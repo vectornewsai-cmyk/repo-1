@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Render outputs (sản phẩm render, không commit)
+renders/
+*.mp4
+*.mov
+*.webm
+!assets/**/*.mp4
+
+# Media mẫu local (không commit file nặng)
+media/
+samples/
+
+# Env & secrets — TUYỆT ĐỐI không commit
+.env
+.env.*
+*.pem
+*.key
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Python (cho local AI ở Phase 2)
+__pycache__/
+*.pyc
+.venv/
+venv/
+models/

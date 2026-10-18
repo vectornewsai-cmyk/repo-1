@@ -1,0 +1,1 @@
+{"description":"Định dạng video-spec JSON + TypeScript types — ngôn ngữ chung giữa editor, render worker và AI agent","exports":{".":"./src/index.ts"},"license":"MIT","name":"@repo-1/video-spec","type":"module","version":"0.1.0"}

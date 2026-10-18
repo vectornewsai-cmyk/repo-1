@@ -1,0 +1,1 @@
+{"description":"Trình dựng video trên web — tầm nhìn đẳng cấp CapCut, AI local, tích hợp AI agent","engines":{"node":">=20"},"license":"MIT","name":"repo-1","private":true,"scripts":{"build":"npm run build --workspaces --if-present","dev:web":"npm run dev --workspace=apps/web"},"type":"module","version":"0.1.0","workspaces":["apps/*","packages/*","server/*"]}
