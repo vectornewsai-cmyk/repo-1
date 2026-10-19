@@ -21,7 +21,7 @@ const { isTextFxAnimation } = require("./textfx");
 const { validateVideoFilter } = require("./lut");
 const { validateEffects: validateVideoEffects } = require("./effects");
 const { validateSticker } = require("./sticker");
-const { validateSourceAudioMode } = require("./audioroute");
+const { validateSourceAudioMode, validateAudioEffects } = require("./audioroute");
 const { validateImage } = require("./image");
 const { validateOpacity } = require("./opacity");
 
@@ -352,6 +352,11 @@ function validateClip(track, clip, where, err, warn) {
         err(where, `sourceAudioMode="detach" chưa được hỗ trợ ` +
           `(render worker chỉ hỗ trợ "inherit" | "mute")`);
     }
+    // R1-076: audio effects cho tiếng kế thừa của video clip
+    if (clip.audioEffects !== undefined) {
+      for (const m of validateAudioEffects(clip.audioEffects))
+        err(where, m);
+    }
   }
 
   if (track.kind === "sticker") {
@@ -387,6 +392,11 @@ function validateClip(track, clip, where, err, warn) {
         err(where, m);
       warn(where, "volumeKeyframes hiện chỉ được preview áp dụng (Web Audio), " +
         "render worker chưa áp dụng — export sẽ dùng volume/fade tĩnh (xem AUDIOPREVIEW_LIMITS.md)");
+    }
+    // R1-076: audio effects cho audio clip
+    if (clip.audioEffects !== undefined) {
+      for (const m of validateAudioEffects(clip.audioEffects))
+        err(where, m);
     }
   }
 
