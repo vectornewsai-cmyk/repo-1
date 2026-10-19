@@ -112,6 +112,10 @@ Tùy chọn:
                       giải quyết từ đây (mặc định: <thư-mục-chứa-spec>/media)
   --ffmpeg <path>     Đường dẫn ffmpeg (mặc định: ffmpeg trên PATH)
   --ffprobe <path>    Đường dẫn ffprobe (mặc định: ffprobe trên PATH)
+  --crf <0..51>       Chất lượng H.264 (CRF; số càng nhỏ càng đẹp, mặc định 20)
+  --x264-preset <p>   ultrafast|superfast|veryfast|faster|fast|medium|slow|slower|veryslow
+                      (mặc định medium)
+  --audio-bitrate <b> Bitrate audio AAC, vd 128k (32k..512k, mặc định 128k)
   -y, --overwrite     Ghi đè file output nếu đã tồn tại
   -q, --quiet         Ẩn log chi tiết của ffmpeg
   --dry-run           Chỉ in câu lệnh ffmpeg, không chạy
@@ -120,11 +124,42 @@ Tùy chọn:
 Mã thoát: 0 = thành công, 1 = spec/media không hợp lệ, 2 = lỗi tham số hoặc lỗi render.`);
 }
 
+/** x264 preset hợp lệ cho --x264-preset (whitelist chống injection). */
+const X264_PRESETS = [
+  "ultrafast", "superfast", "veryfast", "faster", "fast",
+  "medium", "slow", "slower", "veryslow",
+];
+
 function parseArgs(argv) {
   const args = {
     spec: null, out: null, mediaDir: null,
     ffmpeg: "ffmpeg", ffprobe: "ffprobe",
+    crf: 20, x264Preset: "medium", audioBitrate: "128k",
     overwrite: false, quiet: false, dryRun: false,
+  };
+  const needInt = (name, raw, min, max) => {
+    const n = Number(raw);
+    if (!Number.isInteger(n) || n < min || n > max) {
+      console.error(`❌ ${name} phải là số nguyên ${min}..${max} (nhận: ${raw})`);
+      process.exit(2);
+    }
+    return n;
+  };
+  const needX264Preset = (raw) => {
+    if (!X264_PRESETS.includes(raw)) {
+      console.error(`❌ --x264-preset phải thuộc: ${X264_PRESETS.join(", ")} (nhận: ${raw})`);
+      process.exit(2);
+    }
+    return raw;
+  };
+  const needAudioBitrate = (raw) => {
+    const m = /^(\d+)k$/.exec(String(raw || ""));
+    const kbps = m ? Number(m[1]) : NaN;
+    if (!m || !Number.isInteger(kbps) || kbps < 32 || kbps > 512) {
+      console.error(`❌ --audio-bitrate phải dạng <số>k, 32k..512k (nhận: ${raw})`);
+      process.exit(2);
+    }
+    return `${kbps}k`;
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -138,6 +173,9 @@ function parseArgs(argv) {
     else if (a === "--media-dir") args.mediaDir = need();
     else if (a === "--ffmpeg") args.ffmpeg = need();
     else if (a === "--ffprobe") args.ffprobe = need();
+    else if (a === "--crf") args.crf = needInt("--crf", need(), 0, 51);
+    else if (a === "--x264-preset") args.x264Preset = needX264Preset(need());
+    else if (a === "--audio-bitrate") args.audioBitrate = needAudioBitrate(need());
     else if (a === "-y" || a === "--overwrite") args.overwrite = true;
     else if (a === "-q" || a === "--quiet") args.quiet = true;
     else if (a === "--dry-run") args.dryRun = true;
@@ -602,9 +640,9 @@ function main() {
   ffArgs.push(
     "-filter_complex", filterComplex,
     "-map", vout, "-map", aout,
-    "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+    "-c:v", "libx264", "-preset", args.x264Preset, "-crf", String(args.crf),
     "-pix_fmt", "yuv420p", "-r", String(meta.fps),
-    "-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-ac", "2",
+    "-c:a", "aac", "-b:a", args.audioBitrate, "-ar", "48000", "-ac", "2",
     "-movflags", "+faststart",
     "-t", num(D),
     "-y", outAbs
@@ -618,7 +656,8 @@ function main() {
   // 7. Chạy ffmpeg
   log(`🎬 Render "${meta.name}" → ${outAbs}`);
   log(`   ${meta.width}x${meta.height} @ ${meta.fps}fps, thời lượng ${num(D)}s, ` +
-    `${orderedMedia.length} file media, ${v.transitions.length} transition`);
+    `${orderedMedia.length} file media, ${v.transitions.length} transition, ` +
+    `crf=${args.crf} preset=${args.x264Preset} audio=${args.audioBitrate}`);
   const t0 = Date.now();
   const r = spawnSync(args.ffmpeg, ffArgs, {
     stdio: ["ignore", "ignore", args.quiet ? "ignore" : "inherit"],
