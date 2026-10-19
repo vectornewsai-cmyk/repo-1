@@ -16,12 +16,16 @@ export const SPEC_VERSION = "0.1.0" as const;
 export * from "./transitions";
 export * from "./speed";
 export * from "./keyframes";
+// Phase 3b: chroma key, text animations.
+export * from "./chroma";
+export * from "./textfx";
 // Lưu ý: "./transitions" export `Transition` (type mở rộng) — dùng thay cho
-// định nghĩa cũ. "./keyframes" gắn `animations?` vào VideoClip/TextClip qua
-// module augmentation.
+// định nghĩa cũ. "./keyframes" và "./chroma" gắn `animations?` / `chromaKey?`
+// vào VideoClip/TextClip qua module augmentation.
 
 import type { Transition } from "./transitions";
 import type { ClipAnimations } from "./keyframes";
+import type { TextAnimation } from "./textfx";
 
 export interface VideoMeta {
   /** Tên dự án */
@@ -116,8 +120,8 @@ export interface TextStyle {
   /** Vị trí tương đối 0..1 (0.5 = giữa) */
   x?: number;
   y?: number;
-  /** Phase 1 chỉ hỗ trợ: "none" | "fadeUp" | "typewriter" */
-  animation?: "none" | "fadeUp" | "typewriter";
+  /** Phase 1: "none" | "fadeUp" | "typewriter". Phase 3b thêm: fadeIn, slideInLeft, slideInRight, slideUp, bounce */
+  animation?: TextAnimation;
 }
 
 export interface VideoSpec {
