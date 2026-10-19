@@ -1,0 +1,11 @@
+# requirements cho server/tts (R1-083: TTS local tiếng Việt)
+# Cài: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+#
+# VieNeu-TTS bản 0.5B — TTS tiếng Việt on-device, 24kHz, code-switching Việt–Anh.
+# License: Apache 2.0 (ghi trên PyPI https://pypi.org/project/vieneu/1.1.3/)
+# → an toàn thương mại.
+#
+# ⚠️ BẪY LICENSE: KHÔNG dùng bản 0.3B (CC BY-NC 4.0 — cấm thương mại).
+# Package `vieneu` trên PyPI là bản 0.5B. Nếu sau này package đổi bản mặc định,
+# phải verify lại license trước khi nâng cấp.
+vieneu>=1.1.3
