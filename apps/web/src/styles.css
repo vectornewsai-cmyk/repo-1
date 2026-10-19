@@ -251,6 +251,27 @@ input[type="color"] {
   align-items: center;
 }
 
+/* ============ Project menu (Mới / Mở / Lưu / Lưu thành) ============ */
+.project-menu {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  margin-right: 2px;
+}
+
+.autosave-indicator {
+  font-size: 11px;
+  color: #7ee2a8;
+  white-space: nowrap;
+  padding: 2px 6px;
+}
+
+.autosave-indicator.dirty {
+  color: #ffcf6e;
+}
+
 .flash-msg {
   position: absolute;
   top: 110%;
@@ -825,6 +846,29 @@ input[type="color"] {
   pointer-events: none;
 }
 
+/* R1-035: thumbnail filmstrip cho clip video/image, thumbnail đơn cho sticker. */
+.clip-thumb {
+  position: absolute;
+  inset: 0;
+  background-size: auto 100%;
+  background-repeat: repeat-x;
+  background-position: left center;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.clip-thumb-sticker {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.tl-clip .clip-label,
+.tl-clip .clip-sub {
+  position: relative;
+  z-index: 1;
+}
+
 .clip-handle {
   position: absolute;
   top: 0;
@@ -946,6 +990,39 @@ input[type="color"] {
 .export-stats b {
   font-size: 16px;
   font-variant-numeric: tabular-nums;
+}
+
+/* P0-01: MP4 export qua bridge */
+.mp4-export {
+  margin: 14px 18px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.mp4-export .panel-head {
+  margin-bottom: 8px;
+}
+.render-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.progress-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent, #4f8cff);
+  transition: width 0.4s ease;
+}
+.progress-label {
+  font-size: 13px;
+  color: var(--muted);
 }
 
 .issues {

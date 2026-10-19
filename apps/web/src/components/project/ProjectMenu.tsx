@@ -14,6 +14,12 @@ import {
   markSaved,
   saveProject,
 } from "../../lib/projectRepo";
+import {
+  ARCHIVE_EXT,
+  downloadArchive,
+  exportArchive,
+  importArchive,
+} from "../../lib/archive";
 
 /** Lưu project hiện tại thành file. Trả về warnings để caller hiển thị. */
 export function saveCurrentProject(): string[] {
@@ -31,6 +37,7 @@ function warnList(warnings: string[]): void {
 export function ProjectMenu() {
   const spec = useStore((s) => s.spec);
   const fileRef = useRef<HTMLInputElement>(null);
+  const archiveRef = useRef<HTMLInputElement>(null);
   // làm mới indicator định kỳ (autosave/dirty thay đổi ngoài React render cycle)
   const [, force] = useReducer((x: number) => x + 1, 0);
   useEffect(() => {
@@ -74,6 +81,7 @@ export function ProjectMenu() {
     markSaved(res.spec);
     clearAutosave();
     autosave(res.spec, res.name); // ghi ngay để reload khôi phục đúng project vừa mở
+    st.checkMissingMedia(); // R1-033: hiện panel relink nếu media thiếu
     warnList(res.warnings);
     force();
   };
@@ -91,6 +99,53 @@ export function ProjectMenu() {
     doSave();
   };
 
+  /** Xuất project + media thành file .vcut.zip (archive portable). */
+  const doExportArchive = async () => {
+    const st = useStore.getState();
+    // Gom file gốc từ media pool: tên khớp `src` trong spec.
+    const mediaSources = st.media
+      .filter((m) => m.file)
+      .map((m) => ({ name: m.name, data: m.file as File }));
+    const res = await exportArchive(st.spec, st.spec.meta.name, mediaSources);
+    if (!res.ok || !res.blob) {
+      window.alert("Không xuất được bản nén:\n- " + res.errors.join("\n- "));
+      return;
+    }
+    downloadArchive(res.blob, st.spec.meta.name);
+    const sizeMB = (res.stats.zipBytes / 1024 / 1024).toFixed(1);
+    const msg =
+      `Đã xuất bản nén (${res.stats.mediaFiles} media, ${sizeMB} MB).` +
+      (res.warnings.length > 0 ? "\n\nLưu ý:\n- " + res.warnings.join("\n- ") : "");
+    window.alert(msg);
+  };
+
+  /** Nhập file .vcut.zip: giải nén → load project + media vào editor. */
+  const doImportArchive = () => archiveRef.current?.click();
+
+  const onArchiveFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = ""; // cho phép chọn lại cùng file
+    if (!f) return;
+    if (!confirmDiscard()) return;
+    const res = await importArchive(f);
+    if (!res.ok || !res.spec) {
+      window.alert("Không nhập được bản nén:\n- " + res.errors.join("\n- "));
+      return;
+    }
+    const st = useStore.getState();
+    st.newProject(); // xoá project cũ (media blob URL cũ không bền vững)
+    st.replaceProject(res.spec);
+    st.setProjectName(res.name);
+    if (res.mediaFiles.length > 0) {
+      await st.importFiles(res.mediaFiles);
+    }
+    markSaved(res.spec);
+    clearAutosave();
+    autosave(res.spec, res.name);
+    warnList(res.warnings);
+    force();
+  };
+
   return (
     <div className="project-menu">
       <button title="Tạo dự án mới" onClick={doNew}>
@@ -105,12 +160,31 @@ export function ProjectMenu() {
       <button title="Lưu thành tên khác" onClick={doSaveAs}>
         💾 Lưu thành…
       </button>
+      <button
+        title="Xuất project + media thành 1 file nén (.vcut.zip) — mang đi máy khác"
+        onClick={() => void doExportArchive()}
+      >
+        📦 Xuất bản nén
+      </button>
+      <button
+        title="Nhập file bản nén (.vcut.zip) — khôi phục project + media"
+        onClick={doImportArchive}
+      >
+        📥 Nhập bản nén
+      </button>
       <input
         ref={fileRef}
         type="file"
         accept=".vcut.json,.json,application/json"
         style={{ display: "none" }}
         onChange={(e) => void onFile(e)}
+      />
+      <input
+        ref={archiveRef}
+        type="file"
+        accept={ARCHIVE_EXT + ",.zip,application/zip"}
+        style={{ display: "none" }}
+        onChange={(e) => void onArchiveFile(e)}
       />
       <span
         className={`autosave-indicator${dirty ? " dirty" : ""}`}
