@@ -9,6 +9,7 @@ import type {
   AudioClip,
   Clip,
   ImageClip,
+  KeyframedValue,
   StickerClip,
   TextClip,
   TextStyle,
@@ -326,6 +327,36 @@ function validateVideoClip(v: unknown): VideoClip {
   return clip;
 }
 
+/** Validate volumeKeyframes { keyframes: [{ t, v, easing }] } cho audio clip (R1-063). */
+function validateVolumeKeyframes(v: unknown, duration: number, clipId: string): KeyframedValue {
+  if (!isObj(v) || !Array.isArray(v["keyframes"]))
+    throw new ValidationError(`clip.volumeKeyframes phải là object { keyframes: [...] }`);
+  const kfs = v["keyframes"] as unknown[];
+  if (kfs.length === 0)
+    throw new ValidationError(`clip.volumeKeyframes.keyframes: mảng rỗng — cần ít nhất 1 keyframe`);
+  if (kfs.length > MAX_KEYFRAMES_PER_PROP)
+    throw new ValidationError(
+      `clip.volumeKeyframes.keyframes: quá ${MAX_KEYFRAMES_PER_PROP} keyframe`
+    );
+  return {
+    keyframes: kfs.map((kf, i) => {
+      const w = `clip.volumeKeyframes.keyframes[${i}]`;
+      if (!isObj(kf))
+        throw new ValidationError(`${w} phải là object { t, v, easing }`);
+      const t = reqFiniteNum(kf["t"], `${w}.t`);
+      if (t < 0 || t > duration)
+        throw new ValidationError(`${w}.t phải trong [0, ${duration}] (nhận được: ${t})`);
+      const val = reqFiniteNum(kf["v"], `${w}.v`);
+      if (val < 0 || val > 1)
+        throw new ValidationError(`${w}.v phải trong 0..1 (nhận được: ${val})`);
+      const easing = optEnum(kf["easing"], `${w}.easing`, EASINGS);
+      if (!easing)
+        throw new ValidationError(`${w}.easing bắt buộc: ${EASINGS.join(" | ")}`);
+      return { t, v: val, easing };
+    }),
+  };
+}
+
 function validateAudioClip(v: unknown): AudioClip {
   if (!isObj(v)) throw new ValidationError(`clip phải là object`);
   const inp = reqNonNegNum(v["in"], "clip.in");
@@ -347,6 +378,10 @@ function validateAudioClip(v: unknown): AudioClip {
   }
   if (v["fadeIn"] !== undefined) clip.fadeIn = reqNonNegNum(v["fadeIn"], "clip.fadeIn");
   if (v["fadeOut"] !== undefined) clip.fadeOut = reqNonNegNum(v["fadeOut"], "clip.fadeOut");
+  // R1-063: volumeKeyframes — passthrough (không làm mất như các field đã validate).
+  if (v["volumeKeyframes"] !== undefined) {
+    clip.volumeKeyframes = validateVolumeKeyframes(v["volumeKeyframes"], clip.duration, clip.id);
+  }
   // Phase 3: speed / reverse (audio)
   Object.assign(clip, validateSpeedFields(v, clip.id));
   return clip;
