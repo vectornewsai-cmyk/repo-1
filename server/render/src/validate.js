@@ -21,9 +21,13 @@ const { isTextFxAnimation } = require("./textfx");
 const { validateVideoFilter } = require("./lut");
 const { validateEffects: validateVideoEffects } = require("./effects");
 const { validateSticker } = require("./sticker");
+const { validateSourceAudioMode } = require("./audioroute");
 const { validateImage } = require("./image");
+const { validateOpacity } = require("./opacity");
 
-const SPEC_VERSION = "0.1.0";
+const SPEC_VERSION = "0.2.0";
+/** Các version cũ vẫn đọc được (backward compat). */
+const SUPPORTED_VERSIONS = new Set(["0.1.0", "0.2.0"]);
 /** Sai số khi so sánh số thực (giây). */
 const EPS = 1e-6;
 /** Dung sai khi so sánh out với duration file thực (metadata container có thể lệch chút). */
@@ -39,7 +43,7 @@ const STILL_CODECS = new Set(["png", "bmp", "tiff", "mjpeg", "mng"]);
 function isVideoSpec(v) {
   if (typeof v !== "object" || v === null) return false;
   return (
-    v.version === SPEC_VERSION &&
+    SUPPORTED_VERSIONS.has(v.version) &&
     typeof v.meta === "object" &&
     v.meta !== null &&
     Array.isArray(v.tracks)
@@ -71,8 +75,8 @@ function validateSpec(spec) {
   }
 
   // ---- version ----
-  if (spec.version !== SPEC_VERSION) {
-    err("version", `không hỗ trợ "${spec.version}" — worker này chỉ render spec version "${SPEC_VERSION}"`);
+  if (!SUPPORTED_VERSIONS.has(spec.version)) {
+    err("version", `không hỗ trợ "${spec.version}" — worker này chỉ render spec version ${[...SUPPORTED_VERSIONS].join(", ")}`);
   }
 
   // ---- meta ----
@@ -186,6 +190,23 @@ function validateSpec(spec) {
     }
   }
 
+  // R1-011: opacity kết hợp transition — unit đã merge dùng opacity của clip đích
+  // cho toàn bộ đoạn chuyển cảnh (xem OPACITY_LIMITS.md).
+  for (const tr of transitions) {
+    const track = spec.tracks.find((t) => t.id === tr.trackId);
+    if (!track || !Array.isArray(track.clips)) continue;
+    const from = track.clips.find((c) => c.id === tr.from);
+    const to = track.clips.find((c) => c.id === tr.to);
+    for (const c of [from, to]) {
+      if (c && c.opacity !== undefined && c.opacity < 1 - EPS) {
+        warn(`tracks "${track.id}" clips "${c.id}"`,
+          `có opacity=${c.opacity} và transition — đoạn chuyển cảnh đã merge sẽ dùng ` +
+          `opacity của clip đích ("${to.id}") cho toàn bộ unit (xem OPACITY_LIMITS.md)`);
+        break;
+      }
+    }
+  }
+
   // Tổng thời lượng phải > 0
   let D = 0;
   for (const t of spec.tracks) {
@@ -252,12 +273,10 @@ function validateClip(track, clip, where, err, warn) {
       if (tr.type !== "none" && tr.duration > clip.duration + EPS)
         err(where, `${key}.duration (${tr.duration}s) dài hơn duration của clip (${clip.duration}s)`);
     }
+    // Opacity (R1-011): 0..1, render thật bằng format=rgba + colorchannelmixer.
     if (clip.opacity !== undefined) {
-      if (!isFiniteNumber(clip.opacity) || clip.opacity < 0 || clip.opacity > 1)
-        err(where, `opacity phải trong khoảng 0..1, nhận được: ${clip.opacity}`);
-      else if (clip.opacity < 1 - EPS)
-        err(where, `opacity=${clip.opacity} chưa được hỗ trợ ở Phase 1 ` +
-          `(render worker hiện tại chỉ render được opacity = 1)`);
+      for (const m of validateOpacity(clip.opacity))
+        err(where, m);
     }
     // Keyframe animations (chỉ x/y/opacity được render; scale/rotation lưu nhưng bỏ qua)
     if (clip.animations !== undefined) {
@@ -271,6 +290,13 @@ function validateClip(track, clip, where, err, warn) {
     if (clip.chromaKey !== undefined) {
       for (const m of validateChroma(clip.chromaKey))
         err(where, m);
+      // R1-012: cảnh báo khi kết hợp chroma key với transition (xfade làm mất alpha)
+      const hasTrans = (clip.transitionIn && clip.transitionIn.type !== "none") ||
+                       (clip.transitionOut && clip.transitionOut.type !== "none");
+      if (hasTrans) {
+        warn(where, "clip có chromaKey + transition: xfade không giữ alpha, " +
+          "vùng trong suốt có thể bị blend sai (xem CHROMA_LIMITS.md)");
+      }
     }
     // LUT filter
     if (clip.filter !== undefined) {
@@ -281,6 +307,14 @@ function validateClip(track, clip, where, err, warn) {
     if (clip.effects !== undefined) {
       for (const m of validateVideoEffects(clip.effects))
         err(where, m);
+    }
+    // R1-015: audio routing cho video nguồn
+    if (clip.sourceAudioMode !== undefined) {
+      for (const m of validateSourceAudioMode(clip.sourceAudioMode))
+        err(where, m);
+      if (clip.sourceAudioMode === "detach")
+        err(where, `sourceAudioMode="detach" chưa được hỗ trợ ` +
+          `(render worker chỉ hỗ trợ "inherit" | "mute")`);
     }
   }
 
@@ -385,7 +419,6 @@ function validateMedia(spec, mediaDir, ffprobeBin) {
   const probes = new Map();
   const err = (msg) => errors.push(msg);
   const warn = (msg) => warnings.push(msg);
-  const warnedAudioSkip = new Set();
 
   const jobs = [];
   for (const track of spec.tracks) {
@@ -443,11 +476,13 @@ function validateMedia(spec, mediaDir, ffprobeBin) {
         err(`[${where}] out=${clip.out}s vượt quá độ dài file (${dur.toFixed(2)}s)`);
       }
       const as = streams.find((s) => s.codec_type === "audio");
-      if (as && !warnedAudioSkip.has(abs)) {
-        warnedAudioSkip.add(abs);
-        warn(`[${where}] file có audio stream nhưng Phase 1 BỎ QUA audio của video clip ` +
-          `— hãy dùng track "audio" riêng nếu cần tiếng`);
+      const mode = clip.sourceAudioMode ?? "inherit";
+      if (!as && mode === "inherit") {
+        // File không có audio nhưng user để inherit (mặc định) — không lỗi,
+        // chỉ báo để user biết video này vốn đã câm.
+        warn(`[${where}] file không có audio stream (sourceAudioMode="inherit" nhưng không có gì để giữ)`);
       }
+      // R1-015: không còn cảnh báo "bỏ qua audio" — audio inherit đã được render xử lý.
     } else if (track.kind === "image") {
       // Image clip: file phải là ảnh tĩnh (video stream 1 frame hoặc codec ảnh).
       // Không kiểm tra in/out — ảnh không có trục thời gian.
