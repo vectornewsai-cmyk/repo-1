@@ -1,14 +1,21 @@
 /**
- * audioEngine.ts — Web Audio graph cho preview (R1-063).
+ * audioEngine.ts — Web Audio graph cho preview (R1-063, mở rộng R1-076).
  *
  * Mục tiêu: "nghe đúng những gì sẽ xuất" — preview audio phải khớp render worker
- * ở các tham số: volume, fadeIn/fadeOut, volumeKeyframes, track muted, speed.
+ * ở các tham số: volume, fadeIn/fadeOut, volumeKeyframes, track muted, speed,
+ * và (R1-076) audio effects: bass/treble/compressor.
  *
  * Kiến trúc:
  *   HTMLMediaElement (từ MediaPool, gồm cả <video> cho audio kế thừa)
  *     → MediaElementAudioSourceNode (1 node / 1 element / 1 AudioContext)
+ *     → BiquadFilterNode lowshelf (bass, ~100Hz — khớp filter `bass` của FFmpeg)
+ *     → BiquadFilterNode highshelf (treble, ~3000Hz — khớp filter `treble`)
+ *     → DynamicsCompressorNode (compressor — khớp `acompressor`)
  *     → GainNode riêng cho từng element (volume + fade + keyframes + mute)
  *     → master GainNode → AnalyserNode (VU meter) → destination
+ *
+ * R1-076: reverb và noiseReduction KHÔNG có node Web Audio tương đương
+ * (aecho/afftdn là filter FFmpeg) → render-only, ghi rõ trong AUDIOFX_LIMITS.md.
  *
  * Mỗi frame của vòng lặp preview: preview.tsx tính gain mục tiêu cho từng
  * source đang active rồi gọi engine.update(). Gain được làm mượt bằng
@@ -66,6 +73,45 @@ export interface ActiveAudioSource {
   el: HTMLMediaElement;
   /** Gain mục tiêu 0..1 (đã gồm volume × fades × keyframes × mute). */
   gain: number;
+  /** Hiệu ứng audio cho preview (R1-076) — subset của AudioEffects. */
+  fx?: PreviewAudioFx;
+}
+
+/**
+ * Hiệu ứng audio mà preview (Web Audio) hỗ trợ (R1-076).
+ * - bass/treble (dB): BiquadFilter lowshelf ~100Hz / highshelf ~3000Hz
+ *   (khớp tần số mặc định của filter `bass`/`treble` trong FFmpeg).
+ * - compressor: DynamicsCompressorNode (khớp `acompressor`).
+ * reverb và noiseReduction không có node tương đương → render-only.
+ */
+export interface PreviewAudioFx {
+  bass?: number;
+  treble?: number;
+  compressor?: {
+    thresholdDb?: number;
+    ratio?: number;
+    attackMs?: number;
+    releaseMs?: number;
+  };
+}
+
+/**
+ * Rút gọn AudioEffects (video-spec) về subset mà preview hỗ trợ.
+ * Trả về undefined nếu không có effect nào preview áp dụng được.
+ */
+export function toPreviewFx(fx?: {
+  bass?: number;
+  treble?: number;
+  compressor?: PreviewAudioFx["compressor"];
+  noiseReduction?: number;
+  reverb?: number;
+}): PreviewAudioFx | undefined {
+  if (!fx) return undefined;
+  const out: PreviewAudioFx = {};
+  if (Math.abs(fx.bass ?? 0) > 1e-9) out.bass = fx.bass;
+  if (Math.abs(fx.treble ?? 0) > 1e-9) out.treble = fx.treble;
+  if (fx.compressor !== undefined) out.compressor = fx.compressor;
+  return Object.keys(out).length > 0 ? out : undefined;
 }
 
 export interface AudioEngineOptions {
@@ -102,7 +148,10 @@ export class AudioEngine {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private analyser: AnalyserNode | null = null;
-  private nodes = new Map<HTMLMediaElement, { gain: GainNode }>();
+  private nodes = new Map<
+    HTMLMediaElement,
+    { gain: GainNode; low: BiquadFilterNode; high: BiquadFilterNode; comp: DynamicsCompressorNode }
+  >();
   private levelBuf: Uint8Array | null = null;
   private lastLevelAt = -1;
 
@@ -156,22 +205,43 @@ export class AudioEngine {
   }
 
   /** Lấy (hoặc tạo) GainNode cho 1 element. Null = không tạo được → dùng fallback. */
-  private nodeFor(el: HTMLMediaElement): { gain: GainNode } | null {
+  private nodeFor(el: HTMLMediaElement): {
+    gain: GainNode;
+    low: BiquadFilterNode;
+    high: BiquadFilterNode;
+    comp: DynamicsCompressorNode;
+  } | null {
     const hit = this.nodes.get(el);
     if (hit) return hit;
     if (!this.ctx || !this.master) return null;
     try {
       // Mỗi element chỉ được createMediaElementSource 1 lần / 1 context (ném lỗi nếu lặp lại).
       const src = this.ctx.createMediaElementSource(el);
+      // R1-076: chuỗi FX — lowshelf (bass ~100Hz) → highshelf (treble ~3000Hz)
+      // → compressor → gain. Mặc định trung tính (không đổi tiếng).
+      const low = this.ctx.createBiquadFilter();
+      low.type = "lowshelf";
+      low.frequency.value = 100;
+      low.gain.value = 0;
+      const high = this.ctx.createBiquadFilter();
+      high.type = "highshelf";
+      high.frequency.value = 3000;
+      high.gain.value = 0;
+      const comp = this.ctx.createDynamicsCompressor();
+      comp.threshold.value = 0; // 0 dBFS = không nén (tắt)
+      comp.ratio.value = 1; // 1:1 = không nén (tắt)
       const gain = this.ctx.createGain();
       gain.gain.value = 1;
-      src.connect(gain);
+      src.connect(low);
+      low.connect(high);
+      high.connect(comp);
+      comp.connect(gain);
       gain.connect(this.master);
       // Từ đây engine nắm toàn quyền gain — element không tự áp volume/mute nữa
       // (tránh nhân đôi với GainNode).
       el.volume = 1;
       el.muted = false;
-      const rec = { gain };
+      const rec = { gain, low, high, comp };
       this.nodes.set(el, rec);
       return rec;
     } catch {
@@ -183,6 +253,10 @@ export class AudioEngine {
    * Cập nhật gain cho mọi source đang active. Gọi mỗi frame từ vòng lặp preview.
    * - Có Web Audio: setTargetAtTime (mượt, không click).
    * - Không có Web Audio: fallback gán el.volume trực tiếp (hành vi cũ).
+   *
+   * R1-076: đồng thời cập nhật tham số FX (bass/treble/compressor) từ s.fx.
+   * Cùng 1 element chia sẻ cho nhiều clip → clip active đầu tiên thắng
+   * (giới hạn kiến trúc đã ghi trong AUDIOPREVIEW_LIMITS.md).
    */
   update(sources: ActiveAudioSource[]): void {
     const seen = new Set<HTMLMediaElement>();
@@ -192,7 +266,29 @@ export class AudioEngine {
       const g = clamp(s.gain, 0, 1);
       const n = this.nodeFor(s.el);
       if (n && this.ctx) {
-        n.gain.gain.setTargetAtTime(g, this.ctx.currentTime, GAIN_SMOOTHING_TC);
+        const t = this.ctx.currentTime;
+        n.gain.gain.setTargetAtTime(g, t, GAIN_SMOOTHING_TC);
+        // R1-076: FX params — về trung tính khi clip không có effect.
+        const fx = s.fx;
+        n.low.gain.setTargetAtTime(clamp(fx?.bass ?? 0, -12, 12), t, GAIN_SMOOTHING_TC);
+        n.high.gain.setTargetAtTime(clamp(fx?.treble ?? 0, -12, 12), t, GAIN_SMOOTHING_TC);
+        const comp = fx?.compressor;
+        n.comp.threshold.setTargetAtTime(
+          comp ? clamp(comp.thresholdDb ?? -20, -60, 0) : 0,
+          t,
+          GAIN_SMOOTHING_TC,
+        );
+        n.comp.ratio.setTargetAtTime(comp ? clamp(comp.ratio ?? 4, 1, 20) : 1, t, GAIN_SMOOTHING_TC);
+        n.comp.attack.setTargetAtTime(
+          comp ? clamp((comp.attackMs ?? 20) / 1000, 0, 1) : 0.003,
+          t,
+          GAIN_SMOOTHING_TC,
+        );
+        n.comp.release.setTargetAtTime(
+          comp ? clamp((comp.releaseMs ?? 250) / 1000, 0, 1) : 0.25,
+          t,
+          GAIN_SMOOTHING_TC,
+        );
       } else {
         // Fallback: chưa có graph (ensure() chưa gọi / thất bại).
         try {
