@@ -13,6 +13,7 @@ import { ChromaPanel } from "./components/chroma";
 import { TextAnimPicker } from "./components/textfx";
 import { LutPicker } from "./components/lut";
 import { EffectPanel } from "./components/effects";
+import { StickerPanel } from "./components/sticker";
 
 function NumField({
   label,
@@ -66,6 +67,8 @@ function ProjectInfo() {
         <li>Kéo mép clip để trim in/out</li>
         <li>Kéo chữ ngay trên preview để di chuyển</li>
       </ul>
+      <div className="panel-head" style={{ marginTop: 16 }}>🌟 Sticker</div>
+      <StickerPanel />
       <p className="tips">
         Bấm vào một clip trên timeline để chỉnh thuộc tính của nó ở đây.
       </p>
@@ -89,7 +92,7 @@ export function Inspector() {
   return (
     <div className="inspector">
       <div className="panel-head">
-        {clip.kind === "text" ? "🔤 Chữ" : clip.kind === "video" ? "🎬 Video" : "🎵 Âm thanh"}
+        {clip.kind === "text" ? "🔤 Chữ" : clip.kind === "video" ? "🎬 Video" : clip.kind === "sticker" ? "🌟 Sticker" : clip.kind === "image" ? "🖼️ Ảnh" : "🎵 Âm thanh"}
       </div>
 
       {clip.kind === "text" && (
@@ -233,12 +236,19 @@ export function Inspector() {
         </>
       )}
 
+      {clip.kind === "sticker" && (
+        <>
+          <div className="panel-head" style={{ marginTop: 12 }}>🌟 Sticker</div>
+          <StickerPanel />
+        </>
+      )}
+
       <div className="panel-head" style={{ marginTop: 12 }}>⏱️ Thời gian</div>
       <div className="field-row">
         <NumField label="Bắt đầu (s)" value={clip.start} onChange={(v) => patch({ start: Math.max(0, v) })} />
         <NumField label="Độ dài (s)" value={clip.duration} onChange={(v) => patch({ duration: Math.max(0.2, v) })} />
       </div>
-      {clip.kind !== "text" && clip.kind !== "sticker" && (
+      {clip.kind !== "text" && clip.kind !== "sticker" && clip.kind !== "image" && (
         <div className="field-row">
           <NumField label="In (s)" value={(clip as { in: number }).in} onChange={(v) => patch({ in: Math.max(0, v), out: Math.max(0, v) + clip.duration } as Partial<typeof clip>)} />
           <NumField label="Out (s)" value={(clip as { out: number }).out} onChange={(v) => { const cin = (clip as { in: number }).in; patch({ out: Math.max(cin + 0.2, v), duration: Math.max(0.2, v - cin) } as Partial<typeof clip>); }} />
