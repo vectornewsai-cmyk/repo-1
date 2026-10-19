@@ -9,6 +9,8 @@ import { fmtTime } from "./lib";
 import { TransitionPanel } from "./components/transitions";
 import { SpeedPanel } from "./components/speed";
 import { KeyframePanel } from "./components/keyframes";
+import { ChromaPanel } from "./components/chroma";
+import { TextAnimPicker } from "./components/textfx";
 
 function NumField({
   label,
@@ -149,18 +151,10 @@ export function Inspector() {
           </div>
           <label className="field">
             <span>Hiệu ứng xuất hiện</span>
-            <select
+            <TextAnimPicker
               value={clip.style.animation ?? "none"}
-              onChange={(e) =>
-                st.patchTextStyle(track.id, clip.id, {
-                  animation: e.target.value as "none" | "fadeUp" | "typewriter",
-                })
-              }
-            >
-              <option value="none">Không</option>
-              <option value="fadeUp">Mờ dần + trượt lên</option>
-              <option value="typewriter">Gõ từng chữ</option>
-            </select>
+              onChange={(anim) => st.patchTextStyle(track.id, clip.id, { animation: anim as never })}
+            />
           </label>
           <label className="field">
             <span>Vị trí ngang: {Math.round((clip.style.x ?? 0.5) * 100)}%</span>
@@ -204,6 +198,8 @@ export function Inspector() {
           />
           <div className="panel-head" style={{ marginTop: 12 }}>⏩ Tốc độ</div>
           <SpeedPanel />
+          <div className="panel-head" style={{ marginTop: 12 }}>🎭 Xoá phông</div>
+          <ChromaPanel />
           <div className="panel-head" style={{ marginTop: 12 }}>🎞️ Keyframe animation</div>
           <KeyframePanel />
         </>

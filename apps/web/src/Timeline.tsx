@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import type { Clip, Track, TrackKind } from "@repo-1/video-spec";
 import { useStore } from "./store";
 import { clamp, fmtTime, tickStep } from "./lib";
+import { ClipWaveform } from "./components/waveform";
 
 const LANE_H: Record<TrackKind, number> = { video: 58, audio: 46, text: 46 };
 
@@ -122,6 +123,9 @@ function ClipView({
         }}
       />
       <div className="clip-label">{clipLabel(clip)}</div>
+      {clip.kind === "audio" && (
+        <ClipWaveform clip={clip} pxPerSec={pxPerSec} />
+      )}
       {clip.kind !== "text" && (
         <div className="clip-sub">
           {fmtTime(clip.start)} → {fmtTime(clip.start + clip.duration)}
