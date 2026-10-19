@@ -1,0 +1,44 @@
+/**
+ * speed.css — Style riêng của SpeedPanel (dark theme, đồng nhất với styles.css).
+ * Import trong SpeedPanel.tsx. Dùng biến CSS có sẵn: --bg1, --border-soft,
+ * --accent, --accent-dim, --accent-hover, --muted, --danger.
+ */
+
+.speed-panel {
+  /* kế thừa layout .inspector, không cần style khung riêng */
+}
+
+.speed-presets {
+  flex-wrap: wrap;
+}
+
+.speed-presets .toggle {
+  flex: 1 1 28%;
+  min-width: 0;
+}
+
+.speed-presets .toggle:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.reverse-badge {
+  color: var(--accent-hover, #7dd3fc);
+  font-weight: 700;
+}
+
+.speed-panel .muted {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.speed-panel .warn {
+  margin: 8px 12px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 6px;
+}
