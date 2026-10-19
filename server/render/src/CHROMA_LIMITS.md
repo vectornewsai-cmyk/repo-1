@@ -31,9 +31,17 @@
    dây) có thể bị mờ hoặc mất hẳn ở biên khi blend > 0.3.
 
 5. **Đã tích hợp vào `render.js` chính** (cập nhật 19/10/2026, commit `1844e2cc`).
-   `buildChromaFilter()` được gọi tại `render.js` dòng 225 (áp sau speed,
+   `buildChromaFilter()` được gọi tại `render.js` dòng 227 (áp sau speed,
    trước scale). `validate.js` gọi `validateChroma()` cho field `chromaKey`.
    `ChromaPanel` đã mount vào `Inspector.tsx`.
+
+   **R1-012/P0-05 (sửa 19/10/2026):** trước đây chain có `format=yuv420p` SAU
+   chroma key, làm mất alpha trước khi overlay → phông xanh bị xoá nhưng
+   vùng trong suốt hiện màu đen thay vì thấy background bên dưới.
+   Đã sửa: khi clip có chromaKey, chain dùng `format=yuva420p` xuyên suốt,
+   `pad` dùng màu trong suốt (`black@0`), overlay tự composite bằng alpha.
+   Kiểm chứng: demo_chroma_alpha.js render MP4 với nền checkerboard —
+   pixel vùng đã key hiện checkerboard (không phải đen), vật thể giữ nguyên.
 
 6. **Tương tác với transition (xfade):** unit đã qua xfade mà mang kênh alpha
    có thể composite không như mong đợi. Khuyến nghị: không đặt transition
