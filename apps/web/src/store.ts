@@ -16,7 +16,15 @@ import type {
   VideoClip,
   VideoSpec,
 } from "@repo-1/video-spec";
-import { projectDuration } from "@repo-1/video-spec";
+import { projectDuration, SPEC_VERSION } from "@repo-1/video-spec";
+import {
+  isSpeedable,
+  maxTrimLeft,
+  maxTrimRightDuration,
+  splitSourceAt,
+  trimLeftTo,
+  trimRightTo,
+} from "@repo-1/video-spec/speed";
 import type { MediaItem, MediaKind } from "./media";
 import { fileToMediaItem } from "./media";
 import { buildSampleProject } from "./sample";
@@ -119,7 +127,7 @@ interface EditorState {
 }
 
 const emptySpec = (): VideoSpec => ({
-  version: "0.1.0",
+  version: SPEC_VERSION,
   meta: { name: "Dự án mới", width: 1280, height: 720, fps: 30 },
   tracks: [],
 });
@@ -296,16 +304,23 @@ export const useStore = create<EditorState>()((set, get) => ({
 
     if (edge === "left") {
       const noIn = clip.kind === "text" || clip.kind === "sticker" || clip.kind === "image";
-      const maxShiftLeft = noIn ? clip.start : Math.min(clip.start, (clip as { in: number }).in);
-      const minStart = clip.start - maxShiftLeft;
+      // R1-014: giới hạn theo speed (và reverse) — dùng maxTrimLeft thay vì so đơn vị lẫn lộn
+      let maxShift = clip.start; // mặc định cho text/sticker/image
+      if (!noIn && isSpeedable(clip)) {
+        const item = media.find((m) => m.name === (clip as { src: string }).src);
+        const mediaDur = item && item.kind !== "image" ? item.duration : Infinity;
+        maxShift = Math.min(clip.start, maxTrimLeft(clip, mediaDur));
+      }
+      const minStart = clip.start - maxShift;
       const maxStart = clip.start + clip.duration - 0.2;
       const newStart = clamp(clip.start + deltaSec, minStart, maxStart);
       const shift = newStart - clip.start;
       if (shift === 0) return;
+      // R1-013: dùng trimLeftTo — đúng với mọi speed/reverse
       const patch: Partial<Clip> =
-        clip.kind === "text" || clip.kind === "sticker" || clip.kind === "image"
+        noIn || !isSpeedable(clip)
           ? { start: newStart, duration: clip.duration - shift }
-          : { start: newStart, duration: clip.duration - shift, in: (clip as { in: number }).in + shift };
+          : trimLeftTo(clip, newStart);
       set((s) => ({
         spec: withTrack(s.spec, trackId, (t) => ({
           ...t, clips: t.clips.map((c) => (c.id === clipId ? patchOne(c, patch) : c)),
@@ -313,10 +328,11 @@ export const useStore = create<EditorState>()((set, get) => ({
       }));
     } else {
       let newDur = Math.max(0.2, clip.duration + deltaSec);
-      if (clip.kind === "video" || clip.kind === "audio") {
+      if ((clip.kind === "video" || clip.kind === "audio") && isSpeedable(clip)) {
         const item = media.find((m) => m.name === clip.src);
         const mediaDur = item && item.kind !== "image" ? item.duration : Infinity;
-        newDur = Math.min(newDur, Math.max(0.2, mediaDur - (clip as { in: number }).in));
+        // R1-014: giới hạn duration theo speed/reverse — (mediaDur - in)/speed, không phải mediaDur - in
+        newDur = Math.min(newDur, maxTrimRightDuration(clip, mediaDur));
       }
       // không cho dài ra đè clip khác
       const end = clip.start + newDur;
@@ -324,10 +340,11 @@ export const useStore = create<EditorState>()((set, get) => ({
         (c) => c.id !== clipId && c.start >= clip.start && c.start < end,
       );
       if (blocked) return;
+      // R1-013: dùng trimRightTo — đúng với mọi speed/reverse
       const patch: Partial<Clip> =
-        clip.kind === "text" || clip.kind === "sticker" || clip.kind === "image"
+        clip.kind === "text" || clip.kind === "sticker" || clip.kind === "image" || !isSpeedable(clip)
           ? { duration: newDur }
-          : { duration: newDur, out: (clip as { in: number }).in + newDur };
+          : trimRightTo(clip, newDur);
       set((s) => ({
         spec: withTrack(s.spec, trackId, (t) => ({
           ...t, clips: t.clips.map((c) => (c.id === clipId ? patchOne(c, patch) : c)),
@@ -388,32 +405,44 @@ export const useStore = create<EditorState>()((set, get) => ({
       left = { ...clip, duration: leftDur };
       right = { ...clip, id: uid("c"), start: t, duration: rightDur };
     } else if (clip.kind === "video") {
+      // R1-014: dùng splitSourceAt — điểm cắt nguồn đúng với mọi speed/reverse
+      const cut = splitSourceAt(clip, t);
+      const leftDuration = (cut.leftOut - cut.leftIn) / (clip.speed ?? 1);
+      const rightDuration = (cut.rightOut - cut.rightIn) / (clip.speed ?? 1);
       left = {
         ...clip,
-        duration: leftDur,
-        out: clip.in + leftDur,
+        duration: leftDuration,
+        in: cut.leftIn,
+        out: cut.leftOut,
         transitionOut: { type: "none", duration: 0 },
       };
       right = {
         ...clip,
         id: uid("c"),
         start: t,
-        duration: rightDur,
-        in: clip.in + leftDur,
-        out: clip.out,
+        duration: rightDuration,
+        in: cut.rightIn,
+        out: cut.rightOut,
         transitionIn: { type: "none", duration: 0 },
       };
-    } else {
-      // audio: không có transition
-      left = { ...clip, duration: leftDur, out: clip.in + leftDur };
+    } else if (clip.kind === "audio") {
+      // audio: không có transition — R1-014: dùng splitSourceAt
+      const cut = splitSourceAt(clip, t);
+      const leftDuration = (cut.leftOut - cut.leftIn) / (clip.speed ?? 1);
+      const rightDuration = (cut.rightOut - cut.rightIn) / (clip.speed ?? 1);
+      left = { ...clip, duration: leftDuration, in: cut.leftIn, out: cut.leftOut };
       right = {
         ...clip,
         id: uid("c"),
         start: t,
-        duration: rightDur,
-        in: clip.in + leftDur,
-        out: clip.out,
+        duration: rightDuration,
+        in: cut.rightIn,
+        out: cut.rightOut,
       };
+    } else {
+      // Không tới đây: text/sticker/image đã xử lý ở nhánh đầu,
+      // video/audio đã xử lý ở hai nhánh trên.
+      throw new Error(`splitClip: kind không hỗ trợ: ${(clip as Clip).kind}`);
     }
     set((s) => ({
       spec: withTrack(s.spec, track.id, (tr) => ({
