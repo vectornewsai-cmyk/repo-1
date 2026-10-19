@@ -250,6 +250,18 @@ function buildFilterGraph(spec, ctx) {
   const transMap = new Map();
   for (const t of transitions) transMap.set(`${t.trackId}:${t.from}`, t);
 
+  // R1-084: phát hiện video nguồn đã có kênh alpha (VD: output của bgremove.py).
+  // Dựa trên pix_fmt từ ffprobe (validateMedia đã lưu vào mediaProbes).
+  const hasAlphaVideo = (abs) => {
+    if (!mediaProbes) return false; // không có probe data → giữ hành vi cũ
+    const probe = mediaProbes.get(abs);
+    const vs = probe && probe.streams &&
+      probe.streams.find((s) => s.codec_type === "video");
+    const fmt = (vs && vs.pix_fmt) || "";
+    // Các pix_fmt có alpha: rgba, argb, bgra, abgr, yuva420p/422p/444p, ya8...
+    return /(^|_)a(rgba?|bgr|yuv|rgbf|bgrf)|rgba|argb|bgra|abgr|yuva|ya8|ya16/.test(fmt);
+  };
+
   // ===== VIDEO: chuẩn hoá từng clip rồi nối bằng xfade khi có transition =====
   // Mỗi "unit" là một stream video hoàn chỉnh, sẽ được đặt lên timeline ở bước sau.
   const units = [];
@@ -283,9 +295,13 @@ function buildFilterGraph(spec, ctx) {
       // - pad phải dùng màu trong suốt (black@0), không phải black đục
       // - format cuối phải là yuva420p, KHÔNG được convert về yuv420p (sẽ mất alpha)
       // - overlay filter tự composite bằng alpha channel
+      // R1-084: video nguồn đã có alpha (VD: output của bgremove.py — MOV PNG rgba)
+      // được tự động phát hiện qua probe pix_fmt, xử lý giống chromaKey.
       const hasChroma = !!clip.chromaKey;
-      const padColor = hasChroma ? "black@0" : "black";
-      const outFormat = hasChroma ? "yuva420p" : "yuv420p";
+      const hasSrcAlpha = hasAlphaVideo(absOf(clip.src));
+      const keepAlpha = hasChroma || hasSrcAlpha;
+      const padColor = keepAlpha ? "black@0" : "black";
+      const outFormat = keepAlpha ? "yuva420p" : "yuv420p";
       fc.push(
         `[${idx}:v]` +
         `trim=start=${num(clip.in)}:end=${num(clip.in + clip.duration * (clip.speed ?? 1))},` +
