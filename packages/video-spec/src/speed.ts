@@ -28,7 +28,7 @@
  * (chờ chủ sở hữu package duyệt — tạm thời import bằng đường dẫn tương đối).
  */
 
-import type { AudioClip, Clip, VideoClip } from "./index";
+import type { AudioClip, Clip, VideoClip } from "./index.js";
 
 /** Tốc độ tối thiểu / tối đa cho phép. */
 export const SPEED_MIN = 0.25;
@@ -112,6 +112,187 @@ export function durationForSpeed(clip: SpeedableClip, speed: number): number {
  */
 export function outForDuration(clip: SpeedableClip, duration: number): number {
   return clip.in + duration * clipSpeed(clip);
+}
+
+// ---------------------------------------------------------------------------
+// R1-013: Unified time mapping — dùng chung cho spec/store/preview/render/MCP.
+// ---------------------------------------------------------------------------
+
+/**
+ * Thời lượng nguồn (giây của file gốc) = out - in.
+ * Không phụ thuộc speed/reverse.
+ */
+export function sourceDurationOf(clip: SpeedableClip): number {
+  return clip.out - clip.in;
+}
+
+/**
+ * Thời lượng trên timeline = (out - in) / speed.
+ * Alias rõ nghĩa của effectiveDuration().
+ */
+export function timelineDurationOf(clip: SpeedableClip): number {
+  return effectiveDuration(clip);
+}
+
+/**
+ * Ánh xạ thời điểm timeline → thời điểm nguồn (giây của file gốc).
+ *
+ * Đây là HÀM DÙNG CHUNG duy nhất cho mọi nơi cần source-time mapping:
+ * store (trim/split), preview (seek), render (đối chiếu), MCP.
+ *
+ * @param clip clip video/audio (phải thỏa invariant duration)
+ * @param timelineT thời điểm trên timeline (giây, thường trong [start, start+duration])
+ * @returns thời điểm nguồn trong [in, out]
+ *
+ * Công thức:
+ *   localT = timelineT - clip.start            // 0..duration trên timeline
+ *   offset = localT * speed                    // quãng nguồn đã "tiêu thụ"
+ *   reverse=false → in + offset
+ *   reverse=true  → out - offset               // phát ngược từ cuối đoạn nguồn
+ *
+ * Ví dụ: clip in=10, out=14, speed=2, duration=2.
+ *   sourceTimeAt(clip, start+0.5) = 10 + 0.5*2 = 11 (không reverse)
+ *   sourceTimeAt(clip, start+0.5) = 14 - 0.5*2 = 13 (reverse)
+ */
+export function sourceTimeAt(clip: SpeedableClip, timelineT: number): number {
+  const speed = clipSpeed(clip);
+  const localT = timelineT - clip.start;
+  const offset = localT * speed;
+  if (clipReversed(clip)) {
+    return clip.out - offset;
+  }
+  return clip.in + offset;
+}
+
+/**
+ * Điểm cắt nguồn khi split clip tại thời điểm timeline t.
+ * Trả về { leftIn, leftOut, rightIn, rightOut } — cả hai phần đều giữ
+ * nguyên speed/reverse, duration mỗi phần = (out - in) / speed.
+ *
+ * Dùng sourceTimeAt để tính điểm cắt: splitPoint = sourceTimeAt(clip, t).
+ * - Phần trái:  [in, splitPoint), duration = (splitPoint - in) / speed
+ * - Phần phải: [splitPoint, out), duration = (out - splitPoint) / speed
+ *
+ * Với reverse, splitPoint vẫn đúng vì sourceTimeAt đã đảo chiều:
+ * phần trái (hiển thị trước) vẫn là đoạn nguồn phát trước theo chiều reverse.
+ */
+export function splitSourceAt(
+  clip: SpeedableClip,
+  timelineT: number,
+): { leftIn: number; leftOut: number; rightIn: number; rightOut: number } {
+  const cut = sourceTimeAt(clip, timelineT);
+  // Kẹp cut vào [in, out] để tránh sai số float tràn biên
+  const clamped = Math.min(clip.out, Math.max(clip.in, cut));
+  return {
+    leftIn: clip.in,
+    leftOut: clamped,
+    rightIn: clamped,
+    rightOut: clip.out,
+  };
+}
+
+/**
+ * Tính in mới khi trim mép TRÁI tới thời điểm timeline newStart.
+ * newIn = sourceTimeAt(clip, newStart) — đúng với mọi speed/reverse.
+ */
+export function inForTrimLeft(clip: SpeedableClip, newStart: number): number {
+  return sourceTimeAt(clip, newStart);
+}
+
+/**
+ * Tính out mới khi trim mép PHẢI tới thời điểm timeline newEnd.
+ * newOut = sourceTimeAt(clip, newEnd) — đúng với mọi speed/reverse.
+ */
+export function outForTrimRight(clip: SpeedableClip, newEnd: number): number {
+  return sourceTimeAt(clip, newEnd);
+}
+
+// ---------------------------------------------------------------------------
+// R1-014: Trim/split helpers — xử lý đúng speed AND reverse.
+// ---------------------------------------------------------------------------
+
+/**
+ * Kết quả trim mép trái: { start, duration, in, out } mới.
+ *
+ * Ngữ nghĩa:
+ * - reverse=false: mép trái timeline ↔ đầu nguồn → dịch `in`.
+ *   newIn = sourceTimeAt(clip, newStart); out giữ nguyên.
+ * - reverse=true: mép trái timeline ↔ cuối nguồn (phát ngược từ out) →
+ *   mở rộng/thu hẹp `out`. newOut = out - shift*speed; in giữ nguyên.
+ *
+ * @param clip clip hiện tại (thỏa invariant)
+ * @param newStart thời điểm timeline mới cho mép trái (<= clip.start + duration - 0.2)
+ * @returns { start: newStart, duration, in, out } — gọi patchClip với kết quả này
+ */
+export function trimLeftTo(
+  clip: SpeedableClip,
+  newStart: number,
+): { start: number; duration: number; in: number; out: number } {
+  const shift = newStart - clip.start; // âm khi kéo dài sang trái
+  const newDuration = clip.duration - shift;
+  if (clipReversed(clip)) {
+    // Phát ngược: đầu timeline ↔ cuối nguồn → dịch out
+    const newOut = clip.out - shift * clipSpeed(clip);
+    return { start: newStart, duration: newDuration, in: clip.in, out: newOut };
+  }
+  // Phát xuôi: đầu timeline ↔ đầu nguồn → dịch in
+  const newIn = sourceTimeAt(clip, newStart);
+  return { start: newStart, duration: newDuration, in: newIn, out: clip.out };
+}
+
+/**
+ * Kết quả trim mép phải: { duration, in, out } mới (start giữ nguyên).
+ *
+ * Ngữ nghĩa:
+ * - reverse=false: mép phải timeline ↔ cuối nguồn → dịch `out`.
+ *   newOut = sourceTimeAt(clip, newEnd); in giữ nguyên.
+ * - reverse=true: mép phải timeline ↔ đầu nguồn (kết thúc phát ngược tại in) →
+ *   dịch `in`. newIn = in + shift*speed; out giữ nguyên.
+ */
+export function trimRightTo(
+  clip: SpeedableClip,
+  newDuration: number,
+): { duration: number; in: number; out: number } {
+  const newEnd = clip.start + newDuration;
+  if (clipReversed(clip)) {
+    const newIn = sourceTimeAt(clip, newEnd);
+    return { duration: newDuration, in: newIn, out: clip.out };
+  }
+  const newOut = sourceTimeAt(clip, newEnd);
+  return { duration: newDuration, in: clip.in, out: newOut };
+}
+
+/**
+ * Giới hạn kéo mép trái: khoảng shift (giây timeline, âm = sang trái) tối đa.
+ * - reverse=false: in không được < 0 → shift >= -in / speed
+ * - reverse=true: out không được > mediaDuration → shift >= -(mediaDuration - out) / speed
+ * Trả về số dương = độ dài tối đa được kéo sang trái (giây timeline).
+ */
+export function maxTrimLeft(
+  clip: SpeedableClip,
+  mediaDuration: number = Infinity,
+): number {
+  const speed = clipSpeed(clip);
+  if (clipReversed(clip)) {
+    return Math.max(0, (mediaDuration - clip.out) / speed);
+  }
+  return Math.max(0, clip.in / speed);
+}
+
+/**
+ * Giới hạn kéo mép phải: duration tối đa (giây timeline).
+ * - reverse=false: out không được > mediaDuration → duration <= (mediaDuration - in) / speed
+ * - reverse=true: in không được < 0 → duration <= out / speed
+ */
+export function maxTrimRightDuration(
+  clip: SpeedableClip,
+  mediaDuration: number = Infinity,
+): number {
+  const speed = clipSpeed(clip);
+  if (clipReversed(clip)) {
+    return Math.max(0.2, clip.out / speed);
+  }
+  return Math.max(0.2, (mediaDuration - clip.in) / speed);
 }
 
 /** Ép speed về khoảng [SPEED_MIN, SPEED_MAX]. */
