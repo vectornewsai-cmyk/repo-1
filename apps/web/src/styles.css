@@ -1025,6 +1025,61 @@ input[type="color"] {
   color: var(--muted);
 }
 
+/* R1-042: Export presets */
+.preset-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 2px;
+  font-size: 13px;
+}
+.preset-row label {
+  color: var(--muted);
+  white-space: nowrap;
+}
+.preset-row select,
+.preset-grid select {
+  background: var(--bg0);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  max-width: 100%;
+}
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 8px 0 2px;
+}
+.preset-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.preset-grid input {
+  background: var(--bg0);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.preset-desc {
+  font-size: 12px;
+}
+.preset-desc code {
+  color: var(--accent, #4f8cff);
+}
+.mp4-export .issues {
+  margin: 8px 0 0;
+}
+
 .issues {
   margin: 10px 18px 0;
   padding: 10px 14px 10px 30px;
