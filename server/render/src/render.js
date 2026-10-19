@@ -34,6 +34,10 @@ const {
   resolveFontFile,
   resolveSrc,
 } = require("./validate");
+// Phase 3 modules: transitions (13 hiệu ứng xfade), speed/reverse, keyframes.
+const { buildXfadeFilter } = require("./transitions");
+const { buildSpeedFilter } = require("./speed");
+const { buildTextExprs, buildOverlayExprs } = require("./keyframes");
 
 // ---------------------------------------------------------------------------
 // Tiện ích
@@ -201,15 +205,19 @@ function buildFilterGraph(spec, ctx) {
   for (const track of spec.tracks.filter((t) => t.kind === "video")) {
     const clips = [...track.clips].sort((a, b) => a.start - b.start);
 
-    // Bước 1: chuẩn hoá từng clip — cắt đúng [in, in+duration), scale/pad về đúng WxH,
-    // fps hằng số (xfade bắt buộc CFR), format yuv420p (tương thích H.264).
+    // Bước 1: chuẩn hoá từng clip — cắt đúng [in, in+duration*speed), speed/reverse,
+    // scale/pad về đúng WxH, fps hằng số (xfade bắt buộc CFR), format yuv420p.
     const segs = clips.map((clip) => {
       const idx = mediaIndex.get(absOf(clip.src));
       const v = lbl("cv");
+      // Speed/reverse: chèn sau trim + setpts=PTS-STARTPTS (ngữ nghĩa: đoạn nguồn
+      // [in, out) bị đảo (nếu reverse) rồi đổi tốc độ; duration hiệu dụng = (out-in)/speed).
+      const spd = buildSpeedFilter(clip.speed ?? 1, clip.reverse ?? false);
+      const speedChain = spd.video ? `,${spd.video}` : "";
       fc.push(
         `[${idx}:v]` +
-        `trim=start=${num(clip.in)}:end=${num(clip.in + clip.duration)},` +
-        `setpts=PTS-STARTPTS,` +
+        `trim=start=${num(clip.in)}:end=${num(clip.in + clip.duration * (clip.speed ?? 1))},` +
+        `setpts=PTS-STARTPTS${speedChain},` +
         // Giữ tỉ lệ gốc, letterbox bằng nền đen cho vừa khít khung hình output.
         `scale=${W}:${H}:force_original_aspect_ratio=decrease,` +
         `pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=black,` +
@@ -223,10 +231,11 @@ function buildFilterGraph(spec, ctx) {
       };
     });
 
-    // Bước 2: gộp các cặp clip kề nhau có transition fade bằng xfade.
+    // Bước 2: gộp các cặp clip kề nhau có transition bằng xfade.
     // Ngữ nghĩa (đã ghi trong README): T giây cuối của clip A crossfade với T giây đầu
     // của clip B — nội dung B bắt đầu sớm hơn T giây so với start đã khai báo.
     // xfade([A],[B], duration=T, offset=dA-T) cho ra stream dài dA+dB-T.
+    // Phase 3: dùng buildXfadeFilter để hỗ trợ 13 loại transition (fade, wipe, slide, fx...).
     const trackUnits = [];
     let cur = null;
     for (const seg of segs) {
@@ -238,7 +247,7 @@ function buildFilterGraph(spec, ctx) {
           const x = lbl("x");
           fc.push(
             `${cur.label}${seg.label}` +
-            `xfade=transition=fade:duration=${num(T)}:offset=${num(cur.duration - T)}` +
+            buildXfadeFilter(tr.type, T, cur.duration - T) +
             `[${x}]`
           );
           cur = {
@@ -246,6 +255,7 @@ function buildFilterGraph(spec, ctx) {
             start: cur.start,
             duration: cur.duration + seg.duration - T,
             declaredEnd: seg.declaredEnd,
+            merged: true, // đánh dấu đã qua xfade (keyframes video không áp dụng cho unit đã merge)
           };
           merged = true;
         }
@@ -264,30 +274,45 @@ function buildFilterGraph(spec, ctx) {
   //   setpts=PTS+S/TB  → dời timestamp của unit tới vị trí S trên timeline,
   //   overlay=eof_action=pass → trước S hiện nền, trong [S, S+dur) hiện unit, sau đó trả về nền.
   // overlay đồng bộ frame theo timestamp nên KHÔNG dùng enable=... (tránh lệch frame).
+  // Phase 3: keyframes x/y cho video clip (chỉ unit đơn, không qua xfade) — biểu thức
+  // overlay theo thời gian timeline t; thời gian cục bộ = (t - start).
   fc.push(`color=c=black:s=${W}x${H}:r=${fps}:d=${num(D)},format=yuv420p[base0]`);
   let base = "[base0]";
   for (const u of units) {
     const p = lbl("pl"), b = lbl("base");
     fc.push(`${u.label}setpts=PTS+${num(u.start)}/TB[${p}]`);
-    fc.push(`${base}[${p}]overlay=0:0:eof_action=pass[${b}]`);
+    let ox = "0", oy = "0";
+    if (!u.merged && u.clip.animations && (u.clip.animations.x || u.clip.animations.y)) {
+      const oe = buildOverlayExprs(u.clip.animations, u.start);
+      ox = oe.x; oy = oe.y;
+    }
+    fc.push(`${base}[${p}]overlay=${ox}:${oy}:eof_action=pass[${b}]`);
     base = `[${b}]`;
   }
 
-  // ===== TEXT: drawtext cho animation "none" / "fadeUp" =====
+  // ===== TEXT: drawtext cho animation "none" / "fadeUp" / keyframes =====
+  // Phase 3: nếu clip có `animations`, dùng buildTextExprs (keyframes x/y/opacity)
+  // và keyframes được ưu tiên hơn `fadeUp`.
   let vcur = base;
   for (const track of spec.tracks.filter((t) => t.kind === "text")) {
     for (const clip of track.clips) {
       if (clip.style.animation === "typewriter") continue; // xử lý riêng bằng ASS bên dưới
       const st = clip.style;
       const S = clip.start, E = clip.start + clip.duration;
-      const fx = `(w-text_w)*${st.x ?? 0.5}`;
-      let fy = `(h-text_h)*${st.y ?? 0.5}`;
-      let extra = "";
-      if (st.animation === "fadeUp") {
-        // Hiện dần + trồi lên 30px trong 0.6 giây đầu — alpha và y đều là biểu thức theo t.
-        const k = `min(1,(t-${num(S)})/0.6)`;
-        fy = `(h-text_h)*${st.y ?? 0.5}-30*(1-${k})`;
-        extra += `:alpha='${k}'`;
+      let fx, fy, extra = "";
+      if (clip.animations && (clip.animations.x || clip.animations.y || clip.animations.opacity)) {
+        const te = buildTextExprs(clip.animations, st, S);
+        fx = te.x; fy = te.y;
+        extra += `:alpha='${te.alpha}'`;
+      } else {
+        fx = `(w-text_w)*${st.x ?? 0.5}`;
+        fy = `(h-text_h)*${st.y ?? 0.5}`;
+        if (st.animation === "fadeUp") {
+          // Hiện dần + trồi lên 30px trong 0.6 giây đầu — alpha và y đều là biểu thức theo t.
+          const k = `min(1,(t-${num(S)})/0.6)`;
+          fy = `(h-text_h)*${st.y ?? 0.5}-30*(1-${k})`;
+          extra += `:alpha='${k}'`;
+        }
       }
       if (st.backgroundColor) {
         extra += `:box=1:boxcolor=${st.backgroundColor}:boxborderw=${Math.max(4, Math.round(st.fontSize / 4))}`;
@@ -320,17 +345,20 @@ function buildFilterGraph(spec, ctx) {
   }
 
   // ===== AUDIO =====
-  // Mỗi clip: cắt [in, in+duration) → chuẩn 48kHz stereo → volume → afade →
-  // adelay tới vị trí start trên timeline. Rồi trộn tất cả bằng amix.
+  // Mỗi clip: cắt [in, in+duration*speed) → speed/reverse → chuẩn 48kHz stereo
+  // → volume → afade → adelay tới vị trí start trên timeline. Rồi trộn bằng amix.
   const aseg = [];
   for (const track of spec.tracks.filter((t) => t.kind === "audio")) {
     for (const clip of track.clips) {
       const idx = mediaIndex.get(absOf(clip.src));
       const a = lbl("ac");
+      const spd = clip.speed ?? 1;
+      const spdF = buildSpeedFilter(spd, clip.reverse ?? false);
+      const speedChain = spdF.audio ? `,${spdF.audio}` : "";
       let chain =
         `[${idx}:a]` +
-        `atrim=start=${num(clip.in)}:end=${num(clip.in + clip.duration)},` +
-        `asetpts=PTS-STARTPTS,aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo`;
+        `atrim=start=${num(clip.in)}:end=${num(clip.in + clip.duration * spd)},` +
+        `asetpts=PTS-STARTPTS${speedChain},aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo`;
       const vol = clip.volume ?? 1;
       if (Math.abs(vol - 1) > EPS) chain += `,volume=${num(vol)}`;
       if ((clip.fadeIn ?? 0) > EPS) chain += `,afade=t=in:st=0:d=${num(clip.fadeIn)}`;
