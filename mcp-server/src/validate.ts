@@ -219,6 +219,12 @@ export function validateClipForTrack(v: unknown, trackKind: TrackKind): Clip {
       return validateAudioClip(v);
     case "text":
       return validateTextClip(v);
+    case "sticker":
+    case "image":
+      // TODO: implement validateStickerClip / validateImageClip
+      throw new ValidationError(`track kind "${trackKind}" chưa được hỗ trợ trong MCP validator`);
+    default:
+      throw new ValidationError(`track kind không hỗ trợ: "${trackKind}"`);
   }
 }
 
