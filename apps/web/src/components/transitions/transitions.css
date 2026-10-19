@@ -94,6 +94,105 @@
 .tr-card[data-type="radial"] .tr-new { animation: tr-radial 2.4s linear infinite; }
 .tr-card[data-type="none"] .tr-new { display: none; }
 
+/* ---- R1-073 (Batch G): animation minh họa 15 transition mới ---- */
+/* smooth*: giống slide nhưng có mờ biên */
+.tr-card[data-type="smoothleft"] .tr-new { animation: tr-smoothleft 2.4s ease-in-out infinite; }
+.tr-card[data-type="smoothright"] .tr-new { animation: tr-smoothright 2.4s ease-in-out infinite; }
+.tr-card[data-type="smoothup"] .tr-new { animation: tr-smoothup 2.4s ease-in-out infinite; }
+.tr-card[data-type="smoothdown"] .tr-new { animation: tr-smoothdown 2.4s ease-in-out infinite; }
+/* slide dọc dùng strip dọc */
+.tr-strip-vertical {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 200%;
+  display: flex;
+  flex-direction: column;
+}
+.tr-strip-vertical .tr-old,
+.tr-strip-vertical .tr-new {
+  position: relative;
+  width: 100%;
+  height: 50%;
+  flex: none;
+}
+.tr-card[data-type="slideup"] .tr-strip-vertical { animation: tr-slideup 2.4s ease-in-out infinite; }
+.tr-card[data-type="slidedown"] .tr-strip-vertical { animation: tr-slidedown 2.4s ease-in-out infinite; }
+/* fx */
+.tr-card[data-type="circleclose"] .tr-new { animation: tr-circleclose 2.4s ease-in-out infinite; }
+.tr-card[data-type="circlecrop"] .tr-old { animation: tr-circlecrop 2.4s ease-in-out infinite; }
+.tr-card[data-type="rectcrop"] .tr-old { animation: tr-rectcrop 2.4s ease-in-out infinite; }
+.tr-card[data-type="pixelize"] .tr-new { animation: tr-pixelize 2.4s steps(6) infinite; }
+.tr-card[data-type="hblur"] .tr-new { animation: tr-hblur 2.4s ease-in-out infinite; }
+.tr-card[data-type="distance"] .tr-new { animation: tr-distance 2.4s ease-in-out infinite; }
+/* wipe */
+.tr-card[data-type="vertopen"] .tr-new { animation: tr-vertopen 2.4s ease-in-out infinite; }
+.tr-card[data-type="horzopen"] .tr-new { animation: tr-horzopen 2.4s ease-in-out infinite; }
+.tr-card[data-type="diagtl"] .tr-new { animation: tr-diagtl 2.4s ease-in-out infinite; }
+
+@keyframes tr-smoothleft {
+  0%, 20% { transform: translateX(100%); filter: blur(4px); opacity: 0.6; }
+  79%, 100% { transform: translateX(0); filter: blur(0); opacity: 1; }
+}
+@keyframes tr-smoothright {
+  0%, 20% { transform: translateX(-100%); filter: blur(4px); opacity: 0.6; }
+  79%, 100% { transform: translateX(0); filter: blur(0); opacity: 1; }
+}
+@keyframes tr-smoothup {
+  0%, 20% { transform: translateY(100%); filter: blur(4px); opacity: 0.6; }
+  79%, 100% { transform: translateY(0); filter: blur(0); opacity: 1; }
+}
+@keyframes tr-smoothdown {
+  0%, 20% { transform: translateY(-100%); filter: blur(4px); opacity: 0.6; }
+  79%, 100% { transform: translateY(0); filter: blur(0); opacity: 1; }
+}
+@keyframes tr-slideup {
+  0%, 20% { transform: translateY(0); }
+  79%, 100% { transform: translateY(-50%); }
+}
+@keyframes tr-slidedown {
+  0%, 20% { transform: translateY(-50%); }
+  79%, 100% { transform: translateY(0); }
+}
+@keyframes tr-circleclose {
+  0%, 20% { clip-path: circle(75% at 50% 50%); }
+  79%, 100% { clip-path: circle(0% at 50% 50%); }
+}
+@keyframes tr-circlecrop {
+  0%, 20% { clip-path: circle(75% at 50% 50%); opacity: 1; }
+  79%, 100% { clip-path: circle(0% at 50% 50%); opacity: 0; }
+}
+@keyframes tr-rectcrop {
+  0%, 20% { clip-path: inset(0 0 0 0); opacity: 1; }
+  79%, 100% { clip-path: inset(40% 40% 40% 40%); opacity: 0; }
+}
+@keyframes tr-pixelize {
+  0%, 20% { opacity: 0; }
+  79%, 100% { opacity: 1; }
+}
+.tr-card[data-type="pixelize"] .tr-preview { image-rendering: pixelated; }
+@keyframes tr-hblur {
+  0%, 20% { opacity: 0; filter: blur(8px); transform: scaleX(1.15); }
+  79%, 100% { opacity: 1; filter: blur(0); transform: scaleX(1); }
+}
+@keyframes tr-distance {
+  0%, 20% { opacity: 0; transform: scale(0.6); }
+  79%, 100% { opacity: 1; transform: scale(1); }
+}
+@keyframes tr-vertopen {
+  0%, 20% { clip-path: inset(50% 0 50% 0); }
+  79%, 100% { clip-path: inset(0 0 0 0); }
+}
+@keyframes tr-horzopen {
+  0%, 20% { clip-path: inset(0 50% 0 50%); }
+  79%, 100% { clip-path: inset(0 0 0 0); }
+}
+@keyframes tr-diagtl {
+  0%, 20% { clip-path: polygon(0 0, 0 0, 0 0); }
+  79%, 100% { clip-path: polygon(0 0, 150% 0, 0 150%); }
+}
+
 .tr-strip {
   position: absolute;
   top: 0;

@@ -30,6 +30,22 @@ export const TRANSITION_OPTIONS: TransitionOption[] = [
   { type: "dissolve", label: "Hòa tan", description: "Cảnh cũ tan dần, cảnh mới hiện dần" },
   { type: "circleopen", label: "Vòng tròn mở", description: "Cảnh mới nở ra từ vòng tròn giữa" },
   { type: "radial", label: "Xoay tỏa tròn", description: "Cảnh mới xoay tỏa như cánh quạt" },
+  // R1-073 (Batch G): 15 transition mới
+  { type: "smoothleft", label: "Trượt mượt ←", description: "Trượt mượt từ phải sang, mờ biên" },
+  { type: "smoothright", label: "Trượt mượt →", description: "Trượt mượt từ trái sang, mờ biên" },
+  { type: "smoothup", label: "Trượt mượt ↑", description: "Trượt mượt từ dưới lên, mờ biên" },
+  { type: "smoothdown", label: "Trượt mượt ↓", description: "Trượt mượt từ trên xuống, mờ biên" },
+  { type: "slideup", label: "Trượt lên", description: "Hai cảnh trượt dọc lên trên" },
+  { type: "slidedown", label: "Trượt xuống", description: "Hai cảnh trượt dọc xuống dưới" },
+  { type: "circleclose", label: "Vòng tròn khép", description: "Vòng tròn khép từ ngoài vào" },
+  { type: "circlecrop", label: "Cắt vòng tròn", description: "Cảnh cũ co thành vòng tròn" },
+  { type: "rectcrop", label: "Cắt chữ nhật", description: "Cảnh cũ co thành chữ nhật" },
+  { type: "pixelize", label: "Điểm ảnh hóa", description: "Vỡ thành ô pixel rồi chuyển" },
+  { type: "hblur", label: "Mờ ngang", description: "Mờ nhòe ngang rồi chuyển cảnh" },
+  { type: "distance", label: "Khoảng cách", description: "Cảnh mới zoom tiến lại gần" },
+  { type: "vertopen", label: "Mở dọc", description: "Mở ra từ giữa theo chiều dọc" },
+  { type: "horzopen", label: "Mở ngang", description: "Mở ra từ giữa theo chiều ngang" },
+  { type: "diagtl", label: "Chéo ↖", description: "Quét chéo từ góc trái-trên" },
 ];
 
 export interface TransitionPanelProps {
@@ -42,11 +58,16 @@ export interface TransitionPanelProps {
 }
 
 function Preview({ type }: { type: string }) {
-  const isSlide = type === "slideleft" || type === "slideright";
+  const isSlide =
+    type === "slideleft" ||
+    type === "slideright" ||
+    type === "slideup" ||
+    type === "slidedown";
+  const isVerticalSlide = type === "slideup" || type === "slidedown";
   return (
     <div className="tr-preview" aria-hidden>
       {isSlide ? (
-        <div className="tr-strip">
+        <div className={isVerticalSlide ? "tr-strip-vertical" : "tr-strip"}>
           <div className="tr-layer tr-old" />
           <div className="tr-layer tr-new" />
         </div>
@@ -61,7 +82,7 @@ function Preview({ type }: { type: string }) {
 }
 
 export function TransitionPanel({ value, duration, onChange }: TransitionPanelProps) {
-  const dur = Math.min(2, Math.max(0.2, duration || 0.5));
+  const dur = Math.min(2, Math.max(0.1, duration || 0.5));
   return (
     <div className="tr-panel">
       <div className="tr-panel-head">
@@ -90,7 +111,7 @@ export function TransitionPanel({ value, duration, onChange }: TransitionPanelPr
         <span>Thời gian</span>
         <input
           type="range"
-          min={0.2}
+          min={0.1}
           max={2}
           step={0.1}
           value={dur}
