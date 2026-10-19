@@ -51,14 +51,51 @@ export const STICKER_DEFAULTS = {
   rotation: 0,
 } as const;
 
+/** Nhóm phân loại sticker trong thư viện. */
+export type StickerCategory = "emoji" | "shapes" | "arrows" | "badges" | "bubbles";
+
+export const STICKER_CATEGORIES: { id: StickerCategory; label: string }[] = [
+  { id: "emoji", label: "Emoji" },
+  { id: "shapes", label: "Hình khối" },
+  { id: "arrows", label: "Mũi tên" },
+  { id: "badges", label: "Huy hiệu" },
+  { id: "bubbles", label: "Bong bóng" },
+];
+
 /** Thư viện sticker mẫu đi kèm dự án (tự vẽ 100%, xem assets/stickers/SOURCES.md). */
 export const STICKER_LIBRARY = [
-  { file: "star.png", label: "Ngôi sao" },
-  { file: "heart.png", label: "Trái tim" },
-  { file: "arrow-right.png", label: "Mũi tên" },
-  { file: "lightning.png", label: "Tia sét" },
-  { file: "badge.png", label: "Huy hiệu" },
-  { file: "bubble.png", label: "Bong bóng chat" },
+  // --- batch 1 (2026-10-19) ---
+  { file: "star.png", label: "Ngôi sao", category: "shapes" as StickerCategory },
+  { file: "heart.png", label: "Trái tim", category: "emoji" as StickerCategory },
+  { file: "arrow-right.png", label: "Mũi tên", category: "arrows" as StickerCategory },
+  { file: "lightning.png", label: "Tia sét", category: "emoji" as StickerCategory },
+  { file: "badge.png", label: "Huy hiệu", category: "badges" as StickerCategory },
+  { file: "bubble.png", label: "Bong bóng chat", category: "bubbles" as StickerCategory },
+  // --- batch 2 (2026-10-19, R1-078) ---
+  { file: "smile.png", label: "Mặt cười", category: "emoji" as StickerCategory },
+  { file: "wink.png", label: "Mắt nháy", category: "emoji" as StickerCategory },
+  { file: "laugh.png", label: "Cười lớn", category: "emoji" as StickerCategory },
+  { file: "cool.png", label: "Ngầu", category: "emoji" as StickerCategory },
+  { file: "party.png", label: "Tiệc tùng", category: "emoji" as StickerCategory },
+  { file: "fire.png", label: "Ngọn lửa", category: "emoji" as StickerCategory },
+  { file: "shape-circle.png", label: "Hình tròn", category: "shapes" as StickerCategory },
+  { file: "shape-square.png", label: "Hình vuông", category: "shapes" as StickerCategory },
+  { file: "shape-triangle.png", label: "Tam giác", category: "shapes" as StickerCategory },
+  { file: "shape-diamond.png", label: "Hình thoi", category: "shapes" as StickerCategory },
+  { file: "shape-plus.png", label: "Dấu cộng", category: "shapes" as StickerCategory },
+  { file: "arrow-up.png", label: "Mũi tên lên", category: "arrows" as StickerCategory },
+  { file: "arrow-down.png", label: "Mũi tên xuống", category: "arrows" as StickerCategory },
+  { file: "arrow-left.png", label: "Mũi tên trái", category: "arrows" as StickerCategory },
+  { file: "arrow-curved.png", label: "Mũi tên cong", category: "arrows" as StickerCategory },
+  { file: "arrow-double.png", label: "Mũi tên đôi", category: "arrows" as StickerCategory },
+  { file: "badge-check.png", label: "Tích xanh", category: "badges" as StickerCategory },
+  { file: "badge-cross.png", label: "Dấu X đỏ", category: "badges" as StickerCategory },
+  { file: "badge-medal.png", label: "Huy chương", category: "badges" as StickerCategory },
+  { file: "badge-crown.png", label: "Vương miện", category: "badges" as StickerCategory },
+  { file: "bubble-speech.png", label: "Bóng thoại", category: "bubbles" as StickerCategory },
+  { file: "bubble-thought.png", label: "Bóng suy nghĩ", category: "bubbles" as StickerCategory },
+  { file: "bubble-shout.png", label: "Bóng hét", category: "bubbles" as StickerCategory },
+  { file: "bubble-tag.png", label: "Thẻ giá", category: "bubbles" as StickerCategory },
 ] as const;
 
 export type StickerLibraryFile = (typeof STICKER_LIBRARY)[number]["file"];
