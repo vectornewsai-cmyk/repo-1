@@ -1,0 +1,111 @@
+/* TextAnimPicker — dark theme VCut Studio, preview CSS minh họa cho từng hiệu ứng. */
+
+.textfx-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.textfx-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.textfx-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px 8px;
+  background: #1e1e2e;
+  border: 1px solid #2e2e42;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #cdd6f4;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.textfx-card:hover {
+  border-color: #8b7cf6;
+  background: #252538;
+}
+
+.textfx-card.selected {
+  border-color: #8b7cf6;
+  background: #2a2547;
+  box-shadow: 0 0 0 1px #8b7cf6;
+}
+
+.textfx-demo {
+  display: inline-block;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  height: 24px;
+  line-height: 24px;
+  overflow: hidden;
+}
+
+.textfx-label {
+  font-size: 11px;
+  color: #a6adc8;
+  text-align: center;
+}
+
+.textfx-card.selected .textfx-label {
+  color: #cdd6f4;
+}
+
+.textfx-note {
+  font-size: 11px;
+  color: #6c7086;
+  margin: 0;
+}
+
+/* ---- Preview animations (minh họa, chạy loop) ---- */
+.tx-prev-none { animation: none; }
+
+.tx-prev-fadeUp { animation: tx-fadeUp 1.6s ease-in-out infinite; }
+@keyframes tx-fadeUp {
+  0% { opacity: 0; transform: translateY(10px); }
+  40%, 100% { opacity: 1; transform: translateY(0); }
+}
+
+.tx-prev-fadeIn { animation: tx-fadeIn 1.6s ease-in-out infinite; }
+@keyframes tx-fadeIn {
+  0% { opacity: 0; }
+  40%, 100% { opacity: 1; }
+}
+
+.tx-prev-slideInLeft { animation: tx-slideInLeft 1.6s ease-out infinite; }
+@keyframes tx-slideInLeft {
+  0% { opacity: 0; transform: translateX(-28px); }
+  40%, 100% { opacity: 1; transform: translateX(0); }
+}
+
+.tx-prev-slideInRight { animation: tx-slideInRight 1.6s ease-out infinite; }
+@keyframes tx-slideInRight {
+  0% { opacity: 0; transform: translateX(28px); }
+  40%, 100% { opacity: 1; transform: translateX(0); }
+}
+
+.tx-prev-slideUp { animation: tx-slideUp 1.6s ease-out infinite; }
+@keyframes tx-slideUp {
+  0% { opacity: 0; transform: translateY(24px); }
+  40%, 100% { opacity: 1; transform: translateY(0); }
+}
+
+.tx-prev-bounce { animation: tx-bounce 1.6s ease-in-out infinite; }
+@keyframes tx-bounce {
+  0% { opacity: 0; transform: translateY(-22px); }
+  30% { opacity: 1; transform: translateY(0); }
+  45% { transform: translateY(-7px); }
+  60%, 100% { transform: translateY(0); }
+}
+
+.tx-prev-typewriter { animation: tx-typewriter 2.2s steps(1) infinite; overflow: hidden; white-space: nowrap; }
+@keyframes tx-typewriter {
+  0% { width: 0; }
+  60%, 100% { width: 100%; }
+}
