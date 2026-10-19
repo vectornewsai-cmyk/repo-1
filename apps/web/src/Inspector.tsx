@@ -11,6 +11,8 @@ import { SpeedPanel } from "./components/speed";
 import { KeyframePanel } from "./components/keyframes";
 import { ChromaPanel } from "./components/chroma";
 import { TextAnimPicker } from "./components/textfx";
+import { LutPicker } from "./components/lut";
+import { EffectPanel } from "./components/effects";
 
 function NumField({
   label,
@@ -200,6 +202,13 @@ export function Inspector() {
           <SpeedPanel />
           <div className="panel-head" style={{ marginTop: 12 }}>🎭 Xoá phông</div>
           <ChromaPanel />
+          <div className="panel-head" style={{ marginTop: 12 }}>🎨 Bộ lọc màu</div>
+          <LutPicker
+            value={clip.filter?.lut}
+            onChange={(lut) => patch({ filter: lut ? { lut } : undefined })}
+          />
+          <div className="panel-head" style={{ marginTop: 12 }}>✨ Hiệu ứng</div>
+          <EffectPanel />
           <div className="panel-head" style={{ marginTop: 12 }}>🎞️ Keyframe animation</div>
           <KeyframePanel />
         </>
@@ -229,10 +238,10 @@ export function Inspector() {
         <NumField label="Bắt đầu (s)" value={clip.start} onChange={(v) => patch({ start: Math.max(0, v) })} />
         <NumField label="Độ dài (s)" value={clip.duration} onChange={(v) => patch({ duration: Math.max(0.2, v) })} />
       </div>
-      {clip.kind !== "text" && (
+      {clip.kind !== "text" && clip.kind !== "sticker" && (
         <div className="field-row">
-          <NumField label="In (s)" value={clip.in} onChange={(v) => patch({ in: Math.max(0, v), out: Math.max(0, v) + clip.duration })} />
-          <NumField label="Out (s)" value={clip.out} onChange={(v) => patch({ out: Math.max(clip.in + 0.2, v), duration: Math.max(0.2, v - clip.in) })} />
+          <NumField label="In (s)" value={(clip as { in: number }).in} onChange={(v) => patch({ in: Math.max(0, v), out: Math.max(0, v) + clip.duration } as Partial<typeof clip>)} />
+          <NumField label="Out (s)" value={(clip as { out: number }).out} onChange={(v) => { const cin = (clip as { in: number }).in; patch({ out: Math.max(cin + 0.2, v), duration: Math.max(0.2, v - cin) } as Partial<typeof clip>); }} />
         </div>
       )}
       <button className="danger-btn" onClick={() => st.deleteSelection()}>

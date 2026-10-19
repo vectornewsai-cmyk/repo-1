@@ -109,11 +109,11 @@ export function KeyframePanel() {
       </div>
     );
   }
-  if (clip.kind === "audio") {
+  if (clip.kind === "audio" || clip.kind === "sticker") {
     return (
       <div className="kf-panel">
         <div className="panel-head">🔑 Keyframe</div>
-        <p className="tips">Keyframe chưa hỗ trợ cho clip âm thanh (chỉ video và chữ).</p>
+        <p className="tips">Keyframe chưa hỗ trợ cho {clip.kind === "audio" ? "clip âm thanh" : "sticker"} (chỉ video và chữ).</p>
       </div>
     );
   }
