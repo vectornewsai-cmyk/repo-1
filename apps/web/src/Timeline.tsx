@@ -2,13 +2,15 @@
  * Timeline đa track: ruler + playhead kéo được, clip kéo-thả di chuyển,
  * trim 2 mép, snap, zoom, thêm/xoá track, kéo-thả media từ thư viện.
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Clip, Track, TrackKind } from "@repo-1/video-spec";
+import { stickerUrl } from "@repo-1/video-spec";
 import { useStore } from "./store";
 import { clamp, fmtTime, tickStep } from "./lib";
+import { getVideoThumbnail } from "./lib/thumbnails";
 import { ClipWaveform } from "./components/waveform";
 
-const LANE_H: Record<TrackKind, number> = { video: 58, audio: 46, text: 46, sticker: 46 };
+const LANE_H: Record<TrackKind, number> = { video: 58, audio: 46, text: 46, sticker: 46, image: 58 };
 
 type DragState =
   | { mode: "scrub" }
@@ -50,6 +52,84 @@ function snapTime(
 function clipLabel(clip: Clip): string {
   if (clip.kind === "text") return clip.text || "(trống)";
   return clip.src;
+}
+
+/** src sticker có thể là tên file thư viện ("star.png") hoặc blob/URL upload. */
+function stickerThumbSrc(src: string): string {
+  if (/^(blob:|https?:|data:)/.test(src) || src.startsWith("/")) return src;
+  return stickerUrl(src);
+}
+
+/**
+ * Thumbnail cho clip trên timeline (R1-035).
+ * - video/image: dùng `thumbnail` có sẵn của media (sync); nếu chưa có thì
+ *   lazy-capture frame giữa clip qua IntersectionObserver.
+ * - sticker: PNG gốc, hiển thị đơn (không lặp).
+ * - Lỗi → null → fallback block màu như cũ.
+ */
+function ClipThumb({ clip }: { clip: Clip }) {
+  const visual = clip.kind === "video" || clip.kind === "image" || clip.kind === "sticker";
+  const src = clip.kind === "sticker" ? clip.src
+    : clip.kind === "video" || clip.kind === "image" ? clip.src : "";
+  const clipIn = clip.kind === "video" ? clip.in : 0;
+  const [thumb, setThumb] = useState<string | null>(null);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!visual || !src) return;
+    let cancelled = false;
+
+    // 1. Đường nhanh (sync, miễn phí): media đã có thumbnail lúc import.
+    if (clip.kind === "sticker") {
+      setThumb(stickerThumbSrc(src));
+      return;
+    }
+    const item = useStore.getState().media.find((m) => m.name === src);
+    if (item?.thumbnail) {
+      setThumb(item.thumbnail);
+      return;
+    }
+    // 2. Lazy capture cho video chưa có thumbnail (chỉ khi lọt vào vùng nhìn).
+    if (clip.kind !== "video") return;
+    const doCapture = () => {
+      const it = useStore.getState().media.find((m) => m.name === src);
+      if (!it) return; // media đã bị xoá → fallback block màu
+      const at = clipIn + clip.duration / 2;
+      getVideoThumbnail(it.url, at).then((url) => {
+        if (!cancelled && url) setThumb(url);
+      });
+    };
+    const el = boxRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      doCapture();
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          io.disconnect();
+          doCapture();
+        }
+      },
+      { rootMargin: "120px" },
+    );
+    io.observe(el);
+    return () => {
+      cancelled = true;
+      io.disconnect();
+    };
+  }, [visual, src, clip.kind, clipIn, clip.duration, clip.id]);
+
+  if (!visual) return null;
+  const sticker = clip.kind === "sticker";
+  return (
+    <div
+      ref={boxRef}
+      className={`clip-thumb${sticker ? " clip-thumb-sticker" : ""}`}
+      aria-hidden="true"
+      style={thumb ? { backgroundImage: `url("${thumb}")` } : undefined}
+    />
+  );
 }
 
 function Ruler({ width, pxPerSec }: { width: number; pxPerSec: number }) {
@@ -122,6 +202,7 @@ function ClipView({
           onPointerDownEdge(e, clip, "left");
         }}
       />
+      <ClipThumb clip={clip} />
       <div className="clip-label">{clipLabel(clip)}</div>
       {clip.kind === "audio" && (
         <ClipWaveform clip={clip} pxPerSec={pxPerSec} />
@@ -142,7 +223,7 @@ function ClipView({
   );
 }
 
-const TRACK_ICON: Record<TrackKind, string> = { video: "🎬", audio: "🎵", text: "🔤", sticker: "🌟" };
+const TRACK_ICON: Record<TrackKind, string> = { video: "🎬", audio: "🎵", text: "🔤", sticker: "🌟", image: "🖼️" };
 
 export function Timeline() {
   const spec = useStore((s) => s.spec);
