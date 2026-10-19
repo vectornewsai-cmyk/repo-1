@@ -13,6 +13,9 @@
 const { execFileSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const { isSupportedTransition } = require("./transitions");
+const { SPEED_MIN, SPEED_MAX } = require("./speed");
+const { validateAnimations } = require("./keyframes");
 
 const SPEC_VERSION = "0.1.0";
 /** Sai số khi so sánh số thực (giây). */
@@ -135,21 +138,24 @@ function validateSpec(spec) {
       }
     }
 
-    // Ghép cặp transition: transitionOut fade của clip A cần clip B kề ngay sau trên cùng track.
+    // Ghép cặp transition: transitionOut của clip A cần clip B kề ngay sau trên cùng track.
+    // Hỗ trợ mọi transition type (trừ "none").
     if (track.kind === "video") {
       const sorted = [...clips].sort((a, b) => a.start - b.start);
       for (let i = 0; i < sorted.length; i++) {
         const clip = sorted[i];
-        const outT = clip.transitionOut && clip.transitionOut.type === "fade" ? clip.transitionOut.duration : 0;
+        const outTr = clip.transitionOut && clip.transitionOut.type !== "none" ? clip.transitionOut : null;
         const next = sorted[i + 1] || null;
-        const inT = next && next.transitionIn && next.transitionIn.type === "fade" ? next.transitionIn.duration : 0;
+        const inTr = next && next.transitionIn && next.transitionIn.type !== "none" ? next.transitionIn : null;
+        const outT = outTr ? outTr.duration : 0;
+        const inT = inTr ? inTr.duration : 0;
 
         if (outT > EPS || inT > EPS) {
           // Phải có clip kề sau, bắt đầu đúng lúc clip hiện tại kết thúc.
           if (!next || Math.abs(next.start - (clip.start + clip.duration)) > EPS) {
             err(`${tw}.clips "${clip.id}"`,
-              `có transition fade nhưng không có clip kề ngay sau trên cùng track ` +
-              `(clip kết thúc ở ${clip.start + clip.duration}s) — transition fade yêu cầu 2 clip nối tiếp nhau`);
+              `có transition (${outTr ? outTr.type : inTr.type}) nhưng không có clip kề ngay sau trên cùng track ` +
+              `(clip kết thúc ở ${clip.start + clip.duration}s) — transition yêu cầu 2 clip nối tiếp nhau`);
             continue;
           }
           if (outT > EPS && inT > EPS && Math.abs(outT - inT) > EPS) {
@@ -159,14 +165,15 @@ function validateSpec(spec) {
             continue;
           }
           const T = Math.max(outT, inT);
+          const Ttype = outT >= inT ? outTr.type : inTr.type;
           if (T > clip.duration + EPS)
             err(`${tw}.clips "${clip.id}"`, `transition (${T}s) dài hơn cả clip (${clip.duration}s)`);
           if (T > next.duration + EPS)
             err(`${tw}.clips "${next.id}"`, `transition (${T}s) dài hơn cả clip (${next.duration}s)`);
           // Ghi nhận cặp transition — chỉ dùng khi spec hợp lệ (ok === true),
           // nên dù có lỗi ở trên thì entry này cũng không bao giờ được render.
-          transitions.push({ trackId: track.id, from: clip.id, to: next.id, duration: T });
-        } else if (clip.transitionIn && clip.transitionIn.type === "fade" && i === 0) {
+          transitions.push({ trackId: track.id, from: clip.id, to: next.id, duration: T, type: Ttype });
+        } else if (clip.transitionIn && clip.transitionIn.type !== "none" && i === 0) {
           warn(`${tw}.clips "${clip.id}"`, "có transitionIn nhưng là clip đầu track — transition bị bỏ qua");
         }
       }
@@ -211,10 +218,20 @@ function validateClip(track, clip, where, err, warn) {
       err(where, `in phải là số >= 0, nhận được: ${clip.in}`);
     if (!isFiniteNumber(clip.out) || !(clip.out > clip.in))
       err(where, `out phải > in, nhận được: in=${clip.in}, out=${clip.out}`);
+    // Speed: duration hiệu dụng = (out - in) / speed
+    const spd = clip.speed === undefined ? 1 : clip.speed;
+    if (clip.speed !== undefined) {
+      if (!isFiniteNumber(clip.speed) || clip.speed < SPEED_MIN || clip.speed > SPEED_MAX)
+        err(where, `speed phải trong khoảng ${SPEED_MIN}–${SPEED_MAX}, nhận được: ${clip.speed}`);
+      if (typeof clip.reverse !== "undefined" && typeof clip.reverse !== "boolean")
+        err(where, `reverse phải là boolean, nhận được: ${JSON.stringify(clip.reverse)}`);
+    }
     if (isFiniteNumber(clip.duration) && isFiniteNumber(clip.in) && isFiniteNumber(clip.out) &&
-        clip.duration > clip.out - clip.in + EPS)
-      err(where, `duration (${clip.duration}s) vượt quá đoạn nguồn [in=${clip.in}, out=${clip.out}] ` +
-        `(${(clip.out - clip.in).toFixed(3)}s) — không đủ frame để phát`);
+        isFiniteNumber(spd) && spd > 0 &&
+        clip.duration > (clip.out - clip.in) / spd + EPS)
+      err(where, `duration (${clip.duration}s) vượt quá đoạn nguồn hiệu dụng ` +
+        `[in=${clip.in}, out=${clip.out}] / speed=${spd} ` +
+        `(${((clip.out - clip.in) / spd).toFixed(3)}s) — không đủ frame để phát`);
   }
 
   if (track.kind === "video") {
@@ -222,11 +239,11 @@ function validateClip(track, clip, where, err, warn) {
       const tr = clip[key];
       if (tr === undefined || tr === null) continue;
       if (typeof tr !== "object") { err(where, `${key} phải là object`); continue; }
-      if (!["fade", "none"].includes(tr.type))
-        err(where, `${key}.type phải là "fade" | "none", nhận được: ${JSON.stringify(tr.type)}`);
+      if (!isSupportedTransition(tr.type))
+        err(where, `${key}.type không hỗ trợ: ${JSON.stringify(tr.type)}`);
       if (!isFiniteNumber(tr.duration) || tr.duration < 0)
         err(where, `${key}.duration phải là số >= 0, nhận được: ${tr.duration}`);
-      if (tr.type === "fade" && tr.duration > clip.duration + EPS)
+      if (tr.type !== "none" && tr.duration > clip.duration + EPS)
         err(where, `${key}.duration (${tr.duration}s) dài hơn duration của clip (${clip.duration}s)`);
     }
     if (clip.opacity !== undefined) {
@@ -235,6 +252,14 @@ function validateClip(track, clip, where, err, warn) {
       else if (clip.opacity < 1 - EPS)
         err(where, `opacity=${clip.opacity} chưa được hỗ trợ ở Phase 1 ` +
           `(render worker hiện tại chỉ render được opacity = 1)`);
+    }
+    // Keyframe animations (chỉ x/y/opacity được render; scale/rotation lưu nhưng bỏ qua)
+    if (clip.animations !== undefined) {
+      for (const m of validateAnimations(clip.animations, clip.duration))
+        err(where, m);
+      if (clip.animations.scale || clip.animations.rotation)
+        warn(where, "keyframes scale/rotation hiện chỉ lưu trong spec, render worker chưa áp dụng " +
+          "(xem KEYFRAMES_LIMITS.md)");
     }
   }
 
@@ -279,6 +304,13 @@ function validateClip(track, clip, where, err, warn) {
     if (!["none", "fadeUp", "typewriter"].includes(st.animation))
       err(where, `style.animation phải là "none" | "fadeUp" | "typewriter", ` +
         `nhận được: ${JSON.stringify(st.animation)}`);
+    // Keyframe animations cho text (x/y/opacity được render; scale/rotation lưu nhưng bỏ qua)
+    if (clip.animations !== undefined) {
+      for (const m of validateAnimations(clip.animations, clip.duration))
+        err(where, m);
+      if (clip.animations.scale || clip.animations.rotation)
+        warn(where, "keyframes scale/rotation hiện chỉ lưu trong spec, render worker chưa áp dụng");
+    }
   }
 }
 
