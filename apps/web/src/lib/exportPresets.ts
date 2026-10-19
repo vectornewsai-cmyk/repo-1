@@ -86,6 +86,39 @@ export const EXPORT_PRESETS: ExportPreset[] = [
     audioBitrateKbps: 192,
   },
   {
+    id: "tiktok",
+    label: "TikTok / Reels 9:16",
+    description: "1080×1920 dọc @30fps — khổ chuẩn TikTok, Reels, Shorts",
+    width: 1080,
+    height: 1920,
+    fps: 30,
+    crf: 20,
+    x264Preset: "medium",
+    audioBitrateKbps: 160,
+  },
+  {
+    id: "youtube",
+    label: "YouTube 1080p",
+    description: "1920×1080 @30fps — bitrate cao hơn, hợp upload YouTube",
+    width: 1920,
+    height: 1080,
+    fps: 30,
+    crf: 18,
+    x264Preset: "medium",
+    audioBitrateKbps: 192,
+  },
+  {
+    id: "ig-square",
+    label: "Instagram vuông 1:1",
+    description: "1080×1080 @30fps — khổ vuông cho feed Instagram",
+    width: 1080,
+    height: 1080,
+    fps: 30,
+    crf: 21,
+    x264Preset: "medium",
+    audioBitrateKbps: 128,
+  },
+  {
     id: "custom",
     label: "Tùy chỉnh…",
     description: "Tự chỉnh độ phân giải, fps và chất lượng nén",
@@ -153,4 +186,51 @@ export function presetSummary(p: ExportPreset): string {
   return (
     `${p.width}×${p.height} @${p.fps}fps · CRF ${p.crf} · ${p.x264Preset} · audio ${p.audioBitrateKbps}k`
   );
+}
+
+// ---------------------------------------------------------------------------
+// R1-064 (Batch F): ước tính dung lượng file xuất.
+// ---------------------------------------------------------------------------
+
+/**
+ * Ước tính video bitrate (kbps) theo công thức heuristic:
+ *
+ *   bpppf = 0.1 × 2^((23 − crf) / 6)      (bits / pixel / frame)
+ *   videoKbps = width × height × fps × bpppf / 1000
+ *
+ * Cơ sở: với x264, tăng ~6 điểm CRF thì bitrate giảm còn một nửa (ngược lại).
+ * 0.1 bpppf ở CRF 23 là mức điển hình cho video quay thường (live action).
+ * Đây là ƯỚC TÍNH: video tĩnh (slide) có thể nhỏ hơn 2–5 lần, video nhiễu/
+ * phức tạp (mưa, cỏ cây, pháo hoa) có thể lớn hơn 2–3 lần.
+ * x264Preset không được tính (chỉ ảnh hưởng tốc độ encode, không đổi nhiều
+ * dung lượng ở cùng CRF).
+ */
+export function estimateVideoBitrateKbps(p: ExportPreset): number {
+  const bpppf = 0.1 * Math.pow(2, (23 - p.crf) / 6);
+  return (p.width * p.height * p.fps * bpppf) / 1000;
+}
+
+/**
+ * Ước tính dung lượng file MP4 (bytes) = (videoKbps + audioKbps) × duration.
+ * Nhân thêm 1.02 cho overhead container MP4 (~2%).
+ * Trả về số nguyên. Xem estimateVideoBitrateKbps về độ chính xác.
+ */
+export function estimateSize(p: ExportPreset, durationSec: number): number {
+  if (!(durationSec > 0)) return 0;
+  const totalKbps = estimateVideoBitrateKbps(p) + p.audioBitrateKbps;
+  return Math.round((totalKbps * 1000 * durationSec) / 8 * 1.02);
+}
+
+/** Định dạng bytes → "1.2 GB" / "67.2 MB" / "845 KB". */
+export function formatBytes(bytes: number): string {
+  if (!(bytes >= 0)) return "—";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+/** Nhãn 1 dòng cho UI: "≈ 67.2 MB · ước tính (không chính xác)". */
+export function sizeEstimateLabel(p: ExportPreset, durationSec: number): string {
+  return `≈ ${formatBytes(estimateSize(p, durationSec))} · ước tính, file thật có thể chênh lệch`;
 }
