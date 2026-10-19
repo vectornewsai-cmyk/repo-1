@@ -252,7 +252,9 @@ function buildFilterGraph(spec, ctx) {
   // Mỗi "unit" là một stream video hoàn chỉnh, sẽ được đặt lên timeline ở bước sau.
   const units = [];
 
-  for (const track of spec.tracks.filter((t) => t.kind === "video")) {
+  // R1-054: track video bị hidden → bỏ qua (không render hình);
+  // track video bị muted → vẫn render hình nhưng bỏ audio kế thừa (xử lý ở phần AUDIO).
+  for (const track of spec.tracks.filter((t) => t.kind === "video" && !t.hidden)) {
     const clips = [...track.clips].sort((a, b) => a.start - b.start);
 
     // Bước 1: chuẩn hoá từng clip — cắt đúng [in, in+duration*speed), speed/reverse,
@@ -364,7 +366,8 @@ function buildFilterGraph(spec, ctx) {
   // P0-03: mỗi image clip được loop thành stream đúng duration (buildImageChain)
   // rồi đặt lên timeline bằng setpts + overlay — giống hệt pattern video unit.
   // Thứ tự composite: video → image → sticker → text.
-  for (const track of spec.tracks.filter((t) => t.kind === "image")) {
+  // R1-054: track image bị hidden → bỏ qua.
+  for (const track of spec.tracks.filter((t) => t.kind === "image" && !t.hidden)) {
     const clips = [...track.clips].sort((a, b) => a.start - b.start);
     for (const clip of clips) {
       const idx = mediaIndex.get(absOf(clip.src));
@@ -381,7 +384,8 @@ function buildFilterGraph(spec, ctx) {
   // Phase 3c: mỗi sticker clip được load, scale/rotate/opacity rồi overlay tại (x,y).
   let vcur_sticker = base;
   const stickerClips = [];
-  for (const track of spec.tracks.filter((t) => t.kind === "sticker"))
+  // R1-054: track sticker bị hidden → bỏ qua.
+  for (const track of spec.tracks.filter((t) => t.kind === "sticker" && !t.hidden))
     for (const clip of track.clips) stickerClips.push(clip);
   if (stickerClips.length > 0) {
     // Register sticker PNG files as inputs (cần absOf + mediaIndex — dùng register pattern)
@@ -405,7 +409,8 @@ function buildFilterGraph(spec, ctx) {
   // và keyframes được ưu tiên hơn `fadeUp`.
   // Phase 3b: các animation mới (fadeIn, slideInLeft, ...) dùng buildTextAnimExpr.
   let vcur = base;
-  for (const track of spec.tracks.filter((t) => t.kind === "text")) {
+  // R1-054: track text bị hidden → bỏ qua (cả drawtext lẫn typewriter).
+  for (const track of spec.tracks.filter((t) => t.kind === "text" && !t.hidden)) {
     for (const clip of track.clips) {
       if (clip.style.animation === "typewriter") continue; // xử lý riêng bằng ASS bên dưới
       const st = clip.style;
@@ -448,7 +453,7 @@ function buildFilterGraph(spec, ctx) {
 
   // ===== TEXT: typewriter qua file ASS + filter subtitles (libass) =====
   const twClips = [];
-  for (const track of spec.tracks.filter((t) => t.kind === "text"))
+  for (const track of spec.tracks.filter((t) => t.kind === "text" && !t.hidden))
     for (const clip of track.clips)
       if (clip.style.animation === "typewriter") twClips.push(clip);
   let assFile = null;
@@ -487,13 +492,15 @@ function buildFilterGraph(spec, ctx) {
     fc.push(chain);
     aseg.push(`[${a}]`);
   };
-  for (const track of spec.tracks.filter((t) => t.kind === "audio")) {
+  // R1-054: track audio bị muted → bỏ qua toàn bộ (câm).
+  for (const track of spec.tracks.filter((t) => t.kind === "audio" && !t.muted)) {
     for (const clip of track.clips) {
       const idx = mediaIndex.get(absOf(clip.src));
       buildAudioChain(`[${idx}:a]`, clip, "ac");
     }
   }
   // Audio inherit từ video clip (R1-015).
+  // R1-054: track video bị muted → bỏ qua audio kế thừa (vẫn render hình).
   // FIX: chỉ inherit khi file thật sự có audio stream (kiểm tra qua mediaProbes
   // từ validateMedia). Nếu không, bỏ qua lặng lẽ — validator đã warn.
   const hasAudioStream = (abs) => {
@@ -502,7 +509,8 @@ function buildFilterGraph(spec, ctx) {
     if (!probe || !probe.streams) return false;
     return probe.streams.some((s) => s.codec_type === "audio");
   };
-  for (const track of spec.tracks.filter((t) => t.kind === "video")) {
+  // R1-054: track video bị muted → bỏ qua audio kế thừa (vẫn render hình ở trên).
+  for (const track of spec.tracks.filter((t) => t.kind === "video" && !t.muted)) {
     for (const clip of track.clips) {
       const mode = clip.sourceAudioMode ?? "inherit";
       if (mode === "mute") continue;
@@ -593,8 +601,9 @@ function main() {
   }
 
   // 4. Resolve font cho các text clip dùng drawtext (fail fast trước khi render)
+  // R1-054: bỏ qua text track bị hidden (không render nên không cần font).
   const fontFiles = new Map();
-  for (const track of spec.tracks.filter((t) => t.kind === "text")) {
+  for (const track of spec.tracks.filter((t) => t.kind === "text" && !t.hidden)) {
     for (const clip of track.clips) {
       if (clip.style.animation === "typewriter") continue; // libass tự resolve qua fontconfig
       const f = resolveFontFile(clip.style.fontFamily, clip.style);
