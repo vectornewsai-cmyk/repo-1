@@ -34,6 +34,17 @@ const CSS_APPROX: Record<LutId, string> = {
   "cartcut-mono-neutral": "grayscale(1) contrast(1.05)",
   "cartcut-faded-seventies": "sepia(0.5) contrast(0.9) brightness(1.08) saturate(0.8)",
   "cartcut-super-eight": "sepia(0.65) contrast(1.1) saturate(1.2)",
+  // vcut-*: xấp xỉ cảm giác màu của file .cube tự tạo
+  "vcut-cinematic": "contrast(1.2) saturate(1.15) sepia(0.25)",
+  "vcut-vintage-fade": "sepia(0.4) contrast(0.85) brightness(1.1) saturate(0.85)",
+  "vcut-noir-contrast": "grayscale(1) contrast(1.5)",
+  "vcut-cyberpunk": "saturate(1.5) contrast(1.15) hue-rotate(-20deg)",
+  "vcut-pastel-dream": "saturate(0.7) brightness(1.1) contrast(0.9)",
+  "vcut-sunset-glow": "sepia(0.5) saturate(1.4) brightness(1.05)",
+  "vcut-arctic": "saturate(0.9) brightness(1.05) hue-rotate(15deg)",
+  "vcut-faded-film": "sepia(0.3) contrast(0.8) brightness(1.05) saturate(0.8)",
+  "vcut-moody-forest": "saturate(0.95) contrast(1.15) brightness(0.9) hue-rotate(-10deg)",
+  "vcut-warm-bloom": "sepia(0.3) saturate(1.15) brightness(1.08)",
 };
 
 function Swatch({ lutId }: { lutId: LutId }) {
