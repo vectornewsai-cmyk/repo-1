@@ -18,6 +18,10 @@ import type {
 } from "@repo-1/video-spec";
 import { projectDuration, SPEC_VERSION } from "@repo-1/video-spec";
 import {
+  snapToFrame,
+  snapToFrameFloor,
+} from "@repo-1/video-spec";
+import {
   isSpeedable,
   maxTrimLeft,
   maxTrimRightDuration,
@@ -30,16 +34,35 @@ import { fileToMediaItem } from "./media";
 import { buildSampleProject } from "./sample";
 import { clamp, uid } from "./lib";
 import { findMissingAssets, relinkAsset, type MissingAsset } from "./lib/relink";
+import { CommandStack, type SpecCommand } from "./lib/commands";
+import {
+  isTrackLocked,
+  toggleTrackFlag as flipTrackFlag,
+  type TrackFlag,
+} from "./lib/trackFlags";
+import { rippleDelete, rippleTrimRight } from "./lib/ripple";
+import {
+  dedupeSelections,
+  deleteClips,
+  moveClipsBy,
+  primarySelection,
+  toggleSelection,
+  type MoveItem,
+  type Selection,
+} from "./lib/multiselect";
 
-export interface Selection {
-  trackId: string;
-  clipId: string;
-}
+export type { MoveItem, Selection } from "./lib/multiselect";
 
 const IMAGE_CLIP_DEFAULT = 3; // ảnh thêm vào timeline dài mặc định 3s
 
 let trackSeq = 0;
 let sampleLoading = false;
+
+/**
+ * Command stack cho undo/redo (R1-050, R1-051). Module-level (không nằm trong
+ * React state) vì chỉ depth/label cần reactive — xem syncHistory().
+ */
+const history = new CommandStack();
 function nextTrackId(kind: TrackKind): string {
   trackSeq += 1;
   return `${kind[0]}${trackSeq}_${uid("t").slice(-4)}`;
@@ -57,6 +80,20 @@ function sortClips(track: Track): Track {
  */
 function patchOne(c: Clip, patch: Partial<Clip>): Clip {
   return { ...c, ...patch } as Clip;
+}
+
+/** Nhãn tiếng Việt cho field clip thường chỉnh trong Inspector (dùng cho undo label). */
+function patchLabel(key: keyof Clip): string {
+  const map: Record<string, string> = {
+    opacity: "độ trong suốt",
+    text: "nội dung chữ",
+    volume: "âm lượng",
+    speed: "tốc độ",
+    start: "vị trí",
+    duration: "độ dài",
+    src: "nguồn media",
+  };
+  return map[key as string] ?? "thuộc tính";
 }
 
 function withTrack(spec: VideoSpec, trackId: string, fn: (t: Track) => Track): VideoSpec {
@@ -94,30 +131,52 @@ interface EditorState {
   playhead: number;
   playing: boolean;
   pxPerSec: number;
-  selection: Selection | null;
+  selection: Selection[];
   ready: boolean;
 
   setPlayhead: (t: number) => void;
   togglePlay: () => void;
   stopPlayback: () => void;
   setZoom: (px: number) => void;
+  /** Chọn 1 clip (thay thế selection hiện tại). Giữ chữ ký cũ để không vỡ caller. */
   select: (sel: Selection | null) => void;
+  /** Thay thế toàn bộ selection bằng danh sách (loại trùng). */
+  selectMany: (sels: Selection[]) => void;
+  /** Thêm vào selection nếu chưa có (Shift+click). */
+  addToSelection: (sel: Selection) => void;
+  /** Bật/tắt một mục (Ctrl/Cmd+click). */
+  toggleSelect: (sel: Selection) => void;
+  /** Xoá toàn bộ selection. */
+  clearSelection: () => void;
   setProjectName: (name: string) => void;
 
   importFiles: (files: File[]) => Promise<void>;
   addTrack: (kind: TrackKind) => string;
   removeTrack: (trackId: string) => void;
+  /** Bật/tắt mute/lock/hide trên track (R1-054). */
+  toggleTrackFlag: (trackId: string, flag: TrackFlag) => void;
   addMediaToTrack: (mediaId: string, trackId: string, at: number) => void;
   addMediaAtPlayhead: (mediaId: string) => void;
   addTextClip: (trackId?: string) => void;
 
   moveClip: (trackId: string, clipId: string, newStart: number) => void;
+  /**
+   * Di chuyển nhiều clip cùng một delta (giữ offset tương đối).
+   * `items` mang origStart lúc bắt đầu kéo — tránh trôi số khi kéo liên tục.
+   */
+  moveSelectionBy: (items: MoveItem[], dxSec: number) => void;
   /** deltaSec: dịch chuyển mép (dương = kéo sang phải). */
   trimClip: (trackId: string, clipId: string, edge: "left" | "right", deltaSec: number) => void;
   patchClip: (trackId: string, clipId: string, patch: Partial<Clip>) => void;
   patchTextStyle: (trackId: string, clipId: string, style: Partial<TextStyle>) => void;
   splitAtPlayhead: () => boolean;
   deleteSelection: () => void;
+  /** Ripple delete 1 clip cụ thể (không phụ thuộc selection). Trả về false nếu không tìm thấy. */
+  deleteClipRipple: (trackId: string, clipId: string) => boolean;
+
+  /** Ripple mode (R1-054): bật = delete/trim mép phải tự dồn gap. */
+  rippleMode: boolean;
+  toggleRipple: () => void;
 
   loadSample: () => Promise<void>;
   /** Tạo project trống (xoá media phiên hiện tại — blob URL không bền vững). */
@@ -138,6 +197,24 @@ interface EditorState {
   relinkMedia: (oldSrc: string, file: File) => Promise<{ ok: boolean; message: string }>;
   /** Đóng panel relink (bỏ qua các asset còn thiếu). */
   dismissRelink: () => void;
+
+  // ---- Undo/redo (R1-050, R1-051): command pattern ----
+  /** Số bước có thể hoàn tác / làm lại (reactive — dùng cho disabled nút). */
+  undoDepth: number;
+  redoDepth: number;
+  /** Nhãn thao tác gần nhất (hiển thị trong tooltip). */
+  undoLabel: string | null;
+  redoLabel: string | null;
+  /** Hoàn tác / làm lại 1 bước (khôi phục cả selection). */
+  undo: () => void;
+  redo: () => void;
+  /**
+   * Bắt đầu gộp các mutation tiếp theo thành 1 entry duy nhất.
+   * Dùng khi kéo-thả trên timeline (chỉ push khi thả chuột).
+   */
+  beginHistoryGroup: (label: string) => void;
+  /** Kết thúc gộp. Không push nếu không có thay đổi thực sự. */
+  endHistoryGroup: () => void;
 }
 
 const emptySpec = (): VideoSpec => ({
@@ -146,19 +223,58 @@ const emptySpec = (): VideoSpec => ({
   tracks: [],
 });
 
-export const useStore = create<EditorState>()((set, get) => ({
+export const useStore = create<EditorState>()((set, get) => {
+  /** Đồng bộ depth/label của history vào React state (để nút undo/redo reactive). */
+  const syncHistory = () => ({
+    undoDepth: history.undoDepth,
+    redoDepth: history.redoDepth,
+    undoLabel: history.undoLabel,
+    redoLabel: history.redoLabel,
+  });
+
+  /**
+   * Thực thi 1 command lên spec hiện tại (R1-050).
+   * nextSelection: undefined = giữ nguyên selection.
+   */
+  const execCommand = (cmd: SpecCommand, nextSelection?: Selection[]): void => {
+    const st = get();
+    const after = history.execute(cmd, st.spec, st.selection, nextSelection ?? st.selection);
+    if (after === null) return; // apply() không thay đổi gì
+    set({
+      spec: after,
+      ...(nextSelection !== undefined ? { selection: nextSelection } : {}),
+      ...syncHistory(),
+    });
+  };
+
+  /** Xoá history khi đổi project (không undo xuyên qua project khác). */
+  const clearHistory = (): void => {
+    history.clear();
+    set(syncHistory());
+  };
+
+  return {
   spec: emptySpec(),
   media: [],
   playhead: 0,
   playing: false,
   pxPerSec: 60,
-  selection: null,
+  selection: [],
   ready: false,
   missingAssets: null,
+  rippleMode: false,
+  undoDepth: 0,
+  redoDepth: 0,
+  undoLabel: null,
+  redoLabel: null,
+
+  toggleRipple: () => set((s) => ({ rippleMode: !s.rippleMode })),
 
   setPlayhead: (t) => {
     const d = get().duration();
-    set({ playhead: clamp(t, 0, Math.max(d, 0.001)) });
+    const fps = get().spec.meta.fps;
+    // R1-055: playhead luôn snap về frame gần nhất
+    set({ playhead: snapToFrame(clamp(t, 0, Math.max(d, 0.001)), fps) });
   },
 
   togglePlay: () => {
@@ -174,7 +290,17 @@ export const useStore = create<EditorState>()((set, get) => ({
 
   setZoom: (px) => set({ pxPerSec: clamp(px, 8, 240) }),
 
-  select: (sel) => set({ selection: sel }),
+  select: (sel) => set({ selection: sel ? [sel] : [] }),
+
+  selectMany: (sels) => set({ selection: dedupeSelections(sels) }),
+
+  addToSelection: (sel) =>
+    set((s) => ({ selection: dedupeSelections([...s.selection, sel]) })),
+
+  toggleSelect: (sel) =>
+    set((s) => ({ selection: toggleSelection(s.selection, sel) })),
+
+  clearSelection: () => set({ selection: [] }),
 
   setProjectName: (name) =>
     set((s) => ({ spec: { ...s.spec, meta: { ...s.spec.meta, name } } })),
@@ -213,28 +339,50 @@ export const useStore = create<EditorState>()((set, get) => ({
     const labels: Record<TrackKind, string> = { video: "Video", audio: "Âm thanh", text: "Chữ", sticker: "Sticker", image: "Ảnh" };
     const count = get().spec.tracks.filter((t) => t.kind === kind).length + 1;
     const track: Track = { id, kind, label: `${labels[kind]} ${count}`, clips: [] };
-    set((s) => ({ spec: { ...s.spec, tracks: [...s.spec.tracks, track] } }));
+    execCommand({
+      label: `Thêm track ${labels[kind]}`,
+      apply: (spec) => ({ ...spec, tracks: [...spec.tracks, track] }),
+    });
     return id;
   },
 
-  removeTrack: (trackId) =>
-    set((s) => {
-      const spec = { ...s.spec, tracks: s.spec.tracks.filter((t) => t.id !== trackId) };
-      const selection =
-        s.selection?.trackId === trackId ? null : s.selection;
-      return { spec, selection };
-    }),
+  removeTrack: (trackId) => {
+    const st = get();
+    const track = st.spec.tracks.find((t) => t.id === trackId);
+    if (!track) return;
+    execCommand(
+      {
+        label: `Xoá track ${track.label ?? track.kind}`,
+        apply: (spec) => ({ ...spec, tracks: spec.tracks.filter((t) => t.id !== trackId) }),
+      },
+      st.selection.filter((x) => x.trackId !== trackId),
+    );
+  },
+
+  toggleTrackFlag: (trackId, flag) => {
+    const track = get().spec.tracks.find((t) => t.id === trackId);
+    if (!track) return;
+    execCommand({
+      label: "Đổi trạng thái track",
+      apply: (spec) => ({
+        ...spec,
+        tracks: spec.tracks.map((t) => (t.id === trackId ? flipTrackFlag(t, flag) : t)),
+      }),
+    });
+  },
 
   addMediaToTrack: (mediaId, trackId, at) => {
     const { spec, media } = get();
     const item = media.find((m) => m.id === mediaId);
     const track = spec.tracks.find((t) => t.id === trackId);
     if (!item || !track) return;
+    if (isTrackLocked(track)) return; // R1-054: track khóa không nhận thêm clip
     if (!mediaKindForTrack(track.kind).includes(item.kind)) return;
 
     const dur =
       item.kind === "image" ? IMAGE_CLIP_DEFAULT : Math.max(0.5, item.duration || 5);
-    const start = Math.max(0, at);
+    // R1-055: vị trí thả clip snap về frame
+    const start = snapToFrame(Math.max(0, at), get().spec.meta.fps);
     if (overlaps(track, "", start, dur)) return; // không cho chồng clip
 
     let clip: Clip;
@@ -251,10 +399,13 @@ export const useStore = create<EditorState>()((set, get) => ({
       };
       clip = vc;
     }
-    set((s) => ({
-      spec: withTrack(s.spec, trackId, (t) => ({ ...t, clips: [...t.clips, clip] })),
-      selection: { trackId, clipId: clip.id },
-    }));
+    execCommand(
+      {
+        label: `Thêm ${item.kind === "audio" ? "âm thanh" : "clip"} "${item.name}"`,
+        apply: (s) => withTrack(s, trackId, (t) => ({ ...t, clips: [...t.clips, clip] })),
+      },
+      [{ trackId, clipId: clip.id }],
+    );
   },
 
   addMediaAtPlayhead: (mediaId) => {
@@ -262,59 +413,100 @@ export const useStore = create<EditorState>()((set, get) => ({
     const item = get().media.find((m) => m.id === mediaId);
     if (!item) return;
     const wantKind: TrackKind = item.kind === "audio" ? "audio" : "video";
-    let track = spec.tracks.find(
-      (t) => t.kind === wantKind && !overlaps(t, "", playhead, item.kind === "image" ? IMAGE_CLIP_DEFAULT : Math.max(0.5, item.duration || 5)),
+    const dur = item.kind === "image" ? IMAGE_CLIP_DEFAULT : Math.max(0.5, item.duration || 5);
+    const track = spec.tracks.find(
+      (t) => t.kind === wantKind && !overlaps(t, "", playhead, dur),
     );
-    let trackId = track?.id;
-    if (!trackId) trackId = get().addTrack(wantKind);
-    get().addMediaToTrack(mediaId, trackId, playhead);
+    // Gộp tạo track (nếu cần) + thêm clip thành 1 bước undo duy nhất.
+    get().beginHistoryGroup("Thêm media vào timeline");
+    try {
+      let trackId = track?.id;
+      if (!trackId) trackId = get().addTrack(wantKind);
+      get().addMediaToTrack(mediaId, trackId, playhead);
+    } finally {
+      get().endHistoryGroup();
+    }
   },
 
   addTextClip: (trackId) => {
-    let tid = trackId;
-    if (!tid) {
-      const existing = get().spec.tracks.find((t) => t.kind === "text");
-      tid = existing ? existing.id : get().addTrack("text");
+    // Gộp tạo track (nếu cần) + thêm chữ thành 1 bước undo duy nhất.
+    get().beginHistoryGroup("Thêm chữ");
+    try {
+      let tid = trackId;
+      if (!tid) {
+        const existing = get().spec.tracks.find((t) => t.kind === "text");
+        tid = existing ? existing.id : get().addTrack("text");
+      }
+      // R1-054: không thêm chữ vào track khóa.
+      if (isTrackLocked(get().spec.tracks.find((t) => t.id === tid))) return;
+      const clip: TextClip = {
+        kind: "text",
+        id: uid("c"),
+        text: "Nhập chữ…",
+        start: get().playhead,
+        duration: 3,
+        style: {
+          fontFamily: "Inter, system-ui, sans-serif",
+          fontSize: 64,
+          color: "#ffffff",
+          bold: true,
+          x: 0.5,
+          y: 0.5,
+          animation: "fadeUp",
+        },
+      };
+      execCommand(
+        {
+          label: "Thêm chữ",
+          apply: (s) => withTrack(s, tid as string, (t) => ({ ...t, clips: [...t.clips, clip] })),
+        },
+        [{ trackId: tid as string, clipId: clip.id }],
+      );
+    } finally {
+      get().endHistoryGroup();
     }
-    const clip: TextClip = {
-      kind: "text",
-      id: uid("c"),
-      text: "Nhập chữ…",
-      start: get().playhead,
-      duration: 3,
-      style: {
-        fontFamily: "Inter, system-ui, sans-serif",
-        fontSize: 64,
-        color: "#ffffff",
-        bold: true,
-        x: 0.5,
-        y: 0.5,
-        animation: "fadeUp",
-      },
-    };
-    set((s) => ({
-      spec: withTrack(s.spec, tid as string, (t) => ({ ...t, clips: [...t.clips, clip] })),
-      selection: { trackId: tid as string, clipId: clip.id },
-    }));
   },
 
   moveClip: (trackId, clipId, newStart) => {
     const found = findClip(get().spec, trackId, clipId);
     if (!found) return;
-    const start = Math.max(0, newStart);
+    if (isTrackLocked(found.track)) return; // R1-054
+    // R1-055: vị trí di chuyển snap về frame gần nhất
+    const start = snapToFrame(Math.max(0, newStart), get().spec.meta.fps);
+    if (start === found.clip.start) return;
     if (overlaps(found.track, clipId, start, found.clip.duration)) return;
-    set((s) => ({
-      spec: withTrack(s.spec, trackId, (t) => ({
+    execCommand({
+      label: "Di chuyển clip",
+      // Gộp theo thời gian để phòng khi caller quên begin/endHistoryGroup.
+      mergeKey: `move:${trackId}:${clipId}`,
+      apply: (spec) => withTrack(spec, trackId, (t) => ({
         ...t,
         clips: t.clips.map((c) => (c.id === clipId ? { ...c, start } : c)),
       })),
-    }));
+    });
+  },
+
+  moveSelectionBy: (items, dxSec) => {
+    if (items.length === 0 || dxSec === 0) return;
+    const { spec } = get();
+    const fps = spec.meta.fps;
+    // R1-055: không di chuyển clip trên track khóa; R1-056: snap về frame
+    const allowed = items.filter(
+      (m) => !isTrackLocked(spec.tracks.find((t) => t.id === m.trackId)),
+    );
+    if (allowed.length === 0) return;
+    execCommand({
+      label: allowed.length > 1 ? `Di chuyển ${allowed.length} clip` : "Di chuyển clip",
+      mergeKey: `movesel:${allowed.map((m) => m.clipId).sort().join(",")}`,
+      apply: (s) => moveClipsBy(s, allowed, dxSec, (t) => snapToFrame(t, fps)),
+    });
   },
 
   trimClip: (trackId, clipId, edge, deltaSec) => {
     const { spec, media } = get();
     const found = findClip(spec, trackId, clipId);
     if (!found) return;
+    if (isTrackLocked(found.track)) return; // R1-054
     const { track, clip } = found;
 
     if (edge === "left") {
@@ -328,7 +520,8 @@ export const useStore = create<EditorState>()((set, get) => ({
       }
       const minStart = clip.start - maxShift;
       const maxStart = clip.start + clip.duration - 0.2;
-      const newStart = clamp(clip.start + deltaSec, minStart, maxStart);
+      // R1-055: mép trim snap về frame gần nhất
+      const newStart = snapToFrame(clamp(clip.start + deltaSec, minStart, maxStart), spec.meta.fps);
       const shift = newStart - clip.start;
       if (shift === 0) return;
       // R1-013: dùng trimLeftTo — đúng với mọi speed/reverse
@@ -336,11 +529,13 @@ export const useStore = create<EditorState>()((set, get) => ({
         noIn || !isSpeedable(clip)
           ? { start: newStart, duration: clip.duration - shift }
           : trimLeftTo(clip, newStart);
-      set((s) => ({
-        spec: withTrack(s.spec, trackId, (t) => ({
+      execCommand({
+        label: "Cắt clip",
+        mergeKey: `trim:${trackId}:${clipId}`,
+        apply: (spec) => withTrack(spec, trackId, (t) => ({
           ...t, clips: t.clips.map((c) => (c.id === clipId ? patchOne(c, patch) : c)),
         })),
-      }));
+      });
     } else {
       let newDur = Math.max(0.2, clip.duration + deltaSec);
       if ((clip.kind === "video" || clip.kind === "audio") && isSpeedable(clip)) {
@@ -349,49 +544,101 @@ export const useStore = create<EditorState>()((set, get) => ({
         // R1-014: giới hạn duration theo speed/reverse — (mediaDur - in)/speed, không phải mediaDur - in
         newDur = Math.min(newDur, maxTrimRightDuration(clip, mediaDur));
       }
-      // không cho dài ra đè clip khác
-      const end = clip.start + newDur;
-      const blocked = track.clips.some(
-        (c) => c.id !== clipId && c.start >= clip.start && c.start < end,
-      );
-      if (blocked) return;
+      // R1-055: floor-snap để không bao giờ vượt giới hạn độ dài file nguồn
+      newDur = Math.max(0.2, snapToFrameFloor(newDur, spec.meta.fps));
+      const ripple = get().rippleMode;
+      if (!ripple) {
+        // không cho dài ra đè clip khác (ripple mode: clip sau tự dồn/đẩy nên không cần chặn)
+        const end = clip.start + newDur;
+        const blocked = track.clips.some(
+          (c) => c.id !== clipId && c.start >= clip.start && c.start < end,
+        );
+        if (blocked) return;
+      }
       // R1-013: dùng trimRightTo — đúng với mọi speed/reverse
       const patch: Partial<Clip> =
         clip.kind === "text" || clip.kind === "sticker" || clip.kind === "image" || !isSpeedable(clip)
           ? { duration: newDur }
           : trimRightTo(clip, newDur);
-      set((s) => ({
-        spec: withTrack(s.spec, trackId, (t) => ({
-          ...t, clips: t.clips.map((c) => (c.id === clipId ? patchOne(c, patch) : c)),
-        })),
-      }));
+      if (ripple) {
+        // R1-054: ripple trim — áp patch rồi dồn/đẩy các clip sau theo delta duration
+        execCommand({
+          label: "Cắt clip (ripple)",
+          mergeKey: `trim:${trackId}:${clipId}`,
+          apply: (spec) => {
+            const foundNow = findClip(spec, trackId, clipId);
+            if (!foundNow) return spec;
+            const r = rippleTrimRight(spec, trackId, clipId, patchOne(foundNow.clip, patch));
+            return r ? r.spec : spec;
+          },
+        });
+      } else {
+        execCommand({
+          label: "Cắt clip",
+          mergeKey: `trim:${trackId}:${clipId}`,
+          apply: (spec) => withTrack(spec, trackId, (t) => ({
+            ...t, clips: t.clips.map((c) => (c.id === clipId ? patchOne(c, patch) : c)),
+          })),
+        });
+      }
     }
   },
 
-  patchClip: (trackId, clipId, patch) =>
-    set((s) => ({
-      spec: withTrack(s.spec, trackId, (t) => ({
+  patchClip: (trackId, clipId, patch) => {
+    // R1-054: track khóa không cho sửa thuộc tính clip (kể cả Inspector).
+    const st = get();
+    const track = st.spec.tracks.find((t) => t.id === trackId);
+    if (isTrackLocked(track)) return;
+    const clip = track?.clips.find((c) => c.id === clipId);
+    if (!clip) return;
+    // Bỏ qua nếu không có field nào thực sự đổi (tránh entry rác khi slider đứng yên).
+    const keys = Object.keys(patch) as (keyof Clip)[];
+    const rec = clip as unknown as Record<string, unknown>;
+    const prec = patch as unknown as Record<string, unknown>;
+    if (!keys.some((k) => rec[k] !== prec[k])) return;
+    const label =
+      keys.length === 1 ? `Chỉnh ${patchLabel(keys[0])}` : "Chỉnh thuộc tính clip";
+    execCommand({
+      label,
+      // Gộp các lần kéo slider liên tiếp thành 1 entry.
+      mergeKey: `patch:${trackId}:${clipId}`,
+      apply: (spec) => withTrack(spec, trackId, (t) => ({
         ...t,
         clips: t.clips.map((c) => (c.id === clipId ? patchOne(c, patch) : c)),
       })),
-    })),
+    });
+  },
 
-  patchTextStyle: (trackId, clipId, style) =>
-    set((s) => ({
-      spec: withTrack(s.spec, trackId, (t) => ({
+  patchTextStyle: (trackId, clipId, style) => {
+    // R1-054: track khóa không cho kéo chữ trực tiếp trên preview.
+    const st = get();
+    const track = st.spec.tracks.find((t) => t.id === trackId);
+    if (isTrackLocked(track)) return;
+    const clip = track?.clips.find((c) => c.id === clipId);
+    if (!clip || clip.kind !== "text") return;
+    const keys = Object.keys(style) as (keyof TextStyle)[];
+    const rec = clip.style as unknown as Record<string, unknown>;
+    const srec = style as unknown as Record<string, unknown>;
+    if (!keys.some((k) => rec[k] !== srec[k])) return;
+    execCommand({
+      label: "Chỉnh chữ",
+      mergeKey: `textstyle:${trackId}:${clipId}`,
+      apply: (spec) => withTrack(spec, trackId, (t) => ({
         ...t,
         clips: t.clips.map((c) =>
           c.id === clipId && c.kind === "text" ? { ...c, style: { ...c.style, ...style } } : c,
         ),
       })),
-    })),
+    });
+  },
 
   splitAtPlayhead: () => {
     const { spec, playhead, selection } = get();
-    // ưu tiên clip đang chọn, nếu không thì clip trên cùng chứa playhead
+    // ưu tiên clip đang chọn (mục đầu tiên khi multi-select), nếu không thì clip trên cùng chứa playhead
     let target: { track: Track; clip: Clip } | null = null;
-    if (selection) {
-      const f = findClip(spec, selection.trackId, selection.clipId);
+    const primary = primarySelection(selection);
+    if (primary) {
+      const f = findClip(spec, primary.trackId, primary.clipId);
       if (f && playhead > f.clip.start + 0.05 && playhead < f.clip.start + f.clip.duration - 0.05) {
         target = f;
       }
@@ -409,6 +656,7 @@ export const useStore = create<EditorState>()((set, get) => ({
       }
     }
     if (!target) return false;
+    if (isTrackLocked(target.track)) return false; // R1-054: không tách clip trên track khóa
     const { track, clip } = target;
     const t = playhead;
     const leftDur = t - clip.start;
@@ -459,26 +707,68 @@ export const useStore = create<EditorState>()((set, get) => ({
       // video/audio đã xử lý ở hai nhánh trên.
       throw new Error(`splitClip: kind không hỗ trợ: ${(clip as Clip).kind}`);
     }
-    set((s) => ({
-      spec: withTrack(s.spec, track.id, (tr) => ({
-        ...tr,
-        clips: [...tr.clips.filter((c) => c.id !== clip.id), left, right],
-      })),
-      selection: { trackId: track.id, clipId: right.id },
-    }));
+    execCommand(
+      {
+        label: "Tách clip",
+        apply: (spec) => withTrack(spec, track.id, (tr) => ({
+          ...tr,
+          clips: [...tr.clips.filter((c) => c.id !== clip.id), left, right],
+        })),
+      },
+      [{ trackId: track.id, clipId: right.id }],
+    );
     return true;
   },
 
   deleteSelection: () => {
-    const { selection } = get();
-    if (!selection) return;
-    set((s) => ({
-      spec: withTrack(s.spec, selection.trackId, (t) => ({
-        ...t,
-        clips: t.clips.filter((c) => c.id !== selection.clipId),
-      })),
-      selection: null,
-    }));
+    const { selection, rippleMode, spec } = get();
+    if (selection.length === 0) return;
+    // R1-055 (track controls): không xóa clip trên track khóa.
+    const unlocked = selection.filter(
+      (s) => !isTrackLocked(spec.tracks.find((t) => t.id === s.trackId)),
+    );
+    if (unlocked.length === 0) return;
+    if (rippleMode) {
+      // R1-054: ripple delete từng clip — dồn các clip sau lên trước, không để lại gap.
+      execCommand({
+        label: unlocked.length > 1 ? `Xoá ${unlocked.length} clip (ripple)` : "Xoá clip (ripple)",
+        apply: (s) => {
+          let cur = s;
+          for (const x of unlocked) {
+            const r = rippleDelete(cur, x.trackId, x.clipId);
+            if (r) cur = r.spec;
+          }
+          return cur;
+        },
+      }, []);
+      return;
+    }
+    execCommand(
+      {
+        label: unlocked.length > 1 ? `Xoá ${unlocked.length} clip` : "Xoá clip",
+        apply: (s) => deleteClips(s, unlocked).spec,
+      },
+      [],
+    );
+  },
+
+  deleteClipRipple: (trackId, clipId) => {
+    // R1-054 (track controls): không xóa clip trên track khóa.
+    if (isTrackLocked(get().spec.tracks.find((t) => t.id === trackId))) return false;
+    const found = findClip(get().spec, trackId, clipId);
+    if (!found) return false;
+    const st = get();
+    execCommand(
+      {
+        label: "Xoá clip (ripple)",
+        apply: (s) => {
+          const r = rippleDelete(s, trackId, clipId);
+          return r ? r.spec : s;
+        },
+      },
+      st.selection.filter((x) => x.clipId !== clipId),
+    );
+    return true;
   },
 
   loadSample: async () => {
@@ -491,37 +781,38 @@ export const useStore = create<EditorState>()((set, get) => ({
       media,
       playhead: 0,
       playing: false,
-      selection: null,
+      selection: [],
       ready: true,
     });
+    clearHistory(); // đổi project -> không undo xuyên project
   },
 
-  newProject: () =>
-    set(() => {
-      trackSeq = 0;
-      return {
-        spec: emptySpec(),
-        media: [],
-        playhead: 0,
-        playing: false,
-        selection: null,
-        ready: true,
-      };
-    }),
+  newProject: () => {
+    trackSeq = 0;
+    set({
+      spec: emptySpec(),
+      media: [],
+      playhead: 0,
+      playing: false,
+      selection: [],
+      ready: true,
+    });
+    clearHistory();
+  },
 
-  replaceProject: (spec) =>
-    set(() => {
-      trackSeq = 100; // tránh trùng id khi thêm track mới sau khi mở file
-      return {
-        spec,
-        media: [],
-        playhead: 0,
-        playing: false,
-        selection: null,
-        ready: true,
-        missingAssets: null, // reset; caller gọi checkMissingMedia() sau
-      };
-    }),
+  replaceProject: (spec) => {
+    trackSeq = 100; // tránh trùng id khi thêm track mới sau khi mở file
+    set({
+      spec,
+      media: [],
+      playhead: 0,
+      playing: false,
+      selection: [],
+      ready: true,
+      missingAssets: null, // reset; caller gọi checkMissingMedia() sau
+    });
+    clearHistory();
+  },
 
   duration: () => projectDuration(get().spec),
 
@@ -568,13 +859,39 @@ export const useStore = create<EditorState>()((set, get) => ({
       return { ok: false, message: `Không còn clip nào dùng "${oldSrc}".` };
     }
     const rest = (missingAssets ?? []).filter((m) => m.src !== oldSrc);
+    // Ghi nhận đổi src clip vào history (undo được).
+    execCommand({ label: "Relink media", apply: () => next });
     set({
       media: [...media, item],
-      spec: next,
       missingAssets: rest.length > 0 ? rest : null, // hết thiếu → tự đóng panel
     });
     return { ok: true, message: `Đã relink ${updatedCount} clip → "${n}".` };
   },
 
   dismissRelink: () => set({ missingAssets: null }),
-}));
+
+  // ---- Undo/redo (R1-050, R1-051) ----
+  undo: () => {
+    const entry = history.undo();
+    if (!entry) return;
+    set({ spec: entry.before, selection: entry.selBefore, ...syncHistory() });
+  },
+
+  redo: () => {
+    const entry = history.redo();
+    if (!entry) return;
+    set({ spec: entry.after, selection: entry.selAfter, ...syncHistory() });
+  },
+
+  beginHistoryGroup: (label) => {
+    const st = get();
+    history.beginGroup(label, st.spec, st.selection);
+  },
+
+  endHistoryGroup: () => {
+    const st = get();
+    const entry = history.endGroup(st.spec, st.selection);
+    if (entry) set(syncHistory());
+  },
+  };
+});
