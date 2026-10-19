@@ -5,7 +5,7 @@
  */
 "use strict";
 
-const { computeClipGain, AudioEngine, GAIN_SMOOTHING_TC } = require("./out/apps/web/src/lib/audioEngine.js");
+const { computeClipGain, AudioEngine, GAIN_SMOOTHING_TC, toPreviewFx } = require("./out/apps/web/src/lib/audioEngine.js");
 
 let pass = 0;
 let fail = 0;
@@ -80,6 +80,31 @@ function makeFakeContext() {
           return { connect() {} };
         },
       };
+    },
+    createBiquadFilter() {
+      const node = {
+        type: "",
+        frequency: makeFakeParam(),
+        gain: makeFakeParam(),
+        connect() {
+          return node;
+        },
+      };
+      (ctx._biquads = ctx._biquads || []).push(node);
+      return node;
+    },
+    createDynamicsCompressor() {
+      const node = {
+        threshold: makeFakeParam(),
+        ratio: makeFakeParam(),
+        attack: makeFakeParam(),
+        release: makeFakeParam(),
+        connect() {
+          return node;
+        },
+      };
+      (ctx._comps = ctx._comps || []).push(node);
+      return node;
     },
     resume() {
       return Promise.resolve();
@@ -234,6 +259,63 @@ console.log("== AudioEngine (play 3s, fake context) ==");
 
   engine.dispose();
   ok(engine.isReady === false, "dispose() → isReady false");
+}
+
+// ---------------------------------------------------------------------------
+// 3b. R1-076: audio effects trong preview (bass/treble/compressor)
+// ---------------------------------------------------------------------------
+console.log("== audio effects preview (R1-076) ==");
+{
+  // toPreviewFx: rút gọn AudioEffects về subset preview hỗ trợ
+  ok(toPreviewFx(undefined) === undefined, "toPreviewFx(undefined) → undefined");
+  ok(toPreviewFx({}) === undefined, "toPreviewFx({}) → undefined (không có FX)");
+  ok(toPreviewFx({ noiseReduction: 0.8, reverb: 0.5 }) === undefined,
+    "toPreviewFx chỉ có noiseReduction/reverb → undefined (render-only)");
+  const fx1 = toPreviewFx({ bass: 6, treble: -3, noiseReduction: 0.5 });
+  ok(fx1 && fx1.bass === 6 && fx1.treble === -3 && fx1.noiseReduction === undefined,
+    "toPreviewFx giữ bass/treble, bỏ noiseReduction");
+  const fx2 = toPreviewFx({ compressor: { thresholdDb: -20, ratio: 4 } });
+  ok(fx2 && fx2.compressor && fx2.compressor.thresholdDb === -20,
+    "toPreviewFx giữ compressor");
+
+  const ctx = makeFakeContext();
+  const engine = new AudioEngine({ createContext: () => ctx });
+  ok(engine.ensure() === true, "ensure() OK cho test FX");
+
+  const el = makeFakeEl();
+  ctx.currentTime = 0;
+  engine.update([{ el, gain: 1, fx: { bass: 6, treble: -3 } }]);
+  const biquads = ctx._biquads || [];
+  ok(biquads.length === 2, "1 element → tạo 2 BiquadFilter (low + high)");
+  const low = biquads[0];
+  const high = biquads[1];
+  ok(low.type === "lowshelf" && low.frequency.value === 100,
+    "low = lowshelf 100Hz (khớp filter bass FFmpeg)");
+  ok(high.type === "highshelf" && high.frequency.value === 3000,
+    "high = highshelf 3000Hz (khớp filter treble FFmpeg)");
+  ok(approx(low.gain.last().v, 6), "bass +6dB → low.gain setTargetAtTime(6)");
+  ok(approx(high.gain.last().v, -3), "treble -3dB → high.gain setTargetAtTime(-3)");
+
+  // Compressor
+  ctx.currentTime = 1;
+  engine.update([{ el, gain: 1, fx: { compressor: { thresholdDb: -20, ratio: 4, attackMs: 20, releaseMs: 250 } } }]);
+  const comps = ctx._comps || [];
+  ok(comps.length === 1, "1 element → tạo 1 DynamicsCompressor");
+  const comp = comps[0];
+  ok(approx(comp.threshold.last().v, -20), "compressor threshold -20dB");
+  ok(approx(comp.ratio.last().v, 4), "compressor ratio 4");
+  ok(approx(comp.attack.last().v, 0.02), "compressor attack 20ms → 0.02s");
+  ok(approx(comp.release.last().v, 0.25), "compressor release 250ms → 0.25s");
+
+  // Không có FX → về trung tính (không đổi tiếng)
+  ctx.currentTime = 2;
+  engine.update([{ el, gain: 1 }]);
+  ok(approx(low.gain.last().v, 0), "không có bass → low.gain về 0");
+  ok(approx(high.gain.last().v, 0), "không có treble → high.gain về 0");
+  ok(approx(comp.threshold.last().v, 0), "không có compressor → threshold về 0 (= tắt)");
+  ok(approx(comp.ratio.last().v, 1), "không có compressor → ratio về 1 (= tắt)");
+
+  engine.dispose();
 }
 
 // ---------------------------------------------------------------------------
