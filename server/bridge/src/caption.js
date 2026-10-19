@@ -30,6 +30,12 @@ const DEFAULT_LANG = "vi";
 // tới ~30 phút. Timeout dài nhưng vẫn có giới hạn để không treo worker.
 const DEFAULT_TIMEOUT_MS = 20 * 60 * 1000;
 
+// --- R1-080: dịch phụ đề (faster-whisper translate task) ----------------------
+// faster-whisper "translate" CHỈ dịch sang tiếng Anh — giới hạn của model.
+// Không phải lựa chọn thiết kế; muốn cặp khác cần engine MT riêng.
+const TRANSLATE_TARGET_LANGS = ["en"];
+const DEFAULT_TRANSLATE_TARGET = "en";
+
 function captionConfigFromEnv(env = process.env) {
   const t = parseInt(env.CAPTION_TIMEOUT_MS || "", 10);
   return {
@@ -42,7 +48,8 @@ function captionConfigFromEnv(env = process.env) {
 
 /** Chuẩn hóa + validate mã ngôn ngữ; throw → endpoint trả 400. */
 function validateLang(raw) {
-  const lang = String(raw ?? DEFAULT_LANG).trim().toLowerCase();
+  const s = String(raw ?? "").trim();
+  const lang = (s || DEFAULT_LANG).toLowerCase();
   if (!CAPTION_LANGS.includes(lang)) {
     throw new Error(
       `Ngôn ngữ không hỗ trợ: "${raw}". Chọn một trong: ${CAPTION_LANGS.join(", ")}.`
@@ -76,6 +83,58 @@ const PHASE_LABELS = {
   upload: "Đã nhận file, chuẩn bị…",
   extract: "Đang trích xuất audio…",
   transcribe: "Đang nhận diện giọng nói (video dài có thể mất vài phút)…",
+  group: "Đang gộp câu phụ đề…",
+};
+
+/** R1-080: config cho translate.py — TRANSLATE_PY để test trỏ sang stub. */
+function translateConfigFromEnv(env = process.env) {
+  const t = parseInt(env.TRANSLATE_TIMEOUT_MS || "", 10);
+  return {
+    pythonBin: env.CAPTION_PYTHON || "python3",
+    translatePy: env.TRANSLATE_PY ||
+      path.resolve(__dirname, "..", "..", "caption", "translate.py"),
+    timeoutMs: Number.isFinite(t) && t >= 30_000 ? t : DEFAULT_TIMEOUT_MS,
+  };
+}
+
+/**
+ * Validate ngôn ngữ ĐÍCH — hiện chỉ "en" (giới hạn của faster-whisper
+ * translate task). Throw → endpoint trả 400.
+ */
+function validateTranslateTarget(raw) {
+  const s = String(raw ?? "").trim();
+  const target = (s || DEFAULT_TRANSLATE_TARGET).toLowerCase();
+  if (!TRANSLATE_TARGET_LANGS.includes(target)) {
+    throw new Error(
+      `Ngôn ngữ đích chưa hỗ trợ: "${raw}". Hiện chỉ hỗ trợ: ${TRANSLATE_TARGET_LANGS.join(", ")} ` +
+      `(giới hạn của faster-whisper translate task).`
+    );
+  }
+  return target;
+}
+
+/** Kiểm tra nhanh translate có chạy được không (python + script tồn tại). */
+function translateAvailable(cfg = translateConfigFromEnv()) {
+  if (!fs.existsSync(cfg.translatePy)) {
+    return { available: false, reason: `Không tìm thấy translate.py (${cfg.translatePy})` };
+  }
+  return { available: true, python: cfg.pythonBin, script: cfg.translatePy };
+}
+
+/** Nhận diện phase từ 1 dòng stdout của translate.py. */
+function translatePhaseFromLine(line) {
+  const l = String(line || "");
+  if (l.includes("[translate] trích audio")) return "extract";
+  if (l.includes("[translate] đang dịch")) return "translating";
+  if (l.includes("[translate] xong")) return "group";
+  return null;
+}
+
+/** Nhãn tiếng Việt cho từng phase dịch (hiện trong modal). */
+const TRANSLATE_PHASE_LABELS = {
+  upload: "Đã nhận file, chuẩn bị…",
+  extract: "Đang trích xuất audio…",
+  translating: "Đang dịch sang tiếng Anh (video dài có thể mất vài phút)…",
   group: "Đang gộp câu phụ đề…",
 };
 
@@ -120,36 +179,38 @@ function validateSegments(raw) {
  * @returns {Promise<{language:string, audioDurationSec:number,
  *   transcribeTimeSec:number, segments:Array<{start,end,text}>>}}
  */
-function runCaption({ inputPath, lang, onPhase, config } = {}) {
-  const cfg = config || captionConfigFromEnv();
-  const language = validateLang(lang);
-  if (typeof inputPath !== "string" || !path.isAbsolute(inputPath)) {
-    return Promise.reject(new Error("inputPath phải là đường dẫn tuyệt đối."));
-  }
-  if (!fs.existsSync(inputPath)) {
-    return Promise.reject(new Error("Không tìm thấy file media để caption."));
-  }
-
+/**
+ * Core chung cho caption.py / translate.py: spawn script python với argv
+ * CỐ ĐỊNH (không shell), stream phase từ stdout, đọc JSON output, validate
+ * segments. Dùng nội bộ bởi runCaption/runTranslate.
+ *
+ * @returns {Promise<{parsed: object, segments: Array}>}
+ */
+function runPythonScriptJob({
+  pythonBin, scriptPy, scriptName, tmpPrefix,
+  inputPath, langArg, timeoutMs, onPhase, phaseFromLineFn,
+  timeoutMsg, spawnFailMsg, childErrorMsg, emptyErrorMsg,
+}) {
   return new Promise((resolve, reject) => {
     const outPath = path.join(
       os.tmpdir(),
-      `vcut-caption-${Date.now()}-${process.pid}.json`
+      `${tmpPrefix}${Date.now()}-${process.pid}.json`
     );
     // argv CỐ ĐỊNH — không shell, không ghép chuỗi lệnh.
     const args = [
-      cfg.captionPy,
+      scriptPy,
       "--input", inputPath,
-      "--lang", language,
+      "--lang", langArg,
       "--out", outPath,
     ];
     let child;
     try {
-      child = spawn(cfg.pythonBin, args, {
+      child = spawn(pythonBin, args, {
         stdio: ["ignore", "pipe", "pipe"],
         shell: false,
       });
     } catch (e) {
-      reject(new Error(`Không khởi động được caption.py: ${e.message}`));
+      reject(new Error(`${spawnFailMsg}: ${e.message}`));
       return;
     }
 
@@ -180,11 +241,9 @@ function runCaption({ inputPath, lang, onPhase, config } = {}) {
       finish(() => {
         try { child.kill("SIGKILL"); } catch { /* bỏ qua */ }
         cleanupOut();
-        reject(new Error(
-          `Caption quá thời gian (${Math.round(cfg.timeoutMs / 60000)} phút) — thử video ngắn hơn.`
-        ));
+        reject(new Error(timeoutMsg));
       });
-    }, cfg.timeoutMs);
+    }, timeoutMs);
     // unref để timer không giữ process bridge khi test thoát
     if (timer.unref) timer.unref();
 
@@ -194,7 +253,7 @@ function runCaption({ inputPath, lang, onPhase, config } = {}) {
       while ((idx = stdoutBuf.indexOf("\n")) >= 0) {
         const line = stdoutBuf.slice(0, idx);
         stdoutBuf = stdoutBuf.slice(idx + 1);
-        emitPhase(phaseFromLine(line));
+        emitPhase(phaseFromLineFn(line));
       }
     });
     child.stderr.on("data", (d) => {
@@ -203,7 +262,7 @@ function runCaption({ inputPath, lang, onPhase, config } = {}) {
     child.on("error", (e) => {
       finish(() => {
         cleanupOut();
-        reject(new Error(`Không chạy được caption.py: ${e.message}`));
+        reject(new Error(`${childErrorMsg}: ${e.message}`));
       });
     });
     child.on("close", (code) => {
@@ -211,7 +270,7 @@ function runCaption({ inputPath, lang, onPhase, config } = {}) {
         if (code !== 0) {
           cleanupOut();
           reject(new Error(
-            `caption.py thoát mã ${code}: ${(stderrTail || "").slice(-300) || "không rõ lỗi"}`
+            `${scriptName} thoát mã ${code}: ${(stderrTail || "").slice(-300) || "không rõ lỗi"}`
           ));
           return;
         }
@@ -232,18 +291,95 @@ function runCaption({ inputPath, lang, onPhase, config } = {}) {
           return;
         }
         if (segments.length === 0) {
-          reject(new Error("Không nhận diện được lời thoại nào (video câm hoặc quá nhiễu?)."));
+          reject(new Error(emptyErrorMsg));
           return;
         }
-        resolve({
-          language: parsed.language || language,
-          audioDurationSec: Number(parsed.audio_duration_sec) || 0,
-          transcribeTimeSec: Number(parsed.transcribe_time_sec) || 0,
-          segments,
-        });
+        resolve({ parsed, segments });
       });
     });
   });
+}
+
+function runCaption({ inputPath, lang, onPhase, config } = {}) {
+  const cfg = config || captionConfigFromEnv();
+  const language = validateLang(lang);
+  if (typeof inputPath !== "string" || !path.isAbsolute(inputPath)) {
+    return Promise.reject(new Error("inputPath phải là đường dẫn tuyệt đối."));
+  }
+  if (!fs.existsSync(inputPath)) {
+    return Promise.reject(new Error("Không tìm thấy file media để caption."));
+  }
+
+  return runPythonScriptJob({
+    pythonBin: cfg.pythonBin,
+    scriptPy: cfg.captionPy,
+    scriptName: "caption.py",
+    tmpPrefix: "vcut-caption-",
+    inputPath,
+    langArg: language,
+    timeoutMs: cfg.timeoutMs,
+    onPhase,
+    phaseFromLineFn: phaseFromLine,
+    timeoutMsg:
+      `Caption quá thời gian (${Math.round(cfg.timeoutMs / 60000)} phút) — thử video ngắn hơn.`,
+    spawnFailMsg: "Không khởi động được caption.py",
+    childErrorMsg: "Không chạy được caption.py",
+    emptyErrorMsg: "Không nhận diện được lời thoại nào (video câm hoặc quá nhiễu?).",
+  }).then(({ parsed, segments }) => ({
+    language: parsed.language || language,
+    audioDurationSec: Number(parsed.audio_duration_sec) || 0,
+    transcribeTimeSec: Number(parsed.transcribe_time_sec) || 0,
+    segments,
+  }));
+}
+
+/**
+ * R1-080: dịch phụ đề sang tiếng Anh bằng translate.py
+ * (faster-whisper translate task, 100% local).
+ *
+ * @param {object} o
+ * @param {string} o.inputPath  đường dẫn TUYỆT ĐỐI tới file media.
+ * @param {string} o.lang       mã ngôn ngữ NGUỒN (whitelist như caption).
+ * @param {string} [o.target]   ngôn ngữ đích — hiện chỉ "en".
+ * @param {(phase:string)=>void} [o.onPhase]
+ * @param {object} [o.config]   override translateConfigFromEnv() (cho test).
+ * @returns {Promise<{sourceLanguage:string, targetLanguage:string,
+ *   audioDurationSec:number, translateTimeSec:number,
+ *   segments:Array<{start,end,text}>>}}
+ */
+function runTranslate({ inputPath, lang, target, onPhase, config } = {}) {
+  const cfg = config || translateConfigFromEnv();
+  const sourceLang = validateLang(lang);
+  const targetLang = validateTranslateTarget(target);
+  if (typeof inputPath !== "string" || !path.isAbsolute(inputPath)) {
+    return Promise.reject(new Error("inputPath phải là đường dẫn tuyệt đối."));
+  }
+  if (!fs.existsSync(inputPath)) {
+    return Promise.reject(new Error("Không tìm thấy file media để dịch."));
+  }
+
+  return runPythonScriptJob({
+    pythonBin: cfg.pythonBin,
+    scriptPy: cfg.translatePy,
+    scriptName: "translate.py",
+    tmpPrefix: "vcut-translate-",
+    inputPath,
+    langArg: sourceLang,
+    timeoutMs: cfg.timeoutMs,
+    onPhase,
+    phaseFromLineFn: translatePhaseFromLine,
+    timeoutMsg:
+      `Dịch quá thời gian (${Math.round(cfg.timeoutMs / 60000)} phút) — thử video ngắn hơn.`,
+    spawnFailMsg: "Không khởi động được translate.py",
+    childErrorMsg: "Không chạy được translate.py",
+    emptyErrorMsg: "Không dịch được câu nào (video câm hoặc quá nhiễu?).",
+  }).then(({ parsed, segments }) => ({
+    sourceLanguage: parsed.source_language || sourceLang,
+    targetLanguage: parsed.target_language || targetLang,
+    audioDurationSec: Number(parsed.audio_duration_sec) || 0,
+    translateTimeSec: Number(parsed.translate_time_sec) || 0,
+    segments,
+  }));
 }
 
 module.exports = {
@@ -256,4 +392,13 @@ module.exports = {
   phaseFromLine,
   captionAvailable,
   runCaption,
+  // R1-080: dịch phụ đề sang tiếng Anh
+  TRANSLATE_TARGET_LANGS,
+  DEFAULT_TRANSLATE_TARGET,
+  TRANSLATE_PHASE_LABELS,
+  translateConfigFromEnv,
+  validateTranslateTarget,
+  translatePhaseFromLine,
+  translateAvailable,
+  runTranslate,
 };
