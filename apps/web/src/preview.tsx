@@ -11,7 +11,7 @@ import type { MediaItem } from "./media";
 import { MediaPool } from "./media";
 import { clamp } from "./lib";
 import { seekAll, Seeker, type SeekTarget } from "./lib/seek";
-import { AudioEngine, computeClipGain } from "./lib/audioEngine";
+import { AudioEngine, computeClipGain, toPreviewFx } from "./lib/audioEngine";
 import type { ActiveAudioSource } from "./lib/audioEngine";
 import {
   applyChromaKey,
@@ -442,16 +442,22 @@ function collectActives(
           actives.push({ el, target, speed, reverse });
           // R1-063: audio kế thừa qua engine. Render bỏ audio khi track muted
           // hoặc sourceAudioMode="mute" → preview gain 0 cho khớp.
+          // R1-076: truyền audioEffects (bass/treble/compressor) cho preview.
           const vclip = clip as VideoClip;
           const gain = (track.muted || (vclip.sourceAudioMode ?? "inherit") === "mute") ? 0 : 1;
-          audioSources.push({ el, gain });
+          audioSources.push({ el, gain, fx: toPreviewFx(vclip.audioEffects) });
         }
       } else if (track.kind === "audio" && clip.kind === "audio" && item.kind === "audio") {
         const el = pool.audioFor(item);
         if (el) {
           actives.push({ el, target, speed, reverse });
           // R1-063: gain = volume × fadeIn × fadeOut × volumeKeyframes × mute (khớp render).
-          audioSources.push({ el, gain: computeClipGain(clip, elapsed, !!track.muted) });
+          // R1-076: truyền audioEffects (bass/treble/compressor) cho preview.
+          audioSources.push({
+            el,
+            gain: computeClipGain(clip, elapsed, !!track.muted),
+            fx: toPreviewFx(clip.audioEffects),
+          });
         }
       }
     }
