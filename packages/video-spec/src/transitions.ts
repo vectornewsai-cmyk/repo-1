@@ -24,6 +24,22 @@ export const TRANSITION_TYPES = [
   "dissolve",
   "circleopen",
   "radial",
+  // R1-073 (Batch G): 15 transition mới — đã kiểm chứng bằng MP4 thật
+  "smoothleft",
+  "smoothright",
+  "smoothup",
+  "smoothdown",
+  "slideup",
+  "slidedown",
+  "circleclose",
+  "circlecrop",
+  "rectcrop",
+  "pixelize",
+  "hblur",
+  "distance",
+  "vertopen",
+  "horzopen",
+  "diagtl",
 ] as const;
 
 export type TransitionType = (typeof TRANSITION_TYPES)[number];
@@ -46,6 +62,22 @@ export const TRANSITION_META: Record<
   dissolve: { label: "Hòa tan", description: "Cảnh cũ tan thành hạt li ti, cảnh mới hiện dần", category: "fx" },
   circleopen: { label: "Vòng tròn mở", description: "Cảnh mới hiện ra từ một vòng tròn nở dần ở giữa", category: "fx" },
   radial: { label: "Xoay tỏa tròn", description: "Cảnh mới xoay tỏa ra như cánh quạt", category: "fx" },
+  // R1-073 (Batch G)
+  smoothleft: { label: "Trượt mượt sang trái", description: "Cảnh mới trượt mượt từ phải sang, có làm mờ biên", category: "slide" },
+  smoothright: { label: "Trượt mượt sang phải", description: "Cảnh mới trượt mượt từ trái sang, có làm mờ biên", category: "slide" },
+  smoothup: { label: "Trượt mượt lên trên", description: "Cảnh mới trượt mượt từ dưới lên, có làm mờ biên", category: "slide" },
+  smoothdown: { label: "Trượt mượt xuống dưới", description: "Cảnh mới trượt mượt từ trên xuống, có làm mờ biên", category: "slide" },
+  slideup: { label: "Trượt lên trên", description: "Hai cảnh trượt dọc cùng nhau lên trên", category: "slide" },
+  slidedown: { label: "Trượt xuống dưới", description: "Hai cảnh trượt dọc cùng nhau xuống dưới", category: "slide" },
+  circleclose: { label: "Vòng tròn khép", description: "Vòng tròn khép dần từ ngoài vào, lộ cảnh mới", category: "fx" },
+  circlecrop: { label: "Cắt vòng tròn", description: "Cảnh cũ co dần thành vòng tròn rồi biến mất", category: "fx" },
+  rectcrop: { label: "Cắt chữ nhật", description: "Cảnh cũ co dần thành hình chữ nhật rồi biến mất", category: "fx" },
+  pixelize: { label: "Điểm ảnh hóa", description: "Cảnh cũ vỡ thành ô vuông pixel rồi chuyển sang cảnh mới", category: "fx" },
+  hblur: { label: "Mờ ngang", description: "Cảnh cũ mờ nhòe theo chiều ngang rồi chuyển cảnh", category: "fx" },
+  distance: { label: "Khoảng cách", description: "Cảnh mới tiến lại gần từ xa như hiệu ứng zoom", category: "fx" },
+  vertopen: { label: "Mở dọc", description: "Cảnh mới mở ra từ giữa theo chiều dọc", category: "wipe" },
+  horzopen: { label: "Mở ngang", description: "Cảnh mới mở ra từ giữa theo chiều ngang", category: "wipe" },
+  diagtl: { label: "Chéo góc trái-trên", description: "Cảnh mới quét chéo từ góc trái-trên", category: "wipe" },
 };
 
 /** Kiểm tra một giá trị có phải TransitionType hợp lệ không. */

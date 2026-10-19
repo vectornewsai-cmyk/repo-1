@@ -31,6 +31,8 @@ export * from "./textfx.js";
 export * from "./lut.js";
 export * from "./effects.js";
 export * from "./sticker.js";
+// R1-074/075: chỉnh màu thủ công (color correction/grading).
+export * from "./color.js";
 // P0-03: image clip (ảnh tĩnh thành media type chính thức).
 export * from "./image.js";
 // R1-015: audio routing cho video nguồn (inherit/mute/detach).
@@ -48,7 +50,7 @@ import type { VideoFilter } from "./lut.js";
 import type { VideoEffect } from "./effects.js";
 import type { StickerClip } from "./sticker.js";
 import type { ImageClip } from "./image.js";
-import type { SourceAudioMode } from "./audio.js";
+import type { SourceAudioMode, AudioEffects } from "./audio.js";
 
 export interface VideoMeta {
   /** Tên dự án */
@@ -118,6 +120,11 @@ export interface VideoClip {
    * "inherit" (mặc định): giữ tiếng gốc; "mute": bỏ tiếng; "detach": chưa hỗ trợ.
    */
   sourceAudioMode?: SourceAudioMode;
+  /**
+   * Hiệu ứng audio cho tiếng kế thừa (R1-076) — xem AudioEffects.
+   * Render worker áp dụng sau aformat, trước volume.
+   */
+  audioEffects?: AudioEffects;
 }
 
 /** Clip audio trên timeline */
@@ -143,6 +150,12 @@ export interface AudioClip {
   speed?: number;
   /** Phát ngược đoạn nguồn (đảo mẫu audio), mặc định false */
   reverse?: boolean;
+  /**
+   * Hiệu ứng audio (R1-076): bass/treble/noise reduction/compressor/reverb.
+   * Render worker áp dụng sau aformat, trước volume. Preview áp dụng 1 phần
+   * (bass/treble/compressor) qua Web Audio — xem AUDIOFX_LIMITS.md.
+   */
+  audioEffects?: AudioEffects;
 }
 
 /** Clip chữ trên timeline */

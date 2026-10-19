@@ -10,7 +10,11 @@
  * thêm LUT mới ở đây thì PHẢI cập nhật cả lut.js.
  */
 
-/** 10 LUT có sẵn (id = tên file .cube không đuôi). */
+import { validateColorAdjust, type ColorAdjust } from "./color.js";
+
+/** 20 LUT có sẵn (id = tên file .cube không đuôi).
+ *  - "cartcut-*": từ dự án cartcut (MIT) — xem assets/SOURCES.md
+ *  - "vcut-*": tự tạo bằng script assets/filters/gen_vcut_luts.py (tác phẩm gốc) */
 export const LUT_IDS = [
   "cartcut-blockbuster",
   "cartcut-teal-orange",
@@ -22,6 +26,16 @@ export const LUT_IDS = [
   "cartcut-mono-neutral",
   "cartcut-faded-seventies",
   "cartcut-super-eight",
+  "vcut-cinematic",
+  "vcut-vintage-fade",
+  "vcut-noir-contrast",
+  "vcut-cyberpunk",
+  "vcut-pastel-dream",
+  "vcut-sunset-glow",
+  "vcut-arctic",
+  "vcut-faded-film",
+  "vcut-moody-forest",
+  "vcut-warm-bloom",
 ] as const;
 
 export type LutId = (typeof LUT_IDS)[number];
@@ -68,6 +82,47 @@ export const LUT_META: Record<LutId, { label: string; description: string }> = {
     label: "Super 8",
     description: "Màu phim nhựa 8mm hoài cổ",
   },
+  // --- vcut-*: tự tạo (tác phẩm gốc của VCut Studio) ---
+  "vcut-cinematic": {
+    label: "Điện ảnh",
+    description: "Tương phản điện ảnh, highlight ấm, shadow xanh teal",
+  },
+  "vcut-vintage-fade": {
+    label: "Phai vintage",
+    description: "Màu phai mờ hoài cổ, đen nâng sáng",
+  },
+  "vcut-noir-contrast": {
+    label: "Noir tương phản",
+    description: "Đen trắng tương phản gắt, phong cách noir",
+  },
+  "vcut-cyberpunk": {
+    label: "Cyberpunk",
+    description: "Magenta/cyan rực rỡ, bão hòa cao kiểu neon",
+  },
+  "vcut-pastel-dream": {
+    label: "Pastel mộng",
+    description: "Pastel nhẹ nhàng, mềm mại như mơ",
+  },
+  "vcut-sunset-glow": {
+    label: "Hoàng hôn rực",
+    description: "Vàng cam rực rỡ của nắng chiều muộn",
+  },
+  "vcut-arctic": {
+    label: "Bắc cực",
+    description: "Xanh băng sạch, lạnh và trong",
+  },
+  "vcut-faded-film": {
+    label: "Phim phai",
+    description: "Tương phản thấp, phai ấm như phim cũ",
+  },
+  "vcut-moody-forest": {
+    label: "Rừng u ám",
+    description: "Xanh lá trầm, tối và đầy tâm trạng",
+  },
+  "vcut-warm-bloom": {
+    label: "Ấm áp",
+    description: "Sáng ấm áp, mềm mại, tràn đầy nắng",
+  },
 };
 
 /** Kiểm tra một giá trị có phải LutId hợp lệ không. */
@@ -87,6 +142,8 @@ export function lutFileName(id: LutId): string {
 export interface VideoFilter {
   /** Id LUT trong catalog (vd "cartcut-teal-orange"). Không đặt = không lọc. */
   lut?: LutId;
+  /** Chỉnh màu thủ công (brightness/contrast/...). Áp TRƯỚC LUT trong render. */
+  color?: ColorAdjust;
 }
 
 /** Validate VideoFilter, trả về danh sách lỗi (rỗng = hợp lệ). */
@@ -103,6 +160,10 @@ export function validateVideoFilter(f: unknown): string[] {
       `(chỉ chấp nhận: ${LUT_IDS.join(", ")})`
     );
   }
+  // R1-075: chỉnh màu thủ công
+  for (const m of validateColorAdjust((f as Record<string, unknown>).color)) {
+    errors.push(m);
+  }
   return errors;
 }
 
@@ -110,9 +171,9 @@ export function validateVideoFilter(f: unknown): string[] {
 // Module augmentation: gắn `filter?` vào VideoClip mà KHÔNG sửa index.ts.
 // (index.ts của agent khác — parent sẽ tích hợp chính thức sau.)
 // ---------------------------------------------------------------------------
-import "./index";
+import "./index.js";
 
-declare module "./index" {
+declare module "./index.js" {
   interface VideoClip {
     filter?: VideoFilter;
   }
