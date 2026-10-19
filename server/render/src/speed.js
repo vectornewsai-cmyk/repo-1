@@ -92,12 +92,102 @@ function effectiveDuration(srcIn, srcOut, speed = 1) {
   return (srcOut - srcIn) / speed;
 }
 
+// ---------------------------------------------------------------------------
+// R1-013: Unified time mapping — mirror của speed.ts (TypeScript).
+// Dùng chung logic sourceTimeAt cho render worker.
+// ---------------------------------------------------------------------------
+
+/**
+ * Ánh xạ thời điểm timeline → thời điểm nguồn.
+ * Mirror của sourceTimeAt() trong packages/video-spec/src/speed.ts.
+ * @param {object} clip clip có {start, in, out, speed?, reverse?}
+ * @param {number} timelineT thời điểm timeline (giây)
+ * @returns {number} thời điểm nguồn trong [in, out]
+ */
+function sourceTimeAt(clip, timelineT) {
+  const speed = clip.speed ?? 1;
+  const localT = timelineT - clip.start;
+  const offset = localT * speed;
+  if (clip.reverse) {
+    return clip.out - offset;
+  }
+  return clip.in + offset;
+}
+
+/** Thời lượng nguồn = out - in. Mirror sourceDurationOf(). */
+function sourceDurationOf(clip) {
+  return clip.out - clip.in;
+}
+
+/** Thời lượng timeline = (out - in) / speed. Mirror timelineDurationOf(). */
+function timelineDurationOf(clip) {
+  return (clip.out - clip.in) / (clip.speed ?? 1);
+}
+
+/**
+ * Điểm cắt nguồn khi split tại thời điểm timeline t.
+ * Mirror splitSourceAt() trong speed.ts.
+ */
+function splitSourceAt(clip, timelineT) {
+  const cut = sourceTimeAt(clip, timelineT);
+  const clamped = Math.min(clip.out, Math.max(clip.in, cut));
+  return { leftIn: clip.in, leftOut: clamped, rightIn: clamped, rightOut: clip.out };
+}
+
+/**
+ * Trim mép trái tới newStart. Mirror trimLeftTo() trong speed.ts.
+ * reverse=false: dịch in; reverse=true: dịch out.
+ */
+function trimLeftTo(clip, newStart) {
+  const speed = clip.speed ?? 1;
+  const shift = newStart - clip.start;
+  const newDuration = clip.duration - shift;
+  if (clip.reverse) {
+    return { start: newStart, duration: newDuration, in: clip.in, out: clip.out - shift * speed };
+  }
+  return { start: newStart, duration: newDuration, in: sourceTimeAt(clip, newStart), out: clip.out };
+}
+
+/**
+ * Trim mép phải tới newDuration. Mirror trimRightTo() trong speed.ts.
+ * reverse=false: dịch out; reverse=true: dịch in.
+ */
+function trimRightTo(clip, newDuration) {
+  const newEnd = clip.start + newDuration;
+  if (clip.reverse) {
+    return { duration: newDuration, in: sourceTimeAt(clip, newEnd), out: clip.out };
+  }
+  return { duration: newDuration, in: clip.in, out: sourceTimeAt(clip, newEnd) };
+}
+
+/** Giới hạn kéo trái (giây timeline). Mirror maxTrimLeft(). */
+function maxTrimLeft(clip, mediaDuration = Infinity) {
+  const speed = clip.speed ?? 1;
+  if (clip.reverse) return Math.max(0, (mediaDuration - clip.out) / speed);
+  return Math.max(0, clip.in / speed);
+}
+
+/** Duration tối đa khi kéo phải. Mirror maxTrimRightDuration(). */
+function maxTrimRightDuration(clip, mediaDuration = Infinity) {
+  const speed = clip.speed ?? 1;
+  if (clip.reverse) return Math.max(0.2, clip.out / speed);
+  return Math.max(0.2, (mediaDuration - clip.in) / speed);
+}
+
 module.exports = {
   SPEED_MIN,
   SPEED_MAX,
   buildSpeedFilter,
   atempoFactors,
   effectiveDuration,
+  sourceTimeAt,
+  sourceDurationOf,
+  timelineDurationOf,
+  splitSourceAt,
+  trimLeftTo,
+  trimRightTo,
+  maxTrimLeft,
+  maxTrimRightDuration,
 };
 
 // Tự test nhanh khi chạy trực tiếp: node src/speed.js
