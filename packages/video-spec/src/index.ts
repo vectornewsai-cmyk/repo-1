@@ -1,5 +1,5 @@
 /**
- * video-spec v0.1.0 — "ngôn ngữ chung" của dự án.
+ * video-spec v0.2.0 — "ngôn ngữ chung" của dự án.
  *
  * Mọi thứ trong editor đều biểu diễn được bằng JSON theo schema này.
  * - apps/web: UI đọc/ghi spec này (project model).
@@ -8,9 +8,17 @@
  *
  * NGUYÊN TẮC: chỉ đưa vào spec những gì render được THẬT.
  * Thêm field mới = phải implement ở cả preview (web) lẫn render (ffmpeg).
+ *
+ * ## Versioning (R1-019)
+ * Xem ./migrations.ts và ./SCHEMA_VERSIONING.md.
+ * - 0.1.0: schema gốc (video/audio/text tracks)
+ * - 0.2.0: thêm sticker/image kinds, filter/effects/chroma/keyframes
  */
 
-export const SPEC_VERSION = "0.1.0" as const;
+export const SPEC_VERSION = "0.2.0" as const;
+
+// Schema versioning & migration (R1-019)
+export * from "./migrations.js";
 
 // Re-export các module tính năng (Phase 3): transitions, speed, keyframes.
 export * from "./transitions.js";
@@ -25,6 +33,8 @@ export * from "./effects.js";
 export * from "./sticker.js";
 // P0-03: image clip (ảnh tĩnh thành media type chính thức).
 export * from "./image.js";
+// R1-015: audio routing cho video nguồn (inherit/mute/detach).
+export * from "./audio.js";
 // Lưu ý: "./transitions" export `Transition` (type mở rộng) — dùng thay cho
 // định nghĩa cũ. "./keyframes", "./chroma" và "./lut" gắn `animations?` /
 // `chromaKey?` / `filter?` vào VideoClip qua module augmentation.
@@ -36,6 +46,7 @@ import type { VideoFilter } from "./lut.js";
 import type { VideoEffect } from "./effects.js";
 import type { StickerClip } from "./sticker.js";
 import type { ImageClip } from "./image.js";
+import type { SourceAudioMode } from "./audio.js";
 
 export interface VideoMeta {
   /** Tên dự án */
@@ -85,6 +96,11 @@ export interface VideoClip {
   filter?: VideoFilter;
   /** Hiệu ứng video — xem VideoEffect[] */
   effects?: VideoEffect[];
+  /**
+   * Cách xử lý audio trong file video nguồn — xem SourceAudioMode.
+   * "inherit" (mặc định): giữ tiếng gốc; "mute": bỏ tiếng; "detach": chưa hỗ trợ.
+   */
+  sourceAudioMode?: SourceAudioMode;
 }
 
 /** Clip audio trên timeline */
