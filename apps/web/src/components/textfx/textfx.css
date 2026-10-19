@@ -109,3 +109,70 @@
   0% { width: 0; }
   60%, 100% { width: 100%; }
 }
+
+/* ---- Batch G (R1-070): preview cho 10 animation mới (minh họa, chạy loop) ---- */
+.tx-prev-slideInDown { animation: tx-slideInDown 1.6s ease-out infinite; }
+@keyframes tx-slideInDown {
+  0% { opacity: 0; transform: translateY(-24px); }
+  40%, 100% { opacity: 1; transform: translateY(0); }
+}
+
+.tx-prev-popIn { animation: tx-popIn 1.6s ease-out infinite; }
+@keyframes tx-popIn {
+  0% { opacity: 0; transform: translateY(-8px); }
+  25% { opacity: 1; transform: translateY(0); }
+  40% { transform: translateY(-3px); }
+  55%, 100% { transform: translateY(0); }
+}
+
+.tx-prev-fadeOut { animation: tx-fadeOut 1.6s ease-in-out infinite; }
+@keyframes tx-fadeOut {
+  0%, 55% { opacity: 1; }
+  90%, 100% { opacity: 0; }
+}
+
+.tx-prev-fadeOutUp { animation: tx-fadeOutUp 1.6s ease-in-out infinite; }
+@keyframes tx-fadeOutUp {
+  0%, 55% { opacity: 1; transform: translateY(0); }
+  90%, 100% { opacity: 0; transform: translateY(-10px); }
+}
+
+.tx-prev-slideOutRight { animation: tx-slideOutRight 1.6s ease-in infinite; }
+@keyframes tx-slideOutRight {
+  0%, 55% { opacity: 1; transform: translateX(0); }
+  90%, 100% { opacity: 0; transform: translateX(28px); }
+}
+
+.tx-prev-slideOutDown { animation: tx-slideOutDown 1.6s ease-in infinite; }
+@keyframes tx-slideOutDown {
+  0%, 55% { opacity: 1; transform: translateY(0); }
+  90%, 100% { opacity: 0; transform: translateY(24px); }
+}
+
+.tx-prev-wave { animation: tx-wave 1.2s ease-in-out infinite; }
+@keyframes tx-wave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.tx-prev-blink { animation: tx-blink 1s steps(1) infinite; }
+@keyframes tx-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.15; }
+}
+
+.tx-prev-shake { animation: tx-shake 1.6s ease-out infinite; }
+@keyframes tx-shake {
+  0% { transform: translateX(0); }
+  10% { transform: translateX(-5px); }
+  20% { transform: translateX(5px); }
+  30% { transform: translateX(-3px); }
+  40%, 100% { transform: translateX(0); }
+}
+
+.tx-prev-fadeInOut { animation: tx-fadeInOut 1.6s ease-in-out infinite; }
+@keyframes tx-fadeInOut {
+  0% { opacity: 0; }
+  25%, 70% { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}

@@ -19,11 +19,17 @@ import "./textfx.css";
 //   import { TEXT_ANIMATION_META, TEXT_ANIMATIONS, type TextAnimation } from "@repo-1/video-spec";
 export type TextAnimation =
   | "none" | "fadeUp" | "fadeIn" | "slideInLeft"
-  | "slideInRight" | "slideUp" | "bounce" | "typewriter";
+  | "slideInRight" | "slideUp" | "bounce" | "typewriter"
+  | "slideInDown" | "popIn"
+  | "fadeOut" | "fadeOutUp" | "slideOutRight" | "slideOutDown"
+  | "wave" | "blink" | "shake" | "fadeInOut";
 
 const TEXT_ANIMATIONS: readonly TextAnimation[] = [
   "none", "fadeUp", "fadeIn", "slideInLeft",
   "slideInRight", "slideUp", "bounce", "typewriter",
+  "slideInDown", "popIn",
+  "fadeOut", "fadeOutUp", "slideOutRight", "slideOutDown",
+  "wave", "blink", "shake", "fadeInOut",
 ];
 
 const TEXT_ANIMATION_META: Record<TextAnimation, { label: string; description: string }> = {
@@ -35,6 +41,16 @@ const TEXT_ANIMATION_META: Record<TextAnimation, { label: string; description: s
   slideUp: { label: "Trượt từ dưới lên", description: "Chữ trượt từ dưới màn hình lên" },
   bounce: { label: "Nảy", description: "Chữ rơi từ trên xuống, nảy nhẹ rồi đứng yên" },
   typewriter: { label: "Gõ từng chữ", description: "Hiện từng ký tự như đang gõ máy" },
+  slideInDown: { label: "Trượt từ trên xuống", description: "Chữ trượt từ trên màn hình xuống" },
+  popIn: { label: "Bật vào", description: "Hiện nhanh + nảy nhẹ (giả lập pop)" },
+  fadeOut: { label: "Mờ dần ra", description: "Mờ dần trong 0.8s cuối clip" },
+  fadeOutUp: { label: "Mờ + bay lên", description: "Bay lên 30px + mờ dần trong 0.8s cuối" },
+  slideOutRight: { label: "Trượt ra phải", description: "Trượt ra ngoài mép phải + mờ dần cuối clip" },
+  slideOutDown: { label: "Trượt xuống dưới", description: "Trượt xuống dưới màn hình + mờ dần cuối clip" },
+  wave: { label: "Sóng", description: "Chữ dập dềnh lên xuống liên tục" },
+  blink: { label: "Nhấp nháy", description: "Chữ nhấp nháy hiện/ẩn liên tục" },
+  shake: { label: "Rung", description: "Chữ rung ngang trong 0.5s đầu" },
+  fadeInOut: { label: "Mờ vào + mờ ra", description: "Mờ dần vào 0.5s đầu, mờ dần ra 0.5s cuối" },
 };
 
 export interface TextAnimPickerProps {
@@ -54,6 +70,16 @@ const PREVIEW_CLASS: Record<TextAnimation, string> = {
   slideUp: "tx-prev-slideUp",
   bounce: "tx-prev-bounce",
   typewriter: "tx-prev-typewriter",
+  slideInDown: "tx-prev-slideInDown",
+  popIn: "tx-prev-popIn",
+  fadeOut: "tx-prev-fadeOut",
+  fadeOutUp: "tx-prev-fadeOutUp",
+  slideOutRight: "tx-prev-slideOutRight",
+  slideOutDown: "tx-prev-slideOutDown",
+  wave: "tx-prev-wave",
+  blink: "tx-prev-blink",
+  shake: "tx-prev-shake",
+  fadeInOut: "tx-prev-fadeInOut",
 };
 
 export function TextAnimPicker({ value, onChange }: TextAnimPickerProps) {
