@@ -43,6 +43,13 @@ const cors = require("cors");
 const multer = require("multer");
 
 const { RenderJobService, newJobId, specDuration } = require("./jobQueue");
+// R1-072: auto-caption (faster-whisper, chạy local qua caption.py)
+const {
+  runCaption,
+  validateLang,
+  captionAvailable,
+  PHASE_LABELS,
+} = require("./caption");
 
 // ---------------------------------------------------------------------------
 // Cấu hình
@@ -70,6 +77,12 @@ const ALLOWED_MEDIA_EXTS = new Set([
   ".mp4", ".mov", ".m4v", ".webm", ".mkv", ".avi",
   ".mp3", ".wav", ".ogg", ".oga", ".m4a", ".flac", ".aac",
   ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp",
+]);
+
+/** R1-072: caption chỉ nhận video/audio (cần track tiếng để transcribe). */
+const AUDIO_VIDEO_EXTS = new Set([
+  ".mp4", ".mov", ".m4v", ".webm", ".mkv", ".avi",
+  ".mp3", ".wav", ".ogg", ".oga", ".m4a", ".flac", ".aac",
 ]);
 
 /** Magic bytes (đủ để nhận diện, không cần đầy đủ mọi định dạng). */
@@ -386,6 +399,7 @@ app.get("/api/health", async (req, res) => {
     workDirWritable: workWritable, // R1-040
     uptimeSec: Math.round(process.uptime()), // R1-040
     node: process.version, // R1-040
+    caption: captionAvailable(), // R1-072: python + caption.py có sẵn không
   });
 });
 
@@ -507,6 +521,93 @@ app.post("/api/render",
     queuePosition: job.queuePosition,
   });
 });
+
+// --- POST /api/caption (R1-072) -------------------------------------------------
+// Nhận 1 file video/audio (multipart field "media") + field "lang" (optional).
+// Chạy caption.py (faster-whisper, 100% local) rồi stream tiến trình về client
+// dạng NDJSON: {"type":"phase",...} ... {"type":"done","segments":[...]}.
+// Lỗi validate (chưa gửi header) → JSON 4xx bình thường; lỗi khi đang chạy
+// → event {"type":"error"} trong stream (header đã gửi nên không đổi status được).
+app.post(
+  "/api/caption",
+  rateLimit(RATE_MAX_RENDER), // R1-040: giới hạn chặt như render (tác vụ nặng)
+  (req, res, next) => upload.single("media")(req, res, (err) => {
+    if (err) return multerErrorHandler(err, req, res, next);
+    next();
+  }),
+  async (req, res) => {
+    // 1. Validate (chưa stream → lỗi trả JSON 4xx)
+    let lang;
+    try {
+      lang = validateLang(req.body.lang);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+    const f = req.file;
+    if (!f) {
+      return res.status(400).json({ error: "Thiếu file media (field 'media')." });
+    }
+    const safe = sanitizeFilename(f.originalname);
+    if (!safe) {
+      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+    }
+    const ext = path.extname(safe).toLowerCase();
+    if (!AUDIO_VIDEO_EXTS.has(ext)) {
+      return res.status(400).json({
+        error: "Caption cần file video hoặc audio (ảnh không có tiếng để nhận diện).",
+      });
+    }
+    const magicErr = checkMagicBytes(safe, f.buffer);
+    if (magicErr) return res.status(400).json({ error: magicErr });
+    const avail = captionAvailable();
+    if (!avail.available) {
+      return res.status(503).json({ error: `Caption chưa sẵn sàng: ${avail.reason}` });
+    }
+
+    // 2. Lưu file vào thư mục tạm riêng (không bao giờ dùng path từ client)
+    const dir = path.join(
+      WORK_ROOT,
+      `caption-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+    );
+    const inputPath = path.join(dir, safe);
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(inputPath, f.buffer);
+    } catch (e) {
+      console.error(`[bridge] không lưu được file caption:`, e.message);
+      cleanupJobDir(dir);
+      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+    }
+
+    // 3. Stream NDJSON: phase... → done | error
+    res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache");
+    const send = (obj) => {
+      try { res.write(JSON.stringify(obj) + "\n"); } catch { /* client đã ngắt */ }
+    };
+    send({ type: "phase", phase: "upload", message: PHASE_LABELS.upload });
+    try {
+      const result = await runCaption({
+        inputPath,
+        lang,
+        onPhase: (p) => send({ type: "phase", phase: p, message: PHASE_LABELS[p] || p }),
+      });
+      send({
+        type: "done",
+        language: result.language,
+        audioDurationSec: result.audioDurationSec,
+        transcribeTimeSec: result.transcribeTimeSec,
+        count: result.segments.length,
+        segments: result.segments,
+      });
+    } catch (e) {
+      send({ type: "error", error: e.message || "Caption thất bại." });
+    } finally {
+      cleanupJobDir(dir);
+      try { res.end(); } catch { /* bỏ qua */ }
+    }
+  }
+);
 
 // --- GET /api/render (danh sách job) -----------------------------------------
 app.get("/api/render", (req, res) => {
