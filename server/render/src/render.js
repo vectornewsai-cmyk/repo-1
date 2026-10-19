@@ -1,0 +1,504 @@
+#!/usr/bin/env node
+/**
+ * render.js — Render worker: đọc video-spec JSON v0.1.0, render MP4 thật bằng FFmpeg.
+ *
+ * Cách dùng:
+ *   node src/render.js --spec project.json --out video.mp4 [--media-dir ./media] [-y] [-q] [--dry-run]
+ *
+ * Luồng xử lý:
+ *   1. Đọc + parse JSON spec.
+ *   2. validateSpec() — sai thì in lỗi chi tiết và thoát (không render bừa).
+ *   3. validateMedia() — kiểm tra file media tồn tại, đúng loại stream, đủ dài.
+ *   4. Dựng filter_complex FFmpeg (1 lần chạy duy nhất):
+ *        video: trim/setpts → scale+pad về đúng WxH → fps chuẩn → xfade (nếu có transition)
+ *               → đặt lên timeline bằng setpts=PTS+S/TB + overlay eof_action=pass trên nền đen
+ *               → drawtext (none/fadeUp) → subtitles ASS (typewriter)
+ *        audio: atrim/asetpts → aresample 48k → volume → afade → adelay tới vị trí timeline
+ *               → amix (nhiều clip) → apad cho đủ tổng thời lượng
+ *   5. Chạy ffmpeg → MP4 H.264 + AAC, đúng meta.width/height/fps.
+ *
+ * Zero dependency. Yêu cầu: ffmpeg + ffprobe trên PATH (hoặc --ffmpeg/--ffprobe), Node >= 20.
+ */
+"use strict";
+
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+const { spawnSync } = require("child_process");
+const {
+  SPEC_VERSION,
+  EPS,
+  isVideoSpec,
+  validateSpec,
+  validateMedia,
+  resolveFontFile,
+  resolveSrc,
+} = require("./validate");
+
+// ---------------------------------------------------------------------------
+// Tiện ích
+// ---------------------------------------------------------------------------
+
+/** Format số cho filter FFmpeg: tránh ký hiệu khoa học, giữ tối đa 6 chữ số thập phân. */
+function num(x) {
+  if (!Number.isFinite(x)) throw new Error(`số không hợp lệ cho filter: ${x}`);
+  return String(Math.round(x * 1e6) / 1e6);
+}
+
+/** Escape text cho drawtext (text='...'): escape \ ' : và %{ (cú pháp expansion của drawtext). */
+function escapeDrawtext(s) {
+  return s
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'")
+    .replace(/:/g, "\\:")
+    .replace(/%\{/g, "\\%{")
+    .replace(/\n/g, "\\n");
+}
+
+/** Escape đường dẫn file cho filter (subtitles=..., fontfile='...'). */
+function escapeFilterPath(p) {
+  return p.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/:/g, "\\:");
+}
+
+/** #rrggbb → &H00BBGGRR (màu ASS/libass, AA=00 là đục hoàn toàn). */
+function hexToAssColor(hex) {
+  let h = hex.replace("#", "");
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  const r = h.slice(0, 2), g = h.slice(2, 4), b = h.slice(4, 6);
+  return `&H00${b}${g}${r}`.toUpperCase();
+}
+
+/** Giây → "H:MM:SS.cc" cho file ASS. */
+function assTime(t) {
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const s = Math.floor(t % 60);
+  const cs = Math.floor((t % 1) * 100);
+  return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(cs).padStart(2, "0")}`;
+}
+
+/** Tổng thời lượng project = clip kết thúc muộn nhất (mirror projectDuration của video-spec). */
+function projectDuration(spec) {
+  let max = 0;
+  for (const t of spec.tracks)
+    for (const c of t.clips) max = Math.max(max, c.start + c.duration);
+  return max;
+}
+
+function printHelp() {
+  console.log(`render.js — video-spec v${SPEC_VERSION} → MP4 (H.264 + AAC)
+
+Cách dùng:
+  node src/render.js --spec <file.json> --out <video.mp4> [tùy chọn]
+
+Tùy chọn:
+  --media-dir <dir>   Thư mục chứa file media; src tương đối trong spec được
+                      giải quyết từ đây (mặc định: <thư-mục-chứa-spec>/media)
+  --ffmpeg <path>     Đường dẫn ffmpeg (mặc định: ffmpeg trên PATH)
+  --ffprobe <path>    Đường dẫn ffprobe (mặc định: ffprobe trên PATH)
+  -y, --overwrite     Ghi đè file output nếu đã tồn tại
+  -q, --quiet         Ẩn log chi tiết của ffmpeg
+  --dry-run           Chỉ in câu lệnh ffmpeg, không chạy
+  -h, --help          Hiện trợ giúp này
+
+Mã thoát: 0 = thành công, 1 = spec/media không hợp lệ, 2 = lỗi tham số hoặc lỗi render.`);
+}
+
+function parseArgs(argv) {
+  const args = {
+    spec: null, out: null, mediaDir: null,
+    ffmpeg: "ffmpeg", ffprobe: "ffprobe",
+    overwrite: false, quiet: false, dryRun: false,
+  };
+  for (let i = 2; i < argv.length; i++) {
+    const a = argv[i];
+    const need = () => {
+      const v = argv[++i];
+      if (v === undefined) { console.error(`Thiếu giá trị cho ${a}`); process.exit(2); }
+      return v;
+    };
+    if (a === "--spec") args.spec = need();
+    else if (a === "--out") args.out = need();
+    else if (a === "--media-dir") args.mediaDir = need();
+    else if (a === "--ffmpeg") args.ffmpeg = need();
+    else if (a === "--ffprobe") args.ffprobe = need();
+    else if (a === "-y" || a === "--overwrite") args.overwrite = true;
+    else if (a === "-q" || a === "--quiet") args.quiet = true;
+    else if (a === "--dry-run") args.dryRun = true;
+    else if (a === "-h" || a === "--help") { printHelp(); process.exit(0); }
+    else { console.error(`Tham số không rõ: ${a} (dùng --help để xem)`); process.exit(2); }
+  }
+  if (!args.spec || !args.out) {
+    console.error("Thiếu --spec <file.json> hoặc --out <video.mp4> (dùng --help để xem)");
+    process.exit(2);
+  }
+  return args;
+}
+
+// ---------------------------------------------------------------------------
+// Dựng file ASS cho các text clip animation="typewriter"
+// ---------------------------------------------------------------------------
+/**
+ * Typewriter THẬT bằng karaoke-style ASS: mỗi ký tự là một dialogue riêng,
+ * dialogue thứ i hiện i+1 ký tự đầu, nối tiếp nhau theo thời gian.
+ * Không dùng drawtext vì drawtext không làm được reveal từng ký tự.
+ */
+function buildTypewriterAss(clips, meta) {
+  const L = [];
+  L.push("[Script Info]", "Title: repo1-typewriter", "ScriptType: v4.00+",
+    `PlayResX: ${meta.width}`, `PlayResY: ${meta.height}`, "ScaledBorderAndShadow: yes", "");
+  L.push("[V4+ Styles]");
+  L.push("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, " +
+    "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, " +
+    "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding");
+  clips.forEach((clip, ci) => {
+    const st = clip.style;
+    const borderStyle = st.backgroundColor ? 3 : 1; // 3 = hộp nền đục
+    const back = st.backgroundColor ? hexToAssColor(st.backgroundColor) : "&H00000000";
+    L.push(`Style: TW${ci},${st.fontFamily},${Math.round(st.fontSize)},` +
+      `${hexToAssColor(st.color)},&H000000FF,&H80000000,${back},` +
+      `${st.bold ? -1 : 0},${st.italic ? -1 : 0},0,0,100,100,0,0,` +
+      `${borderStyle},2,0,5,10,10,10,1`);
+  });
+  L.push("", "[Events]");
+  L.push("Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text");
+  clips.forEach((clip, ci) => {
+    const chars = [...clip.text]; // tách theo code point (đúng với emoji/tiếng Việt)
+    const n = Math.max(chars.length, 1);
+    const dt = clip.duration / n;
+    const x = Math.round(meta.width * (clip.style.x ?? 0.5));
+    const y = Math.round(meta.height * (clip.style.y ?? 0.5));
+    for (let i = 0; i < n; i++) {
+      const t0 = clip.start + i * dt;
+      const t1 = i === n - 1 ? clip.start + clip.duration : clip.start + (i + 1) * dt;
+      const visible = chars.slice(0, i + 1).join("")
+        .replace(/\{/g, "\\{").replace(/\}/g, "\\}"); // escape cú pháp ASS
+      L.push(`Dialogue: 0,${assTime(t0)},${assTime(t1)},TW${ci},,0,0,0,,{\\pos(${x},${y})}${visible}`);
+    }
+  });
+  const file = path.join(os.tmpdir(), `repo1-typewriter-${process.pid}.ass`);
+  fs.writeFileSync(file, L.join("\n") + "\n", "utf8");
+  return file;
+}
+
+// ---------------------------------------------------------------------------
+// Dựng filter_complex
+// ---------------------------------------------------------------------------
+function buildFilterGraph(spec, ctx) {
+  const { W, H, fps, D, mediaIndex, absOf, transitions, fontFiles } = ctx;
+  const fc = [];
+  let n = 0;
+  const lbl = (p) => `${p}${n++}`;
+
+  // Bản đồ transition: "trackId:fromClipId" -> { to, duration } (đã validate ở validateSpec)
+  const transMap = new Map();
+  for (const t of transitions) transMap.set(`${t.trackId}:${t.from}`, t);
+
+  // ===== VIDEO: chuẩn hoá từng clip rồi nối bằng xfade khi có transition =====
+  // Mỗi "unit" là một stream video hoàn chỉnh, sẽ được đặt lên timeline ở bước sau.
+  const units = [];
+
+  for (const track of spec.tracks.filter((t) => t.kind === "video")) {
+    const clips = [...track.clips].sort((a, b) => a.start - b.start);
+
+    // Bước 1: chuẩn hoá từng clip — cắt đúng [in, in+duration), scale/pad về đúng WxH,
+    // fps hằng số (xfade bắt buộc CFR), format yuv420p (tương thích H.264).
+    const segs = clips.map((clip) => {
+      const idx = mediaIndex.get(absOf(clip.src));
+      const v = lbl("cv");
+      fc.push(
+        `[${idx}:v]` +
+        `trim=start=${num(clip.in)}:end=${num(clip.in + clip.duration)},` +
+        `setpts=PTS-STARTPTS,` +
+        // Giữ tỉ lệ gốc, letterbox bằng nền đen cho vừa khít khung hình output.
+        `scale=${W}:${H}:force_original_aspect_ratio=decrease,` +
+        `pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=black,` +
+        `setsar=1,fps=${fps},format=yuv420p` +
+        `[${v}]`
+      );
+      return {
+        label: `[${v}]`, clip,
+        start: clip.start, duration: clip.duration,
+        declaredEnd: clip.start + clip.duration, // vị trí kết thúc theo spec (để kiểm tra kề nhau)
+      };
+    });
+
+    // Bước 2: gộp các cặp clip kề nhau có transition fade bằng xfade.
+    // Ngữ nghĩa (đã ghi trong README): T giây cuối của clip A crossfade với T giây đầu
+    // của clip B — nội dung B bắt đầu sớm hơn T giây so với start đã khai báo.
+    // xfade([A],[B], duration=T, offset=dA-T) cho ra stream dài dA+dB-T.
+    const trackUnits = [];
+    let cur = null;
+    for (const seg of segs) {
+      let merged = false;
+      if (cur) {
+        const tr = transMap.get(`${track.id}:${cur.clip.id}`);
+        if (tr && tr.to === seg.clip.id && tr.duration > EPS) {
+          const T = tr.duration;
+          const x = lbl("x");
+          fc.push(
+            `${cur.label}${seg.label}` +
+            `xfade=transition=fade:duration=${num(T)}:offset=${num(cur.duration - T)}` +
+            `[${x}]`
+          );
+          cur = {
+            label: `[${x}]`, clip: seg.clip,
+            start: cur.start,
+            duration: cur.duration + seg.duration - T,
+            declaredEnd: seg.declaredEnd,
+          };
+          merged = true;
+        }
+      }
+      if (!merged) {
+        if (cur) trackUnits.push(cur);
+        cur = seg;
+      }
+    }
+    if (cur) trackUnits.push(cur);
+    units.push(...trackUnits);
+  }
+
+  // ===== VIDEO: đặt từng unit lên timeline =====
+  // Công thức đã kiểm chứng thực tế (test với color source):
+  //   setpts=PTS+S/TB  → dời timestamp của unit tới vị trí S trên timeline,
+  //   overlay=eof_action=pass → trước S hiện nền, trong [S, S+dur) hiện unit, sau đó trả về nền.
+  // overlay đồng bộ frame theo timestamp nên KHÔNG dùng enable=... (tránh lệch frame).
+  fc.push(`color=c=black:s=${W}x${H}:r=${fps}:d=${num(D)},format=yuv420p[base0]`);
+  let base = "[base0]";
+  for (const u of units) {
+    const p = lbl("pl"), b = lbl("base");
+    fc.push(`${u.label}setpts=PTS+${num(u.start)}/TB[${p}]`);
+    fc.push(`${base}[${p}]overlay=0:0:eof_action=pass[${b}]`);
+    base = `[${b}]`;
+  }
+
+  // ===== TEXT: drawtext cho animation "none" / "fadeUp" =====
+  let vcur = base;
+  for (const track of spec.tracks.filter((t) => t.kind === "text")) {
+    for (const clip of track.clips) {
+      if (clip.style.animation === "typewriter") continue; // xử lý riêng bằng ASS bên dưới
+      const st = clip.style;
+      const S = clip.start, E = clip.start + clip.duration;
+      const fx = `(w-text_w)*${st.x ?? 0.5}`;
+      let fy = `(h-text_h)*${st.y ?? 0.5}`;
+      let extra = "";
+      if (st.animation === "fadeUp") {
+        // Hiện dần + trồi lên 30px trong 0.6 giây đầu — alpha và y đều là biểu thức theo t.
+        const k = `min(1,(t-${num(S)})/0.6)`;
+        fy = `(h-text_h)*${st.y ?? 0.5}-30*(1-${k})`;
+        extra += `:alpha='${k}'`;
+      }
+      if (st.backgroundColor) {
+        extra += `:box=1:boxcolor=${st.backgroundColor}:boxborderw=${Math.max(4, Math.round(st.fontSize / 4))}`;
+      }
+      const d = lbl("dt");
+      fc.push(
+        `${vcur}drawtext=` +
+        `fontfile='${escapeFilterPath(fontFiles.get(clip.id))}':` +
+        `text='${escapeDrawtext(clip.text)}':` +
+        `fontsize=${st.fontSize}:fontcolor=${st.color}:` +
+        `x='${fx}':y='${fy}':` +
+        `enable='between(t,${num(S)},${num(E)})'${extra}` +
+        `[${d}]`
+      );
+      vcur = `[${d}]`;
+    }
+  }
+
+  // ===== TEXT: typewriter qua file ASS + filter subtitles (libass) =====
+  const twClips = [];
+  for (const track of spec.tracks.filter((t) => t.kind === "text"))
+    for (const clip of track.clips)
+      if (clip.style.animation === "typewriter") twClips.push(clip);
+  let assFile = null;
+  if (twClips.length > 0) {
+    assFile = buildTypewriterAss(twClips, { width: W, height: H });
+    const s = lbl("sub");
+    fc.push(`${vcur}subtitles='${escapeFilterPath(assFile)}'[${s}]`);
+    vcur = `[${s}]`;
+  }
+
+  // ===== AUDIO =====
+  // Mỗi clip: cắt [in, in+duration) → chuẩn 48kHz stereo → volume → afade →
+  // adelay tới vị trí start trên timeline. Rồi trộn tất cả bằng amix.
+  const aseg = [];
+  for (const track of spec.tracks.filter((t) => t.kind === "audio")) {
+    for (const clip of track.clips) {
+      const idx = mediaIndex.get(absOf(clip.src));
+      const a = lbl("ac");
+      let chain =
+        `[${idx}:a]` +
+        `atrim=start=${num(clip.in)}:end=${num(clip.in + clip.duration)},` +
+        `asetpts=PTS-STARTPTS,aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo`;
+      const vol = clip.volume ?? 1;
+      if (Math.abs(vol - 1) > EPS) chain += `,volume=${num(vol)}`;
+      if ((clip.fadeIn ?? 0) > EPS) chain += `,afade=t=in:st=0:d=${num(clip.fadeIn)}`;
+      if ((clip.fadeOut ?? 0) > EPS)
+        chain += `,afade=t=out:st=${num(clip.duration - clip.fadeOut)}:d=${num(clip.fadeOut)}`;
+      chain += `,adelay=${Math.round(clip.start * 1000)}:all=1[${a}]`;
+      fc.push(chain);
+      aseg.push(`[${a}]`);
+    }
+  }
+  let aout;
+  if (aseg.length === 0) {
+    // Không có track audio: tạo track câm để output luôn có audio stream (đúng hợp đồng H.264+AAC).
+    fc.push(`anullsrc=r=48000:cl=stereo:d=${num(D)}[aout0]`);
+    aout = "[aout0]";
+  } else {
+    const mixed = lbl("amx");
+    // amix duration=longest: output dài bằng clip kết thúc muộn nhất; apad bù câm tới D.
+    fc.push(
+      `${aseg.join("")}amix=inputs=${aseg.length}:duration=longest:dropout_transition=0,` +
+      `apad=whole_dur=${num(D)},atrim=0:${num(D)}[${mixed}]`
+    );
+    aout = `[${mixed}]`;
+  }
+
+  return { filterComplex: fc.join(";"), vout: vcur, aout, assFile };
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+function main() {
+  const args = parseArgs(process.argv);
+  const log = (...m) => { if (!args.quiet) console.log(...m); };
+
+  // 1. Đọc spec
+  let raw;
+  try {
+    raw = fs.readFileSync(args.spec, "utf8");
+  } catch {
+    console.error(`❌ Không đọc được file spec: ${args.spec}`);
+    process.exit(2);
+  }
+  let spec;
+  try {
+    spec = JSON.parse(raw);
+  } catch (e) {
+    console.error(`❌ File spec không phải JSON hợp lệ: ${e.message}`);
+    process.exit(1);
+  }
+  if (!isVideoSpec(spec)) {
+    console.error(
+      `❌ Spec không qua kiểm tra tối thiểu (isVideoSpec): ` +
+      `cần { version: "${SPEC_VERSION}", meta: {...}, tracks: [...] }`
+    );
+    process.exit(1);
+  }
+
+  // 2. Validate cấu trúc
+  const v = validateSpec(spec);
+  for (const w of v.warnings) console.error(`⚠️  ${w}`);
+  if (!v.ok) {
+    console.error(`\n❌ Spec không hợp lệ (${v.errors.length} lỗi):`);
+    v.errors.forEach((e, i) => console.error(`  ${i + 1}. ${e}`));
+    process.exit(1);
+  }
+
+  const meta = spec.meta;
+  const D = projectDuration(spec);
+  const mediaDir = args.mediaDir
+    ? path.resolve(args.mediaDir)
+    : path.join(path.dirname(path.resolve(args.spec)), "media");
+  const absOf = (src) => resolveSrc(src, mediaDir);
+
+  // 3. Validate media
+  const mv = validateMedia(spec, mediaDir, args.ffprobe);
+  for (const w of mv.warnings) console.error(`⚠️  ${w}`);
+  if (!mv.ok) {
+    console.error(`\n❌ Media không hợp lệ (${mv.errors.length} lỗi):`);
+    mv.errors.forEach((e, i) => console.error(`  ${i + 1}. ${e}`));
+    process.exit(1);
+  }
+
+  // 4. Resolve font cho các text clip dùng drawtext (fail fast trước khi render)
+  const fontFiles = new Map();
+  for (const track of spec.tracks.filter((t) => t.kind === "text")) {
+    for (const clip of track.clips) {
+      if (clip.style.animation === "typewriter") continue; // libass tự resolve qua fontconfig
+      const f = resolveFontFile(clip.style.fontFamily, clip.style);
+      if (!f) {
+        console.error(`❌ Không tìm được font "${clip.style.fontFamily}" cho text clip "${clip.id}"`);
+        process.exit(1);
+      }
+      fontFiles.set(clip.id, f);
+      log(`   font "${clip.style.fontFamily}" → ${f}`);
+    }
+  }
+
+  // 5. Đánh chỉ số input cho từng file media (mỗi file chỉ -i một lần)
+  const mediaIndex = new Map();
+  const orderedMedia = [];
+  const register = (src) => {
+    const abs = absOf(src);
+    if (!mediaIndex.has(abs)) {
+      mediaIndex.set(abs, orderedMedia.length);
+      orderedMedia.push(abs);
+    }
+  };
+  for (const track of spec.tracks)
+    for (const clip of track.clips)
+      if (clip.src) register(clip.src);
+
+  // 6. Dựng filter graph
+  const { filterComplex, vout, aout, assFile } = buildFilterGraph(spec, {
+    W: meta.width, H: meta.height, fps: meta.fps, D,
+    mediaIndex, absOf, transitions: v.transitions, fontFiles,
+  });
+
+  const outAbs = path.resolve(args.out);
+  if (fs.existsSync(outAbs) && !args.overwrite) {
+    console.error(`❌ File output đã tồn tại: ${outAbs} (dùng -y để ghi đè)`);
+    process.exit(2);
+  }
+
+  const ffArgs = [];
+  for (const m of orderedMedia) ffArgs.push("-i", m);
+  ffArgs.push(
+    "-filter_complex", filterComplex,
+    "-map", vout, "-map", aout,
+    "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+    "-pix_fmt", "yuv420p", "-r", String(meta.fps),
+    "-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-ac", "2",
+    "-movflags", "+faststart",
+    "-t", num(D),
+    "-y", outAbs
+  );
+
+  if (args.dryRun) {
+    console.log([args.ffmpeg, ...ffArgs.map((a) => (/\s/.test(a) ? `'${a}'` : a))].join(" "));
+    return;
+  }
+
+  // 7. Chạy ffmpeg
+  log(`🎬 Render "${meta.name}" → ${outAbs}`);
+  log(`   ${meta.width}x${meta.height} @ ${meta.fps}fps, thời lượng ${num(D)}s, ` +
+    `${orderedMedia.length} file media, ${v.transitions.length} transition`);
+  const t0 = Date.now();
+  const r = spawnSync(args.ffmpeg, ffArgs, {
+    stdio: ["ignore", "ignore", args.quiet ? "ignore" : "inherit"],
+  });
+  const dt = ((Date.now() - t0) / 1000).toFixed(1);
+
+  // Dọn file ASS tạm (giữ lại khi lỗi để debug)
+  if (assFile && r.status === 0) {
+    try { fs.unlinkSync(assFile); } catch { /* bỏ qua */ }
+  } else if (assFile) {
+    console.error(`   (giữ file ASS tạm để debug: ${assFile})`);
+  }
+
+  if (r.error) {
+    console.error(`\n❌ Không chạy được ffmpeg: ${r.error.message}`);
+    process.exit(2);
+  }
+  if (r.status !== 0) {
+    console.error(`\n❌ ffmpeg thoát với mã ${r.status} — render thất bại`);
+    process.exit(2);
+  }
+  log(`\n✅ Xong trong ${dt}s → ${outAbs}`);
+}
+
+main();
