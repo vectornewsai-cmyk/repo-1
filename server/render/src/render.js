@@ -43,9 +43,11 @@ const { buildTextExprs, buildOverlayExprs } = require("./keyframes");
 const { buildChromaFilter } = require("./chroma");
 const { buildTextAnimExpr, isTextFxAnimation } = require("./textfx");
 // Phase 3c: LUT filters, video effects, stickers.
-const { buildLutFilter } = require("./lut");
+const { buildLutFilter, buildColorAdjustFilter } = require("./lut");
 const { buildEffectsChain } = require("./effects");
 const { buildStickerOverlay } = require("./sticker");
+// Batch G (R1-076): audio effects — dựng chuỗi filter cho AudioEffects.
+const { buildAudioEffectsFilters } = require("./audioroute");
 // P0-03: image clip (ảnh tĩnh thành media type chính thức).
 const { buildImageChain } = require("./image");
 // R1-011: opacity/alpha cho video clip.
@@ -269,7 +271,10 @@ function buildFilterGraph(spec, ctx) {
       // Chroma key: áp sau speed, trước scale (key trên pixel gốc cho chính xác).
       const chromaChain = clip.chromaKey ? `,${buildChromaFilter(clip.chromaKey)}` : "";
       // LUT filter + video effects: áp sau scale/pad (trên pixel output).
+      // R1-075: chỉnh màu thủ công áp TRƯỚC LUT (correction → look).
       // buildLutFilter cần assetsDir — lấy từ ctx.
+      const colorFilter = buildColorAdjustFilter(clip.filter?.color);
+      const colorChain = colorFilter ? `,${colorFilter}` : "";
       const lutChain = clip.filter?.lut ? `,${buildLutFilter(clip.filter.lut, ctx.assetsDir)}` : "";
       const fxChain = buildEffectsChain(clip.effects);
       const effectsChain = fxChain ? `,${fxChain}` : "";
@@ -288,7 +293,7 @@ function buildFilterGraph(spec, ctx) {
         // Giữ tỉ lệ gốc, letterbox bằng nền đen (hoặc trong suốt nếu chroma) cho vừa khít khung hình output.
         `scale=${W}:${H}:force_original_aspect_ratio=decrease,` +
         `pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=${padColor},` +
-        `setsar=1,fps=${fps},format=${outFormat}${lutChain}${effectsChain}` +
+        `setsar=1,fps=${fps},format=${outFormat}${colorChain}${lutChain}${effectsChain}` +
         `[${v}]`
       );
       return {
@@ -424,7 +429,8 @@ function buildFilterGraph(spec, ctx) {
         fx = te.x; fy = te.y;
         extra += `:alpha='${te.alpha}'`;
       } else if (isTextFxAnimation(st.animation) && st.animation !== "none" && st.animation !== "fadeUp") {
-        const te = buildTextAnimExpr(st.animation, st, S);
+        // Batch G (R1-070): truyền clipEnd cho exit animations (fadeOut, slideOutRight...).
+        const te = buildTextAnimExpr(st.animation, st, S, E);
         fx = te.x; fy = te.y;
         extra += `:alpha='${te.alpha}'`;
       } else {
@@ -486,6 +492,9 @@ function buildFilterGraph(spec, ctx) {
       `${streamRef}` +
       `atrim=start=${num(clip.in)}:end=${num(clip.in + clip.duration * spd)},` +
       `asetpts=PTS-STARTPTS${speedChain},aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo`;
+    // R1-076: audio effects (bass → treble → noiseReduction → compressor → reverb),
+    // áp dụng sau aformat, trước volume.
+    chain += buildAudioEffectsFilters(clip.audioEffects);
     const vol = clip.volume ?? 1;
     if (Math.abs(vol - 1) > EPS) chain += `,volume=${num(vol)}`;
     if ((clip.fadeIn ?? 0) > EPS) chain += `,afade=t=in:st=0:d=${num(clip.fadeIn)}`;
