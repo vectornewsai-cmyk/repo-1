@@ -125,6 +125,15 @@ function validateSpec(spec) {
       err(`${tw}.kind`, `phải là "video" | "audio" | "text" | "sticker" | "image", nhận được: ${JSON.stringify(track.kind)}`);
       continue;
     }
+    // R1-054: track controls — 3 flag boolean tùy chọn.
+    for (const flag of ["muted", "locked", "hidden"]) {
+      if (track[flag] !== undefined && typeof track[flag] !== "boolean") {
+        err(`${tw}.${flag}`, "phải là boolean");
+      }
+    }
+    if (track.kind === "audio" && track.hidden === true) {
+      warn(`${tw}: hidden không có tác dụng với track audio (chỉ mute mới tắt tiếng)`);
+    }
     if (!Array.isArray(track.clips)) {
       err(`${tw}.clips`, "phải là một mảng"); continue;
     }
