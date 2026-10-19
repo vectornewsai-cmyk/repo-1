@@ -1284,3 +1284,87 @@ input[type="color"] {
   color: var(--muted);
   font-size: 13px;
 }
+
+/* --- CaptionModal (R1-072) --- */
+.modal-body {
+  padding: 16px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 13px;
+}
+.modal-body .muted {
+  color: var(--muted);
+  margin: 0;
+}
+.modal-body .muted.small {
+  font-size: 12px;
+}
+.modal-body .warn {
+  color: #f5b453;
+  margin: 0;
+}
+.modal-body .error {
+  color: #ff7b7b;
+  margin: 0;
+  white-space: pre-wrap;
+}
+.caption-running {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 0;
+  text-align: center;
+}
+.spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  animation: caption-spin 0.9s linear infinite;
+}
+@keyframes caption-spin {
+  to { transform: rotate(360deg); }
+}
+.caption-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 8px;
+}
+.caption-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--bg2);
+}
+.caption-row.dropped {
+  opacity: 0.45;
+}
+.caption-row.dropped .caption-text {
+  text-decoration: line-through;
+}
+.caption-tc {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.caption-text {
+  flex: 1;
+  min-width: 0;
+}
+.icon-btn.sm {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+}
