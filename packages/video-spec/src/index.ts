@@ -19,13 +19,20 @@ export * from "./keyframes";
 // Phase 3b: chroma key, text animations.
 export * from "./chroma";
 export * from "./textfx";
+// Phase 3c: LUT filters, video effects, stickers.
+export * from "./lut";
+export * from "./effects";
+export * from "./sticker";
 // Lưu ý: "./transitions" export `Transition` (type mở rộng) — dùng thay cho
-// định nghĩa cũ. "./keyframes" và "./chroma" gắn `animations?` / `chromaKey?`
-// vào VideoClip/TextClip qua module augmentation.
+// định nghĩa cũ. "./keyframes", "./chroma" và "./lut" gắn `animations?` /
+// `chromaKey?` / `filter?` vào VideoClip qua module augmentation.
 
 import type { Transition } from "./transitions";
 import type { ClipAnimations } from "./keyframes";
 import type { TextAnimation } from "./textfx";
+import type { VideoFilter } from "./lut";
+import type { VideoEffect } from "./effects";
+import type { StickerClip } from "./sticker";
 
 export interface VideoMeta {
   /** Tên dự án */
@@ -37,7 +44,7 @@ export interface VideoMeta {
   fps: number;
 }
 
-export type TrackKind = "video" | "audio" | "text";
+export type TrackKind = "video" | "audio" | "text" | "sticker";
 
 export interface Track {
   id: string;
@@ -71,6 +78,10 @@ export interface VideoClip {
   reverse?: boolean;
   /** Keyframe animation (x, y, opacity) — xem ClipAnimations */
   animations?: ClipAnimations;
+  /** Bộ lọc màu LUT — xem VideoFilter */
+  filter?: VideoFilter;
+  /** Hiệu ứng video — xem VideoEffect[] */
+  effects?: VideoEffect[];
 }
 
 /** Clip audio trên timeline */
@@ -104,7 +115,7 @@ export interface TextClip {
   animations?: ClipAnimations;
 }
 
-export type Clip = VideoClip | AudioClip | TextClip;
+export type Clip = VideoClip | AudioClip | TextClip | StickerClip;
 
 // Lưu ý: `Transition` được import từ "./transitions" ở đầu file
 // (type mở rộng với 13 loại transition, thay cho "fade" | "none" cũ).
