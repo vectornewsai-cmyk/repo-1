@@ -3,7 +3,7 @@
  * cho preview canvas, mirror render engine `server/render/src/render.js`.
  *
  * THỨ TỰ TRANSFORM (khóa cứng, phải giống render.js — video):
- *   trim → setpts=PTS-STARTPTS → SPEED → CHROMA → scale/pad → LUT → EFFECTS
+ *   trim → setpts=PTS-STARTPTS → SPEED → CHROMA → scale/pad → COLOR → LUT → EFFECTS
  *   → (xfade merge) → OPACITY → KEYFRAMES (x/y qua overlay)
  * Composite: video → image → sticker → text.
  * Text: keyframes (animations) > textfx animation > fadeUp > none; typewriter riêng.
@@ -17,6 +17,7 @@ import {
   STICKER_DEFAULTS,
   interpolateKeyframes,
   type ChromaKey,
+  type ColorAdjust,
   type ImageClip,
   type LutId,
   type StickerClip,
@@ -30,6 +31,7 @@ import {
 export const PREVIEW_TRANSFORM_ORDER = [
   "speed",
   "chroma",
+  "color",
   "lut",
   "effects",
   "opacity",
@@ -85,6 +87,17 @@ const LUT_CSS: Record<LutId, string> = {
   "cartcut-ocean": "saturate(1.35) hue-rotate(12deg)",
   "cartcut-faded-seventies": "sepia(0.45) contrast(0.85) brightness(1.08)",
   "cartcut-super-eight": "sepia(0.55) contrast(1.12) saturate(0.9)",
+  // vcut-*: xấp xỉ cảm giác màu của file .cube tự tạo
+  "vcut-cinematic": "contrast(1.2) saturate(1.15) sepia(0.25)",
+  "vcut-vintage-fade": "sepia(0.4) contrast(0.85) brightness(1.1) saturate(0.85)",
+  "vcut-noir-contrast": "grayscale(1) contrast(1.5)",
+  "vcut-cyberpunk": "saturate(1.5) contrast(1.15) hue-rotate(-20deg)",
+  "vcut-pastel-dream": "saturate(0.7) brightness(1.1) contrast(0.9)",
+  "vcut-sunset-glow": "sepia(0.5) saturate(1.4) brightness(1.05)",
+  "vcut-arctic": "saturate(0.9) brightness(1.05) hue-rotate(15deg)",
+  "vcut-faded-film": "sepia(0.3) contrast(0.8) brightness(1.05) saturate(0.8)",
+  "vcut-moody-forest": "saturate(0.95) contrast(1.15) brightness(0.9) hue-rotate(-10deg)",
+  "vcut-warm-bloom": "sepia(0.3) saturate(1.15) brightness(1.08)",
 };
 
 /** Mọi LUT id trong catalog đều phải có ánh xạ CSS (test sẽ kiểm tra). */
@@ -93,6 +106,33 @@ export function lutCssFilter(lut: LutId | string): string | null {
     return LUT_CSS[lut as LutId];
   }
   return null;
+}
+
+/**
+ * Chỉnh màu thủ công → CSS filter XẤP XỈ (mirror buildColorAdjustFilter).
+ * Thứ tự render: color adjust TRƯỚC LUT → CSS này đứng trước lutCss.
+ * temperature/tint/highlights/shadows không có CSS tương đương chính xác —
+ * xấp xỉ bằng sepia/hue-rotate/brightness.
+ */
+export function colorAdjustCssFilter(c: ColorAdjust | undefined | null): string {
+  if (!c || typeof c !== "object") return "";
+  const parts: string[] = [];
+  const v = (k: keyof ColorAdjust): number => c[k] ?? 0;
+  const b = v("brightness");
+  if (b !== 0) parts.push(`brightness(${(1 + b / 100).toFixed(3)})`);
+  const ct = v("contrast");
+  if (ct !== 0) parts.push(`contrast(${(1 + ct / 100).toFixed(3)})`);
+  const s = v("saturation");
+  if (s !== 0) parts.push(`saturate(${(1 + s / 100).toFixed(3)})`);
+  const t = v("temperature");
+  if (t !== 0) parts.push(`sepia(${(Math.abs(t) / 100 * 0.5).toFixed(3)})`);
+  const tint = v("tint");
+  if (tint !== 0) parts.push(`hue-rotate(${(-tint * 0.3).toFixed(1)}deg)`);
+  const hi = v("highlights");
+  if (hi !== 0) parts.push(`brightness(${(1 + hi / 100 * 0.3).toFixed(3)})`);
+  const sh = v("shadows");
+  if (sh !== 0) parts.push(`brightness(${(1 + sh / 100 * 0.2).toFixed(3)})`);
+  return parts.join(" ");
 }
 
 // ---------------------------------------------------------------------------
@@ -209,9 +249,10 @@ export function videoClipVisual(
   const offsetY = a?.y
     ? interpolateKeyframes(a.y.keyframes, localT) * (frameH - unitH)
     : 0;
+  const colorCss = colorAdjustCssFilter(clip.filter?.color);
   const lutCss = clip.filter?.lut ? (lutCssFilter(clip.filter.lut) ?? "") : "";
   const fx = effectsVisual(clip.effects);
-  const cssFilter = [lutCss, fx.css].filter(Boolean).join(" ");
+  const cssFilter = [colorCss, lutCss, fx.css].filter(Boolean).join(" ");
   return {
     opacity: clip.opacity ?? 1,
     offsetX,
@@ -289,6 +330,15 @@ export interface TextClipVisual {
  *  - slideUp:      y = yt+(1-q)*(H-yt),     alpha = q(0.7)
  *  - bounce:   y = yt-140*decay+40*decay*|sin(q*2π)|, alpha = p(0.3), q = p(1.0)
  *  - typewriter: ký tự i hiện từ start + i*(duration/n) — hết duration mới đủ chữ
+ * Batch G (R1-070):
+ *  - slideInDown: y = yt-(1-k)*(yt+textH), alpha = k(0.7)
+ *  - popIn:    y = yt-24*decay, alpha = min(1,lt/0.25) (giả lập, không scale thật)
+ *  - fadeOut/fadeOutUp: alpha = 1-q(0.8); fadeOutUp thêm y -= 30*q
+ *  - slideOutRight: x = xt+q*(W-xt); slideOutDown: y = yt+q*(H-yt); alpha = 1-q(0.7)
+ *  - wave:     y = yt+12*sin(2π*lt/1.2) (cả dòng, không từng ký tự)
+ *  - blink:    alpha = lt%1<0.5 ? 1 : 0.15
+ *  - shake:    x = xt+10*sin(lt*40)*max(0,1-lt/0.5)
+ *  - fadeInOut: alpha = min(p(0.5), 1-q(0.5))
  * với p(d) = clamp(localT / d).
  */
 export function textClipVisual(
@@ -300,6 +350,8 @@ export function textClipVisual(
 ): TextClipVisual {
   const st = clip.style;
   const p = (d: number) => clamp01(localT / d);
+  // Batch G (R1-070): tiến trình outro trong d giây cuối clip.
+  const exitP = (d: number) => clamp01(Math.max(0, (localT - (clip.duration - d)) / d));
 
   // 1. Keyframes ưu tiên hơn mọi animation (giống render.js).
   //    drawtext: x = (w-text_w)*interp — đây là MÉP TRÁI; đổi sang tâm để vẽ canvas.
@@ -365,6 +417,50 @@ export function textClipVisual(
         alpha: p(0.3),
         revealChars: null,
       };
+    }
+    // ---- Batch G (R1-070): 10 animation mới — mirror textfx.js ----
+    case "slideInDown": {
+      const k = p(0.7);
+      const top = yt - (1 - k) * (yt + m.textH);
+      return { cx: cx0, cy: top + m.textH / 2, alpha: k, revealChars: null };
+    }
+    case "popIn": {
+      // Giả lập pop (không scale thật — xem TEXTFX_LIMITS.md §1).
+      const k = p(0.5);
+      const decay = (1 - k) * (1 - k);
+      return { cx: cx0, cy: cy0 - 24 * decay, alpha: Math.min(1, localT / 0.25), revealChars: null };
+    }
+    case "fadeOut": {
+      const k = exitP(0.8);
+      return { cx: cx0, cy: cy0, alpha: 1 - k, revealChars: null };
+    }
+    case "fadeOutUp": {
+      const k = exitP(0.8);
+      return { cx: cx0, cy: cy0 - 30 * k, alpha: 1 - k, revealChars: null };
+    }
+    case "slideOutRight": {
+      const k = exitP(0.7);
+      const left = xt + k * (frameW - xt);
+      return { cx: left + m.textW / 2, cy: cy0, alpha: 1 - k, revealChars: null };
+    }
+    case "slideOutDown": {
+      const k = exitP(0.7);
+      const top = yt + k * (frameH - yt);
+      return { cx: cx0, cy: top + m.textH / 2, alpha: 1 - k, revealChars: null };
+    }
+    case "wave":
+      // Wave cả dòng chữ (không từng ký tự — xem TEXTFX_LIMITS.md §3).
+      return { cx: cx0, cy: cy0 + 12 * Math.sin((localT * 2 * Math.PI) / 1.2), alpha: 1, revealChars: null };
+    case "blink":
+      return { cx: cx0, cy: cy0, alpha: localT % 1 < 0.5 ? 1 : 0.15, revealChars: null };
+    case "shake": {
+      const decay = Math.max(0, 1 - localT / 0.5);
+      return { cx: cx0 + 10 * Math.sin(localT * 40) * decay, cy: cy0, alpha: 1, revealChars: null };
+    }
+    case "fadeInOut": {
+      const pin = p(0.5);
+      const pout = exitP(0.5);
+      return { cx: cx0, cy: cy0, alpha: Math.min(pin, 1 - pout), revealChars: null };
     }
     default:
       return { cx: cx0, cy: cy0, alpha: 1, revealChars: null };
