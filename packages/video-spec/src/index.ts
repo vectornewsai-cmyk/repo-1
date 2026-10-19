@@ -12,6 +12,17 @@
 
 export const SPEC_VERSION = "0.1.0" as const;
 
+// Re-export các module tính năng (Phase 3): transitions, speed, keyframes.
+export * from "./transitions";
+export * from "./speed";
+export * from "./keyframes";
+// Lưu ý: "./transitions" export `Transition` (type mở rộng) — dùng thay cho
+// định nghĩa cũ. "./keyframes" gắn `animations?` vào VideoClip/TextClip qua
+// module augmentation.
+
+import type { Transition } from "./transitions";
+import type { ClipAnimations } from "./keyframes";
+
 export interface VideoMeta {
   /** Tên dự án */
   name: string;
@@ -50,6 +61,12 @@ export interface VideoClip {
   transitionOut?: Transition;
   /** 0..1, mặc định 1 */
   opacity?: number;
+  /** Tốc độ phát 0.25–4, mặc định 1. duration hiệu dụng = (out - in) / speed */
+  speed?: number;
+  /** Phát ngược đoạn nguồn (đảo frame), mặc định false */
+  reverse?: boolean;
+  /** Keyframe animation (x, y, opacity) — xem ClipAnimations */
+  animations?: ClipAnimations;
 }
 
 /** Clip audio trên timeline */
@@ -65,6 +82,10 @@ export interface AudioClip {
   volume?: number;
   fadeIn?: number;
   fadeOut?: number;
+  /** Tốc độ phát 0.25–4, mặc định 1. duration hiệu dụng = (out - in) / speed */
+  speed?: number;
+  /** Phát ngược đoạn nguồn (đảo mẫu audio), mặc định false */
+  reverse?: boolean;
 }
 
 /** Clip chữ trên timeline */
@@ -75,16 +96,14 @@ export interface TextClip {
   start: number;
   duration: number;
   style: TextStyle;
+  /** Keyframe animation (x, y, opacity) — xem ClipAnimations */
+  animations?: ClipAnimations;
 }
 
 export type Clip = VideoClip | AudioClip | TextClip;
 
-export interface Transition {
-  /** Phase 1 chỉ hỗ trợ: "fade" | "none". Thêm loại mới phải implement ở cả preview + ffmpeg. */
-  type: "fade" | "none";
-  /** Độ dài transition (giây) */
-  duration: number;
-}
+// Lưu ý: `Transition` được import từ "./transitions" ở đầu file
+// (type mở rộng với 13 loại transition, thay cho "fade" | "none" cũ).
 
 export interface TextStyle {
   fontFamily: string;
