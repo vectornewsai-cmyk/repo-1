@@ -30,9 +30,10 @@
 4. **`similarity` cao + `blend` cao = biên nhòe.** Vật thể nhỏ, mảnh (ngón tay,
    dây) có thể bị mờ hoặc mất hẳn ở biên khi blend > 0.3.
 
-5. **Chưa tích hợp vào `render.js` chính.** Module `chroma.js` đã sẵn sàng với
-   hướng dẫn tích hợp 1-dòng trong header file (chèn sau `format=yuv420p`,
-   giữ kênh alpha `yuva420p` cho overlay). Agent chính cần nối vào.
+5. **Đã tích hợp vào `render.js` chính** (cập nhật 19/10/2026, commit `1844e2cc`).
+   `buildChromaFilter()` được gọi tại `render.js` dòng 225 (áp sau speed,
+   trước scale). `validate.js` gọi `validateChroma()` cho field `chromaKey`.
+   `ChromaPanel` đã mount vào `Inspector.tsx`.
 
 6. **Tương tác với transition (xfade):** unit đã qua xfade mà mang kênh alpha
    có thể composite không như mong đợi. Khuyến nghị: không đặt transition

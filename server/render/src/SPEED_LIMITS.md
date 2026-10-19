@@ -49,15 +49,10 @@ của CapCut). Muốn hiệu ứng "giọng chipmunk" khi tua nhanh thì phải 
 có tiếng và user bật reverse/speed, phần tiếng đó vẫn bị bỏ qua như cũ —
 không phải lỗi của module speed.
 
-### 5. Chưa tích hợp vào `render.js` / `validate.js`
-`speed.js` là module độc lập theo phân công (không được sửa `render.js`).
-Để render thật end-to-end từ spec JSON, chủ sở hữu render cần:
-- Trong `validate.js`: chấp nhận field `speed`/`reverse`, đổi bất biến
-  `duration ≤ out − in` thành `|duration − (out−in)/speed| ≤ EPS`
-  (hiện tại clip slow-motion 0.5x sẽ bị validate.js REJECT vì duration > out−in).
-- Trong `render.js` (`buildFilterGraph`): sau `trim…setpts=PTS-STARTPTS`,
-  chèn `buildSpeedFilter(clip.speed, clip.reverse)` vào chain video và audio.
-- Demo `speed-demo.js` đã mô phỏng đúng vị trí chèn này nên tích hợp là cơ học.
+### 5. Đã tích hợp vào `render.js` / `validate.js` (cập nhật 19/10/2026, commit `1844e2cc`)
+`buildSpeedFilter()` được gọi trong `buildFilterGraph` (video tại dòng 222,
+audio tại dòng 398). `validate.js` chấp nhận field `speed`/`reverse` và kiểm tra
+bất biến duration theo speed.
 
 ### 6. `store.ts` (editor) chưa tính speed ở trim/split
 - `trimClip` mép phải: công thức đúng là `out = in + duration × speed`

@@ -43,35 +43,18 @@ shader custom. Mỗi transition dưới đây đã render thật trong
    xfade), nhưng **chưa render thử nên KHÔNG đưa vào catalog** — đúng nguyên tắc
    "chưa test thì không khai báo".
 
-## 🔌 CHƯA TÍCH HỢP (cần agent chính làm — tôi không được sửa file người khác)
+## ✅ ĐÃ TÍCH HỢP (cập nhật 19/10/2026, commit `1844e2cc`)
 
-Module `transitions.js` đã xong và test độc lập, nhưng render worker chính
-**chưa dùng nó**:
+Module `transitions.js` đã được nối vào render worker chính:
 
-- `server/render/src/render.js` (dòng dựng xfade): hiện hardcode
-  `xfade=transition=fade`. Cần thay bằng `buildXfadeFilter(tr.type, T, offset)`.
-  Patch gợi ý (1 dòng):
-  ```js
-  const { buildXfadeFilter } = require("./transitions");
-  // ...
-  fc.push(
-    `${cur.label}${seg.label}` +
-    buildXfadeFilter(tr.type, T, cur.duration - T) +
-    `[${x}]`
-  );
-  ```
-- `server/render/src/validate.js`: hiện chỉ chấp nhận
-  `["fade", "none"]` ở `transitionIn/transitionOut` và logic ghép cặp
-  transition chỉ nhận `type === "fade"`. Cần mở rộng theo catalog mới
-  (dùng `isSupportedTransition()` từ `transitions.js`).
-- `packages/video-spec/src/index.ts`: `Transition["type"]` vẫn là
-  `"fade" | "none"` — nên import `TransitionType` từ `transitions.ts`
-  (file mới, chưa được export qua package `exports` — cần thêm entry
-  `"./transitions"` vào `packages/video-spec/package.json`).
-- `apps/web`: `TransitionPanel` (mới, ở
-  `apps/web/src/components/transitions/`) chưa được gắn vào `Inspector.tsx`
-  (hiện dropdown chỉ có none/fade); `preview.tsx` cũng chỉ preview được
-  fade bằng alpha — preview canvas cho các transition mới là việc riêng.
+- `server/render/src/render.js`: `buildXfadeFilter(tr.type, T, offset)` được gọi
+  tại dòng 264 (thay cho hardcode `xfade=transition=fade` cũ).
+- `server/render/src/validate.js`: dùng `isSupportedTransition()` để chấp nhận
+  cả 13 loại transition (không còn giới hạn `["fade", "none"]`).
+- `packages/video-spec/src/index.ts`: export `transitions.ts` với đầy đủ 13 type.
+- `apps/web`: `TransitionPanel` đã mount vào `Inspector.tsx`.
+- Preview canvas: vẫn chỉ preview được `fade` bằng alpha (các transition mới
+  chưa có preview riêng) — xem P0-08.
 
 ## Kiểm chứng đã làm
 

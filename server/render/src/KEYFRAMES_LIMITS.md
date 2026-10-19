@@ -23,19 +23,18 @@ chưa làm được ở thời điểm hiện tại. Không phóng đại, khôn
    - Spec + UI vẫn cho phép nhập/lưu 2 thuộc tính này (để sau này implement), nhưng render hiện tại **bỏ qua** chúng.
 2. **`opacity` của video clip chưa render.** Pipeline `render.js` Phase 1 dựng video bằng
    `overlay` trên nền đen, chưa có kênh alpha từng frame cho opacity keyframes.
-3. **Tích hợp vào `render.js` / `validate.js` chưa có.** Hai file đó thuộc về agent khác
-   (không được sửa) nên keyframes hiện render qua **demo script độc lập**
-   (`demo_keyframes_text.js`, `demo_keyframes_video.js`), chưa phải qua
-   `node src/render.js --spec project.json`. Việc nối vào render worker chính là
-   bước tiếp theo (cần sửa `buildFilterGraph` + `validateSpec`).
+3. **Đã tích hợp vào `render.js` / `validate.js`** (cập nhật 19/10/2026,
+   commit `1844e2cc`). `buildTextExprs`/`buildOverlayExprs` được gọi trong
+   `buildFilterGraph`; `validate.js` gọi `validateAnimations()`.
 4. **Preview trong editor chưa áp dụng keyframes.** `preview.tsx` thuộc về agent khác;
    panel keyframe chỉ hiển thị "giá trị nội suy tại playhead" bằng số. Canvas preview
    vẫn vẽ vị trí tĩnh.
 5. **Keyframe times là clip-local** (giây tính từ đầu clip), không phải timeline-global.
    Đây là lựa chọn thiết kế có chủ ý (giống CapCut), đã ghi trong spec.
 6. **Chưa có keyframe cho audio** (volume/pan theo thời gian) — ngoài phạm vi đợt này.
-7. **UI panel chưa được mount vào Inspector** — cần 1 dòng tích hợp, xem
-   `apps/web/src/components/keyframes/README.md` (do `Inspector.tsx` thuộc về agent khác).
+7. **UI panel đã được mount vào Inspector** (cập nhật 19/10/2026,
+   commit `1844e2cc`). `KeyframePanel` được import và render trong
+   `apps/web/src/Inspector.tsx`.
 
 ## Ngữ nghĩa easing (khóa cứng, không được đổi một bên)
 

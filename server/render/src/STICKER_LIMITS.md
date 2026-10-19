@@ -11,9 +11,13 @@
 
 ## Chưa làm được / giới hạn
 
-1. **Chưa tích hợp vào render.js/validate.js/index.ts** — theo phân công không
-   sửa file agent khác. Module `sticker.js` độc lập, đã có hướng dẫn tích hợp
-   từng bước trong `apps/web/src/components/sticker/README.md`.
+1. **Đã tích hợp vào render.js/validate.js/index.ts** (cập nhật 19/10/2026,
+   commit `1844e2cc`). `buildStickerOverlay()` được gọi trong `buildFilterGraph`
+   (`render.js` dòng 310-322); `validate.js` gọi `validateSticker()` và chấp nhận
+   track kind `"sticker"`; `packages/video-spec/src/index.ts` export `sticker.ts`
+   và `TrackKind` bao gồm `"sticker"`.
+   **Còn thiếu:** `StickerPanel.tsx` chưa được mount vào `Inspector.tsx`
+   (file tồn tại trong `apps/web/src/components/sticker/` nhưng chưa import).
 2. **Preview web chưa hiển thị sticker** — panel UI ghi rõ "hiệu lực khi render".
 3. **Không có keyframe cho sticker** — vị trí/kích thước/độ mờ là hằng số trong
    suốt clip. Muốn sticker bay theo thời gian thì cần thêm `animations` như
