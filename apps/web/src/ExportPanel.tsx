@@ -30,6 +30,83 @@ const BRIDGE_URL =
 
 type RenderStatus = "idle" | "uploading" | "rendering" | "done" | "error" | "cancelled";
 
+/** R1-083/R1-085: Auto-reframe — crop video theo chủ thể qua bridge /api/reframe. */
+function ReframeSection({ media, bridgeUrl }: { media: import("./media").MediaItem[]; bridgeUrl: string }) {
+  const videos = media.filter((m) => m.kind === "video" && m.file);
+  const [videoName, setVideoName] = useState<string>(videos[0]?.name ?? "");
+  const [aspect, setAspect] = useState<string>("9:16");
+  const [status, setStatus] = useState<"idle" | "working" | "done" | "error">("idle");
+  const [message, setMessage] = useState<string>("");
+
+  const start = async () => {
+    const item = videos.find((m) => m.name === videoName);
+    if (!item?.file || status === "working") return;
+    setStatus("working");
+    setMessage("Đang phân tích chủ thể và crop… (video dài có thể mất vài phút)");
+    try {
+      const form = new FormData();
+      form.append("media", item.file, item.file.name);
+      form.append("aspect", aspect);
+      const res = await fetch(`${bridgeUrl}/api/reframe`, { method: "POST", body: form });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Bridge trả lỗi ${res.status}`);
+      }
+      const blob = await res.blob();
+      const dot = item.name.lastIndexOf(".");
+      const base = dot > 0 ? item.name.slice(0, dot) : item.name;
+      const outName = `${base}_${aspect.replace(":", "x")}.mp4`;
+      const file = new File([blob], outName, { type: "video/mp4" });
+      await useStore.getState().importFiles([file]);
+      setStatus("done");
+      setMessage(`✅ Đã thêm "${outName}" vào kho media — xuất bằng preset TikTok 9:16 để đăng.`);
+    } catch (e) {
+      setStatus("error");
+      setMessage(e instanceof Error ? `❌ ${e.message}` :
+        `❌ Không kết nối được bridge server (${bridgeUrl}).`);
+    }
+  };
+
+  if (videos.length === 0) return null;
+  return (
+    <div className="reframe-section">
+      <div className="panel-head">📱 Auto-reframe theo chủ thể</div>
+      <p className="tips">
+        Crop video ngang sang dọc/vuông, tự động bám theo khuôn mặt hoặc chuyển động
+        (OpenCV local, không cloud). Kết quả được thêm vào kho media.
+      </p>
+      <div className="preset-row">
+        <label htmlFor="reframe-video">Video:</label>
+        <select
+          id="reframe-video"
+          value={videoName}
+          onChange={(e) => setVideoName(e.target.value)}
+          disabled={status === "working"}
+        >
+          {videos.map((v) => (
+            <option key={v.id} value={v.name}>{v.name}</option>
+          ))}
+        </select>
+        <label htmlFor="reframe-aspect">Tỉ lệ:</label>
+        <select
+          id="reframe-aspect"
+          value={aspect}
+          onChange={(e) => setAspect(e.target.value)}
+          disabled={status === "working"}
+        >
+          <option value="9:16">9:16 (TikTok/Reels)</option>
+          <option value="1:1">1:1 (Instagram)</option>
+          <option value="4:5">4:5 (Facebook)</option>
+        </select>
+        <button className="primary" onClick={start} disabled={status === "working" || !videoName}>
+          {status === "working" ? "⏳ Đang reframe…" : "🔍 Auto-reframe"}
+        </button>
+      </div>
+      {message && <p className="tips">{message}</p>}
+    </div>
+  );
+}
+
 /** R1-065: format ETA giây → "1:23" / "1:02:03". */
 function fmtEta(sec: number | null): string {
   if (sec == null || !isFinite(sec) || sec < 0) return "…";
@@ -377,6 +454,9 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
               {" "}<span title="Ước tính theo công thức bitrate × thời lượng, file thật có thể chênh lệch theo nội dung video">(ước tính)</span>
             </p>
           )}
+
+          {/* --- R1-083/R1-085: Auto-reframe 9:16 --- */}
+          <ReframeSection media={media} bridgeUrl={BRIDGE_URL} />
 
           {renderStatus === "idle" && (
             <p className="tips">
