@@ -35,6 +35,8 @@ export * from "./sticker.js";
 export * from "./image.js";
 // R1-015: audio routing cho video nguồn (inherit/mute/detach).
 export * from "./audio.js";
+// R1-055: frame-accurate timebase (snap theo frame, timecode).
+export * from "./timebase.js";
 // Lưu ý: "./transitions" export `Transition` (type mở rộng) — dùng thay cho
 // định nghĩa cũ. "./keyframes", "./chroma" và "./lut" gắn `animations?` /
 // `chromaKey?` / `filter?` vào VideoClip qua module augmentation.
@@ -65,6 +67,21 @@ export interface Track {
   kind: TrackKind;
   /** Tên hiển thị trên timeline */
   label?: string;
+  /**
+   * Tắt tiếng track (R1-054): audio track bị câm; video track thì audio kế thừa
+   * từ file nguồn cũng bị bỏ. Mặc định false.
+   */
+  muted?: boolean;
+  /**
+   * Khóa track (R1-054): editor không cho di chuyển/trim/tách/sửa/xóa clip
+   * trên track này. Chỉ có tác dụng ở UI, render bỏ qua. Mặc định false.
+   */
+  locked?: boolean;
+  /**
+   * Ẩn track (R1-054): track không hiện trong preview và không được render.
+   * Chỉ có ý nghĩa với track hình ảnh (video/text/sticker/image). Mặc định false.
+   */
+  hidden?: boolean;
   clips: Clip[];
 }
 

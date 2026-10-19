@@ -1,1 +1,12 @@
-{"description":"Định dạng video-spec JSON + TypeScript types — ngôn ngữ chung giữa editor, render worker và AI agent","exports":{".":"./src/index.ts","./speed":"./src/speed.ts"},"license":"MIT","name":"@repo-1/video-spec","type":"module","version":"0.1.0"}
+{
+  "description": "\u0110\u1ecbnh d\u1ea1ng video-spec JSON + TypeScript types \u2014 ng\u00f4n ng\u1eef chung gi\u1eefa editor, render worker v\u00e0 AI agent",
+  "exports": {
+    ".": "./src/index.ts",
+    "./speed": "./src/speed.ts",
+    "./timebase": "./src/timebase.ts"
+  },
+  "license": "MIT",
+  "name": "@repo-1/video-spec",
+  "type": "module",
+  "version": "0.1.0"
+}
