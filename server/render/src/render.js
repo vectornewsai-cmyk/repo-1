@@ -358,7 +358,10 @@ function buildFilterGraph(spec, ctx) {
       const oe = buildOverlayExprs(u.clip.animations, u.start);
       ox = oe.x; oy = oe.y;
     }
-    fc.push(`${base}[${p}]overlay=${ox}:${oy}:eof_action=pass[${b}]`);
+    // Biểu thức x/y chứa dấu phẩy (if(lt(...),...)) nên PHẢI bọc trong nháy đơn,
+    // nếu không FFmpeg tách nhầm filter và render crash (đã kiểm chứng).
+    // Demo keyframes-video.mp4 dùng cách quote này và chạy đúng.
+    fc.push(`${base}[${p}]overlay=x='${ox}':y='${oy}':eof_action=pass[${b}]`);
     base = `[${b}]`;
   }
 
@@ -645,6 +648,10 @@ function main() {
   }
 
   const ffArgs = [];
+  // R1-065: "-stats" bật tường minh (dù là mặc định của ffmpeg) để bridge
+  // server luôn parse được tiến trình (time=/frame=) từ stderr — ai đó thêm
+  // "-v error" sau này cũng không làm mất progress.
+  ffArgs.push("-stats");
   for (const m of orderedMedia) ffArgs.push("-i", m);
   ffArgs.push(
     "-filter_complex", filterComplex,
