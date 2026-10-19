@@ -1,0 +1,20 @@
+{
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "multer": "^2.0.0"
+  },
+  "description": "Local bridge server: nhận video-spec + media từ web UI, chạy render worker, trả về MP4.",
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "src/index.js",
+  "name": "@repo-1/bridge",
+  "private": true,
+  "scripts": {
+    "dev": "node src/index.js --port 8787",
+    "start": "node src/index.js"
+  },
+  "type": "commonjs",
+  "version": "0.1.0"
+}
