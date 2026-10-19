@@ -42,7 +42,7 @@ export * from "./timebase.js";
 // `chromaKey?` / `filter?` vào VideoClip qua module augmentation.
 
 import type { Transition } from "./transitions.js";
-import type { ClipAnimations } from "./keyframes.js";
+import type { ClipAnimations, KeyframedValue } from "./keyframes.js";
 import type { TextAnimation } from "./textfx.js";
 import type { VideoFilter } from "./lut.js";
 import type { VideoEffect } from "./effects.js";
@@ -133,6 +133,12 @@ export interface AudioClip {
   volume?: number;
   fadeIn?: number;
   fadeOut?: number;
+  /**
+   * Keyframe volume (giá trị 0..1, thời gian tính từ ĐẦU CLIP).
+   * Khi có, GHI ĐÈ `volume` tĩnh (ngữ nghĩa giống keyframes.ts).
+   * R1-063: preview (Web Audio) áp dụng; render worker chưa (validate.js warn).
+   */
+  volumeKeyframes?: KeyframedValue;
   /** Tốc độ phát 0.25–4, mặc định 1. duration hiệu dụng = (out - in) / speed */
   speed?: number;
   /** Phát ngược đoạn nguồn (đảo mẫu audio), mặc định false */

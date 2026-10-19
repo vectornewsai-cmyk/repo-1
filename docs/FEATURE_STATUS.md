@@ -22,12 +22,12 @@
 | Trim / Split | ✅ in/out/duration | ✅ store.ts | ⚠️ chưa áp speed (P0-07) | ✅ trim filter | ❌ | Manual | **VERIFIED**¹ |
 | Text overlay | ✅ TextClip | ✅ Inspector | ✅ drawtext tương đương | ✅ drawtext | ✅ add_text | Demo MP4 | **VERIFIED** |
 | Transitions (13) | ✅ transitions.ts | ✅ TransitionPanel đã mount | ⚠️ chỉ fade (alpha) | ✅ buildXfadeFilter | ⚠️ apply_transition (tập type cũ) | demo_transitions.js 12/12 | **VERIFIED** |
-| Keyframes (x/y/opacity) | ✅ keyframes.ts | ✅ KeyframePanel đã mount | ❌ | ✅ buildTextExprs/buildOverlayExprs | ❌ | self-test 13 nhóm | **VERIFIED**² |
+| Keyframes (x/y/opacity) | ✅ keyframes.ts | ✅ KeyframePanel đã mount | ✅ text x/y/opacity + video (công thức overlay) | ✅ buildTextExprs/buildOverlayExprs | ❌ | self-test 13 nhóm + preview-engine 80 assert | **VERIFIED**² |
 | Speed / Reverse | ✅ speed.ts | ✅ SpeedPanel đã mount | ❌ (P0-07) | ✅ buildSpeedFilter | ❌ | speed-demo.js 7/7 | **VERIFIED** |
-| Chroma key | ✅ chroma.ts | ✅ ChromaPanel đã mount | ❌ | ✅ buildChromaFilter | ❌ | demo_chroma.js (pixel-level) | **VERIFIED** |
+| Chroma key | ✅ chroma.ts | ✅ ChromaPanel đã mount | ✅ pixel shader canvas (xấp xỉ YUV) | ✅ buildChromaFilter | ❌ | demo_chroma.js (pixel-level) + preview-engine | **VERIFIED** |
 | LUT (10 filter) | ✅ lut.ts | ✅ LutPicker đã mount | ⚠️ CSS minh họa gần đúng | ✅ buildLutFilter (lut3d) | ❌ | demo_lut.js 3/3 | **VERIFIED** |
-| Video effects (7) | ✅ effects.ts | ✅ EffectPanel đã mount | ❌ | ✅ buildEffectsChain | ❌ | demo_effects.js | **VERIFIED** |
-| Sticker overlay | ✅ sticker.ts | ⚠️ StickerPanel tồn tại nhưng **chưa mount** vào Inspector | ❌ | ✅ buildStickerOverlay | ❌ | demo_sticker.js | **IMPLEMENTED-PARTIAL**³ |
+| Video effects (7) | ✅ effects.ts | ✅ EffectPanel đã mount | ⚠️ 5/7 (blur/grayscale/sepia/brightness/vignette; sharpen/noise skip) | ✅ buildEffectsChain | ❌ | demo_effects.js + preview-engine | **VERIFIED** |
+| Sticker overlay | ✅ sticker.ts | ✅ StickerPanel đã mount (Batch A) | ✅ vị trí/tỉ lệ/xoay/opacity | ✅ buildStickerOverlay | ❌ | demo_sticker.js + preview-engine | **VERIFIED** |
 | Audio waveform | n/a | ✅ waveform.ts + ClipWaveform | ✅ (trên timeline) | n/a | n/a | 16/16 test | **VERIFIED** |
 | Auto-caption (faster-whisper) | ✅ caption track JSON | ❌ (chỉ CLI) | n/a | n/a (pipeline riêng) | ❌ | Manual (tiếng Việt) | **IMPLEMENTED-PARTIAL**⁴ |
 | MCP tools (6) | ⚠️ schema MCP lạc hậu (P0-10) | n/a | n/a | ✅ via render_video | ✅ 6 tools | npm run demo 28/28 | **VERIFIED**⁵ |
@@ -37,7 +37,10 @@
 1. **Trim/Split:** VERIFIED ở speed=1. Khi clip có speed ≠ 1, `store.ts` tính
    `out = in + duration` (chỉ đúng khi speed=1) — xem P0-07 trong Master Plan.
 2. **Keyframes:** Chỉ x/y/opacity được render. `scale`/`rotation` lưu trong spec
-   nhưng render bỏ qua (xem KEYFRAMES_LIMITS.md). Preview chưa áp dụng keyframes.
+   nhưng render bỏ qua (xem KEYFRAMES_LIMITS.md). Preview đã áp dụng keyframes
+   text (x/y/opacity) và công thức overlay cho video (19/10, R1-060/061).
+   Lưu ý: video keyframes x/y không có hiệu ứng nhìn thấy ở cả render lẫn
+   preview vì unit đã pad đúng WxH (đã kiểm chứng bằng render thật).
 3. **Sticker:** Render đã tích hợp đầy đủ (`render.js` dòng 310-322,
    `validate.js` chấp nhận track kind `"sticker"`). Tuy nhiên `StickerPanel.tsx`
    tồn tại trong `apps/web/src/components/sticker/` nhưng **chưa được import/mount**
@@ -83,7 +86,11 @@
 
 - **Export MP4 từ UI:** ExportPanel chỉ xuất `.videospec.json`, chưa nối tới render worker (P0-01)
 - **Save/Load project:** Store là in-memory, chưa có persistence (P0-02)
-- **Preview đầy đủ:** preview.tsx chỉ hỗ trợ fade transition cơ bản; chưa có keyframes, speed, LUT, effects, chroma, sticker (P0-08)
+- **Preview đầy đủ (R1-060/061, 19/10):** preview.tsx đã parity với render.js —
+  letterbox (không còn cover-crop), composite video → image → sticker → text,
+  LUT (CSS xấp xỉ), 5/7 effects, chroma key pixel shader, sticker, image track,
+  đủ 7 text animation + keyframes. Xem `apps/web/src/lib/PREVIEW_LIMITS.md`
+  để biết những gì chỉ xấp xỉ.
 - **TTS tiếng Việt:** Chưa implement (Phase 2)
 - **Tách nền AI:** Chưa implement — chỉ có chroma key (key theo màu), không phải AI segmentation (Phase 2)
 - **Masking:** Chưa có
