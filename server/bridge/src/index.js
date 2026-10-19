@@ -26,7 +26,7 @@
  *                                files field "media" (nhiều file, filename = clip.src)
  *                                → 201 { jobId, status, queuePosition } | 429 (hàng đợi đầy) | 400
  *  GET    /api/render            → { jobs: [...] } (mới nhất trước, ?limit=)
- *  GET    /api/render/:id        → { id, status, progress, queuePosition, attempts, error?, outputName?, qaReport? }
+ *  GET    /api/render/:id        → { id, status, progress, etaSeconds, queuePosition, attempts, error?, outputName?, qaReport? }
  *  GET    /api/render/:id/download → file MP4 (khi status=done)
  *  DELETE /api/render/:id        → hủy job (kill cả process group) + xóa thư mục tạm
  *  POST   /api/render/:id/retry  → chạy lại job bị lỗi
@@ -279,6 +279,7 @@ function publicJob(j) {
     id: j.id,
     status: j.status,
     progress: Math.round(j.progress * 100) / 100,
+    etaSeconds: j.etaSeconds == null ? null : Math.round(j.etaSeconds * 10) / 10, // R1-065
     queuePosition: j.queuePosition,
     attempts: j.attempts,
     error: j.error,
