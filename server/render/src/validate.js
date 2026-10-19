@@ -21,13 +21,14 @@ const { isTextFxAnimation } = require("./textfx");
 const { validateVideoFilter } = require("./lut");
 const { validateEffects: validateVideoEffects } = require("./effects");
 const { validateSticker } = require("./sticker");
+const { validateImage } = require("./image");
 
 const SPEC_VERSION = "0.1.0";
 /** Sai số khi so sánh số thực (giây). */
 const EPS = 1e-6;
 /** Dung sai khi so sánh out với duration file thực (metadata container có thể lệch chút). */
 const MEDIA_EPS = 0.15;
-/** Codec của ảnh tĩnh — Phase 1 chưa hỗ trợ ảnh làm clip video. */
+/** Codec của ảnh tĩnh — video clip từ chối ảnh (dùng image track thay thế, xem P0-03). */
 const STILL_CODECS = new Set(["png", "bmp", "tiff", "mjpeg", "mng"]);
 
 /**
@@ -116,8 +117,8 @@ function validateSpec(spec) {
     }
     if (seenTrackIds.has(track.id)) err(tw, `trùng id track: "${track.id}"`);
     seenTrackIds.add(track.id);
-    if (!["video", "audio", "text", "sticker"].includes(track.kind)) {
-      err(`${tw}.kind`, `phải là "video" | "audio" | "text" | "sticker", nhận được: ${JSON.stringify(track.kind)}`);
+    if (!["video", "audio", "text", "sticker", "image"].includes(track.kind)) {
+      err(`${tw}.kind`, `phải là "video" | "audio" | "text" | "sticker" | "image", nhận được: ${JSON.stringify(track.kind)}`);
       continue;
     }
     if (!Array.isArray(track.clips)) {
@@ -130,15 +131,15 @@ function validateSpec(spec) {
       validateClip(track, clips[ci], `${tw}.clips[${ci}]`, err, warn);
     }
 
-    // Clip trên cùng track video không được chồng lấn thời gian
+    // Clip trên cùng track video/image không được chồng lấn thời gian
     // (track khác nhau được phép chồng — sẽ composite theo thứ tự track).
-    if (track.kind === "video") {
+    if (track.kind === "video" || track.kind === "image") {
       const sorted = [...clips].sort((a, b) => a.start - b.start);
       for (let i = 0; i + 1 < sorted.length; i++) {
         const a = sorted[i], b = sorted[i + 1];
         if (a.start + a.duration > b.start + EPS) {
           err(tw, `clip "${a.id}" [${a.start}, ${a.start + a.duration}] chồng lấn clip "${b.id}" ` +
-            `(bắt đầu ${b.start}) — trên cùng một track video các clip không được đè lên nhau`);
+            `(bắt đầu ${b.start}) — trên cùng một track ${track.kind} các clip không được đè lên nhau`);
         }
       }
     }
@@ -289,6 +290,15 @@ function validateClip(track, clip, where, err, warn) {
       err(where, m);
   }
 
+  if (track.kind === "image") {
+    // Image clip: cần src; không có in/out (ảnh không có trục thời gian).
+    // fit được validate bởi validateImage.
+    if (typeof clip.src !== "string" || clip.src.length === 0)
+      err(where, "thiếu src (đường dẫn file ảnh)");
+    for (const m of validateImage(clip))
+      err(where, m);
+  }
+
   if (track.kind === "audio") {
     const vol = clip.volume === undefined ? 1 : clip.volume;
     if (!isFiniteNumber(vol) || vol < 0 || vol > 1)
@@ -379,7 +389,7 @@ function validateMedia(spec, mediaDir, ffprobeBin) {
 
   const jobs = [];
   for (const track of spec.tracks) {
-    if (track.kind !== "video" && track.kind !== "audio") continue;
+    if (track.kind !== "video" && track.kind !== "audio" && track.kind !== "image") continue;
     for (const clip of track.clips) {
       jobs.push({ track, clip });
     }
@@ -425,7 +435,8 @@ function validateMedia(spec, mediaDir, ffprobeBin) {
       }
       // Ảnh tĩnh: chỉ 1 frame, hoặc codec vốn là ảnh.
       if (vs.nb_frames === "1" || STILL_CODECS.has(vs.codec_name)) {
-        err(`[${where}] là ảnh tĩnh (${vs.codec_name}) — Phase 1 chưa hỗ trợ ảnh làm clip video`);
+        err(`[${where}] là ảnh tĩnh (${vs.codec_name}) — video clip yêu cầu file video, ` +
+          `dùng image track cho ảnh tĩnh (xem P0-03)`);
         continue;
       }
       if (Number.isFinite(dur) && clip.out > dur + MEDIA_EPS) {
@@ -436,6 +447,20 @@ function validateMedia(spec, mediaDir, ffprobeBin) {
         warnedAudioSkip.add(abs);
         warn(`[${where}] file có audio stream nhưng Phase 1 BỎ QUA audio của video clip ` +
           `— hãy dùng track "audio" riêng nếu cần tiếng`);
+      }
+    } else if (track.kind === "image") {
+      // Image clip: file phải là ảnh tĩnh (video stream 1 frame hoặc codec ảnh).
+      // Không kiểm tra in/out — ảnh không có trục thời gian.
+      const vs = streams.find((s) => s.codec_type === "video");
+      if (!vs) {
+        err(`[${where}] file không có video stream (không phải ảnh?)`);
+        continue;
+      }
+      const isStill = vs.nb_frames === "1" || STILL_CODECS.has(vs.codec_name);
+      if (!isStill) {
+        err(`[${where}] không phải ảnh tĩnh (codec=${vs.codec_name}, nb_frames=${vs.nb_frames}) — ` +
+          `image clip yêu cầu file ảnh, dùng video track cho file video`);
+        continue;
       }
     } else {
       const as = streams.find((s) => s.codec_type === "audio");
