@@ -1,0 +1,23 @@
+/* Chữ với gạch chân vẽ dần từ trái sang phải — keyframes gốc.
+ * TỰ LÀM 100% cho VCut Studio — không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-underline-draw" vào element chữ
+ *   (mặc định vẽ 1 lần trong 0.9s, giữ trạng thái cuối).
+ */
+
+@keyframes vcut-underline-draw {
+  from { background-size: 0% 3px; }
+  to { background-size: 100% 3px; }
+}
+
+.text-preset.vcut-underline-draw {
+  font-weight: 700;
+  color: #f8fafc;
+  background-image: linear-gradient(90deg, #8b7cf6, #8b7cf6);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 3px;
+  padding-bottom: 4px;
+  animation: vcut-underline-draw 0.9s ease-out both;
+}

@@ -1,0 +1,14 @@
+/* Chữ thanh lịch — bóng mềm, khoảng cách chữ rộng kiểu điện ảnh.
+ * TỰ LÀM 100% cho VCut Studio — không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-cinematic" vào element chữ.
+ */
+
+.text-preset.vcut-cinematic {
+  color: #f1f5f9;
+  font-weight: 300;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.7);
+}

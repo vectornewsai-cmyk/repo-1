@@ -1,0 +1,19 @@
+/* Chữ glitch — tách kênh RGB rung nhẹ, keyframes gốc.
+ * TỰ LÀM 100% cho VCut Studio — không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-glitch" vào element chữ.
+ */
+
+@keyframes vcut-glitch-shift {
+  0%, 100% { text-shadow: 2px 0 0 #f43f5e, -2px 0 0 #22d3ee; }
+  25% { text-shadow: -3px 0 0 #f43f5e, 3px 0 0 #22d3ee; }
+  50% { text-shadow: 1px 0 0 #f43f5e, -1px 0 0 #22d3ee; }
+  75% { text-shadow: -2px 0 0 #f43f5e, 2px 0 0 #22d3ee; }
+}
+
+.text-preset.vcut-glitch {
+  color: #f8fafc;
+  font-weight: 800;
+  animation: vcut-glitch-shift 0.9s steps(2) infinite;
+}

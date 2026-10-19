@@ -1,0 +1,16 @@
+/* Chữ sticker bong bóng — nền bo tròn, chữ đậm, bóng đổ.
+ * TỰ LÀM 100% cho VCut Studio — không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-bubble" vào element chữ.
+ */
+
+.text-preset.vcut-bubble {
+  font-weight: 800;
+  color: #1e1b4b;
+  background: #fef08a;
+  border: 3px solid #1e1b4b;
+  border-radius: 16px;
+  padding: 6px 18px;
+  box-shadow: 4px 4px 0 #1e1b4b;
+}
