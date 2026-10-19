@@ -41,6 +41,22 @@ export const CAPTION_LANGS = [
 export type CaptionLangCode = (typeof CAPTION_LANGS)[number]["code"];
 
 /**
+ * R1-080: ngôn ngữ đích cho dịch phụ đề.
+ * faster-whisper "translate" task CHỈ dịch sang tiếng Anh (giới hạn của model)
+ * — list này mở rộng được khi có engine MT khác (vd: argos-translate en→vi).
+ */
+export const TRANSLATE_TARGET_LANGS = [
+  { code: "en", label: "Tiếng Anh" },
+] as const;
+
+export type TranslateTargetCode = (typeof TRANSLATE_TARGET_LANGS)[number]["code"];
+
+/** Nhãn track cho phụ đề đã dịch — hiển thị trong timeline. */
+export function translatedTrackLabel(targetCode: string): string {
+  return `Phụ đề (${targetCode.toUpperCase()})`;
+}
+
+/**
  * Validate mảng segments từ bridge (không tin dữ liệu mạng mù quáng).
  * Bỏ qua câu hỏng, sắp xếp theo start. Throw nếu không còn câu nào.
  */

@@ -14,9 +14,12 @@ import { useStore } from "../store";
 import type { MediaItem } from "../media";
 import {
   CAPTION_LANGS,
+  TRANSLATE_TARGET_LANGS,
+  translatedTrackLabel,
   validateCaptionSegments,
   type CaptionLangCode,
   type CaptionSegment,
+  type TranslateTargetCode,
 } from "../lib/captions";
 import { formatTimecode } from "@repo-1/video-spec";
 
@@ -77,17 +80,23 @@ export function CaptionModal({ onClose }: Props) {
 
   const [mediaId, setMediaId] = useState(defaultMediaId);
   const [lang, setLang] = useState<CaptionLangCode>("vi");
+  // R1-080: "" = không dịch; chọn đích → sau caption sẽ dịch và tạo track thứ 2.
+  const [targetLang, setTargetLang] = useState<"" | TranslateTargetCode>("");
   const [step, setStep] = useState<Step>("config");
   const [phaseMsg, setPhaseMsg] = useState("");
   const [elapsed, setElapsed] = useState(0);
   const [segments, setSegments] = useState<CaptionSegment[]>([]);
   const [dropped, setDropped] = useState<Set<number>>(new Set());
+  // R1-080: bản dịch (null = không dịch)
+  const [segmentsEn, setSegmentsEn] = useState<CaptionSegment[] | null>(null);
+  const [droppedEn, setDroppedEn] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<number | null>(null);
 
   const kept = segments.filter((_, i) => !dropped.has(i));
+  const keptEn = (segmentsEn ?? []).filter((_, i) => !droppedEn.has(i));
 
   // Dọn timer/abort khi đóng modal giữa chừng.
   useEffect(() => {
@@ -96,6 +105,68 @@ export function CaptionModal({ onClose }: Props) {
       abortRef.current?.abort();
     };
   }, []);
+
+  /**
+   * POST 1 job caption/translate lên bridge, đọc NDJSON stream → segments.
+   * Dùng chung cho /api/caption và /api/caption/translate (R1-080).
+   */
+  const runJob = async (
+    endpoint: string,
+    item: MediaItem,
+    fields: Record<string, string>,
+    ctrl: AbortController
+  ): Promise<CaptionSegment[]> => {
+    const form = new FormData();
+    if (!item.file) throw new Error("File media không còn tồn tại.");
+    form.append("media", item.file, item.file.name);
+    for (const [k, v] of Object.entries(fields)) form.append(k, v);
+    const res = await fetch(`${BRIDGE_URL}${endpoint}`, {
+      method: "POST",
+      body: form,
+      signal: ctrl.signal,
+    });
+    // Lỗi validate (4xx/503): bridge trả JSON thường, chưa stream.
+    const ct = res.headers.get("content-type") || "";
+    if (!res.ok && ct.includes("application/json")) {
+      const j = (await res.json()) as { error?: string };
+      throw new Error(j.error || `Bridge lỗi HTTP ${res.status}.`);
+    }
+    if (!res.ok || !res.body) {
+      throw new Error(
+        `Không kết nối được bridge (${BRIDGE_URL}). Hãy chạy: cd server/bridge && npm start`
+      );
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    let got: CaptionSegment[] | null = null;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let idx: number;
+      while ((idx = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, idx).trim();
+        buf = buf.slice(idx + 1);
+        if (!line) continue;
+        let evt: NdjsonEvent;
+        try {
+          evt = JSON.parse(line) as NdjsonEvent;
+        } catch {
+          continue; // dòng rác — bỏ qua, không fail cả luồng
+        }
+        if (evt.type === "phase") {
+          setPhaseMsg(evt.message || evt.phase || "Đang xử lý…");
+        } else if (evt.type === "done") {
+          got = validateCaptionSegments(evt.segments);
+        } else if (evt.type === "error") {
+          throw new Error(evt.error || "Caption thất bại.");
+        }
+      }
+    }
+    if (!got) throw new Error("Bridge ngắt kết nối giữa chừng — thử lại.");
+    return got;
+  };
 
   const start = async () => {
     const item = candidates.find((m) => m.id === mediaId);
@@ -107,6 +178,8 @@ export function CaptionModal({ onClose }: Props) {
     setStep("running");
     setSegments([]);
     setDropped(new Set());
+    setSegmentsEn(null);
+    setDroppedEn(new Set());
     setPhaseMsg("Đang gửi file lên bridge…");
     const t0 = Date.now();
     setElapsed(0);
@@ -115,55 +188,19 @@ export function CaptionModal({ onClose }: Props) {
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     try {
-      const form = new FormData();
-      form.append("media", item.file, item.file.name);
-      form.append("lang", lang);
-      const res = await fetch(`${BRIDGE_URL}/api/caption`, {
-        method: "POST",
-        body: form,
-        signal: ctrl.signal,
-      });
-      // Lỗi validate (4xx/503): bridge trả JSON thường, chưa stream.
-      const ct = res.headers.get("content-type") || "";
-      if (!res.ok && ct.includes("application/json")) {
-        const j = (await res.json()) as { error?: string };
-        throw new Error(j.error || `Bridge lỗi HTTP ${res.status}.`);
-      }
-      if (!res.ok || !res.body) {
-        throw new Error(
-          `Không kết nối được bridge (${BRIDGE_URL}). Hãy chạy: cd server/bridge && npm start`
-        );
-      }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = "";
-      let got: CaptionSegment[] | null = null;
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        let idx: number;
-        while ((idx = buf.indexOf("\n")) >= 0) {
-          const line = buf.slice(0, idx).trim();
-          buf = buf.slice(idx + 1);
-          if (!line) continue;
-          let evt: NdjsonEvent;
-          try {
-            evt = JSON.parse(line) as NdjsonEvent;
-          } catch {
-            continue; // dòng rác — bỏ qua, không fail cả luồng
-          }
-          if (evt.type === "phase") {
-            setPhaseMsg(evt.message || evt.phase || "Đang xử lý…");
-          } else if (evt.type === "done") {
-            got = validateCaptionSegments(evt.segments);
-          } else if (evt.type === "error") {
-            throw new Error(evt.error || "Caption thất bại.");
-          }
-        }
-      }
-      if (!got) throw new Error("Bridge ngắt kết nối giữa chừng — thử lại.");
+      const got = await runJob("/api/caption", item, { lang }, ctrl);
       setSegments(got);
+      // R1-080: dịch sang ngôn ngữ đích trên cùng file → track thứ 2.
+      if (targetLang) {
+        setPhaseMsg("Xong phụ đề gốc — bắt đầu dịch…");
+        const gotEn = await runJob(
+          "/api/caption/translate",
+          item,
+          { lang, target: targetLang },
+          ctrl
+        );
+        setSegmentsEn(gotEn);
+      }
       setStep("review");
     } catch (e) {
       if ((e as Error).name === "AbortError") {
@@ -188,6 +225,13 @@ export function CaptionModal({ onClose }: Props) {
     setApplying(true);
     try {
       useStore.getState().addCaptionTrack(kept);
+      // R1-080: track phụ đề dịch (nếu có) — undo riêng từng track.
+      if (targetLang && keptEn.length > 0) {
+        useStore.getState().addCaptionTrack(keptEn, {
+          label: translatedTrackLabel(targetLang),
+          historyLabel: `Dịch phụ đề sang ${targetLang.toUpperCase()}`,
+        });
+      }
       onClose();
     } finally {
       setApplying(false);
@@ -251,6 +295,29 @@ export function CaptionModal({ onClose }: Props) {
                   ))}
                 </select>
               </label>
+              <label className="field">
+                <span>🌐 Dịch sang</span>
+                <select
+                  value={targetLang}
+                  onChange={(e) =>
+                    setTargetLang(e.target.value as "" | TranslateTargetCode)
+                  }
+                >
+                  <option value="">Không dịch</option>
+                  {TRANSLATE_TARGET_LANGS.map((l) => (
+                    <option key={l.code} value={l.code}>
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {targetLang && (
+                <p className="muted small">
+                  Dịch bằng <b>faster-whisper</b> chạy local (không cloud) —
+                  hiện chỉ hỗ trợ sang tiếng Anh. Bản dịch được tạo thành
+                  track phụ đề thứ 2, giữ nguyên track gốc.
+                </p>
+              )}
               <p className="muted small">
                 Phụ đề được căn theo thời gian gốc của file (giây 0 = đầu file).
                 Nếu clip đã bị cắt/dời trên timeline, bạn có thể chọn các câu phụ
@@ -309,6 +376,50 @@ export function CaptionModal({ onClose }: Props) {
                   </div>
                 ))}
               </div>
+              {segmentsEn && (
+                <>
+                  <p style={{ marginTop: 12 }}>
+                    🌐 <b>{segmentsEn.length}</b> câu dịch
+                    ({targetLang.toUpperCase()})
+                    {droppedEn.size > 0 && (
+                      <span className="muted"> (bỏ {droppedEn.size} câu)</span>
+                    )}
+                    — sẽ tạo track {translatedTrackLabel(targetLang)}:
+                  </p>
+                  <div className="caption-list">
+                    {segmentsEn.map((s, i) => (
+                      <div
+                        key={i}
+                        className={
+                          "caption-row" + (droppedEn.has(i) ? " dropped" : "")
+                        }
+                      >
+                        <span className="caption-tc">
+                          {formatTimecode(s.start, fps)} →{" "}
+                          {formatTimecode(s.end, fps)}
+                        </span>
+                        <span className="caption-text">{s.text}</span>
+                        <button
+                          className="icon-btn sm"
+                          title={
+                            droppedEn.has(i) ? "Giữ lại câu này" : "Bỏ câu này"
+                          }
+                          onClick={() =>
+                            setDroppedEn((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(i)) next.delete(i);
+                              else next.add(i);
+                              return next;
+                            })
+                          }
+                        >
+                          {droppedEn.has(i) ? "↩" : "✕"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
@@ -339,6 +450,8 @@ export function CaptionModal({ onClose }: Props) {
                 disabled={kept.length === 0 || applying}
               >
                 ✓ Áp dụng {kept.length} câu phụ đề
+                {targetLang && keptEn.length > 0 &&
+                  ` + ${keptEn.length} câu ${targetLang.toUpperCase()}`}
               </button>
             </>
           )}

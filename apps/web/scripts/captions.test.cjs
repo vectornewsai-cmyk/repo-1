@@ -7,6 +7,8 @@ const {
   CAPTION_TRACK_LABEL,
   CAPTION_DEFAULT_STYLE,
   CAPTION_LANGS,
+  TRANSLATE_TARGET_LANGS,
+  translatedTrackLabel,
   validateCaptionSegments,
   segmentsToTextClips,
 } = require("./out/apps/web/src/lib/captions.js");
@@ -100,6 +102,30 @@ ok("CAPTION_TRACK_LABEL + CAPTION_LANGS", () => {
   assert.ok(codes.includes("vi"));
   assert.ok(codes.includes("en"));
   assert.ok(codes.includes("auto"));
+});
+
+console.log("== [4] R1-080 dịch phụ đề ==");
+ok("TRANSLATE_TARGET_LANGS hiện chỉ có en", () => {
+  const codes = TRANSLATE_TARGET_LANGS.map((l) => l.code);
+  assert.deepEqual(codes, ["en"]);
+});
+ok("translatedTrackLabel('en') → 'Phụ đề (EN)'", () => {
+  assert.equal(translatedTrackLabel("en"), "Phụ đề (EN)");
+});
+ok("translatedTrackLabel viết hoa mã", () => {
+  assert.equal(translatedTrackLabel("EN"), "Phụ đề (EN)");
+});
+ok("segments bản dịch validate như caption gốc (giữ timing, đổi text)", () => {
+  const out = validateCaptionSegments([
+    { start: 0.5, end: 2.3, text: "Hello everyone" },
+    { start: 2.8, end: 5.1, text: "This is a subtitle test video" },
+  ]);
+  assert.equal(out.length, 2);
+  assert.equal(out[0].start, 0.5);
+  assert.equal(out[1].text, "This is a subtitle test video");
+  const clips = segmentsToTextClips(out);
+  assert.equal(clips[0].text, "Hello everyone");
+  assert.equal(clips[1].duration, 2.3);
 });
 
 console.log(`\n==========================================\n🎉 CAPTIONS UI PASS: ${pass} assertions\n==========================================`);
