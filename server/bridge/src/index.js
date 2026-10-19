@@ -30,6 +30,11 @@
  *  GET    /api/render/:id/download → file MP4 (khi status=done)
  *  DELETE /api/render/:id        → hủy job (kill cả process group) + xóa thư mục tạm
  *  POST   /api/render/:id/retry  → chạy lại job bị lỗi
+ *  POST   /api/caption           multipart: field "media" (video/audio) → NDJSON segments
+ *  POST   /api/reframe           multipart: field "media" (video), field "aspect"
+ *                                → download MP4 đã crop theo chủ thể (9:16 | 1:1 | 4:5)
+ *  POST   /api/tts               JSON { text, voice? } → download file WAV giọng đọc (ZeroTTS, local)
+ *  GET    /api/tts/voices        → { voices: [...], default }
  *  GET    /api/health            → { ok: true, version, ffmpeg, runningJobs, queuedJobs }
  */
 "use strict";
@@ -44,12 +49,54 @@ const multer = require("multer");
 
 const { RenderJobService, newJobId, specDuration } = require("./jobQueue");
 // R1-072: auto-caption (faster-whisper, chạy local qua caption.py)
+// R1-080: dịch phụ đề sang tiếng Anh (translate.py, faster-whisper translate task)
 const {
   runCaption,
   validateLang,
   captionAvailable,
   PHASE_LABELS,
+  runTranslate,
+  validateTranslateTarget,
+  translateAvailable,
+  TRANSLATE_PHASE_LABELS,
 } = require("./caption");
+// R1-083: local TTS tiếng Việt (ZeroTTS, chạy local qua tts.py)
+const {
+  TTS_VOICES,
+  DEFAULT_VOICE,
+  validateText,
+  validateVoice,
+  ttsAvailable,
+  runTts,
+} = require("./tts");
+// R1-083/R1-085: auto-reframe (OpenCV, chạy local qua reframe.py)
+const {
+  runReframe,
+  validateAspect,
+  reframeAvailable,
+  REFRAME_ASPECTS,
+} = require("./reframe");
+// R1-084: AI background removal (rembg MIT + birefnet-general MIT, chạy local qua bgremove.py)
+const {
+  runBgremove,
+  validateSession,
+  bgremoveAvailable,
+  DEFAULT_SESSION,
+} = require("./bgremove");
+// R1-084: silence removal (FFmpeg silencedetect, chạy local qua silence.py)
+const {
+  runSilence,
+  validateNoiseDb,
+  validateMinDur,
+  silenceAvailable,
+} = require("./silence");
+// R1-085: scene detection (FFmpeg select filter, chạy local qua scene.py)
+const {
+  runSceneDetect,
+  validateThreshold,
+  validateRange,
+  sceneAvailable,
+} = require("./scene");
 
 // ---------------------------------------------------------------------------
 // Cấu hình
@@ -83,6 +130,11 @@ const ALLOWED_MEDIA_EXTS = new Set([
 const AUDIO_VIDEO_EXTS = new Set([
   ".mp4", ".mov", ".m4v", ".webm", ".mkv", ".avi",
   ".mp3", ".wav", ".ogg", ".oga", ".m4a", ".flac", ".aac",
+]);
+
+/** R1-083: reframe chỉ nhận VIDEO (cần hình để theo dõi chủ thể). */
+const VIDEO_EXTS = new Set([
+  ".mp4", ".mov", ".m4v", ".webm", ".mkv", ".avi",
 ]);
 
 /** Magic bytes (đủ để nhận diện, không cần đầy đủ mọi định dạng). */
@@ -400,6 +452,11 @@ app.get("/api/health", async (req, res) => {
     uptimeSec: Math.round(process.uptime()), // R1-040
     node: process.version, // R1-040
     caption: captionAvailable(), // R1-072: python + caption.py có sẵn không
+    bgremove: bgremoveAvailable(), // R1-084: python + bgremove.py có sẵn không
+    translate: translateAvailable(), // R1-080: python + translate.py có sẵn không
+    reframe: reframeAvailable(), // R1-083: python venv + reframe.py có sẵn không
+    silence: silenceAvailable(), // R1-084: python + silence.py có sẵn không
+    scene: sceneAvailable(), // R1-085: python + scene.py có sẵn không
   });
 });
 
@@ -609,6 +666,407 @@ app.post(
   }
 );
 
+// --- POST /api/reframe (R1-083/R1-085) ----------------------------------------
+// Nhận 1 file VIDEO (multipart field "media") + field "aspect" (9:16 | 1:1 | 4:5).
+// Chạy reframe.py (OpenCV: Haar face → motion fallback, 100% local), crop theo
+// chủ thể rồi trả về MP4 đích qua res.download. Đồng bộ (timeout 10 phút).
+app.post(
+  "/api/reframe",
+  rateLimit(RATE_MAX_RENDER), // R1-040: tác vụ nặng, giới hạn như render
+  (req, res, next) => upload.single("media")(req, res, (err) => {
+    if (err) return multerErrorHandler(err, req, res, next);
+    next();
+  }),
+  async (req, res) => {
+    let aspect;
+    try {
+      aspect = validateAspect(req.body.aspect);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+    const f = req.file;
+    if (!f) {
+      return res.status(400).json({ error: "Thiếu file video (field 'media')." });
+    }
+    const safe = sanitizeFilename(f.originalname);
+    if (!safe) {
+      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+    }
+    const ext = path.extname(safe).toLowerCase();
+    if (!VIDEO_EXTS.has(ext)) {
+      return res.status(400).json({
+        error: `Reframe cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
+      });
+    }
+    const magicErr = checkMagicBytes(safe, f.buffer);
+    if (magicErr) return res.status(400).json({ error: magicErr });
+    const avail = reframeAvailable();
+    if (!avail.available) {
+      return res.status(503).json({ error: `Reframe chưa sẵn sàng: ${avail.reason}` });
+    }
+
+    const dir = path.join(
+      WORK_ROOT,
+      `reframe-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+    );
+    const inputPath = path.join(dir, safe);
+    const dot = safe.lastIndexOf(".");
+    const outName = `${safe.slice(0, dot > 0 ? dot : undefined)}_${aspect.replace(":", "x")}.mp4`;
+    const outputPath = path.join(dir, outName);
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(inputPath, f.buffer);
+    } catch (e) {
+      console.error(`[bridge] không lưu được file reframe:`, e.message);
+      cleanupJobDir(dir);
+      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+    }
+
+    try {
+      const result = await runReframe({ inputPath, outputPath, aspect });
+      console.log(`[bridge] reframe xong: ${outName} (${result.bytes} bytes, ${aspect})`);
+      res.download(result.outPath, outName, (err) => {
+        if (err) console.error(`[bridge] lỗi download reframe:`, err.message);
+        cleanupJobDir(dir);
+      });
+    } catch (e) {
+      cleanupJobDir(dir);
+      // Chưa gửi header nào → trả JSON lỗi bình thường.
+      return res.status(500).json({ error: e.message || "Reframe thất bại." });
+    }
+  }
+);
+
+// --- POST /api/bgremove (R1-084) ------------------------------------------------
+// Nhận 1 file VIDEO (multipart field "media") + field "session" (optional).
+// Chạy bgremove.py (rembg MIT + birefnet-general MIT, 100% local) rồi trả về
+// file MOV PNG có kênh alpha qua res.download. Đồng bộ (timeout 30 phút).
+app.post(
+  "/api/bgremove",
+  rateLimit(RATE_MAX_RENDER), // R1-040: tác vụ nặng, giới hạn như render
+  (req, res, next) => upload.single("media")(req, res, (err) => {
+    if (err) return multerErrorHandler(err, req, res, next);
+    next();
+  }),
+  async (req, res) => {
+    let session;
+    try {
+      session = validateSession(req.body.session);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+    const f = req.file;
+    if (!f) {
+      return res.status(400).json({ error: "Thiếu file video (field 'media')." });
+    }
+    const safe = sanitizeFilename(f.originalname);
+    if (!safe) {
+      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+    }
+    const ext = path.extname(safe).toLowerCase();
+    if (!VIDEO_EXTS.has(ext)) {
+      return res.status(400).json({
+        error: `Xóa nền cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
+      });
+    }
+    const magicErr = checkMagicBytes(safe, f.buffer);
+    if (magicErr) return res.status(400).json({ error: magicErr });
+    const avail = bgremoveAvailable();
+    if (!avail.available) {
+      return res.status(503).json({ error: `Xóa nền chưa sẵn sàng: ${avail.reason}` });
+    }
+
+    const dir = path.join(
+      WORK_ROOT,
+      `bgremove-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+    );
+    const inputPath = path.join(dir, safe);
+    const dot = safe.lastIndexOf(".");
+    const outName = `${safe.slice(0, dot > 0 ? dot : undefined)}_no_bg.mov`;
+    const outputPath = path.join(dir, outName);
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(inputPath, f.buffer);
+    } catch (e) {
+      console.error(`[bridge] không lưu được file bgremove:`, e.message);
+      cleanupJobDir(dir);
+      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+    }
+
+    try {
+      await runBgremove({ inputPath, outputPath, session });
+      console.log(`[bridge] bgremove xong: ${outName} (session=${session})`);
+      res.download(outputPath, outName, (err) => {
+        if (err) console.error(`[bridge] lỗi download bgremove:`, err.message);
+        cleanupJobDir(dir);
+      });
+    } catch (e) {
+      cleanupJobDir(dir);
+      // Chưa gửi header nào → trả JSON lỗi bình thường.
+      return res.status(500).json({ error: e.message || "Xóa nền thất bại." });
+    }
+  }
+);
+
+// --- POST /api/silence (R1-084) ------------------------------------------------
+// Nhận 1 file video/audio (multipart field "media") + field "noiseDb"/"minDur".
+// Chạy silence.py (FFmpeg silencedetect, 100% local) → trả JSON một lần:
+// { audioDurationSec, noiseDb, minDur, silences: [{start,end,duration}], keep }.
+// Detect rất nhanh nên không cần stream tiến trình như caption.
+app.post(
+  "/api/silence",
+  rateLimit(RATE_MAX_GENERAL),
+  (req, res, next) => upload.single("media")(req, res, (err) => {
+    if (err) return multerErrorHandler(err, req, res, next);
+    next();
+  }),
+  async (req, res) => {
+    // 1. Validate
+    let noiseDb, minDur;
+    try {
+      noiseDb = validateNoiseDb(req.body.noiseDb);
+      minDur = validateMinDur(req.body.minDur);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+    const f = req.file;
+    if (!f) {
+      return res.status(400).json({ error: "Thiếu file media (field 'media')." });
+    }
+    const safe = sanitizeFilename(f.originalname);
+    if (!safe) {
+      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+    }
+    const ext = path.extname(safe).toLowerCase();
+    if (!AUDIO_VIDEO_EXTS.has(ext)) {
+      return res.status(400).json({
+        error: "Silence removal cần file video hoặc audio (ảnh không có track tiếng).",
+      });
+    }
+    const magicErr = checkMagicBytes(safe, f.buffer);
+    if (magicErr) return res.status(400).json({ error: magicErr });
+    const avail = silenceAvailable();
+    if (!avail.available) {
+      return res.status(503).json({ error: `Silence removal chưa sẵn sàng: ${avail.reason}` });
+    }
+
+    // 2. Lưu file vào thư mục tạm riêng (không bao giờ dùng path từ client)
+    const dir = path.join(
+      WORK_ROOT,
+      `silence-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+    );
+    const inputPath = path.join(dir, safe);
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(inputPath, f.buffer);
+    } catch (e) {
+      console.error(`[bridge] không lưu được file silence:`, e.message);
+      cleanupJobDir(dir);
+      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+    }
+
+    // 3. Chạy detect rồi trả JSON
+    try {
+      const result = await runSilence({ inputPath, noiseDb, minDur });
+      res.json({
+        audioDurationSec: result.audioDurationSec,
+        noiseDb: result.noiseDb,
+        minDur: result.minDur,
+        count: result.silences.length,
+        silences: result.silences,
+        keep: result.keep,
+      });
+    } catch (e) {
+      res.status(500).json({ error: e.message || "Phân tích khoảng lặng thất bại." });
+    } finally {
+      cleanupJobDir(dir);
+    }
+  }
+);
+
+// --- POST /api/scene (R1-085) --------------------------------------------------
+// Nhận 1 file VIDEO (multipart field "media") + field "threshold" (optional,
+// 0.05..0.95) + "start"/"end" (optional, giây tuyệt đối theo file).
+// Chạy scene.py (FFmpeg select='gt(scene,...)', 100% local) rồi stream tiến
+// trình về client dạng NDJSON: {"type":"phase",...} ... {"type":"done","cuts":[...]}.
+// Lỗi validate (chưa gửi header) → JSON 4xx bình thường; lỗi khi đang chạy
+// → event {"type":"error"} trong stream.
+app.post(
+  "/api/scene",
+  rateLimit(RATE_MAX_RENDER), // R1-040: tác vụ nặng, giới hạn như render
+  (req, res, next) => upload.single("media")(req, res, (err) => {
+    if (err) return multerErrorHandler(err, req, res, next);
+    next();
+  }),
+  async (req, res) => {
+    // 1. Validate (chưa stream → lỗi trả JSON 4xx)
+    let threshold, start, end;
+    try {
+      threshold = validateThreshold(req.body.threshold);
+      ({ start, end } = validateRange(req.body.start, req.body.end));
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+    const f = req.file;
+    if (!f) {
+      return res.status(400).json({ error: "Thiếu file video (field 'media')." });
+    }
+    const safe = sanitizeFilename(f.originalname);
+    if (!safe) {
+      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+    }
+    const ext = path.extname(safe).toLowerCase();
+    if (!VIDEO_EXTS.has(ext)) {
+      return res.status(400).json({
+        error: `Tách cảnh cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
+      });
+    }
+    const magicErr = checkMagicBytes(safe, f.buffer);
+    if (magicErr) return res.status(400).json({ error: magicErr });
+    const avail = sceneAvailable();
+    if (!avail.available) {
+      return res.status(503).json({ error: `Tách cảnh chưa sẵn sàng: ${avail.reason}` });
+    }
+
+    // 2. Lưu file vào thư mục tạm riêng (không bao giờ dùng path từ client)
+    const dir = path.join(
+      WORK_ROOT,
+      `scene-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+    );
+    const inputPath = path.join(dir, safe);
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(inputPath, f.buffer);
+    } catch (e) {
+      console.error(`[bridge] không lưu được file scene:`, e.message);
+      cleanupJobDir(dir);
+      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+    }
+
+    // 3. Stream NDJSON: phase... → done | error
+    const SCENE_PHASE_LABELS = {
+      upload: "Đã nhận file, chuẩn bị…",
+      scan: "Đang quét chuyển cảnh (video dài có thể mất vài phút)…",
+    };
+    res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache");
+    const send = (obj) => {
+      try { res.write(JSON.stringify(obj) + "\n"); } catch { /* client đã ngắt */ }
+    };
+    send({ type: "phase", phase: "upload", message: SCENE_PHASE_LABELS.upload });
+    try {
+      const result = await runSceneDetect({
+        inputPath,
+        threshold,
+        start,
+        end,
+        onPhase: (p) => send({ type: "phase", phase: p, message: SCENE_PHASE_LABELS[p] || p }),
+      });
+      send({
+        type: "done",
+        cuts: result.cuts,
+        duration: result.duration,
+        threshold: result.threshold,
+        count: result.cuts.length,
+      });
+    } catch (e) {
+      send({ type: "error", error: e.message || "Tách cảnh thất bại." });
+    } finally {
+      cleanupJobDir(dir);
+      try { res.end(); } catch { /* bỏ qua */ }
+    }
+  }
+);
+
+// --- POST /api/caption/translate (R1-080) -------------------------------------
+// Dịch phụ đề sang tiếng Anh bằng translate.py (faster-whisper translate task,
+// 100% local). Nhận 1 file video/audio (multipart field "media") + field "lang"
+// (ngôn ngữ NGUỒN) + field "target" (ngôn ngữ đích — hiện chỉ "en").
+// Stream NDJSON giống /api/caption: phase... → done | error.
+app.post(
+  "/api/caption/translate",
+  rateLimit(RATE_MAX_RENDER), // R1-040: giới hạn chặt như render (tác vụ nặng)
+  (req, res, next) => upload.single("media")(req, res, (err) => {
+    if (err) return multerErrorHandler(err, req, res, next);
+    next();
+  }),
+  async (req, res) => {
+    // 1. Validate (chưa stream → lỗi trả JSON 4xx)
+    let lang, target;
+    try {
+      lang = validateLang(req.body.lang);
+      target = validateTranslateTarget(req.body.target);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+    const f = req.file;
+    if (!f) {
+      return res.status(400).json({ error: "Thiếu file media (field 'media')." });
+    }
+    const safe = sanitizeFilename(f.originalname);
+    if (!safe) {
+      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+    }
+    const ext = path.extname(safe).toLowerCase();
+    if (!AUDIO_VIDEO_EXTS.has(ext)) {
+      return res.status(400).json({
+        error: "Dịch phụ đề cần file video hoặc audio (ảnh không có tiếng để nhận diện).",
+      });
+    }
+    const magicErr = checkMagicBytes(safe, f.buffer);
+    if (magicErr) return res.status(400).json({ error: magicErr });
+    const avail = translateAvailable();
+    if (!avail.available) {
+      return res.status(503).json({ error: `Dịch phụ đề chưa sẵn sàng: ${avail.reason}` });
+    }
+
+    // 2. Lưu file vào thư mục tạm riêng (không bao giờ dùng path từ client)
+    const dir = path.join(
+      WORK_ROOT,
+      `translate-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+    );
+    const inputPath = path.join(dir, safe);
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(inputPath, f.buffer);
+    } catch (e) {
+      console.error(`[bridge] không lưu được file translate:`, e.message);
+      cleanupJobDir(dir);
+      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+    }
+
+    // 3. Stream NDJSON: phase... → done | error
+    res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache");
+    const send = (obj) => {
+      try { res.write(JSON.stringify(obj) + "\n"); } catch { /* client đã ngắt */ }
+    };
+    send({ type: "phase", phase: "upload", message: TRANSLATE_PHASE_LABELS.upload });
+    try {
+      const result = await runTranslate({
+        inputPath,
+        lang,
+        target,
+        onPhase: (p) => send({ type: "phase", phase: p, message: TRANSLATE_PHASE_LABELS[p] || p }),
+      });
+      send({
+        type: "done",
+        sourceLanguage: result.sourceLanguage,
+        targetLanguage: result.targetLanguage,
+        audioDurationSec: result.audioDurationSec,
+        translateTimeSec: result.translateTimeSec,
+        count: result.segments.length,
+        segments: result.segments,
+      });
+    } catch (e) {
+      send({ type: "error", error: e.message || "Dịch phụ đề thất bại." });
+    } finally {
+      cleanupJobDir(dir);
+      try { res.end(); } catch { /* bỏ qua */ }
+    }
+  }
+);
+
 // --- GET /api/render (danh sách job) -----------------------------------------
 app.get("/api/render", (req, res) => {
   const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
@@ -666,6 +1124,57 @@ app.post("/api/render/:id/retry", validateJobIdParam, (req, res) => {
     if (e.code === "NOT_FOUND") return res.status(404).json({ error: e.message });
     return res.status(409).json({ error: e.message });
   }
+});
+
+// --- GET /api/tts/voices + POST /api/tts (R1-083) --------------------------------
+// TTS local tiếng Việt (ZeroTTS, MIT). Nhận JSON {text, voice?}, trả về file WAV.
+// Tác vụ nặng (model ~0.86GB, CPU ~2x realtime) → rate-limit như render.
+app.get("/api/tts/voices", (req, res) => {
+  res.json({ voices: TTS_VOICES, default: DEFAULT_VOICE });
+});
+
+app.post("/api/tts", rateLimit(RATE_MAX_RENDER), async (req, res) => {
+  let text, voice;
+  try {
+    text = validateText(req.body && req.body.text);
+    voice = validateVoice(req.body && req.body.voice);
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+  const avail = ttsAvailable();
+  if (!avail.available) {
+    return res.status(503).json({ error: `TTS chưa sẵn sàng: ${avail.reason}` });
+  }
+  const dir = path.join(
+    WORK_ROOT,
+    `tts-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+  );
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+  } catch (e) {
+    console.error(`[bridge] không tạo được thư mục tts:`, e.message);
+    return res.status(500).json({ error: "Lỗi máy chủ khi chuẩn bị TTS — thử lại sau." });
+  }
+  let result;
+  try {
+    result = await runTts({ text, voice, outDir: dir });
+  } catch (e) {
+    cleanupJobDir(dir);
+    return res.status(500).json({ error: e.message || "TTS thất bại." });
+  }
+  const wavPath = result.outPath;
+  if (!fs.existsSync(wavPath)) {
+    cleanupJobDir(dir);
+    return res.status(500).json({ error: "TTS xong nhưng không thấy file WAV." });
+  }
+  const downloadName = `tts-${voice}-${Date.now()}.wav`;
+  res.setHeader("X-TTS-Voice", encodeURIComponent(voice)); // Unicode → %encoded (header chỉ cho phép Latin-1)
+  res.setHeader("X-TTS-Duration", String(result.durationSec || 0));
+  res.setHeader("X-TTS-Chars", String(result.chars || text.length));
+  res.download(wavPath, downloadName, (err) => {
+    cleanupJobDir(dir); // xóa file tạm sau khi gửi xong (kể cả lỗi)
+    if (err) console.error(`[bridge] lỗi gửi file TTS:`, err.message);
+  });
 });
 
 // R1-040: 404 cho API không tồn tại → JSON (thay vì HTML của Express)
