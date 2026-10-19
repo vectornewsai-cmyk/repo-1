@@ -29,6 +29,24 @@
 - Keyframe animation, audio waveform, mixer cơ bản
 - *Tiêu chí xong:* ≥20 transition gốc + 10 text animation gốc, preview và export khớp nhau
 
+### Phase 3a — Keyframes + Transitions + Speed/Reverse ✅ (19/10/2026)
+- Keyframes x/y/opacity cho text và video (TS↔JS parity 100%, demo MP4 đã xem bằng mắt)
+- 13 transitions qua FFmpeg xfade native (fade, wipe×4, slide×2, dissolve, circleopen, radial...)
+- Speed 0.25x–4x + reverse (7/7 case duration chính xác)
+- Giới hạn: keyframe scale/rotation lưu nhưng chưa render; 21 GLSL transition chưa dùng được (thiếu filter gltransition)
+
+### Phase 3b — Chroma key + Waveform + Text animations ✅ (19/10/2026)
+- Chroma key xoá phông xanh (FFmpeg chromakey native, kiểm chứng pixel-level)
+- Audio waveform trên timeline (Web Audio API, 16/16 test pass)
+- 5 text animation mới: fadeIn, slideInLeft/Right, slideUp, bounce
+- Giới hạn: chroma là key theo màu (không phải AI segmentation); text animation chỉ có entrance
+
+### Phase 3c — LUT + Video effects + Sticker ✅ (19/10/2026)
+- 10 bộ lọc màu LUT (FFmpeg lut3d, file .cube MIT)
+- 7 video effects: blur, sharpen, grayscale, sepia, vignette, noise, brightness (intensity 0-1)
+- Sticker PNG overlay (vị trí/scale/opacity/rotation, 6 sticker tự vẽ)
+- Giới hạn: StickerPanel chưa mount vào Inspector (chỉ render được, chưa thêm từ UI); preview web chưa hiển thị LUT/effects/sticker/chroma
+
 ## Phase 4 — Agent integration layer ⭐ (điểm mạnh hơn CapCut)
 - MCP server (TypeScript SDK): `create_project`, `add_clip`, `add_text`, `apply_transition`, `render_video`...
 - REST API + CLI song song
