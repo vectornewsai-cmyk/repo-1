@@ -3,12 +3,25 @@
  * đồng bộ phát lại video/audio thật, hỗ trợ kéo chữ trực tiếp.
  */
 import { useEffect, useRef } from "react";
-import type { TextClip, VideoSpec } from "@repo-1/video-spec";
-import { isSpeedable, sourceTimeAt } from "@repo-1/video-spec/speed";
+import type { TextClip, VideoClip, VideoSpec } from "@repo-1/video-spec";
+import { isSpeedable, sourceTimeAt, stickerUrl } from "@repo-1/video-spec";
+import type { ImageClip, StickerClip } from "@repo-1/video-spec";
 import { useStore } from "./store";
 import type { MediaItem } from "./media";
 import { MediaPool } from "./media";
 import { clamp } from "./lib";
+import { seekAll, Seeker, type SeekTarget } from "./lib/seek";
+import { AudioEngine, computeClipGain } from "./lib/audioEngine";
+import type { ActiveAudioSource } from "./lib/audioEngine";
+import {
+  applyChromaKey,
+  imageClipFit,
+  letterboxFit,
+  stickerVisual,
+  textClipVisual,
+  videoClipVisual,
+  type ChromaParams,
+} from "./lib/previewEngine";
 
 interface Viewport {
   cw: number;
@@ -27,22 +40,115 @@ function computeViewport(cw: number, ch: number, spec: VideoSpec): Viewport {
   };
 }
 
-/** Vẽ media phủ kín khung hình (cover-fit) trong tọa độ project. */
-function drawCover(
+/**
+ * R1-060/061: helpers cho preview parity với render.js.
+ * Thứ tự transform (video): speed → chroma → LUT → effects → opacity → keyframes.
+ * Xem apps/web/src/lib/PREVIEW_LIMITS.md để biết những gì chỉ là xấp xỉ.
+ */
+
+/** ctx.filter có được trình duyệt hỗ trợ không (Safari cũ không có). */
+const CTX_FILTER_OK: boolean = (() => {
+  try {
+    return (
+      typeof CanvasRenderingContext2D !== "undefined" &&
+      "filter" in CanvasRenderingContext2D.prototype
+    );
+  } catch {
+    return false;
+  }
+})();
+
+function setCtxFilter(ctx: CanvasRenderingContext2D, css: string): void {
+  if (!CTX_FILTER_OK) return;
+  try {
+    ctx.filter = css || "none";
+  } catch {
+    /* bỏ qua */
+  }
+}
+
+// ---- Chroma key: offscreen canvas + pixel shader (previewEngine.applyChromaKey) ----
+const CHROMA_MAX_W = 640; // giới hạn để giữ 30fps (xem PREVIEW_LIMITS.md)
+let chromaCanvas: HTMLCanvasElement | null = null;
+
+function chromaKeyedSource(
+  src: HTMLVideoElement | HTMLImageElement,
+  vw: number,
+  vh: number,
+  chroma: ChromaParams,
+): HTMLCanvasElement | null {
+  if (typeof document === "undefined") return null;
+  if (!chromaCanvas) chromaCanvas = document.createElement("canvas");
+  const s = Math.min(1, CHROMA_MAX_W / vw);
+  const w = Math.max(2, Math.round(vw * s));
+  const h = Math.max(2, Math.round(vh * s));
+  if (chromaCanvas.width !== w || chromaCanvas.height !== h) {
+    chromaCanvas.width = w;
+    chromaCanvas.height = h;
+  }
+  const cctx = chromaCanvas.getContext("2d", { willReadFrequently: true });
+  if (!cctx) return null;
+  cctx.clearRect(0, 0, w, h);
+  cctx.drawImage(src, 0, 0, w, h);
+  const img = cctx.getImageData(0, 0, w, h);
+  applyChromaKey(img, chroma);
+  cctx.putImageData(img, 0, 0);
+  return chromaCanvas;
+}
+
+// ---- Vignette: radial gradient xấp xỉ FFmpeg vignette ----
+function drawVignette(
   ctx: CanvasRenderingContext2D,
-  img: CanvasImageSource,
-  mw: number,
-  mh: number,
-  W: number,
-  H: number,
-  alpha: number,
-) {
-  const s = Math.max(W / mw, H / mh);
-  const dw = mw * s;
-  const dh = mh * s;
-  ctx.globalAlpha = alpha;
-  ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
-  ctx.globalAlpha = 1;
+  dx: number,
+  dy: number,
+  dw: number,
+  dh: number,
+  intensity: number,
+): void {
+  const cx = dx + dw / 2;
+  const cy = dy + dh / 2;
+  const rMax = Math.hypot(dw, dh) / 2;
+  const g = ctx.createRadialGradient(cx, cy, rMax * 0.45, cx, cy, rMax);
+  g.addColorStop(0, "rgba(0,0,0,0)");
+  g.addColorStop(1, `rgba(0,0,0,${(0.25 + 0.55 * intensity).toFixed(3)})`);
+  ctx.save();
+  ctx.fillStyle = g;
+  ctx.fillRect(dx, dy, dw, dh);
+  ctx.restore();
+}
+
+// ---- Sticker: cache ảnh theo URL đã resolve ----
+function resolveStickerUrl(src: string): string {
+  if (/^(blob:|https?:|data:)/.test(src) || src.startsWith("/")) return src;
+  return stickerUrl(src);
+}
+
+const stickerImgCache = new Map<string, HTMLImageElement>();
+
+function stickerImageFor(src: string): HTMLImageElement | null {
+  if (typeof document === "undefined") return null;
+  const url = resolveStickerUrl(src);
+  let img = stickerImgCache.get(url);
+  if (!img) {
+    img = new Image();
+    img.src = url;
+    stickerImgCache.set(url, img);
+  }
+  return img;
+}
+
+// Cảnh báo 1 lần cho effect preview không thể hiện (tránh spam console mỗi frame).
+const warnedEffects = new Set<string>();
+
+function warnSkippedEffects(skipped: string[]): void {
+  for (const s of skipped) {
+    if (!warnedEffects.has(s)) {
+      warnedEffects.add(s);
+      console.warn(
+        `[preview] effect "${s}" không hiển thị trong preview (xem PREVIEW_LIMITS.md); bản render vẫn có.`,
+      );
+    }
+  }
 }
 
 function textFont(c: TextClip): string {
@@ -59,18 +165,6 @@ interface TextBox {
   h: number;
 }
 
-function measureTextBox(ctx: CanvasRenderingContext2D, spec: VideoSpec, trackId: string, clip: TextClip): TextBox {
-  ctx.font = textFont(clip);
-  const w = Math.max(10, ctx.measureText(clip.text || " ").width + 24);
-  const h = clip.style.fontSize * 1.35 + 16;
-  return {
-    clip, trackId,
-    x: (clip.style.x ?? 0.5) * spec.meta.width,
-    y: (clip.style.y ?? 0.5) * spec.meta.height,
-    w, h,
-  };
-}
-
 function drawTextClip(
   ctx: CanvasRenderingContext2D,
   spec: VideoSpec,
@@ -80,37 +174,34 @@ function drawTextClip(
   selected: boolean,
 ) {
   const s = clip.style;
-  const box = measureTextBox(ctx, spec, trackId, clip);
-  let alpha = 1;
-  let yOff = 0;
+  const { width: W, height: H } = spec.meta;
+  const localT = t - clip.start;
+  // Đo chữ để textClipVisual tính vị trí (mirror drawtext dùng text_w/text_h).
+  ctx.font = textFont(clip);
+  const textW = Math.max(1, ctx.measureText(clip.text || " ").width);
+  const textH = clip.style.fontSize * 1.35;
+  const vis = textClipVisual(clip, localT, W, H, { textW, textH });
   let text = clip.text;
-  const elapsed = t - clip.start;
-  if (s.animation === "fadeUp") {
-    const p = clamp(elapsed / 0.5, 0, 1);
-    alpha = p;
-    yOff = (1 - p) * 24;
-  } else if (s.animation === "typewriter") {
-    const revealDur = Math.min(1.5, clip.duration);
-    const n = Math.floor(clamp(elapsed / revealDur, 0, 1) * text.length);
-    text = text.slice(0, n);
+  if (vis.revealChars != null) {
+    text = [...text].slice(0, vis.revealChars).join("");
   }
+  // Hộp nền + outline: box có padding như cũ, đặt tại tâm vis.
+  const boxW = textW + 24;
+  const boxH = textH + 16;
 
   ctx.save();
-  ctx.globalAlpha = alpha;
+  ctx.globalAlpha = clamp(vis.alpha, 0, 1);
   if (s.backgroundColor) {
     ctx.fillStyle = s.backgroundColor;
-    const r = 10;
-    const x0 = box.x - box.w / 2;
-    const y0 = box.y - box.h / 2 + yOff;
     ctx.beginPath();
-    ctx.roundRect(x0, y0, box.w, box.h, r);
+    ctx.roundRect(vis.cx - boxW / 2, vis.cy - boxH / 2, boxW, boxH, 10);
     ctx.fill();
   }
   ctx.font = textFont(clip);
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = s.color;
-  ctx.fillText(text, box.x, box.y + yOff);
+  ctx.fillText(text, vis.cx, vis.cy);
   ctx.restore();
 
   if (selected) {
@@ -118,15 +209,128 @@ function drawTextClip(
     ctx.strokeStyle = "#8b7cf6";
     ctx.lineWidth = 2 / computeScaleHack(ctx);
     ctx.setLineDash([8, 6]);
-    ctx.strokeRect(box.x - box.w / 2, box.y - box.h / 2 + yOff, box.w, box.h);
+    ctx.strokeRect(vis.cx - boxW / 2, vis.cy - boxH / 2, boxW, boxH);
     ctx.restore();
   }
+  void trackId;
 }
 
 /** Lấy scale hiện tại từ transform (dùng cho lineWidth khi vẽ outline). */
 function computeScaleHack(ctx: CanvasRenderingContext2D): number {
   const m = ctx.getTransform();
   return Math.max(0.001, m.a);
+}
+
+/** Vẽ 1 video clip — mirror pipeline render.js (letterbox + transforms). */
+function drawVideoClip(
+  ctx: CanvasRenderingContext2D,
+  spec: VideoSpec,
+  pool: MediaPool,
+  mediaByName: Map<string, MediaItem>,
+  clip: VideoClip,
+  t: number,
+) {
+  const { width: W, height: H } = spec.meta;
+  const item = mediaByName.get(clip.src);
+  const localT = t - clip.start;
+  // Fade transition (preview chỉ mô phỏng fade; xfade loại khác xem PREVIEW_LIMITS.md).
+  let alpha = clip.opacity ?? 1;
+  if (clip.transitionIn?.type === "fade" && clip.transitionIn.duration > 0) {
+    alpha *= clamp(localT / clip.transitionIn.duration, 0, 1);
+  }
+  if (clip.transitionOut?.type === "fade" && clip.transitionOut.duration > 0) {
+    alpha *= clamp((clip.duration - localT) / clip.transitionOut.duration, 0, 1);
+  }
+  if (!item) {
+    ctx.fillStyle = "#1a2030";
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#8b94a7";
+    ctx.font = "28px Inter, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`Thiếu media: ${clip.src}`, W / 2, H / 2);
+    return;
+  }
+  let srcEl: HTMLVideoElement | HTMLImageElement | null = null;
+  let mw = 0;
+  let mh = 0;
+  if (item.kind === "image") {
+    const img = pool.imageFor(item);
+    if (img && img.complete && img.naturalWidth > 0) {
+      srcEl = img;
+      mw = img.naturalWidth;
+      mh = img.naturalHeight;
+    }
+  } else if (item.kind === "video") {
+    const v = pool.videoFor(item);
+    if (v && v.readyState >= 2 && v.videoWidth > 0) {
+      srcEl = v;
+      mw = v.videoWidth;
+      mh = v.videoHeight;
+    }
+  }
+  if (!srcEl || mw <= 0 || mh <= 0) return;
+
+  // R1-060: letterbox (giữ tỉ lệ + nền đen) — KHỚP render (scale=decrease + pad).
+  // Trước đây preview dùng cover-fit (crop) → sai khác với bản render.
+  const { dw, dh, dx, dy } = letterboxFit(mw, mh, W, H);
+  // Render pad unit đúng WxH nên unitW=W, unitH=H.
+  const vis = videoClipVisual(clip, localT, W, H, W, H);
+  let drawSrc: CanvasImageSource = srcEl;
+  if (vis.chroma) {
+    const keyed = chromaKeyedSource(srcEl, mw, mh, vis.chroma);
+    if (keyed) drawSrc = keyed;
+  }
+  ctx.save();
+  ctx.globalAlpha = clamp(alpha * vis.opacity, 0, 1);
+  setCtxFilter(ctx, vis.cssFilter);
+  ctx.drawImage(drawSrc, dx + vis.offsetX, dy + vis.offsetY, dw, dh);
+  ctx.restore();
+  if (vis.vignette != null) {
+    drawVignette(ctx, dx + vis.offsetX, dy + vis.offsetY, dw, dh, vis.vignette);
+  }
+  warnSkippedEffects(vis.skippedEffects);
+}
+
+/** Vẽ 1 image clip — render KHÔNG áp LUT/effects/opacity cho ảnh → preview cũng không. */
+function drawImageClip(
+  ctx: CanvasRenderingContext2D,
+  spec: VideoSpec,
+  pool: MediaPool,
+  mediaByName: Map<string, MediaItem>,
+  clip: ImageClip,
+) {
+  const { width: W, height: H } = spec.meta;
+  const item = mediaByName.get(clip.src);
+  if (!item || item.kind !== "image") return;
+  const img = pool.imageFor(item);
+  if (!img || !img.complete || !img.naturalWidth) return;
+  const { dw, dh, dx, dy } = imageClipFit(
+    clip,
+    img.naturalWidth,
+    img.naturalHeight,
+    W,
+    H,
+  );
+  ctx.drawImage(img, dx, dy, dw, dh);
+}
+
+/** Vẽ 1 sticker — mirror buildStickerOverlay: tâm (W*x, H*y), rộng scale*W. */
+function drawStickerClip(
+  ctx: CanvasRenderingContext2D,
+  spec: VideoSpec,
+  clip: StickerClip,
+) {
+  const { width: W, height: H } = spec.meta;
+  const img = stickerImageFor(clip.src);
+  if (!img || !img.complete || !img.naturalWidth) return;
+  const sv = stickerVisual(clip, W, H);
+  const hPx = (sv.wPx * img.naturalHeight) / img.naturalWidth;
+  ctx.save();
+  ctx.globalAlpha = clamp(sv.opacity, 0, 1);
+  ctx.translate(sv.cx, sv.cy);
+  if (sv.rotation) ctx.rotate((sv.rotation * Math.PI) / 180);
+  ctx.drawImage(img, -sv.wPx / 2, -hPx / 2, sv.wPx, hPx);
+  ctx.restore();
 }
 
 /** Vẽ 1 frame hoàn chỉnh. */
@@ -150,60 +354,70 @@ function renderFrame(
   ctx.fillStyle = "#0a0c10";
   ctx.fillRect(0, 0, W, H);
 
-  // track[0] = lớp dưới cùng, track sau đè lên
+  // R1-060/061: thứ tự composite KHỚP render.js: video → image → sticker → text.
+  // (Trước đây duyệt theo thứ tự track trong spec — sai khi text track nằm dưới video.)
   for (const track of spec.tracks) {
-    if (track.hidden) continue; // R1-054: track ẩn không vẽ trong preview
+    if (track.hidden || track.kind !== "video") continue;
     for (const clip of track.clips) {
+      if (clip.kind !== "video") continue;
       if (t < clip.start || t >= clip.start + clip.duration) continue;
-      if (track.kind === "video" && clip.kind === "video") {
-        const item = mediaByName.get(clip.src);
-        // alpha từ opacity + transition fade
-        let alpha = clip.opacity ?? 1;
-        const el = t - clip.start;
-        if (clip.transitionIn?.type === "fade" && clip.transitionIn.duration > 0) {
-          alpha *= clamp(el / clip.transitionIn.duration, 0, 1);
-        }
-        if (clip.transitionOut?.type === "fade" && clip.transitionOut.duration > 0) {
-          const remain = clip.duration - el;
-          alpha *= clamp(remain / clip.transitionOut.duration, 0, 1);
-        }
-        if (!item) {
-          ctx.fillStyle = "#1a2030";
-          ctx.fillRect(0, 0, W, H);
-          ctx.fillStyle = "#8b94a7";
-          ctx.font = "28px Inter, system-ui, sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText(`Thiếu media: ${clip.src}`, W / 2, H / 2);
-          continue;
-        }
-        if (item.kind === "image") {
-          const img = pool.imageFor(item);
-          if (img && img.complete && img.naturalWidth > 0) {
-            drawCover(ctx, img, img.naturalWidth, img.naturalHeight, W, H, alpha);
-          }
-        } else {
-          const v = pool.videoFor(item);
-          if (v && v.readyState >= 2 && v.videoWidth > 0) {
-            drawCover(ctx, v, v.videoWidth, v.videoHeight, W, H, alpha);
-          }
-        }
-      } else if (track.kind === "text" && clip.kind === "text") {
-        drawTextClip(ctx, spec, track.id, clip, t, selected?.clipId === clip.id);
-      }
+      drawVideoClip(ctx, spec, pool, mediaByName, clip, t);
+    }
+  }
+  for (const track of spec.tracks) {
+    if (track.hidden || track.kind !== "image") continue;
+    for (const clip of track.clips) {
+      if (clip.kind !== "image") continue;
+      if (t < clip.start || t >= clip.start + clip.duration) continue;
+      drawImageClip(ctx, spec, pool, mediaByName, clip);
+    }
+  }
+  for (const track of spec.tracks) {
+    if (track.hidden || track.kind !== "sticker") continue;
+    for (const clip of track.clips) {
+      if (clip.kind !== "sticker") continue;
+      if (t < clip.start || t >= clip.start + clip.duration) continue;
+      drawStickerClip(ctx, spec, clip);
+    }
+  }
+  for (const track of spec.tracks) {
+    if (track.hidden || track.kind !== "text") continue;
+    for (const clip of track.clips) {
+      if (clip.kind !== "text") continue;
+      if (t < clip.start || t >= clip.start + clip.duration) continue;
+      drawTextClip(ctx, spec, track.id, clip, t, selected?.clipId === clip.id);
     }
   }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
 
-/** Đồng bộ các phần tử video/audio với playhead. */
-function syncMedia(
+/**
+ * Đồng bộ các phần tử video/audio với playhead (transport: seek/play/pause/
+ * playbackRate) + đẩy gain mục tiêu vào AudioEngine (R1-063).
+ *
+ * Gain đi qua Web Audio GainNode nên volume/fadeIn/fadeOut/volumeKeyframes/mute
+ * được áp chính xác như render worker. `forceSeek=true` (khi vừa bấm play)
+ * buộc seek chính xác mọi source trong cùng 1 task — "start cùng lúc, offset chuẩn".
+ */
+interface ActiveMedia {
+  el: HTMLVideoElement | HTMLAudioElement;
+  target: number;
+  speed: number;
+  reverse: boolean;
+}
+
+/**
+ * Thu thập các element media đang active tại t + audio sources cho engine.
+ * Dùng chung cho cả syncMedia (khi phát) và Seeker (khi pause/seek, R1-062).
+ */
+function collectActives(
   spec: VideoSpec,
   pool: MediaPool,
   mediaByName: Map<string, MediaItem>,
   t: number,
-  playing: boolean,
-) {
-  const actives: { el: HTMLVideoElement | HTMLAudioElement; target: number; volume: number; speed: number; reverse: boolean }[] = [];
+): { actives: ActiveMedia[]; audioSources: ActiveAudioSource[] } {
+  const actives: ActiveMedia[] = [];
+  const audioSources: ActiveAudioSource[] = [];
   for (const track of spec.tracks) {
     // R1-054: track audio bị mute → bỏ qua hoàn toàn (không phát tiếng).
     if (track.kind === "audio" && track.muted) continue;
@@ -221,28 +435,59 @@ function syncMedia(
       const reverse = speedable ? (clip.reverse ?? false) : false;
       const target =
         clip.kind === "image" ? 0 : speedable ? sourceTimeAt(clip, t) : 0;
+      const elapsed = t - clip.start;
       if (track.kind === "video" && clip.kind === "video" && item.kind === "video") {
         const el = pool.videoFor(item);
-        // R1-054: video track bị mute → giữ phát hình nhưng tắt tiếng (volume 0).
-        if (el) actives.push({ el, target, volume: track.muted ? 0 : 1, speed, reverse });
+        if (el) {
+          actives.push({ el, target, speed, reverse });
+          // R1-063: audio kế thừa qua engine. Render bỏ audio khi track muted
+          // hoặc sourceAudioMode="mute" → preview gain 0 cho khớp.
+          const vclip = clip as VideoClip;
+          const gain = (track.muted || (vclip.sourceAudioMode ?? "inherit") === "mute") ? 0 : 1;
+          audioSources.push({ el, gain });
+        }
       } else if (track.kind === "audio" && clip.kind === "audio" && item.kind === "audio") {
         const el = pool.audioFor(item);
         if (el) {
-          const audioClip = clip as import("@repo-1/video-spec").AudioClip;
-          let v = audioClip.volume ?? 1;
-          const el2 = t - audioClip.start;
-          if (audioClip.fadeIn && audioClip.fadeIn > 0) v *= clamp(el2 / audioClip.fadeIn, 0, 1);
-          if (audioClip.fadeOut && audioClip.fadeOut > 0) v *= clamp((audioClip.duration - el2) / audioClip.fadeOut, 0, 1);
-          actives.push({ el, target, volume: v, speed, reverse });
+          actives.push({ el, target, speed, reverse });
+          // R1-063: gain = volume × fadeIn × fadeOut × volumeKeyframes × mute (khớp render).
+          audioSources.push({ el, gain: computeClipGain(clip, elapsed, !!track.muted) });
         }
       }
     }
   }
+  return { actives, audioSources };
+}
+
+/**
+ * Đồng bộ các phần tử video/audio với playhead (transport: seek/play/pause/
+ * playbackRate) + đẩy gain mục tiêu vào AudioEngine (R1-063).
+ *
+ * Gain đi qua Web Audio GainNode nên volume/fadeIn/fadeOut/volumeKeyframes/mute
+ * được áp chính xác như render worker. `forceSeek=true` (khi vừa bấm play)
+ * buộc seek chính xác mọi source trong cùng 1 task — "start cùng lúc, offset chuẩn".
+ *
+ * R1-062: khi pause, hàm này KHÔNG set currentTime trực tiếp nữa — việc seek
+ * chính xác do Seeker đảm nhiệm (pause all → seek → chờ `seeked` → vẽ frame),
+ * tránh hiển thị frame cũ do seek bất đồng bộ.
+ */
+function syncMedia(
+  spec: VideoSpec,
+  pool: MediaPool,
+  mediaByName: Map<string, MediaItem>,
+  t: number,
+  playing: boolean,
+  engine: AudioEngine,
+  forceSeek: boolean,
+) {
+  const { actives, audioSources } = collectActives(spec, pool, mediaByName, t);
   const seen = new Set<HTMLVideoElement | HTMLAudioElement>();
   for (const a of actives) {
     if (seen.has(a.el)) continue;
     seen.add(a.el);
-    a.el.volume = clamp(a.volume, 0, 1);
+    // R1-063: KHÔNG gán el.volume ở đây nữa — AudioEngine nắm toàn quyền gain
+    // qua GainNode (tránh nhân đôi). Trường hợp fallback (không có Web Audio),
+    // engine.update() tự gán el.volume.
     // R1-013: đồng bộ playbackRate với clip.speed (giữ cao độ như render dùng atempo)
     try {
       if (a.el.playbackRate !== a.speed) a.el.playbackRate = a.speed;
@@ -252,7 +497,10 @@ function syncMedia(
       /* bỏ qua nếu trình duyệt không hỗ trợ */
     }
     if (playing) {
-      if (Math.abs(a.el.currentTime - a.target) > 0.35) {
+      // R1-063: forceSeek khi vừa bấm play → seek chính xác mọi source rồi mới phát,
+      // các source "start cùng lúc với offset chính xác". Khi đang phát bình thường
+      // chỉ re-seek khi drift > 0.35s để tránh giật.
+      if (forceSeek || Math.abs(a.el.currentTime - a.target) > 0.35) {
         try {
           a.el.currentTime = a.target;
         } catch {
@@ -265,16 +513,15 @@ function syncMedia(
         });
       }
     } else {
+      // R1-062: chỉ pause ở đây. Seek chính xác do Seeker xử lý (lib/seek.ts):
+      // pause all -> set currentTime đã snap -> chờ `seeked` -> vẽ frame.
+      // Không gán currentTime trực tiếp nữa để tránh vẽ frame cũ khi seek
+      // bất đồng bộ chưa xong.
       a.el.pause();
-      if (Math.abs(a.el.currentTime - a.target) > 1 / 30) {
-        try {
-          a.el.currentTime = a.target;
-        } catch {
-          /* bỏ qua */
-        }
-      }
     }
   }
+  // R1-063: đẩy gain vào Web Audio graph (mượt bằng setTargetAtTime) + VU meter.
+  engine.update(audioSources);
   if (!playing) pool.pauseAll();
 }
 
@@ -283,7 +530,25 @@ export function PreviewCanvas() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const poolRef = useRef<MediaPool | null>(null);
   const dragRef = useRef<{ trackId: string; clipId: string; dx: number; dy: number } | null>(null);
+  const engineRef = useRef<AudioEngine | null>(null);
+  const vuBarRef = useRef<HTMLDivElement>(null);
+  const prevPlayingRef = useRef(false);
+  // R1-062: seek chính xác khi pause/scrub.
+  const seekerRef = useRef<Seeker | null>(null);
+  const lastDrawnTRef = useRef<number | null>(null);
+  const lastRequestedTRef = useRef<number | null>(null);
+  if (!seekerRef.current) seekerRef.current = new Seeker();
   if (!poolRef.current) poolRef.current = new MediaPool();
+  if (!engineRef.current) {
+    // R1-063: Web Audio graph cho preview audio. VU meter cập nhật trực tiếp
+    // style (không qua React state) để tránh re-render 12 lần/giây.
+    engineRef.current = new AudioEngine({
+      onLevel: (rms) => {
+        const bar = vuBarRef.current;
+        if (bar) bar.style.transform = `scaleX(${clamp(rms * 1.6, 0, 1).toFixed(3)})`;
+      },
+    });
+  }
 
   // vòng lặp phát lại + vẽ
   useEffect(() => {
@@ -322,11 +587,57 @@ export function PreviewCanvas() {
       const pool = poolRef.current!;
       const t = useStore.getState().playhead;
       const playing = useStore.getState().playing;
-      syncMedia(spec, pool, mediaByName, t, playing);
-      renderFrame(ctx, spec, pool, mediaByName, t, computeViewport(cw, ch, spec), useStore.getState().selection[0] ?? null);
+      // R1-063: mở AudioContext khi phát (nút play = user gesture).
+      const engine = engineRef.current!;
+      if (playing) engine.ensure();
+      // Phát hiện cạnh lên của playing → force seek chính xác mọi source.
+      const forceSeek = playing && !prevPlayingRef.current;
+      prevPlayingRef.current = playing;
+      if (playing) {
+        // Đang phát: hủy seek dở của Seeker, đồng bộ như cũ, vẽ mỗi frame.
+        seekerRef.current!.cancel();
+        syncMedia(spec, pool, mediaByName, t, true, engine, forceSeek);
+        renderFrame(ctx, spec, pool, mediaByName, t, computeViewport(cw, ch, spec), useStore.getState().selection[0] ?? null);
+        lastDrawnTRef.current = t;
+        lastRequestedTRef.current = t;
+      } else {
+        // R1-062: pause/scrub — gain engine vẫn cập nhật theo playhead, nhưng
+        // frame CHỈ vẽ sau khi seek mới nhất hoàn tất (chờ `seeked`):
+        //  - debounce: kéo nhanh -> chỉ seek 1 lần khi thả tay,
+        //  - latest-wins: seek cũ bị hủy, không vẽ frame sai,
+        //  - trong lúc chờ, canvas giữ nguyên frame tĩnh (không nhấp nháy).
+        syncMedia(spec, pool, mediaByName, t, false, engine, false);
+        if (t !== lastDrawnTRef.current) {
+          lastRequestedTRef.current = t;
+          void seekerRef.current!.request(t, (tt) => {
+            const { actives } = collectActives(spec, pool, mediaByName, tt);
+            const targets: SeekTarget[] = actives.map((a) => ({
+              el: a.el,
+              target: a.target,
+              label: a.el instanceof HTMLVideoElement ? "video" : "audio",
+            }));
+            // seekAll: pause TẤT CẢ trước, seek audio+video đồng thời.
+            return seekAll(targets, { fps: spec.meta.fps });
+          }).then((outcome) => {
+            if (!outcome.cancelled && outcome.ok && lastRequestedTRef.current === t) {
+              renderFrame(ctx, spec, pool, mediaByName, t, computeViewport(cw, ch, spec), useStore.getState().selection[0] ?? null);
+              lastDrawnTRef.current = t;
+            }
+          });
+        }
+      }
     };
     raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
+    // R1-063: dự phòng — nếu AudioContext vẫn suspended (trình duyệt chặn resume
+    // ngoài gesture), gesture tiếp theo sẽ mở nó.
+    const kickAudio = () => engineRef.current?.ensure();
+    window.addEventListener("pointerdown", kickAudio);
+    window.addEventListener("keydown", kickAudio);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("pointerdown", kickAudio);
+      window.removeEventListener("keydown", kickAudio);
+    };
   }, []);
 
   /** Đổi client px -> tọa độ project. */
@@ -351,6 +662,7 @@ export function PreviewCanvas() {
     if (!ctx) return null;
     const st = useStore.getState();
     const t = st.playhead;
+    const { width: W, height: H } = st.spec.meta;
     // duyệt ngược để chữ trên cùng trúng trước
     for (let i = st.spec.tracks.length - 1; i >= 0; i--) {
       const track = st.spec.tracks[i];
@@ -359,9 +671,15 @@ export function PreviewCanvas() {
         const clip = track.clips[j];
         if (clip.kind !== "text") continue;
         if (t < clip.start || t >= clip.start + clip.duration) continue;
-        const box = measureTextBox(ctx, st.spec, track.id, clip);
-        if (Math.abs(p.x - box.x) <= box.w / 2 && Math.abs(p.y - box.y) <= box.h / 2) {
-          return box;
+        // R1-061: hit-test tại đúng vị trí visual (kể cả khi animation đang chạy).
+        ctx.font = textFont(clip);
+        const textW = Math.max(1, ctx.measureText(clip.text || " ").width);
+        const textH = clip.style.fontSize * 1.35;
+        const vis = textClipVisual(clip, t - clip.start, W, H, { textW, textH });
+        const w = textW + 24;
+        const h = textH + 16;
+        if (Math.abs(p.x - vis.cx) <= w / 2 && Math.abs(p.y - vis.cy) <= h / 2) {
+          return { clip, trackId: track.id, x: vis.cx, y: vis.cy, w, h };
         }
       }
     }
@@ -415,6 +733,10 @@ export function PreviewCanvas() {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
       />
+      {/* R1-063: VU meter đơn giản — mức tín hiệu sau master gain */}
+      <div className="vu-meter" title="Mức âm thanh preview">
+        <div ref={vuBarRef} className="vu-meter-fill" />
+      </div>
     </div>
   );
 }
