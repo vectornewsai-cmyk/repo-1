@@ -232,6 +232,33 @@ function validateSpec(spec) {
 }
 
 /** Validate một clip theo kind của track. */
+function validateVolumeKeyframes(v, duration) {
+  // R1-063: kiểm tra hình dạng { keyframes: [{ t, v, easing }] } cho AudioClip.volumeKeyframes.
+  const msgs = [];
+  if (typeof v !== "object" || v === null || !Array.isArray(v.keyframes)) {
+    msgs.push("volumeKeyframes phải là object { keyframes: [...] }");
+    return msgs;
+  }
+  const kfs = v.keyframes;
+  if (kfs.length === 0) msgs.push("volumeKeyframes.keyframes: mảng rỗng — cần ít nhất 1 keyframe");
+  if (kfs.length > 128) msgs.push("volumeKeyframes.keyframes: quá 128 keyframe");
+  kfs.forEach((kf, i) => {
+    const w = `volumeKeyframes.keyframes[${i}]`;
+    if (typeof kf !== "object" || kf === null) {
+      msgs.push(`${w} phải là object { t, v, easing }`);
+      return;
+    }
+    if (!isFiniteNumber(kf.t) || kf.t < 0 || kf.t > duration + EPS)
+      msgs.push(`${w}.t phải trong [0, ${duration}] (nhận được: ${kf.t})`);
+    if (!isFiniteNumber(kf.v) || kf.v < 0 || kf.v > 1)
+      msgs.push(`${w}.v phải trong 0..1 (nhận được: ${kf.v})`);
+    if (!["linear", "ease-in", "ease-out"].includes(kf.easing))
+      msgs.push(`${w}.easing phải là linear | ease-in | ease-out (nhận được: ${JSON.stringify(kf.easing)})`);
+  });
+  return msgs;
+}
+
+/** Validate một clip theo kind của track. */
 function validateClip(track, clip, where, err, warn) {
   if (typeof clip !== "object" || clip === null) {
     err(where, "phải là object"); return;
@@ -352,6 +379,14 @@ function validateClip(track, clip, where, err, warn) {
         err(where, `${key} phải là số >= 0, nhận được: ${clip[key]}`);
       else if (isFiniteNumber(clip.duration) && f > clip.duration + EPS)
         err(where, `${key} (${f}s) dài hơn duration của clip (${clip.duration}s)`);
+    }
+    // R1-063: volumeKeyframes — validate hình dạng, nhưng render worker CHƯA áp dụng
+    // (chỉ preview Web Audio áp dụng). Cảnh báo để user không bất ngờ khi export.
+    if (clip.volumeKeyframes !== undefined) {
+      for (const m of validateVolumeKeyframes(clip.volumeKeyframes, clip.duration))
+        err(where, m);
+      warn(where, "volumeKeyframes hiện chỉ được preview áp dụng (Web Audio), " +
+        "render worker chưa áp dụng — export sẽ dùng volume/fade tĩnh (xem AUDIOPREVIEW_LIMITS.md)");
     }
   }
 
