@@ -1,0 +1,82 @@
+{
+  "meta": {
+    "fps": 30,
+    "height": 720,
+    "name": "demo-render",
+    "width": 1280
+  },
+  "tracks": [
+    {
+      "clips": [
+        {
+          "duration": 5,
+          "id": "c1",
+          "in": 1,
+          "kind": "video",
+          "out": 6,
+          "src": "clip1.mp4",
+          "start": 0,
+          "transitionOut": {
+            "duration": 1,
+            "type": "fade"
+          }
+        },
+        {
+          "duration": 5,
+          "id": "c2",
+          "in": 0,
+          "kind": "video",
+          "out": 5,
+          "src": "clip2.mp4",
+          "start": 5
+        }
+      ],
+      "id": "v1",
+      "kind": "video",
+      "label": "Video chính"
+    },
+    {
+      "clips": [
+        {
+          "duration": 4,
+          "id": "tx1",
+          "kind": "text",
+          "start": 1,
+          "style": {
+            "animation": "fadeUp",
+            "bold": true,
+            "color": "#ffffff",
+            "fontFamily": "Noto Sans",
+            "fontSize": 64,
+            "x": 0.5,
+            "y": 0.35
+          },
+          "text": "Xin chào CapCut-2!"
+        }
+      ],
+      "id": "t1",
+      "kind": "text",
+      "label": "Chữ"
+    },
+    {
+      "clips": [
+        {
+          "duration": 10,
+          "fadeIn": 1,
+          "fadeOut": 2.5,
+          "id": "au1",
+          "in": 0,
+          "kind": "audio",
+          "out": 10,
+          "src": "music.m4a",
+          "start": 0,
+          "volume": 0.5
+        }
+      ],
+      "id": "a1",
+      "kind": "audio",
+      "label": "Nhạc nền"
+    }
+  ],
+  "version": "0.1.0"
+}

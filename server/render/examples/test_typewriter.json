@@ -1,0 +1,65 @@
+{
+  "meta": {
+    "fps": 30,
+    "height": 720,
+    "name": "test-typewriter",
+    "width": 1280
+  },
+  "tracks": [
+    {
+      "clips": [
+        {
+          "duration": 6,
+          "id": "c1",
+          "in": 0,
+          "kind": "video",
+          "out": 6,
+          "src": "clip1.mp4",
+          "start": 0
+        }
+      ],
+      "id": "v1",
+      "kind": "video",
+      "label": "Video"
+    },
+    {
+      "clips": [
+        {
+          "duration": 4,
+          "id": "tx1",
+          "kind": "text",
+          "start": 0.5,
+          "style": {
+            "animation": "typewriter",
+            "backgroundColor": "#000000",
+            "color": "#ffe14d",
+            "fontFamily": "DejaVu Sans",
+            "fontSize": 72,
+            "x": 0.5,
+            "y": 0.5
+          },
+          "text": "Gõ từng chữ…"
+        },
+        {
+          "duration": 3,
+          "id": "tx2",
+          "kind": "text",
+          "start": 1,
+          "style": {
+            "animation": "none",
+            "color": "#ffffff",
+            "fontFamily": "DejaVu Sans",
+            "fontSize": 40,
+            "x": 0.5,
+            "y": 0.75
+          },
+          "text": "Dòng chữ thường"
+        }
+      ],
+      "id": "t1",
+      "kind": "text",
+      "label": "Chữ typewriter"
+    }
+  ],
+  "version": "0.1.0"
+}

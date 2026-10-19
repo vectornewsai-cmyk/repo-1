@@ -1,0 +1,74 @@
+/* Chữ "đập" 2 nhịp như nhịp tim — hợp để nhấn mạnh.
+ * Nguồn: animate.css v3.7.2 — keyframes "heartBeat"
+ * Tác giả: Daniel Eden — https://github.com/animate-css/animate.css
+ * Giấy phép: MIT (Copyright (c) 2019 Daniel Eden) — xem LICENSE tại
+ *   https://github.com/animate-css/animate.css/blob/3.7.2/LICENSE
+ * Ngày lấy: 2026-10-18
+ * Cách dùng: gắn class "text-preset" vào element chữ (mặc định chạy 1s,
+ *   giữ trạng thái cuối bằng animation-fill-mode: both).
+ */
+
+@-webkit-keyframes heartBeat {
+  0% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+
+  14% {
+    -webkit-transform: scale(1.3);
+    transform: scale(1.3);
+  }
+
+  28% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+
+  42% {
+    -webkit-transform: scale(1.3);
+    transform: scale(1.3);
+  }
+
+  70% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+}
+
+@keyframes heartBeat {
+  0% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+
+  14% {
+    -webkit-transform: scale(1.3);
+    transform: scale(1.3);
+  }
+
+  28% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+
+  42% {
+    -webkit-transform: scale(1.3);
+    transform: scale(1.3);
+  }
+
+  70% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+}
+
+.text-preset {
+  -webkit-animation-name: heartBeat;
+  animation-name: heartBeat;
+  -webkit-animation-duration: 1.3s;
+  animation-duration: 1.3s;
+  -webkit-animation-timing-function: ease-in-out;
+  animation-timing-function: ease-in-out;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
