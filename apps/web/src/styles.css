@@ -437,6 +437,27 @@ input[type="color"] {
   touch-action: none;
 }
 
+/* R1-063: VU meter đơn giản — thanh ngang dưới góc trái preview */
+.vu-meter {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  width: 120px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  pointer-events: none;
+}
+.vu-meter-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #34d399 0%, #fbbf24 70%, #f87171 100%);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
 /* ============ Inspector ============ */
 .inspector {
   width: 288px;
@@ -922,7 +943,8 @@ input[type="color"] {
   pointer-events: none;
 }
 
-/* R1-035: thumbnail filmstrip cho clip video/image, thumbnail đơn cho sticker. */
+/* R1-035: thumbnail cho clip video/image, thumbnail đơn cho sticker.
+   R1-066: clip video dài hiện dải filmstrip nhiều frame (.clip-filmstrip). */
 .clip-thumb {
   position: absolute;
   inset: 0;
@@ -937,6 +959,25 @@ input[type="color"] {
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
+}
+
+/* R1-066: dải filmstrip nhiều frame cho clip video dài (như CapCut). */
+.clip-filmstrip {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.clip-filmstrip-cell {
+  flex: 1 1 0;
+  min-width: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.clip-filmstrip-cell + .clip-filmstrip-cell {
+  border-left: 1px solid rgba(0, 0, 0, 0.25);
 }
 
 .tl-clip .clip-label,
