@@ -41,6 +41,10 @@ const { buildTextExprs, buildOverlayExprs } = require("./keyframes");
 // Phase 3b: chroma key, text animations.
 const { buildChromaFilter } = require("./chroma");
 const { buildTextAnimExpr, isTextFxAnimation } = require("./textfx");
+// Phase 3c: LUT filters, video effects, stickers.
+const { buildLutFilter } = require("./lut");
+const { buildEffectsChain } = require("./effects");
+const { buildStickerOverlay } = require("./sticker");
 
 // ---------------------------------------------------------------------------
 // Tiện ích
@@ -192,7 +196,7 @@ function buildTypewriterAss(clips, meta) {
 // Dựng filter_complex
 // ---------------------------------------------------------------------------
 function buildFilterGraph(spec, ctx) {
-  const { W, H, fps, D, mediaIndex, absOf, transitions, fontFiles } = ctx;
+  const { W, H, fps, D, mediaIndex, absOf, transitions, fontFiles, assetsDir } = ctx;
   const fc = [];
   let n = 0;
   const lbl = (p) => `${p}${n++}`;
@@ -219,6 +223,11 @@ function buildFilterGraph(spec, ctx) {
       const speedChain = spd.video ? `,${spd.video}` : "";
       // Chroma key: áp sau speed, trước scale (key trên pixel gốc cho chính xác).
       const chromaChain = clip.chromaKey ? `,${buildChromaFilter(clip.chromaKey)}` : "";
+      // LUT filter + video effects: áp sau scale/pad (trên pixel output).
+      // buildLutFilter cần assetsDir — lấy từ ctx.
+      const lutChain = clip.filter?.lut ? `,${buildLutFilter(clip.filter.lut, ctx.assetsDir)}` : "";
+      const fxChain = buildEffectsChain(clip.effects);
+      const effectsChain = fxChain ? `,${fxChain}` : "";
       fc.push(
         `[${idx}:v]` +
         `trim=start=${num(clip.in)}:end=${num(clip.in + clip.duration * (clip.speed ?? 1))},` +
@@ -226,7 +235,7 @@ function buildFilterGraph(spec, ctx) {
         // Giữ tỉ lệ gốc, letterbox bằng nền đen cho vừa khít khung hình output.
         `scale=${W}:${H}:force_original_aspect_ratio=decrease,` +
         `pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=black,` +
-        `setsar=1,fps=${fps},format=yuv420p` +
+        `setsar=1,fps=${fps},format=yuv420p${lutChain}${effectsChain}` +
         `[${v}]`
       );
       return {
@@ -294,6 +303,29 @@ function buildFilterGraph(spec, ctx) {
     fc.push(`${base}[${p}]overlay=${ox}:${oy}:eof_action=pass[${b}]`);
     base = `[${b}]`;
   }
+
+  // ===== STICKER: overlay PNG lên timeline (sau video, trước text) =====
+  // Phase 3c: mỗi sticker clip được load, scale/rotate/opacity rồi overlay tại (x,y).
+  let vcur_sticker = base;
+  const stickerClips = [];
+  for (const track of spec.tracks.filter((t) => t.kind === "sticker"))
+    for (const clip of track.clips) stickerClips.push(clip);
+  if (stickerClips.length > 0) {
+    // Register sticker PNG files as inputs (cần absOf + mediaIndex — dùng register pattern)
+    // Lưu ý: sticker src được resolve qua absOf (mediaDir). Đảm bảo file đã register ở main.
+    for (const clip of stickerClips) {
+      const { filter, x, y } = buildStickerOverlay(clip, W, H);
+      const idx = mediaIndex.get(absOf(clip.src));
+      const s = lbl("stk");
+      // filter đã bao gồm loop/scale/rotate/opacity; overlay với enable theo thời gian
+      const S = clip.start, E = clip.start + clip.duration;
+      fc.push(`[${idx}:v]${filter}[${s}]`);
+      const o = lbl("stko");
+      fc.push(`${vcur_sticker}[${s}]overlay=${x}:${y}:enable='between(t,${num(S)},${num(E)})':eof_action=pass[${o}]`);
+      vcur_sticker = `[${o}]`;
+    }
+  }
+  base = vcur_sticker;
 
   // ===== TEXT: drawtext cho animation "none" / "fadeUp" / keyframes / textfx =====
   // Phase 3: nếu clip có `animations`, dùng buildTextExprs (keyframes x/y/opacity)
@@ -485,6 +517,7 @@ function main() {
   const { filterComplex, vout, aout, assFile } = buildFilterGraph(spec, {
     W: meta.width, H: meta.height, fps: meta.fps, D,
     mediaIndex, absOf, transitions: v.transitions, fontFiles,
+    assetsDir: path.join(__dirname, "..", "..", "..", "assets"),
   });
 
   const outAbs = path.resolve(args.out);
