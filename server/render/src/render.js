@@ -12,6 +12,7 @@
  *   4. Dựng filter_complex FFmpeg (1 lần chạy duy nhất):
  *        video: trim/setpts → scale+pad về đúng WxH → fps chuẩn → xfade (nếu có transition)
  *               → đặt lên timeline bằng setpts=PTS+S/TB + overlay eof_action=pass trên nền đen
+ *               (opacity: format=rgba + colorchannelmixer nhân alpha trước overlay)
  *               → drawtext (none/fadeUp) → subtitles ASS (typewriter)
  *        audio: atrim/asetpts → aresample 48k → volume → afade → adelay tới vị trí timeline
  *               → amix (nhiều clip) → apad cho đủ tổng thời lượng
@@ -45,6 +46,10 @@ const { buildTextAnimExpr, isTextFxAnimation } = require("./textfx");
 const { buildLutFilter } = require("./lut");
 const { buildEffectsChain } = require("./effects");
 const { buildStickerOverlay } = require("./sticker");
+// P0-03: image clip (ảnh tĩnh thành media type chính thức).
+const { buildImageChain } = require("./image");
+// R1-011: opacity/alpha cho video clip.
+const { buildOpacityFilter } = require("./opacity");
 
 // ---------------------------------------------------------------------------
 // Tiện ích
@@ -196,7 +201,7 @@ function buildTypewriterAss(clips, meta) {
 // Dựng filter_complex
 // ---------------------------------------------------------------------------
 function buildFilterGraph(spec, ctx) {
-  const { W, H, fps, D, mediaIndex, absOf, transitions, fontFiles, assetsDir } = ctx;
+  const { W, H, fps, D, mediaIndex, absOf, transitions, fontFiles, assetsDir, mediaProbes } = ctx;
   const fc = [];
   let n = 0;
   const lbl = (p) => `${p}${n++}`;
@@ -228,14 +233,22 @@ function buildFilterGraph(spec, ctx) {
       const lutChain = clip.filter?.lut ? `,${buildLutFilter(clip.filter.lut, ctx.assetsDir)}` : "";
       const fxChain = buildEffectsChain(clip.effects);
       const effectsChain = fxChain ? `,${fxChain}` : "";
+      // P0-05/R1-012: khi có chroma key, GIỮ alpha xuyên suốt chain.
+      // - buildChromaFilter đã output yuva420p (có alpha từ chromakey)
+      // - pad phải dùng màu trong suốt (black@0), không phải black đục
+      // - format cuối phải là yuva420p, KHÔNG được convert về yuv420p (sẽ mất alpha)
+      // - overlay filter tự composite bằng alpha channel
+      const hasChroma = !!clip.chromaKey;
+      const padColor = hasChroma ? "black@0" : "black";
+      const outFormat = hasChroma ? "yuva420p" : "yuv420p";
       fc.push(
         `[${idx}:v]` +
         `trim=start=${num(clip.in)}:end=${num(clip.in + clip.duration * (clip.speed ?? 1))},` +
         `setpts=PTS-STARTPTS${speedChain}${chromaChain},` +
-        // Giữ tỉ lệ gốc, letterbox bằng nền đen cho vừa khít khung hình output.
+        // Giữ tỉ lệ gốc, letterbox bằng nền đen (hoặc trong suốt nếu chroma) cho vừa khít khung hình output.
         `scale=${W}:${H}:force_original_aspect_ratio=decrease,` +
-        `pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=black,` +
-        `setsar=1,fps=${fps},format=yuv420p${lutChain}${effectsChain}` +
+        `pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=${padColor},` +
+        `setsar=1,fps=${fps},format=${outFormat}${lutChain}${effectsChain}` +
         `[${v}]`
       );
       return {
@@ -294,7 +307,12 @@ function buildFilterGraph(spec, ctx) {
   let base = "[base0]";
   for (const u of units) {
     const p = lbl("pl"), b = lbl("base");
-    fc.push(`${u.label}setpts=PTS+${num(u.start)}/TB[${p}]`);
+    // R1-011: opacity — áp sau khi unit đã hoàn chỉnh (kể cả xfade merge):
+    // format=rgba + colorchannelmixer nhân alpha, overlay composite bằng alpha.
+    // opacity ≈ 1 → không thêm filter (giữ nguyên pipeline cũ, không tốn hiệu năng).
+    const opFilter = buildOpacityFilter(u.clip.opacity);
+    const opChain = opFilter ? `${opFilter},` : "";
+    fc.push(`${u.label}${opChain}setpts=PTS+${num(u.start)}/TB[${p}]`);
     let ox = "0", oy = "0";
     if (!u.merged && u.clip.animations && (u.clip.animations.x || u.clip.animations.y)) {
       const oe = buildOverlayExprs(u.clip.animations, u.start);
@@ -302,6 +320,23 @@ function buildFilterGraph(spec, ctx) {
     }
     fc.push(`${base}[${p}]overlay=${ox}:${oy}:eof_action=pass[${b}]`);
     base = `[${b}]`;
+  }
+
+  // ===== IMAGE: ảnh tĩnh thành clip full-frame (sau video, trước sticker) =====
+  // P0-03: mỗi image clip được loop thành stream đúng duration (buildImageChain)
+  // rồi đặt lên timeline bằng setpts + overlay — giống hệt pattern video unit.
+  // Thứ tự composite: video → image → sticker → text.
+  for (const track of spec.tracks.filter((t) => t.kind === "image")) {
+    const clips = [...track.clips].sort((a, b) => a.start - b.start);
+    for (const clip of clips) {
+      const idx = mediaIndex.get(absOf(clip.src));
+      const v = lbl("img");
+      fc.push(`[${idx}:v]${buildImageChain(clip, W, H, fps)}[${v}]`);
+      const p = lbl("imgp"), b = lbl("imgb");
+      fc.push(`[${v}]setpts=PTS+${num(clip.start)}/TB[${p}]`);
+      fc.push(`${base}[${p}]overlay=0:0:eof_action=pass[${b}]`);
+      base = `[${b}]`;
+    }
   }
 
   // ===== STICKER: overlay PNG lên timeline (sau video, trước text) =====
@@ -389,26 +424,61 @@ function buildFilterGraph(spec, ctx) {
   // ===== AUDIO =====
   // Mỗi clip: cắt [in, in+duration*speed) → speed/reverse → chuẩn 48kHz stereo
   // → volume → afade → adelay tới vị trí start trên timeline. Rồi trộn bằng amix.
+  //
+  // R1-015: audio của VIDEO clip được xử lý theo `sourceAudioMode`:
+  // - "inherit" (mặc định): trích audio từ video source, áp cùng trim/speed/reverse.
+  // - "mute": bỏ qua. - "detach": chưa hỗ trợ (validate.js báo lỗi).
   const aseg = [];
+  // Helper dựng chain audio cho 1 clip (dùng chung cho audio clip và video inherit).
+  // streamRef: `[idx:a]` — audio stream của file nguồn.
+  const buildAudioChain = (streamRef, clip, label) => {
+    const a = lbl(label);
+    const spd = clip.speed ?? 1;
+    const spdF = buildSpeedFilter(spd, clip.reverse ?? false);
+    const speedChain = spdF.audio ? `,${spdF.audio}` : "";
+    let chain =
+      `${streamRef}` +
+      `atrim=start=${num(clip.in)}:end=${num(clip.in + clip.duration * spd)},` +
+      `asetpts=PTS-STARTPTS${speedChain},aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo`;
+    const vol = clip.volume ?? 1;
+    if (Math.abs(vol - 1) > EPS) chain += `,volume=${num(vol)}`;
+    if ((clip.fadeIn ?? 0) > EPS) chain += `,afade=t=in:st=0:d=${num(clip.fadeIn)}`;
+    if ((clip.fadeOut ?? 0) > EPS)
+      chain += `,afade=t=out:st=${num(clip.duration - clip.fadeOut)}:d=${num(clip.fadeOut)}`;
+    chain += `,adelay=${Math.round(clip.start * 1000)}:all=1[${a}]`;
+    fc.push(chain);
+    aseg.push(`[${a}]`);
+  };
   for (const track of spec.tracks.filter((t) => t.kind === "audio")) {
     for (const clip of track.clips) {
       const idx = mediaIndex.get(absOf(clip.src));
-      const a = lbl("ac");
-      const spd = clip.speed ?? 1;
-      const spdF = buildSpeedFilter(spd, clip.reverse ?? false);
-      const speedChain = spdF.audio ? `,${spdF.audio}` : "";
-      let chain =
-        `[${idx}:a]` +
-        `atrim=start=${num(clip.in)}:end=${num(clip.in + clip.duration * spd)},` +
-        `asetpts=PTS-STARTPTS${speedChain},aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo`;
-      const vol = clip.volume ?? 1;
-      if (Math.abs(vol - 1) > EPS) chain += `,volume=${num(vol)}`;
-      if ((clip.fadeIn ?? 0) > EPS) chain += `,afade=t=in:st=0:d=${num(clip.fadeIn)}`;
-      if ((clip.fadeOut ?? 0) > EPS)
-        chain += `,afade=t=out:st=${num(clip.duration - clip.fadeOut)}:d=${num(clip.fadeOut)}`;
-      chain += `,adelay=${Math.round(clip.start * 1000)}:all=1[${a}]`;
-      fc.push(chain);
-      aseg.push(`[${a}]`);
+      buildAudioChain(`[${idx}:a]`, clip, "ac");
+    }
+  }
+  // Audio inherit từ video clip (R1-015).
+  // FIX: chỉ inherit khi file thật sự có audio stream (kiểm tra qua mediaProbes
+  // từ validateMedia). Nếu không, bỏ qua lặng lẽ — validator đã warn.
+  const hasAudioStream = (abs) => {
+    if (!mediaProbes) return true; // không có probe data → giữ hành vi cũ
+    const probe = mediaProbes.get(abs);
+    if (!probe || !probe.streams) return false;
+    return probe.streams.some((s) => s.codec_type === "audio");
+  };
+  for (const track of spec.tracks.filter((t) => t.kind === "video")) {
+    for (const clip of track.clips) {
+      const mode = clip.sourceAudioMode ?? "inherit";
+      if (mode === "mute") continue;
+      if (mode === "detach") {
+        // validate.js đã chặn — tới đây nghĩa là validator bị bypass; fail fast.
+        throw new Error(
+          `clip "${clip.id}": sourceAudioMode="detach" chưa được hỗ trợ ` +
+          `(render worker chỉ hỗ trợ "inherit" | "mute")`
+        );
+      }
+      const abs = absOf(clip.src);
+      if (!hasAudioStream(abs)) continue; // file câm → không add [idx:a]
+      const idx = mediaIndex.get(abs);
+      buildAudioChain(`[${idx}:a]`, clip, "va");
     }
   }
   let aout;
@@ -518,6 +588,7 @@ function main() {
     W: meta.width, H: meta.height, fps: meta.fps, D,
     mediaIndex, absOf, transitions: v.transitions, fontFiles,
     assetsDir: path.join(__dirname, "..", "..", "..", "assets"),
+    mediaProbes: mv.probes, // R1-015 fix: check audio stream trước khi inherit
   });
 
   const outAbs = path.resolve(args.out);
