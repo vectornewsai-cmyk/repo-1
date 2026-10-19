@@ -35,6 +35,16 @@
 | `filters/cartcut-mono-neutral.cube` | preset "Mono Neutral" / lut.cube | https://github.com/cartesiancs/cartcut | cartesiancs | MIT (Copyright (c) 2025 cartesiancs) | 2026-10-18 |
 | `filters/cartcut-faded-seventies.cube` | preset "Faded Seventies" / lut.cube | https://github.com/cartesiancs/cartcut | cartesiancs | MIT (Copyright (c) 2025 cartesiancs) | 2026-10-18 |
 | `filters/cartcut-super-eight.cube` | preset "Super 8" / lut.cube | https://github.com/cartesiancs/cartcut | cartesiancs | MIT (Copyright (c) 2025 cartesiancs) | 2026-10-18 |
+| `filters/vcut-cinematic.cube` | tự tạo bằng `assets/filters/gen_vcut_luts.py` (tác phẩm gốc VCut Studio) | — | VCut Studio | Tác phẩm gốc (không copy) | 2026-10-19 |
+| `filters/vcut-vintage-fade.cube` | tự tạo bằng `assets/filters/gen_vcut_luts.py` (tác phẩm gốc VCut Studio) | — | VCut Studio | Tác phẩm gốc (không copy) | 2026-10-19 |
+| `filters/vcut-noir-contrast.cube` | tự tạo bằng `assets/filters/gen_vcut_luts.py` (tác phẩm gốc VCut Studio) | — | VCut Studio | Tác phẩm gốc (không copy) | 2026-10-19 |
+| `filters/vcut-cyberpunk.cube` | tự tạo bằng `assets/filters/gen_vcut_luts.py` (tác phẩm gốc VCut Studio) | — | VCut Studio | Tác phẩm gốc (không copy) | 2026-10-19 |
+| `filters/vcut-pastel-dream.cube` | tự tạo bằng `assets/filters/gen_vcut_luts.py` (tác phẩm gốc VCut Studio) | — | VCut Studio | Tác phẩm gốc (không copy) | 2026-10-19 |
+| `filters/vcut-sunset-glow.cube` | tự tạo bằng `assets/filters/gen_vcut_luts.py` (tác phẩm gốc VCut Studio) | — | VCut Studio | Tác phẩm gốc (không copy) | 2026-10-19 |
+| `filters/vcut-arctic.cube` | tự tạo bằng `assets/filters/gen_vcut_luts.py` (tác phẩm gốc VCut Studio) | — | VCut Studio | Tác phẩm gốc (không copy) | 2026-10-19 |
+| `filters/vcut-faded-film.cube` | tự tạo bằng `assets/filters/gen_vcut_luts.py` (tác phẩm gốc VCut Studio) | — | VCut Studio | Tác phẩm gốc (không copy) | 2026-10-19 |
+| `filters/vcut-moody-forest.cube` | tự tạo bằng `assets/filters/gen_vcut_luts.py` (tác phẩm gốc VCut Studio) | — | VCut Studio | Tác phẩm gốc (không copy) | 2026-10-19 |
+| `filters/vcut-warm-bloom.cube` | tự tạo bằng `assets/filters/gen_vcut_luts.py` (tác phẩm gốc VCut Studio) | — | VCut Studio | Tác phẩm gốc (không copy) | 2026-10-19 |
 | `text-presets/animate-css-fadeInUp.css` | fadeInUp (keyframes) | https://github.com/animate-css/animate.css (tag 3.7.2) | Daniel Eden | MIT (Copyright (c) 2019 Daniel Eden) | 2026-10-18 |
 | `text-presets/animate-css-fadeIn.css` | fadeIn (keyframes) | https://github.com/animate-css/animate.css (tag 3.7.2) | Daniel Eden | MIT (Copyright (c) 2019 Daniel Eden) | 2026-10-18 |
 | `text-presets/animate-css-bounceIn.css` | bounceIn (keyframes) | https://github.com/animate-css/animate.css (tag 3.7.2) | Daniel Eden | MIT (Copyright (c) 2019 Daniel Eden) | 2026-10-18 |
@@ -45,6 +55,16 @@
 | `text-presets/animate-css-lightSpeedIn.css` | lightSpeedIn (keyframes) | https://github.com/animate-css/animate.css (tag 3.7.2) | Daniel Eden | MIT (Copyright (c) 2019 Daniel Eden) | 2026-10-18 |
 | `text-presets/animate-css-jackInTheBox.css` | jackInTheBox (keyframes) | https://github.com/animate-css/animate.css (tag 3.7.2) | Daniel Eden | MIT (Copyright (c) 2019 Daniel Eden) | 2026-10-18 |
 | `text-presets/animate-css-heartBeat.css` | heartBeat (keyframes) | https://github.com/animate-css/animate.css (tag 3.7.2) | Daniel Eden | MIT (Copyright (c) 2019 Daniel Eden) | 2026-10-18 |
+| `text-presets/vcut-neon.css` | chữ neon phát sáng (keyframes gốc) | TỰ LÀM cho VCut Studio | VCut Studio | MIT | 2026-10-19 |
+| `text-presets/vcut-outline.css` | chữ viền outline | TỰ LÀM cho VCut Studio | VCut Studio | MIT | 2026-10-19 |
+| `text-presets/vcut-gradient.css` | chữ gradient tím→hồng→cam | TỰ LÀM cho VCut Studio | VCut Studio | MIT | 2026-10-19 |
+| `text-presets/vcut-retro.css` | chữ retro 3D | TỰ LÀM cho VCut Studio | VCut Studio | MIT | 2026-10-19 |
+| `text-presets/vcut-marker.css` | vệt highlight quét ngang (keyframes gốc) | TỰ LÀM cho VCut Studio | VCut Studio | MIT | 2026-10-19 |
+| `text-presets/vcut-glitch.css` | chữ glitch RGB split (keyframes gốc) | TỰ LÀM cho VCut Studio | VCut Studio | MIT | 2026-10-19 |
+| `text-presets/vcut-typewriter-caret.css` | con trỏ gõ máy nhấp nháy (keyframes gốc) | TỰ LÀM cho VCut Studio | VCut Studio | MIT | 2026-10-19 |
+| `text-presets/vcut-cinematic.css` | chữ điện ảnh giãn cách rộng | TỰ LÀM cho VCut Studio | VCut Studio | MIT | 2026-10-19 |
+| `text-presets/vcut-underline-draw.css` | gạch chân vẽ dần (keyframes gốc) | TỰ LÀM cho VCut Studio | VCut Studio | MIT | 2026-10-19 |
+| `text-presets/vcut-bubble.css` | chữ bong bóng sticker | TỰ LÀM cho VCut Studio | VCut Studio | MIT | 2026-10-19 |
 | `effects/pixi-filters-glitch.glsl` | GlitchFilter (glitch.frag) | https://github.com/pixijs/filters/tree/main/src/glitch | pixi.js filters contributors | MIT (Copyright (c) 2013-2025 Mathew Groves, Chad Engler) | 2026-10-18 |
 | `effects/pixi-filters-glow.glsl` | GlowFilter (glow.frag) | https://github.com/pixijs/filters/tree/main/src/glow | pixi.js filters contributors | MIT (Copyright (c) 2013-2025 Mathew Groves, Chad Engler) | 2026-10-18 |
 | `effects/pixi-filters-rgb-split.glsl` | RGBSplitFilter (rgb-split.frag) | https://github.com/pixijs/filters/tree/main/src/rgb-split | pixi.js filters contributors | MIT (Copyright (c) 2013-2025 Mathew Groves, Chad Engler) | 2026-10-18 |
@@ -85,3 +105,33 @@
 - **Audio — GitHub `andlo/ovos-skill-soundboard`**: repo license **GPL-3.0** → không thuộc danh sách cho phép → LOẠI.
 - **Audio — GitHub `sandraschi/sfx-mcp`**: MIT nhưng là wrapper gọi FreeSound API, repo không chứa file audio → không dùng được.
 - **Audio — GitHub `Daarko/sparkstream-sounds`**: mirror 521 file Kenney (CC0, có credits/ lưu license text gốc) nhưng GitHub không detect được LICENSE ở root và nội dung trùng 100% với nguồn Kenney đã lấy trực tiếp → đã xem xét, không lấy thêm (tránh trùng lặp).
+| `stickers/star.png` | star.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/heart.png` | heart.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/arrow-right.png` | arrow-right.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/lightning.png` | lightning.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/badge.png` | badge.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/bubble.png` | bubble.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/smile.png` | smile.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/wink.png` | wink.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/laugh.png` | laugh.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/cool.png` | cool.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/party.png` | party.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/fire.png` | fire.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/shape-circle.png` | shape-circle.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/shape-square.png` | shape-square.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/shape-triangle.png` | shape-triangle.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/shape-diamond.png` | shape-diamond.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/shape-plus.png` | shape-plus.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/arrow-up.png` | arrow-up.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/arrow-down.png` | arrow-down.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/arrow-left.png` | arrow-left.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/arrow-curved.png` | arrow-curved.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/arrow-double.png` | arrow-double.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/badge-check.png` | badge-check.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/badge-cross.png` | badge-cross.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/badge-medal.png` | badge-medal.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/badge-crown.png` | badge-crown.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/bubble-speech.png` | bubble-speech.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/bubble-thought.png` | bubble-thought.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/bubble-shout.png` | bubble-shout.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
+| `stickers/bubble-tag.png` | bubble-tag.png (tự vẽ 100% bằng PIL) | tự tạo | VCut Studio | MIT (tài sản gốc của repo) | 2026-10-19 |
