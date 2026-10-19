@@ -6,33 +6,43 @@
  * chạy render worker (server/render/src/render.js) bằng child_process.spawn
  * với argv cố định, theo dõi tiến trình, trả MP4 về cho UI tải xuống.
  *
+ * R1-041: dùng RenderJobService (src/jobQueue.js) — hàng đợi FIFO đúng nghĩa:
+ * job vượt MAX_CONCURRENT_JOBS được xếp hàng (queued) thay vì bị 429.
+ *
+ * R1-043: sau khi render worker thoát mã 0, service chạy outputQA (ffprobe)
+ * kiểm tra codec/duration/resolution trước khi đánh dấu done (xem
+ * src/outputQA.js). QA fail → job error, file lỗi không được trả qua download.
+ *
  * Bảo mật (theo yêu cầu task P0-01 / R1-040):
  *  - KHÔNG chạy shell tùy ý: chỉ spawn `node render.js` với argv cố định.
  *  - Tên file media được sanitize (basename, whitelist ký tự); KHÔNG cho path traversal.
- *  - Giới hạn số job đồng thời (MAX_CONCURRENT_JOBS); job thừa bị từ chối 429.
- *  - Giới hạn kích thước upload (MAX_UPLOAD_BYTES) và tổng dung lượng job dir.
- *  - Job dir là thư mục tạm riêng per-job; DELETE /api/render/:id dọn dẹp.
+ *  - Giới hạn số job đồng thời (MAX_CONCURRENT_JOBS) + độ dài hàng đợi (MAX_QUEUE_LENGTH).
+ *  - Giới hạn kích thước upload (MAX_UPLOAD_BYTES).
+ *  - Job dir là thư mục tạm riêng per-job; cancel dọn dẹp ngay.
  *  - Không nhận đường dẫn tuyệt đối từ client — mọi file đều do client upload.
  *
  * API:
  *  POST   /api/render            multipart: field "spec" (JSON string),
  *                                files field "media" (nhiều file, filename = clip.src)
- *                                → 201 { jobId } | 429 | 400
- *  GET    /api/render/:id        → { id, status, progress, error?, outputName? }
+ *                                → 201 { jobId, status, queuePosition } | 429 (hàng đợi đầy) | 400
+ *  GET    /api/render            → { jobs: [...] } (mới nhất trước, ?limit=)
+ *  GET    /api/render/:id        → { id, status, progress, queuePosition, attempts, error?, outputName?, qaReport? }
  *  GET    /api/render/:id/download → file MP4 (khi status=done)
- *  DELETE /api/render/:id        → hủy job (kill process) + xóa thư mục tạm
- *  GET    /api/health            → { ok: true, version, ffmpeg }
+ *  DELETE /api/render/:id        → hủy job (kill cả process group) + xóa thư mục tạm
+ *  POST   /api/render/:id/retry  → chạy lại job bị lỗi
+ *  GET    /api/health            → { ok: true, version, ffmpeg, runningJobs, queuedJobs }
  */
 "use strict";
 
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
-const crypto = require("crypto");
 const { spawn, execFile } = require("child_process");
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
+
+const { RenderJobService, newJobId, specDuration } = require("./jobQueue");
 
 // ---------------------------------------------------------------------------
 // Cấu hình
@@ -42,20 +52,48 @@ const RENDER_JS = path.resolve(__dirname, "..", "..", "render", "src", "render.j
 const FFMPEG = process.env.FFMPEG || "ffmpeg";
 const FFPROBE = process.env.FFPROBE || "ffprobe";
 const MAX_CONCURRENT_JOBS = parseInt(process.env.BRIDGE_MAX_JOBS || "2", 10);
+const MAX_QUEUE_LENGTH = parseInt(process.env.BRIDGE_MAX_QUEUE || "100", 10);
 const MAX_UPLOAD_BYTES = parseInt(process.env.BRIDGE_MAX_UPLOAD || String(2 * 1024 * 1024 * 1024), 10); // 2GB
 const JOB_TTL_MS = parseInt(process.env.BRIDGE_JOB_TTL || String(60 * 60 * 1000), 10); // 1h
 const WORK_ROOT = process.env.BRIDGE_WORK_DIR ||
   path.join(os.tmpdir(), "vcut-bridge-jobs");
+
+// --- R1-040 hardening: giới hạn & chính sách ---------------------------------
+const SPEC_MAX_BYTES = parseInt(process.env.BRIDGE_SPEC_MAX || String(10 * 1024 * 1024), 10); // 10MB
+const RATE_WINDOW_MS = 60 * 1000;
+const RATE_MAX_GENERAL = parseInt(process.env.BRIDGE_RATE_GENERAL || "120", 10); // req/phút/IP
+const RATE_MAX_RENDER = parseInt(process.env.BRIDGE_RATE_RENDER || "20", 10);     // POST render/phút/IP
+const MIN_DISK_FREE_BYTES = parseInt(process.env.BRIDGE_MIN_DISK_FREE || String(256 * 1024 * 1024), 10); // 256MB
+
+/** Whitelist đuôi file media cho phép upload. */
+const ALLOWED_MEDIA_EXTS = new Set([
+  ".mp4", ".mov", ".m4v", ".webm", ".mkv", ".avi",
+  ".mp3", ".wav", ".ogg", ".oga", ".m4a", ".flac", ".aac",
+  ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp",
+]);
+
+/** Magic bytes (đủ để nhận diện, không cần đầy đủ mọi định dạng). */
+const MAGIC = [
+  { ext: [".mp4", ".mov", ".m4v", ".m4a"], test: (b) => b.length > 12 && b.toString("ascii", 4, 12).includes("ftyp") },
+  { ext: [".webm", ".mkv"], test: (b) => b.length >= 4 && b[0] === 0x1a && b[1] === 0x45 && b[2] === 0xdf && b[3] === 0xa3 },
+  { ext: [".mp3"], test: (b) => b.length >= 3 && ((b[0] === 0xff && (b[1] & 0xe0) === 0xe0) || b.toString("ascii", 0, 3) === "ID3") },
+  { ext: [".wav"], test: (b) => b.length >= 12 && b.toString("ascii", 0, 4) === "RIFF" && b.toString("ascii", 8, 12) === "WAVE" },
+  { ext: [".ogg", ".oga"], test: (b) => b.length >= 4 && b.toString("ascii", 0, 4) === "OggS" },
+  { ext: [".flac"], test: (b) => b.length >= 4 && b.toString("ascii", 0, 4) === "fLaC" },
+  { ext: [".png"], test: (b) => b.length >= 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 },
+  { ext: [".jpg", ".jpeg"], test: (b) => b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
+  { ext: [".gif"], test: (b) => b.length >= 6 && (b.toString("ascii", 0, 6) === "GIF87a" || b.toString("ascii", 0, 6) === "GIF89a") },
+  { ext: [".webp"], test: (b) => b.length >= 12 && b.toString("ascii", 0, 4) === "RIFF" && b.toString("ascii", 8, 12) === "WEBP" },
+  { ext: [".bmp"], test: (b) => b.length >= 2 && b[0] === 0x42 && b[1] === 0x4d },
+  { ext: [".avi"], test: (b) => b.length >= 12 && b.toString("ascii", 0, 4) === "RIFF" && b.toString("ascii", 8, 11) === "AVI" },
+  { ext: [".aac"], test: (b) => b.length >= 2 && b[0] === 0xff && (b[1] & 0xf0) === 0xf0 },
+];
 
 const VERSION = "0.1.0";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function jobId() {
-  return crypto.randomBytes(8).toString("hex");
-}
-
 /**
  * Sanitize tên file upload: chỉ giữ basename, whitelist ký tự an toàn.
  * Trả về null nếu tên không hợp lệ (chặn path traversal).
@@ -67,62 +105,259 @@ function sanitizeFilename(name) {
   if (base === "." || base === "..") return null;
   if (!/^[\w\-. ]{1,128}$/.test(base)) return null; // whitelist ký tự
   if (base.startsWith(".")) return null;        // ẩn file
+  const ext = path.extname(base).toLowerCase();
+  if (!ALLOWED_MEDIA_EXTS.has(ext)) return null; // R1-040: whitelist loại file
   return base;
 }
 
-/** Parse tiến trình từ stderr của ffmpeg (dòng "time=HH:MM:SS.xx"). */
-function parseFfmpegTime(line) {
-  const m = /time=(\d+):(\d+):([\d.]+)/.exec(line);
-  if (!m) return null;
-  return (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]);
-}
-
-/** Ước lượng duration từ spec (meta.duration hoặc max end của clip). */
-function specDuration(spec) {
+/**
+ * R1-040: kiểm tra magic bytes của buffer có khớp với đuôi file không.
+ * Trả về null nếu OK, message lỗi nếu không khớp.
+ */
+function checkMagicBytes(safeName, buffer) {
+  const ext = path.extname(safeName).toLowerCase();
+  const candidates = MAGIC.filter((m) => m.ext.includes(ext));
+  if (candidates.length === 0) return null; // không có rule → đã qua whitelist đuôi
   try {
-    if (spec.meta && typeof spec.meta.duration === "number" && spec.meta.duration > 0)
-      return spec.meta.duration;
-    let d = 0;
-    for (const t of spec.tracks || [])
-      for (const c of t.clips || [])
-        d = Math.max(d, (c.start || 0) + (c.duration || 0));
-    return d;
-  } catch { return 0; }
+    if (buffer.length < 16) return `File "${safeName}" quá nhỏ hoặc rỗng, không nhận diện được định dạng.`;
+    for (const c of candidates) {
+      try { if (c.test(buffer)) return null; } catch { /* tiếp tục */ }
+    }
+    return `File "${safeName}" có đuôi ${ext} nhưng nội dung không khớp định dạng (có thể là file giả mạo).`;
+  } catch {
+    return `Không đọc được nội dung file "${safeName}".`;
+  }
+}
+
+/** R1-040: dung lượng đĩa còn trống (bytes) tại WORK_ROOT; -1 nếu không đo được. */
+function diskFreeBytes() {
+  try {
+    if (typeof fs.statfsSync !== "function") return -1;
+    try { fs.mkdirSync(WORK_ROOT, { recursive: true }); } catch {}
+    const st = fs.statfsSync(WORK_ROOT);
+    return Number(st.bfree) * Number(st.bsize);
+  } catch {
+    return -1;
+  }
+}
+
+/** R1-040: job id hợp lệ là 16 ký tự hex (do newJobId() tạo ra). */
+function isValidJobId(id) {
+  return typeof id === "string" && /^[0-9a-f]{16}$/.test(id);
 }
 
 // ---------------------------------------------------------------------------
-// Job store (in-memory)
+// R1-040: Rate limiter (in-memory, theo IP, fixed window)
 // ---------------------------------------------------------------------------
-/** @type {Map<string, Job>} */
-const jobs = new Map();
-
-function runningCount() {
-  let n = 0;
-  for (const j of jobs.values()) if (j.status === "running" || j.status === "queued") n++;
-  return n;
-}
-
-function cleanupJobDir(j) {
-  try { fs.rmSync(j.dir, { recursive: true, force: true }); } catch { /* bỏ qua */ }
-}
-
-/** Dọn job hết hạn định kỳ. */
+/** @type {Map<string, {count:number, resetAt:number}>} */
+const rateBuckets = new Map();
 setInterval(() => {
   const now = Date.now();
-  for (const [id, j] of jobs) {
-    if (now - j.createdAt > JOB_TTL_MS) {
-      if (j.proc) { try { j.proc.kill("SIGKILL"); } catch {} }
-      cleanupJobDir(j);
-      jobs.delete(id);
+  for (const [k, v] of rateBuckets) if (v.resetAt <= now) rateBuckets.delete(k);
+}, RATE_WINDOW_MS).unref();
+
+function rateLimit(max) {
+  return (req, res, next) => {
+    const ip = req.ip || req.socket?.remoteAddress || "unknown";
+    const now = Date.now();
+    let b = rateBuckets.get(ip);
+    if (!b || b.resetAt <= now) {
+      b = { count: 0, resetAt: now + RATE_WINDOW_MS };
+      rateBuckets.set(ip, b);
     }
+    b.count += 1;
+    res.setHeader("X-RateLimit-Limit", String(max));
+    res.setHeader("X-RateLimit-Remaining", String(Math.max(0, max - b.count)));
+    if (b.count > max) {
+      const retryAfter = Math.ceil((b.resetAt - now) / 1000);
+      res.setHeader("Retry-After", String(retryAfter));
+      return res.status(429).json({
+        error: `Quá nhiều request — thử lại sau ${retryAfter}s.`,
+      });
+    }
+    next();
+  };
+}
+
+/** R1-040: lỗi từ multer (file quá lớn, quá nhiều file...) → JSON rõ ràng. */
+// eslint-disable-next-line no-unused-vars
+function multerErrorHandler(err, req, res, next) {
+  if (!err) return next();
+  if (err.code && String(err.code).startsWith("LIMIT_")) {
+    const msg = err.code === "LIMIT_FILE_SIZE"
+      ? `File vượt quá giới hạn ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)}MB.`
+      : err.code === "LIMIT_FILE_COUNT"
+        ? "Quá nhiều file trong một request (tối đa 200)."
+        : "Upload không hợp lệ.";
+    return res.status(413).json({ error: msg });
   }
-}, 5 * 60 * 1000).unref();
+  return next(err);
+}
+
+/** R1-040: dọn media của job ngay khi done (giữ output.mp4 + spec.json). */
+function pruneJobMedia(job) {
+  try {
+    if (job.mediaDir && fs.existsSync(job.mediaDir)) {
+      fs.rmSync(job.mediaDir, { recursive: true, force: true });
+    }
+  } catch { /* bỏ qua */ }
+}
+
+/** R1-040: validate job id param trước khi tra cứu. */
+function validateJobIdParam(req, res, next) {
+  if (!isValidJobId(req.params.id)) {
+    return res.status(400).json({ error: "Job id không hợp lệ." });
+  }
+  next();
+}
+
+/** R1-040: lấy version ffmpeg (chuỗi ngắn), null nếu không chạy được. */
+async function ffmpegVersion() {
+  try {
+    const out = await new Promise((resolve, reject) => {
+      execFile(FFMPEG, ["-version"], { timeout: 8000 }, (err, stdout) =>
+        err ? reject(err) : resolve(String(stdout || "")));
+    });
+    const first = out.split("\n")[0] || "";
+    return first.slice(0, 120);
+  } catch {
+    return null;
+  }
+}
+
+function cleanupJobDir(dir) {
+  try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* bỏ qua */ }
+}
+
+// ---------------------------------------------------------------------------
+// Export preset (R1-042): quality params từ UI → argv render.js.
+// Whitelist nghiêm ngặt — KHÔNG cho client truyền argv tùy ý.
+// ---------------------------------------------------------------------------
+const X264_PRESETS = [
+  "ultrafast", "superfast", "veryfast", "faster", "fast",
+  "medium", "slow", "slower", "veryslow",
+];
+
+/**
+ * Parse + validate field "preset" (JSON string, optional).
+ * Trả về { crf, x264Preset, audioBitrate } đã sanitize, hoặc throw Error → 400.
+ */
+function parsePreset(raw) {
+  const defaults = { crf: 20, x264Preset: "medium", audioBitrate: "128k" };
+  if (raw === undefined || raw === null || raw === "") return defaults;
+  let p;
+  try {
+    p = JSON.parse(raw);
+  } catch {
+    throw new Error("Field 'preset' phải là JSON hợp lệ.");
+  }
+  if (!p || typeof p !== "object" || Array.isArray(p))
+    throw new Error("Field 'preset' phải là object.");
+  const out = { ...defaults };
+  if (p.crf !== undefined) {
+    if (!Number.isInteger(p.crf) || p.crf < 0 || p.crf > 51)
+      throw new Error("preset.crf phải là số nguyên 0..51.");
+    out.crf = p.crf;
+  }
+  if (p.x264Preset !== undefined) {
+    if (typeof p.x264Preset !== "string" || !X264_PRESETS.includes(p.x264Preset))
+      throw new Error(`preset.x264Preset phải thuộc: ${X264_PRESETS.join(", ")}.`);
+    out.x264Preset = p.x264Preset;
+  }
+  if (p.audioBitrateKbps !== undefined) {
+    if (!Number.isInteger(p.audioBitrateKbps) || p.audioBitrateKbps < 32 || p.audioBitrateKbps > 512)
+      throw new Error("preset.audioBitrateKbps phải là số nguyên 32..512.");
+    out.audioBitrate = `${p.audioBitrateKbps}k`;
+  }
+  return out;
+}
+
+/** Serialize job record cho API (loại bỏ proc, _stderrTail, _killTimer). */
+function publicJob(j) {
+  if (!j) return null;
+  return {
+    id: j.id,
+    status: j.status,
+    progress: Math.round(j.progress * 100) / 100,
+    queuePosition: j.queuePosition,
+    attempts: j.attempts,
+    error: j.error,
+    outputName: j.outputName,
+    outputSize: j.outputSize || null,
+    createdAt: j.createdAt,
+    startedAt: j.startedAt,
+    finishedAt: j.finishedAt,
+    recovered: !!j.recovered,
+    note: j.note,
+    qaReport: j.qaReport || null, // R1-043: chi tiết kiểm tra output
+  };
+}
+
+// ---------------------------------------------------------------------------
+// RenderJobService — spawnJob thật
+// ---------------------------------------------------------------------------
+const service = new RenderJobService({
+  maxConcurrent: MAX_CONCURRENT_JOBS,
+  maxQueueLength: MAX_QUEUE_LENGTH,
+  jobTtlMs: JOB_TTL_MS,
+  ffprobeBin: FFPROBE, // R1-043: QA output sau render
+  onDone: pruneJobMedia, // R1-040: dọn media ngay khi done
+  spawnJob(job) {
+    const args = [
+      RENDER_JS,
+      "--spec", job.specPath,
+      "--out", job.outPath,
+      "--media-dir", job.mediaDir,
+      "--ffmpeg", FFMPEG,
+      "--ffprobe", FFPROBE,
+      "-y",
+    ];
+    // R1-042: quality params đã sanitize ở parsePreset (job recover → dùng default).
+    const preset = job.preset || { crf: 20, x264Preset: "medium", audioBitrate: "128k" };
+    args.push(
+      "--crf", String(preset.crf),
+      "--x264-preset", preset.x264Preset,
+      "--audio-bitrate", preset.audioBitrate,
+    );
+    // detached: true → process group riêng, để cancel kill được cả ffmpeg con.
+    // (xem killProcessTree trong jobQueue.js)
+    return spawn(process.execPath, args, {
+      cwd: path.dirname(RENDER_JS),
+      stdio: ["ignore", "pipe", "pipe"],
+      shell: false, // QUAN TRỌNG: không dùng shell
+      detached: process.platform !== "win32",
+    });
+  },
+});
+
+// Phục hồi job dở dang sau restart (best-effort), rồi bật janitor dọn TTL.
+try {
+  fs.mkdirSync(WORK_ROOT, { recursive: true });
+  const n = service.recover(WORK_ROOT);
+  if (n > 0) console.log(`♻️  Phục hồi ${n} job dở dang từ lần chạy trước (render lại từ đầu).`);
+} catch (e) {
+  console.error("⚠️  Không phục hồi được job cũ:", e.message);
+}
+service.startJanitor();
 
 // ---------------------------------------------------------------------------
 // Express app
 // ---------------------------------------------------------------------------
 const app = express();
+app.set("trust proxy", false); // R1-040: không tin X-Forwarded-For (chạy local)
 app.use(cors());
+
+// R1-040: security headers cơ bản (không phá API hiện tại)
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  next();
+});
+
+// R1-040: rate limit chung cho mọi API
+app.use("/api/", rateLimit(RATE_MAX_GENERAL));
+
 app.use(express.json({ limit: "50mb" }));
 
 const upload = multer({
@@ -131,22 +366,51 @@ const upload = multer({
 });
 
 app.get("/api/health", async (req, res) => {
-  let ffmpeg = false;
-  try {
-    await new Promise((resolve, reject) => {
-      execFile(FFMPEG, ["-version"], { timeout: 8000 }, (err) => err ? reject(err) : resolve());
-    });
-    ffmpeg = true;
-  } catch { ffmpeg = false; }
-  res.json({ ok: true, version: VERSION, ffmpeg, runningJobs: runningCount() });
+  const fv = await ffmpegVersion();
+  const free = diskFreeBytes();
+  let workWritable = false;
+  try { fs.mkdirSync(WORK_ROOT, { recursive: true }); fs.accessSync(WORK_ROOT, fs.constants.W_OK); workWritable = true; } catch {}
+  res.json({
+    ok: true,
+    version: VERSION,
+    ffmpeg: fv !== null,
+    ffmpegVersion: fv, // R1-040
+    runningJobs: service.runningCount(),
+    queuedJobs: service.queuedCount(),
+    disk: free >= 0 ? { // R1-040
+      freeBytes: free,
+      freeGB: Math.round(free / 1024 / 1024 / 1024 * 100) / 100,
+      lowDisk: free < MIN_DISK_FREE_BYTES,
+    } : null,
+    workDirWritable: workWritable, // R1-040
+    uptimeSec: Math.round(process.uptime()), // R1-040
+    node: process.version, // R1-040
+  });
 });
 
 // --- POST /api/render -------------------------------------------------------
-app.post("/api/render", upload.array("media", 200), async (req, res) => {
+app.post("/api/render",
+  rateLimit(RATE_MAX_RENDER), // R1-040: giới hạn riêng, chặt hơn cho render
+  (req, res, next) => upload.array("media", 200)(req, res, (err) => {
+    if (err) return multerErrorHandler(err, req, res, next);
+    next();
+  }),
+  async (req, res) => {
+  // R1-040: giới hạn kích thước spec (multipart text field không bị multer giới hạn)
+  const specRaw = req.body.spec;
+  if (typeof specRaw !== "string") {
+    return res.status(400).json({ error: "Thiếu field 'spec'." });
+  }
+  if (Buffer.byteLength(specRaw, "utf8") > SPEC_MAX_BYTES) {
+    return res.status(413).json({
+      error: `Spec quá lớn (tối đa ${Math.round(SPEC_MAX_BYTES / 1024 / 1024)}MB).`,
+    });
+  }
+
   // 1. Parse + kiểm tra spec
   let spec;
   try {
-    spec = JSON.parse(req.body.spec);
+    spec = JSON.parse(specRaw);
   } catch {
     return res.status(400).json({ error: "Field 'spec' phải là JSON hợp lệ." });
   }
@@ -154,180 +418,183 @@ app.post("/api/render", upload.array("media", 200), async (req, res) => {
     return res.status(400).json({ error: "Spec thiếu tracks hoặc sai định dạng." });
   }
 
-  // 2. Giới hạn concurrent jobs
-  if (runningCount() >= MAX_CONCURRENT_JOBS) {
-    return res.status(429).json({
-      error: `Đang có ${MAX_CONCURRENT_JOBS} job chạy — thử lại sau.`,
+  // R1-040: kiểm tra dung lượng đĩa trước khi nhận job
+  const free = diskFreeBytes();
+  if (free >= 0 && free < MIN_DISK_FREE_BYTES) {
+    return res.status(507).json({
+      error: `Ổ đĩa sắp đầy (còn ${Math.round(free / 1024 / 1024)}MB) — dọn dẹp rồi thử lại.`,
     });
   }
 
-  // 3. Tạo job dir
-  const id = jobId();
+  // 1b. Parse export preset (R1-042, optional) — validate whitelist nghiêm ngặt.
+  let preset;
+  try {
+    preset = parsePreset(req.body.preset);
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+
+  // 2. Tạo job dir với id cuối cùng ngay từ đầu (tránh race rename)
+  const id = newJobId();
   const dir = path.join(WORK_ROOT, id);
   const mediaDir = path.join(dir, "media");
   const outPath = path.join(dir, "output.mp4");
   try {
     fs.mkdirSync(mediaDir, { recursive: true });
   } catch (e) {
-    return res.status(500).json({ error: "Không tạo được thư mục job: " + e.message });
+    console.error(`[bridge] không tạo được thư mục job:`, e.message);
+    return res.status(500).json({ error: "Lỗi máy chủ khi tạo job — thử lại sau." });
   }
 
-  // 4. Lưu media (sanitize tên file)
-  const savedFiles = [];
+  // 3. Lưu media (sanitize tên file + whitelist loại + magic bytes — R1-040)
   for (const f of req.files || []) {
     const safe = sanitizeFilename(f.originalname);
     if (!safe) {
-      cleanupJobDir({ dir });
-      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+      cleanupJobDir(dir);
+      return res.status(400).json({ error: `Tên file không hợp lệ hoặc loại file không được phép: ${f.originalname}` });
+    }
+    const magicErr = checkMagicBytes(safe, f.buffer);
+    if (magicErr) {
+      cleanupJobDir(dir);
+      return res.status(400).json({ error: magicErr });
     }
     const dest = path.join(mediaDir, safe);
     // Double-check: dest phải nằm trong mediaDir (chống traversal)
     if (!dest.startsWith(mediaDir + path.sep)) {
-      cleanupJobDir({ dir });
+      cleanupJobDir(dir);
       return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
     }
     try {
       fs.writeFileSync(dest, f.buffer);
-      savedFiles.push(safe);
     } catch (e) {
-      cleanupJobDir({ dir });
-      return res.status(500).json({ error: "Không lưu được file media: " + e.message });
+      console.error(`[bridge] không lưu được file media:`, e.message);
+      cleanupJobDir(dir);
+      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
     }
   }
 
-  // 5. Ghi spec.json
+  // 4. Ghi spec.json
   const specPath = path.join(dir, "spec.json");
   try {
     fs.writeFileSync(specPath, JSON.stringify(spec));
   } catch (e) {
-    cleanupJobDir({ dir });
-    return res.status(500).json({ error: "Không ghi được spec: " + e.message });
+    console.error(`[bridge] không ghi được spec:`, e.message);
+    cleanupJobDir(dir);
+    return res.status(500).json({ error: "Lỗi máy chủ khi lưu spec — thử lại sau." });
   }
 
-  // 6. Tạo job record
-  const job = {
-    id, dir, mediaDir, specPath, outPath,
-    status: "queued",
-    progress: 0,
-    error: null,
-    outputName: null,
-    createdAt: Date.now(),
-    proc: null,
-    totalDuration: specDuration(spec),
-    log: [],
-  };
-  jobs.set(id, job);
-
-  // 7. Spawn render worker (argv cố định — KHÔNG shell)
-  const args = [
-    RENDER_JS,
-    "--spec", specPath,
-    "--out", outPath,
-    "--media-dir", mediaDir,
-    "--ffmpeg", FFMPEG,
-    "--ffprobe", FFPROBE,
-    "-y",
-  ];
-  let proc;
+  // 5. Xếp vào hàng đợi (service tự chạy khi có slot trống)
+  let job;
   try {
-    proc = spawn(process.execPath, args, {
-      cwd: path.dirname(RENDER_JS),
-      stdio: ["ignore", "pipe", "pipe"],
-      shell: false, // QUAN TRỌNG: không dùng shell
+    job = service.enqueue({
+      id, dir, mediaDir, specPath, outPath,
+      totalDuration: specDuration(spec),
+      preset,
     });
   } catch (e) {
-    job.status = "error";
-    job.error = "Không khởi động được render worker: " + e.message;
-    return res.status(201).json({ jobId: id });
+    cleanupJobDir(dir);
+    if (e.code === "QUEUE_FULL") {
+      return res.status(429).json({ error: e.message });
+    }
+    console.error(`[bridge] không tạo được job:`, e.message);
+    return res.status(500).json({ error: "Lỗi máy chủ khi tạo job — thử lại sau." });
   }
-  job.proc = proc;
-  job.status = "running";
 
-  let stderrTail = "";
-  proc.stderr.on("data", (chunk) => {
-    const text = chunk.toString();
-    stderrTail += text;
-    if (stderrTail.length > 20000) stderrTail = stderrTail.slice(-20000);
-    // Parse progress từ ffmpeg
-    for (const line of text.split("\n")) {
-      const t = parseFfmpegTime(line);
-      if (t !== null && job.totalDuration > 0) {
-        job.progress = Math.min(0.99, Math.max(0, t / job.totalDuration));
-      }
-    }
+  return res.status(201).json({
+    jobId: job.id,
+    status: job.status,
+    queuePosition: job.queuePosition,
   });
-  proc.stdout.on("data", (chunk) => {
-    job.log.push(chunk.toString().slice(0, 2000));
-    if (job.log.length > 50) job.log.shift();
-  });
+});
 
-  proc.on("close", (code, signal) => {
-    job.proc = null;
-    if (job.status === "cancelled") return; // đã bị DELETE
-    if (code === 0 && fs.existsSync(outPath)) {
-      job.status = "done";
-      job.progress = 1;
-      const stat = fs.statSync(outPath);
-      job.outputName = `vcut-${id}.mp4`;
-      job.outputSize = stat.size;
-    } else {
-      job.status = "error";
-      const reason = signal ? `bị kill bởi signal ${signal}` : `thoát với mã ${code}`;
-      job.error = `Render worker ${reason}. ` +
-        (stderrTail ? "Chi tiết: " + stderrTail.slice(-1500) : "(không có stderr)");
-    }
+// --- GET /api/render (danh sách job) -----------------------------------------
+app.get("/api/render", (req, res) => {
+  const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
+  res.json({
+    jobs: service.list({ limit }).map(publicJob),
+    running: service.runningCount(),
+    queued: service.queuedCount(),
   });
-  proc.on("error", (e) => {
-    job.proc = null;
-    if (job.status !== "cancelled") {
-      job.status = "error";
-      job.error = "Lỗi spawn render worker: " + e.message;
-    }
-  });
-
-  return res.status(201).json({ jobId: id });
 });
 
 // --- GET /api/render/:id -----------------------------------------------------
-app.get("/api/render/:id", (req, res) => {
-  const job = jobs.get(req.params.id);
+app.get("/api/render/:id", validateJobIdParam, (req, res) => {
+  const job = service.get(req.params.id);
   if (!job) return res.status(404).json({ error: "Không tìm thấy job." });
-  res.json({
-    id: job.id,
-    status: job.status,
-    progress: Math.round(job.progress * 100) / 100,
-    error: job.error,
-    outputName: job.outputName,
-    outputSize: job.outputSize || null,
-  });
+  res.json(publicJob(job));
 });
 
 // --- GET /api/render/:id/download --------------------------------------------
-app.get("/api/render/:id/download", (req, res) => {
-  const job = jobs.get(req.params.id);
+app.get("/api/render/:id/download", validateJobIdParam, (req, res) => {
+  const job = service.get(req.params.id);
   if (!job) return res.status(404).json({ error: "Không tìm thấy job." });
   if (job.status !== "done" || !fs.existsSync(job.outPath)) {
     return res.status(409).json({ error: `Job chưa xong (status=${job.status}).` });
   }
   res.setHeader("Content-Type", "video/mp4");
   res.setHeader("Content-Disposition", `attachment; filename="${job.outputName || "vcut-export.mp4"}"`);
-  fs.createReadStream(job.outPath).pipe(res);
+  const stream = fs.createReadStream(job.outPath);
+  stream.on("error", (e) => {
+    console.error(`[bridge] lỗi đọc output job ${job.id}:`, e.message);
+    if (!res.headersSent) res.status(500).json({ error: "Lỗi khi đọc file output." });
+    else res.destroy();
+  });
+  stream.pipe(res);
 });
 
-// --- DELETE /api/render/:id --------------------------------------------------
-app.delete("/api/render/:id", (req, res) => {
-  const job = jobs.get(req.params.id);
+// --- DELETE /api/render/:id (hủy) --------------------------------------------
+app.delete("/api/render/:id", validateJobIdParam, (req, res) => {
+  const job = service.get(req.params.id);
   if (!job) return res.status(404).json({ error: "Không tìm thấy job." });
-  job.status = "cancelled";
-  if (job.proc) { try { job.proc.kill("SIGTERM"); } catch {} }
-  // Dọn sau 2s để process kịp thoát
-  setTimeout(() => { cleanupJobDir(job); jobs.delete(job.id); }, 2000);
+  const ok = service.cancel(job.id);
+  if (!ok) {
+    return res.status(409).json({
+      error: `Job đã ở trạng thái cuối ("${job.status}") — không hủy được.`,
+    });
+  }
   res.json({ ok: true, id: job.id, status: "cancelled" });
 });
 
+// --- POST /api/render/:id/retry (chạy lại job lỗi) ----------------------------
+app.post("/api/render/:id/retry", validateJobIdParam, (req, res) => {
+  try {
+    const job = service.retry(req.params.id);
+    res.json({ jobId: job.id, status: job.status, queuePosition: job.queuePosition });
+  } catch (e) {
+    if (e.code === "NOT_FOUND") return res.status(404).json({ error: e.message });
+    return res.status(409).json({ error: e.message });
+  }
+});
+
+// R1-040: 404 cho API không tồn tại → JSON (thay vì HTML của Express)
+app.use("/api/", (req, res) => {
+  res.status(404).json({ error: "API không tồn tại." });
+});
+
+// R1-040: error handler toàn cục — mọi lỗi chưa bắt → JSON gọn, KHÔNG leak stack.
+// Chi tiết đầy đủ chỉ log ở server.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error(`[bridge] unhandled error ${req.method} ${req.path}:`, err && err.stack || err);
+  if (res.headersSent) return;
+  const status = err && err.status && Number.isInteger(err.status) ? err.status : 500;
+  res.status(status).json({ error: "Lỗi máy chủ nội bộ." });
+});
+
 // ---------------------------------------------------------------------------
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🌉 VCut bridge server v${VERSION} đang chạy tại http://127.0.0.1:${PORT}`);
   console.log(`   render worker: ${RENDER_JS}`);
-  console.log(`   work dir: ${WORK_ROOT} | max jobs: ${MAX_CONCURRENT_JOBS}`);
+  console.log(`   work dir: ${WORK_ROOT} | max concurrent: ${MAX_CONCURRENT_JOBS} | max queue: ${MAX_QUEUE_LENGTH}`);
+  console.log(`   hardening: rate-limit ${RATE_MAX_GENERAL}/phút (render ${RATE_MAX_RENDER}/phút), spec ≤${Math.round(SPEC_MAX_BYTES / 1024 / 1024)}MB`);
 });
+
+// Shutdown graceful: hủy job, đóng server.
+function shutdown() {
+  console.log("\n🛑 Đang tắt bridge server — hủy job...");
+  try { service.shutdown(); } catch { /* bỏ qua */ }
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(0), 8000).unref();
+}
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
