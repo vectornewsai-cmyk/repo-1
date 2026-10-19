@@ -1,0 +1,217 @@
+/* ============ TransitionPanel — dark theme VCut Studio ============ */
+/* Preview là MINH HỌA bằng CSS animation, không phải render thật. */
+
+.tr-panel {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tr-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tr-panel-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.tr-panel-note {
+  font-size: 11px;
+  color: var(--muted-dim);
+}
+
+.tr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.tr-card {
+  background: var(--bg2);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.tr-card:hover {
+  border-color: #31405f;
+  background: var(--bg3);
+}
+
+.tr-card.selected {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.tr-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 5px;
+  overflow: hidden;
+  background: #1a1410;
+}
+
+.tr-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.tr-old {
+  background: linear-gradient(135deg, #c0392b, #e67e22);
+}
+
+.tr-new {
+  background: linear-gradient(135deg, #2471a3, #2ecc71);
+}
+
+/* ---- animation minh họa từng loại (chu kỳ 2.4s: giữ cũ 0.5s → chuyển 1.4s → giữ mới 0.5s) ---- */
+.tr-card[data-type="fade"] .tr-new { animation: tr-fade 2.4s ease-in-out infinite; }
+.tr-card[data-type="fadeblack"] .tr-new { animation: tr-fadeblack 2.4s ease-in-out infinite; }
+.tr-card[data-type="fadewhite"] .tr-new { animation: tr-fadewhite 2.4s ease-in-out infinite; }
+.tr-card[data-type="wipeleft"] .tr-new { animation: tr-wipeleft 2.4s ease-in-out infinite; }
+.tr-card[data-type="wiperight"] .tr-new { animation: tr-wiperight 2.4s ease-in-out infinite; }
+.tr-card[data-type="wipeup"] .tr-new { animation: tr-wipeup 2.4s ease-in-out infinite; }
+.tr-card[data-type="wipedown"] .tr-new { animation: tr-wipedown 2.4s ease-in-out infinite; }
+.tr-card[data-type="slideleft"] .tr-strip { animation: tr-slideleft 2.4s ease-in-out infinite; }
+.tr-card[data-type="slideright"] .tr-strip { animation: tr-slideright 2.4s ease-in-out infinite; }
+.tr-card[data-type="dissolve"] .tr-new { animation: tr-dissolve 2.4s ease-in-out infinite; }
+.tr-card[data-type="circleopen"] .tr-new { animation: tr-circleopen 2.4s ease-in-out infinite; }
+.tr-card[data-type="radial"] .tr-new { animation: tr-radial 2.4s linear infinite; }
+.tr-card[data-type="none"] .tr-new { display: none; }
+
+.tr-strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+  display: flex;
+}
+.tr-strip .tr-old,
+.tr-strip .tr-new {
+  position: relative;
+  width: 50%;
+  height: 100%;
+  flex: none;
+}
+
+@keyframes tr-fade {
+  0%, 20% { opacity: 0; }
+  79%, 100% { opacity: 1; }
+}
+@keyframes tr-fadeblack {
+  0%, 15% { opacity: 0; }
+  42%, 58% { opacity: 0; }
+  85%, 100% { opacity: 1; }
+}
+@keyframes tr-fadewhite {
+  0%, 15% { opacity: 0; }
+  42%, 58% { opacity: 0; }
+  85%, 100% { opacity: 1; }
+}
+.tr-card[data-type="fadeblack"] .tr-preview { background: #000; }
+.tr-card[data-type="fadeblack"] .tr-old { animation: tr-oldtoblack 2.4s ease-in-out infinite; }
+.tr-card[data-type="fadewhite"] .tr-preview { background: #fff; }
+.tr-card[data-type="fadewhite"] .tr-old { animation: tr-oldtowhite 2.4s ease-in-out infinite; }
+@keyframes tr-oldtoblack {
+  0%, 15% { opacity: 1; }
+  42%, 100% { opacity: 0; }
+}
+@keyframes tr-oldtowhite {
+  0%, 15% { opacity: 1; }
+  42%, 100% { opacity: 0; }
+}
+@keyframes tr-wipeleft {
+  0%, 20% { clip-path: inset(0 100% 0 0); }
+  79%, 100% { clip-path: inset(0 0 0 0); }
+}
+@keyframes tr-wiperight {
+  0%, 20% { clip-path: inset(0 0 0 100%); }
+  79%, 100% { clip-path: inset(0 0 0 0); }
+}
+@keyframes tr-wipeup {
+  0%, 20% { clip-path: inset(100% 0 0 0); }
+  79%, 100% { clip-path: inset(0 0 0 0); }
+}
+@keyframes tr-wipedown {
+  0%, 20% { clip-path: inset(0 0 100% 0); }
+  79%, 100% { clip-path: inset(0 0 0 0); }
+}
+@keyframes tr-slideleft {
+  0%, 20% { transform: translateX(0); }
+  79%, 100% { transform: translateX(-50%); }
+}
+@keyframes tr-slideright {
+  0%, 20% { transform: translateX(-50%); }
+  79%, 100% { transform: translateX(0); }
+}
+@keyframes tr-dissolve {
+  0%, 20% { opacity: 0; filter: blur(0); }
+  50% { opacity: 0.5; filter: blur(1.5px); }
+  79%, 100% { opacity: 1; filter: blur(0); }
+}
+@keyframes tr-circleopen {
+  0%, 20% { clip-path: circle(0% at 50% 50%); }
+  79%, 100% { clip-path: circle(75% at 50% 50%); }
+}
+@property --tr-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes tr-radial {
+  0%, 20% { --tr-angle: 0deg; }
+  79%, 100% { --tr-angle: 360deg; }
+}
+.tr-card[data-type="radial"] .tr-new {
+  -webkit-mask: conic-gradient(from 0deg at 50% 50%, black var(--tr-angle), transparent var(--tr-angle));
+  mask: conic-gradient(from 0deg at 50% 50%, black var(--tr-angle), transparent var(--tr-angle));
+}
+
+.tr-name {
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.tr-desc {
+  font-size: 10.5px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.35;
+  min-height: 28px;
+}
+
+.tr-duration {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tr-duration input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+.tr-duration b {
+  color: var(--text);
+  min-width: 44px;
+  text-align: right;
+}
