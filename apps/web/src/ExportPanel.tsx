@@ -14,6 +14,8 @@ import {
   EXPORT_PRESETS,
   X264_PRESETS,
   defaultCustomPreset,
+  estimateSize,
+  formatBytes,
   getPreset,
   presetSummary,
   validateExportPreset,
@@ -27,6 +29,17 @@ const BRIDGE_URL =
   "http://127.0.0.1:8787";
 
 type RenderStatus = "idle" | "uploading" | "rendering" | "done" | "error" | "cancelled";
+
+/** R1-065: format ETA giây → "1:23" / "1:02:03". */
+function fmtEta(sec: number | null): string {
+  if (sec == null || !isFinite(sec) || sec < 0) return "…";
+  const s = Math.round(sec);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const r = s % 60;
+  const mm = h > 0 ? String(m).padStart(2, "0") : String(m);
+  return (h > 0 ? `${h}:` : "") + `${mm}:${String(r).padStart(2, "0")}`;
+}
 
 /** Kiểm tra sâu hơn isVideoSpec: mọi field số phải hợp lệ, clip phải có src... */
 function deepValidate(spec: VideoSpec): string[] {
@@ -67,6 +80,9 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
   // --- P0-01: state xuất MP4 qua bridge ---
   const [renderStatus, setRenderStatus] = useState<RenderStatus>("idle");
   const [renderProgress, setRenderProgress] = useState(0);
+  // R1-065: ETA (giây, null = chưa đủ dữ liệu) + vị trí hàng đợi
+  const [renderEta, setRenderEta] = useState<number | null>(null);
+  const [queuePos, setQueuePos] = useState<number | null>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
@@ -116,6 +132,8 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
     if (!ok || !presetOk || renderStatus === "uploading" || renderStatus === "rendering") return;
     setRenderError(null);
     setRenderProgress(0);
+    setRenderEta(null); // R1-065
+    setQueuePos(null);  // R1-065
 
     const { files, missing } = collectMediaFiles();
     if (missing.length > 0) {
@@ -174,6 +192,9 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
         if (!res.ok) throw new Error(`status ${res.status}`);
         const data = await res.json();
         setRenderProgress(data.progress ?? 0);
+        // R1-065: ETA + vị trí hàng đợi
+        setRenderEta(typeof data.etaSeconds === "number" ? data.etaSeconds : null);
+        setQueuePos(typeof data.queuePosition === "number" ? data.queuePosition : null);
         if (data.status === "done") {
           stopPolling();
           setRenderStatus("done");
@@ -188,7 +209,7 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
       } catch {
         // giữ polling, có thể bridge lag tạm thời
       }
-    }, 1500);
+    }, 1000); // R1-065: poll mỗi 1s cho tiến trình mượt hơn
   };
 
   const stopPolling = () => {
@@ -349,6 +370,13 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
               )}
             </p>
           )}
+          {/* --- R1-064: ước tính dung lượng file xuất --- */}
+          {presetOk && ok && (
+            <p className="tips preset-desc">
+              📦 Dung lượng ước tính: <b>{formatBytes(estimateSize(activePreset, dur))}</b>
+              {" "}<span title="Ước tính theo công thức bitrate × thời lượng, file thật có thể chênh lệch theo nội dung video">(ước tính)</span>
+            </p>
+          )}
 
           {renderStatus === "idle" && (
             <p className="tips">
@@ -363,7 +391,12 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
               </div>
               <div className="progress-label">
                 {renderStatus === "uploading" ? "Đang tải media lên..." :
-                  `Đang render... ${Math.round(renderProgress * 100)}%`}
+                  queuePos != null && renderProgress <= 0
+                    ? `Đang xếp hàng (vị trí #${queuePos})…` // R1-065
+                    : `Đang render... ${Math.round(renderProgress * 100)}%` +
+                      (renderEta != null && renderProgress > 0
+                        ? ` — còn ~${fmtEta(renderEta)}` // R1-065
+                        : "")}
               </div>
               <button onClick={cancelRender}>Hủy</button>
             </div>
