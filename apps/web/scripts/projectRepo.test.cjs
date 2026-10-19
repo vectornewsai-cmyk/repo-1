@@ -32,7 +32,7 @@ function eq(a, b, label) {
 
 function makeSpec(name) {
   return {
-    version: "0.1.0",
+    version: "0.2.0",
     meta: { name: name || "Test", width: 1280, height: 720, fps: 30 },
     tracks: [
       {
@@ -53,13 +53,20 @@ function makeSpec(name) {
   };
 }
 
+/** Spec theo schema cũ 0.1.0 (để test migration P0-12). */
+function makeSpec010(name) {
+  const s = makeSpec(name);
+  s.version = "0.1.0";
+  return s;
+}
+
 console.log("== serializeProject ==");
 {
   const { json, envelope, warnings } = repo.serializeProject(makeSpec("Demo"), "Demo");
   eq(envelope.format, "vcut-project", "format");
   eq(envelope.formatVersion, 1, "formatVersion");
   eq(envelope.appVersion, "0.1.0", "appVersion");
-  eq(envelope.specVersion, "0.1.0", "specVersion");
+  eq(envelope.specVersion, "0.2.0", "specVersion");
   eq(envelope.name, "Demo", "name");
   ok(!Number.isNaN(Date.parse(envelope.savedAt)), "savedAt là ISO date");
   eq(warnings.length, 0, "không warning khi spec sạch");
@@ -153,7 +160,7 @@ console.log("== autosave round-trip ==");
 
 console.log("== isDirty / markSaved ==");
 {
-  const empty = { version: "0.1.0", meta: { name: "Dự án mới", width: 1280, height: 720, fps: 30 }, tracks: [] };
+  const empty = { version: "0.2.0", meta: { name: "Dự án mới", width: 1280, height: 720, fps: 30 }, tracks: [] };
   // reset trạng thái module bằng cách markSaved một spec khác rồi kiểm tra lại
   repo.markSaved(empty);
   eq(repo.isDirty(empty), false, "vừa markSaved → không dirty");
@@ -178,6 +185,58 @@ console.log("== parseProjectText: image clip (P1.1) ==");
   bad.tracks.push({ id: "i1", kind: "image", label: "x", clips: [{ kind: "image", id: "c3", start: 0, duration: 3 }] });
   const res2 = repo.parseProjectText(JSON.stringify(bad));
   eq(res2.ok, false, "image clip thiếu src → ok=false");
+}
+
+console.log("== parseProjectText: migrate 0.1.0 → 0.2.0 (P0-12) ==");
+{
+  // Envelope định dạng 0.1.0 đầy đủ (như file do app cũ lưu) → tự migrate
+  const env010 = {
+    format: "vcut-project",
+    formatVersion: 1,
+    appVersion: "0.1.0",
+    specVersion: "0.1.0",
+    savedAt: new Date().toISOString(),
+    name: "Cũ",
+    spec: makeSpec010("Cũ"),
+  };
+  const res = repo.parseProjectText(JSON.stringify(env010));
+  eq(res.ok, true, "file 0.1.0 cũ vẫn mở được");
+  eq(res.name, "Cũ", "giữ tên project");
+  eq(res.spec.version, "0.2.0", "spec được nâng cấp lên 0.2.0");
+  eq(res.spec.tracks.length, 2, "giữ nguyên tracks");
+  eq(res.spec.tracks[0].clips[0].src, "clip.mp4", "giữ nguyên dữ liệu clip");
+  eq(res.spec.tracks[1].clips[0].text, "Xin chào", "giữ nguyên text clip");
+  ok(
+    res.warnings.some((w) => w.includes("0.1.0") && w.includes("nâng cấp")),
+    "có cảnh báo đã tự động nâng cấp",
+  );
+
+  // Spec trần 0.1.0 (không envelope) → cũng migrate
+  const res2 = repo.parseProjectText(JSON.stringify(makeSpec010("Trần cũ")));
+  eq(res2.ok, true, "spec trần 0.1.0 mở được");
+  eq(res2.spec.version, "0.2.0", "spec trần được nâng cấp");
+
+  // File 0.2.0 hiện tại → không có cảnh báo migrate
+  const cur = repo.parseProjectText(JSON.stringify(makeSpec("Mới")));
+  eq(cur.ok, true, "file 0.2.0 mở bình thường");
+  ok(
+    !cur.warnings.some((w) => w.includes("nâng cấp")),
+    "không cảnh báo nâng cấp khi đã ở version hiện tại",
+  );
+
+  // Version quá cũ (không có migration path) → từ chối rõ ràng
+  const tooOld = makeSpec010("X");
+  tooOld.version = "0.0.5";
+  const res3 = repo.parseProjectText(JSON.stringify(tooOld));
+  eq(res3.ok, false, "version 0.0.5 → ok=false");
+  ok(res3.errors[0].includes("0.0.5"), "lỗi nêu rõ version không hỗ trợ");
+
+  // Version mới hơn app → từ chối với gợi ý update
+  const newer = makeSpec010("Y");
+  newer.version = "9.9.9";
+  const res4 = repo.parseProjectText(JSON.stringify(newer));
+  eq(res4.ok, false, "version 9.9.9 → ok=false");
+  ok(res4.errors[0].includes("9.9.9"), "lỗi nêu rõ version mới hơn app");
 }
 
 console.log(`\n${pass} pass, ${fail} fail`);
