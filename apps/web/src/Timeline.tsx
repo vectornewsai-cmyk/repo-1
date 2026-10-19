@@ -8,7 +8,7 @@ import { useStore } from "./store";
 import { clamp, fmtTime, tickStep } from "./lib";
 import { ClipWaveform } from "./components/waveform";
 
-const LANE_H: Record<TrackKind, number> = { video: 58, audio: 46, text: 46 };
+const LANE_H: Record<TrackKind, number> = { video: 58, audio: 46, text: 46, sticker: 46 };
 
 type DragState =
   | { mode: "scrub" }
@@ -142,7 +142,7 @@ function ClipView({
   );
 }
 
-const TRACK_ICON: Record<TrackKind, string> = { video: "🎬", audio: "🎵", text: "🔤" };
+const TRACK_ICON: Record<TrackKind, string> = { video: "🎬", audio: "🎵", text: "🔤", sticker: "🌟" };
 
 export function Timeline() {
   const spec = useStore((s) => s.spec);

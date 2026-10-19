@@ -208,7 +208,7 @@ function syncMedia(
       if (t < clip.start || t >= clip.start + clip.duration) continue;
       const item = mediaByName.get(clip.src);
       if (!item) continue;
-      const target = clip.in + (t - clip.start);
+      const target = (clip as { in: number }).in + (t - clip.start);
       if (track.kind === "video" && clip.kind === "video" && item.kind === "video") {
         const el = pool.videoFor(item);
         if (el) actives.push({ el, target, volume: 1 });
