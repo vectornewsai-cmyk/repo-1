@@ -47,6 +47,10 @@ import {
 } from "./lib/trackFlags";
 import { rippleDelete, rippleTrimRight } from "./lib/ripple";
 import {
+  removeSilenceFromClip,
+  type LocalSilence,
+} from "./lib/silence";
+import {
   dedupeSelections,
   deleteClips,
   moveClipsBy,
@@ -116,6 +120,64 @@ function findClip(spec: VideoSpec, trackId: string, clipId: string): { track: Tr
   return { track, clip };
 }
 
+/**
+ * Tách 1 clip thành 2 tại thời điểm t (timeline, giây).
+ * Logic tách y hệt splitAtPlayhead (R1-014: video/audio dùng splitSourceAt
+ * nên đúng với mọi speed/reverse).
+ * Trả về null nếu t không nằm hẳn trong clip (cách mép < 0.05s) hoặc
+ * kind không hỗ trợ.
+ */
+function splitClipAt(clip: Clip, t: number): [Clip, Clip] | null {
+  if (t <= clip.start + 0.05 || t >= clip.start + clip.duration - 0.05) {
+    return null;
+  }
+  const leftDur = t - clip.start;
+  const rightDur = clip.start + clip.duration - t;
+  if (clip.kind === "text" || clip.kind === "sticker" || clip.kind === "image") {
+    const left: Clip = { ...clip, duration: leftDur };
+    const right: Clip = { ...clip, id: uid("c"), start: t, duration: rightDur };
+    return [left, right];
+  }
+  if (clip.kind === "video") {
+    const cut = splitSourceAt(clip, t);
+    const lDur = (cut.leftOut - cut.leftIn) / (clip.speed ?? 1);
+    const rDur = (cut.rightOut - cut.rightIn) / (clip.speed ?? 1);
+    const left: Clip = {
+      ...clip,
+      duration: lDur,
+      in: cut.leftIn,
+      out: cut.leftOut,
+      transitionOut: { type: "none", duration: 0 },
+    };
+    const right: Clip = {
+      ...clip,
+      id: uid("c"),
+      start: t,
+      duration: rDur,
+      in: cut.rightIn,
+      out: cut.rightOut,
+      transitionIn: { type: "none", duration: 0 },
+    };
+    return [left, right];
+  }
+  if (clip.kind === "audio") {
+    const cut = splitSourceAt(clip, t);
+    const lDur = (cut.leftOut - cut.leftIn) / (clip.speed ?? 1);
+    const rDur = (cut.rightOut - cut.rightIn) / (clip.speed ?? 1);
+    const left: Clip = { ...clip, duration: lDur, in: cut.leftIn, out: cut.leftOut };
+    const right: Clip = {
+      ...clip,
+      id: uid("c"),
+      start: t,
+      duration: rDur,
+      in: cut.rightIn,
+      out: cut.rightOut,
+    };
+    return [left, right];
+  }
+  return null;
+}
+
 /** Kiểm tra đoạn [start, start+dur) có chồng clip khác trên track không. */
 function overlaps(track: Track, ignoreId: string, start: number, dur: number): boolean {
   return track.clips.some(
@@ -168,7 +230,19 @@ interface EditorState {
    * Mỗi segment → 1 text clip; toàn bộ là 1 bước undo duy nhất.
    * Trả về id của track vừa tạo.
    */
-  addCaptionTrack: (segments: CaptionSegment[]) => string;
+  addCaptionTrack: (segments: CaptionSegment[], opts?: { label?: string; historyLabel?: string }) => string;
+
+  /**
+   * Cắt các khoảng lặng khỏi 1 clip video/audio (R1-084).
+   * `silences`: khoảng lặng theo THỜI GIAN LOCAL của clip (offset từ clip.start).
+   * Toàn bộ (split + xóa + dồn) là 1 bước undo duy nhất.
+   * Trả về {cutCount, removedTotal} hoặc null nếu không cắt được.
+   */
+  removeSilence: (
+    trackId: string,
+    clipId: string,
+    silences: LocalSilence[]
+  ) => { cutCount: number; removedTotal: number } | null;
 
   moveClip: (trackId: string, clipId: string, newStart: number) => void;
   /**
@@ -181,6 +255,8 @@ interface EditorState {
   patchClip: (trackId: string, clipId: string, patch: Partial<Clip>) => void;
   patchTextStyle: (trackId: string, clipId: string, style: Partial<TextStyle>) => void;
   splitAtPlayhead: () => boolean;
+  /** R1-085: tách 1 clip tại nhiều thời điểm trong 1 bước undo. */
+  splitClipAtTimes: (trackId: string, clipId: string, times: number[]) => number;
   deleteSelection: () => void;
   /** Ripple delete 1 clip cụ thể (không phụ thuộc selection). Trả về false nếu không tìm thấy. */
   deleteClipRipple: (trackId: string, clipId: string) => boolean;
@@ -478,27 +554,50 @@ export const useStore = create<EditorState>()((set, get) => {
     }
   },
 
-  addCaptionTrack: (segments) => {
+  addCaptionTrack: (segments, opts) => {
     const clips = segmentsToTextClips(segments);
     const id = nextTrackId("text");
     const count = get().spec.tracks.filter((t) => t.kind === "text").length + 1;
+    // R1-080: track dịch có label riêng (vd: "Phụ đề (EN)"); tránh trùng label.
+    let label = opts?.label ?? `${CAPTION_TRACK_LABEL} ${count}`;
+    const taken = new Set(get().spec.tracks.map((t) => t.label));
+    if (taken.has(label)) label = `${label} ${count}`;
     const track: Track = {
       id,
       kind: "text",
-      label: `${CAPTION_TRACK_LABEL} ${count}`,
+      label,
       clips,
     };
+    const historyLabel = opts?.historyLabel ?? "Tạo phụ đề tự động";
     // Gộp tạo track + chèn toàn bộ câu thành 1 bước undo duy nhất.
-    get().beginHistoryGroup("Tạo phụ đề tự động");
+    get().beginHistoryGroup(historyLabel);
     try {
       execCommand({
-        label: "Tạo phụ đề tự động",
+        label: historyLabel,
         apply: (s) => ({ ...s, tracks: [...s.tracks, track] }),
       });
     } finally {
       get().endHistoryGroup();
     }
     return id;
+  },
+
+  removeSilence: (trackId, clipId, silences) => {
+    const res = removeSilenceFromClip(get().spec, trackId, clipId, silences, (p) =>
+      uid(p)
+    );
+    if (!res) return null;
+    // 1 bước undo duy nhất cho toàn bộ thao tác cắt.
+    get().beginHistoryGroup("Cắt khoảng lặng");
+    try {
+      execCommand({
+        label: "Cắt khoảng lặng",
+        apply: () => res.spec,
+      });
+    } finally {
+      get().endHistoryGroup();
+    }
+    return { cutCount: res.cutCount, removedTotal: res.removedTotal };
   },
 
   moveClip: (trackId, clipId, newStart) => {
@@ -692,55 +791,9 @@ export const useStore = create<EditorState>()((set, get) => {
     if (!target) return false;
     if (isTrackLocked(target.track)) return false; // R1-054: không tách clip trên track khóa
     const { track, clip } = target;
-    const t = playhead;
-    const leftDur = t - clip.start;
-    const rightDur = clip.start + clip.duration - t;
-
-    let left: Clip;
-    let right: Clip;
-    if (clip.kind === "text" || clip.kind === "sticker" || clip.kind === "image") {
-      left = { ...clip, duration: leftDur };
-      right = { ...clip, id: uid("c"), start: t, duration: rightDur };
-    } else if (clip.kind === "video") {
-      // R1-014: dùng splitSourceAt — điểm cắt nguồn đúng với mọi speed/reverse
-      const cut = splitSourceAt(clip, t);
-      const leftDuration = (cut.leftOut - cut.leftIn) / (clip.speed ?? 1);
-      const rightDuration = (cut.rightOut - cut.rightIn) / (clip.speed ?? 1);
-      left = {
-        ...clip,
-        duration: leftDuration,
-        in: cut.leftIn,
-        out: cut.leftOut,
-        transitionOut: { type: "none", duration: 0 },
-      };
-      right = {
-        ...clip,
-        id: uid("c"),
-        start: t,
-        duration: rightDuration,
-        in: cut.rightIn,
-        out: cut.rightOut,
-        transitionIn: { type: "none", duration: 0 },
-      };
-    } else if (clip.kind === "audio") {
-      // audio: không có transition — R1-014: dùng splitSourceAt
-      const cut = splitSourceAt(clip, t);
-      const leftDuration = (cut.leftOut - cut.leftIn) / (clip.speed ?? 1);
-      const rightDuration = (cut.rightOut - cut.rightIn) / (clip.speed ?? 1);
-      left = { ...clip, duration: leftDuration, in: cut.leftIn, out: cut.leftOut };
-      right = {
-        ...clip,
-        id: uid("c"),
-        start: t,
-        duration: rightDuration,
-        in: cut.rightIn,
-        out: cut.rightOut,
-      };
-    } else {
-      // Không tới đây: text/sticker/image đã xử lý ở nhánh đầu,
-      // video/audio đã xử lý ở hai nhánh trên.
-      throw new Error(`splitClip: kind không hỗ trợ: ${(clip as Clip).kind}`);
-    }
+    const pair = splitClipAt(clip, playhead);
+    if (!pair) return false;
+    const [left, right] = pair;
     execCommand(
       {
         label: "Tách clip",
@@ -752,6 +805,51 @@ export const useStore = create<EditorState>()((set, get) => {
       [{ trackId: track.id, clipId: right.id }],
     );
     return true;
+  },
+
+  /**
+   * R1-085: tách 1 clip tại NHIỀU thời điểm (timeline, giây) trong 1 bước undo.
+   * Dùng cho scene detection: mỗi cảnh thành 1 clip riêng.
+   * Trả về số điểm tách đã áp dụng (0 nếu không tách được điểm nào).
+   */
+  splitClipAtTimes: (trackId: string, clipId: string, times: number[]): number => {
+    const st = get();
+    const found = findClip(st.spec, trackId, clipId);
+    if (!found) return 0;
+    if (isTrackLocked(found.track)) return 0; // R1-054
+    const sorted = [...times].sort((a, b) => a - b);
+    let applied = 0;
+    execCommand({
+      label: `Tách cảnh (${sorted.length} điểm)`,
+      apply: (spec) => withTrack(spec, trackId, (tr) => {
+        const clip = tr.clips.find((c) => c.id === clipId);
+        if (!clip) return tr;
+        let pieces: Clip[] = [clip];
+        for (const t of sorted) {
+          let done = false;
+          const next: Clip[] = [];
+          for (const p of pieces) {
+            if (!done) {
+              const pair = splitClipAt(p, t);
+              if (pair) {
+                next.push(pair[0], pair[1]);
+                applied++;
+                done = true;
+                continue;
+              }
+            }
+            next.push(p);
+          }
+          pieces = next;
+        }
+        if (applied === 0) return tr;
+        return {
+          ...tr,
+          clips: [...tr.clips.filter((c) => c.id !== clipId), ...pieces],
+        };
+      }),
+    });
+    return applied;
   },
 
   deleteSelection: () => {

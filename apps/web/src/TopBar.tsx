@@ -4,7 +4,7 @@ import { useStore } from "./store";
 import { fmtTime } from "./lib";
 import { ProjectMenu } from "./components/project/ProjectMenu";
 
-export function TopBar({ onExport, onCaption }: { onExport: () => void; onCaption: () => void }) {
+export function TopBar({ onExport, onCaption, onSilence }: { onExport: () => void; onCaption: () => void; onSilence: () => void }) {
   const name = useStore((s) => s.spec.meta.name);
   const playing = useStore((s) => s.playing);
   const playhead = useStore((s) => s.playhead);
@@ -89,6 +89,13 @@ export function TopBar({ onExport, onCaption }: { onExport: () => void; onCaptio
           disabled={!canCaption}
         >
           💬 Phụ đề
+        </button>
+        <button
+          title="Cắt khoảng lặng tự động trong clip (FFmpeg silencedetect, chạy trên máy bạn)"
+          onClick={onSilence}
+          disabled={!canCaption}
+        >
+          🔇 Cắt lặng
         </button>
         <button
           title="Xoá clip đang chọn (Delete)"

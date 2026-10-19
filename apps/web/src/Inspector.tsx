@@ -4,17 +4,21 @@
  * - chọn clip video/audio -> opacity/volume/fade/transition, thời gian
  * - không chọn gì -> thông tin dự án + phím tắt
  */
+import { useState } from "react";
 import { useStore } from "./store";
 import { fmtTime } from "./lib";
 import { TransitionPanel } from "./components/transitions";
 import { SpeedPanel } from "./components/speed";
 import { KeyframePanel } from "./components/keyframes";
 import { ChromaPanel } from "./components/chroma";
+import { BgRemovePanel } from "./components/BgRemovePanel";
 import { TextAnimPicker } from "./components/textfx";
+import { TtsButton } from "./components/TtsButton";
 import { LutPicker, ColorAdjustPanel } from "./components/lut";
 import { EffectPanel } from "./components/effects";
 import { StickerPanel } from "./components/sticker";
 import { AudioFxPanel } from "./components/audiofx";
+import { SceneModal } from "./components/SceneModal";
 
 function NumField({
   label,
@@ -136,6 +140,7 @@ export function Inspector() {
   const selection = useStore((s) => s.selection);
   const spec = useStore((s) => s.spec);
   const st = useStore.getState();
+  const [sceneOpen, setSceneOpen] = useState(false);
 
   if (selection.length === 0) return <ProjectInfo />;
   if (selection.length > 1) return <MultiSelectInfo />;
@@ -237,6 +242,7 @@ export function Inspector() {
             />
           </label>
           <p className="tips">💡 Mẹo: kéo chữ trực tiếp trên preview cũng được.</p>
+          <TtsButton text={clip.text} />
           <div className="panel-head" style={{ marginTop: 12 }}>🎞️ Keyframe animation</div>
           <KeyframePanel />
         </>
@@ -276,6 +282,10 @@ export function Inspector() {
           <AudioFxPanel />
           <div className="panel-head" style={{ marginTop: 12 }}>🎭 Xoá phông</div>
           <ChromaPanel />
+          <div className="panel-head" style={{ marginTop: 12 }}>🤖 Xoá nền AI</div>
+          <BgRemovePanel
+            mediaItem={st.media.find((m) => m.name === clip.src)}
+          />
           <div className="panel-head" style={{ marginTop: 12 }}>🎨 Bộ lọc màu</div>
           <LutPicker
             value={clip.filter?.lut}
@@ -300,6 +310,17 @@ export function Inspector() {
           <EffectPanel />
           <div className="panel-head" style={{ marginTop: 12 }}>🎞️ Keyframe animation</div>
           <KeyframePanel />
+          <div className="panel-head" style={{ marginTop: 12 }}>🎬 Tách cảnh</div>
+          <button onClick={() => setSceneOpen(true)}>
+            🔍 Tự động tách cảnh…
+          </button>
+          {sceneOpen && (
+            <SceneModal
+              trackId={track.id}
+              clipId={clip.id}
+              onClose={() => setSceneOpen(false)}
+            />
+          )}
         </>
       )}
 
