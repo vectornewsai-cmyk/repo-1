@@ -454,7 +454,7 @@ function probeFile(ffprobeBin, absPath) {
   const raw = execFileSync(
     ffprobeBin,
     ["-v", "error",
-     "-show_entries", "stream=codec_type,codec_name,width,height,nb_frames,avg_frame_rate",
+     "-show_entries", "stream=codec_type,codec_name,width,height,nb_frames,avg_frame_rate,pix_fmt",
      "-show_entries", "format=duration",
      "-of", "json", absPath],
     { encoding: "utf8", maxBuffer: 16 * 1024 * 1024 }
@@ -520,8 +520,12 @@ function validateMedia(spec, mediaDir, ffprobeBin) {
         err(`[${where}] file không có video stream`);
         continue;
       }
-      // Ảnh tĩnh: chỉ 1 frame, hoặc codec vốn là ảnh.
-      if (vs.nb_frames === "1" || STILL_CODECS.has(vs.codec_name)) {
+      // Ảnh tĩnh: chỉ 1 frame. Codec ảnh (png...) NHƯNG có nhiều frame
+      // (VD: MOV PNG có alpha từ bgremove.py — R1-084) vẫn là video thật.
+      const nbFrames = parseInt(vs.nb_frames || "", 10);
+      const isStill = vs.nb_frames === "1" ||
+        (STILL_CODECS.has(vs.codec_name) && !(Number.isFinite(nbFrames) && nbFrames > 1));
+      if (isStill) {
         err(`[${where}] là ảnh tĩnh (${vs.codec_name}) — video clip yêu cầu file video, ` +
           `dùng image track cho ảnh tĩnh (xem P0-03)`);
         continue;
