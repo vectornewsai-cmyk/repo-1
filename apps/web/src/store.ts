@@ -75,6 +75,7 @@ function overlaps(track: Track, ignoreId: string, start: number, dur: number): b
 function mediaKindForTrack(trackKind: TrackKind): MediaKind[] {
   if (trackKind === "video") return ["video", "image"];
   if (trackKind === "audio") return ["audio"];
+  if (trackKind === "image") return ["image"];
   return [];
 }
 
@@ -110,6 +111,10 @@ interface EditorState {
   deleteSelection: () => void;
 
   loadSample: () => Promise<void>;
+  /** Tạo project trống (xoá media phiên hiện tại — blob URL không bền vững). */
+  newProject: () => void;
+  /** Thay toàn bộ spec (mở file / khôi phục autosave). Media bị xoá vì blob URL cũ đã chết. */
+  replaceProject: (spec: VideoSpec) => void;
   duration: () => number;
 }
 
@@ -182,7 +187,7 @@ export const useStore = create<EditorState>()((set, get) => ({
 
   addTrack: (kind) => {
     const id = nextTrackId(kind);
-    const labels: Record<TrackKind, string> = { video: "Video", audio: "Âm thanh", text: "Chữ", sticker: "Sticker" };
+    const labels: Record<TrackKind, string> = { video: "Video", audio: "Âm thanh", text: "Chữ", sticker: "Sticker", image: "Ảnh" };
     const count = get().spec.tracks.filter((t) => t.kind === kind).length + 1;
     const track: Track = { id, kind, label: `${labels[kind]} ${count}`, clips: [] };
     set((s) => ({ spec: { ...s.spec, tracks: [...s.spec.tracks, track] } }));
@@ -290,14 +295,15 @@ export const useStore = create<EditorState>()((set, get) => ({
     const { track, clip } = found;
 
     if (edge === "left") {
-      const maxShiftLeft = clip.kind === "text" || clip.kind === "sticker" ? clip.start : Math.min(clip.start, (clip as { in: number }).in);
+      const noIn = clip.kind === "text" || clip.kind === "sticker" || clip.kind === "image";
+      const maxShiftLeft = noIn ? clip.start : Math.min(clip.start, (clip as { in: number }).in);
       const minStart = clip.start - maxShiftLeft;
       const maxStart = clip.start + clip.duration - 0.2;
       const newStart = clamp(clip.start + deltaSec, minStart, maxStart);
       const shift = newStart - clip.start;
       if (shift === 0) return;
       const patch: Partial<Clip> =
-        clip.kind === "text" || clip.kind === "sticker"
+        clip.kind === "text" || clip.kind === "sticker" || clip.kind === "image"
           ? { start: newStart, duration: clip.duration - shift }
           : { start: newStart, duration: clip.duration - shift, in: (clip as { in: number }).in + shift };
       set((s) => ({
@@ -307,7 +313,7 @@ export const useStore = create<EditorState>()((set, get) => ({
       }));
     } else {
       let newDur = Math.max(0.2, clip.duration + deltaSec);
-      if (clip.kind !== "text" && clip.kind !== "sticker") {
+      if (clip.kind === "video" || clip.kind === "audio") {
         const item = media.find((m) => m.name === clip.src);
         const mediaDur = item && item.kind !== "image" ? item.duration : Infinity;
         newDur = Math.min(newDur, Math.max(0.2, mediaDur - (clip as { in: number }).in));
@@ -319,7 +325,7 @@ export const useStore = create<EditorState>()((set, get) => ({
       );
       if (blocked) return;
       const patch: Partial<Clip> =
-        clip.kind === "text" || clip.kind === "sticker"
+        clip.kind === "text" || clip.kind === "sticker" || clip.kind === "image"
           ? { duration: newDur }
           : { duration: newDur, out: (clip as { in: number }).in + newDur };
       set((s) => ({
@@ -378,7 +384,7 @@ export const useStore = create<EditorState>()((set, get) => ({
 
     let left: Clip;
     let right: Clip;
-    if (clip.kind === "text" || clip.kind === "sticker") {
+    if (clip.kind === "text" || clip.kind === "sticker" || clip.kind === "image") {
       left = { ...clip, duration: leftDur };
       right = { ...clip, id: uid("c"), start: t, duration: rightDur };
     } else if (clip.kind === "video") {
@@ -445,6 +451,32 @@ export const useStore = create<EditorState>()((set, get) => ({
       ready: true,
     });
   },
+
+  newProject: () =>
+    set(() => {
+      trackSeq = 0;
+      return {
+        spec: emptySpec(),
+        media: [],
+        playhead: 0,
+        playing: false,
+        selection: null,
+        ready: true,
+      };
+    }),
+
+  replaceProject: (spec) =>
+    set(() => {
+      trackSeq = 100; // tránh trùng id khi thêm track mới sau khi mở file
+      return {
+        spec,
+        media: [],
+        playhead: 0,
+        playing: false,
+        selection: null,
+        ready: true,
+      };
+    }),
 
   duration: () => projectDuration(get().spec),
 }));
