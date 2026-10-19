@@ -1,0 +1,63 @@
+/**
+ * chroma.css — Style riêng của ChromaPanel (dark theme, đồng nhất với styles.css).
+ * Import trong ChromaPanel.tsx. Dùng biến CSS có sẵn: --bg1, --border-soft,
+ * --accent, --muted, --danger.
+ */
+
+.chroma-panel {
+  /* kế thừa layout .inspector, không cần style khung riêng */
+}
+
+.chroma-color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chroma-color-row input[type="color"] {
+  width: 44px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  background: var(--bg1);
+  cursor: pointer;
+}
+
+.chroma-hex {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.chroma-presets {
+  flex-wrap: wrap;
+}
+
+.chroma-presets .toggle {
+  flex: 1 1 45%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.chroma-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.chroma-panel .warn {
+  margin: 8px 12px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 6px;
+}
