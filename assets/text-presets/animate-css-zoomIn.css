@@ -1,0 +1,42 @@
+/* Chữ phóng to dần từ nhỏ đến kích thước thật.
+ * Nguồn: animate.css v3.7.2 — keyframes "zoomIn"
+ * Tác giả: Daniel Eden — https://github.com/animate-css/animate.css
+ * Giấy phép: MIT (Copyright (c) 2019 Daniel Eden) — xem LICENSE tại
+ *   https://github.com/animate-css/animate.css/blob/3.7.2/LICENSE
+ * Ngày lấy: 2026-10-18
+ * Cách dùng: gắn class "text-preset" vào element chữ (mặc định chạy 1s,
+ *   giữ trạng thái cuối bằng animation-fill-mode: both).
+ */
+
+@-webkit-keyframes zoomIn {
+  from {
+    opacity: 0;
+    -webkit-transform: scale3d(0.3, 0.3, 0.3);
+    transform: scale3d(0.3, 0.3, 0.3);
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    -webkit-transform: scale3d(0.3, 0.3, 0.3);
+    transform: scale3d(0.3, 0.3, 0.3);
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.text-preset {
+  -webkit-animation-name: zoomIn;
+  animation-name: zoomIn;
+  -webkit-animation-duration: 1s;
+  animation-duration: 1s;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+}

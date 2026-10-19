@@ -1,0 +1,13 @@
+# Model faster-whisper (tải 1 lần, ~460MB cho "small") — không commit
+models/
+# Môi trường Python local
+.venv/
+__pycache__/
+*.pyc
+# Output test local — không commit
+*.json
+*.wav
+*.mp3
+*.mp4
+# Log
+*.log
