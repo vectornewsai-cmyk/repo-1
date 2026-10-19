@@ -64,6 +64,10 @@ function ProjectInfo() {
         <li><kbd>Space</kbd> phát / tạm dừng</li>
         <li><kbd>S</kbd> tách clip tại playhead</li>
         <li><kbd>Delete</kbd> xoá clip đang chọn</li>
+        <li><kbd>Shift</kbd>+click thêm clip vào vùng chọn</li>
+        <li><kbd>Ctrl</kbd>+click bật/tắt chọn từng clip</li>
+        <li>Kéo vùng trống trên timeline để chọn nhiều</li>
+        <li><kbd>Ctrl</kbd>+<kbd>A</kbd> chọn tất cả clip</li>
         <li>Kéo mép clip để trim in/out</li>
         <li>Kéo chữ ngay trên preview để di chuyển</li>
       </ul>
@@ -76,14 +80,68 @@ function ProjectInfo() {
   );
 }
 
+/** Panel khi chọn nhiều clip (R1-052): đếm theo loại + thao tác hàng loạt. */
+function MultiSelectInfo() {
+  const selection = useStore((s) => s.selection);
+  const spec = useStore((s) => s.spec);
+  const undoDepth = useStore((s) => s.undoDepth);
+  const undoLabel = useStore((s) => s.undoLabel);
+  const st = useStore.getState();
+
+  const kindCount = new Map<string, number>();
+  for (const s of selection) {
+    const track = spec.tracks.find((t) => t.id === s.trackId);
+    const clip = track?.clips.find((c) => c.id === s.clipId);
+    if (clip) kindCount.set(clip.kind, (kindCount.get(clip.kind) ?? 0) + 1);
+  }
+  const kindLabel: Record<string, string> = {
+    video: "🎬 Video", audio: "🎵 Âm thanh", text: "🔤 Chữ",
+    sticker: "🌟 Sticker", image: "🖼️ Ảnh",
+  };
+
+  return (
+    <div className="inspector">
+      <div className="panel-head">🎯 Đã chọn {selection.length} clip</div>
+      <div className="info-rows">
+        {[...kindCount.entries()].map(([k, n]) => (
+          <div key={k}><span>{kindLabel[k] ?? k}</span><b>{n}</b></div>
+        ))}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+        <button onClick={() => st.deleteSelection()} title="Xoá tất cả clip đang chọn (Delete)">
+          🗑 Xoá {selection.length} clip
+        </button>
+        {undoDepth > 0 && (
+          <button
+            onClick={() => st.undo()}
+            title={undoLabel ? `Hoàn tác: ${undoLabel} (Ctrl+Z)` : "Hoàn tác (Ctrl+Z)"}
+          >
+            ↩ Hoàn tác{undoLabel ? `: ${undoLabel}` : ""}
+          </button>
+        )}
+        <button onClick={() => st.clearSelection()}>
+          Bỏ chọn
+        </button>
+      </div>
+      <p className="tips">
+        Kéo một clip đang chọn để di chuyển cả nhóm (giữ offset tương đối).
+        Chọn 1 clip để chỉnh thuộc tính chi tiết.
+      </p>
+    </div>
+  );
+}
+
 export function Inspector() {
   const selection = useStore((s) => s.selection);
   const spec = useStore((s) => s.spec);
   const st = useStore.getState();
 
-  if (!selection) return <ProjectInfo />;
-  const track = spec.tracks.find((t) => t.id === selection.trackId);
-  const clip = track?.clips.find((c) => c.id === selection.clipId);
+  if (selection.length === 0) return <ProjectInfo />;
+  if (selection.length > 1) return <MultiSelectInfo />;
+
+  const primary = selection[0];
+  const track = spec.tracks.find((t) => t.id === primary.trackId);
+  const clip = track?.clips.find((c) => c.id === primary.clipId);
   if (!track || !clip) return <ProjectInfo />;
 
   const patch = (p: Parameters<typeof st.patchClip>[2]) =>

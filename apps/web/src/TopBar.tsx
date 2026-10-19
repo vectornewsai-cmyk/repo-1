@@ -2,12 +2,17 @@
 import { useState } from "react";
 import { useStore } from "./store";
 import { fmtTime } from "./lib";
+import { ProjectMenu } from "./components/project/ProjectMenu";
 
 export function TopBar({ onExport }: { onExport: () => void }) {
   const name = useStore((s) => s.spec.meta.name);
   const playing = useStore((s) => s.playing);
   const playhead = useStore((s) => s.playhead);
   const selection = useStore((s) => s.selection);
+  const undoDepth = useStore((s) => s.undoDepth);
+  const redoDepth = useStore((s) => s.redoDepth);
+  const undoLabel = useStore((s) => s.undoLabel);
+  const redoLabel = useStore((s) => s.redoLabel);
   const [flash, setFlash] = useState<string | null>(null);
   const st = useStore.getState();
   const duration = st.duration();
@@ -52,6 +57,21 @@ export function TopBar({ onExport }: { onExport: () => void }) {
       </div>
 
       <div className="topbar-actions">
+        <button
+          title={undoLabel ? `Hoàn tác: ${undoLabel} (Ctrl+Z)` : "Hoàn tác (Ctrl+Z)"}
+          onClick={() => st.undo()}
+          disabled={undoDepth === 0}
+        >
+          ↩
+        </button>
+        <button
+          title={redoLabel ? `Làm lại: ${redoLabel} (Ctrl+Shift+Z)` : "Làm lại (Ctrl+Shift+Z)"}
+          onClick={() => st.redo()}
+          disabled={redoDepth === 0}
+        >
+          ↪
+        </button>
+        <ProjectMenu />
         <button title="Thêm chữ tại playhead" onClick={() => st.addTextClip()}>
           ＋ Chữ
         </button>
@@ -61,7 +81,7 @@ export function TopBar({ onExport }: { onExport: () => void }) {
         <button
           title="Xoá clip đang chọn (Delete)"
           onClick={() => st.deleteSelection()}
-          disabled={!selection}
+          disabled={selection.length === 0}
         >
           🗑 Xoá
         </button>

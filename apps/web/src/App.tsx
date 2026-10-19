@@ -61,6 +61,27 @@ export default function App() {
         return;
       }
       const st = useStore.getState();
+      // R1-051: Ctrl/Cmd+Z hoàn tác, Ctrl/Cmd+Shift+Z hoặc Ctrl/Cmd+Y làm lại
+      if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z")) {
+        e.preventDefault();
+        if (e.shiftKey) st.redo();
+        else st.undo();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || e.key === "Y")) {
+        e.preventDefault();
+        st.redo();
+        return;
+      }
+      // Ctrl/Cmd+A: chọn tất cả clip (R1-052)
+      if ((e.ctrlKey || e.metaKey) && (e.key === "a" || e.key === "A")) {
+        e.preventDefault();
+        const sels: { trackId: string; clipId: string }[] = [];
+        for (const t of st.spec.tracks)
+          for (const c of t.clips) sels.push({ trackId: t.id, clipId: c.id });
+        st.selectMany(sels);
+        return;
+      }
       if (e.code === "Space") {
         e.preventDefault();
         st.togglePlay();
