@@ -11,10 +11,12 @@
  * - Không bao giờ lưu `blob:` URL làm nguồn bền vững — nếu spec chứa blob: URL,
  *   save/load chỉ đưa ra CẢNH BÁO (media đó sẽ mất khi tải lại trang).
  * - Autosave dùng localStorage (giới hạn ~5MB). Media binaries không autosave được.
- * - Chưa có migration giữa các specVersion (P0-12): file có specVersion khác sẽ
- *   bị từ chối với lỗi rõ ràng thay vì đọc sai lặng lẽ.
+ * - Migration schema (P0-12 / R1-019, xem packages/video-spec/src/migrations.ts):
+ *   file có spec.version cũ hơn (vd 0.1.0) được tự động nâng cấp lên
+ *   SPEC_VERSION hiện tại khi mở, không mất dữ liệu. Version không hỗ trợ
+ *   (quá cũ hoặc mới hơn app) → từ chối với lỗi rõ ràng.
  */
-import { SPEC_VERSION, isVideoSpec } from "@repo-1/video-spec";
+import { SPEC_VERSION, isVideoSpec, migrate, MigrationError, readSchemaVersion } from "@repo-1/video-spec";
 import type { TrackKind, VideoSpec } from "@repo-1/video-spec";
 
 export const PROJECT_FILE_EXT = ".vcut.json";
@@ -135,7 +137,7 @@ export function validateSpecDeep(spec: unknown): string[] {
     const v = isRecord(spec) ? (spec as Record<string, unknown>).version : undefined;
     errors.push(
       `Không phải video-spec hợp lệ (version=${JSON.stringify(v)}, app hỗ trợ ${SPEC_VERSION}). ` +
-        `File có thể bị hỏng hoặc thuộc phiên bản schema khác (chưa có migration).`,
+        `File có thể bị hỏng hoặc dùng schema version không được hỗ trợ.`,
     );
     return errors;
   }
@@ -198,16 +200,31 @@ export function parseProjectText(text: string): LoadResult {
         `formatVersion=${JSON.stringify(data.formatVersion)} khác 1 — có thể bỏ sót field mới.`,
       );
     if (typeof data.name === "string" && data.name.length > 0) name = data.name;
-    if (typeof data.specVersion === "string" && data.specVersion !== SPEC_VERSION)
-      warnings.push(
-        `specVersion trong file là ${data.specVersion}, app hỗ trợ ${SPEC_VERSION} — ` +
-          `chưa có migration tự động (P0-12).`,
-      );
+    // specVersion trong envelope chỉ là metadata; version thật nằm trong spec.version
+    // và sẽ được migrate ở bước dưới nếu cần.
     spec = data.spec;
   } else {
     warnings.push("File không có envelope .vcut (định dạng cũ) — vẫn thử đọc như video-spec trần.");
     spec = data;
   }
+
+  // P0-12 / R1-019: migrate schema version cũ → hiện tại TRƯỚC khi validate.
+  // File 0.1.0 được nâng cấp tự động, không mất dữ liệu; version không hỗ trợ
+  // (quá cũ / mới hơn app / thiếu version) → từ chối với lỗi rõ ràng.
+  const fromVersion = readSchemaVersion(spec);
+  if (typeof fromVersion === "string" && fromVersion !== SPEC_VERSION) {
+    try {
+      spec = migrate(spec);
+      warnings.push(
+        `File dùng schema version ${fromVersion} — đã tự động nâng cấp lên ${SPEC_VERSION} ` +
+          `(không mất dữ liệu). Lưu lại file để hoàn tất nâng cấp.`,
+      );
+    } catch (e) {
+      const msg = e instanceof MigrationError ? e.message : String(e);
+      return fail([`Không mở được file: ${msg}`], warnings);
+    }
+  }
+
   const errors = validateSpecDeep(spec);
   if (errors.length > 0) return fail(errors, warnings);
   const vspec = spec as VideoSpec;
