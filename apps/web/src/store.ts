@@ -29,6 +29,7 @@ import type { MediaItem, MediaKind } from "./media";
 import { fileToMediaItem } from "./media";
 import { buildSampleProject } from "./sample";
 import { clamp, uid } from "./lib";
+import { findMissingAssets, relinkAsset, type MissingAsset } from "./lib/relink";
 
 export interface Selection {
   trackId: string;
@@ -124,6 +125,19 @@ interface EditorState {
   /** Thay toàn bộ spec (mở file / khôi phục autosave). Media bị xoá vì blob URL cũ đã chết. */
   replaceProject: (spec: VideoSpec) => void;
   duration: () => number;
+
+  // ---- Relink (R1-033): media thiếu sau khi mở project ----
+  /** null = chưa kiểm tra hoặc đã đóng panel; mảng rỗng = không thiếu gì. */
+  missingAssets: MissingAsset[] | null;
+  /** Quét spec hiện tại, mở panel nếu có asset thiếu. */
+  checkMissingMedia: () => void;
+  /**
+   * Relink 1 asset: import file user chọn, verify đọc được, cập nhật clip.
+   * Trả về {ok, message} để panel hiển thị lỗi nếu file không đọc được.
+   */
+  relinkMedia: (oldSrc: string, file: File) => Promise<{ ok: boolean; message: string }>;
+  /** Đóng panel relink (bỏ qua các asset còn thiếu). */
+  dismissRelink: () => void;
 }
 
 const emptySpec = (): VideoSpec => ({
@@ -140,6 +154,7 @@ export const useStore = create<EditorState>()((set, get) => ({
   pxPerSec: 60,
   selection: null,
   ready: false,
+  missingAssets: null,
 
   setPlayhead: (t) => {
     const d = get().duration();
@@ -504,8 +519,62 @@ export const useStore = create<EditorState>()((set, get) => ({
         playing: false,
         selection: null,
         ready: true,
+        missingAssets: null, // reset; caller gọi checkMissingMedia() sau
       };
     }),
 
   duration: () => projectDuration(get().spec),
+
+  // ---- Relink (R1-033) ----
+  checkMissingMedia: () => {
+    const { spec, media } = get();
+    const names = new Set(media.map((m) => m.name));
+    const missing = findMissingAssets(spec, names);
+    set({ missingAssets: missing.length > 0 ? missing : null });
+  },
+
+  relinkMedia: async (oldSrc, file) => {
+    // 1. Đọc + probe file user chọn (verify thật, không chỉ tin extension).
+    let item: MediaItem;
+    try {
+      item = await fileToMediaItem(file);
+    } catch {
+      return { ok: false, message: `Không đọc được file "${file.name}" — định dạng không hỗ trợ.` };
+    }
+    // 2. Verify: video/audio phải có duration, ảnh phải có kích thước.
+    const looksBroken =
+      (item.kind === "video" && !(item.duration > 0)) ||
+      (item.kind === "audio" && !(item.duration > 0)) ||
+      (item.kind === "image" && !(item.width && item.height));
+    if (looksBroken) {
+      return {
+        ok: false,
+        message: `File "${file.name}" đọc được nhưng metadata rỗng (có thể file hỏng).`,
+      };
+    }
+    // 3. Thêm vào media (tên duy nhất như importFiles) + cập nhật clip src.
+    const { spec, media, missingAssets } = get();
+    const names = new Set(media.map((m) => m.name));
+    let n = item.name;
+    let i = 1;
+    const dot = item.name.lastIndexOf(".");
+    while (names.has(n)) {
+      n = dot > 0 ? `${item.name.slice(0, dot)} (${i})${item.name.slice(dot)}` : `${item.name} (${i})`;
+      i += 1;
+    }
+    item.name = n;
+    const { spec: next, updatedCount } = relinkAsset(spec, oldSrc, n);
+    if (updatedCount === 0) {
+      return { ok: false, message: `Không còn clip nào dùng "${oldSrc}".` };
+    }
+    const rest = (missingAssets ?? []).filter((m) => m.src !== oldSrc);
+    set({
+      media: [...media, item],
+      spec: next,
+      missingAssets: rest.length > 0 ? rest : null, // hết thiếu → tự đóng panel
+    });
+    return { ok: true, message: `Đã relink ${updatedCount} clip → "${n}".` };
+  },
+
+  dismissRelink: () => set({ missingAssets: null }),
 }));

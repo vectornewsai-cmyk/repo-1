@@ -6,14 +6,36 @@ import { Inspector } from "./Inspector";
 import { Timeline } from "./Timeline";
 import { ExportPanel } from "./ExportPanel";
 import { PreviewCanvas } from "./preview";
+import { RelinkPanel } from "./components/RelinkPanel";
+import { autosave, loadAutosave, markSaved } from "./lib/projectRepo";
+import { saveCurrentProject } from "./components/project/ProjectMenu";
 
 export default function App() {
   const ready = useStore((s) => s.ready);
+  const missingAssets = useStore((s) => s.missingAssets);
   const [exportOpen, setExportOpen] = useState(false);
 
-  // tải dự án mẫu khi mở app
+  // Khởi tạo: ưu tiên khôi phục autosave; chỉ tải project mẫu khi chưa có autosave.
+  // (Không tự ghi đè project đang làm bằng sample khi reload.)
   useEffect(() => {
-    void useStore.getState().loadSample();
+    const st = useStore.getState();
+    const auto = loadAutosave();
+    if (auto) {
+      st.replaceProject(auto.spec);
+      st.setProjectName(auto.name);
+      markSaved(auto.spec);
+      st.checkMissingMedia(); // R1-033: hiện panel relink nếu media thiếu
+    } else {
+      void st.loadSample();
+    }
+  }, []);
+
+  // Autosave (debounce 5s) mỗi khi spec thay đổi.
+  useEffect(() => {
+    const unsub = useStore.subscribe((s, prev) => {
+      if (s.spec !== prev.spec) autosave(s.spec, s.spec.meta.name);
+    });
+    return unsub;
   }, []);
 
   // phím tắt toàn cục
@@ -27,6 +49,15 @@ export default function App() {
           el.tagName === "SELECT" ||
           el.isContentEditable)
       ) {
+        return;
+      }
+      // Ctrl/Cmd+S: lưu project (chặn hành vi lưu trang của trình duyệt)
+      if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) {
+        e.preventDefault();
+        const warnings = saveCurrentProject();
+        if (warnings.length > 0) {
+          window.alert("Đã lưu, nhưng có lưu ý:\n- " + warnings.join("\n- "));
+        }
         return;
       }
       const st = useStore.getState();
@@ -55,12 +86,19 @@ export default function App() {
       </div>
       <Timeline />
       {exportOpen && <ExportPanel onClose={() => setExportOpen(false)} />}
+      {missingAssets && missingAssets.length > 0 && (
+        <RelinkPanel
+          missing={missingAssets}
+          onPick={(pick) => useStore.getState().relinkMedia(pick.oldSrc, pick.file)}
+          onClose={() => useStore.getState().dismissRelink()}
+        />
+      )}
       {!ready && (
         <div className="splash">
           <div className="splash-card">
             <div className="splash-logo">◧</div>
             <div className="splash-title">VCut Studio</div>
-            <div className="splash-sub">Đang chuẩn bị dự án mẫu…</div>
+            <div className="splash-sub">Đang mở dự án…</div>
           </div>
         </div>
       )}
