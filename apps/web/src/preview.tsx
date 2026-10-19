@@ -152,6 +152,7 @@ function renderFrame(
 
   // track[0] = lớp dưới cùng, track sau đè lên
   for (const track of spec.tracks) {
+    if (track.hidden) continue; // R1-054: track ẩn không vẽ trong preview
     for (const clip of track.clips) {
       if (t < clip.start || t >= clip.start + clip.duration) continue;
       if (track.kind === "video" && clip.kind === "video") {
@@ -204,6 +205,8 @@ function syncMedia(
 ) {
   const actives: { el: HTMLVideoElement | HTMLAudioElement; target: number; volume: number; speed: number; reverse: boolean }[] = [];
   for (const track of spec.tracks) {
+    // R1-054: track audio bị mute → bỏ qua hoàn toàn (không phát tiếng).
+    if (track.kind === "audio" && track.muted) continue;
     for (const clip of track.clips) {
       if (clip.kind === "text" || clip.kind === "sticker") continue; // text/sticker không có media để đồng bộ
       if (t < clip.start || t >= clip.start + clip.duration) continue;
@@ -220,7 +223,8 @@ function syncMedia(
         clip.kind === "image" ? 0 : speedable ? sourceTimeAt(clip, t) : 0;
       if (track.kind === "video" && clip.kind === "video" && item.kind === "video") {
         const el = pool.videoFor(item);
-        if (el) actives.push({ el, target, volume: 1, speed, reverse });
+        // R1-054: video track bị mute → giữ phát hình nhưng tắt tiếng (volume 0).
+        if (el) actives.push({ el, target, volume: track.muted ? 0 : 1, speed, reverse });
       } else if (track.kind === "audio" && clip.kind === "audio" && item.kind === "audio") {
         const el = pool.audioFor(item);
         if (el) {
@@ -319,7 +323,7 @@ export function PreviewCanvas() {
       const t = useStore.getState().playhead;
       const playing = useStore.getState().playing;
       syncMedia(spec, pool, mediaByName, t, playing);
-      renderFrame(ctx, spec, pool, mediaByName, t, computeViewport(cw, ch, spec), useStore.getState().selection);
+      renderFrame(ctx, spec, pool, mediaByName, t, computeViewport(cw, ch, spec), useStore.getState().selection[0] ?? null);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
