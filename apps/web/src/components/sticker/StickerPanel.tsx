@@ -19,11 +19,13 @@ import { useStore } from "../../store";
 import { uid } from "../../lib";
 import "./sticker.css";
 import {
+  STICKER_CATEGORIES,
   STICKER_LIBRARY,
   isStickerClip,
   normalizeStickerClip,
   stickerUrl,
   validateStickerClip,
+  type StickerCategory,
   type StickerClip,
 } from "../../../../../packages/video-spec/src/sticker";
 // TODO(parent): đổi thành `from "@repo-1/video-spec"` sau khi index.ts re-export ./sticker
@@ -73,7 +75,7 @@ function addStickerToTimeline(src: string) {
     return {
       // [STICKER-CAST] trả về Track[] sau khi index.ts có union "sticker"
       spec: { ...s.spec, tracks: ts as unknown as typeof s.spec.tracks },
-      selection: { trackId: trackId as string, clipId: clip.id },
+      selection: [{ trackId: trackId as string, clipId: clip.id }],
     };
   });
   return null;
@@ -120,12 +122,15 @@ export function StickerPanel() {
   const selection = useStore((s) => s.selection);
   const spec = useStore((s) => s.spec);
   const [err, setErr] = useState<string | null>(null);
+  const [tab, setTab] = useState<"all" | StickerCategory>("all");
+  const [query, setQuery] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const track = selection
-    ? spec.tracks.find((t) => t.id === selection.trackId)
+  const primary = selection[0] ?? null;
+  const track = primary
+    ? spec.tracks.find((t) => t.id === primary.trackId)
     : undefined;
-  const rawClip = track?.clips.find((c) => c.id === selection?.clipId);
+  const rawClip = track?.clips.find((c) => c.id === primary?.clipId);
   const stickerClip = rawClip && isStickerClip(rawClip) ? rawClip : null;
 
   const pick = (file: string) => {
@@ -143,6 +148,13 @@ export function StickerPanel() {
     if (e) { setErr(e); URL.revokeObjectURL(url); }
   };
 
+  const q = query.trim().toLowerCase();
+  const visible = STICKER_LIBRARY.filter(
+    (s) =>
+      (tab === "all" || s.category === tab) &&
+      (q === "" || s.label.toLowerCase().includes(q)),
+  );
+
   return (
     <div className="sticker-panel">
       <div className="panel-head" style={{ marginTop: 12 }}>🌟 Sticker</div>
@@ -152,8 +164,32 @@ export function StickerPanel() {
       ) : (
         <>
           <p className="tips">Bấm vào sticker để dán lên video tại vị trí playhead (3 giây).</p>
+          <input
+            className="sticker-search"
+            type="search"
+            placeholder="🔍 Tìm sticker…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <div className="sticker-tabs">
+            <button
+              className={tab === "all" ? "active" : ""}
+              onClick={() => setTab("all")}
+            >
+              Tất cả ({STICKER_LIBRARY.length})
+            </button>
+            {STICKER_CATEGORIES.map((c) => (
+              <button
+                key={c.id}
+                className={tab === c.id ? "active" : ""}
+                onClick={() => setTab(c.id)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
           <div className="sticker-grid">
-            {STICKER_LIBRARY.map((s) => (
+            {visible.map((s) => (
               <button
                 key={s.file}
                 className="sticker-cell"
@@ -165,6 +201,9 @@ export function StickerPanel() {
               </button>
             ))}
           </div>
+          {visible.length === 0 && (
+            <p className="muted">Không tìm thấy sticker nào cho "{query}".</p>
+          )}
           <button className="toggle" onClick={() => fileRef.current?.click()}>
             ⬆ Tải PNG của bạn…
           </button>

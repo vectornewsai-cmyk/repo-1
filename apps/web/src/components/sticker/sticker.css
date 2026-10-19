@@ -28,6 +28,43 @@
   object-fit: contain;
   pointer-events: none;
 }
+.sticker-search {
+  width: 100%;
+  padding: 6px 10px;
+  margin: 4px 0 8px;
+  background: #1e1e24;
+  border: 1px solid #2e2e38;
+  border-radius: 8px;
+  color: #e8e8ec;
+  font-size: 12px;
+}
+.sticker-search:focus {
+  outline: none;
+  border-color: #4a4a5a;
+}
+.sticker-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.sticker-tabs button {
+  padding: 4px 10px;
+  background: #1e1e24;
+  border: 1px solid #2e2e38;
+  border-radius: 999px;
+  color: #cfcfd6;
+  font-size: 11px;
+  cursor: pointer;
+}
+.sticker-tabs button:hover {
+  border-color: #4a4a5a;
+}
+.sticker-tabs button.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
 .sticker-editor .sticker-preview-row {
   display: flex;
   align-items: center;
