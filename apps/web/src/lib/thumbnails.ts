@@ -1,5 +1,5 @@
 /**
- * Thumbnail pipeline cho timeline (R1-035).
+ * Thumbnail pipeline cho timeline (R1-035) + filmstrip nhiều frame (R1-066).
  *
  * - Capture frame video qua <video> + <canvas>, hoàn toàn async — không block UI.
  * - Cache LRU tối đa 100 mục (tính cả kết quả thất bại).
@@ -8,6 +8,10 @@
  * - Lỗi → trả `null` (caller fallback block màu), KHÔNG throw.
  */
 
+/**
+ * Filmstrip (R1-066): mỗi clip video hiện dải N frame cách đều (như CapCut),
+ * thay vì 1 frame giữa clip lặp ngang.
+ */
 export const THUMB_W = 120;
 export const THUMB_H = 68;
 /** Số mục tối đa trong cache (mục = 1 dataURL JPEG ~10-20KB → ~2MB RAM). */
@@ -151,4 +155,53 @@ export function clearThumbnailCache(): void {
 /** Số mục hiện tại trong cache (phục vụ test/giám sát). */
 export function thumbnailCacheSize(): number {
   return cache.size;
+}
+
+/* ------------------------------------------------------------------ */
+/* Filmstrip nhiều frame cho clip video (R1-066)                        */
+/* ------------------------------------------------------------------ */
+
+/** 1 thumbnail filmstrip mỗi ~2 giây thời lượng clip. */
+export const FILMSTRIP_SECONDS_PER_THUMB = 2;
+/** Tối đa thumbnail trong 1 dải filmstrip (tránh bùng cache với clip dài). */
+export const FILMSTRIP_MAX = 10;
+
+/**
+ * Số frame filmstrip cho clip dài durationSec giây: 1 mỗi ~2s, tối đa 10.
+ * Pure — test được bằng Node, không cần DOM.
+ */
+export function filmstripCount(durationSec: number): number {
+  if (!Number.isFinite(durationSec) || durationSec <= 0) return 1;
+  return Math.min(
+    FILMSTRIP_MAX,
+    Math.max(1, Math.ceil(durationSec / FILMSTRIP_SECONDS_PER_THUMB)),
+  );
+}
+
+/**
+ * Các mốc source-time (giây) cho filmstrip: điểm giữa mỗi đoạn, cách đều,
+ * nằm trong [clipInSec, clipInSec + durationSec].
+ * Pure — test được bằng Node, không cần DOM.
+ */
+export function filmstripTimestamps(clipInSec: number, durationSec: number): number[] {
+  const count = filmstripCount(durationSec);
+  const ts: number[] = [];
+  for (let i = 0; i < count; i++) {
+    ts.push(clipInSec + ((i + 0.5) * durationSec) / count);
+  }
+  return ts;
+}
+
+/**
+ * Lấy dải filmstrip cho 1 clip video: mảng dataURL|null, mỗi frame đi qua
+ * `getVideoThumbnail` (dedupe + cache LRU + giới hạn 3 capture song song).
+ * Caller nên gọi lazy (IntersectionObserver) — không gọi cho clip ngoài viewport.
+ */
+export function getFilmstrip(
+  url: string,
+  clipInSec: number,
+  durationSec: number,
+): Promise<Array<string | null>> {
+  const ts = filmstripTimestamps(clipInSec, durationSec);
+  return Promise.all(ts.map((t) => getVideoThumbnail(url, t)));
 }

@@ -1,21 +1,23 @@
 # Thumbnail timeline — Giới hạn trung thực (R1-035)
 
 ## Đã làm
-- Timeline hiển thị thumbnail dạng filmstrip cho clip **video** (lặp ngang) và **image**
-  (ảnh gốc), thumbnail đơn cho clip **sticker** (PNG gốc, contain).
+- Timeline hiển thị thumbnail dạng **filmstrip nhiều frame** cho clip **video**
+  dài (R1-066: 1 frame mỗi ~2s, tối đa 10 frame, lazy + cache + dedupe) và
+  thumbnail đơn cho clip **image** (ảnh gốc lúc import), thumbnail đơn cho clip
+  **sticker** (PNG gốc, contain).
 - Capture qua `<video>` + `<canvas>`, async, không block UI; lazy qua
   `IntersectionObserver` (chỉ capture khi clip lọt vào vùng nhìn ±120px).
 - Cache LRU 100 mục (`apps/web/src/lib/thumbnails.ts`), dedupe request trùng,
   tối đa 3 capture song song.
 - Media import qua thư viện đã có sẵn `thumbnail` (chụp ở 10%/0.5s lúc import)
-  → dùng luôn, không capture lại.
+  → dùng luôn cho clip ngắn/image, không capture lại.
 - Lỗi load/seek/CORS → trả `null`, fallback block màu như cũ (không crash).
 
 ## Chưa làm / giới hạn
 1. **Không phải proxy video**: chỉ là ảnh tĩnh JPEG 120×68, không scrub-preview
-   động khi hover (CapCut có). Muốn có phải thêm strip nhiều frame + hover logic.
-2. **Thumbnail chụp ở giữa clip** (`in + duration/2`), không phản ánh đúng nội
-   dung nếu clip có keyframe/speed phức tạp — chỉ là gợi ý thị giác.
+   động khi hover (CapCut có). Muốn có phải thêm hover logic.
+2. **Thumbnail chụp theo mốc cách đều** (`in + (i+0.5)*dur/count`), không tính
+   speed/reverse/keyframe — chỉ là gợi ý thị giác.
 3. **Chroma/LUT/effects không áp vào thumbnail**: ảnh là frame gốc của video,
    không qua filter chain (preview thật mới thấy hiệu ứng).
 4. **Cache theo session**: blob URL mất hiệu lực khi reload trang → thumbnail của
