@@ -451,6 +451,14 @@ function validateTrack(v: unknown, seenIds: Set<string>): Track {
   });
   const track: Track = { id, kind, clips };
   if (v["label"] !== undefined) track.label = reqString(v["label"], "track.label", 100);
+  // R1-054: track controls — passthrough để MCP không làm mất flag.
+  for (const flag of ["muted", "locked", "hidden"] as const) {
+    if (v[flag] !== undefined) {
+      if (typeof v[flag] !== "boolean")
+        throw new ValidationError(`track.${flag} phải là boolean`);
+      track[flag] = v[flag];
+    }
+  }
   return track;
 }
 
