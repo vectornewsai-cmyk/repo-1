@@ -4,6 +4,7 @@
  */
 import { useEffect, useRef } from "react";
 import type { TextClip, VideoSpec } from "@repo-1/video-spec";
+import { isSpeedable, sourceTimeAt } from "@repo-1/video-spec/speed";
 import { useStore } from "./store";
 import type { MediaItem } from "./media";
 import { MediaPool } from "./media";
@@ -201,25 +202,34 @@ function syncMedia(
   t: number,
   playing: boolean,
 ) {
-  const actives: { el: HTMLVideoElement | HTMLAudioElement; target: number; volume: number }[] = [];
+  const actives: { el: HTMLVideoElement | HTMLAudioElement; target: number; volume: number; speed: number; reverse: boolean }[] = [];
   for (const track of spec.tracks) {
     for (const clip of track.clips) {
-      if (clip.kind === "text") continue; // text không có media để đồng bộ
+      if (clip.kind === "text" || clip.kind === "sticker") continue; // text/sticker không có media để đồng bộ
       if (t < clip.start || t >= clip.start + clip.duration) continue;
       const item = mediaByName.get(clip.src);
       if (!item) continue;
-      const target = (clip as { in: number }).in + (t - clip.start);
+      // R1-013: dùng sourceTimeAt — đúng với mọi speed/reverse.
+      // LƯU Ý: HTMLVideoElement không phát ngược được. Khi clip.reverse=true và
+      // đang phát (playing), preview chỉ seek đúng khi pause/scrub; lúc phát
+      // sẽ chạy xuôi (giới hạn đã ghi trong SPEED_INVARIANT.md).
+      const speedable = isSpeedable(clip);
+      const speed = speedable ? (clip.speed ?? 1) : 1;
+      const reverse = speedable ? (clip.reverse ?? false) : false;
+      const target =
+        clip.kind === "image" ? 0 : speedable ? sourceTimeAt(clip, t) : 0;
       if (track.kind === "video" && clip.kind === "video" && item.kind === "video") {
         const el = pool.videoFor(item);
-        if (el) actives.push({ el, target, volume: 1 });
+        if (el) actives.push({ el, target, volume: 1, speed, reverse });
       } else if (track.kind === "audio" && clip.kind === "audio" && item.kind === "audio") {
         const el = pool.audioFor(item);
         if (el) {
-          let v = clip.volume ?? 1;
-          const el2 = t - clip.start;
-          if (clip.fadeIn && clip.fadeIn > 0) v *= clamp(el2 / clip.fadeIn, 0, 1);
-          if (clip.fadeOut && clip.fadeOut > 0) v *= clamp((clip.duration - el2) / clip.fadeOut, 0, 1);
-          actives.push({ el, target, volume: v });
+          const audioClip = clip as import("@repo-1/video-spec").AudioClip;
+          let v = audioClip.volume ?? 1;
+          const el2 = t - audioClip.start;
+          if (audioClip.fadeIn && audioClip.fadeIn > 0) v *= clamp(el2 / audioClip.fadeIn, 0, 1);
+          if (audioClip.fadeOut && audioClip.fadeOut > 0) v *= clamp((audioClip.duration - el2) / audioClip.fadeOut, 0, 1);
+          actives.push({ el, target, volume: v, speed, reverse });
         }
       }
     }
@@ -229,6 +239,14 @@ function syncMedia(
     if (seen.has(a.el)) continue;
     seen.add(a.el);
     a.el.volume = clamp(a.volume, 0, 1);
+    // R1-013: đồng bộ playbackRate với clip.speed (giữ cao độ như render dùng atempo)
+    try {
+      if (a.el.playbackRate !== a.speed) a.el.playbackRate = a.speed;
+      // preservesPitch=true giữ cao độ khi đổi tốc độ (giống atempo của render)
+      if ("preservesPitch" in a.el) (a.el as HTMLVideoElement).preservesPitch = true;
+    } catch {
+      /* bỏ qua nếu trình duyệt không hỗ trợ */
+    }
     if (playing) {
       if (Math.abs(a.el.currentTime - a.target) > 0.35) {
         try {
