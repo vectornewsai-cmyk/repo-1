@@ -588,6 +588,24 @@ input[type="color"] {
   font-size: 12px;
 }
 
+.tl-ripple {
+  display: flex;
+  align-items: center;
+}
+
+.tl-ripple button {
+  padding: 5px 10px;
+  font-size: 12px;
+  opacity: 0.55;
+}
+
+.tl-ripple button.active {
+  opacity: 1;
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
 .tl-zoom {
   display: flex;
   align-items: center;
@@ -611,6 +629,20 @@ input[type="color"] {
 .tl-hint {
   font-size: 11px;
   color: var(--muted);
+}
+
+/* R1-055: readout timecode playhead */
+.tl-timecode {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent, #7dd3fc);
+  background: rgba(125, 211, 252, 0.08);
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  border-radius: 6px;
+  padding: 3px 10px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .tl-body {
@@ -679,6 +711,41 @@ input[type="color"] {
   border-color: transparent;
 }
 
+/* R1-054: nút mute/lock/hide trên track header */
+.tl-track-flag {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1;
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+  opacity: 0.55;
+  flex: none;
+}
+.tl-track-flag:hover {
+  opacity: 1;
+  background: rgba(139, 124, 246, 0.12);
+  border-color: transparent;
+  color: inherit;
+}
+.tl-track-flag.on {
+  opacity: 1;
+  color: #f2b544;
+  background: rgba(242, 181, 68, 0.12);
+}
+/* Track khóa/ẩn: gợi ý thị giác trên header + lane */
+.tl-track-head.is-locked .tl-track-label,
+.tl-lane.is-locked {
+  opacity: 0.55;
+}
+.tl-track-head.is-hidden .tl-track-label {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
 .tl-empty-gutter {
   padding: 16px 12px;
   font-size: 12px;
@@ -732,6 +799,15 @@ input[type="color"] {
 .tl-lanes {
   position: relative;
   user-select: none;
+}
+
+/* Hộp chọn vùng khi kéo trên vùng trống (R1-052 multi-select). */
+.tl-boxselect {
+  position: absolute;
+  border: 1px solid var(--accent, #4da3ff);
+  background: rgba(77, 163, 255, 0.15);
+  pointer-events: none;
+  z-index: 50;
 }
 
 .tl-lane {
