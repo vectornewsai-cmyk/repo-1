@@ -18,6 +18,9 @@ const { SPEED_MIN, SPEED_MAX } = require("./speed");
 const { validateAnimations } = require("./keyframes");
 const { validateChroma } = require("./chroma");
 const { isTextFxAnimation } = require("./textfx");
+const { validateVideoFilter } = require("./lut");
+const { validateEffects: validateVideoEffects } = require("./effects");
+const { validateSticker } = require("./sticker");
 
 const SPEC_VERSION = "0.1.0";
 /** Sai số khi so sánh số thực (giây). */
@@ -113,8 +116,8 @@ function validateSpec(spec) {
     }
     if (seenTrackIds.has(track.id)) err(tw, `trùng id track: "${track.id}"`);
     seenTrackIds.add(track.id);
-    if (!["video", "audio", "text"].includes(track.kind)) {
-      err(`${tw}.kind`, `phải là "video" | "audio" | "text", nhận được: ${JSON.stringify(track.kind)}`);
+    if (!["video", "audio", "text", "sticker"].includes(track.kind)) {
+      err(`${tw}.kind`, `phải là "video" | "audio" | "text" | "sticker", nhận được: ${JSON.stringify(track.kind)}`);
       continue;
     }
     if (!Array.isArray(track.clips)) {
@@ -268,6 +271,22 @@ function validateClip(track, clip, where, err, warn) {
       for (const m of validateChroma(clip.chromaKey))
         err(where, m);
     }
+    // LUT filter
+    if (clip.filter !== undefined) {
+      for (const m of validateVideoFilter(clip.filter))
+        err(where, m);
+    }
+    // Video effects
+    if (clip.effects !== undefined) {
+      for (const m of validateVideoEffects(clip.effects))
+        err(where, m);
+    }
+  }
+
+  if (track.kind === "sticker") {
+    // Sticker clip: validate riêng
+    for (const m of validateSticker(clip))
+      err(where, m);
   }
 
   if (track.kind === "audio") {
