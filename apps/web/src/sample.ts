@@ -4,6 +4,7 @@
  * là thấy ngay editor hoạt động: phát, cắt, kéo, chữ...
  */
 import type { VideoSpec } from "@repo-1/video-spec";
+import { SPEC_VERSION } from "@repo-1/video-spec";
 import type { MediaItem } from "./media";
 import { uid } from "./lib";
 
@@ -146,7 +147,7 @@ export async function buildSampleProject(): Promise<{ spec: VideoSpec; media: Me
   }
 
   const spec: VideoSpec = {
-    version: "0.1.0",
+    version: SPEC_VERSION,
     meta: { name: "Dự án mẫu", width: 1280, height: 720, fps: 30 },
     tracks: [
       {

@@ -193,6 +193,16 @@ export function Inspector() {
               onChange={(e) => patch({ opacity: Number(e.target.value) / 100 })}
             />
           </label>
+          <label className="field">
+            <span>🔊 Âm thanh gốc</span>
+            <select
+              value={clip.sourceAudioMode ?? "inherit"}
+              onChange={(e) => patch({ sourceAudioMode: e.target.value as "inherit" | "mute" })}
+            >
+              <option value="inherit">Giữ tiếng gốc</option>
+              <option value="mute">Tắt tiếng gốc</option>
+            </select>
+          </label>
           <div className="panel-head" style={{ marginTop: 12 }}>🔀 Chuyển cảnh</div>
           <TransitionPanel
             value={clip.transitionOut?.type ?? "none"}
