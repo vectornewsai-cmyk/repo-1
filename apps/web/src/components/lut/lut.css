@@ -1,0 +1,75 @@
+/* LutPicker — dark theme VCut Studio, đồng nhất với các panel khác. */
+
+.lut-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lut-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.lut-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 6px;
+  background: #1e1e24;
+  border: 1px solid #33333d;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.lut-card:hover {
+  border-color: #55555f;
+  transform: translateY(-1px);
+}
+
+.lut-card.selected {
+  border-color: #4f8cff;
+  box-shadow: 0 0 0 1px #4f8cff;
+}
+
+.lut-swatch {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lut-swatch.lut-none {
+  background: linear-gradient(135deg, #ff5a5a 0%, #ffb84d 25%, #f7ff5a 50%, #5aff8a 75%, #5ab8ff 100%);
+}
+
+.lut-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e8e8ec;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lut-desc {
+  font-size: 10.5px;
+  color: #9a9aa5;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 27px;
+}
+
+.lut-note {
+  font-size: 11px;
+  color: #8a8a95;
+  margin: 0;
+  line-height: 1.4;
+}
