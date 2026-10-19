@@ -8,7 +8,7 @@ import { formatTimecode, snapToFrame, stickerUrl } from "@repo-1/video-spec";
 import { useStore } from "./store";
 import type { MoveItem, Selection } from "./store";
 import { clamp, fmtTime, tickStep } from "./lib";
-import { getVideoThumbnail } from "./lib/thumbnails";
+import { getVideoThumbnail, getFilmstrip, filmstripCount } from "./lib/thumbnails";
 import { visibleFlagsFor, type TrackFlag } from "./lib/trackFlags";
 import { ClipWaveform } from "./components/waveform";
 
@@ -63,9 +63,11 @@ function stickerThumbSrc(src: string): string {
 }
 
 /**
- * Thumbnail cho clip trên timeline (R1-035).
- * - video/image: dùng `thumbnail` có sẵn của media (sync); nếu chưa có thì
- *   lazy-capture frame giữa clip qua IntersectionObserver.
+ * Thumbnail cho clip trên timeline (R1-035) + filmstrip nhiều frame (R1-066).
+ * - video: dải filmstrip N frame cách đều theo thời lượng (1 mỗi ~2s, tối đa 10);
+ *   clip ngắn (<=2s) giữ 1 frame như cũ. Lazy-capture qua IntersectionObserver,
+ *   mỗi frame qua cache LRU/dedupe của thumbnails.ts.
+ * - image: thumbnail có sẵn của media (sync), ảnh đơn.
  * - sticker: PNG gốc, hiển thị đơn (không lặp).
  * - Lỗi → null → fallback block màu như cũ.
  */
@@ -74,24 +76,65 @@ function ClipThumb({ clip }: { clip: Clip }) {
   const src = clip.kind === "sticker" ? clip.src
     : clip.kind === "video" || clip.kind === "image" ? clip.src : "";
   const clipIn = clip.kind === "video" ? clip.in : 0;
+  // R1-066: chỉ video mới có filmstrip; count<=1 → hành vi đơn như cũ.
+  const stripCount = clip.kind === "video" ? filmstripCount(clip.duration) : 0;
   const [thumb, setThumb] = useState<string | null>(null);
+  const [strip, setStrip] = useState<Array<string | null> | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!visual || !src) return;
     let cancelled = false;
 
-    // 1. Đường nhanh (sync, miễn phí): media đã có thumbnail lúc import.
+    // 1. Sticker: PNG gốc (sync, miễn phí).
     if (clip.kind === "sticker") {
       setThumb(stickerThumbSrc(src));
       return;
     }
     const item = useStore.getState().media.find((m) => m.name === src);
+
+    // 2. R1-066: filmstrip cho video clip dài — thumbnail import (nếu có) chỉ là
+    // 1 frame nên không đủ dựng dải; capture các frame qua cache.
+    if (stripCount > 1) {
+      setStrip(new Array<string | null>(stripCount).fill(null));
+      const doCapture = () => {
+        const it = useStore.getState().media.find((m) => m.name === src);
+        if (!it) return; // media đã bị xoá → fallback block màu
+        getFilmstrip(it.url, clipIn, clip.duration)
+          .then((frames) => {
+            if (!cancelled) setStrip(frames);
+          })
+          .catch(() => {
+            /* giữ placeholder */
+          });
+      };
+      const el = boxRef.current;
+      if (!el || typeof IntersectionObserver === "undefined") {
+        doCapture();
+        return;
+      }
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            io.disconnect();
+            doCapture();
+          }
+        },
+        { rootMargin: "120px" },
+      );
+      io.observe(el);
+      return () => {
+        cancelled = true;
+        io.disconnect();
+      };
+    }
+
+    // 3. Đường nhanh (sync, miễn phí): media đã có thumbnail lúc import.
     if (item?.thumbnail) {
       setThumb(item.thumbnail);
       return;
     }
-    // 2. Lazy capture cho video chưa có thumbnail (chỉ khi lọt vào vùng nhìn).
+    // 4. Lazy capture cho video chưa có thumbnail (chỉ khi lọt vào vùng nhìn).
     if (clip.kind !== "video") return;
     const doCapture = () => {
       const it = useStore.getState().media.find((m) => m.name === src);
@@ -120,10 +163,24 @@ function ClipThumb({ clip }: { clip: Clip }) {
       cancelled = true;
       io.disconnect();
     };
-  }, [visual, src, clip.kind, clipIn, clip.duration, clip.id]);
+  }, [visual, src, clip.kind, clipIn, clip.duration, clip.id, stripCount]);
 
   if (!visual) return null;
   const sticker = clip.kind === "sticker";
+  // R1-066: render dải filmstrip.
+  if (stripCount > 1 && strip) {
+    return (
+      <div ref={boxRef} className="clip-filmstrip" aria-hidden="true">
+        {strip.map((frame, i) => (
+          <div
+            key={i}
+            className="clip-filmstrip-cell"
+            style={frame ? { backgroundImage: `url("${frame}")` } : undefined}
+          />
+        ))}
+      </div>
+    );
+  }
   return (
     <div
       ref={boxRef}
