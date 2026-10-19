@@ -38,6 +38,9 @@ const {
 const { buildXfadeFilter } = require("./transitions");
 const { buildSpeedFilter } = require("./speed");
 const { buildTextExprs, buildOverlayExprs } = require("./keyframes");
+// Phase 3b: chroma key, text animations.
+const { buildChromaFilter } = require("./chroma");
+const { buildTextAnimExpr, isTextFxAnimation } = require("./textfx");
 
 // ---------------------------------------------------------------------------
 // Tiện ích
@@ -214,10 +217,12 @@ function buildFilterGraph(spec, ctx) {
       // [in, out) bị đảo (nếu reverse) rồi đổi tốc độ; duration hiệu dụng = (out-in)/speed).
       const spd = buildSpeedFilter(clip.speed ?? 1, clip.reverse ?? false);
       const speedChain = spd.video ? `,${spd.video}` : "";
+      // Chroma key: áp sau speed, trước scale (key trên pixel gốc cho chính xác).
+      const chromaChain = clip.chromaKey ? `,${buildChromaFilter(clip.chromaKey)}` : "";
       fc.push(
         `[${idx}:v]` +
         `trim=start=${num(clip.in)}:end=${num(clip.in + clip.duration * (clip.speed ?? 1))},` +
-        `setpts=PTS-STARTPTS${speedChain},` +
+        `setpts=PTS-STARTPTS${speedChain}${chromaChain},` +
         // Giữ tỉ lệ gốc, letterbox bằng nền đen cho vừa khít khung hình output.
         `scale=${W}:${H}:force_original_aspect_ratio=decrease,` +
         `pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=black,` +
@@ -290,9 +295,10 @@ function buildFilterGraph(spec, ctx) {
     base = `[${b}]`;
   }
 
-  // ===== TEXT: drawtext cho animation "none" / "fadeUp" / keyframes =====
+  // ===== TEXT: drawtext cho animation "none" / "fadeUp" / keyframes / textfx =====
   // Phase 3: nếu clip có `animations`, dùng buildTextExprs (keyframes x/y/opacity)
   // và keyframes được ưu tiên hơn `fadeUp`.
+  // Phase 3b: các animation mới (fadeIn, slideInLeft, ...) dùng buildTextAnimExpr.
   let vcur = base;
   for (const track of spec.tracks.filter((t) => t.kind === "text")) {
     for (const clip of track.clips) {
@@ -302,6 +308,10 @@ function buildFilterGraph(spec, ctx) {
       let fx, fy, extra = "";
       if (clip.animations && (clip.animations.x || clip.animations.y || clip.animations.opacity)) {
         const te = buildTextExprs(clip.animations, st, S);
+        fx = te.x; fy = te.y;
+        extra += `:alpha='${te.alpha}'`;
+      } else if (isTextFxAnimation(st.animation) && st.animation !== "none" && st.animation !== "fadeUp") {
+        const te = buildTextAnimExpr(st.animation, st, S);
         fx = te.x; fy = te.y;
         extra += `:alpha='${te.alpha}'`;
       } else {
