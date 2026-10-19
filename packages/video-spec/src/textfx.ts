@@ -23,6 +23,19 @@ export const TEXT_ANIMATIONS = [
   "slideUp",
   "bounce",
   "typewriter",
+  // Batch G (R1-070): entrance thêm
+  "slideInDown",
+  "popIn",
+  // Batch G (R1-070): exit animations (cần clipEnd khi render)
+  "fadeOut",
+  "fadeOutUp",
+  "slideOutRight",
+  "slideOutDown",
+  // Batch G (R1-070): loop / emphasis / combo
+  "wave",
+  "blink",
+  "shake",
+  "fadeInOut",
 ] as const;
 
 export type TextAnimation = (typeof TEXT_ANIMATIONS)[number];
@@ -40,6 +53,17 @@ export const TEXT_ANIMATION_META: Record<
   slideUp: { label: "Trượt từ dưới lên", description: "Chữ trượt từ dưới màn hình lên" },
   bounce: { label: "Nảy", description: "Chữ rơi từ trên xuống, nảy nhẹ rồi đứng yên" },
   typewriter: { label: "Gõ từng chữ", description: "Hiện từng ký tự như đang gõ máy" },
+  // Batch G (R1-070)
+  slideInDown: { label: "Trượt từ trên xuống", description: "Chữ trượt từ trên màn hình xuống" },
+  popIn: { label: "Bật vào", description: "Hiện nhanh + nảy nhẹ (giả lập pop, không scale thật)" },
+  fadeOut: { label: "Mờ dần ra", description: "Mờ dần trong 0.8s cuối clip" },
+  fadeOutUp: { label: "Mờ + bay lên", description: "Bay lên 30px + mờ dần trong 0.8s cuối" },
+  slideOutRight: { label: "Trượt ra phải", description: "Trượt ra ngoài mép phải + mờ dần cuối clip" },
+  slideOutDown: { label: "Trượt xuống dưới", description: "Trượt xuống dưới màn hình + mờ dần cuối clip" },
+  wave: { label: "Sóng", description: "Chữ dập dềnh lên xuống liên tục (cả dòng, không từng ký tự)" },
+  blink: { label: "Nhấp nháy", description: "Chữ nhấp nháy hiện/ẩn liên tục" },
+  shake: { label: "Rung", description: "Chữ rung ngang trong 0.5s đầu (nhấn mạnh)" },
+  fadeInOut: { label: "Mờ vào + mờ ra", description: "Mờ dần vào 0.5s đầu, mờ dần ra 0.5s cuối" },
 };
 
 /** Kiểm tra một giá trị có phải TextAnimation hợp lệ không. */
@@ -59,6 +83,16 @@ export const DRAWTEXT_ANIMATIONS: readonly TextAnimation[] = [
   "slideInRight",
   "slideUp",
   "bounce",
+  "slideInDown",
+  "popIn",
+  "fadeOut",
+  "fadeOutUp",
+  "slideOutRight",
+  "slideOutDown",
+  "wave",
+  "blink",
+  "shake",
+  "fadeInOut",
 ];
 
 /** Animation này có được render bằng drawtext không? */
