@@ -13,26 +13,29 @@
 export const SPEC_VERSION = "0.1.0" as const;
 
 // Re-export các module tính năng (Phase 3): transitions, speed, keyframes.
-export * from "./transitions";
-export * from "./speed";
-export * from "./keyframes";
+export * from "./transitions.js";
+export * from "./speed.js";
+export * from "./keyframes.js";
 // Phase 3b: chroma key, text animations.
-export * from "./chroma";
-export * from "./textfx";
+export * from "./chroma.js";
+export * from "./textfx.js";
 // Phase 3c: LUT filters, video effects, stickers.
-export * from "./lut";
-export * from "./effects";
-export * from "./sticker";
+export * from "./lut.js";
+export * from "./effects.js";
+export * from "./sticker.js";
+// P0-03: image clip (ảnh tĩnh thành media type chính thức).
+export * from "./image.js";
 // Lưu ý: "./transitions" export `Transition` (type mở rộng) — dùng thay cho
 // định nghĩa cũ. "./keyframes", "./chroma" và "./lut" gắn `animations?` /
 // `chromaKey?` / `filter?` vào VideoClip qua module augmentation.
 
-import type { Transition } from "./transitions";
-import type { ClipAnimations } from "./keyframes";
-import type { TextAnimation } from "./textfx";
-import type { VideoFilter } from "./lut";
-import type { VideoEffect } from "./effects";
-import type { StickerClip } from "./sticker";
+import type { Transition } from "./transitions.js";
+import type { ClipAnimations } from "./keyframes.js";
+import type { TextAnimation } from "./textfx.js";
+import type { VideoFilter } from "./lut.js";
+import type { VideoEffect } from "./effects.js";
+import type { StickerClip } from "./sticker.js";
+import type { ImageClip } from "./image.js";
 
 export interface VideoMeta {
   /** Tên dự án */
@@ -44,7 +47,7 @@ export interface VideoMeta {
   fps: number;
 }
 
-export type TrackKind = "video" | "audio" | "text" | "sticker";
+export type TrackKind = "video" | "audio" | "text" | "sticker" | "image";
 
 export interface Track {
   id: string;
@@ -115,9 +118,11 @@ export interface TextClip {
   animations?: ClipAnimations;
 }
 
-export type Clip = VideoClip | AudioClip | TextClip | StickerClip;
+export type Clip = VideoClip | AudioClip | TextClip | StickerClip | ImageClip;
 
 // Lưu ý: `Transition` được import từ "./transitions" ở đầu file
+// và re-export để các consumer (mcp-server, v.v.) dùng được.
+export type { Transition } from "./transitions.js";
 // (type mở rộng với 13 loại transition, thay cho "fade" | "none" cũ).
 
 export interface TextStyle {
