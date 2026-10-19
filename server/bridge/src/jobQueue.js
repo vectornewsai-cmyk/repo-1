@@ -18,6 +18,10 @@
  *  - In-memory: restart server làm mất job đang chạy; job queued được
  *    phục hồi best-effort từ WORK_ROOT (render lại từ đầu).
  *
+ * R1-065: tiến trình export thời gian thực — parse time=/frame= từ stderr
+ * ffmpeg (chuẩn hóa \r), progress đơn điệu 0→0.99 (1 khi done), ETA ước lượng
+ * từ tốc độ render trong cửa sổ trượt 8s, expose qua etaSeconds.
+ *
  * Không phụ thuộc bên ngoài (chỉ dùng node builtins).
  */
 "use strict";
@@ -36,14 +40,72 @@ function newJobId() {
 }
 
 /**
+ * Parse 1 dòng stderr của ffmpeg → { time, frame }.
+ *  - time: số giây (float) từ "time=HH:MM:SS.ss", null nếu không có.
+ *  - frame: số frame từ "frame= 123", null nếu không có.
+ * R1-065: frame= là fallback khi ffmpeg không báo time= (một số build/format).
+ */
+function parseFfmpegProgress(line) {
+  let time = null;
+  let frame = null;
+  if (typeof line === "string") {
+    const mt = /time=(\d+):(\d+):([\d.]+)/.exec(line);
+    if (mt) time = (+mt[1]) * 3600 + (+mt[2]) * 60 + (+mt[3]);
+    const mf = /frame=\s*(\d+)/.exec(line);
+    if (mf) frame = +mf[1];
+  }
+  return { time, frame };
+}
+
+/**
  * Parse tiến trình từ 1 dòng stderr của ffmpeg (dạng "time=00:00:03.42").
  * Trả về số giây (float) hoặc null nếu không phải dòng progress.
+ * (Giữ API cũ — R1-065 bổ sung parseFfmpegProgress cho frame= fallback.)
  */
 function parseFfmpegTime(line) {
-  if (typeof line !== "string") return null;
-  const m = /time=(\d+):(\d+):([\d.]+)/.exec(line);
-  if (!m) return null;
-  return (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]);
+  return parseFfmpegProgress(line).time;
+}
+
+// --- R1-065: ước lượng ETA từ tốc độ render gần nhất -------------------------
+/** Cửa sổ trượt (ms) để ước lượng tốc độ render cho ETA. */
+const ETA_WINDOW_MS = 8000;
+/** Số sample tối thiểu để tính ETA. */
+const ETA_MIN_SAMPLES = 2;
+
+/**
+ * Thêm 1 sample {at, time} vào job._samples. time không tiến (chunk lặp)
+ * thì chỉ refresh timestamp để cửa sổ trượt không bị cũ.
+ */
+function pushSample(job, t) {
+  const now = Date.now();
+  const s = job._samples || (job._samples = []);
+  const last = s[s.length - 1];
+  if (last && t <= last.time) {
+    last.at = now;
+    return;
+  }
+  s.push({ at: now, time: t });
+  while (s.length > 20) s.shift();
+  const cut = now - ETA_WINDOW_MS;
+  while (s.length > ETA_MIN_SAMPLES && s[0].at < cut) s.shift();
+}
+
+/**
+ * ETA (giây, float) = thời gian-video còn lại / tốc độ gần nhất.
+ * Trả về null khi chưa đủ dữ liệu để ước lượng.
+ */
+function computeEta(job) {
+  const s = job._samples || [];
+  if (job.totalDuration <= 0 || s.length < ETA_MIN_SAMPLES) return null;
+  const a = s[0];
+  const b = s[s.length - 1];
+  const dWall = (b.at - a.at) / 1000; // giây-thật
+  const dTime = b.time - a.time;      // giây-video đã render
+  if (dWall <= 0 || dTime <= 0) return null;
+  const speed = dTime / dWall;
+  const remain = job.totalDuration - b.time;
+  if (remain <= 0) return 0;
+  return Math.max(0, remain / speed);
 }
 
 /** Ước lượng duration từ spec object (meta.duration hoặc max end của clip). */
@@ -106,7 +168,8 @@ function isAlive(pid) {
 }
 
 /**
- * Đọc spec.meta (width/height) từ spec.json của job — dùng cho QA output (R1-043).
+ * Đọc spec.meta (width/height/fps) từ spec.json của job — dùng cho QA output
+ * (R1-043) và frame= fallback của progress (R1-065).
  * Lỗi đọc/parse → trả về {} (các check thiếu kỳ vọng sẽ bị skip trong verifyOutput).
  */
 function readSpecMeta(specPath) {
@@ -116,6 +179,7 @@ function readSpecMeta(specPath) {
     return {
       width: typeof m.width === "number" ? m.width : undefined,
       height: typeof m.height === "number" ? m.height : undefined,
+      fps: typeof m.fps === "number" ? m.fps : undefined, // R1-065
     };
   } catch {
     return {};
@@ -205,6 +269,9 @@ class RenderJobService {
       dir, mediaDir, specPath, outPath,
       status: "queued",
       progress: 0,
+      etaSeconds: null,   // R1-065: ước lượng thời gian còn lại (giây)
+      totalFps: 0,        // R1-065: fps từ spec.meta (frame= fallback)
+      _samples: [],       // R1-065: sample progress cho ETA (không serialize)
       queuePosition: null,
       attempts: 0,
       error: null,
@@ -263,6 +330,7 @@ class RenderJobService {
     job.status = "cancelled";
     job.finishedAt = Date.now();
     job.progress = 0;
+    job.etaSeconds = null; // R1-065
 
     // Gỡ khỏi hàng đợi nếu còn queued
     const qi = this.fifo.indexOf(id);
@@ -315,6 +383,8 @@ class RenderJobService {
     }
     job.status = "queued";
     job.progress = 0;
+    job.etaSeconds = null; // R1-065
+    job._samples = [];     // R1-065
     job.error = null;
     job.startedAt = null;
     job.finishedAt = null;
@@ -445,6 +515,14 @@ class RenderJobService {
     job.attempts += 1;
     job.queuePosition = null;
     job._stderrTail = "";
+    job.etaSeconds = null; // R1-065
+    job._samples = [];     // R1-065
+    // R1-065: đọc fps từ spec để làm frame= fallback khi ffmpeg thiếu time=
+    job.totalFps = 0;
+    try {
+      const meta = readSpecMeta(job.specPath);
+      if (meta.fps > 0) job.totalFps = meta.fps;
+    } catch { /* giữ 0 → không fallback */ }
 
     let proc;
     try {
@@ -463,11 +541,25 @@ class RenderJobService {
       const text = chunk.toString();
       job._stderrTail += text;
       if (job._stderrTail.length > 20000) job._stderrTail = job._stderrTail.slice(-20000);
-      for (const line of text.split("\n")) {
-        const t = parseFfmpegTime(line);
-        if (t !== null && job.totalDuration > 0) {
-          job.progress = Math.min(0.99, Math.max(0, t / job.totalDuration));
-        }
+      // R1-065: ffmpeg viết progress updates bằng \r (cùng 1 dòng) → chuẩn hóa
+      // thành \n trước khi tách dòng, lấy update MỚI NHẤT trong mỗi chunk.
+      let bestTime = null;
+      let bestFrame = null;
+      for (const line of text.replace(/\r/g, "\n").split("\n")) {
+        const p = parseFfmpegProgress(line);
+        if (p.time !== null) bestTime = p.time;
+        if (p.frame !== null) bestFrame = p.frame;
+      }
+      let t = bestTime;
+      if (t === null && bestFrame !== null && job.totalFps > 0 && job.totalDuration > 0) {
+        // R1-065 fallback: ffmpeg không báo time= → ước lượng từ frame=
+        t = bestFrame / job.totalFps;
+      }
+      if (t !== null && job.totalDuration > 0) {
+        const p = Math.min(0.99, Math.max(0, t / job.totalDuration));
+        if (p > job.progress) job.progress = p; // đơn điệu không giảm
+        pushSample(job, t);
+        job.etaSeconds = computeEta(job);
       }
     });
     proc.stdout && proc.stdout.on("data", () => { /* bỏ qua log stdout */ });
@@ -535,6 +627,7 @@ class RenderJobService {
     if (!job) return;
     job.status = "done";
     job.progress = 1;
+    job.etaSeconds = 0; // R1-065
     job.finishedAt = Date.now();
     job.outputName = `vcut-${id}.mp4`;
     job.outputSize = outputSize;
@@ -548,6 +641,7 @@ class RenderJobService {
     if (job.proc) { try { killProcessTree(job.proc, "SIGKILL"); } catch {} }
     job.proc = null;
     job.status = "error";
+    job.etaSeconds = null; // R1-065
     // R1-040: log chi tiết ở server, API chỉ nhận tóm tắt (không leak đường dẫn nội bộ)
     console.error(`[bridge] job ${id} lỗi:`, message);
     job.error = String(message).split(" Chi tiết:")[0].split(" (file lỗi")[0];
@@ -560,6 +654,8 @@ module.exports = {
   RenderJobService,
   newJobId,
   parseFfmpegTime,
+  parseFfmpegProgress, // R1-065
+  computeEta,          // R1-065
   specDuration,
   killProcessTree,
   isAlive,
