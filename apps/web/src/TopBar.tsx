@@ -4,11 +4,12 @@ import { useStore } from "./store";
 import { fmtTime } from "./lib";
 import { ProjectMenu } from "./components/project/ProjectMenu";
 
-export function TopBar({ onExport }: { onExport: () => void }) {
+export function TopBar({ onExport, onCaption }: { onExport: () => void; onCaption: () => void }) {
   const name = useStore((s) => s.spec.meta.name);
   const playing = useStore((s) => s.playing);
   const playhead = useStore((s) => s.playhead);
   const selection = useStore((s) => s.selection);
+  const media = useStore((s) => s.media);
   const undoDepth = useStore((s) => s.undoDepth);
   const redoDepth = useStore((s) => s.redoDepth);
   const undoLabel = useStore((s) => s.undoLabel);
@@ -16,6 +17,10 @@ export function TopBar({ onExport }: { onExport: () => void }) {
   const [flash, setFlash] = useState<string | null>(null);
   const st = useStore.getState();
   const duration = st.duration();
+  // R1-072: chỉ bật nút phụ đề khi có file video/audio gốc để transcribe.
+  const canCaption = media.some(
+    (m) => (m.kind === "video" || m.kind === "audio") && m.file
+  );
 
   const doSplit = () => {
     const ok = st.splitAtPlayhead();
@@ -77,6 +82,13 @@ export function TopBar({ onExport }: { onExport: () => void }) {
         </button>
         <button title="Tách clip tại playhead (S)" onClick={doSplit}>
           ✂ Tách
+        </button>
+        <button
+          title="Tạo phụ đề tự động từ video/audio (faster-whisper, chạy trên máy bạn)"
+          onClick={onCaption}
+          disabled={!canCaption}
+        >
+          💬 Phụ đề
         </button>
         <button
           title="Xoá clip đang chọn (Delete)"

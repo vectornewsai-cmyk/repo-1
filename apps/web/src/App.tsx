@@ -7,6 +7,7 @@ import { Timeline } from "./Timeline";
 import { ExportPanel } from "./ExportPanel";
 import { PreviewCanvas } from "./preview";
 import { RelinkPanel } from "./components/RelinkPanel";
+import { CaptionModal } from "./components/CaptionModal";
 import { autosave, loadAutosave, markSaved } from "./lib/projectRepo";
 import { saveCurrentProject } from "./components/project/ProjectMenu";
 
@@ -14,6 +15,7 @@ export default function App() {
   const ready = useStore((s) => s.ready);
   const missingAssets = useStore((s) => s.missingAssets);
   const [exportOpen, setExportOpen] = useState(false);
+  const [captionOpen, setCaptionOpen] = useState(false);
 
   // Khởi tạo: ưu tiên khôi phục autosave; chỉ tải project mẫu khi chưa có autosave.
   // (Không tự ghi đè project đang làm bằng sample khi reload.)
@@ -97,7 +99,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <TopBar onExport={() => setExportOpen(true)} />
+      <TopBar onExport={() => setExportOpen(true)} onCaption={() => setCaptionOpen(true)} />
       <div className="editor-main">
         <MediaBin />
         <div className="preview-col">
@@ -107,6 +109,7 @@ export default function App() {
       </div>
       <Timeline />
       {exportOpen && <ExportPanel onClose={() => setExportOpen(false)} />}
+      {captionOpen && <CaptionModal onClose={() => setCaptionOpen(false)} />}
       {missingAssets && missingAssets.length > 0 && (
         <RelinkPanel
           missing={missingAssets}
