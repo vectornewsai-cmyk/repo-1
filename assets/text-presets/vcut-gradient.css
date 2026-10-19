@@ -1,0 +1,15 @@
+/* Chữ gradient tím → hồng, đổ theo chiều ngang.
+ * TỰ LÀM 100% cho VCut Studio — không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-gradient" vào element chữ.
+ */
+
+.text-preset.vcut-gradient {
+  font-weight: 800;
+  background: linear-gradient(90deg, #a78bfa 0%, #f472b6 55%, #fb923c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}

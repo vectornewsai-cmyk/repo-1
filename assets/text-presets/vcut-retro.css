@@ -1,0 +1,18 @@
+/* Chữ retro 3D — bóng đổ xếp lớp tạo chiều sâu.
+ * TỰ LÀM 100% cho VCut Studio — không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-retro" vào element chữ.
+ */
+
+.text-preset.vcut-retro {
+  color: #fef3c7;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-shadow:
+    1px 1px 0 #b45309,
+    2px 2px 0 #92400e,
+    3px 3px 0 #78350f,
+    4px 4px 0 #451a03,
+    6px 6px 12px rgba(0, 0, 0, 0.55);
+}

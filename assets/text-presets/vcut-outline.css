@@ -1,0 +1,13 @@
+/* Chữ viền (outline) — ruột trong suốt, viền trắng dày.
+ * TỰ LÀM 100% cho VCut Studio — không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-outline" vào element chữ.
+ */
+
+.text-preset.vcut-outline {
+  color: transparent;
+  font-weight: 800;
+  -webkit-text-stroke: 2px #f8fafc;
+  text-stroke: 2px #f8fafc;
+}

@@ -1,0 +1,25 @@
+/* Chữ neon phát sáng (cyan) + nhấp nháy nhẹ.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-neon" vào element chữ.
+ */
+
+@keyframes vcut-neon-flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.6; }
+  94% { opacity: 1; }
+  96% { opacity: 0.8; }
+  97% { opacity: 1; }
+}
+
+.text-preset.vcut-neon {
+  color: #e8feff;
+  font-weight: 700;
+  text-shadow:
+    0 0 6px #22d3ee,
+    0 0 18px #22d3ee,
+    0 0 42px #0ea5e9;
+  animation: vcut-neon-flicker 4s linear infinite;
+}
