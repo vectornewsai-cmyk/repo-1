@@ -1,0 +1,4 @@
+# Media mẫu do examples/make_demo_media.sh tự tạo — không commit file nặng.
+examples/media/
+# File tạm khi render thất bại (giữ lại để debug).
+/tmp/

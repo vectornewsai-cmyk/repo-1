@@ -1,0 +1,7 @@
+# Output của agent khi dùng MCP server — không commit
+projects/
+renders/
+
+# Build & deps (đã có ở root .gitignore, ghi lại cho rõ)
+node_modules/
+dist/
