@@ -19,6 +19,8 @@ export interface MediaItem {
   height?: number;
   /** Ảnh thumbnail dataURL (nếu tạo được). */
   thumbnail?: string;
+  /** File gốc — dùng để upload lên bridge server khi xuất MP4 (P0-01). */
+  file?: File;
 }
 
 function kindOf(file: File): MediaKind | null {
@@ -104,7 +106,7 @@ export async function fileToMediaItem(file: File): Promise<MediaItem> {
   const kind = kindOf(file);
   if (!kind) throw new Error(`Định dạng không hỗ trợ: ${file.name}`);
   const url = URL.createObjectURL(file);
-  const item: MediaItem = { id: uid("m"), name: file.name, kind, url, duration: 0 };
+  const item: MediaItem = { id: uid("m"), name: file.name, kind, url, duration: 0, file };
   try {
     if (kind === "video") {
       const meta = await probeVideo(url);
@@ -176,5 +178,11 @@ export class MediaPool {
   pauseAll(): void {
     for (const v of this.videos.values()) v.pause();
     for (const a of this.audios.values()) a.pause();
+  }
+
+  /** Duyệt mọi phần tử media (R1-062: để syncPlaying dừng element không còn active). */
+  eachMedia(fn: (el: HTMLVideoElement | HTMLAudioElement) => void): void {
+    for (const v of this.videos.values()) fn(v);
+    for (const a of this.audios.values()) fn(a);
   }
 }
