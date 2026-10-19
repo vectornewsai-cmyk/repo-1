@@ -11,9 +11,10 @@ import { SpeedPanel } from "./components/speed";
 import { KeyframePanel } from "./components/keyframes";
 import { ChromaPanel } from "./components/chroma";
 import { TextAnimPicker } from "./components/textfx";
-import { LutPicker } from "./components/lut";
+import { LutPicker, ColorAdjustPanel } from "./components/lut";
 import { EffectPanel } from "./components/effects";
 import { StickerPanel } from "./components/sticker";
+import { AudioFxPanel } from "./components/audiofx";
 
 function NumField({
   label,
@@ -271,12 +272,29 @@ export function Inspector() {
           />
           <div className="panel-head" style={{ marginTop: 12 }}>⏩ Tốc độ</div>
           <SpeedPanel />
+          <div className="panel-head" style={{ marginTop: 12 }}>🎚️ Hiệu ứng âm thanh (tiếng gốc)</div>
+          <AudioFxPanel />
           <div className="panel-head" style={{ marginTop: 12 }}>🎭 Xoá phông</div>
           <ChromaPanel />
           <div className="panel-head" style={{ marginTop: 12 }}>🎨 Bộ lọc màu</div>
           <LutPicker
             value={clip.filter?.lut}
-            onChange={(lut) => patch({ filter: lut ? { lut } : undefined })}
+            onChange={(lut) => {
+              const next = { ...(clip.filter ?? {}) };
+              if (lut) next.lut = lut;
+              else delete next.lut;
+              patch({ filter: Object.keys(next).length > 0 ? next : undefined });
+            }}
+          />
+          <div className="panel-head" style={{ marginTop: 12 }}>🎚️ Chỉnh màu thủ công</div>
+          <ColorAdjustPanel
+            value={clip.filter?.color}
+            onChange={(color) => {
+              const next = { ...(clip.filter ?? {}) };
+              if (color) next.color = color;
+              else delete next.color;
+              patch({ filter: Object.keys(next).length > 0 ? next : undefined });
+            }}
           />
           <div className="panel-head" style={{ marginTop: 12 }}>✨ Hiệu ứng</div>
           <EffectPanel />
@@ -299,6 +317,8 @@ export function Inspector() {
             <NumField label="Mờ vào (s)" value={clip.fadeIn ?? 0} onChange={(v) => patch({ fadeIn: Math.max(0, v) })} />
             <NumField label="Mờ ra (s)" value={clip.fadeOut ?? 0} onChange={(v) => patch({ fadeOut: Math.max(0, v) })} />
           </div>
+          <div className="panel-head" style={{ marginTop: 12 }}>🎚️ Hiệu ứng âm thanh</div>
+          <AudioFxPanel />
           <div className="panel-head" style={{ marginTop: 12 }}>⏩ Tốc độ</div>
           <SpeedPanel />
         </>
