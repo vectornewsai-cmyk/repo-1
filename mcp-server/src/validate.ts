@@ -7,6 +7,7 @@
  */
 import type {
   AudioClip,
+  AudioEffects,
   Clip,
   ImageClip,
   KeyframedValue,
@@ -255,12 +256,45 @@ function validateChromaKey(v: unknown): VideoClip["chromaKey"] {
   return out;
 }
 
-/** Validate LUT filter { lut? }. */
+/** Validate LUT filter { lut?, color? }. */
 function validateVideoFilter(v: unknown): VideoFilter | undefined {
   if (v === undefined) return undefined;
-  if (!isObj(v)) throw new ValidationError(`clip.filter phải là một object { lut? }`);
+  if (!isObj(v)) throw new ValidationError(`clip.filter phải là một object { lut?, color? }`);
   const lut = optEnum(v["lut"], "clip.filter.lut", LUT_IDS);
-  return lut !== undefined ? { lut } : {};
+  const color = validateColorAdjustMcp(v["color"]);
+  const out: VideoFilter = {};
+  if (lut !== undefined) out.lut = lut;
+  if (color !== undefined) out.color = color;
+  return out;
+}
+
+/** Validate ColorAdjust { brightness..shadows }, mỗi param -100..100. */
+function validateColorAdjustMcp(v: unknown): VideoFilter["color"] | undefined {
+  if (v === undefined) return undefined;
+  if (!isObj(v)) throw new ValidationError(`clip.filter.color phải là một object`);
+  const keys = [
+    "brightness",
+    "contrast",
+    "saturation",
+    "temperature",
+    "tint",
+    "highlights",
+    "shadows",
+  ] as const;
+  const out: Record<string, number> = {};
+  for (const k of Object.keys(v)) {
+    if (!(keys as readonly string[]).includes(k))
+      throw new ValidationError(`clip.filter.color.${k} không được hỗ trợ`);
+  }
+  for (const k of keys) {
+    const raw = (v as Record<string, unknown>)[k];
+    if (raw === undefined) continue;
+    const n = reqFiniteNum(raw, `clip.filter.color.${k}`);
+    if (n < -100 || n > 100)
+      throw new ValidationError(`clip.filter.color.${k} phải trong -100..100 (nhận được: ${n})`);
+    out[k] = n;
+  }
+  return out as VideoFilter["color"];
 }
 
 /** Validate mảng video effects [{ type, intensity? }]. */
@@ -324,6 +358,9 @@ function validateVideoClip(v: unknown): VideoClip {
   // Phase 3c: video effects
   const effects = validateVideoEffects(v["effects"]);
   if (effects !== undefined) clip.effects = effects;
+  // R1-076: audio effects cho tiếng kế thừa của video clip
+  const vafx = validateAudioEffects(v["audioEffects"]);
+  if (vafx !== undefined) clip.audioEffects = vafx;
   return clip;
 }
 
@@ -357,9 +394,62 @@ function validateVolumeKeyframes(v: unknown, duration: number, clipId: string): 
   };
 }
 
+/**
+ * Validate AudioEffects cho audio clip (R1-076).
+ * Trả về object đã chuẩn hoá, hoặc undefined nếu input undefined.
+ */
+function validateAudioEffects(v: unknown): AudioEffects | undefined {
+  if (v === undefined) return undefined;
+  if (!isObj(v)) throw new ValidationError(`clip.audioEffects phải là object`);
+  const fx: AudioEffects = {};
+  const numIn = (key: string, min: number, max: number): number | undefined => {
+    const raw = (v as Record<string, unknown>)[key];
+    if (raw === undefined) return undefined;
+    const n = reqFiniteNum(raw, `clip.audioEffects.${key}`);
+    if (n < min || n > max)
+      throw new ValidationError(
+        `clip.audioEffects.${key} phải trong [${min}, ${max}] (nhận được: ${n})`,
+      );
+    return n;
+  };
+  const bass = numIn("bass", -12, 12);
+  if (bass !== undefined) fx.bass = bass;
+  const treble = numIn("treble", -12, 12);
+  if (treble !== undefined) fx.treble = treble;
+  const nr = numIn("noiseReduction", 0, 1);
+  if (nr !== undefined) fx.noiseReduction = nr;
+  const rev = numIn("reverb", 0, 1);
+  if (rev !== undefined) fx.reverb = rev;
+  const cRaw = (v as Record<string, unknown>)["compressor"];
+  if (cRaw !== undefined) {
+    if (!isObj(cRaw)) throw new ValidationError(`clip.audioEffects.compressor phải là object`);
+    const c = cRaw as Record<string, unknown>;
+    const cnum = (key: string, min: number, max: number): number | undefined => {
+      const raw = c[key];
+      if (raw === undefined) return undefined;
+      const n = reqFiniteNum(raw, `clip.audioEffects.compressor.${key}`);
+      if (n < min || n > max)
+        throw new ValidationError(
+          `clip.audioEffects.compressor.${key} phải trong [${min}, ${max}] (nhận được: ${n})`,
+        );
+      return n;
+    };
+    const comp: NonNullable<AudioEffects["compressor"]> = {};
+    const thr = cnum("thresholdDb", -60, 0);
+    if (thr !== undefined) comp.thresholdDb = thr;
+    const ratio = cnum("ratio", 1, 20);
+    if (ratio !== undefined) comp.ratio = ratio;
+    const atk = cnum("attackMs", 0.1, 2000);
+    if (atk !== undefined) comp.attackMs = atk;
+    const rel = cnum("releaseMs", 10, 9000);
+    if (rel !== undefined) comp.releaseMs = rel;
+    fx.compressor = comp;
+  }
+  return fx;
+}
+
 function validateAudioClip(v: unknown): AudioClip {
-  if (!isObj(v)) throw new ValidationError(`clip phải là object`);
-  const inp = reqNonNegNum(v["in"], "clip.in");
+  if (!isObj(v)) throw new ValidationError(`clip phải là object`);  const inp = reqNonNegNum(v["in"], "clip.in");
   const out = reqPosNum(v["out"], "clip.out");
   if (out <= inp) throw new ValidationError(`clip.out (${out}) phải > clip.in (${inp})`);
   const clip: AudioClip = {
@@ -382,6 +472,9 @@ function validateAudioClip(v: unknown): AudioClip {
   if (v["volumeKeyframes"] !== undefined) {
     clip.volumeKeyframes = validateVolumeKeyframes(v["volumeKeyframes"], clip.duration, clip.id);
   }
+  // R1-076: audioEffects — passthrough + validate.
+  const afx = validateAudioEffects(v["audioEffects"]);
+  if (afx !== undefined) clip.audioEffects = afx;
   // Phase 3: speed / reverse (audio)
   Object.assign(clip, validateSpeedFields(v, clip.id));
   return clip;
