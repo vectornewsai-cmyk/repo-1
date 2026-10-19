@@ -17,7 +17,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import type { Track, VideoSpec } from "../../packages/video-spec/src/index.js";
-import { projectDuration } from "../../packages/video-spec/src/index.js";
+import { projectDuration, SPEC_VERSION } from "../../packages/video-spec/src/index.js";
 import {
   ValidationError,
   validateAddClipInput,
@@ -46,7 +46,11 @@ import {
 // ---------------------------------------------------------------------------
 
 const transitionSchema = z.object({
-  type: z.enum(["fade", "none"]).describe('Loại transition (hiện hỗ trợ "fade")'),
+  type: z.enum([
+    "none", "fade", "fadeblack", "fadewhite",
+    "wipeleft", "wiperight", "wipeup", "wipedown",
+    "slideleft", "slideright", "dissolve", "circleopen", "radial",
+  ]).describe("Loại transition (13 loại)"),
   duration: z.number().nonnegative().describe("Độ dài transition, tính bằng giây"),
 });
 
@@ -59,7 +63,9 @@ const textStyleSchema = z.object({
   italic: z.boolean().optional(),
   x: z.number().min(0).max(1).optional().describe("Vị trí ngang tương đối 0..1 (0.5 = giữa)"),
   y: z.number().min(0).max(1).optional().describe("Vị trí dọc tương đối 0..1"),
-  animation: z.enum(["none", "fadeUp", "typewriter"]).optional(),
+  animation: z.enum([
+    "none", "fadeUp", "fadeIn", "slideInLeft", "slideInRight", "slideUp", "bounce", "typewriter",
+  ]).optional(),
 });
 
 const videoClipSchema = z.object({
@@ -73,6 +79,25 @@ const videoClipSchema = z.object({
   transitionIn: transitionSchema.optional(),
   transitionOut: transitionSchema.optional(),
   opacity: z.number().min(0).max(1).optional(),
+  speed: z.number().min(0.25).max(4).optional().describe("Tốc độ phát 0.25–4 (mặc định 1)"),
+  reverse: z.boolean().optional().describe("Phát ngược đoạn nguồn"),
+  chromaKey: z.object({
+    color: z.string().describe("Màu phông hex #rrggbb, vd \"#00FF00\""),
+    similarity: z.number().min(0).max(1).optional(),
+    blend: z.number().min(0).max(1).optional(),
+  }).optional().describe("Xoá phông xanh/lục"),
+  filter: z.object({
+    lut: z.enum([
+      "cartcut-blockbuster", "cartcut-teal-orange", "cartcut-nordic-noir",
+      "cartcut-honey", "cartcut-golden-hour", "cartcut-winter-blue",
+      "cartcut-ocean", "cartcut-mono-neutral", "cartcut-faded-seventies",
+      "cartcut-super-eight",
+    ]).optional(),
+  }).optional().describe("Bộ lọc màu LUT"),
+  effects: z.array(z.object({
+    type: z.enum(["blur", "sharpen", "grayscale", "sepia", "vignette", "noise", "brightness"]),
+    intensity: z.number().min(0).max(1).optional(),
+  })).optional().describe("Danh sách hiệu ứng video"),
 });
 
 const audioClipSchema = z.object({
@@ -86,6 +111,30 @@ const audioClipSchema = z.object({
   volume: z.number().min(0).max(2).optional().describe("Âm lượng 0..2 (mặc định 1)"),
   fadeIn: z.number().nonnegative().optional().describe("Fade in (giây)"),
   fadeOut: z.number().nonnegative().optional().describe("Fade out (giây)"),
+  speed: z.number().min(0.25).max(4).optional().describe("Tốc độ phát 0.25–4 (mặc định 1)"),
+  reverse: z.boolean().optional().describe("Phát ngược đoạn nguồn"),
+});
+
+const stickerClipSchema = z.object({
+  kind: z.literal("sticker"),
+  id: z.string(),
+  src: z.string().describe("Tên file PNG sticker trong thư mục media"),
+  start: z.number().nonnegative().describe("Vị trí trên timeline (giây)"),
+  duration: z.number().positive().describe("Độ dài hiển thị (giây)"),
+  x: z.number().min(0).max(1).optional().describe("Tâm ngang 0..1 (mặc định 0.5)"),
+  y: z.number().min(0).max(1).optional().describe("Tâm dọc 0..1 (mặc định 0.5)"),
+  scale: z.number().positive().optional().describe("Tỉ lệ so với chiều rộng khung hình (mặc định 0.25)"),
+  opacity: z.number().min(0).max(1).optional(),
+  rotation: z.number().optional().describe("Góc xoay (độ)"),
+});
+
+const imageClipSchema = z.object({
+  kind: z.literal("image"),
+  id: z.string(),
+  src: z.string().describe("Tên file ảnh trong thư mục media"),
+  start: z.number().nonnegative().describe("Vị trí trên timeline (giây)"),
+  duration: z.number().positive().describe("Độ dài hiển thị (giây)"),
+  fit: z.enum(["contain", "cover"]).optional().describe("Cách lấp đầy khung hình (mặc định contain)"),
 });
 
 const textClipSchema = z.object({
@@ -184,7 +233,7 @@ server.tool(
       const input = validateCreateProjectInput(args);
       const mediaDir = await resolveMediaDir(input.media_dir);
       const spec: VideoSpec = {
-        version: "0.1.0",
+        version: SPEC_VERSION,
         meta: { name: input.name, width: input.width, height: input.height, fps: input.fps },
         tracks: [],
       };
@@ -198,12 +247,12 @@ server.tool(
 
 server.tool(
   "add_clip",
-  "Thêm 1 clip (video/audio/text) vào track. Nếu chưa có track phù hợp (hoặc có track_id), tự tạo track mới.",
+  "Thêm 1 clip (video/audio/text/sticker/image) vào track. Nếu chưa có track phù hợp (hoặc có track_id), tự tạo track mới.",
   {
     project_id: z.string().describe("ID project từ create_project"),
-    track_kind: z.enum(["video", "audio", "text"]).describe("Loại track"),
+    track_kind: z.enum(["video", "audio", "text", "sticker", "image"]).describe("Loại track"),
     clip: z
-      .union([videoClipSchema, audioClipSchema, textClipSchema])
+      .union([videoClipSchema, audioClipSchema, textClipSchema, stickerClipSchema, imageClipSchema])
       .describe("Clip cần thêm (kind phải khớp track_kind)"),
     track_id: z.string().optional().describe("ID track muốn thêm vào (mặc định: track đầu tiên cùng loại, hoặc tạo mới)"),
     track_label: z.string().optional().describe("Tên hiển thị của track nếu tạo mới"),
@@ -309,7 +358,11 @@ server.tool(
     project_id: z.string(),
     clip_id: z.string().describe("ID clip video cần gắn transition"),
     direction: z.enum(["in", "out"]).describe('"in" = đầu clip, "out" = cuối clip'),
-    type: z.enum(["fade", "none"]).default("fade"),
+    type: z.enum([
+      "none", "fade", "fadeblack", "fadewhite",
+      "wipeleft", "wiperight", "wipeup", "wipedown",
+      "slideleft", "slideright", "dissolve", "circleopen", "radial",
+    ]).default("fade"),
     duration: z.number().nonnegative().describe("Độ dài transition (giây)"),
   },
   async (args) => {
