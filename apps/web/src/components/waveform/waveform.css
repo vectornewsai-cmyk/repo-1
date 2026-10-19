@@ -1,0 +1,28 @@
+/**
+ * waveform.css — Style cho waveform trên timeline (dark theme VCut Studio).
+ *
+ * .clip-waveform nằm tuyệt đối phía dưới label của clip audio,
+ * không bắt sự kiện chuột (kéo/trim vẫn ăn như thường).
+ */
+
+.clip-waveform {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 2px;
+  height: 24px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.92;
+}
+
+.waveform-canvas {
+  display: block;
+}
+
+/* Label + thời gian của clip luôn nổi lên trên sóng âm. */
+.tl-clip .clip-label,
+.tl-clip .clip-sub {
+  position: relative;
+  z-index: 1;
+}
