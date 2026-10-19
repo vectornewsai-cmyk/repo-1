@@ -8,16 +8,31 @@
 import type {
   AudioClip,
   Clip,
+  ImageClip,
+  StickerClip,
   TextClip,
   TextStyle,
   Track,
   TrackKind,
   Transition,
   VideoClip,
+  VideoEffect,
+  VideoFilter,
   VideoMeta,
   VideoSpec,
 } from "../../packages/video-spec/src/index.js";
-import { SPEC_VERSION } from "../../packages/video-spec/src/index.js";
+import {
+  SPEC_VERSION,
+  TRANSITION_TYPES,
+  TEXT_ANIMATIONS,
+  LUT_IDS,
+  EFFECT_TYPES,
+  SPEED_MIN,
+  SPEED_MAX,
+  ANIMATABLE_PROPS,
+  EASINGS,
+  MAX_KEYFRAMES_PER_PROP,
+} from "../../packages/video-spec/src/index.js";
 
 export class ValidationError extends Error {
   constructor(message: string) {
@@ -106,7 +121,7 @@ function optEnum<T extends string>(v: unknown, name: string, allowed: readonly T
 
 function validateTransition(v: unknown, name: string): Transition {
   if (!isObj(v)) throw new ValidationError(`${name} phải là object {type, duration}`);
-  const type = optEnum(v["type"], `${name}.type`, ["fade", "none"] as const) ?? "fade";
+  const type = optEnum(v["type"], `${name}.type`, TRANSITION_TYPES) ?? "fade";
   const duration = reqNonNegNum(v["duration"], `${name}.duration`);
   if (type !== "none" && duration === 0)
     throw new ValidationError(`${name}.duration phải > 0 khi type="${type}"`);
@@ -139,9 +154,137 @@ function validateTextStyle(v: unknown, name: string): TextStyle {
       style[k] = n;
     }
   }
-  const animation = optEnum(v["animation"], `${name}.animation`, ["none", "fadeUp", "typewriter"] as const);
+  const animation = optEnum(v["animation"], `${name}.animation`, TEXT_ANIMATIONS);
   if (animation !== undefined) style.animation = animation;
   return style;
+}
+
+/** Validate speed (0.25–4) và reverse (boolean) cho video/audio clip. */
+function validateSpeedFields(
+  v: Record<string, unknown>,
+  clipId: string
+): { speed?: number; reverse?: boolean } {
+  const out: { speed?: number; reverse?: boolean } = {};
+  if (v["speed"] !== undefined) {
+    const s = reqFiniteNum(v["speed"], "clip.speed");
+    if (s < SPEED_MIN || s > SPEED_MAX)
+      throw new ValidationError(
+        `clip.speed phải trong khoảng ${SPEED_MIN}–${SPEED_MAX} (nhận được: ${s})`
+      );
+    out.speed = s;
+  }
+  if (v["reverse"] !== undefined) {
+    if (typeof v["reverse"] !== "boolean")
+      throw new ValidationError(
+        `clip.reverse phải là boolean (nhận được: ${JSON.stringify(v["reverse"])})`
+      );
+    out.reverse = v["reverse"];
+  }
+  return out;
+}
+
+/** Validate keyframe animations (x, y, opacity, scale, rotation). */
+function validateClipAnimations(
+  v: unknown,
+  duration: number,
+  clipId: string
+): Record<string, { keyframes: Array<{ t: number; v: number; easing: string }> }> | undefined {
+  if (v === undefined) return undefined;
+  if (!isObj(v)) throw new ValidationError(`clip.animations phải là một object`);
+  const anims: Record<string, unknown> = {};
+  for (const key of Object.keys(v)) {
+    if (!(ANIMATABLE_PROPS as readonly string[]).includes(key))
+      throw new ValidationError(
+        `clip.animations.${key}: thuộc tính không hỗ trợ (chỉ: ${ANIMATABLE_PROPS.join(", ")})`
+      );
+    const kv = v[key];
+    if (!isObj(kv) || !Array.isArray(kv["keyframes"]))
+      throw new ValidationError(`clip.animations.${key} phải là object { keyframes: [...] }`);
+    const kfs = kv["keyframes"] as unknown[];
+    if (kfs.length === 0)
+      throw new ValidationError(`clip.animations.${key}.keyframes: mảng rỗng — cần ít nhất 1 keyframe`);
+    if (kfs.length > MAX_KEYFRAMES_PER_PROP)
+      throw new ValidationError(
+        `clip.animations.${key}.keyframes: quá ${MAX_KEYFRAMES_PER_PROP} keyframe`
+      );
+    anims[key] = {
+      keyframes: kfs.map((kf, i) => {
+        if (!isObj(kf))
+          throw new ValidationError(`clip.animations.${key}.keyframes[${i}] phải là object { t, v, easing }`);
+        const t = reqFiniteNum(kf["t"], `clip.animations.${key}.keyframes[${i}].t`);
+        if (t < 0 || t > duration)
+          throw new ValidationError(
+            `clip.animations.${key}.keyframes[${i}].t phải trong [0, ${duration}] (nhận được: ${t})`
+          );
+        const val = reqFiniteNum(kf["v"], `clip.animations.${key}.keyframes[${i}].v`);
+        const easing = optEnum(kf["easing"], `clip.animations.${key}.keyframes[${i}].easing`, EASINGS);
+        if (!easing)
+          throw new ValidationError(
+            `clip.animations.${key}.keyframes[${i}].easing bắt buộc: ${EASINGS.join(" | ")}`
+          );
+        return { t, v: val, easing };
+      }),
+    };
+  }
+  return anims as Record<string, { keyframes: Array<{ t: number; v: number; easing: string }> }>;
+}
+
+/** Validate chroma key { color, similarity?, blend? }. */
+function validateChromaKey(v: unknown): VideoClip["chromaKey"] {
+  if (v === undefined) return undefined;
+  if (!isObj(v)) throw new ValidationError(`clip.chromaKey phải là một object { color, similarity?, blend? }`);
+  const color = reqString(v["color"], "clip.chromaKey.color", 7);
+  if (!/^#([0-9a-fA-F]{6})$/.test(color))
+    throw new ValidationError(
+      `clip.chromaKey.color phải là hex #rrggbb (vd "#00FF00"), nhận được: ${JSON.stringify(color)}`
+    );
+  const out: NonNullable<VideoClip["chromaKey"]> = { color };
+  if (v["similarity"] !== undefined) {
+    const s = reqFiniteNum(v["similarity"], "clip.chromaKey.similarity");
+    if (s < 0 || s > 1)
+      throw new ValidationError(`clip.chromaKey.similarity phải trong 0..1 (nhận được: ${s})`);
+    out.similarity = s;
+  }
+  if (v["blend"] !== undefined) {
+    const b = reqFiniteNum(v["blend"], "clip.chromaKey.blend");
+    if (b < 0 || b > 1)
+      throw new ValidationError(`clip.chromaKey.blend phải trong 0..1 (nhận được: ${b})`);
+    out.blend = b;
+  }
+  return out;
+}
+
+/** Validate LUT filter { lut? }. */
+function validateVideoFilter(v: unknown): VideoFilter | undefined {
+  if (v === undefined) return undefined;
+  if (!isObj(v)) throw new ValidationError(`clip.filter phải là một object { lut? }`);
+  const lut = optEnum(v["lut"], "clip.filter.lut", LUT_IDS);
+  return lut !== undefined ? { lut } : {};
+}
+
+/** Validate mảng video effects [{ type, intensity? }]. */
+function validateVideoEffects(v: unknown): VideoEffect[] | undefined {
+  if (v === undefined) return undefined;
+  if (!Array.isArray(v)) throw new ValidationError(`clip.effects phải là một mảng`);
+  const seen = new Set<string>();
+  return v.map((e, i) => {
+    if (!isObj(e))
+      throw new ValidationError(`clip.effects[${i}] phải là object { type, intensity? }`);
+    const type = optEnum(e["type"], `clip.effects[${i}].type`, EFFECT_TYPES);
+    if (!type)
+      throw new ValidationError(`clip.effects[${i}].type bắt buộc: ${EFFECT_TYPES.join(", ")}`);
+    if (seen.has(type))
+      throw new ValidationError(`clip.effects[${i}]: trùng effect "${type}" — mỗi loại chỉ dùng 1 lần`);
+    seen.add(type);
+    const effect: VideoEffect = { type };
+    if (e["intensity"] !== undefined) {
+      const it = reqFiniteNum(e["intensity"], `clip.effects[${i}].intensity`);
+      if (it < 0 || it > 1)
+        throw new ValidationError(`clip.effects[${i}].intensity phải trong 0..1 (nhận được: ${it})`);
+      effect.intensity = it;
+    }
+    return effect;
+  });
 }
 
 function validateVideoClip(v: unknown): VideoClip {
@@ -166,6 +309,20 @@ function validateVideoClip(v: unknown): VideoClip {
     if (o < 0 || o > 1) throw new ValidationError(`clip.opacity phải trong 0..1 (nhận được: ${o})`);
     clip.opacity = o;
   }
+  // Phase 3: speed / reverse
+  Object.assign(clip, validateSpeedFields(v, clip.id));
+  // Phase 3: keyframe animations
+  const anims = validateClipAnimations(v["animations"], duration, clip.id);
+  if (anims !== undefined) clip.animations = anims;
+  // Phase 3b: chroma key
+  const chroma = validateChromaKey(v["chromaKey"]);
+  if (chroma !== undefined) clip.chromaKey = chroma;
+  // Phase 3c: LUT filter
+  const filter = validateVideoFilter(v["filter"]);
+  if (filter !== undefined) clip.filter = filter;
+  // Phase 3c: video effects
+  const effects = validateVideoEffects(v["effects"]);
+  if (effects !== undefined) clip.effects = effects;
   return clip;
 }
 
@@ -190,6 +347,8 @@ function validateAudioClip(v: unknown): AudioClip {
   }
   if (v["fadeIn"] !== undefined) clip.fadeIn = reqNonNegNum(v["fadeIn"], "clip.fadeIn");
   if (v["fadeOut"] !== undefined) clip.fadeOut = reqNonNegNum(v["fadeOut"], "clip.fadeOut");
+  // Phase 3: speed / reverse (audio)
+  Object.assign(clip, validateSpeedFields(v, clip.id));
   return clip;
 }
 
@@ -220,12 +379,59 @@ export function validateClipForTrack(v: unknown, trackKind: TrackKind): Clip {
     case "text":
       return validateTextClip(v);
     case "sticker":
+      return validateStickerClip(v);
     case "image":
-      // TODO: implement validateStickerClip / validateImageClip
-      throw new ValidationError(`track kind "${trackKind}" chưa được hỗ trợ trong MCP validator`);
+      return validateImageClip(v);
     default:
       throw new ValidationError(`track kind không hỗ trợ: "${trackKind}"`);
   }
+}
+
+function validateStickerClip(v: unknown): StickerClip {
+  if (!isObj(v)) throw new ValidationError(`clip phải là object`);
+  const clip: StickerClip = {
+    kind: "sticker",
+    id: reqId(v["id"], "clip.id"),
+    src: reqSafeSrc(v["src"], "clip.src"),
+    start: reqNonNegNum(v["start"], "clip.start"),
+    duration: reqPosNum(v["duration"], "clip.duration"),
+  };
+  for (const k of ["x", "y"] as const) {
+    if (v[k] !== undefined) {
+      const n = reqFiniteNum(v[k], `clip.${k}`);
+      if (n < 0 || n > 1)
+        throw new ValidationError(`clip.${k} phải trong khoảng 0..1 (nhận được: ${n})`);
+      clip[k] = n;
+    }
+  }
+  if (v["scale"] !== undefined) {
+    const s = reqFiniteNum(v["scale"], "clip.scale");
+    if (s <= 0) throw new ValidationError(`clip.scale phải > 0 (nhận được: ${s})`);
+    clip.scale = s;
+  }
+  if (v["opacity"] !== undefined) {
+    const o = reqFiniteNum(v["opacity"], "clip.opacity");
+    if (o < 0 || o > 1) throw new ValidationError(`clip.opacity phải trong 0..1 (nhận được: ${o})`);
+    clip.opacity = o;
+  }
+  if (v["rotation"] !== undefined) {
+    clip.rotation = reqFiniteNum(v["rotation"], "clip.rotation");
+  }
+  return clip;
+}
+
+function validateImageClip(v: unknown): ImageClip {
+  if (!isObj(v)) throw new ValidationError(`clip phải là object`);
+  const clip: ImageClip = {
+    kind: "image",
+    id: reqId(v["id"], "clip.id"),
+    src: reqSafeSrc(v["src"], "clip.src"),
+    start: reqNonNegNum(v["start"], "clip.start"),
+    duration: reqPosNum(v["duration"], "clip.duration"),
+  };
+  const fit = optEnum(v["fit"], "clip.fit", ["contain", "cover"] as const);
+  if (fit !== undefined) clip.fit = fit;
+  return clip;
 }
 
 function validateTrack(v: unknown, seenIds: Set<string>): Track {
@@ -233,8 +439,8 @@ function validateTrack(v: unknown, seenIds: Set<string>): Track {
   const id = reqId(v["id"], "track.id");
   if (seenIds.has(id)) throw new ValidationError(`trùng track.id: "${id}"`);
   seenIds.add(id);
-  const kind = optEnum(v["kind"], "track.kind", ["video", "audio", "text"] as const);
-  if (!kind) throw new ValidationError(`track.kind bắt buộc: "video" | "audio" | "text"`);
+  const kind = optEnum(v["kind"], "track.kind", ["video", "audio", "text", "sticker", "image"] as const);
+  if (!kind) throw new ValidationError(`track.kind bắt buộc: "video" | "audio" | "text" | "sticker" | "image"`);
   if (!Array.isArray(v["clips"])) throw new ValidationError(`track.clips phải là mảng`);
   const clipIds = new Set<string>();
   const clips = (v["clips"] as unknown[]).map((c) => {
@@ -314,8 +520,8 @@ export interface AddClipInput {
 
 export function validateAddClipInput(v: unknown): AddClipInput {
   if (!isObj(v)) throw new ValidationError(`input phải là object`);
-  const track_kind = optEnum(v["track_kind"], "track_kind", ["video", "audio", "text"] as const);
-  if (!track_kind) throw new ValidationError(`track_kind bắt buộc: "video" | "audio" | "text"`);
+  const track_kind = optEnum(v["track_kind"], "track_kind", ["video", "audio", "text", "sticker", "image"] as const);
+  if (!track_kind) throw new ValidationError(`track_kind bắt buộc: "video" | "audio" | "text" | "sticker" | "image"`);
   const out: AddClipInput = {
     project_id: validateProjectId(v["project_id"]),
     track_kind,
@@ -352,7 +558,7 @@ export interface ApplyTransitionInput {
   project_id: string;
   clip_id: string;
   direction: "in" | "out";
-  type: "fade" | "none";
+  type: (typeof TRANSITION_TYPES)[number];
   duration: number;
 }
 
@@ -360,7 +566,7 @@ export function validateApplyTransitionInput(v: unknown): ApplyTransitionInput {
   if (!isObj(v)) throw new ValidationError(`input phải là object`);
   const direction = optEnum(v["direction"], "direction", ["in", "out"] as const);
   if (!direction) throw new ValidationError(`direction bắt buộc: "in" | "out"`);
-  const type = optEnum(v["type"], "type", ["fade", "none"] as const) ?? "fade";
+  const type = optEnum(v["type"], "type", TRANSITION_TYPES) ?? "fade";
   const duration = reqNonNegNum(v["duration"], "duration");
   if (type !== "none" && duration === 0)
     throw new ValidationError(`duration phải > 0 khi type="${type}"`);
