@@ -22,6 +22,11 @@ import {
   snapToFrameFloor,
 } from "@repo-1/video-spec";
 import {
+  CAPTION_TRACK_LABEL,
+  segmentsToTextClips,
+  type CaptionSegment,
+} from "./lib/captions";
+import {
   isSpeedable,
   maxTrimLeft,
   maxTrimRightDuration,
@@ -158,6 +163,12 @@ interface EditorState {
   addMediaToTrack: (mediaId: string, trackId: string, at: number) => void;
   addMediaAtPlayhead: (mediaId: string) => void;
   addTextClip: (trackId?: string) => void;
+  /**
+   * Chèn track "Phụ đề" mới từ segments auto-caption (R1-072).
+   * Mỗi segment → 1 text clip; toàn bộ là 1 bước undo duy nhất.
+   * Trả về id của track vừa tạo.
+   */
+  addCaptionTrack: (segments: CaptionSegment[]) => string;
 
   moveClip: (trackId: string, clipId: string, newStart: number) => void;
   /**
@@ -465,6 +476,29 @@ export const useStore = create<EditorState>()((set, get) => {
     } finally {
       get().endHistoryGroup();
     }
+  },
+
+  addCaptionTrack: (segments) => {
+    const clips = segmentsToTextClips(segments);
+    const id = nextTrackId("text");
+    const count = get().spec.tracks.filter((t) => t.kind === "text").length + 1;
+    const track: Track = {
+      id,
+      kind: "text",
+      label: `${CAPTION_TRACK_LABEL} ${count}`,
+      clips,
+    };
+    // Gộp tạo track + chèn toàn bộ câu thành 1 bước undo duy nhất.
+    get().beginHistoryGroup("Tạo phụ đề tự động");
+    try {
+      execCommand({
+        label: "Tạo phụ đề tự động",
+        apply: (s) => ({ ...s, tracks: [...s.tracks, track] }),
+      });
+    } finally {
+      get().endHistoryGroup();
+    }
+    return id;
   },
 
   moveClip: (trackId, clipId, newStart) => {
