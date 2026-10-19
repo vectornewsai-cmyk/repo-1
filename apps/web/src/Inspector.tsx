@@ -6,6 +6,9 @@
  */
 import { useStore } from "./store";
 import { fmtTime } from "./lib";
+import { TransitionPanel } from "./components/transitions";
+import { SpeedPanel } from "./components/speed";
+import { KeyframePanel } from "./components/keyframes";
 
 function NumField({
   label,
@@ -176,6 +179,8 @@ export function Inspector() {
             />
           </label>
           <p className="tips">💡 Mẹo: kéo chữ trực tiếp trên preview cũng được.</p>
+          <div className="panel-head" style={{ marginTop: 12 }}>🎞️ Keyframe animation</div>
+          <KeyframePanel />
         </>
       )}
 
@@ -189,33 +194,18 @@ export function Inspector() {
               onChange={(e) => patch({ opacity: Number(e.target.value) / 100 })}
             />
           </label>
-          <label className="field">
-            <span>Chuyển cảnh cuối clip</span>
-            <select
-              value={clip.transitionOut?.type ?? "none"}
-              onChange={(e) =>
-                patch({
-                  transitionOut: {
-                    type: e.target.value as "none" | "fade",
-                    duration: clip.transitionOut?.duration ?? 0.5,
-                  },
-                })
-              }
-            >
-              <option value="none">Không</option>
-              <option value="fade">Mờ dần (fade)</option>
-            </select>
-          </label>
-          {(clip.transitionOut?.type === "fade") && (
-            <NumField
-              label="Thời gian mờ (giây)"
-              value={clip.transitionOut.duration}
-              step={0.1}
-              onChange={(v) =>
-                patch({ transitionOut: { type: "fade", duration: Math.max(0.1, v) } })
-              }
-            />
-          )}
+          <div className="panel-head" style={{ marginTop: 12 }}>🔀 Chuyển cảnh</div>
+          <TransitionPanel
+            value={clip.transitionOut?.type ?? "none"}
+            duration={clip.transitionOut?.duration ?? 0.5}
+            onChange={(type, duration) =>
+              patch({ transitionOut: { type: type as never, duration } })
+            }
+          />
+          <div className="panel-head" style={{ marginTop: 12 }}>⏩ Tốc độ</div>
+          <SpeedPanel />
+          <div className="panel-head" style={{ marginTop: 12 }}>🎞️ Keyframe animation</div>
+          <KeyframePanel />
         </>
       )}
 
@@ -233,6 +223,8 @@ export function Inspector() {
             <NumField label="Mờ vào (s)" value={clip.fadeIn ?? 0} onChange={(v) => patch({ fadeIn: Math.max(0, v) })} />
             <NumField label="Mờ ra (s)" value={clip.fadeOut ?? 0} onChange={(v) => patch({ fadeOut: Math.max(0, v) })} />
           </div>
+          <div className="panel-head" style={{ marginTop: 12 }}>⏩ Tốc độ</div>
+          <SpeedPanel />
         </>
       )}
 
