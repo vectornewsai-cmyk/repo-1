@@ -16,6 +16,8 @@ const path = require("path");
 const { isSupportedTransition } = require("./transitions");
 const { SPEED_MIN, SPEED_MAX } = require("./speed");
 const { validateAnimations } = require("./keyframes");
+const { validateChroma } = require("./chroma");
+const { isTextFxAnimation } = require("./textfx");
 
 const SPEC_VERSION = "0.1.0";
 /** Sai số khi so sánh số thực (giây). */
@@ -261,6 +263,11 @@ function validateClip(track, clip, where, err, warn) {
         warn(where, "keyframes scale/rotation hiện chỉ lưu trong spec, render worker chưa áp dụng " +
           "(xem KEYFRAMES_LIMITS.md)");
     }
+    // Chroma key (xoá phông xanh)
+    if (clip.chromaKey !== undefined) {
+      for (const m of validateChroma(clip.chromaKey))
+        err(where, m);
+    }
   }
 
   if (track.kind === "audio") {
@@ -301,9 +308,8 @@ function validateClip(track, clip, where, err, warn) {
       if (st[key] !== undefined && (!isFiniteNumber(st[key]) || st[key] < 0 || st[key] > 1))
         err(where, `style.${key} là vị trí tương đối, phải trong khoảng 0..1, nhận được: ${st[key]}`);
     }
-    if (!["none", "fadeUp", "typewriter"].includes(st.animation))
-      err(where, `style.animation phải là "none" | "fadeUp" | "typewriter", ` +
-        `nhận được: ${JSON.stringify(st.animation)}`);
+    if (!isTextFxAnimation(st.animation) && st.animation !== "typewriter")
+      err(where, `style.animation không hỗ trợ: ${JSON.stringify(st.animation)}`);
     // Keyframe animations cho text (x/y/opacity được render; scale/rotation lưu nhưng bỏ qua)
     if (clip.animations !== undefined) {
       for (const m of validateAnimations(clip.animations, clip.duration))
