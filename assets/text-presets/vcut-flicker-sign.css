@@ -1,0 +1,28 @@
+/* Bảng hiệu nhấp nháy (bật/tắt như đèn neon hỏng).
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-flicker-sign" vào element chữ.
+ * Port sang drawtext: alpha nhấp nháy theo t — port được (alpha = f(t) theo keyframes). */
+
+@keyframes vcut-flicker-sign {
+  0%, 100% { opacity: 1; }
+  41% { opacity: 1; }
+  42% { opacity: 0.2; }
+  43% { opacity: 1; }
+  44% { opacity: 0.4; }
+  45% { opacity: 1; }
+  78% { opacity: 1; }
+  79% { opacity: 0.3; }
+  80% { opacity: 1; }
+}
+
+.text-preset.vcut-flicker-sign {
+  font-weight: 800;
+  color: #fef08a;
+  text-shadow:
+    0 0 8px #facc15,
+    0 0 24px #eab308,
+    0 0 64px #ca8a04;
+  animation: vcut-flicker-sign 3.5s linear infinite;
+}

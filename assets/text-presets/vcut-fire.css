@@ -1,0 +1,15 @@
+/* Chữ lửa: gradient đỏ→cam→vàng rực cháy.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-fire" vào element chữ.
+ * Port sang drawtext: KHÔNG port được gradient fill (drawtext chỉ 1 màu). Dùng cho preview web; render dùng màu cam đặc. */
+
+.text-preset.vcut-fire {
+  font-weight: 900;
+  background-image: linear-gradient(180deg, #fef08a 0%, #fbbf24 30%, #f97316 60%, #dc2626 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 8px rgba(249, 115, 22, 0.55));
+}

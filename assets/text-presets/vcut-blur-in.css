@@ -1,0 +1,24 @@
+/* Chữ hiện dần từ mờ nhòe thành sắc nét.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-blur-in" vào element chữ.
+ * Port sang drawtext: mô phỏng bằng fade alpha 0→1 (bỏ blur — drawtext không có blur). */
+
+@keyframes vcut-blur-in {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+    -webkit-filter: blur(12px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    -webkit-filter: blur(0);
+  }
+}
+
+.text-preset.vcut-blur-in {
+  font-weight: 700;
+  animation: vcut-blur-in 0.9s ease-out both;
+}

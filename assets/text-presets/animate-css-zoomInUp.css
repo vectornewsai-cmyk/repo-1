@@ -1,0 +1,55 @@
+/* Chữ phóng to dần đồng thời bay lên từ dưới.
+ * Nguồn: animate.css v3.7.2 — keyframes "zoomInUp"
+ * Tác giả: Daniel Eden — https://github.com/animate-css/animate.css
+ * Giấy phép: MIT (Copyright (c) 2019 Daniel Eden) — xem LICENSE tại
+ *   https://github.com/animate-css/animate.css/blob/3.7.2/LICENSE
+ * Ngày lấy: 2026-10-19
+ * Cách dùng: gắn class "text-preset" vào element chữ (mặc định chạy 1s,
+ *   giữ trạng thái cuối bằng animation-fill-mode: both).
+ * Port sang drawtext: mô phỏng bằng fade + di chuyển y (drawtext không animate fontsize theo t). */
+
+@-webkit-keyframes zoomInUp {
+  from {
+    opacity: 0;
+    -webkit-transform: scale3d(0.1, 0.1, 0.1) translate3d(0, 1000px, 0);
+    transform: scale3d(0.1, 0.1, 0.1) translate3d(0, 1000px, 0);
+    -webkit-animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  }
+
+  60% {
+    opacity: 1;
+    -webkit-transform: scale3d(0.475, 0.475, 0.475) translate3d(0, -60px, 0);
+    transform: scale3d(0.475, 0.475, 0.475) translate3d(0, -60px, 0);
+    -webkit-animation-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1);
+    animation-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1);
+  }
+}
+
+@keyframes zoomInUp {
+  from {
+    opacity: 0;
+    -webkit-transform: scale3d(0.1, 0.1, 0.1) translate3d(0, 1000px, 0);
+    transform: scale3d(0.1, 0.1, 0.1) translate3d(0, 1000px, 0);
+    -webkit-animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  }
+
+  60% {
+    opacity: 1;
+    -webkit-transform: scale3d(0.475, 0.475, 0.475) translate3d(0, -60px, 0);
+    transform: scale3d(0.475, 0.475, 0.475) translate3d(0, -60px, 0);
+    -webkit-animation-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1);
+    animation-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1);
+  }
+}
+
+.text-preset {
+  -webkit-animation-name: zoomInUp;
+  animation-name: zoomInUp;
+  -webkit-animation-duration: 1s;
+  animation-duration: 1s;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+
