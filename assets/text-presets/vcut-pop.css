@@ -1,0 +1,27 @@
+/* Chữ bật ra với độ nảy (overshoot).
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-pop" vào element chữ.
+ * Port sang drawtext: mô phỏng bằng fontsize nội suy theo t (giống popIn đã làm trong render). */
+
+@keyframes vcut-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  75% { transform: scale(0.96); }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.text-preset.vcut-pop {
+  font-weight: 800;
+  animation: vcut-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}

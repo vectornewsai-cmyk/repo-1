@@ -1,0 +1,21 @@
+/* Chữ cầu vồng chạy màu liên tục.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-rainbow" vào element chữ.
+ * Port sang drawtext: KHÔNG port được (cần đổi màu theo t). Chỉ dùng cho preview web. */
+
+@keyframes vcut-rainbow-slide {
+  from { background-position: 0% 0; }
+  to { background-position: 200% 0; }
+}
+
+.text-preset.vcut-rainbow {
+  font-weight: 900;
+  background-image: linear-gradient(90deg, #f43f5e, #f97316, #facc15, #22c55e, #3b82f6, #a855f7, #f43f5e);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: vcut-rainbow-slide 4s linear infinite;
+}

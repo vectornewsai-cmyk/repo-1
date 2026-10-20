@@ -1,0 +1,17 @@
+/* Chữ 3D đổ bóng nhiều lớp.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-shadow-3d" vào element chữ.
+ * Port sang drawtext: mô phỏng bằng shadowx/shadowy + shadowcolor (1 lớp). Nhiều lớp thì vẽ text chồng 4 lần lệch 1px. */
+
+.text-preset.vcut-shadow-3d {
+  font-weight: 900;
+  color: #f8fafc;
+  text-shadow:
+    1px 1px 0 #cbd5e1,
+    2px 2px 0 #94a3b8,
+    3px 3px 0 #64748b,
+    4px 4px 0 #475569,
+    6px 6px 12px rgba(0, 0, 0, 0.5);
+}
