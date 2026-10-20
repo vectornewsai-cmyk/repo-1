@@ -1,0 +1,24 @@
+/* Chữ giãn cách ký tự từ khít thành rộng (kiểu cinematic).
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-tracking-expand" vào element chữ.
+ * Port sang drawtext: KHÔNG port được (drawtext không chỉnh letter-spacing). Chỉ dùng cho preview web. */
+
+@keyframes vcut-tracking-expand {
+  from {
+    opacity: 0;
+    letter-spacing: -0.1em;
+  }
+  60% { opacity: 1; }
+  to {
+    opacity: 1;
+    letter-spacing: 0.35em;
+  }
+}
+
+.text-preset.vcut-tracking-expand {
+  font-weight: 600;
+  text-transform: uppercase;
+  animation: vcut-tracking-expand 1.2s ease-out both;
+}

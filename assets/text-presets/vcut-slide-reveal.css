@@ -1,0 +1,16 @@
+/* Chữ lộ dần từ trái sang phải (mặt nạ trượt).
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-19
+ * Cách dùng: gắn class "text-preset vcut-slide-reveal" vào element chữ.
+ * Port sang drawtext: KHÓ — cần crop text theo t. Chỉ dùng cho preview web. */
+
+@keyframes vcut-slide-reveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+.text-preset.vcut-slide-reveal {
+  font-weight: 800;
+  animation: vcut-slide-reveal 1s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
