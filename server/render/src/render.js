@@ -38,7 +38,9 @@ const {
 // Phase 3 modules: transitions (13 hiệu ứng xfade), speed/reverse, keyframes.
 const { buildXfadeFilter } = require("./transitions");
 const { buildSpeedFilter } = require("./speed");
-const { buildTextExprs, buildOverlayExprs } = require("./keyframes");
+const {
+  buildTextExprs, buildOverlayExprs, buildKeyframeTransform, hasScaleRotation,
+} = require("./keyframes");
 // Phase 3b: chroma key, text animations.
 const { buildChromaFilter } = require("./chroma");
 const { buildTextAnimExpr, isTextFxAnimation } = require("./textfx");
@@ -52,6 +54,8 @@ const { buildAudioEffectsFilters } = require("./audioroute");
 const { buildImageChain } = require("./image");
 // R1-011: opacity/alpha cho video clip.
 const { buildOpacityFilter } = require("./opacity");
+// Batch J plugin wiring: nối PluginRegistry vào pipeline (chỉ khi spec có `plugins`).
+const { createPluginHost } = require("./plugins");
 
 // ---------------------------------------------------------------------------
 // Tiện ích
@@ -271,6 +275,19 @@ function buildFilterGraph(spec, ctx) {
   for (const track of spec.tracks.filter((t) => t.kind === "video" && !t.hidden)) {
     const clips = [...track.clips].sort((a, b) => a.start - b.start);
 
+    // Clip dính transition (kề trước hoặc kề sau trong một cặp xfade) sẽ bị gộp
+    // thành unit đã merge ở bước 2 — keyframes scale/rotation KHÔNG áp dụng cho
+    // các clip đó (validate.js đã cảnh báo). Cần biết trước từ bước 1 vì quyết
+    // định giữ kênh alpha (phục vụ scale/rotate) nằm ở chuỗi chuẩn hoá clip.
+    const mergeInvolved = new Set();
+    for (let i = 0; i + 1 < clips.length; i++) {
+      const tr = transMap.get(`${track.id}:${clips[i].id}`);
+      if (tr && tr.to === clips[i + 1].id && tr.duration > EPS) {
+        mergeInvolved.add(clips[i].id);
+        mergeInvolved.add(clips[i + 1].id);
+      }
+    }
+
     // Bước 1: chuẩn hoá từng clip — cắt đúng [in, in+duration*speed), speed/reverse,
     // scale/pad về đúng WxH, fps hằng số (xfade bắt buộc CFR), format yuv420p.
     const segs = clips.map((clip) => {
@@ -290,6 +307,17 @@ function buildFilterGraph(spec, ctx) {
       const lutChain = clip.filter?.lut ? `,${buildLutFilter(clip.filter.lut, ctx.assetsDir)}` : "";
       const fxChain = buildEffectsChain(clip.effects);
       const effectsChain = fxChain ? `,${fxChain}` : "";
+      // Plugin (Batch J wiring): filters từ hook onClipRender của các plugin
+      // trong spec.plugins. Vị trí: SAU effects — tức sau toàn bộ pipeline
+      // pixel của chính clip (speed → chroma → scale/pad → color → LUT →
+      // effects), để plugin thấy hình cuối của clip; nhưng TRƯỚC xfade và
+      // opacity vì hai thứ đó thuộc tầng timeline (gộp các clip / đặt unit
+      // lên nền), không thuộc tầng clip. Tại điểm này frame đã scale/pad về
+      // đúng WxH nên biểu thức theo w/h của plugin (vd drawtext watermark ở
+      // góc dưới-phải) khớp khung hình output. ctx.pluginFiltersFor === null
+      // khi spec không khai plugin → chain giữ nguyên như cũ.
+      const pluginFilters = ctx.pluginFiltersFor ? ctx.pluginFiltersFor(clip) : [];
+      const pluginChain = pluginFilters.length ? `,${pluginFilters.join(",")}` : "";
       // P0-05/R1-012: khi có chroma key, GIỮ alpha xuyên suốt chain.
       // - buildChromaFilter đã output yuva420p (có alpha từ chromakey)
       // - pad phải dùng màu trong suốt (black@0), không phải black đục
@@ -297,9 +325,13 @@ function buildFilterGraph(spec, ctx) {
       // - overlay filter tự composite bằng alpha channel
       // R1-084: video nguồn đã có alpha (VD: output của bgremove.py — MOV PNG rgba)
       // được tự động phát hiện qua probe pix_fmt, xử lý giống chromaKey.
+      // Keyframes scale/rotation: cũng cần giữ alpha — khi element thu nhỏ/xoay,
+      // vùng letterbox và góc xoay phải TRONG SUỐT để lộ nội dung bên dưới thay
+      // vì vẽ đè hình chữ nhật đen (transform áp ở bước đặt timeline bên dưới).
       const hasChroma = !!clip.chromaKey;
       const hasSrcAlpha = hasAlphaVideo(absOf(clip.src));
-      const keepAlpha = hasChroma || hasSrcAlpha;
+      const keepAlpha = hasChroma || hasSrcAlpha ||
+        (hasScaleRotation(clip.animations) && !mergeInvolved.has(clip.id));
       const padColor = keepAlpha ? "black@0" : "black";
       const outFormat = keepAlpha ? "yuva420p" : "yuv420p";
       fc.push(
@@ -309,7 +341,7 @@ function buildFilterGraph(spec, ctx) {
         // Giữ tỉ lệ gốc, letterbox bằng nền đen (hoặc trong suốt nếu chroma) cho vừa khít khung hình output.
         `scale=${W}:${H}:force_original_aspect_ratio=decrease,` +
         `pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=${padColor},` +
-        `setsar=1,fps=${fps},format=${outFormat}${colorChain}${lutChain}${effectsChain}` +
+        `setsar=1,fps=${fps},format=${outFormat}${colorChain}${lutChain}${effectsChain}${pluginChain}` +
         `[${v}]`
       );
       return {
@@ -373,9 +405,23 @@ function buildFilterGraph(spec, ctx) {
     // opacity ≈ 1 → không thêm filter (giữ nguyên pipeline cũ, không tốn hiệu năng).
     const opFilter = buildOpacityFilter(u.clip.opacity);
     const opChain = opFilter ? `${opFilter},` : "";
-    fc.push(`${u.label}${opChain}setpts=PTS+${num(u.start)}/TB[${p}]`);
+    // Keyframes scale/rotation (chỉ unit đơn, không qua xfade): chuỗi scale
+    // eval=frame + rotate theo biểu thức nội suy, chèn SAU opacity và TRƯỚC
+    // setpts lên timeline — tại điểm này timestamp của frame là thời gian cục
+    // bộ của clip nên biểu thức dùng t trực tiếp (xem buildKeyframeTransform).
+    const srChain = !u.merged && hasScaleRotation(u.clip.animations)
+      ? `${buildKeyframeTransform(u.clip.animations)},`
+      : "";
+    fc.push(`${u.label}${opChain}${srChain}setpts=PTS+${num(u.start)}/TB[${p}]`);
     let ox = "0", oy = "0";
-    if (!u.merged && u.clip.animations && (u.clip.animations.x || u.clip.animations.y)) {
+    // Khi có scale/rotation, unit không còn đúng kích thước khung hình nữa:
+    // overlay_w/overlay_h thay đổi theo từng frame và biểu thức overlay (kể cả
+    // mặc định căn giữa của buildOverlayExprs) mới có tác dụng thật — đây cũng
+    // là lúc keyframes x/y bắt đầu nhìn thấy được (trước đây unit luôn full
+    // khung nên (main_w-overlay_w) = 0). Xem KEYFRAMES_LIMITS.md.
+    if (!u.merged && u.clip.animations &&
+        (u.clip.animations.x || u.clip.animations.y ||
+         u.clip.animations.scale || u.clip.animations.rotation)) {
       const oe = buildOverlayExprs(u.clip.animations, u.start);
       ox = oe.x; oy = oe.y;
     }
@@ -612,6 +658,28 @@ function main() {
     process.exit(1);
   }
 
+  // 2b. Plugin host (Batch J wiring) — chỉ khi spec khai `plugins`.
+  // Nạp plugin thất bại → fail fast (không lặng lẽ render thiếu thứ user
+  // đã khai). onProjectValidate của plugin: errors chặn render như lỗi
+  // validate thường, warnings in ra stderr (vào job log của bridge).
+  let pluginHost = null;
+  if (Array.isArray(spec.plugins) && spec.plugins.length > 0) {
+    try {
+      pluginHost = createPluginHost(spec, path.dirname(path.resolve(args.spec)));
+    } catch (e) {
+      console.error(`❌ Plugin: ${e.message}`);
+      process.exit(1);
+    }
+    log(`   plugin đã nạp: ${pluginHost.loaded.map((p) => p.name).join(", ")}`);
+    const pv = pluginHost.validateProject(spec);
+    for (const w of pv.warnings) console.error(`⚠️  ${w}`);
+    if (pv.errors.length > 0) {
+      console.error(`\n❌ Plugin chặn render (${pv.errors.length} lỗi):`);
+      pv.errors.forEach((e, i) => console.error(`  ${i + 1}. ${e}`));
+      process.exit(1);
+    }
+  }
+
   const meta = spec.meta;
   const D = projectDuration(spec);
   const mediaDir = args.mediaDir
@@ -664,7 +732,18 @@ function main() {
     mediaIndex, absOf, transitions: v.transitions, fontFiles,
     assetsDir: path.join(__dirname, "..", "..", "..", "assets"),
     mediaProbes: mv.probes, // R1-015 fix: check audio stream trước khi inherit
+    // Plugin wiring: null khi spec không khai plugin (hành vi cũ 100%).
+    pluginFiltersFor: pluginHost
+      ? (clip) => pluginHost.filtersForClip(clip, { width: meta.width, height: meta.height, fps: meta.fps })
+      : null,
   });
+
+  // Plugin: lỗi hook onClipRender gom được khi dựng graph — in ra stderr
+  // để bridge gom vào job log (hook lỗi KHÔNG chặn render, theo thiết kế registry).
+  if (pluginHost) {
+    for (const [name, msg] of Object.entries(pluginHost.hookErrors))
+      console.error(`⚠️  plugin "${name}": ${msg}`);
+  }
 
   const outAbs = path.resolve(args.out);
   if (fs.existsSync(outAbs) && !args.overwrite) {
@@ -700,10 +779,37 @@ function main() {
     `${orderedMedia.length} file media, ${v.transitions.length} transition, ` +
     `crf=${args.crf} preset=${args.x264Preset} audio=${args.audioBitrate}`);
   const t0 = Date.now();
+  // Plugin: onExportStart (quan sát, ngay trước khi ffmpeg chạy; dry-run đã
+  // return ở trên nên hook không cháy khi không export thật). Lỗi hook chỉ
+  // log ra stderr, không chặn render.
+  const pluginExportCtx = {
+    projectName: meta.name,
+    preset: { id: "cli", width: meta.width, height: meta.height },
+    outputPath: outAbs,
+  };
+  if (pluginHost) {
+    const rep = pluginHost.exportStart(pluginExportCtx);
+    for (const [name, msg] of Object.entries(rep.hookErrors))
+      console.error(`⚠️  plugin "${name}" (onExportStart): ${msg}`);
+  }
   const r = spawnSync(args.ffmpeg, ffArgs, {
     stdio: ["ignore", "ignore", args.quiet ? "ignore" : "inherit"],
   });
   const dt = ((Date.now() - t0) / 1000).toFixed(1);
+
+  // Plugin: onExportFinish — chạy cả khi render thất bại (success=false).
+  // Warnings plugin trả về in ra stderr để bridge gom vào kết quả job
+  // (job._stderrTail); lỗi hook cũng vậy, không đổi mã thoát của render.
+  if (pluginHost) {
+    const rep = pluginHost.exportFinish({
+      ...pluginExportCtx,
+      success: !r.error && r.status === 0,
+      durationMs: Date.now() - t0,
+    });
+    for (const w of rep.warnings) console.error(`⚠️  ${w}`);
+    for (const [name, msg] of Object.entries(rep.hookErrors))
+      console.error(`⚠️  plugin "${name}" (onExportFinish): ${msg}`);
+  }
 
   // Dọn file ASS tạm (giữ lại khi lỗi để debug)
   if (assFile && r.status === 0) {
