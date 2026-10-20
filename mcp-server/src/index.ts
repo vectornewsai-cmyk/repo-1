@@ -40,6 +40,11 @@ import {
   resolveOutPath,
   saveProject,
 } from "./store.js";
+// R1-090: tools mở rộng (Batch I)
+import { registerClipTools } from "./tools/clips.js";
+import { registerModifyTools } from "./tools/modify.js";
+import { registerAiTools } from "./tools/ai.js";
+import { registerExportTools } from "./tools/export.js";
 
 // ---------------------------------------------------------------------------
 // Zod schemas (client thấy được — Claude Code/Codex đọc schema này để gọi tool)
@@ -465,6 +470,14 @@ server.tool(
     }
   }
 );
+
+// ---------------------------------------------------------------------------
+// R1-090: đăng ký tools mở rộng (Batch I)
+// ---------------------------------------------------------------------------
+registerClipTools(server);
+registerModifyTools(server);
+registerAiTools(server);
+registerExportTools(server);
 
 // ---------------------------------------------------------------------------
 // Khởi động (stdio)

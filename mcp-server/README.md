@@ -40,18 +40,23 @@ Thêm vào file config MCP của Claude Code (`~/.claude.json` hoặc project `.
 
 Codex / các client MCP khác: trỏ tới cùng file `dist/mcp-server/src/index.js` với stdio transport.
 
-## Danh sách tools
+## Danh sách tools (29 tools — xem chi tiết trong [TOOLS.md](./TOOLS.md))
 
-| Tool | Mô tả |
-|------|-------|
-| `create_project(name, width, height, fps, media_dir?)` | Tạo project mới, trả về `project_id`. Project lưu tại `mcp-server/projects/<id>.json` |
-| `add_clip(project_id, track_kind, clip, track_id?, track_label?)` | Thêm clip video/audio/text vào track (tự tạo track nếu chưa có). `clip.kind` phải khớp `track_kind` |
-| `add_text(project_id, text, start, duration, style?, track_id?)` | Shortcut thêm chữ (mặc định: trắng, cỡ 64, giữa khung, animation fadeUp) |
-| `apply_transition(project_id, clip_id, direction, type, duration)` | Gắn transition (`fade`) vào đầu (`in`) / cuối (`out`) clip video |
-| `get_project(project_id)` | Lấy video-spec JSON hiện tại + tổng thời lượng |
-| `render_video(project_id, out_path, media_dir?)` | Validate spec → render MP4 thật bằng FFmpeg → trả về đường dẫn + thông tin ffprobe. `out_path` là đường dẫn tương đối trong `mcp-server/renders/`, bắt buộc `.mp4` |
+**Cơ bản (6):** `create_project`, `add_clip`, `add_text`, `apply_transition`, `get_project`, `render_video`
 
-Mọi tool validate input chặt chẽ theo video-spec v0.1.0 — input sai trả lỗi rõ ràng
+**Thêm clip (3):** `add_audio`, `add_sticker`, `add_image`
+
+**Chỉnh sửa (6):** `apply_filter`, `apply_effect`, `apply_text_animation`, `set_speed`, `set_volume`, `add_keyframe`
+
+**Cắt/ghép (3):** `trim_clip`, `split_clip`, `delete_clip`
+
+**Undo/Redo (2):** `undo`, `redo`
+
+**AI local (7):** `auto_caption`, `translate_captions`, `text_to_speech`, `remove_background`, `auto_reframe`, `remove_silence`, `detect_scenes`
+
+**Export (2):** `export_video` (với preset 720p/1080p/4K/TikTok/YouTube/Instagram), `list_export_presets`
+
+Mọi tool validate input chặt chẽ theo video-spec — input sai trả lỗi rõ ràng
 (`isError: true`) kèm hướng dẫn sửa, không bao giờ ghi spec hỏng.
 
 ## Cấu trúc
