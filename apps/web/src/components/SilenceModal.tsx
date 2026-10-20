@@ -198,10 +198,16 @@ export function SilenceModal({ onClose }: Props) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal-card"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Cắt khoảng lặng"
+      >
         <div className="modal-head">
           <h3>🔇 Cắt khoảng lặng</h3>
-          <button className="modal-x" onClick={onClose} title="Đóng">✕</button>
+          <button className="modal-x" onClick={onClose} title="Đóng" aria-label="Đóng">✕</button>
         </div>
 
         {step === "config" && (

@@ -72,10 +72,27 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
     };
   }, []);
 
+  // R1-107: Esc đóng modal
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT")) return;
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   if (!clip || clip.kind !== "video") {
     return (
       <div className="modal-backdrop" onClick={onClose}>
-        <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-card"
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Tách cảnh"
+        >
           <div className="panel-head">Tách cảnh</div>
           <p>Không tìm thấy clip video đã chọn.</p>
           <button onClick={onClose}>Đóng</button>
@@ -188,7 +205,13 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card scene-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal-card scene-modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Tách cảnh tự động"
+      >
         <div className="panel-head">Tách cảnh tự động</div>
 
         {step === "config" && (
