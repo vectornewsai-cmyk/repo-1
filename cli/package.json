@@ -1,0 +1,1 @@
+{"bin":{"vcut":"dist/cli/src/index.js"},"description":"Command-line interface cho VCut Studio — AI agent và power user dùng editor từ terminal","devDependencies":{"@types/node":"^26.6.5","typescript":"^5.5.0"},"engines":{"node":">=20"},"license":"MIT","name":"@repo-1/cli","scripts":{"build":"tsc -p tsconfig.json","test":"bash test-cli.sh"},"type":"module","version":"0.1.0"}
