@@ -1,0 +1,1 @@
+{"compilerOptions":{"declaration":false,"module":"NodeNext","moduleResolution":"NodeNext","sourceMap":false,"strict":true,"target":"ES2022","typeRoots":["../../node_modules/@types"]},"include":["src/**/*.ts"]}
