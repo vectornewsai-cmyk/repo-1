@@ -1,0 +1,167 @@
+{
+  "template": {
+    "id": "youtube-outro",
+    "name": "Outro YouTube",
+    "description": "Kết thúc video: cảm ơn + kêu gọi đăng ký, kèm huy hiệu.",
+    "category": "outro",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "youtube",
+      "outro",
+      "subscribe"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 8,
+    "placeholders": [
+      {
+        "id": "footage",
+        "kind": "video",
+        "label": "Video nền",
+        "default": "outro-bg.mp4"
+      },
+      {
+        "id": "thanks",
+        "kind": "text",
+        "label": "Lời cảm ơn",
+        "default": "Cảm ơn bạn đã xem!"
+      },
+      {
+        "id": "channel",
+        "kind": "text",
+        "label": "Tên kênh",
+        "default": "KÊNH CỦA BẠN"
+      },
+      {
+        "id": "cta",
+        "kind": "text",
+        "label": "Lời kêu gọi",
+        "default": "Nhớ đăng ký để không bỏ lỡ video mới nhé!"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Outro YouTube",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Nền",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{footage}}",
+            "start": 0,
+            "duration": 8,
+            "in": 0,
+            "out": 8,
+            "filter": {
+              "lut": "vcut-warm-bloom"
+            },
+            "transitionIn": {
+              "type": "dissolve",
+              "duration": 0.6
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Cảm ơn",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{thanks}}",
+            "start": 0.5,
+            "duration": 7.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 72,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.32,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Tên kênh",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{channel}}",
+            "start": 1.5,
+            "duration": 6.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 54,
+              "color": "#22D3EE",
+              "x": 0.5,
+              "y": 0.5,
+              "animation": "slideInRight",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t3",
+        "kind": "text",
+        "label": "Kêu gọi",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t3",
+            "text": "{{cta}}",
+            "start": 2.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 40,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.66,
+              "animation": "typewriter",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "s1",
+        "kind": "sticker",
+        "label": "Huy hiệu",
+        "clips": [
+          {
+            "kind": "sticker",
+            "id": "s1",
+            "src": "badge.png",
+            "start": 2.5,
+            "duration": 5.0,
+            "x": 0.85,
+            "y": 0.2,
+            "scale": 0.12
+          }
+        ]
+      }
+    ]
+  }
+}

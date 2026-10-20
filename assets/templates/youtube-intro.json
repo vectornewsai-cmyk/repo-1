@@ -1,0 +1,120 @@
+{
+  "template": {
+    "id": "youtube-intro",
+    "name": "Intro YouTube",
+    "description": "Mở đầu kênh: tiêu đề kênh bay lên trên nền video điện ảnh.",
+    "category": "intro",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "youtube",
+      "intro",
+      "kênh"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 5,
+    "placeholders": [
+      {
+        "id": "footage",
+        "kind": "video",
+        "label": "Video nền",
+        "default": "intro-bg.mp4"
+      },
+      {
+        "id": "title",
+        "kind": "text",
+        "label": "Tên kênh / tiêu đề",
+        "default": "KÊNH CỦA BẠN"
+      },
+      {
+        "id": "subtitle",
+        "kind": "text",
+        "label": "Dòng phụ (slogan)",
+        "default": "Video mới mỗi tuần"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Intro YouTube",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Nền",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{footage}}",
+            "start": 0,
+            "duration": 5,
+            "in": 0,
+            "out": 5,
+            "filter": {
+              "lut": "vcut-cinematic"
+            },
+            "transitionIn": {
+              "type": "fade",
+              "duration": 0.5
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tiêu đề",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{title}}",
+            "start": 1.0,
+            "duration": 3.2,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 96,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.42,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Dòng phụ",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{subtitle}}",
+            "start": 1.6,
+            "duration": 2.6,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 44,
+              "color": "#E9D5FF",
+              "x": 0.5,
+              "y": 0.58,
+              "animation": "slideInLeft",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
