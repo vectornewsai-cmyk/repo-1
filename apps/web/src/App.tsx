@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useStore } from "./store";
 import { TopBar } from "./TopBar";
+import { t, useLang } from "./i18n";
 import { MediaBin } from "./MediaBin";
 import { Inspector } from "./Inspector";
 import { Timeline } from "./Timeline";
@@ -9,15 +10,18 @@ import { PreviewCanvas } from "./preview";
 import { RelinkPanel } from "./components/RelinkPanel";
 import { CaptionModal } from "./components/CaptionModal";
 import { SilenceModal } from "./components/SilenceModal";
+import { TemplatePicker } from "./components/TemplatePicker";
 import { autosave, loadAutosave, markSaved } from "./lib/projectRepo";
 import { saveCurrentProject } from "./components/project/ProjectMenu";
 
 export default function App() {
+  useLang(); // re-render khi đổi ngôn ngữ (splash + modal)
   const ready = useStore((s) => s.ready);
   const missingAssets = useStore((s) => s.missingAssets);
   const [exportOpen, setExportOpen] = useState(false);
   const [captionOpen, setCaptionOpen] = useState(false);
   const [silenceOpen, setSilenceOpen] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
 
   // Khởi tạo: ưu tiên khôi phục autosave; chỉ tải project mẫu khi chưa có autosave.
   // (Không tự ghi đè project đang làm bằng sample khi reload.)
@@ -53,6 +57,14 @@ export default function App() {
           el.tagName === "SELECT" ||
           el.isContentEditable)
       ) {
+        return;
+      }
+      // R1-107: Esc đóng modal đang mở (setter idempotent — gọi cả 3 an toàn
+      // vì hook deps [] giữ closure; chỉ 1 modal mở tại 1 thời điểm)
+      if (e.key === "Escape") {
+        setExportOpen(false);
+        setCaptionOpen(false);
+        setSilenceOpen(false);
         return;
       }
       // Ctrl/Cmd+S: lưu project (chặn hành vi lưu trang của trình duyệt)
@@ -101,7 +113,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <TopBar onExport={() => setExportOpen(true)} onCaption={() => setCaptionOpen(true)} onSilence={() => setSilenceOpen(true)} />
+      <TopBar onExport={() => setExportOpen(true)} onCaption={() => setCaptionOpen(true)} onSilence={() => setSilenceOpen(true)} onTemplate={() => setTemplateOpen(true)} />
       <div className="editor-main">
         <MediaBin />
         <div className="preview-col">
@@ -113,6 +125,7 @@ export default function App() {
       {exportOpen && <ExportPanel onClose={() => setExportOpen(false)} />}
       {captionOpen && <CaptionModal onClose={() => setCaptionOpen(false)} />}
       {silenceOpen && <SilenceModal onClose={() => setSilenceOpen(false)} />}
+      {templateOpen && <TemplatePicker onClose={() => setTemplateOpen(false)} />}
       {missingAssets && missingAssets.length > 0 && (
         <RelinkPanel
           missing={missingAssets}
@@ -123,9 +136,9 @@ export default function App() {
       {!ready && (
         <div className="splash">
           <div className="splash-card">
-            <div className="splash-logo">◧</div>
-            <div className="splash-title">VCut Studio</div>
-            <div className="splash-sub">Đang mở dự án…</div>
+            <div className="splash-logo" aria-hidden="true">◧</div>
+            <div className="splash-title">{t("app.name")}</div>
+            <div className="splash-sub">{t("app.loading")}</div>
           </div>
         </div>
       )}
