@@ -15,7 +15,7 @@ const fs = require("fs");
 const path = require("path");
 const { isSupportedTransition } = require("./transitions");
 const { SPEED_MIN, SPEED_MAX } = require("./speed");
-const { validateAnimations } = require("./keyframes");
+const { validateAnimations, SCALE_MIN, SCALE_MAX } = require("./keyframes");
 const { validateChroma } = require("./chroma");
 const { isTextFxAnimation } = require("./textfx");
 const { validateVideoFilter } = require("./lut");
@@ -96,6 +96,49 @@ function validateSpec(spec) {
       err("meta.height", `phải là số chẵn (yêu cầu của H.264), nhận được: ${meta.height}`);
     if (!isFiniteNumber(meta.fps) || meta.fps <= 0)
       err("meta.fps", `phải là số dương, nhận được: ${meta.fps}`);
+  }
+
+  // ---- plugins (tùy chọn — Batch J plugin wiring) ----
+  // Mirror của PluginRef trong packages/video-spec/src/index.ts.
+  // Chỉ kiểm tra CẤU TRÚC ở đây; việc nạp plugin (đọc file, sandbox, manifest)
+  // do render worker làm sau khi validate xong (src/plugins.js). Không có
+  // trường `plugins` = hành vi cũ, không kiểm tra gì thêm.
+  if (spec.plugins !== undefined) {
+    if (!Array.isArray(spec.plugins)) {
+      err("plugins", "phải là một mảng các { id | path, config? }");
+    } else {
+      const seenPluginKeys = new Set();
+      spec.plugins.forEach((p, pi) => {
+        const pw = `plugins[${pi}]`;
+        if (typeof p !== "object" || p === null || Array.isArray(p)) {
+          err(pw, "phải là object { id | path, config? }"); return;
+        }
+        const hasId = typeof p.id === "string" && p.id.length > 0;
+        const hasPath = typeof p.path === "string" && p.path.length > 0;
+        if (p.id !== undefined && !hasId)
+          err(`${pw}.id`, `phải là chuỗi khác rỗng, nhận được: ${JSON.stringify(p.id)}`);
+        if (p.path !== undefined && !hasPath)
+          err(`${pw}.path`, `phải là chuỗi khác rỗng, nhận được: ${JSON.stringify(p.path)}`);
+        if (hasId && hasPath)
+          err(pw, "chỉ khai đúng MỘT trong hai: id hoặc path");
+        if (!hasId && !hasPath)
+          err(pw, "thiếu id (plugin đóng gói sẵn) hoặc path (file plugin.js)");
+        // id được join vào plugins/<id>/plugin.js nên cấm ký tự đường dẫn.
+        if (hasId && !/^[a-z0-9][a-z0-9-]*$/.test(p.id))
+          err(`${pw}.id`, `id chỉ gồm chữ thường, số và dấu "-" (nhận: ${JSON.stringify(p.id)})`);
+        if (hasPath && !p.path.endsWith(".js"))
+          err(`${pw}.path`, `path phải trỏ tới file .js (nhận: ${JSON.stringify(p.path)})`);
+        if (p.config !== undefined &&
+            (typeof p.config !== "object" || p.config === null || Array.isArray(p.config)))
+          err(`${pw}.config`, "config phải là object JSON thuần");
+        const key = hasId ? `id:${p.id}` : hasPath ? `path:${p.path}` : null;
+        if (key) {
+          if (seenPluginKeys.has(key))
+            warn(pw, `plugin "${key.slice(key.indexOf(":") + 1)}" khai báo trùng — registry sẽ từ chối nạp bản thứ hai`);
+          seenPluginKeys.add(key);
+        }
+      });
+    }
   }
 
   // ---- tracks ----
@@ -216,6 +259,22 @@ function validateSpec(spec) {
     }
   }
 
+  // Keyframes scale/rotation kết hợp transition: unit bị gộp qua xfade trước khi
+  // đặt lên timeline nên render BỎ QUA scale/rotation của cả 2 clip trong cặp
+  // (giống keyframes x/y cho unit đã merge). Cảnh báo rõ thay vì render sai lặng lẽ.
+  for (const tr of transitions) {
+    const track = spec.tracks.find((t) => t.id === tr.trackId);
+    if (!track || !Array.isArray(track.clips)) continue;
+    for (const id of [tr.from, tr.to]) {
+      const c = track.clips.find((cl) => cl.id === id);
+      if (c && c.animations && (c.animations.scale || c.animations.rotation)) {
+        warn(`tracks "${track.id}" clips "${c.id}"`,
+          `có keyframes scale/rotation và transition — đoạn chuyển cảnh được gộp qua xfade ` +
+          `nên keyframes scale/rotation của clip này bị bỏ qua khi render (xem KEYFRAMES_LIMITS.md)`);
+      }
+    }
+  }
+
   // Tổng thời lượng phải > 0
   let D = 0;
   for (const t of spec.tracks) {
@@ -314,13 +373,22 @@ function validateClip(track, clip, where, err, warn) {
       for (const m of validateOpacity(clip.opacity))
         err(where, m);
     }
-    // Keyframe animations (chỉ x/y/opacity được render; scale/rotation lưu nhưng bỏ qua)
+    // Keyframe animations (x/y/opacity/scale/rotation đều render thật cho video;
+    // scale/rotation bị bỏ qua nếu clip dính transition — cảnh báo ở vòng lặp
+    // transition phía dưới, xem KEYFRAMES_LIMITS.md)
     if (clip.animations !== undefined) {
       for (const m of validateAnimations(clip.animations, clip.duration))
         err(where, m);
-      if (clip.animations.scale || clip.animations.rotation)
-        warn(where, "keyframes scale/rotation hiện chỉ lưu trong spec, render worker chưa áp dụng " +
-          "(xem KEYFRAMES_LIMITS.md)");
+      const skf = clip.animations.scale && clip.animations.scale.keyframes;
+      if (Array.isArray(skf)) {
+        for (const kf of skf) {
+          if (isFiniteNumber(kf.v) && (kf.v < SCALE_MIN || kf.v > SCALE_MAX)) {
+            warn(where, `keyframe scale=${kf.v} nằm ngoài [${SCALE_MIN}, ${SCALE_MAX}] — ` +
+              `render sẽ clamp về khoảng này (xem KEYFRAMES_LIMITS.md)`);
+            break;
+          }
+        }
+      }
     }
     // Chroma key (xoá phông xanh)
     if (clip.chromaKey !== undefined) {
@@ -427,12 +495,15 @@ function validateClip(track, clip, where, err, warn) {
     }
     if (!isTextFxAnimation(st.animation) && st.animation !== "typewriter")
       err(where, `style.animation không hỗ trợ: ${JSON.stringify(st.animation)}`);
-    // Keyframe animations cho text (x/y/opacity được render; scale/rotation lưu nhưng bỏ qua)
+    // Keyframe animations cho text (x/y/opacity được render qua drawtext;
+    // scale/rotation của TEXT vẫn chưa render được — drawtext không hỗ trợ.
+    // Lưu ý: scale/rotation của VIDEO clip thì render thật, xem nhánh video.)
     if (clip.animations !== undefined) {
       for (const m of validateAnimations(clip.animations, clip.duration))
         err(where, m);
       if (clip.animations.scale || clip.animations.rotation)
-        warn(where, "keyframes scale/rotation hiện chỉ lưu trong spec, render worker chưa áp dụng");
+        warn(where, "keyframes scale/rotation của text clip hiện chỉ lưu trong spec, " +
+          "render worker chưa áp dụng cho text (drawtext không hỗ trợ scale/rotate theo thời gian)");
     }
   }
 }
