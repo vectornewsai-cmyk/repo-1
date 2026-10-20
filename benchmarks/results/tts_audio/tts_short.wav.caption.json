@@ -1,0 +1,136 @@
+{
+  "source": "tts_short.wav",
+  "language": "vi",
+  "model": "small",
+  "audio_duration_sec": 4.0,
+  "transcribe_time_sec": 13.1,
+  "realtime_factor": 3.29,
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 2.38,
+      "text": "Xin chào, đây là video hướng dẫn sử dụng trình"
+    },
+    {
+      "start": 2.38,
+      "end": 3.5,
+      "text": "dựng video Vegas Studio."
+    }
+  ],
+  "words": [
+    {
+      "start": 0.0,
+      "end": 0.26,
+      "word": "Xin"
+    },
+    {
+      "start": 0.26,
+      "end": 0.56,
+      "word": "chào,"
+    },
+    {
+      "start": 0.84,
+      "end": 0.96,
+      "word": "đây"
+    },
+    {
+      "start": 0.96,
+      "end": 1.1,
+      "word": "là"
+    },
+    {
+      "start": 1.1,
+      "end": 1.3,
+      "word": "video"
+    },
+    {
+      "start": 1.3,
+      "end": 1.66,
+      "word": "hướng"
+    },
+    {
+      "start": 1.66,
+      "end": 1.84,
+      "word": "dẫn"
+    },
+    {
+      "start": 1.84,
+      "end": 2.0,
+      "word": "sử"
+    },
+    {
+      "start": 2.0,
+      "end": 2.22,
+      "word": "dụng"
+    },
+    {
+      "start": 2.22,
+      "end": 2.38,
+      "word": "trình"
+    },
+    {
+      "start": 2.38,
+      "end": 2.62,
+      "word": "dựng"
+    },
+    {
+      "start": 2.62,
+      "end": 2.82,
+      "word": "video"
+    },
+    {
+      "start": 2.82,
+      "end": 3.16,
+      "word": "Vegas"
+    },
+    {
+      "start": 3.16,
+      "end": 3.5,
+      "word": "Studio."
+    }
+  ],
+  "video_spec_track": {
+    "id": "cap1",
+    "kind": "text",
+    "label": "Auto-caption",
+    "clips": [
+      {
+        "kind": "text",
+        "id": "cap1",
+        "text": "Xin chào, đây là video hướng dẫn sử dụng trình",
+        "start": 0.0,
+        "duration": 2.38,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      },
+      {
+        "kind": "text",
+        "id": "cap2",
+        "text": "dựng video Vegas Studio.",
+        "start": 2.38,
+        "duration": 1.12,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      }
+    ]
+  },
+  "spec_version": "0.1.0"
+}
