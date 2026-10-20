@@ -344,10 +344,16 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-backdrop" onClick={handleClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Xuất video"
+      >
         <div className="modal-head">
           <span>⬇ Xuất video</span>
-          <button className="icon-btn" onClick={handleClose} title="Đóng">×</button>
+          <button className="icon-btn" onClick={handleClose} title="Đóng" aria-label="Đóng">×</button>
         </div>
 
         <div className={`valid-banner ${ok ? "ok" : "bad"}`}>

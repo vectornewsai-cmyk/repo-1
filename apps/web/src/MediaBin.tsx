@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { useStore } from "./store";
 import type { MediaItem } from "./media";
 import { fmtTime } from "./lib";
+import { t, useLang } from "./i18n";
 
 const KIND_ICON: Record<MediaItem["kind"], string> = {
   video: "🎬",
@@ -17,13 +18,13 @@ function MediaCard({ item }: { item: MediaItem }) {
       className="media-card"
       draggable
       onDragStart={(e) => e.dataTransfer.setData("text/media-id", item.id)}
-      title={`${item.name} — kéo thả vào track timeline`}
+      title={`${item.name} — ${t("mediabin.dragHint")}`}
     >
       <div className="media-thumb">
         {item.thumbnail ? (
           <img src={item.thumbnail} alt={item.name} draggable={false} />
         ) : (
-          <span className="media-icon">{KIND_ICON[item.kind]}</span>
+          <span className="media-icon" aria-hidden="true">{KIND_ICON[item.kind]}</span>
         )}
         {item.kind !== "image" && item.duration > 0 && (
           <span className="media-dur">{fmtTime(item.duration)}</span>
@@ -32,16 +33,18 @@ function MediaCard({ item }: { item: MediaItem }) {
       <div className="media-name">{item.name}</div>
       <button
         className="media-add"
-        title="Thêm vào timeline tại playhead"
+        title={t("mediabin.addAtPlayhead")}
+        aria-label={`${t("mediabin.addAtPlayhead")}: ${item.name}`}
         onClick={() => st.addMediaAtPlayhead(item.id)}
       >
-        ＋ Thêm
+        {t("mediabin.addShort")}
       </button>
     </div>
   );
 }
 
 export function MediaBin() {
+  useLang(); // re-render khi đổi ngôn ngữ
   const media = useStore((s) => s.media);
   const fileRef = useRef<HTMLInputElement>(null);
   const st = useStore.getState();
@@ -53,11 +56,11 @@ export function MediaBin() {
   };
 
   return (
-    <aside className="mediabin">
+    <aside className="mediabin" aria-label={t("mediabin.title")}>
       <div className="panel-head">
-        <span>📁 Thư viện</span>
-        <button className="mini-btn" onClick={() => fileRef.current?.click()} title="Nhập video / audio / ảnh từ máy">
-          ＋ Nhập
+        <span>📁 {t("mediabin.title")}</span>
+        <button className="mini-btn" onClick={() => fileRef.current?.click()} title={t("mediabin.import")}>
+          {t("mediabin.import")}
         </button>
       </div>
       <input
@@ -66,6 +69,7 @@ export function MediaBin() {
         accept="video/*,audio/*,image/*"
         multiple
         hidden
+        aria-label={t("mediabin.import")}
         onChange={(e) => onFiles(e.target.files)}
       />
       <div className="media-grid">
@@ -74,9 +78,7 @@ export function MediaBin() {
         ))}
         {media.length === 0 && (
           <div className="media-empty">
-            Chưa có media nào.
-            <br />
-            Bấm <b>＋ Nhập</b> để thêm video, nhạc, ảnh từ máy của bạn.
+            {t("mediabin.empty")}
           </div>
         )}
       </div>
