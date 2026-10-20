@@ -20,6 +20,7 @@ import {
   stickerVisual,
   textClipVisual,
   videoClipVisual,
+  videoElementPlacement,
   type ChromaParams,
 } from "./lib/previewEngine";
 
@@ -283,6 +284,25 @@ function drawVideoClip(
   ctx.save();
   ctx.globalAlpha = clamp(alpha * vis.opacity, 0, 1);
   setCtxFilter(ctx, vis.cssFilter);
+  // Keyframes scale/rotation: mirror render (scale eval=frame + rotate quanh
+  // tâm, overlay đặt hình bao theo x/y). Canvas: dịch tới tâm element →
+  // xoay → scale → vẽ nội dung trong hệ toạ độ unit (gốc tại tâm unit).
+  // Khi có scale/rotation, vùng letterbox trong render là TRONG SUỐT (unit
+  // mang alpha) nên preview cũng chỉ vẽ đúng hình chữ nhật nội dung đã biến
+  // đổi — phần ngoài cho thấy nội dung bên dưới, khớp render.
+  if (clip.animations?.scale || clip.animations?.rotation) {
+    const pl = videoElementPlacement(clip, localT, W, H, W, H);
+    ctx.translate(pl.centerX, pl.centerY);
+    if (pl.rotationDeg) ctx.rotate((pl.rotationDeg * Math.PI) / 180);
+    if (pl.scale !== 1) ctx.scale(pl.scale, pl.scale);
+    ctx.drawImage(drawSrc, dx - W / 2, dy - H / 2, dw, dh);
+    if (vis.vignette != null) {
+      drawVignette(ctx, dx - W / 2, dy - H / 2, dw, dh, vis.vignette);
+    }
+    ctx.restore();
+    warnSkippedEffects(vis.skippedEffects);
+    return;
+  }
   ctx.drawImage(drawSrc, dx + vis.offsetX, dy + vis.offsetY, dw, dh);
   ctx.restore();
   if (vis.vignette != null) {
