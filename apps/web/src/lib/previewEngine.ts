@@ -4,7 +4,8 @@
  *
  * THỨ TỰ TRANSFORM (khóa cứng, phải giống render.js — video):
  *   trim → setpts=PTS-STARTPTS → SPEED → CHROMA → scale/pad → COLOR → LUT → EFFECTS
- *   → (xfade merge) → OPACITY → KEYFRAMES (x/y qua overlay)
+ *   → (xfade merge) → OPACITY → KEYFRAMES (scale/rotation qua scale eval=frame +
+ *   rotate, x/y qua overlay)
  * Composite: video → image → sticker → text.
  * Text: keyframes (animations) > textfx animation > fadeUp > none; typewriter riêng.
  *
@@ -304,11 +305,28 @@ export interface VideoClipVisual {
   /** Offset px từ keyframes x/y — mirror buildOverlayExprs: v*(frame-unit). */
   offsetX: number;
   offsetY: number;
+  /**
+   * Hệ số scale nội suy từ keyframes tại localT (đã clamp [0.01, 8] như render),
+   * 1 nếu không có keyframes scale. Mirror buildKeyframeTransform (render.js).
+   */
+  scale: number;
+  /**
+   * Góc xoay nội suy từ keyframes tại localT (độ, dương = chiều kim đồng hồ —
+   * khớp rotate filter của FFmpeg và canvas rotate), 0 nếu không có keyframes.
+   */
+  rotation: number;
   /** CSS filter đã gộp LUT + effects theo đúng thứ tự render (lut trước, effects sau). */
   cssFilter: string;
   chroma: ChromaParams | null;
   vignette: number | null;
   skippedEffects: VideoEffectType[];
+}
+
+/** Clamp scale giống hệt render (keyframes.js SCALE_MIN/SCALE_MAX). */
+export const RENDER_SCALE_MIN = 0.01;
+export const RENDER_SCALE_MAX = 8;
+export function clampRenderScale(s: number): number {
+  return Math.min(RENDER_SCALE_MAX, Math.max(RENDER_SCALE_MIN, s));
 }
 
 /**
@@ -341,10 +359,80 @@ export function videoClipVisual(
     opacity: clip.opacity ?? 1,
     offsetX,
     offsetY,
+    scale: a?.scale
+      ? clampRenderScale(interpolateKeyframes(a.scale.keyframes, localT))
+      : 1,
+    rotation: a?.rotation
+      ? interpolateKeyframes(a.rotation.keyframes, localT)
+      : 0,
     cssFilter,
     chroma: clip.chromaKey ? normalizeChroma(clip.chromaKey) : null,
     vignette: fx.vignette,
     skippedEffects: fx.skipped,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Vị trí element video khi có scale/rotation — mirror render.js:
+// unit (unitW×unitH) được scale theo hệ số nội suy rồi xoay quanh tâm;
+// overlay đặt HÌNH BAO (bbox) của element đã xoay theo phân số x/y trên
+// khoảng trống (frame − bbox), mặc định căn giữa (buildOverlayExprs).
+// Đây là lúc keyframes x/y có tác dụng thật: khi element nhỏ hơn khung hình.
+// ---------------------------------------------------------------------------
+
+export interface VideoElementPlacement {
+  /** Hệ số scale đã nội suy + clamp như render. */
+  scale: number;
+  /** Góc xoay đã nội suy (độ, dương = kim đồng hồ). */
+  rotationDeg: number;
+  /** Kích thước hình bao của element sau scale + xoay. */
+  bboxW: number;
+  bboxH: number;
+  /** Góc trên-trái của hình bao trong toạ độ khung hình. */
+  topLeftX: number;
+  topLeftY: number;
+  /** Tâm element (= tâm xoay/scale) trong toạ độ khung hình. */
+  centerX: number;
+  centerY: number;
+}
+
+export function videoElementPlacement(
+  clip: VideoClip,
+  localT: number,
+  unitW: number,
+  unitH: number,
+  frameW: number,
+  frameH: number,
+): VideoElementPlacement {
+  const a = clip.animations;
+  const scale = a?.scale
+    ? clampRenderScale(interpolateKeyframes(a.scale.keyframes, localT))
+    : 1;
+  const rotationDeg = a?.rotation
+    ? interpolateKeyframes(a.rotation.keyframes, localT)
+    : 0;
+  const rad = (rotationDeg * Math.PI) / 180;
+  const ew = unitW * scale;
+  const eh = unitH * scale;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+  const bboxW = ew * cos + eh * sin;
+  const bboxH = ew * sin + eh * cos;
+  // Mirror buildOverlayExprs: có keyframe x/y thì dùng phân số nội suy,
+  // không có thì căn giữa (0.5) — áp lên khoảng (frame − bbox) như overlay.
+  const xf = a?.x ? interpolateKeyframes(a.x.keyframes, localT) : 0.5;
+  const yf = a?.y ? interpolateKeyframes(a.y.keyframes, localT) : 0.5;
+  const topLeftX = xf * (frameW - bboxW);
+  const topLeftY = yf * (frameH - bboxH);
+  return {
+    scale,
+    rotationDeg,
+    bboxW,
+    bboxH,
+    topLeftX,
+    topLeftY,
+    centerX: topLeftX + bboxW / 2,
+    centerY: topLeftY + bboxH / 2,
   };
 }
 
