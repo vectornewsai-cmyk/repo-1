@@ -192,10 +192,39 @@ export interface TextStyle {
   animation?: TextAnimation;
 }
 
+/**
+ * Tham chiếu plugin (Batch J — plugin wiring): plugin JS chạy trong sandbox
+ * của @repo-1/plugin-api, được render worker nạp khi render. CHỈ khai đúng
+ * MỘT trong hai: `id` hoặc `path`.
+ */
+export interface PluginRef {
+  /**
+   * Tên plugin đóng gói sẵn trong thư mục `plugins/` của repo:
+   * resolve thành `plugins/<id>/plugin.js`. Chỉ gồm chữ thường/số/dấu `-`
+   * (validator chặn path traversal).
+   */
+  id?: string;
+  /**
+   * Đường dẫn file plugin.js: tuyệt đối, hoặc tương đối so với thư mục
+   * chứa file spec.
+   */
+  path?: string;
+  /** Config override cho plugin (JSON thuần, gộp lên defaultConfig). */
+  config?: Record<string, unknown>;
+}
+
 export interface VideoSpec {
   version: typeof SPEC_VERSION;
   meta: VideoMeta;
   tracks: Track[];
+  /**
+   * Plugin áp dụng khi render (tùy chọn). Không có trường này = hành vi
+   * render cũ 100%. Render worker nạp plugin qua PluginRegistry:
+   * onClipRender chèn filter vào từng video clip (sau effects, trước
+   * opacity), onProjectValidate thêm lỗi/cảnh báo, onExportStart/
+   * onExportFinish chạy quanh lần render. Xem docs/PLUGINS.md.
+   */
+  plugins?: PluginRef[];
 }
 
 /** Kiểm tra nhanh spec có hợp lệ tối thiểu không (validate đầy đủ bằng zod ở render worker). */

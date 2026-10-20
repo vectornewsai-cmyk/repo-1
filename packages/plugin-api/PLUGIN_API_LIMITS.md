@@ -13,6 +13,12 @@
 7. Hook vòng lặp vô hạn bị timeout (~1s), lỗi ghi vào `hookErrors`, host không sập.
 8. Filter nguy hiểm (`movie=/etc/passwd`) bị từ chối, không vào filter chain.
 9. Hook trả Promise bị báo lỗi (hooks phải đồng bộ).
+10. **Render worker đã nối registry thật** (`server/render/test_plugin_wire.js`:
+    15/15 pass) — render MP4 với plugin watermark theo `id` trong spec, kiểm
+    tra pixel: vùng dưới-phải sáng lên (mean xám 76.0 → 93.9), vùng trên-trái
+    không đổi; warning của `onProjectValidate`/`onExportFinish` và log của
+    `onExportStart` đều xuất hiện trên stderr của render (kênh bridge gom
+    vào job log); 4 dạng spec plugins sai đều fail fast exit 1.
 
 ## Giới hạn còn lại (chưa làm / không làm được)
 
@@ -34,9 +40,27 @@
    plugin trong editor.
 7. Registry chưa persist: plugin nạp lại mỗi lần khởi động host; chưa có
    enable/disable trong UI (API có `unload()` nhưng chưa nối UI).
-8. Render worker (`server/render`) **chưa gọi** PluginRegistry — wiring
-   `runClipRender` vào `buildFilterGraph` là việc tiếp theo (để lại cho chủ
-   sở hữu render worker duyệt, vì chạm pipeline render thật).
+8. Wiring vào render worker **đã xong** (cập nhật): spec khai `plugins:
+   [{ id | path, config? }]` (type `PluginRef` trong video-spec, validate
+   cấu trúc ở `server/render/src/validate.js`), host ở
+   `server/render/src/plugins.js`:
+   - `onClipRender` nối vào `buildFilterGraph`: filter plugin chèn **sau
+     effects, trước xfade/opacity** (sau toàn bộ pipeline pixel của clip,
+     trước tầng timeline). Frame tại điểm chèn đã đúng W×H nên biểu thức
+     theo w/h của plugin khớp khung output.
+   - `onProjectValidate` chạy ngay sau validateSpec (errors chặn render);
+     `onExportStart`/`onExportFinish` chạy quanh lần chạy ffmpeg thật
+     (không cháy ở `--dry-run`), warnings in ra stderr → bridge gom vào
+     kết quả job (`_stderrTail`).
+   - Nạp plugin thất bại (thiếu file/manifest sai) → render **fail**,
+     không lặng lẽ bỏ qua; lỗi trong hook thì chỉ log, không sập render.
+   Giới hạn còn lại của wiring: chỉ **video clip** được gọi onClipRender
+   (image/sticker/text clip chưa nối); `onTimelineAction` chưa có nguồn
+   phát (thuộc editor, render worker không có timeline action); plugin
+   được nạp lại mỗi job render (mỗi job là 1 process riêng — đúng vòng
+   đời hiện tại của worker, chưa có cache xuyên job); `path` tương đối
+   resolve theo thư mục chứa spec, path tuyệt đối được chấp nhận (spec do
+   chính user chạy render viết — mức tin cậy tương đương file plugin).
 9. Không có chữ ký/xác thực plugin — không chống được plugin giả mạo tên.
 10. Log của plugin ra stderr của host — chưa có log viewer trong UI.
 
