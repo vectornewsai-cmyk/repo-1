@@ -1,0 +1,924 @@
+openapi: 3.0.3
+info:
+  title: VCut Studio — Bridge Server API
+  version: 0.1.0
+  description: |
+    REST API cho VCut Studio bridge server (R1-092).
+
+    Bridge chạy local tại `http://127.0.0.1:8787` (đổi qua env `BRIDGE_PORT`),
+    nhận video-spec JSON + file media, chạy render worker (FFmpeg, 100% local)
+    và các tác vụ AI local (caption, dịch, TTS, xóa nền, reframe, cắt lặng,
+    tách cảnh). Spec này được serve trực tiếp tại `GET /api/openapi.json`
+    — mở bằng Swagger UI / Redoc để thử API.
+
+    ## Quy ước chung
+
+    - Mọi lỗi đều trả JSON `{"error": "<thông điệp tiếng Việt>"}` với mã HTTP
+      tương ứng; KHÔNG bao giờ trả HTML hay leak stack trace.
+    - Các endpoint AI chạy đồng bộ trên server; giới hạn rate riêng cho tác vụ
+      nặng (render/caption/reframe/bgremove/scene/translate: 20 req/phút/IP;
+      API chung: 120 req/phút/IP).
+    - File upload: tên file được sanitize, kiểm tra magic bytes; KHÔNG nhận
+      đường dẫn tuyệt đối từ client.
+  contact:
+    name: VCut Studio
+servers:
+  - url: http://127.0.0.1:8787
+    description: Bridge server local (mặc định)
+tags:
+  - name: health
+    description: Kiểm tra trạng thái server
+  - name: render
+    description: Hàng đợi render video-spec → MP4 (FFmpeg)
+  - name: caption
+    description: Phụ đề tự động (faster-whisper, local) + dịch sang tiếng Anh
+  - name: tts
+    description: Text-to-Speech tiếng Việt (VieNeu-TTS 0.5B, local)
+  - name: ai
+    description: Tác vụ AI local khác (xóa nền, reframe, cắt lặng, tách cảnh)
+paths:
+  /api/health:
+    get:
+      tags: [health]
+      summary: Trạng thái server
+      operationId: getHealth
+      responses:
+        "200":
+          description: Server đang chạy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+              example:
+                ok: true
+                version: "0.1.0"
+                ffmpeg: true
+                ffmpegVersion: "8.1.2"
+                runningJobs: 1
+                queuedJobs: 0
+                disk:
+                  freeBytes: 53687091200
+                  freeGB: 50.0
+                  lowDisk: false
+                workDirWritable: true
+                uptimeSec: 3600
+                node: "v24.20.0"
+                caption: true
+                translate: true
+                reframe: true
+                silence: true
+                scene: true
+                bgremove: true
+
+  /api/openapi.json:
+    get:
+      tags: [health]
+      summary: Lấy OpenAPI spec (file này)
+      operationId: getOpenApiSpec
+      description: |
+        Trả về nội dung `openapi.yaml` dưới dạng JSON — dùng cho Swagger UI,
+        Redoc hoặc codegen client.
+      responses:
+        "200":
+          description: OpenAPI 3.0 spec dạng JSON
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/render:
+    post:
+      tags: [render]
+      summary: Tạo job render mới
+      operationId: createRenderJob
+      description: |
+        Nhận video-spec JSON + các file media (multipart/form-data), xếp vào
+        hàng đợi FIFO rồi render bằng FFmpeg → MP4.
+
+        Field `spec` là JSON string của video-spec (xem package
+        `@repo-1/video-spec`); mỗi file ở field `media` phải có filename trùng
+        với `clip.src` trong spec. Field `preset` (optional) là JSON string
+        export preset `{width,height,fps,crf,x264Preset,audioBitrate}`.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [spec]
+              properties:
+                spec:
+                  type: string
+                  description: Video-spec JSON (dạng string, tối đa 10MB)
+                preset:
+                  type: string
+                  description: Export preset JSON (optional)
+                media:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: File media, filename = clip.src (tối đa 200 file, 2GB/job)
+            encoding:
+              spec:
+                contentType: text/plain
+              preset:
+                contentType: text/plain
+      responses:
+        "201":
+          description: Job đã được tạo / xếp hàng
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [jobId, status, queuePosition]
+                properties:
+                  jobId:
+                    type: string
+                    example: "a1b2c3d4e5f6"
+                  status:
+                    $ref: "#/components/schemas/JobStatus"
+                  queuePosition:
+                    type: integer
+                    description: Vị trí trong hàng đợi (0 = đang chạy)
+                    example: 0
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "413":
+          description: Spec quá lớn (> 10MB)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Hàng đợi đầy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/ServerError"
+        "507":
+          description: Ổ đĩa sắp đầy (< 256MB trống)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      tags: [render]
+      summary: Liệt kê job render
+      operationId: listRenderJobs
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+          description: Số job tối đa (mới nhất trước)
+      responses:
+        "200":
+          description: Danh sách job
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RenderJob"
+                  running:
+                    type: integer
+                  queued:
+                    type: integer
+
+  /api/render/{id}:
+    get:
+      tags: [render]
+      summary: Chi tiết 1 job render
+      operationId: getRenderJob
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Thông tin job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RenderJob"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [render]
+      summary: Hủy job render
+      operationId: cancelRenderJob
+      description: |
+        Hủy job đang chạy/chờ (kill cả process group) và xóa thư mục tạm.
+        Job đã ở trạng thái cuối (done/error/cancelled) → 409.
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Đã hủy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  id:
+                    type: string
+                  status:
+                    type: string
+                    example: "cancelled"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Job đã ở trạng thái cuối, không hủy được
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/render/{id}/download:
+    get:
+      tags: [render]
+      summary: Tải file MP4 của job đã xong
+      operationId: downloadRenderJob
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: File MP4
+          content:
+            video/mp4:
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Job chưa xong
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/render/{id}/retry:
+    post:
+      tags: [render]
+      summary: Chạy lại job bị lỗi
+      operationId: retryRenderJob
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Job đã được xếp lại hàng đợi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                  status:
+                    $ref: "#/components/schemas/JobStatus"
+                  queuePosition:
+                    type: integer
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Job không ở trạng thái cho phép retry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/caption:
+    post:
+      tags: [caption]
+      summary: Phụ đề tự động (speech-to-text)
+      operationId: createCaption
+      description: |
+        Nhận 1 file video/audio, chạy faster-whisper (100% local), stream tiến
+        trình về client dạng NDJSON rồi trả segments.
+
+        Mỗi dòng NDJSON là 1 JSON object:
+        `{"type":"phase","phase":"upload|extract|transcribe|group","message":"..."}`
+        … rồi `{"type":"done", ...}` hoặc `{"type":"error","error":"..."}`.
+        Lỗi validate (chưa stream) → JSON 4xx bình thường.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [media]
+              properties:
+                media:
+                  type: string
+                  format: binary
+                  description: File video/audio (mp4/mov/webm/mkv/avi/mp3/wav/ogg/m4a/flac/aac)
+                lang:
+                  type: string
+                  default: "vi"
+                  description: Mã ngôn ngữ nguồn (faster-whisper)
+            encoding:
+              lang:
+                contentType: text/plain
+      responses:
+        "200":
+          description: Stream NDJSON (xem mô tả)
+          content:
+            application/x-ndjson:
+              schema:
+                type: object
+                description: Các event phase / done / error, mỗi event 1 dòng JSON
+              example:
+                type: done
+                language: "vi"
+                audioDurationSec: 12.5
+                transcribeTimeSec: 4.2
+                count: 3
+                segments:
+                  - { start: 0.0, end: 2.4, text: "Xin chào các bạn" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "503":
+          description: Caption chưa sẵn sàng (thiếu python/model)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/caption/translate:
+    post:
+      tags: [caption]
+      summary: Dịch phụ đề sang tiếng Anh
+      operationId: translateCaption
+      description: |
+        Giống /api/caption nhưng dùng faster-whisper `translate` task để dịch
+        mọi ngôn ngữ nguồn sang tiếng Anh. Hiện chỉ hỗ trợ đích `en`.
+        Stream NDJSON: phase `upload|extract|translating|group` → done | error.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [media]
+              properties:
+                media:
+                  type: string
+                  format: binary
+                  description: File video/audio
+                lang:
+                  type: string
+                  default: "vi"
+                  description: Ngôn ngữ nguồn
+                target:
+                  type: string
+                  default: "en"
+                  enum: [en]
+                  description: Ngôn ngữ đích (hiện chỉ "en")
+      responses:
+        "200":
+          description: Stream NDJSON
+          content:
+            application/x-ndjson:
+              schema:
+                type: object
+              example:
+                type: done
+                sourceLanguage: "vi"
+                targetLanguage: "en"
+                audioDurationSec: 12.5
+                translateTimeSec: 5.1
+                count: 3
+                segments:
+                  - { start: 0.0, end: 2.4, text: "Hello everyone" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "503":
+          description: Dịch chưa sẵn sàng (thiếu python/model)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/tts/voices:
+    get:
+      tags: [tts]
+      summary: Danh sách giọng đọc
+      operationId: listTtsVoices
+      responses:
+        "200":
+          description: 25 giọng preset của VieNeu-TTS 0.5B
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  voices:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TtsVoice"
+                  default:
+                    type: string
+                    example: "Hải Đăng"
+              example:
+                voices:
+                  - { name: "Hải Đăng", gender: "nam", desc: "Nam · Bắc · Phong cách tự nhiên" }
+                  - { name: "Trúc Ly", gender: "nữ", desc: "Nữ · Bắc · Phong cách tự nhiên" }
+                default: "Hải Đăng"
+
+  /api/tts:
+    post:
+      tags: [tts]
+      summary: Đọc văn bản thành tiếng (WAV)
+      operationId: synthesizeSpeech
+      description: |
+        TTS tiếng Việt local (VieNeu-TTS 0.5B, Apache 2.0, watermark đã tắt).
+        Trả về file WAV qua download; header `X-TTS-Voice` (URL-encoded),
+        `X-TTS-Duration` (giây), `X-TTS-Chars` (số ký tự).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                  maxLength: 2000
+                  description: Văn bản cần đọc (tối đa 2000 ký tự)
+                  example: "Xin chào Việt Nam"
+                voice:
+                  type: string
+                  default: "Hải Đăng"
+                  description: Tên giọng (xem GET /api/tts/voices)
+      responses:
+        "200":
+          description: File WAV (48kHz)
+          content:
+            audio/wav:
+              schema:
+                type: string
+                format: binary
+          headers:
+            X-TTS-Voice:
+              schema:
+                type: string
+              description: Tên giọng (URL-encoded vì header chỉ cho Latin-1)
+            X-TTS-Duration:
+              schema:
+                type: number
+              description: Độ dài audio (giây)
+            X-TTS-Chars:
+              schema:
+                type: integer
+              description: Số ký tự đã đọc
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "503":
+          description: TTS chưa sẵn sàng (thiếu python/model)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/bgremove:
+    post:
+      tags: [ai]
+      summary: Xóa nền video (AI)
+      operationId: removeBackground
+      description: |
+        Chạy rembg + BiRefNet-general (MIT, 100% local) theo từng frame, trả về
+        file MOV (PNG codec, giữ kênh alpha) qua download. Đồng bộ, timeout
+        30 phút. Session `bria-rmbg`/`rmbg-2.0` bị cấm (weights non-commercial).
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [media]
+              properties:
+                media:
+                  type: string
+                  format: binary
+                  description: File video (mp4/mov/m4v/webm/mkv/avi)
+                session:
+                  type: string
+                  default: "birefnet-general"
+                  description: Model session rembg (mặc định birefnet-general)
+      responses:
+        "200":
+          description: File MOV có kênh alpha (`<tên>_no_bg.mov`)
+          content:
+            video/quicktime:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "503":
+          description: Xóa nền chưa sẵn sàng (thiếu python/model)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/reframe:
+    post:
+      tags: [ai]
+      summary: Auto-reframe (crop theo chủ thể)
+      operationId: reframeVideo
+      description: |
+        Phát hiện chủ thể (Haar face → motion fallback, OpenCV, 100% local),
+        crop video sang tỉ lệ đích với trajectory mượt, trả MP4 qua download.
+        Đồng bộ, timeout 10 phút.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [media]
+              properties:
+                media:
+                  type: string
+                  format: binary
+                  description: File video 16:9 (mp4/mov/m4v/webm/mkv/avi)
+                aspect:
+                  type: string
+                  default: "9:16"
+                  enum: ["9:16", "1:1", "4:5"]
+                  description: Tỉ lệ đích
+      responses:
+        "200":
+          description: File MP4 đã crop (`<tên>_9x16.mp4`)
+          content:
+            video/mp4:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "503":
+          description: Reframe chưa sẵn sàng (thiếu python venv)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/silence:
+    post:
+      tags: [ai]
+      summary: Phát hiện khoảng lặng trong audio
+      operationId: detectSilence
+      description: |
+        Chạy FFmpeg silencedetect (100% local), trả JSON một lần gồm danh sách
+        khoảng lặng và các đoạn giữ lại. Detect nhanh nên không stream.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [media]
+              properties:
+                media:
+                  type: string
+                  format: binary
+                  description: File video/audio
+                noiseDb:
+                  type: number
+                  minimum: -80
+                  maximum: 0
+                  default: -35
+                  description: Ngưỡng ồn (dB) — dưới ngưỡng coi là lặng
+                minDur:
+                  type: number
+                  minimum: 0.1
+                  maximum: 10
+                  default: 0.5
+                  description: Độ dài tối thiểu của một khoảng lặng (giây)
+      responses:
+        "200":
+          description: Kết quả detect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SilenceResult"
+              example:
+                audioDurationSec: 10.0
+                noiseDb: -35
+                minDur: 0.5
+                count: 2
+                silences:
+                  - { start: 2.0, end: 4.0, duration: 2.0 }
+                  - { start: 6.0, end: 8.0, duration: 2.0 }
+                keep:
+                  - { start: 0.0, end: 2.0 }
+                  - { start: 4.0, end: 6.0 }
+                  - { start: 8.0, end: 10.0 }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "503":
+          description: Silence removal chưa sẵn sàng
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/scene:
+    post:
+      tags: [ai]
+      summary: Tách cảnh tự động
+      operationId: detectScenes
+      description: |
+        Chạy FFmpeg `select='gt(scene,...)'` (100% local), stream NDJSON:
+        phase `upload|scan` → `{"type":"done","cuts":[...],"duration","threshold","count"}`
+        hoặc `{"type":"error","error":"..."}`.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [media]
+              properties:
+                media:
+                  type: string
+                  format: binary
+                  description: File video (mp4/mov/m4v/webm/mkv/avi)
+                threshold:
+                  type: number
+                  minimum: 0.05
+                  maximum: 0.95
+                  default: 0.4
+                  description: Ngưỡng chuyển cảnh (càng cao càng ít cắt)
+                start:
+                  type: number
+                  minimum: 0
+                  description: Chỉ quét từ giây này (optional)
+                end:
+                  type: number
+                  minimum: 0
+                  description: Chỉ quét đến giây này (optional)
+      responses:
+        "200":
+          description: Stream NDJSON
+          content:
+            application/x-ndjson:
+              schema:
+                type: object
+              example:
+                type: done
+                cuts: [2.0, 4.0]
+                duration: 6.0
+                threshold: 0.4
+                count: 2
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "503":
+          description: Tách cảnh chưa sẵn sàng
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  parameters:
+    JobId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: ID job render
+      example: "a1b2c3d4e5f6"
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Thông điệp lỗi (tiếng Việt)
+          example: "Không tìm thấy job."
+
+    JobStatus:
+      type: string
+      enum: [queued, running, done, error, cancelled]
+      description: Trạng thái job render
+
+    RenderJob:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "a1b2c3d4e5f6"
+        status:
+          $ref: "#/components/schemas/JobStatus"
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Tiến độ 0→1 (đơn điệu tăng)
+          example: 0.42
+        etaSeconds:
+          type: number
+          nullable: true
+          description: Thời gian còn lại ước tính (giây)
+          example: 18.5
+        queuePosition:
+          type: integer
+          description: Vị trí trong hàng đợi (0 = đang chạy / đã xong)
+          example: 0
+        attempts:
+          type: integer
+          example: 1
+        error:
+          type: string
+          nullable: true
+          description: Lỗi (khi status=error)
+        outputName:
+          type: string
+          nullable: true
+          example: "vcut-export.mp4"
+        outputSize:
+          type: integer
+          nullable: true
+          description: Kích thước file output (bytes)
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        finishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        recovered:
+          type: boolean
+        note:
+          type: string
+          nullable: true
+        qaReport:
+          type: object
+          nullable: true
+          description: Kết quả kiểm tra output (codec/duration/resolution) — R1-043
+
+    HealthStatus:
+      type: object
+      required: [ok, version, ffmpeg, runningJobs, queuedJobs]
+      properties:
+        ok:
+          type: boolean
+          example: true
+        version:
+          type: string
+          example: "0.1.0"
+        ffmpeg:
+          type: boolean
+          description: FFmpeg có sẵn không
+        ffmpegVersion:
+          type: string
+          nullable: true
+          example: "8.1.2"
+        runningJobs:
+          type: integer
+        queuedJobs:
+          type: integer
+        disk:
+          type: object
+          nullable: true
+          properties:
+            freeBytes:
+              type: integer
+            freeGB:
+              type: number
+            lowDisk:
+              type: boolean
+        workDirWritable:
+          type: boolean
+        uptimeSec:
+          type: integer
+        node:
+          type: string
+        caption:
+          type: boolean
+          description: faster-whisper caption có sẵn không
+        translate:
+          type: boolean
+        reframe:
+          type: boolean
+        silence:
+          type: boolean
+        scene:
+          type: boolean
+        bgremove:
+          type: boolean
+
+    CaptionSegment:
+      type: object
+      required: [start, end, text]
+      properties:
+        start:
+          type: number
+          description: Giây bắt đầu
+          example: 0.0
+        end:
+          type: number
+          description: Giây kết thúc
+          example: 2.4
+        text:
+          type: string
+          example: "Xin chào các bạn"
+
+    TtsVoice:
+      type: object
+      required: [name, gender, desc]
+      properties:
+        name:
+          type: string
+          example: "Hải Đăng"
+        gender:
+          type: string
+          enum: [nam, "nữ"]
+        desc:
+          type: string
+          example: "Nam · Bắc · Phong cách tự nhiên"
+
+    SilenceInterval:
+      type: object
+      required: [start, end, duration]
+      properties:
+        start:
+          type: number
+        end:
+          type: number
+        duration:
+          type: number
+
+    KeepSegment:
+      type: object
+      required: [start, end]
+      properties:
+        start:
+          type: number
+        end:
+          type: number
+
+    SilenceResult:
+      type: object
+      required: [audioDurationSec, noiseDb, minDur, count, silences, keep]
+      properties:
+        audioDurationSec:
+          type: number
+        noiseDb:
+          type: number
+        minDur:
+          type: number
+        count:
+          type: integer
+        silences:
+          type: array
+          items:
+            $ref: "#/components/schemas/SilenceInterval"
+        keep:
+          type: array
+          items:
+            $ref: "#/components/schemas/KeepSegment"
+
+  responses:
+    BadRequest:
+      description: Tham số không hợp lệ
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Không tìm thấy
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "Không tìm thấy job."
+    ServerError:
+      description: Lỗi máy chủ
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
