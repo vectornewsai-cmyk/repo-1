@@ -1,0 +1,482 @@
+{
+  "version": "1.0.0",
+  "generated": "2026-10-19",
+  "engine": "ffmpeg-xfade",
+  "ffmpeg_version_tested": "8.1.2",
+  "total": 58,
+  "note": "Tất cả transitions render thật qua filter xfade của FFmpeg. 21 GLSL transitions trong assets/transitions/*.glsl KHÔNG dùng được (FFmpeg thiếu gltransition) — xem TRANSITIONS_LIMITS.md.",
+  "categories": {
+    "none": "Không hiệu ứng",
+    "fade": "Mờ dần / hòa trộn",
+    "wipe": "Quét / mở / khép",
+    "slide": "Trượt / phủ / hé lộ",
+    "fx": "Hiệu ứng đặc biệt"
+  },
+  "transitions": [
+    {
+      "type": "fade",
+      "xfade": "fade",
+      "label": "Mờ dần",
+      "description": "Hai cảnh hòa vào nhau (crossfade cổ điển)",
+      "category": "fade",
+      "filter_example": "xfade=transition=fade:duration=1:offset=2"
+    },
+    {
+      "type": "fadeblack",
+      "xfade": "fadeblack",
+      "label": "Mờ qua đen",
+      "description": "Mờ dần qua màn hình đen rồi hiện cảnh mới",
+      "category": "fade",
+      "filter_example": "xfade=transition=fadeblack:duration=1:offset=2"
+    },
+    {
+      "type": "fadewhite",
+      "xfade": "fadewhite",
+      "label": "Mờ qua trắng",
+      "description": "Mờ dần qua màn hình trắng rồi hiện cảnh mới",
+      "category": "fade",
+      "filter_example": "xfade=transition=fadewhite:duration=1:offset=2"
+    },
+    {
+      "type": "wipeleft",
+      "xfade": "wipeleft",
+      "label": "Quét sang trái",
+      "description": "Cảnh mới quét từ phải sang, đẩy cảnh cũ sang trái",
+      "category": "wipe",
+      "filter_example": "xfade=transition=wipeleft:duration=1:offset=2"
+    },
+    {
+      "type": "wiperight",
+      "xfade": "wiperight",
+      "label": "Quét sang phải",
+      "description": "Cảnh mới quét từ trái sang, đẩy cảnh cũ sang phải",
+      "category": "wipe",
+      "filter_example": "xfade=transition=wiperight:duration=1:offset=2"
+    },
+    {
+      "type": "wipeup",
+      "xfade": "wipeup",
+      "label": "Quét lên trên",
+      "description": "Cảnh mới quét từ dưới lên, đẩy cảnh cũ lên trên",
+      "category": "wipe",
+      "filter_example": "xfade=transition=wipeup:duration=1:offset=2"
+    },
+    {
+      "type": "wipedown",
+      "xfade": "wipedown",
+      "label": "Quét xuống dưới",
+      "description": "Cảnh mới quét từ trên xuống, đẩy cảnh cũ xuống dưới",
+      "category": "wipe",
+      "filter_example": "xfade=transition=wipedown:duration=1:offset=2"
+    },
+    {
+      "type": "slideleft",
+      "xfade": "slideleft",
+      "label": "Trượt sang trái",
+      "description": "Hai cảnh trượt ngang cùng nhau sang trái",
+      "category": "slide",
+      "filter_example": "xfade=transition=slideleft:duration=1:offset=2"
+    },
+    {
+      "type": "slideright",
+      "xfade": "slideright",
+      "label": "Trượt sang phải",
+      "description": "Hai cảnh trượt ngang cùng nhau sang phải",
+      "category": "slide",
+      "filter_example": "xfade=transition=slideright:duration=1:offset=2"
+    },
+    {
+      "type": "dissolve",
+      "xfade": "dissolve",
+      "label": "Hòa tan",
+      "description": "Cảnh cũ tan thành hạt li ti, cảnh mới hiện dần",
+      "category": "fx",
+      "filter_example": "xfade=transition=dissolve:duration=1:offset=2"
+    },
+    {
+      "type": "circleopen",
+      "xfade": "circleopen",
+      "label": "Vòng tròn mở",
+      "description": "Cảnh mới hiện ra từ một vòng tròn nở dần ở giữa",
+      "category": "fx",
+      "filter_example": "xfade=transition=circleopen:duration=1:offset=2"
+    },
+    {
+      "type": "radial",
+      "xfade": "radial",
+      "label": "Xoay tỏa tròn",
+      "description": "Cảnh mới xoay tỏa ra như cánh quạt",
+      "category": "fx",
+      "filter_example": "xfade=transition=radial:duration=1:offset=2"
+    },
+    {
+      "type": "smoothleft",
+      "xfade": "smoothleft",
+      "label": "Trượt mượt sang trái",
+      "description": "Cảnh mới trượt mượt từ phải sang, có làm mờ biên",
+      "category": "slide",
+      "filter_example": "xfade=transition=smoothleft:duration=1:offset=2"
+    },
+    {
+      "type": "smoothright",
+      "xfade": "smoothright",
+      "label": "Trượt mượt sang phải",
+      "description": "Cảnh mới trượt mượt từ trái sang, có làm mờ biên",
+      "category": "slide",
+      "filter_example": "xfade=transition=smoothright:duration=1:offset=2"
+    },
+    {
+      "type": "smoothup",
+      "xfade": "smoothup",
+      "label": "Trượt mượt lên trên",
+      "description": "Cảnh mới trượt mượt từ dưới lên, có làm mờ biên",
+      "category": "slide",
+      "filter_example": "xfade=transition=smoothup:duration=1:offset=2"
+    },
+    {
+      "type": "smoothdown",
+      "xfade": "smoothdown",
+      "label": "Trượt mượt xuống dưới",
+      "description": "Cảnh mới trượt mượt từ trên xuống, có làm mờ biên",
+      "category": "slide",
+      "filter_example": "xfade=transition=smoothdown:duration=1:offset=2"
+    },
+    {
+      "type": "slideup",
+      "xfade": "slideup",
+      "label": "Trượt lên trên",
+      "description": "Hai cảnh trượt dọc cùng nhau lên trên",
+      "category": "slide",
+      "filter_example": "xfade=transition=slideup:duration=1:offset=2"
+    },
+    {
+      "type": "slidedown",
+      "xfade": "slidedown",
+      "label": "Trượt xuống dưới",
+      "description": "Hai cảnh trượt dọc cùng nhau xuống dưới",
+      "category": "slide",
+      "filter_example": "xfade=transition=slidedown:duration=1:offset=2"
+    },
+    {
+      "type": "circleclose",
+      "xfade": "circleclose",
+      "label": "Vòng tròn khép",
+      "description": "Vòng tròn khép dần từ ngoài vào, lộ cảnh mới",
+      "category": "fx",
+      "filter_example": "xfade=transition=circleclose:duration=1:offset=2"
+    },
+    {
+      "type": "circlecrop",
+      "xfade": "circlecrop",
+      "label": "Cắt vòng tròn",
+      "description": "Cảnh cũ co dần thành vòng tròn rồi biến mất",
+      "category": "fx",
+      "filter_example": "xfade=transition=circlecrop:duration=1:offset=2"
+    },
+    {
+      "type": "rectcrop",
+      "xfade": "rectcrop",
+      "label": "Cắt chữ nhật",
+      "description": "Cảnh cũ co dần thành hình chữ nhật rồi biến mất",
+      "category": "fx",
+      "filter_example": "xfade=transition=rectcrop:duration=1:offset=2"
+    },
+    {
+      "type": "pixelize",
+      "xfade": "pixelize",
+      "label": "Điểm ảnh hóa",
+      "description": "Cảnh cũ vỡ thành ô vuông pixel rồi chuyển sang cảnh mới",
+      "category": "fx",
+      "filter_example": "xfade=transition=pixelize:duration=1:offset=2"
+    },
+    {
+      "type": "hblur",
+      "xfade": "hblur",
+      "label": "Mờ ngang",
+      "description": "Cảnh cũ mờ nhòe theo chiều ngang rồi chuyển cảnh",
+      "category": "fx",
+      "filter_example": "xfade=transition=hblur:duration=1:offset=2"
+    },
+    {
+      "type": "distance",
+      "xfade": "distance",
+      "label": "Khoảng cách",
+      "description": "Cảnh mới tiến lại gần từ xa như hiệu ứng zoom",
+      "category": "fx",
+      "filter_example": "xfade=transition=distance:duration=1:offset=2"
+    },
+    {
+      "type": "vertopen",
+      "xfade": "vertopen",
+      "label": "Mở dọc",
+      "description": "Cảnh mới mở ra từ giữa theo chiều dọc",
+      "category": "wipe",
+      "filter_example": "xfade=transition=vertopen:duration=1:offset=2"
+    },
+    {
+      "type": "horzopen",
+      "xfade": "horzopen",
+      "label": "Mở ngang",
+      "description": "Cảnh mới mở ra từ giữa theo chiều ngang",
+      "category": "wipe",
+      "filter_example": "xfade=transition=horzopen:duration=1:offset=2"
+    },
+    {
+      "type": "diagtl",
+      "xfade": "diagtl",
+      "label": "Chéo góc trái-trên",
+      "description": "Cảnh mới quét chéo từ góc trái-trên",
+      "category": "wipe",
+      "filter_example": "xfade=transition=diagtl:duration=1:offset=2"
+    },
+    {
+      "type": "vertclose",
+      "xfade": "vertclose",
+      "label": "Khép dọc",
+      "description": "Hai nửa trên-dưới khép lại vào giữa, lộ cảnh mới",
+      "category": "wipe",
+      "filter_example": "xfade=transition=vertclose:duration=1:offset=2"
+    },
+    {
+      "type": "horzclose",
+      "xfade": "horzclose",
+      "label": "Khép ngang",
+      "description": "Hai nửa trái-phải khép lại vào giữa, lộ cảnh mới",
+      "category": "wipe",
+      "filter_example": "xfade=transition=horzclose:duration=1:offset=2"
+    },
+    {
+      "type": "diagtr",
+      "xfade": "diagtr",
+      "label": "Chéo góc phải-trên",
+      "description": "Cảnh mới quét chéo từ góc phải-trên",
+      "category": "wipe",
+      "filter_example": "xfade=transition=diagtr:duration=1:offset=2"
+    },
+    {
+      "type": "diagbl",
+      "xfade": "diagbl",
+      "label": "Chéo góc trái-dưới",
+      "description": "Cảnh mới quét chéo từ góc trái-dưới",
+      "category": "wipe",
+      "filter_example": "xfade=transition=diagbl:duration=1:offset=2"
+    },
+    {
+      "type": "diagbr",
+      "xfade": "diagbr",
+      "label": "Chéo góc phải-dưới",
+      "description": "Cảnh mới quét chéo từ góc phải-dưới",
+      "category": "wipe",
+      "filter_example": "xfade=transition=diagbr:duration=1:offset=2"
+    },
+    {
+      "type": "hlslice",
+      "xfade": "hlslice",
+      "label": "Cắt lát ngang trái",
+      "description": "Cảnh mới hiện qua các lát cắt ngang từ trái",
+      "category": "fx",
+      "filter_example": "xfade=transition=hlslice:duration=1:offset=2"
+    },
+    {
+      "type": "hrslice",
+      "xfade": "hrslice",
+      "label": "Cắt lát ngang phải",
+      "description": "Cảnh mới hiện qua các lát cắt ngang từ phải",
+      "category": "fx",
+      "filter_example": "xfade=transition=hrslice:duration=1:offset=2"
+    },
+    {
+      "type": "vuslice",
+      "xfade": "vuslice",
+      "label": "Cắt lát dọc lên",
+      "description": "Cảnh mới hiện qua các lát cắt dọc từ dưới lên",
+      "category": "fx",
+      "filter_example": "xfade=transition=vuslice:duration=1:offset=2"
+    },
+    {
+      "type": "vdslice",
+      "xfade": "vdslice",
+      "label": "Cắt lát dọc xuống",
+      "description": "Cảnh mới hiện qua các lát cắt dọc từ trên xuống",
+      "category": "fx",
+      "filter_example": "xfade=transition=vdslice:duration=1:offset=2"
+    },
+    {
+      "type": "fadegrays",
+      "xfade": "fadegrays",
+      "label": "Mờ qua xám",
+      "description": "Mờ dần qua tông xám rồi hiện cảnh mới",
+      "category": "fade",
+      "filter_example": "xfade=transition=fadegrays:duration=1:offset=2"
+    },
+    {
+      "type": "wipetl",
+      "xfade": "wipetl",
+      "label": "Quét góc trái-trên",
+      "description": "Cảnh mới quét từ góc trái-trên theo đường chéo",
+      "category": "wipe",
+      "filter_example": "xfade=transition=wipetl:duration=1:offset=2"
+    },
+    {
+      "type": "wipetr",
+      "xfade": "wipetr",
+      "label": "Quét góc phải-trên",
+      "description": "Cảnh mới quét từ góc phải-trên theo đường chéo",
+      "category": "wipe",
+      "filter_example": "xfade=transition=wipetr:duration=1:offset=2"
+    },
+    {
+      "type": "wipebl",
+      "xfade": "wipebl",
+      "label": "Quét góc trái-dưới",
+      "description": "Cảnh mới quét từ góc trái-dưới theo đường chéo",
+      "category": "wipe",
+      "filter_example": "xfade=transition=wipebl:duration=1:offset=2"
+    },
+    {
+      "type": "wipebr",
+      "xfade": "wipebr",
+      "label": "Quét góc phải-dưới",
+      "description": "Cảnh mới quét từ góc phải-dưới theo đường chéo",
+      "category": "wipe",
+      "filter_example": "xfade=transition=wipebr:duration=1:offset=2"
+    },
+    {
+      "type": "squeezeh",
+      "xfade": "squeezeh",
+      "label": "Ép ngang",
+      "description": "Cảnh cũ bị ép dẹt theo chiều ngang, cảnh mới giãn ra",
+      "category": "fx",
+      "filter_example": "xfade=transition=squeezeh:duration=1:offset=2"
+    },
+    {
+      "type": "squeezev",
+      "xfade": "squeezev",
+      "label": "Ép dọc",
+      "description": "Cảnh cũ bị ép dẹt theo chiều dọc, cảnh mới giãn ra",
+      "category": "fx",
+      "filter_example": "xfade=transition=squeezev:duration=1:offset=2"
+    },
+    {
+      "type": "zoomin",
+      "xfade": "zoomin",
+      "label": "Zoom vào",
+      "description": "Cảnh mới zoom phóng to dần từ giữa",
+      "category": "fx",
+      "filter_example": "xfade=transition=zoomin:duration=1:offset=2"
+    },
+    {
+      "type": "fadefast",
+      "xfade": "fadefast",
+      "label": "Mờ nhanh",
+      "description": "Hòa vào nhau với tốc độ nhanh ở đầu",
+      "category": "fade",
+      "filter_example": "xfade=transition=fadefast:duration=1:offset=2"
+    },
+    {
+      "type": "fadeslow",
+      "xfade": "fadeslow",
+      "label": "Mờ chậm",
+      "description": "Hòa vào nhau với tốc độ chậm rãi",
+      "category": "fade",
+      "filter_example": "xfade=transition=fadeslow:duration=1:offset=2"
+    },
+    {
+      "type": "hlwind",
+      "xfade": "hlwind",
+      "label": "Gió ngang trái",
+      "description": "Cảnh mới thổi vào từ trái như cơn gió ngang",
+      "category": "slide",
+      "filter_example": "xfade=transition=hlwind:duration=1:offset=2"
+    },
+    {
+      "type": "hrwind",
+      "xfade": "hrwind",
+      "label": "Gió ngang phải",
+      "description": "Cảnh mới thổi vào từ phải như cơn gió ngang",
+      "category": "slide",
+      "filter_example": "xfade=transition=hrwind:duration=1:offset=2"
+    },
+    {
+      "type": "vuwind",
+      "xfade": "vuwind",
+      "label": "Gió dọc lên",
+      "description": "Cảnh mới thổi vào từ dưới lên như cơn gió",
+      "category": "slide",
+      "filter_example": "xfade=transition=vuwind:duration=1:offset=2"
+    },
+    {
+      "type": "vdwind",
+      "xfade": "vdwind",
+      "label": "Gió dọc xuống",
+      "description": "Cảnh mới thổi vào từ trên xuống như cơn gió",
+      "category": "slide",
+      "filter_example": "xfade=transition=vdwind:duration=1:offset=2"
+    },
+    {
+      "type": "coverleft",
+      "xfade": "coverleft",
+      "label": "Phủ sang trái",
+      "description": "Cảnh mới phủ lên từ phải, che dần cảnh cũ sang trái",
+      "category": "slide",
+      "filter_example": "xfade=transition=coverleft:duration=1:offset=2"
+    },
+    {
+      "type": "coverright",
+      "xfade": "coverright",
+      "label": "Phủ sang phải",
+      "description": "Cảnh mới phủ lên từ trái, che dần cảnh cũ sang phải",
+      "category": "slide",
+      "filter_example": "xfade=transition=coverright:duration=1:offset=2"
+    },
+    {
+      "type": "coverup",
+      "xfade": "coverup",
+      "label": "Phủ lên trên",
+      "description": "Cảnh mới phủ lên từ dưới, che dần cảnh cũ lên trên",
+      "category": "slide",
+      "filter_example": "xfade=transition=coverup:duration=1:offset=2"
+    },
+    {
+      "type": "coverdown",
+      "xfade": "coverdown",
+      "label": "Phủ xuống dưới",
+      "description": "Cảnh mới phủ lên từ trên, che dần cảnh cũ xuống dưới",
+      "category": "slide",
+      "filter_example": "xfade=transition=coverdown:duration=1:offset=2"
+    },
+    {
+      "type": "revealleft",
+      "xfade": "revealleft",
+      "label": "Hé lộ sang trái",
+      "description": "Cảnh cũ trượt sang phải, hé lộ cảnh mới bên trái",
+      "category": "slide",
+      "filter_example": "xfade=transition=revealleft:duration=1:offset=2"
+    },
+    {
+      "type": "revealright",
+      "xfade": "revealright",
+      "label": "Hé lộ sang phải",
+      "description": "Cảnh cũ trượt sang trái, hé lộ cảnh mới bên phải",
+      "category": "slide",
+      "filter_example": "xfade=transition=revealright:duration=1:offset=2"
+    },
+    {
+      "type": "revealup",
+      "xfade": "revealup",
+      "label": "Hé lộ lên trên",
+      "description": "Cảnh cũ trượt xuống, hé lộ cảnh mới bên trên",
+      "category": "slide",
+      "filter_example": "xfade=transition=revealup:duration=1:offset=2"
+    },
+    {
+      "type": "revealdown",
+      "xfade": "revealdown",
+      "label": "Hé lộ xuống dưới",
+      "description": "Cảnh cũ trượt lên, hé lộ cảnh mới bên dưới",
+      "category": "slide",
+      "filter_example": "xfade=transition=revealdown:duration=1:offset=2"
+    }
+  ],
+  "custom_needed": []
+}
