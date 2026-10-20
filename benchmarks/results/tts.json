@@ -1,0 +1,29 @@
+[
+  {
+    "case": "short",
+    "chars": 70,
+    "audio_s": 4.0,
+    "wall_s": 43.88,
+    "rt_factor": 0.091,
+    "chars_per_s": 1.6,
+    "file": "tts_short.wav"
+  },
+  {
+    "case": "medium",
+    "chars": 147,
+    "audio_s": 7.36,
+    "wall_s": 37.26,
+    "rt_factor": 0.198,
+    "chars_per_s": 3.9,
+    "file": "tts_medium.wav"
+  },
+  {
+    "case": "long",
+    "chars": 376,
+    "audio_s": 18.33,
+    "wall_s": 41.88,
+    "rt_factor": 0.438,
+    "chars_per_s": 9.0,
+    "file": "tts_long.wav"
+  }
+]

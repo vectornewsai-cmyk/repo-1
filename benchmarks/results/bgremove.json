@@ -1,0 +1,20 @@
+[
+  {
+    "case": "3s",
+    "session": "u2net",
+    "max_side": 960,
+    "frames": 90,
+    "wall_s": 290.49,
+    "fps": 0.31,
+    "note": "birefnet-general (default của app) OOM trên máy 8GB -> dùng u2net fallback"
+  },
+  {
+    "case": "10s",
+    "session": "u2net",
+    "max_side": 960,
+    "frames": 300,
+    "wall_s": 704.33,
+    "fps": 0.43,
+    "note": "birefnet-general (default của app) OOM trên máy 8GB -> dùng u2net fallback"
+  }
+]

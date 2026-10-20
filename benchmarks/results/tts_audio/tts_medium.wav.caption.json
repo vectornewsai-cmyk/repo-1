@@ -1,0 +1,272 @@
+{
+  "source": "tts_medium.wav",
+  "language": "vi",
+  "model": "small",
+  "audio_duration_sec": 7.36,
+  "transcribe_time_sec": 16.3,
+  "realtime_factor": 2.22,
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 1.94,
+      "text": "Hôm nay chúng ta sẽ học cách cắt gép video,"
+    },
+    {
+      "start": 2.4,
+      "end": 4.22,
+      "text": "thêm phụ đề tự động, trèn hiệu ứng chuyển"
+    },
+    {
+      "start": 4.22,
+      "end": 6.44,
+      "text": "cảnh và xuất bản video lên mạng xã hội, một"
+    },
+    {
+      "start": 6.44,
+      "end": 7.1,
+      "text": "cách nhanh chóng."
+    }
+  ],
+  "words": [
+    {
+      "start": 0.0,
+      "end": 0.18,
+      "word": "Hôm"
+    },
+    {
+      "start": 0.18,
+      "end": 0.28,
+      "word": "nay"
+    },
+    {
+      "start": 0.28,
+      "end": 0.44,
+      "word": "chúng"
+    },
+    {
+      "start": 0.44,
+      "end": 0.64,
+      "word": "ta"
+    },
+    {
+      "start": 0.64,
+      "end": 0.78,
+      "word": "sẽ"
+    },
+    {
+      "start": 0.78,
+      "end": 0.92,
+      "word": "học"
+    },
+    {
+      "start": 0.92,
+      "end": 1.08,
+      "word": "cách"
+    },
+    {
+      "start": 1.08,
+      "end": 1.38,
+      "word": "cắt"
+    },
+    {
+      "start": 1.38,
+      "end": 1.62,
+      "word": "gép"
+    },
+    {
+      "start": 1.62,
+      "end": 1.94,
+      "word": "video,"
+    },
+    {
+      "start": 2.4,
+      "end": 2.56,
+      "word": "thêm"
+    },
+    {
+      "start": 2.56,
+      "end": 2.74,
+      "word": "phụ"
+    },
+    {
+      "start": 2.74,
+      "end": 2.88,
+      "word": "đề"
+    },
+    {
+      "start": 2.88,
+      "end": 3.04,
+      "word": "tự"
+    },
+    {
+      "start": 3.04,
+      "end": 3.22,
+      "word": "động,"
+    },
+    {
+      "start": 3.56,
+      "end": 3.74,
+      "word": "trèn"
+    },
+    {
+      "start": 3.74,
+      "end": 3.88,
+      "word": "hiệu"
+    },
+    {
+      "start": 3.88,
+      "end": 4.02,
+      "word": "ứng"
+    },
+    {
+      "start": 4.02,
+      "end": 4.22,
+      "word": "chuyển"
+    },
+    {
+      "start": 4.22,
+      "end": 4.5,
+      "word": "cảnh"
+    },
+    {
+      "start": 4.5,
+      "end": 4.68,
+      "word": "và"
+    },
+    {
+      "start": 4.68,
+      "end": 4.84,
+      "word": "xuất"
+    },
+    {
+      "start": 4.84,
+      "end": 5.02,
+      "word": "bản"
+    },
+    {
+      "start": 5.02,
+      "end": 5.32,
+      "word": "video"
+    },
+    {
+      "start": 5.32,
+      "end": 5.5,
+      "word": "lên"
+    },
+    {
+      "start": 5.5,
+      "end": 5.72,
+      "word": "mạng"
+    },
+    {
+      "start": 5.72,
+      "end": 5.82,
+      "word": "xã"
+    },
+    {
+      "start": 5.82,
+      "end": 6.02,
+      "word": "hội,"
+    },
+    {
+      "start": 6.36,
+      "end": 6.44,
+      "word": "một"
+    },
+    {
+      "start": 6.44,
+      "end": 6.58,
+      "word": "cách"
+    },
+    {
+      "start": 6.58,
+      "end": 6.88,
+      "word": "nhanh"
+    },
+    {
+      "start": 6.88,
+      "end": 7.1,
+      "word": "chóng."
+    }
+  ],
+  "video_spec_track": {
+    "id": "cap1",
+    "kind": "text",
+    "label": "Auto-caption",
+    "clips": [
+      {
+        "kind": "text",
+        "id": "cap1",
+        "text": "Hôm nay chúng ta sẽ học cách cắt gép video,",
+        "start": 0.0,
+        "duration": 1.94,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      },
+      {
+        "kind": "text",
+        "id": "cap2",
+        "text": "thêm phụ đề tự động, trèn hiệu ứng chuyển",
+        "start": 2.4,
+        "duration": 1.82,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      },
+      {
+        "kind": "text",
+        "id": "cap3",
+        "text": "cảnh và xuất bản video lên mạng xã hội, một",
+        "start": 4.22,
+        "duration": 2.22,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      },
+      {
+        "kind": "text",
+        "id": "cap4",
+        "text": "cách nhanh chóng.",
+        "start": 6.44,
+        "duration": 0.66,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      }
+    ]
+  },
+  "spec_version": "0.1.0"
+}

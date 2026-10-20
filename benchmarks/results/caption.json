@@ -1,0 +1,29 @@
+{
+  "source_kind": "tts-speech",
+  "results": [
+    {
+      "file": "tts_long.wav",
+      "source_kind": "tts-speech",
+      "audio_s": 18.33,
+      "wall_s": 213.06,
+      "rt_factor": 0.086,
+      "segments": 10
+    },
+    {
+      "file": "tts_medium.wav",
+      "source_kind": "tts-speech",
+      "audio_s": 7.36,
+      "wall_s": 16.64,
+      "rt_factor": 0.442,
+      "segments": 4
+    },
+    {
+      "file": "tts_short.wav",
+      "source_kind": "tts-speech",
+      "audio_s": 4.0,
+      "wall_s": 13.42,
+      "rt_factor": 0.298,
+      "segments": 2
+    }
+  ]
+}

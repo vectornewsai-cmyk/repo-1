@@ -1,0 +1,4 @@
+{"label":"vf_1280x720","res":"1280x720","dur_s":10,"preset":"veryfast","crf":23,"wall_s":19.914,"fps":15.06,"rt_factor":0.502}
+{"label":"vf_1920x1080","res":"1920x1080","dur_s":10,"preset":"veryfast","crf":23,"wall_s":34.963,"fps":8.58,"rt_factor":0.286}
+{"label":"vf_3840x2160","res":"3840x2160","dur_s":10,"preset":"veryfast","crf":23,"wall_s":110.516,"fps":2.71,"rt_factor":0.090}
+{"label":"default_1080p","res":"1920x1080","dur_s":10,"preset":"medium","crf":20,"wall_s":47.906,"fps":6.26,"rt_factor":0.209}

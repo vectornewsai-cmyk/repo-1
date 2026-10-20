@@ -1,0 +1,665 @@
+{
+  "source": "tts_long.wav",
+  "language": "vi",
+  "model": "small",
+  "audio_duration_sec": 18.33,
+  "transcribe_time_sec": 212.6,
+  "realtime_factor": 11.6,
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 1.74,
+      "text": "Chí tội nhân tạo đang thay đổi cách con người"
+    },
+    {
+      "start": 1.74,
+      "end": 2.42,
+      "text": "làm việc mỗi ngày."
+    },
+    {
+      "start": 2.9,
+      "end": 5.28,
+      "text": "Từ việc viết văn bản, vẽ tranh, sáng tác nhạc"
+    },
+    {
+      "start": 5.28,
+      "end": 7.62,
+      "text": "cho đến dựng video, các công cụ mới giúp giúp"
+    },
+    {
+      "start": 7.62,
+      "end": 9.32,
+      "text": "ngắn thời gian sản xuất từ nhiều giờ xuống"
+    },
+    {
+      "start": 9.32,
+      "end": 9.86,
+      "text": "còn vài phút."
+    },
+    {
+      "start": 10.32,
+      "end": 12.06,
+      "text": "Tuy nhiên, yếu tố quan trọng nhất vẫn là ý"
+    },
+    {
+      "start": 12.06,
+      "end": 14.36,
+      "text": "tưởng và sự sáng tạo của con người, bởi công"
+    },
+    {
+      "start": 14.36,
+      "end": 16.78,
+      "text": "nghệ chỉ là công cụ hỗ trợ, không thể thay"
+    },
+    {
+      "start": 16.78,
+      "end": 18.14,
+      "text": "thế hoàn toàn tư duy nghệ thuật."
+    }
+  ],
+  "words": [
+    {
+      "start": 0.0,
+      "end": 0.22,
+      "word": "Chí"
+    },
+    {
+      "start": 0.22,
+      "end": 0.34,
+      "word": "tội"
+    },
+    {
+      "start": 0.34,
+      "end": 0.48,
+      "word": "nhân"
+    },
+    {
+      "start": 0.48,
+      "end": 0.78,
+      "word": "tạo"
+    },
+    {
+      "start": 0.78,
+      "end": 0.94,
+      "word": "đang"
+    },
+    {
+      "start": 0.94,
+      "end": 1.14,
+      "word": "thay"
+    },
+    {
+      "start": 1.14,
+      "end": 1.26,
+      "word": "đổi"
+    },
+    {
+      "start": 1.26,
+      "end": 1.4,
+      "word": "cách"
+    },
+    {
+      "start": 1.4,
+      "end": 1.56,
+      "word": "con"
+    },
+    {
+      "start": 1.56,
+      "end": 1.74,
+      "word": "người"
+    },
+    {
+      "start": 1.74,
+      "end": 1.86,
+      "word": "làm"
+    },
+    {
+      "start": 1.86,
+      "end": 2.02,
+      "word": "việc"
+    },
+    {
+      "start": 2.02,
+      "end": 2.24,
+      "word": "mỗi"
+    },
+    {
+      "start": 2.24,
+      "end": 2.42,
+      "word": "ngày."
+    },
+    {
+      "start": 2.9,
+      "end": 3.02,
+      "word": "Từ"
+    },
+    {
+      "start": 3.02,
+      "end": 3.14,
+      "word": "việc"
+    },
+    {
+      "start": 3.14,
+      "end": 3.34,
+      "word": "viết"
+    },
+    {
+      "start": 3.34,
+      "end": 3.48,
+      "word": "văn"
+    },
+    {
+      "start": 3.48,
+      "end": 3.74,
+      "word": "bản,"
+    },
+    {
+      "start": 3.9,
+      "end": 4.0,
+      "word": "vẽ"
+    },
+    {
+      "start": 4.0,
+      "end": 4.28,
+      "word": "tranh,"
+    },
+    {
+      "start": 4.62,
+      "end": 4.76,
+      "word": "sáng"
+    },
+    {
+      "start": 4.76,
+      "end": 4.94,
+      "word": "tác"
+    },
+    {
+      "start": 4.94,
+      "end": 5.28,
+      "word": "nhạc"
+    },
+    {
+      "start": 5.28,
+      "end": 5.4,
+      "word": "cho"
+    },
+    {
+      "start": 5.4,
+      "end": 5.58,
+      "word": "đến"
+    },
+    {
+      "start": 5.58,
+      "end": 5.8,
+      "word": "dựng"
+    },
+    {
+      "start": 5.8,
+      "end": 6.06,
+      "word": "video,"
+    },
+    {
+      "start": 6.58,
+      "end": 6.7,
+      "word": "các"
+    },
+    {
+      "start": 6.7,
+      "end": 6.86,
+      "word": "công"
+    },
+    {
+      "start": 6.86,
+      "end": 7.04,
+      "word": "cụ"
+    },
+    {
+      "start": 7.04,
+      "end": 7.2,
+      "word": "mới"
+    },
+    {
+      "start": 7.2,
+      "end": 7.44,
+      "word": "giúp"
+    },
+    {
+      "start": 7.44,
+      "end": 7.62,
+      "word": "giúp"
+    },
+    {
+      "start": 7.62,
+      "end": 7.76,
+      "word": "ngắn"
+    },
+    {
+      "start": 7.76,
+      "end": 7.94,
+      "word": "thời"
+    },
+    {
+      "start": 7.94,
+      "end": 8.16,
+      "word": "gian"
+    },
+    {
+      "start": 8.16,
+      "end": 8.32,
+      "word": "sản"
+    },
+    {
+      "start": 8.32,
+      "end": 8.54,
+      "word": "xuất"
+    },
+    {
+      "start": 8.54,
+      "end": 8.68,
+      "word": "từ"
+    },
+    {
+      "start": 8.68,
+      "end": 8.86,
+      "word": "nhiều"
+    },
+    {
+      "start": 8.86,
+      "end": 9.04,
+      "word": "giờ"
+    },
+    {
+      "start": 9.04,
+      "end": 9.32,
+      "word": "xuống"
+    },
+    {
+      "start": 9.32,
+      "end": 9.44,
+      "word": "còn"
+    },
+    {
+      "start": 9.44,
+      "end": 9.66,
+      "word": "vài"
+    },
+    {
+      "start": 9.66,
+      "end": 9.86,
+      "word": "phút."
+    },
+    {
+      "start": 10.32,
+      "end": 10.48,
+      "word": "Tuy"
+    },
+    {
+      "start": 10.48,
+      "end": 10.78,
+      "word": "nhiên,"
+    },
+    {
+      "start": 10.86,
+      "end": 10.94,
+      "word": "yếu"
+    },
+    {
+      "start": 10.94,
+      "end": 11.04,
+      "word": "tố"
+    },
+    {
+      "start": 11.04,
+      "end": 11.18,
+      "word": "quan"
+    },
+    {
+      "start": 11.18,
+      "end": 11.42,
+      "word": "trọng"
+    },
+    {
+      "start": 11.42,
+      "end": 11.54,
+      "word": "nhất"
+    },
+    {
+      "start": 11.54,
+      "end": 11.78,
+      "word": "vẫn"
+    },
+    {
+      "start": 11.78,
+      "end": 11.92,
+      "word": "là"
+    },
+    {
+      "start": 11.92,
+      "end": 12.06,
+      "word": "ý"
+    },
+    {
+      "start": 12.06,
+      "end": 12.3,
+      "word": "tưởng"
+    },
+    {
+      "start": 12.3,
+      "end": 12.46,
+      "word": "và"
+    },
+    {
+      "start": 12.46,
+      "end": 12.6,
+      "word": "sự"
+    },
+    {
+      "start": 12.6,
+      "end": 12.8,
+      "word": "sáng"
+    },
+    {
+      "start": 12.8,
+      "end": 13.04,
+      "word": "tạo"
+    },
+    {
+      "start": 13.04,
+      "end": 13.14,
+      "word": "của"
+    },
+    {
+      "start": 13.14,
+      "end": 13.3,
+      "word": "con"
+    },
+    {
+      "start": 13.3,
+      "end": 13.56,
+      "word": "người,"
+    },
+    {
+      "start": 14.02,
+      "end": 14.26,
+      "word": "bởi"
+    },
+    {
+      "start": 14.26,
+      "end": 14.36,
+      "word": "công"
+    },
+    {
+      "start": 14.36,
+      "end": 14.6,
+      "word": "nghệ"
+    },
+    {
+      "start": 14.6,
+      "end": 14.78,
+      "word": "chỉ"
+    },
+    {
+      "start": 14.78,
+      "end": 14.9,
+      "word": "là"
+    },
+    {
+      "start": 14.9,
+      "end": 15.08,
+      "word": "công"
+    },
+    {
+      "start": 15.08,
+      "end": 15.3,
+      "word": "cụ"
+    },
+    {
+      "start": 15.3,
+      "end": 15.44,
+      "word": "hỗ"
+    },
+    {
+      "start": 15.44,
+      "end": 15.72,
+      "word": "trợ,"
+    },
+    {
+      "start": 16.04,
+      "end": 16.26,
+      "word": "không"
+    },
+    {
+      "start": 16.26,
+      "end": 16.52,
+      "word": "thể"
+    },
+    {
+      "start": 16.52,
+      "end": 16.78,
+      "word": "thay"
+    },
+    {
+      "start": 16.78,
+      "end": 16.92,
+      "word": "thế"
+    },
+    {
+      "start": 16.92,
+      "end": 17.18,
+      "word": "hoàn"
+    },
+    {
+      "start": 17.18,
+      "end": 17.42,
+      "word": "toàn"
+    },
+    {
+      "start": 17.42,
+      "end": 17.6,
+      "word": "tư"
+    },
+    {
+      "start": 17.6,
+      "end": 17.76,
+      "word": "duy"
+    },
+    {
+      "start": 17.76,
+      "end": 17.94,
+      "word": "nghệ"
+    },
+    {
+      "start": 17.94,
+      "end": 18.14,
+      "word": "thuật."
+    }
+  ],
+  "video_spec_track": {
+    "id": "cap1",
+    "kind": "text",
+    "label": "Auto-caption",
+    "clips": [
+      {
+        "kind": "text",
+        "id": "cap1",
+        "text": "Chí tội nhân tạo đang thay đổi cách con người",
+        "start": 0.0,
+        "duration": 1.74,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      },
+      {
+        "kind": "text",
+        "id": "cap2",
+        "text": "làm việc mỗi ngày.",
+        "start": 1.74,
+        "duration": 0.68,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      },
+      {
+        "kind": "text",
+        "id": "cap3",
+        "text": "Từ việc viết văn bản, vẽ tranh, sáng tác nhạc",
+        "start": 2.9,
+        "duration": 2.38,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      },
+      {
+        "kind": "text",
+        "id": "cap4",
+        "text": "cho đến dựng video, các công cụ mới giúp giúp",
+        "start": 5.28,
+        "duration": 2.34,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      },
+      {
+        "kind": "text",
+        "id": "cap5",
+        "text": "ngắn thời gian sản xuất từ nhiều giờ xuống",
+        "start": 7.62,
+        "duration": 1.7,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      },
+      {
+        "kind": "text",
+        "id": "cap6",
+        "text": "còn vài phút.",
+        "start": 9.32,
+        "duration": 0.54,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      },
+      {
+        "kind": "text",
+        "id": "cap7",
+        "text": "Tuy nhiên, yếu tố quan trọng nhất vẫn là ý",
+        "start": 10.32,
+        "duration": 1.74,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      },
+      {
+        "kind": "text",
+        "id": "cap8",
+        "text": "tưởng và sự sáng tạo của con người, bởi công",
+        "start": 12.06,
+        "duration": 2.3,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      },
+      {
+        "kind": "text",
+        "id": "cap9",
+        "text": "nghệ chỉ là công cụ hỗ trợ, không thể thay",
+        "start": 14.36,
+        "duration": 2.42,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      },
+      {
+        "kind": "text",
+        "id": "cap10",
+        "text": "thế hoàn toàn tư duy nghệ thuật.",
+        "start": 16.78,
+        "duration": 1.36,
+        "style": {
+          "fontFamily": "Inter",
+          "fontSize": 56,
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
+          "bold": true,
+          "italic": false,
+          "x": 0.5,
+          "y": 0.85,
+          "animation": "none"
+        }
+      }
+    ]
+  },
+  "spec_version": "0.1.0"
+}
