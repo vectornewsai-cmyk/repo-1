@@ -35,6 +35,7 @@
  *                                → download MP4 đã crop theo chủ thể (9:16 | 1:1 | 4:5)
  *  POST   /api/tts               JSON { text, voice? } → download file WAV giọng đọc (ZeroTTS, local)
  *  GET    /api/tts/voices        → { voices: [...], default }
+ *  GET    /api/openapi.json      → OpenAPI 3.0 spec dạng JSON (R1-092, dùng cho Swagger UI)
  *  GET    /api/health            → { ok: true, version, ffmpeg, runningJobs, queuedJobs }
  */
 "use strict";
@@ -1175,6 +1176,29 @@ app.post("/api/tts", rateLimit(RATE_MAX_RENDER), async (req, res) => {
     cleanupJobDir(dir); // xóa file tạm sau khi gửi xong (kể cả lỗi)
     if (err) console.error(`[bridge] lỗi gửi file TTS:`, err.message);
   });
+});
+
+// --- GET /api/openapi.json (R1-092) -------------------------------------------
+// Trả về OpenAPI 3.0 spec (server/bridge/openapi.yaml) dạng JSON — dùng cho
+// Swagger UI, Redoc hoặc codegen client. Đọc file mỗi lần gọi để luôn mới
+// sau khi sửa yaml mà không cần restart server.
+let openApiSpecCache = null;
+let openApiSpecMtime = 0;
+app.get("/api/openapi.json", (req, res) => {
+  try {
+    const specPath = path.join(__dirname, "..", "openapi.yaml");
+    const stat = fs.statSync(specPath);
+    if (!openApiSpecCache || stat.mtimeMs > openApiSpecMtime) {
+      // eslint-disable-next-line global-require
+      const yaml = require("js-yaml");
+      openApiSpecCache = yaml.load(fs.readFileSync(specPath, "utf8"));
+      openApiSpecMtime = stat.mtimeMs;
+    }
+    res.json(openApiSpecCache);
+  } catch (e) {
+    console.error("[bridge] không đọc được openapi.yaml:", e.message);
+    res.status(500).json({ error: "Không đọc được OpenAPI spec." });
+  }
 });
 
 // R1-040: 404 cho API không tồn tại → JSON (thay vì HTML của Express)
