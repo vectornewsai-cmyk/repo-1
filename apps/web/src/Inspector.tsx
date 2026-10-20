@@ -19,6 +19,7 @@ import { EffectPanel } from "./components/effects";
 import { StickerPanel } from "./components/sticker";
 import { AudioFxPanel } from "./components/audiofx";
 import { SceneModal } from "./components/SceneModal";
+import { FontPicker } from "./components/FontPicker";
 
 function NumField({
   label,
@@ -169,6 +170,10 @@ export function Inspector() {
               onChange={(e) => patch({ text: e.target.value })}
             />
           </label>
+          <FontPicker
+            value={clip.style.fontFamily}
+            onChange={(family) => st.patchTextStyle(track.id, clip.id, { fontFamily: family })}
+          />
           <label className="field">
             <span>Cỡ chữ: {clip.style.fontSize}px</span>
             <input
