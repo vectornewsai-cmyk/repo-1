@@ -1,9 +1,10 @@
 {
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "multer": "^2.0.0"
-  },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "express": "^4.19.2",
+        "js-yaml": "^4.1.0",
+        "multer": "^2.0.0"
+    },
   "description": "Local bridge server: nhận video-spec + media từ web UI, chạy render worker, trả về MP4.",
   "engines": {
     "node": ">=18"
