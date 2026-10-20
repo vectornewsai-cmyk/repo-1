@@ -14,6 +14,8 @@
  *     với tcExpr là biểu thức "thời gian cục bộ của clip", vd "(t-2.5)".
  *   - buildTextExprs(animations, style, clipStart): {x, y, alpha} cho drawtext.
  *   - buildOverlayExprs(animations, clipStart): {x, y} cho filter overlay.
+ *   - buildKeyframeTransform(animations): chuỗi scale/rotate động (eval=frame
+ *     + rotate) cho video clip — render THẬT scale/rotation theo keyframe.
  *
  * Chạy self-test: node src/keyframes.js --self-test
  */
@@ -185,6 +187,54 @@ function buildTextExprs(animations, style, clipStart) {
   };
 }
 
+/** Scale keyframe được clamp về [SCALE_MIN, SCALE_MAX] khi render (tránh
+ * frame 0px hoặc frame khổng lồ làm nổ bộ nhớ). Mirror trong previewEngine.ts. */
+const SCALE_MIN = 0.01;
+const SCALE_MAX = 8;
+
+/** Clip có keyframes scale và/hoặc rotation không? */
+function hasScaleRotation(animations) {
+  return !!(animations && (animations.scale || animations.rotation));
+}
+
+/**
+ * Chuỗi filter scale/rotate ĐỘNG cho một video unit, hoặc "" nếu không có
+ * keyframes scale/rotation.
+ *
+ * Vị trí trong pipeline (render.js, bước đặt unit lên timeline): SAU opacity,
+ * TRƯỚC setpts=PTS+start/TB — nên biểu thức dùng tc = "t" = thời gian CỤC BỘ
+ * của clip (frame timestamp tính từ đầu clip), KHÁC overlay x/y vốn dùng
+ * (t - clipStart) vì overlay chạy trên stream nền đã dịch thời gian.
+ *
+ * - scale: filter `scale` với eval=frame. Kích thước làm tròn về số chẵn
+ *   (yuva420p/yuv420p cần chiều chẵn cho chroma subsampling).
+ *   ⚠️ KHÔNG được đặt filter `format` NGAY SAU scale động này: đã kiểm chứng
+ *   thực tế format làm "đóng băng" kích thước về frame đầu (auto-scaler của
+ *   FFmpeg chuẩn hoá lại link) → scale ngừng thay đổi. Unit phải được đưa về
+ *   đúng format từ bước chuẩn hoá clip (render.js lo).
+ * - rotation: filter `rotate`, góc nội suy (độ) × PI/180. Dấu DƯƠNG = xoay
+ *   theo chiều kim đồng hồ (đã kiểm chứng bằng pixel, khớp CSS/canvas).
+ *   fillcolor trong suốt black@0 — unit BẮT BUỘC có kênh alpha (render.js
+ *   mở rộng keepAlpha cho clip có scale/rotation) để góc xoay + vùng
+ *   letterbox không vẽ đè hình chữ nhật đen lên nội dung bên dưới.
+ */
+function buildKeyframeTransform(animations) {
+  if (!hasScaleRotation(animations)) return "";
+  const parts = [];
+  if (animations.scale) {
+    const s = buildInterpExpr(animations.scale, "t");
+    const sc = `min(${SCALE_MAX},max(${SCALE_MIN},(${s})))`;
+    parts.push(
+      `scale=w='trunc(iw*(${sc})/2)*2':h='trunc(ih*(${sc})/2)*2':eval=frame`
+    );
+  }
+  if (animations.rotation) {
+    const r = buildInterpExpr(animations.rotation, "t");
+    parts.push(`rotate=a='(${r})*PI/180':fillcolor='black@0'`);
+  }
+  return parts.join(",");
+}
+
 /**
  * {x, y} cho filter overlay của một video clip (đơn vị pixel).
  * animations.x/y là 0..1 tương đối trên khoảng di chuyển còn lại
@@ -275,6 +325,34 @@ function selfTest() {
     .some((m) => m.includes("easing")));
   assert.ok(validateAnimations("không phải object", 5).length > 0);
 
+  // 13. hasScaleRotation / buildKeyframeTransform (scale/rotation render thật)
+  assert.strictEqual(hasScaleRotation(undefined), false);
+  assert.strictEqual(hasScaleRotation(null), false);
+  assert.strictEqual(hasScaleRotation({ x: { keyframes: [{ t: 0, v: 0, easing: "linear" }] } }), false);
+  assert.strictEqual(hasScaleRotation({ scale: { keyframes: [{ t: 0, v: 1, easing: "linear" }] } }), true);
+  assert.strictEqual(hasScaleRotation({ rotation: { keyframes: [{ t: 0, v: 0, easing: "linear" }] } }), true);
+  assert.strictEqual(buildKeyframeTransform(undefined), "");
+  assert.strictEqual(buildKeyframeTransform({ x: { keyframes: [{ t: 0, v: 0, easing: "linear" }] } }), "");
+  const ts = buildKeyframeTransform(
+    { scale: { keyframes: [{ t: 0, v: 1, easing: "linear" }, { t: 4, v: 2, easing: "linear" }] } });
+  assert.ok(ts.includes("eval=frame"), `scale thiếu eval=frame: ${ts}`);
+  assert.ok(ts.includes("min(8,max(0.01,"), `scale thiếu clamp: ${ts}`);
+  assert.ok(ts.includes("lt(t,4)"), `scale phải nội suy theo t cục bộ: ${ts}`);
+  assert.ok(!ts.includes("rotate"), `không có rotation keyframes thì không rotate: ${ts}`);
+  const tr = buildKeyframeTransform(
+    { rotation: { keyframes: [{ t: 0, v: 0, easing: "linear" }, { t: 4, v: 90, easing: "linear" }] } });
+  assert.ok(tr.includes("rotate=a='(") && tr.includes("*PI/180"), `rotation sai: ${tr}`);
+  assert.ok(tr.includes("fillcolor='black@0'"), `rotation thiếu fill trong suốt: ${tr}`);
+  assert.ok(!tr.includes("scale="), `không có scale keyframes thì không scale: ${tr}`);
+  const tb = buildKeyframeTransform({
+    scale: { keyframes: [{ t: 0, v: 1, easing: "linear" }] },
+    rotation: { keyframes: [{ t: 0, v: 45, easing: "linear" }] },
+  });
+  assert.ok(tb.indexOf("scale=") < tb.indexOf("rotate="), `thứ tự phải scale trước rotate: ${tb}`);
+  // scale hằng số (1 keyframe) → không sinh if lồng
+  const tc1 = buildKeyframeTransform({ scale: { keyframes: [{ t: 0, v: 0.5, easing: "linear" }] } });
+  assert.ok(tc1.includes("max(0.01,(0.5))"), `scale hằng số sai: ${tc1}`);
+
   console.log("✅ keyframes.js self-test: tất cả assertion pass");
 }
 
@@ -290,6 +368,8 @@ module.exports = {
   EASINGS,
   ANIMATABLE_PROPS,
   MAX_KEYFRAMES_PER_PROP,
+  SCALE_MIN,
+  SCALE_MAX,
   ffNum,
   applyEasing,
   normalizeKeyframes,
@@ -298,4 +378,6 @@ module.exports = {
   buildInterpExpr,
   buildTextExprs,
   buildOverlayExprs,
+  hasScaleRotation,
+  buildKeyframeTransform,
 };
