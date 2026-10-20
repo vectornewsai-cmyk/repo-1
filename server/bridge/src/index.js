@@ -412,7 +412,20 @@ service.startJanitor();
 // ---------------------------------------------------------------------------
 const app = express();
 app.set("trust proxy", false); // R1-040: không tin X-Forwarded-For (chạy local)
-app.use(cors());
+
+// CORS (sửa SECURITY.md §3.1, 2026-10-20): trước đây `cors()` mở toàn bộ origin —
+// bất kỳ website nào user mở cũng đọc được response của bridge local. Nay chỉ
+// cấp Access-Control-Allow-Origin cho origin loopback (web UI dev :5173, vite
+// preview, mọi port local khác). Request không có Origin header (curl, MCP
+// server, CLI — client local không phải browser) vẫn qua bình thường. Origin
+// lạ: không trả ACAO → trình duyệt tự chặn đọc response.
+const LOCAL_ORIGIN_RE = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || LOCAL_ORIGIN_RE.test(origin)) return callback(null, true);
+    return callback(null, false);
+  },
+}));
 
 // R1-040: security headers cơ bản (không phá API hiện tại)
 app.use((req, res, next) => {
