@@ -508,3 +508,20 @@
 | `fonts/files/ibm-plex-mono-regular.ttf` | IBM Plex Mono Regular (Google Fonts) | https://fonts.google.com/specimen/IBM+Plex+Mono | Google Fonts contributors | OFL-1.1 | 2026-10-19 |
 | `fonts/files/ibm-plex-mono-bold.ttf` | IBM Plex Mono Bold (Google Fonts) | https://fonts.google.com/specimen/IBM+Plex+Mono | Google Fonts contributors | OFL-1.1 | 2026-10-19 |
 | `fonts/files/victor-mono-regular.ttf` | Victor Mono Regular (Google Fonts) | https://fonts.google.com/specimen/Victor+Mono | Google Fonts contributors | OFL-1.1 | 2026-10-19 |
+
+## Templates & brand kit (2026-10-20, tài sản gốc VCut Studio — MIT)
+
+| File | Tên | Nguồn | Tác giả | License | Ngày |
+|---|---|---|---|---|---|
+| `templates/youtube-intro.json` | Intro YouTube | Tự thiết kế | VCut Studio | MIT | 2026-10-20 |
+| `templates/youtube-outro.json` | Outro YouTube | Tự thiết kế | VCut Studio | MIT | 2026-10-20 |
+| `templates/tiktok-viral.json` | TikTok dọc | Tự thiết kế | VCut Studio | MIT | 2026-10-20 |
+| `templates/slideshow.json` | Slideshow ảnh | Tự thiết kế | VCut Studio | MIT | 2026-10-20 |
+| `templates/lyric-video.json` | Lyric video | Tự thiết kế | VCut Studio | MIT | 2026-10-20 |
+| `templates/lower-third.json` | Bảng tên (Lower Third) | Tự thiết kế | VCut Studio | MIT | 2026-10-20 |
+| `templates/title-card.json` | Thẻ tiêu đề | Tự thiết kế | VCut Studio | MIT | 2026-10-20 |
+| `templates/product-showcase.json` | Giới thiệu sản phẩm | Tự thiết kế | VCut Studio | MIT | 2026-10-20 |
+| `templates/travel-vlog-intro.json` | Mở đầu Vlog du lịch | Tự thiết kế | VCut Studio | MIT | 2026-10-20 |
+| `templates/podcast-audiogram.json` | Audiogram Podcast | Tự thiết kế | VCut Studio | MIT | 2026-10-20 |
+| `brand/logo.svg` | Logo VCut Studio | Tự vẽ | VCut Studio | MIT | 2026-10-20 |
+| `brand/logo-mark.svg` | Logo mark (favicon/app icon) | Tự vẽ | VCut Studio | MIT | 2026-10-20 |
