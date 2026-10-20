@@ -1,4 +1,4 @@
-# Preview — Giới hạn trung thực (R1-060/R1-061, cập nhật 2026-10-19)
+# Preview — Giới hạn trung thực (R1-060/R1-061, cập nhật 2026-10-20)
 
 Tài liệu này liệt kê **chính xác** những gì preview canvas làm được và chưa làm
 được so với render engine (`server/render/src/render.js`). Không phóng đại.
@@ -13,13 +13,14 @@ Tài liệu này liệt kê **chính xác** những gì preview canvas làm đư
 | Sticker (vị trí/tỉ lệ/xoay/opacity) | ✅ | ✅ | Trước đây preview không vẽ sticker — đã thêm |
 | Composite video → image → sticker → text | ✅ | ✅ | Trước đây duyệt theo thứ tự track — đã sửa |
 | Text keyframes x/y/opacity (ưu tiên hơn animation) | ✅ | ✅ | cùng công thức nội suy `interpolateKeyframes` |
+| Video keyframes scale/rotation (+ x/y khi có SR) | ✅ | ✅ | cùng `interpolateKeyframes` + clamp scale [0.01, 8]; hình học khớp, nội suy pixel chỉ tương đối — xem mục 6 phần chưa parity |
 | 7 text animation (fadeUp/fadeIn/slideIn*/slideUp/bounce/typewriter) | ✅ | ✅ | fadeUp đã sửa 0.5s/24px → **0.6s/30px** cho khớp render; typewriter đã sửa reveal suốt **duration** (trước đây min(1.5s)) |
 | Opacity clip + fade transition | ✅ | ✅ | |
 | Track hidden/muted | ✅ | ✅ | |
 
 ## Chưa parity / chỉ xấp xỉ (nói thẳng)
 
-1. **LUT chỉ là xấp xỉ.** Preview ánh xạ 10 LUT sang CSS filter
+1. **LUT chỉ là xấp xỉ.** Preview ánh xạ 104 LUT sang CSS filter
    (`grayscale()`, `sepia()`, `contrast()`…). Cảm giác màu gần đúng nhưng
    **không pixel-perfect** so với file `.cube`. Muốn chính xác phải xem bản render.
 2. **Effect `sharpen` và `noise` không hiển thị trong preview** (không có
@@ -31,13 +32,24 @@ Tài liệu này liệt kê **chính xác** những gì preview canvas làm đư
    tuyến tính (`inner = similarity*0.5`, `outer += blend*0.5` trên thang
    khoảng cách tối đa) — biên keying có thể khác render một chút.
    Xử lý ở độ phân giải ≤640px chiều rộng để giữ 30fps.
-5. **Video keyframes x/y: không có hiệu ứng nhìn thấy ở CẢ render lẫn preview.**
-   Render pad unit đúng WxH trước khi overlay nên biểu thức
-   `interp * (main_w - overlay_w)` = 0 (đã kiểm chứng bằng render thật với nguồn
-   tĩnh: 0 pixel khác nhau giữa t=0.2 và t=1.8). Preview mirror đúng công thức này.
-   Đây là quirk phía render (ngoài phạm vi task này), không phải lỗi preview.
+5. **Video keyframes x/y: không có hiệu ứng nhìn thấy ở CẢ render lẫn preview
+   — TRỪ khi clip có thêm keyframes scale/rotation.** Render pad unit đúng WxH
+   trước khi overlay nên biểu thức `interp * (main_w - overlay_w)` = 0 (đã kiểm
+   chứng bằng render thật: 0 pixel khác nhau giữa t=0.2 và t=1.8). Preview
+   mirror đúng công thức này. Khi có scale/rotation, element nhỏ hơn khung
+   hình → overlay_w/overlay_h thay đổi theo frame và x/y CÓ tác dụng thật ở cả
+   render lẫn preview (xem KEYFRAMES_LIMITS.md; test render A2 + placement
+   trong `preview-engine.test.cjs` mục 10).
 6. **Video keyframe `opacity`: render bỏ qua → preview bỏ qua** (parity).
-   `scale`/`rotation` keyframes: render chưa hỗ trợ → preview chưa hỗ trợ.
+   `scale`/`rotation` keyframes: **đã hỗ trợ ở cả render lẫn preview**
+   (render: scale `eval=frame` + filter `rotate`; preview: canvas transform
+   translate→rotate→scale quanh tâm element theo `videoElementPlacement`).
+   Chỉ là mirror tương đối: vị trí hình bao và góc/hệ số khớp công thức render,
+   nhưng nội suy hình ảnh khác nhau (FFmpeg scale bicubic/rotate bilinear so
+   với drawImage của trình duyệt) nên không pixel-perfect. Clip có
+   scale/rotation KÈM transition: render bỏ qua SR (validator cảnh báo) nhưng
+   preview vẫn áp SR khi vẽ từng clip riêng lẻ → preview lệch render ở đoạn
+   chuyển cảnh đó.
 7. **Transition:** preview chỉ mô phỏng `fade` in/out. Các loại xfade khác
    (wipe/slide/…) chỉ thấy ở bản render.
 8. **Typewriter:** preview hiện chữ bằng canvas theo đúng timing
