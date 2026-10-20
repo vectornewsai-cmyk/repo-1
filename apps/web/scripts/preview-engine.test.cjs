@@ -23,10 +23,10 @@ function approx(a, b, eps, msg) {
   pass++;
 }
 
-// --- 1. Thứ tự transform khớp render.js ---
+// --- 1. Thứ tự transform khớp render.js (R1-075: color adjust trước LUT) ---
 eq(
   pe.PREVIEW_TRANSFORM_ORDER.join(","),
-  "speed,chroma,lut,effects,opacity,keyframes",
+  "speed,chroma,color,lut,effects,opacity,keyframes",
   "thứ tự transform",
 );
 
@@ -48,14 +48,37 @@ eq(
   approx(c.dx, -106.67, 0.01, "cover dx (crop giữa)");
 }
 
-// --- 3. LUT: đủ 10 id, id lạ → null ---
+// --- 3. LUT: đủ 104 id (20 gốc + 84 harvest/gen2), id lạ → null ---
 {
   for (const id of spec.LUT_IDS) {
     const css = pe.lutCssFilter(id);
     ok(typeof css === "string" && css.length > 0, `LUT ${id} có CSS`);
   }
-  eq(spec.LUT_IDS.length, 10, "đủ 10 LUT");
+  eq(spec.LUT_IDS.length, 104, "đủ 104 LUT");
   eq(pe.lutCssFilter("khong-co"), null, "LUT lạ → null");
+}
+
+// --- 3b. ColorAdjust → CSS (R1-075) ---
+{
+  eq(pe.colorAdjustCssFilter(undefined), "", "undefined → ''");
+  eq(pe.colorAdjustCssFilter({}), "", "{} → ''");
+  ok(
+    pe.colorAdjustCssFilter({ brightness: 20 }).includes("brightness(1.200)"),
+    "brightness=20 → brightness(1.200)"
+  );
+  ok(
+    pe.colorAdjustCssFilter({ contrast: -50, saturation: 30 }).includes("contrast(0.500)") &&
+      pe.colorAdjustCssFilter({ contrast: -50, saturation: 30 }).includes("saturate(1.300)"),
+    "contrast+saturation → CSS"
+  );
+  ok(
+    pe.colorAdjustCssFilter({ temperature: 100 }).includes("sepia("),
+    "temperature → sepia xấp xỉ"
+  );
+  ok(
+    pe.colorAdjustCssFilter({ tint: 100 }).includes("hue-rotate("),
+    "tint → hue-rotate xấp xỉ"
+  );
 }
 
 // --- 4. effectsVisual: công thức mirror effects.js ---
@@ -238,6 +261,84 @@ eq(
   eq(pe.parseHexColor("#ff0000").join(","), "255,0,0", "parse #ff0000");
   eq(pe.parseHexColor("#00FF00").join(","), "0,255,0", "parse #00FF00");
   eq(pe.parseHexColor("zzz").join(","), "0,255,0", "parse lỗi → fallback");
+}
+
+// --- 10. Keyframes scale/rotation: videoClipVisual + videoElementPlacement ---
+// Mirror render.js buildKeyframeTransform: cùng interpolateKeyframes, scale
+// clamp [0.01, 8], góc dương = kim đồng hồ, overlay đặt bbox theo phân số x/y.
+{
+  const base = { kind: "video", id: "c", src: "a.mp4", start: 0, duration: 4, in: 0, out: 4 };
+
+  // Không keyframes SR → scale 1, rotation 0
+  const v0 = pe.videoClipVisual(base, 1, 640, 360, 640, 360);
+  eq(v0.scale, 1, "SR: không keyframes → scale 1");
+  eq(v0.rotation, 0, "SR: không keyframes → rotation 0");
+
+  // scale linear 1→2 tại t=2 (giữa) = 1.5; rotation 0→90 tại t=2 = 45
+  const srClip = {
+    ...base,
+    animations: {
+      scale: { keyframes: [{ t: 0, v: 1, easing: "linear" }, { t: 4, v: 2, easing: "linear" }] },
+      rotation: { keyframes: [{ t: 0, v: 0, easing: "linear" }, { t: 4, v: 90, easing: "linear" }] },
+    },
+  };
+  const vMid = pe.videoClipVisual(srClip, 2, 640, 360, 640, 360);
+  eq(vMid.scale, 1.5, "SR: scale nội suy tuyến tính tại giữa đoạn");
+  eq(vMid.rotation, 45, "SR: rotation nội suy tuyến tính tại giữa đoạn");
+
+  // easing của keyframe BẮT ĐẦU đoạn: ease-in tại p=0.5 → hệ số 0.25
+  const easeClip = {
+    ...base,
+    animations: {
+      scale: { keyframes: [{ t: 0, v: 1, easing: "ease-in" }, { t: 4, v: 3, easing: "linear" }] },
+    },
+  };
+  eq(pe.videoClipVisual(easeClip, 2, 640, 360, 640, 360).scale, 1.5,
+    "SR: ease-in p=0.5 → 1 + 2*0.25");
+
+  // clamp giống render: scale 20 → 8
+  const bigClip = {
+    ...base,
+    animations: { scale: { keyframes: [{ t: 0, v: 20, easing: "linear" }] } },
+  };
+  eq(pe.videoClipVisual(bigClip, 0, 640, 360, 640, 360).scale, 8, "SR: scale clamp về 8");
+
+  // placement: scale 0.5 hằng số, không xoay → bbox = nửa unit, căn giữa
+  const halfClip = {
+    ...base,
+    animations: { scale: { keyframes: [{ t: 0, v: 0.5, easing: "linear" }] } },
+  };
+  const p1 = pe.videoElementPlacement(halfClip, 1, 640, 360, 640, 360);
+  eq(p1.bboxW, 320, "placement: bboxW = 640*0.5");
+  eq(p1.bboxH, 180, "placement: bboxH = 360*0.5");
+  eq(p1.topLeftX, 160, "placement: căn giữa ngang (640-320)/2");
+  eq(p1.topLeftY, 90, "placement: căn giữa dọc (360-180)/2");
+  eq(p1.centerX, 320, "placement: tâm x = giữa khung");
+  eq(p1.centerY, 180, "placement: tâm y = giữa khung");
+
+  // placement: xoay 90° → bbox hoán đổi ngang/dọc
+  const rotClip = {
+    ...base,
+    animations: { rotation: { keyframes: [{ t: 0, v: 90, easing: "linear" }] } },
+  };
+  const p2 = pe.videoElementPlacement(rotClip, 0, 640, 360, 640, 360);
+  approx(p2.bboxW, 360, 0.01, "placement rot90: bboxW = chiều cao gốc");
+  approx(p2.bboxH, 640, 0.01, "placement rot90: bboxH = chiều ngang gốc");
+  eq(p2.centerX, 320, "placement rot90: tâm vẫn giữa khung");
+  eq(p2.centerY, 180, "placement rot90: tâm vẫn giữa khung (dọc)");
+
+  // placement: x keyframes có tác dụng khi element nhỏ hơn khung (khớp render A2)
+  const xClip = {
+    ...base,
+    animations: {
+      scale: { keyframes: [{ t: 0, v: 0.5, easing: "linear" }] },
+      x: { keyframes: [{ t: 0, v: 0, easing: "linear" }, { t: 4, v: 1, easing: "linear" }] },
+    },
+  };
+  eq(pe.videoElementPlacement(xClip, 0, 640, 360, 640, 360).topLeftX, 0,
+    "placement: x=0 → element sát trái");
+  eq(pe.videoElementPlacement(xClip, 4, 640, 360, 640, 360).topLeftX, 320,
+    "placement: x=1 → element sát phải (640-320)");
 }
 
 console.log(`\n✅ preview-engine: ${pass} assertions pass`);
