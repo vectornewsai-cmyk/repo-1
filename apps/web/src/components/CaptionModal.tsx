@@ -246,11 +246,12 @@ export function CaptionModal({ onClose }: Props) {
         className="modal caption-modal"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
+        aria-modal="true"
         aria-label="Tạo phụ đề tự động"
       >
         <div className="modal-head">
           <span>💬 Tạo phụ đề tự động</span>
-          <button className="icon-btn" onClick={onClose} title="Đóng">
+          <button className="icon-btn" onClick={onClose} title="Đóng" aria-label="Đóng">
             ✕
           </button>
         </div>

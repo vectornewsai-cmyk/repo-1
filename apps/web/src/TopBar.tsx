@@ -1,10 +1,17 @@
-/** Thanh công cụ trên cùng: tên dự án, điều khiển phát, thao tác clip, export. */
+/**
+ * Thanh công cụ trên cùng: tên dự án, điều khiển phát, thao tác clip, export.
+ *
+ * R1-107: dùng i18n (vi/en) cho toàn bộ chuỗi hiển thị + aria-label cho các nút
+ * chỉ có icon, aria-live cho thông báo flash.
+ */
 import { useState } from "react";
 import { useStore } from "./store";
 import { fmtTime } from "./lib";
 import { ProjectMenu } from "./components/project/ProjectMenu";
+import { t, useLang, setLang, getLang } from "./i18n";
 
-export function TopBar({ onExport, onCaption, onSilence }: { onExport: () => void; onCaption: () => void; onSilence: () => void }) {
+export function TopBar({ onExport, onCaption, onSilence, onTemplate }: { onExport: () => void; onCaption: () => void; onSilence: () => void; onTemplate: () => void }) {
+  useLang(); // re-render khi đổi ngôn ngữ
   const name = useStore((s) => s.spec.meta.name);
   const playing = useStore((s) => s.playing);
   const playhead = useStore((s) => s.playhead);
@@ -25,7 +32,7 @@ export function TopBar({ onExport, onCaption, onSilence }: { onExport: () => voi
   const doSplit = () => {
     const ok = st.splitAtPlayhead();
     if (!ok) {
-      setFlash("Không có clip nào tại vị trí playhead");
+      setFlash(t("topbar.noClipAtPlayhead"));
       setTimeout(() => setFlash(null), 1800);
     }
   };
@@ -33,83 +40,111 @@ export function TopBar({ onExport, onCaption, onSilence }: { onExport: () => voi
   return (
     <header className="topbar">
       <div className="brand">
-        <div className="brand-logo">◧</div>
-        <div className="brand-name">VCut Studio</div>
+        <div className="brand-logo" aria-hidden="true">◧</div>
+        <div className="brand-name">{t("app.name")}</div>
       </div>
 
       <input
         className="project-name"
         value={name}
         onChange={(e) => st.setProjectName(e.target.value)}
-        title="Tên dự án"
+        title={t("topbar.projectName")}
+        aria-label={t("topbar.projectName")}
         maxLength={60}
       />
 
-      <div className="transport">
-        <button className="tbtn" title="Về đầu" onClick={() => st.stopPlayback()}>
-          ⏮
+      <div className="transport" role="group" aria-label="transport">
+        <button
+          className="tbtn"
+          title={t("topbar.toStart")}
+          aria-label={t("topbar.toStart")}
+          onClick={() => st.stopPlayback()}
+        >
+          <span aria-hidden="true">⏮</span>
         </button>
         <button
           className="tbtn play"
-          title={playing ? "Tạm dừng (Space)" : "Phát (Space)"}
+          title={playing ? t("topbar.pause") : t("topbar.play")}
+          aria-label={playing ? t("topbar.pause") : t("topbar.play")}
+          aria-pressed={playing}
           onClick={() => st.togglePlay()}
         >
-          {playing ? "⏸" : "▶"}
+          <span aria-hidden="true">{playing ? "⏸" : "▶"}</span>
         </button>
-        <div className="time-display">
+        <div className="time-display" aria-live="off">
           {fmtTime(playhead)} <span>/</span> {fmtTime(duration)}
         </div>
       </div>
 
       <div className="topbar-actions">
         <button
-          title={undoLabel ? `Hoàn tác: ${undoLabel} (Ctrl+Z)` : "Hoàn tác (Ctrl+Z)"}
+          title={undoLabel ? t("topbar.undoWith", { label: undoLabel }) : t("topbar.undo")}
+          aria-label={undoLabel ? t("topbar.undoWith", { label: undoLabel }) : t("topbar.undo")}
           onClick={() => st.undo()}
           disabled={undoDepth === 0}
         >
-          ↩
+          <span aria-hidden="true">↩</span>
         </button>
         <button
-          title={redoLabel ? `Làm lại: ${redoLabel} (Ctrl+Shift+Z)` : "Làm lại (Ctrl+Shift+Z)"}
+          title={redoLabel ? t("topbar.redoWith", { label: redoLabel }) : t("topbar.redo")}
+          aria-label={redoLabel ? t("topbar.redoWith", { label: redoLabel }) : t("topbar.redo")}
           onClick={() => st.redo()}
           disabled={redoDepth === 0}
         >
-          ↪
+          <span aria-hidden="true">↪</span>
         </button>
         <ProjectMenu />
-        <button title="Thêm chữ tại playhead" onClick={() => st.addTextClip()}>
-          ＋ Chữ
+        <button title={t("topbar.addText")} onClick={() => st.addTextClip()}>
+          {t("topbar.addTextShort")}
         </button>
-        <button title="Tách clip tại playhead (S)" onClick={doSplit}>
-          ✂ Tách
+        <button title={t("topbar.split")} onClick={doSplit}>
+          {t("topbar.splitShort")}
         </button>
         <button
-          title="Tạo phụ đề tự động từ video/audio (faster-whisper, chạy trên máy bạn)"
+          title={t("topbar.caption")}
           onClick={onCaption}
           disabled={!canCaption}
         >
-          💬 Phụ đề
+          {t("topbar.captionShort")}
         </button>
         <button
-          title="Cắt khoảng lặng tự động trong clip (FFmpeg silencedetect, chạy trên máy bạn)"
+          title={t("topbar.cutSilence")}
           onClick={onSilence}
           disabled={!canCaption}
         >
-          🔇 Cắt lặng
+          {t("topbar.cutSilenceShort")}
         </button>
         <button
-          title="Xoá clip đang chọn (Delete)"
+          title={t("topbar.template")}
+          onClick={onTemplate}
+        >
+          {t("topbar.templateShort")}
+        </button>
+        <button
+          title={t("topbar.delete")}
           onClick={() => st.deleteSelection()}
           disabled={selection.length === 0}
         >
-          🗑 Xoá
+          {t("topbar.deleteShort")}
         </button>
-        <button className="primary" onClick={onExport} title="Xuất video-spec JSON">
-          ⬇ Xuất bản
+        <button className="primary" onClick={onExport} title={t("topbar.publish")}>
+          {t("topbar.publishShort")}
+        </button>
+        <button
+          className="tbtn"
+          title={t("common.language")}
+          aria-label={t("common.language")}
+          onClick={() => setLang(getLang() === "vi" ? "en" : "vi")}
+        >
+          <span aria-hidden="true">{getLang() === "vi" ? "🇻🇳" : "🇺🇸"}</span>
         </button>
       </div>
 
-      {flash && <div className="flash-msg">{flash}</div>}
+      {flash && (
+        <div className="flash-msg" role="status" aria-live="polite">
+          {flash}
+        </div>
+      )}
     </header>
   );
 }
