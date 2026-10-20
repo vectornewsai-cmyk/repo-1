@@ -1,0 +1,153 @@
+{
+  "template": {
+    "id": "tiktok-viral",
+    "name": "TikTok dọc",
+    "description": "Video dọc 9:16: 3 cảnh cắt nhanh + chữ hook nổi bật.",
+    "category": "social",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "tiktok",
+      "shorts",
+      "dọc",
+      "9:16"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 15,
+    "placeholders": [
+      {
+        "id": "clip1",
+        "kind": "video",
+        "label": "Cảnh 1 (mở đầu)",
+        "default": "scene-1.mp4"
+      },
+      {
+        "id": "clip2",
+        "kind": "video",
+        "label": "Cảnh 2",
+        "default": "scene-2.mp4"
+      },
+      {
+        "id": "clip3",
+        "kind": "video",
+        "label": "Cảnh 3 (kết)",
+        "default": "scene-3.mp4"
+      },
+      {
+        "id": "hook",
+        "kind": "text",
+        "label": "Câu hook 3 giây đầu",
+        "default": "ĐỪNG BỎ QUA VIDEO NÀY"
+      },
+      {
+        "id": "caption",
+        "kind": "text",
+        "label": "Chú thích chạy suốt",
+        "default": "@kenhcuaban"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "TikTok dọc",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Cảnh",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{clip1}}",
+            "start": 0,
+            "duration": 5,
+            "in": 0,
+            "out": 5,
+            "transitionOut": {
+              "type": "dissolve",
+              "duration": 0.4
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v2",
+            "src": "{{clip2}}",
+            "start": 5,
+            "duration": 5,
+            "in": 0,
+            "out": 5,
+            "transitionOut": {
+              "type": "dissolve",
+              "duration": 0.4
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v3",
+            "src": "{{clip3}}",
+            "start": 10,
+            "duration": 5,
+            "in": 0,
+            "out": 5
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Hook",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{hook}}",
+            "start": 0.5,
+            "duration": 4.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 64,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.14,
+              "animation": "popIn",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Chú thích",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{caption}}",
+            "start": 5.5,
+            "duration": 9.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 48,
+              "color": "#22D3EE",
+              "x": 0.5,
+              "y": 0.86,
+              "animation": "wave",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

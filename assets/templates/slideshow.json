@@ -1,0 +1,125 @@
+{
+  "template": {
+    "id": "slideshow",
+    "name": "Slideshow ảnh",
+    "description": "Trình chiếu 4 ảnh với hiệu ứng chuyển cảnh mượt.",
+    "category": "slideshow",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "ảnh",
+      "slideshow",
+      "kỷ niệm"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 12,
+    "placeholders": [
+      {
+        "id": "photo1",
+        "kind": "image",
+        "label": "Ảnh 1",
+        "default": "photo-1.jpg"
+      },
+      {
+        "id": "photo2",
+        "kind": "image",
+        "label": "Ảnh 2",
+        "default": "photo-2.jpg"
+      },
+      {
+        "id": "photo3",
+        "kind": "image",
+        "label": "Ảnh 3",
+        "default": "photo-3.jpg"
+      },
+      {
+        "id": "photo4",
+        "kind": "image",
+        "label": "Ảnh 4",
+        "default": "photo-4.jpg"
+      },
+      {
+        "id": "title",
+        "kind": "text",
+        "label": "Tiêu đề album",
+        "default": "Kỷ niệm đáng nhớ"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Slideshow ảnh",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Ảnh",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{photo1}}",
+            "start": 0,
+            "duration": 3,
+            "fit": "cover"
+          },
+          {
+            "kind": "image",
+            "id": "i2",
+            "src": "{{photo2}}",
+            "start": 3,
+            "duration": 3,
+            "fit": "cover"
+          },
+          {
+            "kind": "image",
+            "id": "i3",
+            "src": "{{photo3}}",
+            "start": 6,
+            "duration": 3,
+            "fit": "cover"
+          },
+          {
+            "kind": "image",
+            "id": "i4",
+            "src": "{{photo4}}",
+            "start": 9,
+            "duration": 3,
+            "fit": "cover"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tiêu đề",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{title}}",
+            "start": 0.5,
+            "duration": 2.5,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 64,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.1,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "template": {
+    "id": "travel-vlog-intro",
+    "name": "Mở đầu Vlog du lịch",
+    "description": "Intro du lịch: tên địa điểm bay vào trên cảnh quay.",
+    "category": "intro",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "du lịch",
+      "vlog",
+      "intro"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 6,
+    "placeholders": [
+      {
+        "id": "footage",
+        "kind": "video",
+        "label": "Cảnh quay địa điểm",
+        "default": "travel.mp4"
+      },
+      {
+        "id": "location",
+        "kind": "text",
+        "label": "Tên địa điểm",
+        "default": "ĐÀ LẠT"
+      },
+      {
+        "id": "date",
+        "kind": "text",
+        "label": "Thời gian",
+        "default": "Mùa thu 2026"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Mở đầu Vlog du lịch",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Cảnh",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{footage}}",
+            "start": 0,
+            "duration": 6,
+            "in": 0,
+            "out": 6,
+            "filter": {
+              "lut": "vcut-sunset-glow"
+            },
+            "transitionIn": {
+              "type": "fade",
+              "duration": 0.8
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Địa điểm",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{location}}",
+            "start": 1.0,
+            "duration": 4.2,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 84,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.44,
+              "animation": "slideInDown",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Thời gian",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{date}}",
+            "start": 1.8,
+            "duration": 3.4,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 40,
+              "color": "#FFE9C7",
+              "x": 0.5,
+              "y": 0.58,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "template": {
+    "id": "title-card",
+    "name": "Thẻ tiêu đề",
+    "description": "Màn hình tiêu đề điện ảnh: chữ lớn mờ dần trên nền tối.",
+    "category": "cinematic",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "title",
+      "điện ảnh",
+      "mở đầu"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 4,
+    "placeholders": [
+      {
+        "id": "bg",
+        "kind": "image",
+        "label": "Ảnh nền",
+        "default": "title-bg.jpg"
+      },
+      {
+        "id": "title",
+        "kind": "text",
+        "label": "Tiêu đề",
+        "default": "CHƯƠNG MỘT"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Thẻ tiêu đề",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Nền",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{bg}}",
+            "start": 0,
+            "duration": 4,
+            "fit": "cover"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tiêu đề",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{title}}",
+            "start": 0.5,
+            "duration": 3.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 88,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.5,
+              "animation": "fadeInOut",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

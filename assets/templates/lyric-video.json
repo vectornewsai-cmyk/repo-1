@@ -1,0 +1,175 @@
+{
+  "template": {
+    "id": "lyric-video",
+    "name": "Lyric video",
+    "description": "Video lời bài hát: 4 câu lyric hiện dần trên nền ảnh.",
+    "category": "music",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "lyric",
+      "nhạc",
+      "karaoke"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 24,
+    "placeholders": [
+      {
+        "id": "music",
+        "kind": "audio",
+        "label": "File nhạc",
+        "default": "song.mp3"
+      },
+      {
+        "id": "bg",
+        "kind": "image",
+        "label": "Ảnh nền",
+        "default": "lyric-bg.jpg"
+      },
+      {
+        "id": "line1",
+        "kind": "text",
+        "label": "Câu hát 1",
+        "default": "Dòng lyric đầu tiên ở đây"
+      },
+      {
+        "id": "line2",
+        "kind": "text",
+        "label": "Câu hát 2",
+        "default": "Dòng lyric thứ hai ở đây"
+      },
+      {
+        "id": "line3",
+        "kind": "text",
+        "label": "Câu hát 3",
+        "default": "Dòng lyric thứ ba ở đây"
+      },
+      {
+        "id": "line4",
+        "kind": "text",
+        "label": "Câu hát 4",
+        "default": "Dòng lyric cuối cùng ở đây"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Lyric video",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "a1",
+        "kind": "audio",
+        "label": "Nhạc",
+        "clips": [
+          {
+            "kind": "audio",
+            "id": "a1",
+            "src": "{{music}}",
+            "start": 0,
+            "duration": 24,
+            "in": 0,
+            "out": 24,
+            "fadeIn": 1.0,
+            "fadeOut": 2.0
+          }
+        ]
+      },
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Nền",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{bg}}",
+            "start": 0,
+            "duration": 24,
+            "fit": "cover"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Lyric",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{line1}}",
+            "start": 0.5,
+            "duration": 5.5,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 56,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.5,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          },
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{line2}}",
+            "start": 6.5,
+            "duration": 5.5,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 56,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.5,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          },
+          {
+            "kind": "text",
+            "id": "t3",
+            "text": "{{line3}}",
+            "start": 12.5,
+            "duration": 5.5,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 56,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.5,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          },
+          {
+            "kind": "text",
+            "id": "t4",
+            "text": "{{line4}}",
+            "start": 18.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 56,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.5,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

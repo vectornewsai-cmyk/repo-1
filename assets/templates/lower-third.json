@@ -1,0 +1,115 @@
+{
+  "template": {
+    "id": "lower-third",
+    "name": "Bảng tên (Lower Third)",
+    "description": "Dải tên người nói ở góc dưới — dùng cho phỏng vấn, tin tức.",
+    "category": "broadcast",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "lower third",
+      "tên",
+      "phỏng vấn"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 6,
+    "placeholders": [
+      {
+        "id": "footage",
+        "kind": "video",
+        "label": "Video nền",
+        "default": "interview.mp4"
+      },
+      {
+        "id": "name",
+        "kind": "text",
+        "label": "Tên người nói",
+        "default": "NGUYỄN VĂN A"
+      },
+      {
+        "id": "role",
+        "kind": "text",
+        "label": "Chức danh",
+        "default": "Giám đốc Sáng tạo"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Bảng tên (Lower Third)",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Nền",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{footage}}",
+            "start": 0,
+            "duration": 6,
+            "in": 0,
+            "out": 6
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{name}}",
+            "start": 0.8,
+            "duration": 4.4,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 64,
+              "color": "#ffffff",
+              "x": 0.14,
+              "y": 0.76,
+              "animation": "slideInLeft",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#7C3AED"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Chức danh",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{role}}",
+            "start": 1.2,
+            "duration": 4.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 40,
+              "color": "#E9D5FF",
+              "x": 0.14,
+              "y": 0.85,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

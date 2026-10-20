@@ -1,0 +1,161 @@
+{
+  "template": {
+    "id": "product-showcase",
+    "name": "Giới thiệu sản phẩm",
+    "description": "Quảng cáo vuông 1:1: ảnh sản phẩm + tên + giá + kêu gọi.",
+    "category": "ads",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "quảng cáo",
+      "sản phẩm",
+      "bán hàng",
+      "1:1"
+    ],
+    "aspect": "1080:1080",
+    "durationSec": 10,
+    "placeholders": [
+      {
+        "id": "product",
+        "kind": "image",
+        "label": "Ảnh sản phẩm",
+        "default": "product.jpg"
+      },
+      {
+        "id": "name",
+        "kind": "text",
+        "label": "Tên sản phẩm",
+        "default": "SẢN PHẨM MỚI"
+      },
+      {
+        "id": "price",
+        "kind": "text",
+        "label": "Giá bán",
+        "default": "299.000đ"
+      },
+      {
+        "id": "cta",
+        "kind": "text",
+        "label": "Kêu gọi hành động",
+        "default": "Đặt hàng ngay!"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Giới thiệu sản phẩm",
+      "width": 1080,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Sản phẩm",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{product}}",
+            "start": 0,
+            "duration": 10,
+            "fit": "contain"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{name}}",
+            "start": 0.5,
+            "duration": 9.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 64,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.1,
+              "animation": "popIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Giá",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{price}}",
+            "start": 1.5,
+            "duration": 8.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 72,
+              "color": "#22D3EE",
+              "x": 0.5,
+              "y": 0.8,
+              "animation": "bounce",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t3",
+        "kind": "text",
+        "label": "CTA",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t3",
+            "text": "{{cta}}",
+            "start": 3.0,
+            "duration": 6.5,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 44,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.9,
+              "animation": "slideInRight",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#7C3AED"
+            }
+          }
+        ]
+      },
+      {
+        "id": "s1",
+        "kind": "sticker",
+        "label": "Ngôi sao",
+        "clips": [
+          {
+            "kind": "sticker",
+            "id": "s1",
+            "src": "star.png",
+            "start": 1.0,
+            "duration": 8.5,
+            "x": 0.86,
+            "y": 0.18,
+            "scale": 0.14
+          }
+        ]
+      }
+    ]
+  }
+}

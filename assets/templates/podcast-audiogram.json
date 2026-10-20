@@ -1,0 +1,136 @@
+{
+  "template": {
+    "id": "podcast-audiogram",
+    "name": "Audiogram Podcast",
+    "description": "Video vuông cho podcast: ảnh bìa + tên tập + khách mời.",
+    "category": "podcast",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "podcast",
+      "audiogram",
+      "vuông"
+    ],
+    "aspect": "1080:1080",
+    "durationSec": 30,
+    "placeholders": [
+      {
+        "id": "audio",
+        "kind": "audio",
+        "label": "File audio podcast",
+        "default": "episode.mp3"
+      },
+      {
+        "id": "cover",
+        "kind": "image",
+        "label": "Ảnh bìa tập",
+        "default": "cover.jpg"
+      },
+      {
+        "id": "episode",
+        "kind": "text",
+        "label": "Tên tập",
+        "default": "TẬP 12: CHUYỆN NGHỀ"
+      },
+      {
+        "id": "guest",
+        "kind": "text",
+        "label": "Khách mời",
+        "default": "Khách mời: Trần Văn B"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Audiogram Podcast",
+      "width": 1080,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "a1",
+        "kind": "audio",
+        "label": "Tiếng",
+        "clips": [
+          {
+            "kind": "audio",
+            "id": "a1",
+            "src": "{{audio}}",
+            "start": 0,
+            "duration": 30,
+            "in": 0,
+            "out": 30,
+            "fadeIn": 1.0,
+            "fadeOut": 2.0
+          }
+        ]
+      },
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Bìa",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{cover}}",
+            "start": 0,
+            "duration": 30,
+            "fit": "contain"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên tập",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{episode}}",
+            "start": 0.5,
+            "duration": 29.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 56,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.06,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Khách mời",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{guest}}",
+            "start": 1.5,
+            "duration": 28.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 44,
+              "color": "#E9D3EE",
+              "x": 0.5,
+              "y": 0.94,
+              "animation": "slideInLeft",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
