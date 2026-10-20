@@ -99,6 +99,14 @@ select:focus {
   box-shadow: 0 0 0 2px var(--accent-dim);
 }
 
+/* R1-107: vòng focus rõ ràng cho điều hướng bằng bàn phím */
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 input[type="range"] {
   width: 100%;
   accent-color: var(--accent);
@@ -1451,4 +1459,140 @@ input[type="color"] {
   color: var(--ok, #4ade80);
   padding: 8px 16px 16px;
   margin: 0;
+}
+
+/* ---- TemplatePicker (R1-104/R1-105, Batch J) ---- */
+.template-modal {
+  width: 760px;
+  padding: 18px 20px;
+}
+.template-modal.wide {
+  width: 900px;
+}
+.template-modal .modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.template-modal .modal-head h3 {
+  margin: 0;
+}
+.template-modal .muted {
+  color: var(--fg-dim, #9aa3b2);
+  font-size: 13px;
+  margin: 4px 0 10px;
+}
+.template-modal .template-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  margin: 8px 0 4px;
+}
+.template-modal .template-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.template-modal .template-form input,
+.template-modal .template-form select {
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg2, #16181d);
+  color: inherit;
+  font-size: 13px;
+}
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+.chip-row .chip {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.chip-row .chip.active {
+  background: var(--accent, #7c3aed);
+  border-color: var(--accent, #7c3aed);
+  color: #fff;
+}
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin-bottom: 10px;
+  max-height: 52vh;
+  overflow-y: auto;
+}
+.template-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.14), rgba(34, 211, 238, 0.1));
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+.template-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent, #7c3aed);
+}
+.template-card .template-aspect {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.25);
+}
+.template-card .template-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+.template-card .template-desc {
+  font-size: 12px;
+  color: var(--fg-dim, #9aa3b2);
+  line-height: 1.4;
+}
+.template-card .template-meta {
+  font-size: 11px;
+  color: var(--fg-dim, #9aa3b2);
+}
+.template-modal .confirm-box {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 8px;
+  background: rgba(124, 58, 237, 0.08);
+}
+.template-modal .confirm-box p {
+  margin: 0 0 10px;
+  font-size: 13px;
+}
+.template-modal .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.template-modal .error {
+  color: var(--err, #f87171);
+  font-size: 13px;
+  margin: 6px 0 0;
+}
+button.danger {
+  background: var(--err, #dc2626);
+  border-color: var(--err, #dc2626);
+  color: #fff;
 }
