@@ -56,6 +56,27 @@ Module `transitions.js` đã được nối vào render worker chính:
 - Preview canvas: vẫn chỉ preview được `fade` bằng alpha (các transition mới
   chưa có preview riêng) — xem P0-08.
 
+## ✅ TRANSITIONHARVEST (19/10/2026) — 30 transition xfade còn thiếu
+
+FFmpeg 8.1.2 hỗ trợ 58 xfade transitions (0–57); VCut trước đây chỉ có 28.
+Đã bổ sung toàn bộ 30 cái còn thiếu, mỗi cái render thật MP4 (testsrc2 +
+smptebars, 320×240, 30fps) và kiểm tra mid-frame không bị đen toàn frame:
+
+| Nhóm | Transitions mới |
+|---|---|
+| Khép | `vertclose`, `horzclose` |
+| Chéo | `diagtr`, `diagbl`, `diagbr` |
+| Lát cắt | `hlslice`, `hrslice`, `vuslice`, `vdslice` |
+| Fade | `fadegrays`, `fadefast`, `fadeslow` |
+| Quét góc | `wipetl`, `wipetr`, `wipebl`, `wipebr` |
+| Biến dạng | `squeezeh`, `squeezev`, `zoomin` |
+| Gió | `hlwind`, `hrwind`, `vuwind`, `vdwind` |
+| Phủ | `coverleft`, `coverright`, `coverup`, `coverdown` |
+| Hé lộ | `revealleft`, `revealright`, `revealup`, `revealdown` |
+
+Tổng catalog hiện tại: **58 transitions** (không tính `none`).
+`assets/transitions/catalog.json` là bản machine-readable đầy đủ.
+
 ## Kiểm chứng đã làm
 
 - `node demo_transitions.js --out-dir ./demo_out` → 3/3 video render thành công,
