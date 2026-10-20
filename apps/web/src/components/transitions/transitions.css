@@ -314,3 +314,79 @@
   min-width: 44px;
   text-align: right;
 }
+
+/* ============ TransitionHarvest: preview CSS cho 30 transition mới ============ */
+/* Minh họa gần đúng bằng CSS — render thật do FFmpeg xfade đảm nhiệm. */
+
+/* wipe góc chéo: dùng clip-path polygon di chuyển */
+.tr-card[data-type="wipetl"] .tr-new { animation: tr-wipetl 2.4s ease-in-out infinite; }
+.tr-card[data-type="wipetr"] .tr-new { animation: tr-wipetr 2.4s ease-in-out infinite; }
+.tr-card[data-type="wipebl"] .tr-new { animation: tr-wipebl 2.4s ease-in-out infinite; }
+.tr-card[data-type="wipebr"] .tr-new { animation: tr-wipebr 2.4s ease-in-out infinite; }
+/* diag còn lại */
+.tr-card[data-type="diagtr"] .tr-new { animation: tr-diagtr 2.4s ease-in-out infinite; }
+.tr-card[data-type="diagbl"] .tr-new { animation: tr-diagbl 2.4s ease-in-out infinite; }
+.tr-card[data-type="diagbr"] .tr-new { animation: tr-diagbr 2.4s ease-in-out infinite; }
+/* khép */
+.tr-card[data-type="vertclose"] .tr-new { animation: tr-vertclose 2.4s ease-in-out infinite; }
+.tr-card[data-type="horzclose"] .tr-new { animation: tr-horzclose 2.4s ease-in-out infinite; }
+/* slice: hiện qua các lát */
+.tr-card[data-type="hlslice"] .tr-new { animation: tr-hlslice 2.4s steps(8) infinite; }
+.tr-card[data-type="hrslice"] .tr-new { animation: tr-hrslice 2.4s steps(8) infinite; }
+.tr-card[data-type="vuslice"] .tr-new { animation: tr-vuslice 2.4s steps(8) infinite; }
+.tr-card[data-type="vdslice"] .tr-new { animation: tr-vdslice 2.4s steps(8) infinite; }
+/* fade biến thể */
+.tr-card[data-type="fadegrays"] .tr-new { animation: tr-fadegrays 2.4s ease-in-out infinite; }
+.tr-card[data-type="fadefast"] .tr-new { animation: tr-fadefast 2.4s ease-in infinite; }
+.tr-card[data-type="fadeslow"] .tr-new { animation: tr-fadeslow 2.4s ease-out infinite; }
+/* squeeze / zoom */
+.tr-card[data-type="squeezeh"] .tr-old { animation: tr-squeezeh 2.4s ease-in-out infinite; }
+.tr-card[data-type="squeezev"] .tr-old { animation: tr-squeezev 2.4s ease-in-out infinite; }
+.tr-card[data-type="zoomin"] .tr-new { animation: tr-zoomin 2.4s ease-in-out infinite; }
+/* wind: trượt có skew */
+.tr-card[data-type="hlwind"] .tr-new { animation: tr-hlwind 2.4s ease-in-out infinite; }
+.tr-card[data-type="hrwind"] .tr-new { animation: tr-hrwind 2.4s ease-in-out infinite; }
+.tr-card[data-type="vuwind"] .tr-new { animation: tr-vuwind 2.4s ease-in-out infinite; }
+.tr-card[data-type="vdwind"] .tr-new { animation: tr-vdwind 2.4s ease-in-out infinite; }
+/* cover: phủ lên trên */
+.tr-card[data-type="coverleft"] .tr-new { animation: tr-coverleft 2.4s ease-in-out infinite; z-index: 2; }
+.tr-card[data-type="coverright"] .tr-new { animation: tr-coverright 2.4s ease-in-out infinite; z-index: 2; }
+.tr-card[data-type="coverup"] .tr-new { animation: tr-coverup 2.4s ease-in-out infinite; z-index: 2; }
+.tr-card[data-type="coverdown"] .tr-new { animation: tr-coverdown 2.4s ease-in-out infinite; z-index: 2; }
+/* reveal: cảnh cũ trượt đi */
+.tr-card[data-type="revealleft"] .tr-old { animation: tr-revealleft 2.4s ease-in-out infinite; z-index: 2; }
+.tr-card[data-type="revealright"] .tr-old { animation: tr-revealright 2.4s ease-in-out infinite; z-index: 2; }
+.tr-card[data-type="revealup"] .tr-old { animation: tr-revealup 2.4s ease-in-out infinite; z-index: 2; }
+.tr-card[data-type="revealdown"] .tr-old { animation: tr-revealdown 2.4s ease-in-out infinite; z-index: 2; }
+
+@keyframes tr-wipetl { 0%,20% { clip-path: polygon(0 0, 0 0, 0 0); } 79%,100% { clip-path: polygon(0 0, 200% 0, 0 200%); } }
+@keyframes tr-wipetr { 0%,20% { clip-path: polygon(100% 0, 100% 0, 100% 0); } 79%,100% { clip-path: polygon(100% 0, -100% 0, 100% 200%); } }
+@keyframes tr-wipebl { 0%,20% { clip-path: polygon(0 100%, 0 100%, 0 100%); } 79%,100% { clip-path: polygon(0 100%, 200% 100%, 0 -100%); } }
+@keyframes tr-wipebr { 0%,20% { clip-path: polygon(100% 100%, 100% 100%, 100% 100%); } 79%,100% { clip-path: polygon(100% 100%, -100% 100%, 100% -100%); } }
+@keyframes tr-diagtr { 0%,20% { transform: translate(100%, -100%); } 79%,100% { transform: translate(0, 0); } }
+@keyframes tr-diagbl { 0%,20% { transform: translate(-100%, 100%); } 79%,100% { transform: translate(0, 0); } }
+@keyframes tr-diagbr { 0%,20% { transform: translate(100%, 100%); } 79%,100% { transform: translate(0, 0); } }
+@keyframes tr-vertclose { 0%,20% { clip-path: inset(50% 0 50% 0); } 79%,100% { clip-path: inset(0 0 0 0); } }
+@keyframes tr-horzclose { 0%,20% { clip-path: inset(0 50% 0 50%); } 79%,100% { clip-path: inset(0 0 0 0); } }
+@keyframes tr-hlslice { 0%,20% { clip-path: inset(0 100% 0 0); } 79%,100% { clip-path: inset(0 0 0 0); } }
+@keyframes tr-hrslice { 0%,20% { clip-path: inset(0 0 0 100%); } 79%,100% { clip-path: inset(0 0 0 0); } }
+@keyframes tr-vuslice { 0%,20% { clip-path: inset(100% 0 0 0); } 79%,100% { clip-path: inset(0 0 0 0); } }
+@keyframes tr-vdslice { 0%,20% { clip-path: inset(0 0 100% 0); } 79%,100% { clip-path: inset(0 0 0 0); } }
+@keyframes tr-fadegrays { 0%,20% { opacity: 0; filter: grayscale(1); } 50% { opacity: 1; filter: grayscale(1); } 79%,100% { opacity: 1; filter: grayscale(0); } }
+@keyframes tr-fadefast { 0%,20% { opacity: 0; } 45%,100% { opacity: 1; } }
+@keyframes tr-fadeslow { 0%,20% { opacity: 0; } 79%,100% { opacity: 1; } }
+@keyframes tr-squeezeh { 0%,20% { transform: scaleX(1); } 50% { transform: scaleX(0.1); } 79%,100% { transform: scaleX(1); opacity: 0; } }
+@keyframes tr-squeezev { 0%,20% { transform: scaleY(1); } 50% { transform: scaleY(0.1); } 79%,100% { transform: scaleY(1); opacity: 0; } }
+@keyframes tr-zoomin { 0%,20% { transform: scale(0.3); opacity: 0; } 79%,100% { transform: scale(1); opacity: 1; } }
+@keyframes tr-hlwind { 0%,20% { transform: translateX(100%) skewX(-12deg); } 79%,100% { transform: translateX(0) skewX(0); } }
+@keyframes tr-hrwind { 0%,20% { transform: translateX(-100%) skewX(12deg); } 79%,100% { transform: translateX(0) skewX(0); } }
+@keyframes tr-vuwind { 0%,20% { transform: translateY(100%) skewY(-8deg); } 79%,100% { transform: translateY(0) skewY(0); } }
+@keyframes tr-vdwind { 0%,20% { transform: translateY(-100%) skewY(8deg); } 79%,100% { transform: translateY(0) skewY(0); } }
+@keyframes tr-coverleft { 0%,20% { transform: translateX(100%); } 79%,100% { transform: translateX(0); } }
+@keyframes tr-coverright { 0%,20% { transform: translateX(-100%); } 79%,100% { transform: translateX(0); } }
+@keyframes tr-coverup { 0%,20% { transform: translateY(100%); } 79%,100% { transform: translateY(0); } }
+@keyframes tr-coverdown { 0%,20% { transform: translateY(-100%); } 79%,100% { transform: translateY(0); } }
+@keyframes tr-revealleft { 0%,20% { transform: translateX(0); } 79%,100% { transform: translateX(100%); } }
+@keyframes tr-revealright { 0%,20% { transform: translateX(0); } 79%,100% { transform: translateX(-100%); } }
+@keyframes tr-revealup { 0%,20% { transform: translateY(0); } 79%,100% { transform: translateY(100%); } }
+@keyframes tr-revealdown { 0%,20% { transform: translateY(0); } 79%,100% { transform: translateY(-100%); } }
