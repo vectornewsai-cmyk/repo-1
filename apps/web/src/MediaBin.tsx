@@ -17,7 +17,10 @@ function MediaCard({ item }: { item: MediaItem }) {
     <div
       className="media-card"
       draggable
-      onDragStart={(e) => e.dataTransfer.setData("text/media-id", item.id)}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/media-id", item.id);
+        e.dataTransfer.effectAllowed = "copy";
+      }}
       title={`${item.name} — ${t("mediabin.dragHint")}`}
     >
       <div className="media-thumb">
@@ -78,7 +81,16 @@ export function MediaBin() {
         ))}
         {media.length === 0 && (
           <div className="media-empty">
-            {t("mediabin.empty")}
+            <p>{t("mediabin.empty")}</p>
+            {/* K5: hướng dẫn 3 bước cho người mới — thay cho một dòng trống trơn. */}
+            <ol className="media-empty-steps">
+              <li>Nhấn “＋ Nhập file” để thêm video, audio hoặc ảnh.</li>
+              <li>Kéo thả file vào track timeline (hoặc bấm “＋ Thêm”).</li>
+              <li>Bấm “⬇ Xuất bản” để xuất video.</li>
+            </ol>
+            <button className="mini-btn" onClick={() => fileRef.current?.click()}>
+              {t("mediabin.import")}
+            </button>
           </div>
         )}
       </div>

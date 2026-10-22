@@ -4,7 +4,7 @@
  * - chọn clip video/audio -> opacity/volume/fade/transition, thời gian
  * - không chọn gì -> thông tin dự án + phím tắt
  */
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useStore } from "./store";
 import { fmtTime } from "./lib";
 import { TransitionPanel } from "./components/transitions";
@@ -51,6 +51,36 @@ function NumField({
   );
 }
 
+/**
+ * K5: nhóm điều khiển thành section gập/mở được — panel clip video trước
+ * đây là một cuộn dài 10+ nhóm khó quét mắt. Mặc định mở hết (không giấu
+ * tính năng), user gập nhóm ít dùng để tập trung.
+ */
+function Section({
+  title,
+  children,
+  defaultOpen = true,
+}: {
+  title: string;
+  children: ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="ins-section">
+      <button
+        type="button"
+        className="section-head"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <span aria-hidden="true">{open ? "▾" : "▸"}</span> {title}
+      </button>
+      {open && <div className="section-body">{children}</div>}
+    </div>
+  );
+}
+
 function ProjectInfo() {
   const spec = useStore((s) => s.spec);
   const st = useStore.getState();
@@ -67,9 +97,13 @@ function ProjectInfo() {
       </div>
       <div className="panel-head" style={{ marginTop: 16 }}>⌨️ Phím tắt</div>
       <ul className="shortcuts">
-        <li><kbd>Space</kbd> phát / tạm dừng</li>
+        <li><kbd>Space</kbd> / <kbd>K</kbd> phát / tạm dừng</li>
         <li><kbd>S</kbd> tách clip tại playhead</li>
         <li><kbd>Delete</kbd> xoá clip đang chọn</li>
+        <li><kbd>J</kbd> / <kbd>L</kbd> tua lại / tới 5 giây</li>
+        <li><kbd>←</kbd> / <kbd>→</kbd> tua từng frame</li>
+        <li><kbd>Home</kbd> / <kbd>End</kbd> về đầu / cuối video</li>
+        <li><kbd>F</kbd> xem preview toàn màn hình</li>
         <li><kbd>Shift</kbd>+click thêm clip vào vùng chọn</li>
         <li><kbd>Ctrl</kbd>+click bật/tắt chọn từng clip</li>
         <li>Kéo vùng trống trên timeline để chọn nhiều</li>
@@ -248,8 +282,9 @@ export function Inspector() {
           </label>
           <p className="tips">💡 Mẹo: kéo chữ trực tiếp trên preview cũng được.</p>
           <TtsButton text={clip.text} />
-          <div className="panel-head" style={{ marginTop: 12 }}>🎞️ Keyframe animation</div>
-          <KeyframePanel />
+          <Section title="🎞️ Keyframe animation">
+            <KeyframePanel />
+          </Section>
         </>
       )}
 
@@ -273,59 +308,69 @@ export function Inspector() {
               <option value="mute">Tắt tiếng gốc</option>
             </select>
           </label>
-          <div className="panel-head" style={{ marginTop: 12 }}>🔀 Chuyển cảnh</div>
-          <TransitionPanel
-            value={clip.transitionOut?.type ?? "none"}
-            duration={clip.transitionOut?.duration ?? 0.5}
-            onChange={(type, duration) =>
-              patch({ transitionOut: { type: type as never, duration } })
-            }
-          />
-          <div className="panel-head" style={{ marginTop: 12 }}>⏩ Tốc độ</div>
-          <SpeedPanel />
-          <div className="panel-head" style={{ marginTop: 12 }}>🎚️ Hiệu ứng âm thanh (tiếng gốc)</div>
-          <AudioFxPanel />
-          <div className="panel-head" style={{ marginTop: 12 }}>🎭 Xoá phông</div>
-          <ChromaPanel />
-          <div className="panel-head" style={{ marginTop: 12 }}>🤖 Xoá nền AI</div>
-          <BgRemovePanel
-            mediaItem={st.media.find((m) => m.name === clip.src)}
-          />
-          <div className="panel-head" style={{ marginTop: 12 }}>🎨 Bộ lọc màu</div>
-          <LutPicker
-            value={clip.filter?.lut}
-            onChange={(lut) => {
-              const next = { ...(clip.filter ?? {}) };
-              if (lut) next.lut = lut;
-              else delete next.lut;
-              patch({ filter: Object.keys(next).length > 0 ? next : undefined });
-            }}
-          />
-          <div className="panel-head" style={{ marginTop: 12 }}>🎚️ Chỉnh màu thủ công</div>
-          <ColorAdjustPanel
-            value={clip.filter?.color}
-            onChange={(color) => {
-              const next = { ...(clip.filter ?? {}) };
-              if (color) next.color = color;
-              else delete next.color;
-              patch({ filter: Object.keys(next).length > 0 ? next : undefined });
-            }}
-          />
-          <div className="panel-head" style={{ marginTop: 12 }}>✨ Hiệu ứng</div>
-          <EffectPanel />
-          <div className="panel-head" style={{ marginTop: 12 }}>🎞️ Keyframe animation</div>
-          <KeyframePanel />
-          <div className="panel-head" style={{ marginTop: 12 }}>🎬 Tách cảnh</div>
-          <button onClick={() => setSceneOpen(true)}>
-            🔍 Tự động tách cảnh…
-          </button>
-          {sceneOpen && (
-            <SceneModal
-              trackId={track.id}
-              clipId={clip.id}
-              onClose={() => setSceneOpen(false)}
+          <Section title="🔀 Chuyển cảnh">
+            <TransitionPanel
+              value={clip.transitionOut?.type ?? "none"}
+              duration={clip.transitionOut?.duration ?? 0.5}
+              onChange={(type, duration) =>
+                patch({ transitionOut: { type: type as never, duration } })
+              }
             />
-          )}
+          </Section>
+          <Section title="⏩ Tốc độ">
+            <SpeedPanel />
+          </Section>
+          <Section title="🎚️ Hiệu ứng âm thanh (tiếng gốc)">
+            <AudioFxPanel />
+          </Section>
+          <Section title="🎭 Xoá phông">
+            <ChromaPanel />
+          </Section>
+          <Section title="🤖 Xoá nền AI">
+            <BgRemovePanel
+              mediaItem={st.media.find((m) => m.name === clip.src)}
+            />
+          </Section>
+          <Section title="🎨 Bộ lọc màu">
+            <LutPicker
+              value={clip.filter?.lut}
+              onChange={(lut) => {
+                const next = { ...(clip.filter ?? {}) };
+                if (lut) next.lut = lut;
+                else delete next.lut;
+                patch({ filter: Object.keys(next).length > 0 ? next : undefined });
+              }}
+            />
+          </Section>
+          <Section title="🎚️ Chỉnh màu thủ công">
+            <ColorAdjustPanel
+              value={clip.filter?.color}
+              onChange={(color) => {
+                const next = { ...(clip.filter ?? {}) };
+                if (color) next.color = color;
+                else delete next.color;
+                patch({ filter: Object.keys(next).length > 0 ? next : undefined });
+              }}
+            />
+          </Section>
+          <Section title="✨ Hiệu ứng">
+            <EffectPanel />
+          </Section>
+          <Section title="🎞️ Keyframe animation">
+            <KeyframePanel />
+          </Section>
+          <Section title="🎬 Tách cảnh">
+            <button onClick={() => setSceneOpen(true)}>
+              🔍 Tự động tách cảnh…
+            </button>
+            {sceneOpen && (
+              <SceneModal
+                trackId={track.id}
+                clipId={clip.id}
+                onClose={() => setSceneOpen(false)}
+              />
+            )}
+          </Section>
         </>
       )}
 
@@ -343,10 +388,12 @@ export function Inspector() {
             <NumField label="Mờ vào (s)" value={clip.fadeIn ?? 0} onChange={(v) => patch({ fadeIn: Math.max(0, v) })} />
             <NumField label="Mờ ra (s)" value={clip.fadeOut ?? 0} onChange={(v) => patch({ fadeOut: Math.max(0, v) })} />
           </div>
-          <div className="panel-head" style={{ marginTop: 12 }}>🎚️ Hiệu ứng âm thanh</div>
-          <AudioFxPanel />
-          <div className="panel-head" style={{ marginTop: 12 }}>⏩ Tốc độ</div>
-          <SpeedPanel />
+          <Section title="🎚️ Hiệu ứng âm thanh">
+            <AudioFxPanel />
+          </Section>
+          <Section title="⏩ Tốc độ">
+            <SpeedPanel />
+          </Section>
         </>
       )}
 
@@ -357,17 +404,18 @@ export function Inspector() {
         </>
       )}
 
-      <div className="panel-head" style={{ marginTop: 12 }}>⏱️ Thời gian</div>
-      <div className="field-row">
-        <NumField label="Bắt đầu (s)" value={clip.start} onChange={(v) => patch({ start: Math.max(0, v) })} />
-        <NumField label="Độ dài (s)" value={clip.duration} onChange={(v) => patch({ duration: Math.max(0.2, v) })} />
-      </div>
-      {clip.kind !== "text" && clip.kind !== "sticker" && clip.kind !== "image" && (
+      <Section title="⏱️ Thời gian">
         <div className="field-row">
-          <NumField label="In (s)" value={(clip as { in: number }).in} onChange={(v) => patch({ in: Math.max(0, v), out: Math.max(0, v) + clip.duration } as Partial<typeof clip>)} />
-          <NumField label="Out (s)" value={(clip as { out: number }).out} onChange={(v) => { const cin = (clip as { in: number }).in; patch({ out: Math.max(cin + 0.2, v), duration: Math.max(0.2, v - cin) } as Partial<typeof clip>); }} />
+          <NumField label="Bắt đầu (s)" value={clip.start} onChange={(v) => patch({ start: Math.max(0, v) })} />
+          <NumField label="Độ dài (s)" value={clip.duration} onChange={(v) => patch({ duration: Math.max(0.2, v) })} />
         </div>
-      )}
+        {clip.kind !== "text" && clip.kind !== "sticker" && clip.kind !== "image" && (
+          <div className="field-row">
+            <NumField label="In (s)" value={(clip as { in: number }).in} onChange={(v) => patch({ in: Math.max(0, v), out: Math.max(0, v) + clip.duration } as Partial<typeof clip>)} />
+            <NumField label="Out (s)" value={(clip as { out: number }).out} onChange={(v) => { const cin = (clip as { in: number }).in; patch({ out: Math.max(cin + 0.2, v), duration: Math.max(0.2, v - cin) } as Partial<typeof clip>); }} />
+          </div>
+        )}
+      </Section>
       <button className="danger-btn" onClick={() => st.deleteSelection()}>
         🗑 Xoá clip này
       </button>

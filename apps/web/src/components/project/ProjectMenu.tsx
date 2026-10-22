@@ -20,6 +20,7 @@ import {
   exportArchive,
   importArchive,
 } from "../../lib/archive";
+import { pushToast } from "../../lib/toast";
 
 /** Lưu project hiện tại thành file. Trả về warnings để caller hiển thị. */
 export function saveCurrentProject(): string[] {
@@ -30,7 +31,8 @@ export function saveCurrentProject(): string[] {
 
 function warnList(warnings: string[]): void {
   if (warnings.length > 0) {
-    window.alert("Đã xong, nhưng có lưu ý:\n- " + warnings.join("\n- "));
+    // K5: toast thay window.alert (không chặn luồng làm việc).
+    pushToast("Đã xong, nhưng có lưu ý: " + warnings.join("; "), "info");
   }
 }
 
@@ -72,7 +74,7 @@ export function ProjectMenu() {
     if (!confirmDiscard()) return;
     const res = await loadProject(f);
     if (!res.ok || !res.spec) {
-      window.alert("Không mở được file:\n- " + res.errors.join("\n- "));
+      pushToast("Không mở được file: " + res.errors.join("; "), "error");
       return;
     }
     const st = useStore.getState();
@@ -108,15 +110,15 @@ export function ProjectMenu() {
       .map((m) => ({ name: m.name, data: m.file as File }));
     const res = await exportArchive(st.spec, st.spec.meta.name, mediaSources);
     if (!res.ok || !res.blob) {
-      window.alert("Không xuất được bản nén:\n- " + res.errors.join("\n- "));
+      pushToast("Không xuất được bản nén: " + res.errors.join("; "), "error");
       return;
     }
     downloadArchive(res.blob, st.spec.meta.name);
     const sizeMB = (res.stats.zipBytes / 1024 / 1024).toFixed(1);
     const msg =
       `Đã xuất bản nén (${res.stats.mediaFiles} media, ${sizeMB} MB).` +
-      (res.warnings.length > 0 ? "\n\nLưu ý:\n- " + res.warnings.join("\n- ") : "");
-    window.alert(msg);
+      (res.warnings.length > 0 ? " Lưu ý: " + res.warnings.join("; ") : "");
+    pushToast(msg, "success");
   };
 
   /** Nhập file .vcut.zip: giải nén → load project + media vào editor. */
@@ -129,7 +131,7 @@ export function ProjectMenu() {
     if (!confirmDiscard()) return;
     const res = await importArchive(f);
     if (!res.ok || !res.spec) {
-      window.alert("Không nhập được bản nén:\n- " + res.errors.join("\n- "));
+      pushToast("Không nhập được bản nén: " + res.errors.join("; "), "error");
       return;
     }
     const st = useStore.getState();
