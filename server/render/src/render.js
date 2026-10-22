@@ -53,7 +53,7 @@ const { buildAudioEffectsFilters } = require("./audioroute");
 // P0-03: image clip (ảnh tĩnh thành media type chính thức).
 const { buildImageChain } = require("./image");
 // R1-011: opacity/alpha cho video clip.
-const { buildOpacityFilter } = require("./opacity");
+const { buildOpacityFilter, buildOpacityKeyframesChain } = require("./opacity");
 // Batch J plugin wiring: nối PluginRegistry vào pipeline (chỉ khi spec có `plugins`).
 const { createPluginHost } = require("./plugins");
 
@@ -302,9 +302,11 @@ function buildFilterGraph(spec, ctx) {
       // LUT filter + video effects: áp sau scale/pad (trên pixel output).
       // R1-075: chỉnh màu thủ công áp TRƯỚC LUT (correction → look).
       // buildLutFilter cần assetsDir — lấy từ ctx.
+      // K3: LUT user (`user-...`) resolve từ mediaDir của job (ctx.userLutsDir),
+      // nơi bridge đã lưu file `__lut_<id>.cube` upload kèm spec.
       const colorFilter = buildColorAdjustFilter(clip.filter?.color);
       const colorChain = colorFilter ? `,${colorFilter}` : "";
-      const lutChain = clip.filter?.lut ? `,${buildLutFilter(clip.filter.lut, ctx.assetsDir)}` : "";
+      const lutChain = clip.filter?.lut ? `,${buildLutFilter(clip.filter.lut, ctx.assetsDir, ctx.userLutsDir)}` : "";
       const fxChain = buildEffectsChain(clip.effects);
       const effectsChain = fxChain ? `,${fxChain}` : "";
       // Plugin (Batch J wiring): filters từ hook onClipRender của các plugin
@@ -400,11 +402,26 @@ function buildFilterGraph(spec, ctx) {
   let base = "[base0]";
   for (const u of units) {
     const p = lbl("pl"), b = lbl("base");
-    // R1-011: opacity — áp sau khi unit đã hoàn chỉnh (kể cả xfade merge):
-    // format=rgba + colorchannelmixer nhân alpha, overlay composite bằng alpha.
-    // opacity ≈ 1 → không thêm filter (giữ nguyên pipeline cũ, không tốn hiệu năng).
-    const opFilter = buildOpacityFilter(u.clip.opacity);
-    const opChain = opFilter ? `${opFilter},` : "";
+    // Opacity — áp sau khi unit đã hoàn chỉnh (kể cả xfade merge):
+    // - Tĩnh (R1-011): format=rgba + colorchannelmixer nhân alpha, overlay
+    //   composite bằng alpha. opacity ≈ 1 → không thêm filter (giữ nguyên
+    //   pipeline cũ, không tốn hiệu năng).
+    // - Keyframes (K1, Phase 6, chỉ unit đơn — unit đã merge thì validator
+    //   đã cảnh báo và rơi về nhánh tĩnh bên dưới): chuỗi tách nhánh qua
+    //   alphamerge (xem opacity.js — colorchannelmixer không nhận biến t,
+    //   geq không đọc được alpha gốc). Chuỗi này KHÔNG tuyến tính nên phải
+    //   push fc entry riêng và đổi label đầu vào của bước sau.
+    let head = u.label;
+    let headChain = "";
+    const hasOpKf = !u.merged && u.clip.animations && u.clip.animations.opacity;
+    if (hasOpKf) {
+      const ch = buildOpacityKeyframesChain(u.label, u.clip.animations.opacity, lbl);
+      for (const e of ch.entries) fc.push(e);
+      head = ch.outLabel;
+    } else {
+      const opFilter = buildOpacityFilter(u.clip.opacity);
+      headChain = opFilter ? `${opFilter},` : "";
+    }
     // Keyframes scale/rotation (chỉ unit đơn, không qua xfade): chuỗi scale
     // eval=frame + rotate theo biểu thức nội suy, chèn SAU opacity và TRƯỚC
     // setpts lên timeline — tại điểm này timestamp của frame là thời gian cục
@@ -412,7 +429,7 @@ function buildFilterGraph(spec, ctx) {
     const srChain = !u.merged && hasScaleRotation(u.clip.animations)
       ? `${buildKeyframeTransform(u.clip.animations)},`
       : "";
-    fc.push(`${u.label}${opChain}${srChain}setpts=PTS+${num(u.start)}/TB[${p}]`);
+    fc.push(`${head}${headChain}${srChain}setpts=PTS+${num(u.start)}/TB[${p}]`);
     let ox = "0", oy = "0";
     // Khi có scale/rotation, unit không còn đúng kích thước khung hình nữa:
     // overlay_w/overlay_h thay đổi theo từng frame và biểu thức overlay (kể cả
@@ -485,6 +502,38 @@ function buildFilterGraph(spec, ctx) {
       if (clip.style.animation === "typewriter") continue; // xử lý riêng bằng ASS bên dưới
       const st = clip.style;
       const S = clip.start, E = clip.start + clip.duration;
+      // K1 (Phase 6): text clip có keyframes scale/rotation — drawtext không
+      // làm được nên chữ đã được vẽ trước ra PNG trong suốt (main() +
+      // render_text_png.py; clip nào fallback vì thiếu PIL thì không có trong
+      // ctx.textSrPng và đi nhánh drawtext cũ bên dưới).
+      // Chain PNG mirror pattern video unit: loop → fps cố định → setpts về 0
+      // (để t = thời gian cục bộ) → opacity keyframes (nếu có, qua alphamerge)
+      // → SR transform → trim về đúng duration → setpts lên timeline →
+      // overlay với x/y expressions (giống SR video: x/y là phần của khoảng
+      // trống còn lại, khớp ngữ nghĩa drawtext x=(w-text_w)*sx).
+      if (ctx.textSrPng && ctx.textSrPng.has(clip.id)) {
+        const idx = ctx.textSrPng.get(clip.id);
+        const t0 = lbl("txt0");
+        fc.push(`[${idx}:v]loop=loop=-1:size=32767,fps=${fps},setpts=PTS-STARTPTS[${t0}]`);
+        let cur = `[${t0}]`;
+        if (clip.animations.opacity) {
+          const ch = buildOpacityKeyframesChain(cur, clip.animations.opacity, lbl);
+          for (const e of ch.entries) fc.push(e);
+          cur = ch.outLabel;
+        }
+        // rotateExpand: PNG text crop sát nên rotate phải mở output ra hình
+        // vuông đường chéo, nếu không chữ bị cắt khi xoay (rotate mặc định
+        // giữ iw/ih — đúng cho video full-frame nhưng sai cho PNG text).
+        const srT = buildKeyframeTransform(clip.animations, { rotateExpand: true });
+        const srChainTxt = srT ? `${srT},` : "";
+        const tp = lbl("txtp");
+        fc.push(`${cur}${srChainTxt}trim=end=${num(clip.duration)},setpts=PTS+${num(S)}/TB[${tp}]`);
+        const oe = buildOverlayExprs(clip.animations, S);
+        const tb = lbl("txtb");
+        fc.push(`${vcur}[${tp}]overlay=x='${oe.x}':y='${oe.y}':eof_action=pass[${tb}]`);
+        vcur = `[${tb}]`;
+        continue;
+      }
       let fx, fy, extra = "";
       if (clip.animations && (clip.animations.x || clip.animations.y || clip.animations.opacity)) {
         const te = buildTextExprs(clip.animations, st, S);
@@ -712,6 +761,43 @@ function main() {
     }
   }
 
+  // K1 (Phase 6): text clip có keyframes scale/rotation — vẽ trước ra PNG
+  // trong suốt bằng PIL (render_text_png.py). Clip nào vẽ thất bại (thiếu
+  // python3/PIL/font) thì fallback về nhánh drawtext cũ + cảnh báo rõ
+  // (không fail cả render vì 1 clip chữ — hành vi cũ vốn đã cảnh báo).
+  const textSrPng = new Map(); // clipId -> pngPath (chỉ clip vẽ thành công)
+  const textSrPngPaths = [];
+  for (const track of spec.tracks.filter((t) => t.kind === "text" && !t.hidden)) {
+    for (const clip of track.clips) {
+      if (clip.style.animation === "typewriter") continue;
+      if (!(clip.animations && (clip.animations.scale || clip.animations.rotation))) continue;
+      const fontFile = fontFiles.get(clip.id);
+      if (!fontFile) continue; // font đã fail fast ở bước trên nên không tới đây
+      const pngPath = path.join(os.tmpdir(), `repo1-textsr-${process.pid}-${clip.id}.png`);
+      const pad = Math.max(4, Math.round(clip.style.fontSize / 4)); // khớp boxborderw của drawtext
+      const pyArgs = [
+        path.join(__dirname, "render_text_png.py"),
+        "--font", fontFile,
+        "--size", String(clip.style.fontSize),
+        "--color", clip.style.color,
+        "--text", clip.text,
+        "--out", pngPath,
+        "--pad", String(pad),
+      ];
+      if (clip.style.backgroundColor) pyArgs.push("--bg", clip.style.backgroundColor);
+      const pr = spawnSync("python3", pyArgs, { stdio: ["ignore", "pipe", "pipe"] });
+      if (pr.error || pr.status !== 0) {
+        console.error(`⚠️  text clip "${clip.id}": không vẽ được PNG cho scale/rotation ` +
+          `(${(pr.stderr || "").toString().trim().slice(-200) || (pr.error && pr.error.message) || "lỗi không rõ"} — ` +
+          `cần python3 + Pillow) → fallback về drawtext, scale/rotation bị bỏ qua`);
+        continue;
+      }
+      textSrPng.set(clip.id, pngPath);
+      textSrPngPaths.push(pngPath);
+      log(`   text SR "${clip.id}" → ${pngPath}`);
+    }
+  }
+
   // 5. Đánh chỉ số input cho từng file media (mỗi file chỉ -i một lần)
   const mediaIndex = new Map();
   const orderedMedia = [];
@@ -725,17 +811,30 @@ function main() {
   for (const track of spec.tracks)
     for (const clip of track.clips)
       if (clip.src) register(clip.src);
+  // Đăng ký PNG text SR làm input (đường dẫn tuyệt đối, không qua absOf).
+  const textSrPngIdx = new Map();
+  for (const [clipId, pngPath] of textSrPng) {
+    if (!mediaIndex.has(pngPath)) {
+      mediaIndex.set(pngPath, orderedMedia.length);
+      orderedMedia.push(pngPath);
+    }
+    textSrPngIdx.set(clipId, mediaIndex.get(pngPath));
+  }
 
   // 6. Dựng filter graph
   const { filterComplex, vout, aout, assFile } = buildFilterGraph(spec, {
     W: meta.width, H: meta.height, fps: meta.fps, D,
     mediaIndex, absOf, transitions: v.transitions, fontFiles,
     assetsDir: path.join(__dirname, "..", "..", "..", "assets"),
+    // K3: LUT user resolve từ mediaDir (file __lut_<id>.cube upload kèm spec).
+    userLutsDir: mediaDir,
     mediaProbes: mv.probes, // R1-015 fix: check audio stream trước khi inherit
     // Plugin wiring: null khi spec không khai plugin (hành vi cũ 100%).
     pluginFiltersFor: pluginHost
       ? (clip) => pluginHost.filtersForClip(clip, { width: meta.width, height: meta.height, fps: meta.fps })
       : null,
+    // K1: map clipId -> input index của PNG text SR (rỗng nếu không có clip SR).
+    textSrPng: textSrPngIdx,
   });
 
   // Plugin: lỗi hook onClipRender gom được khi dựng graph — in ra stderr
@@ -816,6 +915,12 @@ function main() {
     try { fs.unlinkSync(assFile); } catch { /* bỏ qua */ }
   } else if (assFile) {
     console.error(`   (giữ file ASS tạm để debug: ${assFile})`);
+  }
+  // Dọn PNG text SR tạm (giữ lại khi lỗi để debug, giống ASS).
+  if (r.status === 0) {
+    for (const p of textSrPngPaths) { try { fs.unlinkSync(p); } catch { /* bỏ qua */ } }
+  } else if (textSrPngPaths.length > 0) {
+    console.error(`   (giữ PNG text SR tạm để debug: ${textSrPngPaths.join(", ")})`);
   }
 
   if (r.error) {
