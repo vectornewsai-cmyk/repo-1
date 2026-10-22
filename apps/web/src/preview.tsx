@@ -2,7 +2,7 @@
  * Preview canvas: vẽ từng frame theo playhead bằng Canvas 2D,
  * đồng bộ phát lại video/audio thật, hỗ trợ kéo chữ trực tiếp.
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { TextClip, VideoClip, VideoSpec } from "@repo-1/video-spec";
 import { isSpeedable, sourceTimeAt, stickerUrl } from "@repo-1/video-spec";
 import type { ImageClip, StickerClip } from "@repo-1/video-spec";
@@ -551,9 +551,29 @@ function syncMedia(
   if (!playing) pool.pauseAll();
 }
 
+/**
+ * K5: bật/tắt fullscreen cho khung preview. Khung preview có id cố định
+ * để phím F (xử lý ở App) cũng gọi được mà không cần prop drilling.
+ * Canvas tự co theo wrap mỗi frame nên fullscreen không cần resize tay.
+ */
+export function togglePreviewFullscreen(): void {
+  const el = document.getElementById("vcut-preview-wrap");
+  if (!el) return;
+  if (document.fullscreenElement) {
+    void document.exitFullscreen();
+  } else {
+    void el.requestFullscreen?.();
+  }
+}
+
 export function PreviewCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  // K5: trạng thái fullscreen (đổi icon nút) + số clip để hiện gợi ý khi trống.
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const clipCount = useStore((s) =>
+    s.spec.tracks.reduce((n, t) => n + t.clips.length, 0),
+  );
   const poolRef = useRef<MediaPool | null>(null);
   const dragRef = useRef<{ trackId: string; clipId: string; dx: number; dy: number } | null>(null);
   const engineRef = useRef<AudioEngine | null>(null);
@@ -750,8 +770,15 @@ export function PreviewCanvas() {
     dragRef.current = null;
   };
 
+  // K5: theo dõi fullscreen để đổi tiêu đề nút (listener gắn 1 lần).
+  useEffect(() => {
+    const onFs = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+
   return (
-    <div ref={wrapRef} className="preview-wrap">
+    <div ref={wrapRef} className="preview-wrap" id="vcut-preview-wrap">
       <canvas
         ref={canvasRef}
         className="preview-canvas"
@@ -763,6 +790,22 @@ export function PreviewCanvas() {
       <div className="vu-meter" title="Mức âm thanh preview">
         <div ref={vuBarRef} className="vu-meter-fill" />
       </div>
+      {/* K5: nút fullscreen góc trên-phải (phím F cũng bật/tắt được). */}
+      <button
+        className="preview-fs-btn"
+        title={isFullscreen ? "Thoát toàn màn hình (F)" : "Xem toàn màn hình (F)"}
+        aria-label={isFullscreen ? "Thoát toàn màn hình" : "Xem toàn màn hình"}
+        onClick={togglePreviewFullscreen}
+      >
+        <span aria-hidden="true">⛶</span>
+      </button>
+      {/* K5: gợi ý khi project chưa có clip nào — không chặn thao tác (pointer-events: none). */}
+      {clipCount === 0 && (
+        <div className="preview-empty-hint" aria-hidden="true">
+          <div className="preview-empty-title">Chưa có clip nào</div>
+          <div>Nhập file vào thư viện, rồi kéo thả vào timeline để bắt đầu.</div>
+        </div>
+      )}
     </div>
   );
 }
