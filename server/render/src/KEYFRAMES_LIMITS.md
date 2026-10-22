@@ -19,14 +19,36 @@ chưa làm được ở thời điểm hiện tại. Không phóng đại, khôn
 | **x/y bắt đầu có tác dụng** khi clip có scale/rotation (element nhỏ hơn khung) | ✅ | Test A2: scale 0.5 + x 0→1, tâm rect đo được 176 → 464px |
 | Preview: scale/rotation + vị trí hình bao cho video clip (canvas transform) | ✅ | `videoElementPlacement` trong previewEngine.ts; `preview-engine.test.cjs` mục 10 (tổng 198 assertion) |
 | SR + transition: validator **cảnh báo** và render bỏ qua SR cho unit đã merge | ✅ | Test C trong `test_keyframes_sr.js` (rect giữ nguyên 320×180 ở t=1.0) |
+| Render video: **opacity keyframes** (alphamerge qua geq, giữ alpha gốc) | ✅ | `node src/test_k1.js` A: (240,0,10) → (125,0,126) → (11,0,242) theo 1→0 |
+| Render text: **scale/rotation** qua PNG PIL + overlay SR (trừ typewriter) | ✅ | `node src/test_k1.js` E/F: scale bbox ×1.79, rotation lật aspect 2.74 → 2.87 |
 | Validate shape keyframes (t trong [0, duration], easing hợp lệ, ≤128 kf/prop) | ✅ | `validateAnimations` (cả TS lẫn JS) |
 
 ## Chưa làm được / giới hạn của scale-rotation (nói thẳng)
 
-1. **`scale`/`rotation` của TEXT clip vẫn chưa render được.**
-   - `drawtext` không cho `fontsize` là biểu thức theo thời gian → không scale chữ từng frame.
-   - `drawtext` không có xoay. (Video clip thì đã render thật cả 2 — xem bảng trên.)
-   - Validator cảnh báo riêng cho text clip để không ai tưởng đã áp dụng.
+1. **`scale`/`rotation` của TEXT clip — ĐÃ XONG cho drawtext thường (K1, Phase 6).**
+   - `drawtext` không cho `fontsize` là biểu thức theo thời gian và không có
+     xoay, nên K1 vẽ chữ trước ra PNG trong suốt bằng PIL
+     (`render_text_png.py`, cùng font file đã resolve + fontsize + màu + box)
+     rồi đưa qua pipeline overlay giống video có SR: `loop → fps → setpts
+     về 0 → (geq opacity nếu có) → scale eval=frame + rotate → trim →
+     setpts lên timeline → overlay` với `buildOverlayExprs` (cùng ngữ nghĩa
+     vị trí như drawtext).
+   - Rotate cho PNG text dùng `ow/oh` mở rộng ra hình vuông đường chéo
+     (`rotateExpand`) vì rotate mặc định giữ iw/ih sẽ CẮT chữ khi xoay —
+     đã kiểm chứng pixel (`test_k1.js` F: bbox 192x70 ở ~7° → 67x192 ở ~83°;
+     scale E: bbox rộng 203 → 363, tỉ lệ 1.79 ≈ 2).
+   - Validator nay CHỈ cảnh báo SR cho text clip **typewriter** (ASS không
+     scale/rotate theo thời gian được); text thường có SR không còn cảnh báo.
+   - Clip có keyframes x/y/opacity mà KHÔNG có scale/rotation vẫn đi nhánh
+     drawtext cũ (đã đúng, không đổi output pixel); keyframes thắng textfx/
+     fadeUp như quy tắc cũ, không cảnh báo thêm.
+   - Fallback: thiếu python3/PIL thì clip rơi về drawtext + cảnh báo rõ trên
+     stderr (scale/rotation bị bỏ qua), render không fail.
+   - Giới hạn còn lại: emoji màu PIL vẽ có thể khác drawtext (CBDT vs
+     FreeType monochrome); khoảng cách dòng đa dòng xấp xỉ (font metrics);
+     scale + rotation động cùng lúc: rotate output cố định ở frame đầu nên
+     scale tăng sau đó có thể bị cắt (cùng tính chất với video SR, xem mục
+     dưới); preview chưa mirror text SR (apps/web ngoài phạm vi K1).
 2. **`scale`/`rotation` bị BỎ QUA khi clip dính transition** (cả clip trước lẫn
    clip sau của cặp). Unit bị gộp qua `xfade` trước khi đặt lên timeline, và
    transform chỉ áp cho unit đơn. Validator **cảnh báo rõ** cho từng clip như
@@ -35,9 +57,13 @@ chưa làm được ở thời điểm hiện tại. Không phóng đại, khôn
 3. **Scale bị clamp về [0.01, 8] khi render** (tránh frame 0px / nổ bộ nhớ).
    Keyframe nằm ngoài khoảng này vẫn lưu trong spec; validator cảnh báo và
    render dùng giá trị đã clamp. Preview clamp giống hệt.
-4. **`opacity` KEYFRAME của video clip vẫn chưa render** (opacity TĨNH của clip
-   thì render thật từ R1-011). Chuỗi transform scale/rotate chưa nhân alpha
-   theo keyframe.
+4. **`opacity` KEYFRAME của video clip — ĐÃ XONG (K1, Phase 6).** Chuỗi
+   alphamerge qua geq (xem `OPACITY_LIMITS.md` mục 3): đỏ trên nền xanh
+   blend 1→0 đúng theo thời gian (`test_k1.js` A: t=0.2 (240,0,10), t=2.0
+   (125,0,126), t=3.8 (11,0,242)). Opacity keyframes + transition → validator
+   cảnh báo, render rơi về opacity tĩnh của clip đích. Cả opacity tĩnh và
+   keyframes cùng set → keyframes thắng, validator cảnh báo. Giá trị ngoài
+   [0,1] bị chặn ở validate (cả JS lẫn TS mirror).
 5. **Hành vi x/y thay đổi khi có scale/rotation** (đã kiểm chứng, không phải bug):
    không có SR → unit luôn full khung hình nên `(main_w - overlay_w) = 0` và
    x/y vô hình (quirk cũ, giữ nguyên). Có SR → overlay_w/h là kích thước hình
