@@ -1596,3 +1596,143 @@ button.danger {
   border-color: var(--err, #dc2626);
   color: #fff;
 }
+/* ============ K5: Toasts (thay window.alert) ============ */
+.toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: min(420px, 90vw);
+}
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #f3f4f6;
+  background: #1f2937;
+  border: 1px solid var(--border, #374151);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.toast-success {
+  border-color: #34d399;
+}
+.toast-error {
+  border-color: #f87171;
+}
+.toast-msg {
+  flex: 1;
+  white-space: pre-line;
+}
+.toast-close {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.toast-close:hover {
+  color: #fff;
+}
+
+/* ============ K5: Preview fullscreen + gợi ý khi trống ============ */
+.preview-wrap:fullscreen {
+  background: #000;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+.preview-fs-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+}
+.preview-fs-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+.preview-empty-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #9ca3af;
+  font-size: 13px;
+  text-align: center;
+  padding: 0 24px;
+  pointer-events: none;
+}
+.preview-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+/* ============ K5: Vạch chỉ vị trí thả media trên timeline ============ */
+.tl-drop-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  margin-left: -1px;
+  background: #fbbf24;
+  z-index: 6;
+  pointer-events: none;
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.8);
+}
+
+/* ============ K5: Hướng dẫn trong MediaBin trống ============ */
+.media-empty-steps {
+  text-align: left;
+  margin: 12px 0;
+  padding-left: 20px;
+}
+.media-empty-steps li {
+  margin-bottom: 6px;
+}
+
+/* ============ K5: Section gập/mở trong Inspector ============ */
+.ins-section {
+  margin-top: 12px;
+}
+.section-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-soft, #374151);
+  color: inherit;
+  cursor: pointer;
+}
+.section-head:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.section-body {
+  padding-top: 4px;
+}
