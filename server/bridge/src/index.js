@@ -125,6 +125,8 @@ const ALLOWED_MEDIA_EXTS = new Set([
   ".mp4", ".mov", ".m4v", ".webm", ".mkv", ".avi",
   ".mp3", ".wav", ".ogg", ".oga", ".m4a", ".flac", ".aac",
   ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp",
+  // K3 (Phase 6): sticker động APNG + LUT .cube user tự nhập (upload kèm spec).
+  ".apng", ".cube",
 ]);
 
 /** R1-072: caption chỉ nhận video/audio (cần track tiếng để transcribe). */
@@ -146,7 +148,22 @@ const MAGIC = [
   { ext: [".wav"], test: (b) => b.length >= 12 && b.toString("ascii", 0, 4) === "RIFF" && b.toString("ascii", 8, 12) === "WAVE" },
   { ext: [".ogg", ".oga"], test: (b) => b.length >= 4 && b.toString("ascii", 0, 4) === "OggS" },
   { ext: [".flac"], test: (b) => b.length >= 4 && b.toString("ascii", 0, 4) === "fLaC" },
-  { ext: [".png"], test: (b) => b.length >= 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 },
+  { ext: [".png", ".apng"], test: (b) => b.length >= 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 },
+  // K3: .cube là file text (bắt đầu bằng # comment, TITLE hoặc LUT_3D_SIZE).
+  // Chỉ đọc được 64 byte đầu nên chỉ kiểm tra "không chứa byte điều khiển lạ"
+  // (cho phép BOM UTF-8 + ký tự đa byte trong TITLE) — parse chặt đầy đủ nằm
+  // ở web (userLut.parseCube) và FFmpeg lut3d lúc render.
+  { ext: [".cube"], test: (b) => {
+    if (b.length < 16) return false;
+    let start = 0;
+    if (b[0] === 0xef && b[1] === 0xbb && b[2] === 0xbf) start = 3; // BOM
+    for (let i = start; i < b.length; i++) {
+      const c = b[i];
+      if ((c >= 0x09 && c <= 0x0d) || (c >= 0x20 && c <= 0x7e) || c >= 0x80) continue;
+      return false;
+    }
+    return true;
+  } },
   { ext: [".jpg", ".jpeg"], test: (b) => b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
   { ext: [".gif"], test: (b) => b.length >= 6 && (b.toString("ascii", 0, 6) === "GIF87a" || b.toString("ascii", 0, 6) === "GIF89a") },
   { ext: [".webp"], test: (b) => b.length >= 12 && b.toString("ascii", 0, 4) === "RIFF" && b.toString("ascii", 8, 12) === "WEBP" },
@@ -440,10 +457,97 @@ app.use("/api/", rateLimit(RATE_MAX_GENERAL));
 
 app.use(express.json({ limit: "50mb" }));
 
+// K4 (Phase 6): upload ghi ra đĩa thay vì RAM (vá DoS §3.2).
+// Thư mục tạm nằm DƯỚI WORK_ROOT để moveUploadTo() dùng rename cùng
+// filesystem (không copy lại qua RAM). File tạm còn sót sau response được
+// dọn bởi finish-hook trong uploadMiddleware() — không còn file mồ côi
+// khi handler trả lỗi sớm.
+const UPLOAD_TMP_DIR = process.env.BRIDGE_UPLOAD_TMP ||
+  path.join(WORK_ROOT, "uploads-tmp");
+// Giới hạn TỔNG dung lượng upload của 1 request (mặc định 8GB); giới hạn
+// từng file vẫn là MAX_UPLOAD_BYTES (2GB). Multer không hỗ trợ cap tổng
+// theo luồng nên cap tổng được kiểm tra sau khi upload xong (xem
+// uploadMiddleware) — trước khi handler xử lý bất kỳ file nào.
+const MAX_TOTAL_UPLOAD_BYTES = parseInt(
+  process.env.BRIDGE_MAX_TOTAL_UPLOAD || String(8 * 1024 * 1024 * 1024), 10);
+
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      try {
+        fs.mkdirSync(UPLOAD_TMP_DIR, { recursive: true });
+        cb(null, UPLOAD_TMP_DIR);
+      } catch (e) { cb(e); }
+    },
+    // Tên tạm ngẫu nhiên, không dùng tên client (tránh traversal/đụng độ);
+    // handler tự đặt tên đích bằng sanitizeFilename(originalname).
+    filename: (req, file, cb) => {
+      cb(null, `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`);
+    },
+  }),
   limits: { fileSize: MAX_UPLOAD_BYTES, files: 200 },
 });
+
+/** Đọc chỉ N byte đầu của file upload (đủ cho checkMagicBytes, không nạp
+ *  cả file vào RAM). Tương thích cả diskStorage (f.path) lẫn buffer cũ. */
+function readUploadHead(f, n = 64) {
+  if (f.buffer) return f.buffer.subarray(0, n);
+  const fd = fs.openSync(f.path, "r");
+  try {
+    const buf = Buffer.alloc(n);
+    const read = fs.readSync(fd, buf, 0, n, 0);
+    return buf.subarray(0, read);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+/** Đưa file upload về đích mà không qua RAM: rename cùng filesystem,
+ *  fallback copy+unlink khi khác device (EXDEV). */
+function moveUploadTo(f, dest) {
+  if (f.path) {
+    try {
+      fs.renameSync(f.path, dest);
+      return;
+    } catch (e) {
+      if (e.code !== "EXDEV") throw e;
+      fs.copyFileSync(f.path, dest);
+      fs.rmSync(f.path, { force: true });
+      return;
+    }
+  }
+  // Fallback memoryStorage (không dùng trong bridge hiện tại, giữ để tương thích).
+  fs.writeFileSync(dest, f.buffer);
+}
+
+/** Xoá file tạm multer còn sót (an toàn khi gọi nhiều lần / file đã move). */
+function cleanupUploadFiles(files) {
+  for (const f of files || []) {
+    try { if (f.path) fs.rmSync(f.path, { force: true }); } catch { /* bỏ qua */ }
+  }
+}
+
+/** Wrapper dùng chung cho mọi endpoint upload: chạy multer → kiểm tra cap
+ *  tổng → gắn finish-hook dọn file tạm còn sót. Lỗi multer vẫn đi qua
+ *  multerErrorHandler như cũ. */
+function uploadMiddleware(mw) {
+  return (req, res, next) => mw(req, res, (err) => {
+    const files = req.files || (req.file ? [req.file] : []);
+    if (err) {
+      cleanupUploadFiles(files);
+      return multerErrorHandler(err, req, res, next);
+    }
+    const total = files.reduce((s, f) => s + (f.size || 0), 0);
+    if (total > MAX_TOTAL_UPLOAD_BYTES) {
+      cleanupUploadFiles(files);
+      return res.status(413).json({
+        error: `Tổng dung lượng upload vượt quá giới hạn ${Math.round(MAX_TOTAL_UPLOAD_BYTES / 1024 / 1024)}MB.`,
+      });
+    }
+    res.on("finish", () => cleanupUploadFiles(files));
+    next();
+  });
+}
 
 app.get("/api/health", async (req, res) => {
   const fv = await ffmpegVersion();
@@ -477,10 +581,7 @@ app.get("/api/health", async (req, res) => {
 // --- POST /api/render -------------------------------------------------------
 app.post("/api/render",
   rateLimit(RATE_MAX_RENDER), // R1-040: giới hạn riêng, chặt hơn cho render
-  (req, res, next) => upload.array("media", 200)(req, res, (err) => {
-    if (err) return multerErrorHandler(err, req, res, next);
-    next();
-  }),
+  uploadMiddleware(upload.array("media", 200)),
   async (req, res) => {
   // R1-040: giới hạn kích thước spec (multipart text field không bị multer giới hạn)
   const specRaw = req.body.spec;
@@ -539,7 +640,7 @@ app.post("/api/render",
       cleanupJobDir(dir);
       return res.status(400).json({ error: `Tên file không hợp lệ hoặc loại file không được phép: ${f.originalname}` });
     }
-    const magicErr = checkMagicBytes(safe, f.buffer);
+    const magicErr = checkMagicBytes(safe, readUploadHead(f));
     if (magicErr) {
       cleanupJobDir(dir);
       return res.status(400).json({ error: magicErr });
@@ -551,7 +652,7 @@ app.post("/api/render",
       return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
     }
     try {
-      fs.writeFileSync(dest, f.buffer);
+      moveUploadTo(f, dest);
     } catch (e) {
       console.error(`[bridge] không lưu được file media:`, e.message);
       cleanupJobDir(dir);
@@ -602,10 +703,7 @@ app.post("/api/render",
 app.post(
   "/api/caption",
   rateLimit(RATE_MAX_RENDER), // R1-040: giới hạn chặt như render (tác vụ nặng)
-  (req, res, next) => upload.single("media")(req, res, (err) => {
-    if (err) return multerErrorHandler(err, req, res, next);
-    next();
-  }),
+  uploadMiddleware(upload.single("media")),
   async (req, res) => {
     // 1. Validate (chưa stream → lỗi trả JSON 4xx)
     let lang;
@@ -628,7 +726,7 @@ app.post(
         error: "Caption cần file video hoặc audio (ảnh không có tiếng để nhận diện).",
       });
     }
-    const magicErr = checkMagicBytes(safe, f.buffer);
+    const magicErr = checkMagicBytes(safe, readUploadHead(f));
     if (magicErr) return res.status(400).json({ error: magicErr });
     const avail = captionAvailable();
     if (!avail.available) {
@@ -643,7 +741,7 @@ app.post(
     const inputPath = path.join(dir, safe);
     try {
       fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(inputPath, f.buffer);
+      moveUploadTo(f, inputPath);
     } catch (e) {
       console.error(`[bridge] không lưu được file caption:`, e.message);
       cleanupJobDir(dir);
@@ -687,10 +785,7 @@ app.post(
 app.post(
   "/api/reframe",
   rateLimit(RATE_MAX_RENDER), // R1-040: tác vụ nặng, giới hạn như render
-  (req, res, next) => upload.single("media")(req, res, (err) => {
-    if (err) return multerErrorHandler(err, req, res, next);
-    next();
-  }),
+  uploadMiddleware(upload.single("media")),
   async (req, res) => {
     let aspect;
     try {
@@ -712,7 +807,7 @@ app.post(
         error: `Reframe cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
       });
     }
-    const magicErr = checkMagicBytes(safe, f.buffer);
+    const magicErr = checkMagicBytes(safe, readUploadHead(f));
     if (magicErr) return res.status(400).json({ error: magicErr });
     const avail = reframeAvailable();
     if (!avail.available) {
@@ -729,7 +824,7 @@ app.post(
     const outputPath = path.join(dir, outName);
     try {
       fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(inputPath, f.buffer);
+      moveUploadTo(f, inputPath);
     } catch (e) {
       console.error(`[bridge] không lưu được file reframe:`, e.message);
       cleanupJobDir(dir);
@@ -758,10 +853,7 @@ app.post(
 app.post(
   "/api/bgremove",
   rateLimit(RATE_MAX_RENDER), // R1-040: tác vụ nặng, giới hạn như render
-  (req, res, next) => upload.single("media")(req, res, (err) => {
-    if (err) return multerErrorHandler(err, req, res, next);
-    next();
-  }),
+  uploadMiddleware(upload.single("media")),
   async (req, res) => {
     let session;
     try {
@@ -783,7 +875,7 @@ app.post(
         error: `Xóa nền cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
       });
     }
-    const magicErr = checkMagicBytes(safe, f.buffer);
+    const magicErr = checkMagicBytes(safe, readUploadHead(f));
     if (magicErr) return res.status(400).json({ error: magicErr });
     const avail = bgremoveAvailable();
     if (!avail.available) {
@@ -800,7 +892,7 @@ app.post(
     const outputPath = path.join(dir, outName);
     try {
       fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(inputPath, f.buffer);
+      moveUploadTo(f, inputPath);
     } catch (e) {
       console.error(`[bridge] không lưu được file bgremove:`, e.message);
       cleanupJobDir(dir);
@@ -830,10 +922,7 @@ app.post(
 app.post(
   "/api/silence",
   rateLimit(RATE_MAX_GENERAL),
-  (req, res, next) => upload.single("media")(req, res, (err) => {
-    if (err) return multerErrorHandler(err, req, res, next);
-    next();
-  }),
+  uploadMiddleware(upload.single("media")),
   async (req, res) => {
     // 1. Validate
     let noiseDb, minDur;
@@ -857,7 +946,7 @@ app.post(
         error: "Silence removal cần file video hoặc audio (ảnh không có track tiếng).",
       });
     }
-    const magicErr = checkMagicBytes(safe, f.buffer);
+    const magicErr = checkMagicBytes(safe, readUploadHead(f));
     if (magicErr) return res.status(400).json({ error: magicErr });
     const avail = silenceAvailable();
     if (!avail.available) {
@@ -872,7 +961,7 @@ app.post(
     const inputPath = path.join(dir, safe);
     try {
       fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(inputPath, f.buffer);
+      moveUploadTo(f, inputPath);
     } catch (e) {
       console.error(`[bridge] không lưu được file silence:`, e.message);
       cleanupJobDir(dir);
@@ -908,10 +997,7 @@ app.post(
 app.post(
   "/api/scene",
   rateLimit(RATE_MAX_RENDER), // R1-040: tác vụ nặng, giới hạn như render
-  (req, res, next) => upload.single("media")(req, res, (err) => {
-    if (err) return multerErrorHandler(err, req, res, next);
-    next();
-  }),
+  uploadMiddleware(upload.single("media")),
   async (req, res) => {
     // 1. Validate (chưa stream → lỗi trả JSON 4xx)
     let threshold, start, end;
@@ -935,7 +1021,7 @@ app.post(
         error: `Tách cảnh cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
       });
     }
-    const magicErr = checkMagicBytes(safe, f.buffer);
+    const magicErr = checkMagicBytes(safe, readUploadHead(f));
     if (magicErr) return res.status(400).json({ error: magicErr });
     const avail = sceneAvailable();
     if (!avail.available) {
@@ -950,7 +1036,7 @@ app.post(
     const inputPath = path.join(dir, safe);
     try {
       fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(inputPath, f.buffer);
+      moveUploadTo(f, inputPath);
     } catch (e) {
       console.error(`[bridge] không lưu được file scene:`, e.message);
       cleanupJobDir(dir);
@@ -1000,10 +1086,7 @@ app.post(
 app.post(
   "/api/caption/translate",
   rateLimit(RATE_MAX_RENDER), // R1-040: giới hạn chặt như render (tác vụ nặng)
-  (req, res, next) => upload.single("media")(req, res, (err) => {
-    if (err) return multerErrorHandler(err, req, res, next);
-    next();
-  }),
+  uploadMiddleware(upload.single("media")),
   async (req, res) => {
     // 1. Validate (chưa stream → lỗi trả JSON 4xx)
     let lang, target;
@@ -1027,7 +1110,7 @@ app.post(
         error: "Dịch phụ đề cần file video hoặc audio (ảnh không có tiếng để nhận diện).",
       });
     }
-    const magicErr = checkMagicBytes(safe, f.buffer);
+    const magicErr = checkMagicBytes(safe, readUploadHead(f));
     if (magicErr) return res.status(400).json({ error: magicErr });
     const avail = translateAvailable();
     if (!avail.available) {
@@ -1042,7 +1125,7 @@ app.post(
     const inputPath = path.join(dir, safe);
     try {
       fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(inputPath, f.buffer);
+      moveUploadTo(f, inputPath);
     } catch (e) {
       console.error(`[bridge] không lưu được file translate:`, e.message);
       cleanupJobDir(dir);
