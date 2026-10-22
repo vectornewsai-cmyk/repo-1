@@ -525,3 +525,145 @@
 | `templates/podcast-audiogram.json` | Audiogram Podcast | Tự thiết kế | VCut Studio | MIT | 2026-10-20 |
 | `brand/logo.svg` | Logo VCut Studio | Tự vẽ | VCut Studio | MIT | 2026-10-20 |
 | `brand/logo-mark.svg` | Logo mark (favicon/app icon) | Tự vẽ | VCut Studio | MIT | 2026-10-20 |
+
+## Fluent UI Emoji 3D (K6, Phase 6) — MIT
+
+Nguồn: microsoft/fluentui-emoji, LICENSE MIT đã đọc trực tiếp (GitHub API license.spdx_id = MIT + file LICENSE "Copyright (c) Microsoft Corporation"). Chỉ dùng biến thể 3D PNG. Fetch lại: `bash assets/stickers/fetch_stickers2.sh`.
+
+| `stickers/fluent-red_heart.png` | fluentui-emoji 3D Red heart | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-fire.png` | fluentui-emoji 3D Fire | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-party_popper.png` | fluentui-emoji 3D Party popper | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-rocket.png` | fluentui-emoji 3D Rocket | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-star.png` | fluentui-emoji 3D Star | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-sparkles.png` | fluentui-emoji 3D Sparkles | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-crown.png` | fluentui-emoji 3D Crown | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-gem_stone.png` | fluentui-emoji 3D Gem stone | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-trophy.png` | fluentui-emoji 3D Trophy | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-soccer_ball.png` | fluentui-emoji 3D Soccer ball | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-cat_face.png` | fluentui-emoji 3D Cat face | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-dog_face.png` | fluentui-emoji 3D Dog face | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-pizza.png` | fluentui-emoji 3D Pizza | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-beer_mug.png` | fluentui-emoji 3D Beer mug | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-musical_notes.png` | fluentui-emoji 3D Musical notes | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-camera.png` | fluentui-emoji 3D Camera | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-video_camera.png` | fluentui-emoji 3D Video camera | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-laptop.png` | fluentui-emoji 3D Laptop | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-mobile_phone.png` | fluentui-emoji 3D Mobile phone | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-light_bulb.png` | fluentui-emoji 3D Light bulb | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-money_bag.png` | fluentui-emoji 3D Money bag | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-balloon.png` | fluentui-emoji 3D Balloon | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-rainbow.png` | fluentui-emoji 3D Rainbow | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-sun.png` | fluentui-emoji 3D Sun | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-snowflake.png` | fluentui-emoji 3D Snowflake | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-palm_tree.png` | fluentui-emoji 3D Palm tree | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-rose.png` | fluentui-emoji 3D Rose | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-sunflower.png` | fluentui-emoji 3D Sunflower | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-grinning_face.png` | fluentui-emoji 3D Grinning face | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-face_with_tears_of_joy.png` | fluentui-emoji 3D Face with tears of joy | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-winking_face.png` | fluentui-emoji 3D Winking face | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-smiling_face_with_heart-eyes.png` | fluentui-emoji 3D Smiling face with heart-eyes | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-thinking_face.png` | fluentui-emoji 3D Thinking face | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-sleeping_face.png` | fluentui-emoji 3D Sleeping face | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-angry_face.png` | fluentui-emoji 3D Angry face | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-eyes.png` | fluentui-emoji 3D Eyes | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-brain.png` | fluentui-emoji 3D Brain | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-hot_beverage.png` | fluentui-emoji 3D Hot beverage | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-wrapped_gift.png` | fluentui-emoji 3D Wrapped gift | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-crescent_moon.png` | fluentui-emoji 3D Crescent moon | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+| `stickers/fluent-full_moon.png` | fluentui-emoji 3D Full moon | https://github.com/microsoft/fluentui-emoji | Microsoft Corporation | MIT | 2026-10-21 |
+
+## LUT tự chế đợt 3 (K6, Phase 6) — tác phẩm gốc VCut
+
+Sinh bằng `assets/filters/gen_vcut_luts3.py` (30 LUT, lưới 17³, chuẩn Adobe .cube). Không copy từ nguồn nào. Tái sinh: `python3 assets/filters/gen_vcut_luts3.py`.
+
+- `vcut-lagoon.cube` — Đầm phá: Xanh ngọc biển nông, bão hoà cao — VCut original, license MIT (repo).
+- `vcut-deep-sea.cube` — Biển sâu: Xanh đậm, tối, lạnh — VCut original, license MIT (repo).
+- `vcut-coral-reef.cube` — Rạn san hô: Ấm, rực rỡ như san hô — VCut original, license MIT (repo).
+- `vcut-santorini.cube` — Santorini: Trắng xanh Địa Trung Hải — VCut original, license MIT (repo).
+- `vcut-bali-sunset.cube` — Hoàng hôn Bali: Vàng cam hoàng hôn nhiệt đới — VCut original, license MIT (repo).
+- `vcut-coffee-roast.cube` — Cà phê rang: Nâu ấm, tương phản rõ — VCut original, license MIT (repo).
+- `vcut-matcha.cube` — Matcha: Xanh lá trà, tươi mát — VCut original, license MIT (repo).
+- `vcut-candy-pop.cube` — Kẹo ngọt: Bão hoà cực cao, vui nhộn — VCut original, license MIT (repo).
+- `vcut-champagne.cube` — Sâm panh: Vàng nhạt, sáng, nhẹ nhàng — VCut original, license MIT (repo).
+- `vcut-blood-moon.cube` — Trăng máu: Đỏ tối, u ám — VCut original, license MIT (repo).
+- `vcut-graveyard-fog.cube` — Sương nghĩa địa: Xám mờ, lạnh, ít màu — VCut original, license MIT (repo).
+- `vcut-toxic-green.cube` — Xanh độc: Xanh lá gắt, độc hại — VCut original, license MIT (repo).
+- `vcut-midnight-purple.cube` — Tím nửa đêm: Tím tối, huyền bí — VCut original, license MIT (repo).
+- `vcut-crt-green.cube` — Màn hình CRT xanh: Đơn sắc xanh lá màn hình cũ — VCut original, license MIT (repo).
+- `vcut-terminal-amber.cube` — Terminal hổ phách: Đơn sắc hổ phách terminal — VCut original, license MIT (repo).
+- `vcut-floppy-purple.cube` — Tím floppy: Tím retro thập niên 90 — VCut original, license MIT (repo).
+- `vcut-vaporwave-sunset.cube` — Hoàng hôn vaporwave: Hồng tím hoàng hôn synth — VCut original, license MIT (repo).
+- `vcut-blush-pink.cube` — Hồng má: Hồng nhẹ, sáng da — VCut original, license MIT (repo).
+- `vcut-ivory.cube` — Ngà voi: Trắng ngà, mềm, sáng — VCut original, license MIT (repo).
+- `vcut-silk-white.cube` — Lụa trắng: Trắng mịn, ít màu — VCut original, license MIT (repo).
+- `vcut-stadium-night.cube` — Đêm sân vận động: Tương phản cao dưới đèn đêm — VCut original, license MIT (repo).
+- `vcut-concert-laser.cube` — Laser hòa nhạc: Rực rỡ, tím laser sân khấu — VCut original, license MIT (repo).
+- `vcut-vinyl-warm.cube` — Đĩa than ấm: Nâu ấm cổ điển — VCut original, license MIT (repo).
+- `vcut-bw-blueprint.cube` — Đơn sắc bản vẽ: Đơn sắc xanh bản thiết kế — VCut original, license MIT (repo).
+- `vcut-bw-sepia-deep.cube` — Nâu đỏ đậm: Đơn sắc nâu đỏ cổ — VCut original, license MIT (repo).
+- `vcut-bw-night-green.cube` — Xanh đêm: Đơn sắc xanh lá đêm — VCut original, license MIT (repo).
+- `vcut-solar-flare.cube` — Lóe mặt trời: Chói sáng, vàng rực — VCut original, license MIT (repo).
+- `vcut-prism.cube` — Lăng kính: Lệch kênh màu cầu vồng — VCut original, license MIT (repo).
+- `vcut-acid-rain.cube` — Mưa axit: Xanh lá lệch kênh, gắt — VCut original, license MIT (repo).
+- `vcut-synthwave-grid.cube` — Lưới synthwave: Hồng tím neon thập niên 80 — VCut original, license MIT (repo).
+
+## Sound tổng hợp gốc (K6, Phase 6) — tác phẩm gốc VCut, MIT
+
+Tổng hợp bằng `assets/sounds/gen_vcut_sounds.py` (numpy: sóng sin/vuông/noise, lọc 1 cực, envelope). Không sample từ nguồn nào. Lấp gap whoosh CC0 mà Batch I ghi nhận. 35 file `vcut-synth-*.ogg` trong assets/audio/.
+
+- `vcut-synth-click-hi.ogg` (ui) — VCut original, MIT, 4458 bytes.
+- `vcut-synth-click-lo.ogg` (ui) — VCut original, MIT, 4518 bytes.
+- `vcut-synth-click-soft.ogg` (ui) — VCut original, MIT, 3981 bytes.
+- `vcut-synth-tap-wood.ogg` (ui) — VCut original, MIT, 4095 bytes.
+- `vcut-synth-pop-up.ogg` (ui) — VCut original, MIT, 4188 bytes.
+- `vcut-synth-pop-down.ogg` (ui) — VCut original, MIT, 4221 bytes.
+- `vcut-synth-blip-a.ogg` (ui) — VCut original, MIT, 4087 bytes.
+- `vcut-synth-blip-b.ogg` (ui) — VCut original, MIT, 4078 bytes.
+- `vcut-synth-whoosh-up.ogg` (whoosh) — VCut original, MIT, 8279 bytes.
+- `vcut-synth-whoosh-down.ogg` (whoosh) — VCut original, MIT, 8284 bytes.
+- `vcut-synth-whoosh-fast.ogg` (whoosh) — VCut original, MIT, 6097 bytes.
+- `vcut-synth-whoosh-slow.ogg` (whoosh) — VCut original, MIT, 11754 bytes.
+- `vcut-synth-whoosh-air.ogg` (whoosh) — VCut original, MIT, 7485 bytes.
+- `vcut-synth-whoosh-gate.ogg` (whoosh) — VCut original, MIT, 6466 bytes.
+- `vcut-synth-riser-short.ogg` (riser) — VCut original, MIT, 4849 bytes.
+- `vcut-synth-riser-long.ogg` (riser) — VCut original, MIT, 6356 bytes.
+- `vcut-synth-riser-noise.ogg` (riser) — VCut original, MIT, 10847 bytes.
+- `vcut-synth-riser-tension.ogg` (riser) — VCut original, MIT, 5894 bytes.
+- `vcut-synth-chime-success.ogg` (chime) — VCut original, MIT, 6489 bytes.
+- `vcut-synth-chime-notify.ogg` (chime) — VCut original, MIT, 5269 bytes.
+- `vcut-synth-ding-high.ogg` (chime) — VCut original, MIT, 5418 bytes.
+- `vcut-synth-bell-soft.ogg` (chime) — VCut original, MIT, 6945 bytes.
+- `vcut-synth-coin.ogg` (chime) — VCut original, MIT, 4767 bytes.
+- `vcut-synth-sparkle.ogg` (chime) — VCut original, MIT, 4929 bytes.
+- `vcut-synth-buzz-error.ogg` (error) — VCut original, MIT, 7535 bytes.
+- `vcut-synth-buzz-warn.ogg` (error) — VCut original, MIT, 6262 bytes.
+- `vcut-synth-thud-low.ogg` (impact) — VCut original, MIT, 4432 bytes.
+- `vcut-synth-impact-hit.ogg` (impact) — VCut original, MIT, 5160 bytes.
+- `vcut-synth-punch.ogg` (impact) — VCut original, MIT, 4168 bytes.
+- `vcut-synth-boom-soft.ogg` (impact) — VCut original, MIT, 5042 bytes.
+- `vcut-synth-swipe-left.ogg` (transition) — VCut original, MIT, 8284 bytes.
+- `vcut-synth-swipe-right.ogg` (transition) — VCut original, MIT, 8279 bytes.
+- `vcut-synth-transition-swoop.ogg` (transition) — VCut original, MIT, 6919 bytes.
+- `vcut-synth-transition-drop.ogg` (transition) — VCut original, MIT, 6918 bytes.
+- `vcut-synth-transition-glitch.ogg` (transition) — VCut original, MIT, 5902 bytes.
+
+## Font đợt 2 (K6, Phase 6) — OFL-1.1, Vietnamese subset
+
+Verify qua METADATA.pb gốc trên google/fonts (subsets chứa "vietnamese") + kiểm tra glyph bằng fontTools (28/28 dấu tiếng Việt). Tải: `bash assets/fonts/fetch_fonts.sh`.
+
+- Work Sans (Sans Serif) — OFL-1.1, Google Fonts, file WorkSans[wght].ttf, vietnamese: true.
+- Archivo (Sans Serif) — OFL-1.1, Google Fonts, file Archivo[wdth,wght].ttf, vietnamese: true.
+- Public Sans (Sans Serif) — OFL-1.1, Google Fonts, file PublicSans[wght].ttf, vietnamese: true.
+- Fira Sans (Sans Serif) — OFL-1.1, Google Fonts, file FiraSans-Regular.ttf, vietnamese: true.
+- Lato (Sans Serif) — OFL-1.1, Google Fonts, file Lato-Regular.ttf, vietnamese: true.
+- Raleway (Sans Serif) — OFL-1.1, Google Fonts, file Raleway[wght].ttf, vietnamese: true.
+- Cabin (Sans Serif) — OFL-1.1, Google Fonts, file Cabin[wdth,wght].ttf, vietnamese: true.
+- Mulish (Sans Serif) — OFL-1.1, Google Fonts, file Mulish[wght].ttf, vietnamese: true.
+- Source Sans 3 (Sans Serif) — OFL-1.1, Google Fonts, file SourceSans3[wght].ttf, vietnamese: true.
+- IBM Plex Sans (Sans Serif) — OFL-1.1, Google Fonts, file IBMPlexSans[wdth,wght].ttf, vietnamese: true.
+- Cormorant Garamond (Serif) — OFL-1.1, Google Fonts, file CormorantGaramond[wght].ttf, vietnamese: true.
+- Bitter (Serif) — OFL-1.1, Google Fonts, file Bitter[wght].ttf, vietnamese: true.
+- Indie Flower (Handwriting) — OFL-1.1, Google Fonts, file IndieFlower-Regular.ttf, vietnamese: true.
+- Inconsolata (Monospace) — OFL-1.1, Google Fonts, file Inconsolata[wdth,wght].ttf, vietnamese: true.
+- Source Code Pro (Monospace) — OFL-1.1, Google Fonts, file SourceCodePro[wght].ttf, vietnamese: true.
+- Comfortaa (Display) — OFL-1.1, Google Fonts, file Comfortaa[wght].ttf, vietnamese: true.
