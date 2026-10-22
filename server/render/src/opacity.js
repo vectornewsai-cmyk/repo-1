@@ -12,11 +12,14 @@
  * (xem OPACITY_LIMITS.md về trường hợp clip có transition).
  *
  * NGUYÊN TẮC TRUNG THỰC: chỉ "normal" blend được hỗ trợ; không có blend mode
- * khác, không keyframe opacity cho video clip ở Phase 1.
+ * khác. Keyframe opacity cho video clip ĐÃ CÓ từ K1 (Phase 6) qua
+ * buildOpacityKeyframesChain bên dưới (chuỗi alphamerge qua geq) — opacity
+ * tĩnh vẫn dùng colorchannelmixer như cũ.
  */
 "use strict";
 
 const assert = require("assert");
+const { buildInterpExpr } = require("./keyframes");
 
 /** Sai số so sánh số thực (mirror EPS trong validate.js). */
 const EPS = 1e-6;
@@ -61,6 +64,45 @@ function buildOpacityFilter(opacity) {
   const op = normalizeOpacity(opacity);
   if (op >= 1 - EPS) return "";
   return `format=rgba,colorchannelmixer=aa=${num(op)}`;
+}
+
+/**
+ * Dựng các fc entry cho opacity KEYFRAMES của 1 unit (K1, Phase 6).
+ *
+ * Cơ chế — ĐÃ KIỂM CHỨNG THỰC NGHIỆM với FFmpeg 8.1 (không đoán):
+ * - `colorchannelmixer=aa=` KHÔNG nhận biến `t`: biểu thức chỉ tính 1 lần
+ *   lúc khởi tạo filter ("Undefined constant ... in 't'"), nên không dùng
+ *   được cho keyframes. Đây là lý do Phase 1–5 để ngỏ gap này.
+ * - `geq` thì nhận `T` (thời gian frame) và `if`/`lt`, nhưng hàm đọc alpha
+ *   `a(X,Y)` KHÔNG tồn tại trong geq của FFmpeg 8.1 ("Unknown function"),
+ *   và `lum(X,Y)` cũng không đọc được alpha — nên không thể nhân trực
+ *   tiếp alpha trong geq trên stream RGBA.
+ * - Cách làm được: tách alpha ra kênh xám (`alphaextract`), nhân luma xám
+ *   bằng geq theo biểu thức nội suy, rồi gộp lại (`alphamerge`). Cách này
+ *   GIỮ alpha gốc (chroma key, video nguồn có alpha, letterbox SR) thay vì
+ *   ghi đè như `a='255*OP'` — đã kiểm chứng pixel: đỏ đục ở T<1, đen hoàn
+ *   toàn ở T>=1 khi composite lên nền đen.
+ *
+ * Chuỗi chạy TRƯỚC `setpts` lên timeline nên `T` trong geq = thời gian cục
+ * bộ của clip (cùng quy ước với SR transform dùng `t`).
+ *
+ * @param {string} unitLabel label nguồn của unit, vd "[cv0]"
+ * @param {object} kv KeyframedValue của animations.opacity
+ * @param {function(string): string} lbl hàm cấp label (như render.js)
+ * @returns {{ entries: string[], outLabel: string }} các fc entry phải push
+ *   (theo thứ tự) và label output để nối tiếp chain (SR/setpts).
+ */
+function buildOpacityKeyframesChain(unitLabel, kv, lbl) {
+  const expr = buildInterpExpr(kv, "T");
+  const m = lbl("opm"), a = lbl("opa"), a2 = lbl("opa2"), mg = lbl("opmg");
+  return {
+    entries: [
+      `${unitLabel}format=rgba,split=2[${m}][${a}]`,
+      `[${a}]alphaextract,geq=lum='lum(X,Y)*(${expr})'[${a2}]`,
+      `[${m}][${a2}]alphamerge,format=yuva420p[${mg}]`,
+    ],
+    outLabel: `[${mg}]`,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -118,4 +160,5 @@ module.exports = {
   normalizeOpacity,
   validateOpacity,
   buildOpacityFilter,
+  buildOpacityKeyframesChain,
 };
