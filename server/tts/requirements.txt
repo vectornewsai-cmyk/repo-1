@@ -8,4 +8,8 @@
 # ⚠️ BẪY LICENSE: KHÔNG dùng bản 0.3B (CC BY-NC 4.0 — cấm thương mại).
 # Package `vieneu` trên PyPI là bản 0.5B. Nếu sau này package đổi bản mặc định,
 # phải verify lại license trước khi nâng cấp.
-vieneu>=1.1.3
+#
+# K4 (Phase 6): pin == theo version đã freeze trong venv đang chạy
+# (vieneu 3.8.3, numpy 2.5.4).
+vieneu==3.8.3
+numpy==2.5.4

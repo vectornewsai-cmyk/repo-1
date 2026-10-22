@@ -1,0 +1,6 @@
+# server/reframe — auto-reframe dependencies (100% local, OpenCV)
+# Cài bằng: bash server/reframe/setup.sh   (tạo .venv riêng, không đụng hệ thống)
+# K4 (Phase 6): pin == theo version đã freeze trong venv đang chạy
+# (opencv-python-headless 5.0.0.93, numpy 2.5.4).
+opencv-python-headless==5.0.0.93
+numpy==2.5.4

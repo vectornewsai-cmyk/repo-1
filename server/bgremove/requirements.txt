@@ -1,4 +1,12 @@
-rembg[cpu]>=2.0
-opencv-python-headless>=4.8
-numpy>=1.24
-Pillow>=10
+# server/bgremove — xoá nền local (rembg MIT + birefnet-general MIT)
+# K4 (Phase 6): pin == theo version đã biết tương thích.
+# LƯU Ý TRUNG THỰC: bgremove hiện KHÔNG còn venv để freeze (venv cũ đã bị
+# dọn). Các pin dưới là version đã verify chạy được ở Batch H (rembg 2.0.38)
+# và version đang chạy tốt ở service reframe trên cùng máy này
+# (opencv 5.0.0.93, numpy 2.5.4) + Pillow 10.2.0 có sẵn trong môi trường.
+# Trước khi dùng cho release, chạy: pip install -r requirements.txt trong
+# venv mới và chạy test_bgremove.py để xác nhận lại.
+rembg[cpu]==2.0.38
+opencv-python-headless==5.0.0.93
+numpy==2.5.4
+Pillow==10.2.0

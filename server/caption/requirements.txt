@@ -1,6 +1,9 @@
 # requirements cho server/caption (Phase 2: auto-caption local)
 # Cài: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-faster-whisper>=1.2.1
+# K4 (Phase 6): pin == theo version đã freeze trong venv đang chạy
+# (faster-whisper 1.2.1 + ctranslate2 4.8.3 + onnxruntime 1.31.0 +
+#  tokenizers 0.23.3 + av 19.0.1) — không còn kéo bản mới từ PyPI.
+faster-whisper==1.2.1
 # Ghi chú: faster-whisper kéo theo ctranslate2, onnxruntime, tokenizers, av.
 # Chỉ dùng để test tạo giọng nói mẫu, KHÔNG phải dependency của caption.py:
 # piper-tts
