@@ -17,6 +17,7 @@
 import { useRef, useState } from "react";
 import { useStore } from "../../store";
 import { uid } from "../../lib";
+import { detectAnimatedImage } from "../../lib/userLut";
 import "./sticker.css";
 import {
   STICKER_CATEGORIES,
@@ -87,11 +88,15 @@ function StickerEditor({ clip, trackId }: { clip: StickerClip; trackId: string }
   const patch = (p: Partial<StickerClip>) =>
     // [STICKER-CAST] Partial<StickerClip> chưa thuộc union Partial<Clip>
     st.patchClip(trackId, clip.id, p as unknown as Parameters<typeof st.patchClip>[2]);
+  // K3: sticker upload từ media store (vd APNG động) preview bằng blob URL
+  // của media item; sticker thư viện vẫn dùng stickerPreviewSrc như cũ.
+  const mediaItem = useStore((s) => s.media.find((m) => m.name === clip.src));
+  const previewSrc = mediaItem?.url ?? stickerPreviewSrc(clip.src);
 
   return (
     <div className="sticker-editor">
       <div className="sticker-preview-row">
-        <img src={stickerPreviewSrc(clip.src)} alt="" className="sticker-thumb" />
+        <img src={previewSrc} alt="" className="sticker-thumb" />
         <div>
           <b>{clip.src.split("/").pop()}</b>
           <div className="muted">Sticker đang chọn</div>
@@ -139,9 +144,31 @@ export function StickerPanel() {
     if (e) setErr(e);
   };
 
-  const onUpload = (f: File | undefined) => {
+  const onUpload = async (f: File | undefined) => {
     if (!f) return;
     if (!f.type.startsWith("image/")) { setErr("Chỉ nhận file ảnh (PNG trong suốt đẹp nhất)."); return; }
+    // K3: phát hiện sticker động trước khi thêm.
+    // - APNG động: render được thật qua FFmpeg → đăng ký vào media store để
+    //   export tìm được file gốc (src = tên file, không dùng blob URL).
+    // - WebP động: FFmpeg 8.1.2 ở đây KHÔNG decode được (demuxer báo
+    //   "image data not found" dù file hợp lệ) → từ chối rõ ràng, gợi ý APNG.
+    const info = await detectAnimatedImage(f).catch(() => null);
+    if (info?.format === "webp" && info.animated) {
+      setErr(
+        "WebP động chưa render được với FFmpeg hiện tại (lỗi demuxer) — " +
+        "hãy dùng APNG động hoặc WebP tĩnh thay thế.",
+      );
+      return;
+    }
+    if (info?.format === "apng" && info.animated) {
+      const st = useStore.getState();
+      await st.importFiles([f]);
+      const item = useStore.getState().media.find((m) => m.file === f);
+      setErr(null);
+      const e = addStickerToTimeline(item ? item.name : f.name);
+      if (e) setErr(e);
+      return;
+    }
     const url = URL.createObjectURL(f);
     setErr(null);
     const e = addStickerToTimeline(url);
@@ -205,15 +232,19 @@ export function StickerPanel() {
             <p className="muted">Không tìm thấy sticker nào cho "{query}".</p>
           )}
           <button className="toggle" onClick={() => fileRef.current?.click()}>
-            ⬆ Tải PNG của bạn…
+            ⬆ Tải ảnh của bạn (PNG / APNG động)…
           </button>
           <input
             ref={fileRef}
             type="file"
-            accept="image/*"
+            accept="image/*,.apng"
             style={{ display: "none" }}
-            onChange={(e) => { onUpload(e.target.files?.[0]); e.target.value = ""; }}
+            onChange={(e) => { void onUpload(e.target.files?.[0]); e.target.value = ""; }}
           />
+          <p className="tips">
+            APNG động render được thật. WebP động chưa hỗ trợ (giới hạn FFmpeg) —
+            WebP tĩnh vẫn dùng bình thường.
+          </p>
         </>
       )}
       {err && <p className="warn">{err}</p>}

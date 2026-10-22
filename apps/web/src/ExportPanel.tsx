@@ -189,7 +189,7 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
   }, [spec]);
 
   /** Thu thập các file media mà spec đang dùng (theo clip.src). */
-  const collectMediaFiles = (): { files: File[]; missing: string[] } => {
+  const collectMediaFiles = async (): Promise<{ files: File[]; missing: string[] }> => {
     const needed = new Set<string>();
     for (const t of spec.tracks)
       for (const c of t.clips)
@@ -202,6 +202,28 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
       if (item?.file) files.push(item.file);
       else missing.push(name);
     }
+    // K3: LUT user (`user-...`) dùng trong spec → upload file .cube từ
+    // IndexedDB kèm theo với tên dành riêng `__lut_<id>.cube` để render
+    // worker resolve từ mediaDir của job.
+    const userLutIds = new Set<string>();
+    for (const t of spec.tracks)
+      for (const c of t.clips) {
+        const lut = (c as { filter?: { lut?: string } }).filter?.lut;
+        if (typeof lut === "string" && lut.startsWith("user-")) userLutIds.add(lut);
+      }
+    if (userLutIds.size > 0) {
+      const { getUserLut, userLutFileName } = await import("./lib/userLut");
+      for (const id of userLutIds) {
+        const lut = await getUserLut(id);
+        if (!lut) {
+          missing.push(`LUT user "${id}" (file .cube chưa lưu trong trình duyệt — nhập lại)`);
+          continue;
+        }
+        files.push(
+          new File([lut.text], userLutFileName(id), { type: "text/plain" }),
+        );
+      }
+    }
     return { files, missing };
   };
 
@@ -212,7 +234,7 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
     setRenderEta(null); // R1-065
     setQueuePos(null);  // R1-065
 
-    const { files, missing } = collectMediaFiles();
+    const { files, missing } = await collectMediaFiles();
     if (missing.length > 0) {
       setRenderStatus("error");
       setRenderError(`Thiếu file media gốc (cần import lại): ${missing.join(", ")}`);
