@@ -133,19 +133,55 @@ trong `server/bridge/src/index.js`:
   (hardening 16/16, jobqueue 52/52, progress 17/17, caption/translate/
   silence/scene/reframe đều pass) — không regression.
 
-### 3.2. 🟡 Multer memoryStorage — nguy cơ DoS RAM (MỨC: thấp–trung bình)
+### 3.2. 🟡 Multer memoryStorage — nguy cơ DoS RAM (MỨC: thấp–trung bình) — ✅ ĐÃ SỬA 2026-10-21 (K4)
 
 Upload dùng `multer.memoryStorage()` — file nằm trong RAM trước khi ghi disk.
 Giới hạn 2GB/file × 200 file về lý thuyết có thể làm cạn RAM nếu attacker gọi
 được bridge (kết hợp với §3.1). **Khuyến nghị**: chuyển sang `diskStorage` với
 thư mục tạm, hoặc giảm `MAX_UPLOAD_BYTES` mặc định.
 
-### 3.3. 🟡 Python requirements không pin version (MỨC: thấp)
+**✅ ĐÃ SỬA (2026-10-21)**: `server/bridge/src/index.js` chuyển sang
+`multer.diskStorage()` (thư mục tạm `WORK_ROOT/uploads-tmp`, tên file tạm
+ngẫu nhiên, không dùng tên client):
+- Handler không còn đọc `f.buffer`: magic check chỉ đọc 64 byte đầu
+  (`readUploadHead`), lưu file bằng rename cùng filesystem (`moveUploadTo`,
+  fallback copy+unlink khi khác device) — không nạp file vào RAM.
+- Thêm giới hạn tổng dung lượng 1 request `BRIDGE_MAX_TOTAL_UPLOAD`
+  (mặc định 8GB; multer không hỗ trợ cap tổng theo luồng nên cap này kiểm
+  tra sau khi upload xong, trước khi handler xử lý file — ghi rõ để không
+  ai tưởng là cap streaming).
+- Mọi file tạm còn sót được dọn bởi finish-hook trong `uploadMiddleware`
+  (áp cho cả 7 endpoint upload, cả đường lỗi sớm) — không còn file mồ côi.
+- Kiểm chứng thật bằng `server/bridge/test/test-diskstorage.sh` (7/7 pass:
+  render qua diskStorage, file giả bị chặn, cap tổng chặn, tmp sạch cả
+  đường thành công lẫn đường lỗi) + đo RSS trong lúc upload file 500MB:
+  baseline 76MB → đỉnh 115MB (chỉ +39MB, file KHÔNG nằm trong RAM —
+  với memoryStorage cũ đỉnh RSS sẽ tăng ~500MB).
+- Toàn bộ suite bridge hiện có chạy lại đều xanh (jobqueue 52/52, progress
+  17/17, caption 18, translate 18, silence 17, scene 19, reframe 20, cors
+  10/10, bridge-queue 12/12) — không regression.
+
+### 3.3. 🟡 Python requirements không pin version (MỨC: thấp) — ✅ ĐÃ SỬA 2026-10-21 (K4)
 
 `server/*/requirements.txt` dùng `>=` lỏng (ví dụ `rembg[cpu]>=2.0`). Nếu một
 bản release độc hại được đẩy lên PyPI, `pip install -r` lần sau sẽ kéo về.
 **Khuyến nghị**: pin version chính xác + hash (`pip hash-checking mode`) cho
 release pipeline.
+
+**✅ ĐÃ SỬA (2026-10-21)**: cả 4 file chuyển sang `==`:
+- caption: `faster-whisper==1.2.1` (freeze từ venv đang chạy; kèm
+  ctranslate2 4.8.3, onnxruntime 1.31.0, tokenizers 0.23.3, av 19.0.1).
+- tts: `vieneu==3.8.3`, `numpy==2.5.4` (freeze từ venv đang chạy).
+- reframe: `opencv-python-headless==5.0.0.93`, `numpy==2.5.4` (freeze từ
+  venv đang chạy).
+- bgremove: `rembg[cpu]==2.0.38` (đã verify ở Batch H), `opencv==5.0.0.93`,
+  `numpy==2.5.4`, `Pillow==10.2.0` — LƯU Ý: bgremove không còn venv để
+  freeze nên các pin này là "đã biết tương thích", chưa phải freeze;
+  ghi rõ trong chính file requirements và cần chạy lại test_bgremove.py
+  sau khi cài venv mới trước khi dùng cho release.
+- Hash-checking mode (`--require-hashes`) chưa bật: cần hashes cho cả cây
+  transitive, làm ở bước release pipeline (R1-102) thay vì ở đây — ghi
+  nhận để không ai tưởng pin `==` đã là hash-checking.
 
 ### 3.4. 🟢 rembg server mode có CVE — không ảnh hưởng
 
@@ -156,11 +192,18 @@ hợp. Ghi nhận để không ai expose server này trong tương lai.
 
 ## 4. Khuyến nghị cho CI/Release
 
-1. Bật quét CVE tự động trong GitHub Actions: `npm audit --audit-level=high`
-   và `pip-audit` cho Python, fail build khi có CVE critical mới.
-2. ~~Sửa §3.1 (CORS)~~ ✅ đã sửa 2026-10-20 — còn §3.2 (diskStorage) cần sửa
-   trước bản release public đầu tiên.
-3. Pin Python dependencies kèm hash cho release pipeline (R1-102).
+1. ~~Bật quét CVE tự động trong GitHub Actions~~ ✅ đã bật 2026-10-21 (K4):
+   `.github/workflows/ci-security.yml` — `npm audit --audit-level=high` cho
+   root workspaces + mcp-server + cli (fail ở high/critical), `pip-audit`
+   cho cả 4 requirements đã pin (pip-audit CLI không có cổng severity nên
+   job này fail khi có bất kỳ lỗ hổng nào — chặt hơn high/critical, ghi
+   rõ trong workflow), cộng quét định kỳ thứ 2 hàng tuần. YAML đã parse
+   kiểm chứng. LƯU Ý: workflow chưa chạy thật trên GitHub (chưa có push
+   nào sau khi thêm file) — lần push đầu cần theo dõi log.
+2. ~~Sửa §3.1 (CORS)~~ ✅ đã sửa 2026-10-20; ~~§3.2 (diskStorage)~~ ✅ đã
+   sửa 2026-10-21 — cả hai đều xong trước bản release public đầu tiên.
+3. Pin Python dependencies kèm hash cho release pipeline (R1-102) — pin
+   `==` đã xong (K4); `--require-hashes` còn lại cho bước release.
 4. Chạy lại audit này mỗi khi thêm dependency mới hoặc model AI mới.
 
 ## 5. Báo cáo lỗ hổng
