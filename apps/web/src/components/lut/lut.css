@@ -13,6 +13,7 @@
 }
 
 .lut-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -72,4 +73,122 @@
   color: #8a8a95;
   margin: 0;
   line-height: 1.4;
+}
+
+/* ColorAdjustPanel — sliders chỉnh màu thủ công */
+.color-adjust {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.color-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.color-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #c9c9d4;
+}
+
+.color-val {
+  font-variant-numeric: tabular-nums;
+  color: #4f8cff;
+  font-weight: 600;
+}
+
+.color-row input[type="range"] {
+  width: 100%;
+  accent-color: #4f8cff;
+  cursor: pointer;
+}
+
+.color-hint {
+  font-size: 10px;
+  color: #77777f;
+}
+
+.color-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+.color-reset {
+  background: #1e1e24;
+  border: 1px solid #33333d;
+  border-radius: 6px;
+  color: #c9c9d4;
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.color-reset:hover:not(:disabled) {
+  border-color: #55555f;
+}
+
+.color-reset:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* K3: nhập LUT user */
+.lut-import-row {
+  margin-bottom: 10px;
+}
+.lut-import-btn {
+  background: #2a2a33;
+  border: 1px dashed #55555f;
+  border-radius: 6px;
+  color: #e6e6ee;
+  font-size: 13px;
+  padding: 8px 12px;
+  cursor: pointer;
+  width: 100%;
+}
+.lut-import-btn:hover:not(:disabled) {
+  border-color: #88889a;
+}
+.lut-import-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.lut-import-err {
+  color: #ff9a9a;
+  font-size: 12px;
+  margin: 0 0 10px;
+}
+.lut-section-head {
+  font-size: 12px;
+  font-weight: 600;
+  color: #a9a9b8;
+  margin: 12px 0 6px;
+}
+.lut-card-main {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+}
+.lut-card-del {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
 }

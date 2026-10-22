@@ -8,15 +8,27 @@
  * LUT thật — màu thật chỉ thấy khi render qua server/render/src/lut.js
  * (filter lut3d của FFmpeg với file .cube).
  */
+import { useEffect, useRef, useState } from "react";
 import "./lut.css";
-import type { LutId } from "../../../../../packages/video-spec/src/lut";
+import type {
+  LutId,
+  UserLutId,
+} from "../../../../../packages/video-spec/src/lut";
 import { LUT_META, LUT_IDS } from "../../../../../packages/video-spec/src/lut";
+import {
+  deleteUserLut,
+  listUserLuts,
+  parseCube,
+  saveUserLut,
+  userLutIdFromName,
+  type UserLutMeta,
+} from "../../lib/userLut";
 
 export interface LutPickerProps {
-  /** LutId đang chọn, hoặc undefined = không lọc */
-  value: LutId | undefined;
+  /** LutId (catalog hoặc user-) đang chọn, hoặc undefined = không lọc */
+  value: LutId | UserLutId | undefined;
   /** (lutId | undefined) => void */
-  onChange: (lut: LutId | undefined) => void;
+  onChange: (lut: LutId | UserLutId | undefined) => void;
 }
 
 /**
@@ -129,6 +141,37 @@ const CSS_APPROX: Record<LutId, string> = {
   "vcut-duotone-cyan-orange": "grayscale(0.6) sepia(0.7) saturate(1.8) contrast(1.1)",
   "vcut-infrared-false": "hue-rotate(180deg) saturate(1.3)",
   "vcut-solarized": "invert(0.15) saturate(1.2) contrast(1.1)",
+  // vcut-*: batch K6 Phase 6
+  "vcut-lagoon": "saturate(1.35) hue-rotate(8deg)",
+  "vcut-deep-sea": "saturate(1.1) brightness(0.92) hue-rotate(12deg)",
+  "vcut-coral-reef": "sepia(0.25) saturate(1.5)",
+  "vcut-santorini": "saturate(1.2) brightness(1.04) hue-rotate(10deg)",
+  "vcut-bali-sunset": "sepia(0.45) saturate(1.4)",
+  "vcut-coffee-roast": "sepia(0.3) contrast(1.2) saturate(1.1)",
+  "vcut-matcha": "saturate(1.3) hue-rotate(-15deg)",
+  "vcut-candy-pop": "saturate(1.7) contrast(1.2)",
+  "vcut-champagne": "sepia(0.25) brightness(1.08) saturate(0.9)",
+  "vcut-blood-moon": "sepia(0.4) saturate(1.2) brightness(0.92)",
+  "vcut-graveyard-fog": "grayscale(0.55) brightness(1.1)",
+  "vcut-toxic-green": "saturate(1.5) hue-rotate(-20deg)",
+  "vcut-midnight-purple": "saturate(1.1) brightness(0.9) hue-rotate(20deg)",
+  "vcut-crt-green": "grayscale(1) sepia(0.6) saturate(2) hue-rotate(60deg)",
+  "vcut-terminal-amber": "grayscale(1) sepia(0.8) saturate(2)",
+  "vcut-floppy-purple": "saturate(1.25) hue-rotate(15deg)",
+  "vcut-vaporwave-sunset": "sepia(0.3) saturate(1.5) hue-rotate(15deg)",
+  "vcut-blush-pink": "sepia(0.2) saturate(1) brightness(1.08)",
+  "vcut-ivory": "sepia(0.15) brightness(1.1) saturate(0.85)",
+  "vcut-silk-white": "saturate(0.7) brightness(1.06)",
+  "vcut-stadium-night": "saturate(1.3) contrast(1.25)",
+  "vcut-concert-laser": "saturate(1.6) hue-rotate(10deg) contrast(1.15)",
+  "vcut-vinyl-warm": "sepia(0.35) saturate(1.05)",
+  "vcut-bw-blueprint": "grayscale(1) sepia(0.5) hue-rotate(160deg) saturate(2)",
+  "vcut-bw-sepia-deep": "grayscale(1) sepia(0.9)",
+  "vcut-bw-night-green": "grayscale(1) sepia(0.5) hue-rotate(70deg) saturate(2)",
+  "vcut-solar-flare": "sepia(0.4) saturate(1.4) brightness(1.1)",
+  "vcut-prism": "saturate(1.4) hue-rotate(-10deg)",
+  "vcut-acid-rain": "saturate(1.55) hue-rotate(-15deg)",
+  "vcut-synthwave-grid": "sepia(0.25) saturate(1.45) hue-rotate(18deg)",
 };
 
 function Swatch({ lutId }: { lutId: LutId }) {
@@ -147,8 +190,127 @@ function Swatch({ lutId }: { lutId: LutId }) {
 }
 
 export function LutPicker({ value, onChange }: LutPickerProps) {
+  // K3: LUT user tự nhập, lưu trong IndexedDB (xem lib/userLut).
+  const [userLuts, setUserLuts] = useState<UserLutMeta[]>([]);
+  const [importErr, setImportErr] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let alive = true;
+    listUserLuts()
+      .then((list) => {
+        if (alive) setUserLuts(list);
+      })
+      .catch(() => {
+        /* IndexedDB không khả dụng (private mode...) → ẩn mục nhập */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const onImportFile = async (f: File | undefined) => {
+    if (!f) return;
+    setImportErr(null);
+    setImporting(true);
+    try {
+      if (!f.name.toLowerCase().endsWith(".cube")) {
+        throw new Error("Chỉ nhận file .cube (định dạng Adobe IRIDAS Cube, LUT 3D).");
+      }
+      const text = await f.text();
+      const parsed = parseCube(text, f.size);
+      // Tránh đè id đã có: thêm hậu tố -2, -3...
+      let id = userLutIdFromName(f.name);
+      let n = 2;
+      const taken = new Set(userLuts.map((u) => u.id));
+      while (taken.has(id)) {
+        id = `${userLutIdFromName(f.name)}-${n++}`;
+      }
+      const label = parsed.title ?? f.name.replace(/\.cube$/i, "");
+      const meta = await saveUserLut(id, label, parsed, text);
+      setUserLuts((prev) => [meta, ...prev]);
+      onChange(id as UserLutId);
+    } catch (e) {
+      setImportErr(e instanceof Error ? e.message : "Không nhập được file này.");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const onDeleteUserLut = async (id: string) => {
+    await deleteUserLut(id);
+    setUserLuts((prev) => prev.filter((u) => u.id !== id));
+    if (value === id) onChange(undefined);
+  };
+
   return (
     <div className="lut-picker">
+      <div className="lut-import-row">
+        <button
+          type="button"
+          className="lut-import-btn"
+          disabled={importing}
+          onClick={() => fileRef.current?.click()}
+        >
+          {importing ? "Đang kiểm tra…" : "📥 Nhập LUT (.cube) của bạn…"}
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".cube"
+          style={{ display: "none" }}
+          onChange={(e) => {
+            onImportFile(e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
+      </div>
+      {importErr && <p className="lut-import-err">⚠️ {importErr}</p>}
+      {userLuts.length > 0 && (
+        <>
+          <div className="lut-section-head">
+            LUT của bạn ({userLuts.length})
+          </div>
+          <div className="lut-grid">
+            {userLuts.map((u) => (
+              <div
+                key={u.id}
+                className={`lut-card${value === u.id ? " selected" : ""}`}
+              >
+                <button
+                  type="button"
+                  className="lut-card-main"
+                  onClick={() => onChange(value === u.id ? undefined : (u.id as UserLutId))}
+                  title={`LUT tự nhập — lưới 3D ${u.size}×${u.size}×${u.size}`}
+                >
+                  <div
+                    className="lut-swatch"
+                    aria-hidden
+                    style={{
+                      background:
+                        "linear-gradient(135deg,#ff5a5a 0%,#ffb84d 25%,#f7ff5a 50%,#5aff8a 75%,#5ab8ff 100%)",
+                    }}
+                  />
+                  <div className="lut-name">{u.label}</div>
+                  <div className="lut-desc">
+                    LUT tự nhập · {u.size}³
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className="lut-card-del"
+                  title="Xóa LUT này"
+                  onClick={() => void onDeleteUserLut(u.id)}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      <div className="lut-section-head">LUT có sẵn</div>
       <div className="lut-grid">
         <button
           type="button"
