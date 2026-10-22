@@ -11,6 +11,8 @@ import { clamp, fmtTime, tickStep } from "./lib";
 import { getVideoThumbnail, getFilmstrip, filmstripCount } from "./lib/thumbnails";
 import { visibleFlagsFor, type TrackFlag } from "./lib/trackFlags";
 import { ClipWaveform } from "./components/waveform";
+import { validateDrop } from "./lib/drop";
+import { pushToast } from "./lib/toast";
 
 const LANE_H: Record<TrackKind, number> = { video: 58, audio: 46, text: 46, sticker: 46, image: 58 };
 
@@ -333,6 +335,8 @@ export function Timeline() {
   const boxStartRef = useRef<{ x0: number; y0: number; active: boolean } | null>(null);
   /** Hộp chọn vùng (box select) đang vẽ — null khi không kéo vùng. */
   const [box, setBox] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  /** K5: vị trí thả media đang rê trên lane (vạch chỉ) — null khi không rê. */
+  const [dropAt, setDropAt] = useState<{ trackId: string; at: number } | null>(null);
 
   const duration = useStore.getState().duration();
   const width = Math.max(duration * pxPerSec, 600) + 240;
@@ -562,16 +566,40 @@ export function Timeline() {
                 key={track.id}
                 className={`tl-lane lane-${track.kind}${track.locked ? " is-locked" : ""}`}
                 style={{ height: LANE_H[track.kind] }}
-                onDragOver={(e) => e.preventDefault()}
+                onDragOver={(e) => {
+                  // K5: vạch chỉ vị trí clip sẽ rơi xuống khi thả.
+                  e.preventDefault();
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const at = clamp((e.clientX - rect.left) / pxPerSec, 0, 3600);
+                  setDropAt({ trackId: track.id, at });
+                }}
+                onDragLeave={() => setDropAt(null)}
                 onDrop={(e) => {
                   e.preventDefault();
+                  setDropAt(null);
                   const mediaId = e.dataTransfer.getData("text/media-id");
                   if (!mediaId) return;
                   const rect = e.currentTarget.getBoundingClientRect();
                   const at = clamp((e.clientX - rect.left) / pxPerSec, 0, 3600);
+                  // K5: báo lý do thay vì im lặng bỏ qua (luật mirror store).
+                  const item = useStore.getState().media.find((m) => m.id === mediaId);
+                  if (item) {
+                    const check = validateDrop(track, item, at, spec.meta.fps);
+                    if (!check.ok) {
+                      pushToast(check.reason, "error");
+                      return;
+                    }
+                  }
                   useStore.getState().addMediaToTrack(mediaId, track.id, at);
                 }}
               >
+                {dropAt && dropAt.trackId === track.id && (
+                  <div
+                    className="tl-drop-line"
+                    style={{ left: dropAt.at * pxPerSec }}
+                    aria-hidden="true"
+                  />
+                )}
                 {track.clips.map((clip) => (
                   <ClipView
                     key={clip.id}
