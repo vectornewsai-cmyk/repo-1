@@ -186,6 +186,10 @@ export function validateAnimations(anims: unknown, duration: number): string[] {
       if (!isFiniteNumber(k["v"])) {
         errors.push(`${w}.v phải là số hữu hạn, nhận được: ${JSON.stringify(k["v"])}`);
       }
+      // K1 (Phase 6, mirror bản JS): opacity keyframe là alpha tuyệt đối 0..1.
+      if (key === "opacity" && isFiniteNumber(k["v"]) && ((k["v"] as number) < 0 || (k["v"] as number) > 1)) {
+        errors.push(`${w}.v phải trong 0..1 (opacity), nhận được: ${JSON.stringify(k["v"])}`);
+      }
       if (!(EASINGS as readonly string[]).includes(k["easing"] as string)) {
         errors.push(`${w}.easing phải là một trong ${EASINGS.join(" | ")}, nhận được: ${JSON.stringify(k["easing"])}`);
       }

@@ -120,9 +120,63 @@ export const LUT_IDS = [
   "vcut-duotone-cyan-orange",
   "vcut-infrared-false",
   "vcut-solarized",
+  // --- batch K6 Phase 6 (gen_vcut_luts3.py, original) ---
+  "vcut-lagoon",
+  "vcut-deep-sea",
+  "vcut-coral-reef",
+  "vcut-santorini",
+  "vcut-bali-sunset",
+  "vcut-coffee-roast",
+  "vcut-matcha",
+  "vcut-candy-pop",
+  "vcut-champagne",
+  "vcut-blood-moon",
+  "vcut-graveyard-fog",
+  "vcut-toxic-green",
+  "vcut-midnight-purple",
+  "vcut-crt-green",
+  "vcut-terminal-amber",
+  "vcut-floppy-purple",
+  "vcut-vaporwave-sunset",
+  "vcut-blush-pink",
+  "vcut-ivory",
+  "vcut-silk-white",
+  "vcut-stadium-night",
+  "vcut-concert-laser",
+  "vcut-vinyl-warm",
+  "vcut-bw-blueprint",
+  "vcut-bw-sepia-deep",
+  "vcut-bw-night-green",
+  "vcut-solar-flare",
+  "vcut-prism",
+  "vcut-acid-rain",
+  "vcut-synthwave-grid",
 ] as const;
 
 export type LutId = (typeof LUT_IDS)[number];
+
+/**
+ * K3 (Phase 6): Id LUT do user tự nhập (.cube tự chế).
+ * - Luôn có prefix `user-` nên không đè được LUT hệ thống.
+ * - File .cube không nằm trong assets/filters/ mà được upload kèm spec lúc
+ *   export với tên dành riêng `__lut_<id>.cube` (xem userLutFileName).
+ * - Render worker resolve từ mediaDir của job (server/render/src/lut.js).
+ */
+export type UserLutId = `user-${string}`;
+
+/** Kiểm tra một giá trị có phải id LUT user hợp lệ không (slug an toàn cho tên file). */
+export function isUserLutId(v: unknown): v is UserLutId {
+  return (
+    typeof v === "string" &&
+    /^user-[a-z0-9][a-z0-9-]*$/.test(v) &&
+    v.length <= 64
+  );
+}
+
+/** Tên file dành riêng khi upload LUT user lên bridge (khớp render worker). */
+export function userLutFileName(id: UserLutId): string {
+  return `__lut_${id}.cube`;
+}
 
 /** Metadata hiển thị cho UI (tiếng Việt). */
 export const LUT_META: Record<LutId, { label: string; description: string }> = {
@@ -543,6 +597,127 @@ export const LUT_META: Record<LutId, { label: string; description: string }> = {
     label: "Solar hóa",
     description: "Hiệu ứng solarization đảo sáng",
   },
+  // --- batch K6 Phase 6 ---
+  "vcut-lagoon": {
+    label: "Đầm phá",
+    description: "Xanh ngọc biển nông, bão hoà cao",
+  },
+  "vcut-deep-sea": {
+    label: "Biển sâu",
+    description: "Xanh đậm, tối, lạnh",
+  },
+  "vcut-coral-reef": {
+    label: "Rạn san hô",
+    description: "Ấm, rực rỡ như san hô",
+  },
+  "vcut-santorini": {
+    label: "Santorini",
+    description: "Trắng xanh Địa Trung Hải",
+  },
+  "vcut-bali-sunset": {
+    label: "Hoàng hôn Bali",
+    description: "Vàng cam hoàng hôn nhiệt đới",
+  },
+  "vcut-coffee-roast": {
+    label: "Cà phê rang",
+    description: "Nâu ấm, tương phản rõ",
+  },
+  "vcut-matcha": {
+    label: "Matcha",
+    description: "Xanh lá trà, tươi mát",
+  },
+  "vcut-candy-pop": {
+    label: "Kẹo ngọt",
+    description: "Bão hoà cực cao, vui nhộn",
+  },
+  "vcut-champagne": {
+    label: "Sâm panh",
+    description: "Vàng nhạt, sáng, nhẹ nhàng",
+  },
+  "vcut-blood-moon": {
+    label: "Trăng máu",
+    description: "Đỏ tối, u ám",
+  },
+  "vcut-graveyard-fog": {
+    label: "Sương nghĩa địa",
+    description: "Xám mờ, lạnh, ít màu",
+  },
+  "vcut-toxic-green": {
+    label: "Xanh độc",
+    description: "Xanh lá gắt, độc hại",
+  },
+  "vcut-midnight-purple": {
+    label: "Tím nửa đêm",
+    description: "Tím tối, huyền bí",
+  },
+  "vcut-crt-green": {
+    label: "Màn hình CRT xanh",
+    description: "Đơn sắc xanh lá màn hình cũ",
+  },
+  "vcut-terminal-amber": {
+    label: "Terminal hổ phách",
+    description: "Đơn sắc hổ phách terminal",
+  },
+  "vcut-floppy-purple": {
+    label: "Tím floppy",
+    description: "Tím retro thập niên 90",
+  },
+  "vcut-vaporwave-sunset": {
+    label: "Hoàng hôn vaporwave",
+    description: "Hồng tím hoàng hôn synth",
+  },
+  "vcut-blush-pink": {
+    label: "Hồng má",
+    description: "Hồng nhẹ, sáng da",
+  },
+  "vcut-ivory": {
+    label: "Ngà voi",
+    description: "Trắng ngà, mềm, sáng",
+  },
+  "vcut-silk-white": {
+    label: "Lụa trắng",
+    description: "Trắng mịn, ít màu",
+  },
+  "vcut-stadium-night": {
+    label: "Đêm sân vận động",
+    description: "Tương phản cao dưới đèn đêm",
+  },
+  "vcut-concert-laser": {
+    label: "Laser hòa nhạc",
+    description: "Rực rỡ, tím laser sân khấu",
+  },
+  "vcut-vinyl-warm": {
+    label: "Đĩa than ấm",
+    description: "Nâu ấm cổ điển",
+  },
+  "vcut-bw-blueprint": {
+    label: "Đơn sắc bản vẽ",
+    description: "Đơn sắc xanh bản thiết kế",
+  },
+  "vcut-bw-sepia-deep": {
+    label: "Nâu đỏ đậm",
+    description: "Đơn sắc nâu đỏ cổ",
+  },
+  "vcut-bw-night-green": {
+    label: "Xanh đêm",
+    description: "Đơn sắc xanh lá đêm",
+  },
+  "vcut-solar-flare": {
+    label: "Lóe mặt trời",
+    description: "Chói sáng, vàng rực",
+  },
+  "vcut-prism": {
+    label: "Lăng kính",
+    description: "Lệch kênh màu cầu vồng",
+  },
+  "vcut-acid-rain": {
+    label: "Mưa axit",
+    description: "Xanh lá lệch kênh, gắt",
+  },
+  "vcut-synthwave-grid": {
+    label: "Lưới synthwave",
+    description: "Hồng tím neon thập niên 80",
+  },
 };
 
 /** Kiểm tra một giá trị có phải LutId hợp lệ không. */
@@ -560,8 +735,11 @@ export function lutFileName(id: LutId): string {
 
 /** Bộ lọc màu áp cho một video clip. */
 export interface VideoFilter {
-  /** Id LUT trong catalog (vd "cartcut-teal-orange"). Không đặt = không lọc. */
-  lut?: LutId;
+  /**
+   * Id LUT trong catalog (vd "cartcut-teal-orange") hoặc LUT user tự nhập
+   * (vd "user-my-look"). Không đặt = không lọc.
+   */
+  lut?: LutId | UserLutId;
   /** Chỉnh màu thủ công (brightness/contrast/...). Áp TRƯỚC LUT trong render. */
   color?: ColorAdjust;
 }
@@ -574,10 +752,12 @@ export function validateVideoFilter(f: unknown): string[] {
   }
   const errors: string[] = [];
   const lut = (f as Record<string, unknown>).lut;
-  if (lut !== undefined && !isLutId(lut)) {
+  // LUT user chỉ kiểm tra định dạng id ở đây; file .cube tương ứng được
+  // kiểm tra tồn tại lúc build filter trong render worker.
+  if (lut !== undefined && !isLutId(lut) && !isUserLutId(lut)) {
     errors.push(
       `filter.lut không hợp lệ: ${JSON.stringify(lut)} ` +
-      `(chỉ chấp nhận: ${LUT_IDS.join(", ")})`
+      `(chỉ chấp nhận id trong catalog hoặc dạng "user-<slug>")`
     );
   }
   // R1-075: chỉnh màu thủ công
