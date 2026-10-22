@@ -126,6 +126,37 @@ const LUT_IDS = [
   "vcut-duotone-cyan-orange",
   "vcut-infrared-false",
   "vcut-solarized",
+  // --- batch K6 Phase 6 ---
+  "vcut-lagoon",
+  "vcut-deep-sea",
+  "vcut-coral-reef",
+  "vcut-santorini",
+  "vcut-bali-sunset",
+  "vcut-coffee-roast",
+  "vcut-matcha",
+  "vcut-candy-pop",
+  "vcut-champagne",
+  "vcut-blood-moon",
+  "vcut-graveyard-fog",
+  "vcut-toxic-green",
+  "vcut-midnight-purple",
+  "vcut-crt-green",
+  "vcut-terminal-amber",
+  "vcut-floppy-purple",
+  "vcut-vaporwave-sunset",
+  "vcut-blush-pink",
+  "vcut-ivory",
+  "vcut-silk-white",
+  "vcut-stadium-night",
+  "vcut-concert-laser",
+  "vcut-vinyl-warm",
+  "vcut-bw-blueprint",
+  "vcut-bw-sepia-deep",
+  "vcut-bw-night-green",
+  "vcut-solar-flare",
+  "vcut-prism",
+  "vcut-acid-rain",
+  "vcut-synthwave-grid",
 ];
 
 const LUT_META = {
@@ -241,6 +272,51 @@ function isLutId(v) {
   return typeof v === "string" && LUT_IDS.includes(v);
 }
 
+// ---------------------------------------------------------------------------
+// K3 (Phase 6): LUT do user tự nhập (.cube tự chế).
+// Id luôn có prefix `user-`; file được upload kèm spec lúc export với tên
+// dành riêng `__lut_<id>.cube` và nằm trong mediaDir của job (không nằm
+// trong assets/filters/ nên không đè được LUT hệ thống).
+// ---------------------------------------------------------------------------
+
+/** @returns {boolean} id LUT user hợp lệ (slug an toàn cho tên file). */
+function isUserLutId(v) {
+  return (
+    typeof v === "string" &&
+    /^user-[a-z0-9][a-z0-9-]*$/.test(v) &&
+    v.length <= 64
+  );
+}
+
+/** Tên file dành riêng của LUT user trong mediaDir (khớp web + bridge). */
+function userLutFileName(lutId) {
+  return `__lut_${lutId}.cube`;
+}
+
+/**
+ * Đường dẫn tuyệt đối tới file .cube của LUT user.
+ * @throws nếu id sai định dạng, thiếu thư mục userLutsDir, hoặc file không tồn tại
+ */
+function userLutFilePath(lutId, userLutsDir) {
+  if (!isUserLutId(lutId)) {
+    throw new Error(`LUT user không hợp lệ: ${JSON.stringify(lutId)}`);
+  }
+  if (!userLutsDir) {
+    throw new Error(
+      `LUT user "${lutId}" cần thư mục user-luts (mediaDir của job) — ` +
+      `file ${userLutFileName(lutId)} chưa được upload kèm spec.`
+    );
+  }
+  const p = path.resolve(userLutsDir, userLutFileName(lutId));
+  if (!fs.existsSync(p)) {
+    throw new Error(
+      `Không tìm thấy file LUT user: ${p} ` +
+      `(export cần upload file .cube kèm theo spec)`
+    );
+  }
+  return p;
+}
+
 /**
  * Đường dẫn tuyệt đối tới file .cube.
  * @param {string} lutId
@@ -272,12 +348,15 @@ function escapeFilterPath(p) {
 
 /**
  * Dựng filter lut3d cho một LUT.
- * @param {string} lutId id trong catalog
+ * @param {string} lutId id trong catalog hoặc id LUT user (`user-...`)
  * @param {string} assetsDir thư mục assets/ của dự án
+ * @param {string} [userLutsDir] thư mục chứa file .cube user (mặc định = mediaDir của job)
  * @returns {string} vd "lut3d=file='/path/to/cartcut-teal-orange.cube'"
  */
-function buildLutFilter(lutId, assetsDir) {
-  const fp = lutFilePath(lutId, assetsDir);
+function buildLutFilter(lutId, assetsDir, userLutsDir) {
+  const fp = isUserLutId(lutId)
+    ? userLutFilePath(lutId, userLutsDir)
+    : lutFilePath(lutId, assetsDir);
   return `lut3d=file='${escapeFilterPath(fp)}'`;
 }
 
@@ -291,10 +370,12 @@ function validateVideoFilter(f) {
     return ["filter phải là một object"];
   }
   const errors = [];
-  if (f.lut !== undefined && !isLutId(f.lut)) {
+  // LUT user chỉ kiểm tra định dạng id ở đây; file .cube tương ứng được
+  // kiểm tra tồn tại lúc build filter (buildLutFilter throw nếu thiếu).
+  if (f.lut !== undefined && !isLutId(f.lut) && !isUserLutId(f.lut)) {
     errors.push(
       `filter.lut không hợp lệ: ${JSON.stringify(f.lut)} ` +
-      `(chỉ chấp nhận: ${LUT_IDS.join(", ")})`
+      `(chỉ chấp nhận id trong catalog hoặc dạng "user-<slug>")`
     );
   }
   // R1-075: chỉnh màu thủ công
@@ -403,7 +484,7 @@ function buildColorAdjustFilter(c) {
 // ---------------------------------------------------------------------------
 function selfTest() {
   // 1. Catalog đủ 20
-  assert.strictEqual(LUT_IDS.length, 104, "catalog phải có đúng 104 LUT");
+  assert.strictEqual(LUT_IDS.length, 134, "catalog phải có đúng 134 LUT");
   // 2. isLutId
   assert.ok(isLutId("cartcut-teal-orange"));
   assert.ok(isLutId("cartcut-mono-neutral"));
@@ -431,6 +512,14 @@ function selfTest() {
   assert.deepStrictEqual(validateVideoFilter({ color: { brightness: 20 } }), []);
   assert.ok(validateVideoFilter({ lut: "sai" }).length > 0);
   assert.ok(validateVideoFilter("chuoi").length > 0);
+  // 5c. K3: LUT user — chấp nhận định dạng id, từ chối id sai format;
+  // buildLutFilter throw khi thiếu file (fail fast, thông báo rõ).
+  assert.deepStrictEqual(validateVideoFilter({ lut: "user-my-look" }), []);
+  assert.ok(validateVideoFilter({ lut: "user-" }).length > 0);
+  assert.ok(validateVideoFilter({ lut: "user-CAPS" }).length > 0);
+  assert.ok(validateVideoFilter({ lut: "user-a/b" }).length > 0);
+  assert.throws(() => buildLutFilter("user-my-look", assetsDir, "/tmp/khong-co"), /Không tìm thấy file LUT user/);
+  assert.throws(() => buildLutFilter("user-my-look", assetsDir), /cần thư mục user-luts/);
   // 5b. validateColorAdjust
   assert.deepStrictEqual(validateColorAdjust(undefined), []);
   assert.deepStrictEqual(validateColorAdjust({}), []);
@@ -473,7 +562,7 @@ function selfTest() {
     "eq=brightness=0.1,colorbalance=rm=-0.2:bm=0.2"
   );
 
-  console.log("✅ lut.js self-test: tất cả assertion pass (104 LUT + color adjust, file .cube đầy đủ)");
+  console.log("✅ lut.js self-test: tất cả assertion pass (134 LUT + color adjust, file .cube đầy đủ)");
 }
 
 if (require.main === module) {
@@ -491,6 +580,10 @@ module.exports = {
   lutFilePath,
   buildLutFilter,
   validateVideoFilter,
+  // K3 (Phase 6): LUT user tự nhập
+  isUserLutId,
+  userLutFileName,
+  userLutFilePath,
   // R1-075: chỉnh màu thủ công
   COLOR_PARAMS,
   isColorNoop,
