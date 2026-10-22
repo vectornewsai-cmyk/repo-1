@@ -54,18 +54,48 @@ export const VCUT_FONTS: VCutFont[] = [
   { family: "Space Mono", category: "Monospace", variable: false },
   { family: "IBM Plex Mono", category: "Monospace", variable: false },
   { family: "Victor Mono", category: "Monospace", variable: true },
+  { family: "Work Sans", category: "Sans Serif", variable: true },
+  { family: "Archivo", category: "Sans Serif", variable: true },
+  { family: "Public Sans", category: "Sans Serif", variable: true },
+  { family: "Fira Sans", category: "Sans Serif", variable: false },
+  { family: "Lato", category: "Sans Serif", variable: false },
+  { family: "Raleway", category: "Sans Serif", variable: true },
+  { family: "Cabin", category: "Sans Serif", variable: true },
+  { family: "Mulish", category: "Sans Serif", variable: true },
+  { family: "Source Sans 3", category: "Sans Serif", variable: true },
+  { family: "IBM Plex Sans", category: "Sans Serif", variable: true },
+  { family: "Cormorant Garamond", category: "Serif", variable: true },
+  { family: "Bitter", category: "Serif", variable: true },
+  { family: "Indie Flower", category: "Handwriting", variable: false },
+  { family: "Inconsolata", category: "Monospace", variable: true },
+  { family: "Source Code Pro", category: "Monospace", variable: true },
+  { family: "Comfortaa", category: "Display", variable: true },
 ];
 
-export const FONT_CATEGORIES = ["Sans Serif", "Serif", "Display", "Handwriting", "Monospace"] as const;
+export const FONT_CATEGORIES = [
+  "Sans Serif",
+  "Serif",
+  "Display",
+  "Handwriting",
+  "Monospace",
+] as const;
 
-/** Fonts nhóm theo category cho UI picker. */
-export function fontsByCategory(): Record<string, VCutFont[]> {
-  const out: Record<string, VCutFont[]> = {};
-  for (const c of FONT_CATEGORIES) out[c] = VCUT_FONTS.filter((f) => f.category === c);
+export type FontCategory = (typeof FONT_CATEGORIES)[number];
+
+/** Nhóm font theo category, giữ đúng thứ tự FONT_CATEGORIES. */
+export function fontsByCategory(): Record<FontCategory, VCutFont[]> {
+  const out = {
+    "Sans Serif": [] as VCutFont[],
+    Serif: [] as VCutFont[],
+    Display: [] as VCutFont[],
+    Handwriting: [] as VCutFont[],
+    Monospace: [] as VCutFont[],
+  };
+  for (const f of VCUT_FONTS) out[f.category].push(f);
   return out;
 }
 
-/** CSS font-family stack: ưu tiên font đã tải, fallback hệ thống. */
+/** CSS font-family cho 1 font: "Family", system-ui, sans-serif. */
 export function fontStack(family: string): string {
-  return `"${family}", "Be Vietnam Pro", system-ui, sans-serif`;
+  return `"${family}", system-ui, sans-serif`;
 }

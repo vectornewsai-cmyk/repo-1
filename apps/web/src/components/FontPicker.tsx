@@ -1,6 +1,6 @@
 /**
  * FontPicker — chọn font chữ hỗ trợ tiếng Việt cho text overlay.
- * 43 fonts OFL từ Google Fonts (assets/fonts/catalog.json).
+ * 59 fonts OFL từ Google Fonts (assets/fonts/catalog.json).
  */
 import { fontsByCategory, FONT_CATEGORIES } from "../lib/fonts";
 
@@ -22,7 +22,7 @@ export function FontPicker({
   const grouped = fontsByCategory();
   return (
     <label className="field">
-      <span>Font chữ (43 font Việt)</span>
+      <span>Font chữ (59 font Việt)</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
