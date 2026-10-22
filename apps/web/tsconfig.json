@@ -29,6 +29,7 @@
     }
   ],
   "exclude": [
-    "src/lib/assetStore.test.ts"
+    "src/lib/assetStore.test.ts",
+    "src/lib/clipboard.test.ts"
   ]
 }

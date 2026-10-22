@@ -11,6 +11,9 @@ import { RelinkPanel } from "./components/RelinkPanel";
 import { CaptionModal } from "./components/CaptionModal";
 import { SilenceModal } from "./components/SilenceModal";
 import { TemplatePicker } from "./components/TemplatePicker";
+import { Toasts } from "./components/Toasts";
+import { pushToast } from "./lib/toast";
+import { togglePreviewFullscreen } from "./preview";
 import { autosave, loadAutosave, markSaved } from "./lib/projectRepo";
 import { saveCurrentProject } from "./components/project/ProjectMenu";
 
@@ -72,7 +75,10 @@ export default function App() {
         e.preventDefault();
         const warnings = saveCurrentProject();
         if (warnings.length > 0) {
-          window.alert("Đã lưu, nhưng có lưu ý:\n- " + warnings.join("\n- "));
+          // K5: toast thay window.alert (không chặn luồng làm việc).
+          pushToast("Đã lưu, nhưng có lưu ý: " + warnings.join("; "), "info");
+        } else {
+          pushToast("Đã lưu project.", "success");
         }
         return;
       }
@@ -98,6 +104,24 @@ export default function App() {
         st.selectMany(sels);
         return;
       }
+      // K2 (Phase 6): Ctrl/Cmd+C copy, Ctrl/Cmd+V paste, Ctrl/Cmd+D duplicate.
+      // (Đã return sớm ở trên khi focus trong input/textarea — copy/paste
+      // văn bản gốc của trình duyệt vẫn hoạt động bình thường.)
+      if ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "C")) {
+        e.preventDefault();
+        st.copySelection();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "v" || e.key === "V")) {
+        e.preventDefault();
+        st.pasteClipboard();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "d" || e.key === "D")) {
+        e.preventDefault();
+        st.duplicateSelection();
+        return;
+      }
       if (e.code === "Space") {
         e.preventDefault();
         st.togglePlay();
@@ -105,6 +129,33 @@ export default function App() {
         st.splitAtPlayhead();
       } else if (e.key === "Delete" || e.key === "Backspace") {
         st.deleteSelection();
+      } else if (e.key === "k" || e.key === "K") {
+        // K5: J/K/L kiểu shuttle (J/L tua ±5s, K phát/dừng — không phát ngược
+        // vì preview chưa hỗ trợ reverse, xem SEEK_LIMITS).
+        st.togglePlay();
+      } else if (e.key === "j" || e.key === "J") {
+        st.setPlayhead(Math.max(0, st.playhead - 5));
+      } else if (e.key === "l" || e.key === "L") {
+        st.setPlayhead(Math.min(st.duration(), st.playhead + 5));
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        st.setPlayhead(0);
+      } else if (e.key === "End") {
+        e.preventDefault();
+        st.setPlayhead(st.duration());
+      } else if (e.key === "ArrowLeft") {
+        // K5: tua từng frame (không có modifier — tránh xung đột với
+        // di chuyển caret trong input, đã được guard ở đầu handler).
+        e.preventDefault();
+        const fps = st.spec.meta.fps || 30;
+        st.setPlayhead(Math.max(0, st.playhead - 1 / fps));
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        const fps = st.spec.meta.fps || 30;
+        st.setPlayhead(Math.min(st.duration(), st.playhead + 1 / fps));
+      } else if (e.key === "f" || e.key === "F") {
+        // K5: fullscreen preview.
+        togglePreviewFullscreen();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -126,6 +177,8 @@ export default function App() {
       {captionOpen && <CaptionModal onClose={() => setCaptionOpen(false)} />}
       {silenceOpen && <SilenceModal onClose={() => setSilenceOpen(false)} />}
       {templateOpen && <TemplatePicker onClose={() => setTemplateOpen(false)} />}
+      {/* K5: chồng toast toàn cục */}
+      <Toasts />
       {missingAssets && missingAssets.length > 0 && (
         <RelinkPanel
           missing={missingAssets}

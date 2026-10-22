@@ -21,6 +21,7 @@ export function TopBar({ onExport, onCaption, onSilence, onTemplate }: { onExpor
   const redoDepth = useStore((s) => s.redoDepth);
   const undoLabel = useStore((s) => s.undoLabel);
   const redoLabel = useStore((s) => s.redoLabel);
+  const clipboardSize = useStore((s) => s.clipboardSize); // K2: bật/tắt nút Dán
   const [flash, setFlash] = useState<string | null>(null);
   const st = useStore.getState();
   const duration = st.duration();
@@ -99,6 +100,28 @@ export function TopBar({ onExport, onCaption, onSilence, onTemplate }: { onExpor
         </button>
         <button title={t("topbar.split")} onClick={doSplit}>
           {t("topbar.splitShort")}
+        </button>
+        {/* K2 (Phase 6): copy/paste/duplicate clip */}
+        <button
+          title={t("topbar.copy")}
+          onClick={() => st.copySelection()}
+          disabled={selection.length === 0}
+        >
+          {t("topbar.copyShort")}
+        </button>
+        <button
+          title={t("topbar.paste")}
+          onClick={() => st.pasteClipboard()}
+          disabled={clipboardSize === 0}
+        >
+          {t("topbar.pasteShort")}
+        </button>
+        <button
+          title={t("topbar.duplicate")}
+          onClick={() => st.duplicateSelection()}
+          disabled={selection.length === 0}
+        >
+          {t("topbar.duplicateShort")}
         </button>
         <button
           title={t("topbar.caption")}
