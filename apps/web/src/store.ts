@@ -59,6 +59,12 @@ import {
   type MoveItem,
   type Selection,
 } from "./lib/multiselect";
+import {
+  copyClips,
+  duplicateClips,
+  pasteClips,
+  type ClipboardContent,
+} from "./lib/clipboard";
 
 export type { MoveItem, Selection } from "./lib/multiselect";
 
@@ -72,6 +78,12 @@ let sampleLoading = false;
  * React state) vì chỉ depth/label cần reactive — xem syncHistory().
  */
 const history = new CommandStack();
+/**
+ * K2 (Phase 6): clipboard nội bộ của editor (module-level, như history —
+ * không nằm trong React state vì nội dung clip không cần reactive; chỉ
+ * `clipboardSize` được đồng bộ vào state để bật/tắt nút Dán).
+ */
+let clipboard: ClipboardContent | null = null;
 function nextTrackId(kind: TrackKind): string {
   trackSeq += 1;
   return `${kind[0]}${trackSeq}_${uid("t").slice(-4)}`;
@@ -257,6 +269,16 @@ interface EditorState {
   splitAtPlayhead: () => boolean;
   /** R1-085: tách 1 clip tại nhiều thời điểm trong 1 bước undo. */
   splitClipAtTimes: (trackId: string, clipId: string, times: number[]) => number;
+  /** K2 (Phase 6): số clip trong clipboard nội bộ (reactive — dùng cho disabled nút Dán). */
+  clipboardSize: number;
+  /** K2: copy selection vào clipboard nội bộ. Trả về số clip đã copy. */
+  copySelection: () => number;
+  /** K2: dán clipboard tại playhead (1 bước undo). Không có gì để dán thì không làm gì. */
+  pasteClipboard: () => void;
+  /** K2: nhân bản từng clip đang chọn ngay sau clip gốc (1 bước undo). */
+  duplicateSelection: () => void;
+  /** K2: xoá clipboard (gọi khi đổi project — tránh dán clip của project cũ). */
+  clearClipboard: () => void;
   deleteSelection: () => void;
   /** Ripple delete 1 clip cụ thể (không phụ thuộc selection). Trả về false nếu không tìm thấy. */
   deleteClipRipple: (trackId: string, clipId: string) => boolean;
@@ -347,6 +369,7 @@ export const useStore = create<EditorState>()((set, get) => {
   playing: false,
   pxPerSec: 60,
   selection: [],
+  clipboardSize: 0,
   ready: false,
   missingAssets: null,
   rippleMode: false,
@@ -852,6 +875,51 @@ export const useStore = create<EditorState>()((set, get) => {
     return applied;
   },
 
+  // ---- Clipboard: copy/paste/duplicate (K2, Phase 6) ----
+  copySelection: () => {
+    const { spec, selection } = get();
+    clipboard = copyClips(spec, selection);
+    const n = clipboard ? clipboard.clips.length : 0;
+    set({ clipboardSize: n });
+    return n;
+  },
+
+  pasteClipboard: () => {
+    if (!clipboard) return;
+    const st = get();
+    // Playhead đã snap về frame (R1-055); neo khối paste ở playhead.
+    const at = snapToFrame(Math.max(0, st.playhead), st.spec.meta.fps);
+    const result = pasteClips(st.spec, clipboard, at, () => uid("c"));
+    if (!result) return;
+    const n = result.pasted.length;
+    execCommand(
+      {
+        label: n > 1 ? `Dán ${n} clip` : "Dán clip",
+        apply: () => result.spec,
+      },
+      result.pasted,
+    );
+  },
+
+  duplicateSelection: () => {
+    const st = get();
+    const result = duplicateClips(st.spec, st.selection, () => uid("c"));
+    if (!result) return;
+    const n = result.duplicated.length;
+    execCommand(
+      {
+        label: n > 1 ? `Nhân bản ${n} clip` : "Nhân bản clip",
+        apply: () => result.spec,
+      },
+      result.duplicated,
+    );
+  },
+
+  clearClipboard: () => {
+    clipboard = null;
+    set({ clipboardSize: 0 });
+  },
+
   deleteSelection: () => {
     const { selection, rippleMode, spec } = get();
     if (selection.length === 0) return;
@@ -908,6 +976,7 @@ export const useStore = create<EditorState>()((set, get) => {
     sampleLoading = true;
     const { spec, media } = await buildSampleProject();
     trackSeq = 10; // tránh trùng id track mẫu (v1, t1)
+    clipboard = null; // K2: đổi project -> clipboard cũ không còn ý nghĩa
     set({
       spec,
       media,
@@ -915,12 +984,14 @@ export const useStore = create<EditorState>()((set, get) => {
       playing: false,
       selection: [],
       ready: true,
+      clipboardSize: 0,
     });
     clearHistory(); // đổi project -> không undo xuyên project
   },
 
   newProject: () => {
     trackSeq = 0;
+    clipboard = null; // K2: đổi project -> clipboard cũ không còn ý nghĩa
     set({
       spec: emptySpec(),
       media: [],
@@ -928,12 +999,14 @@ export const useStore = create<EditorState>()((set, get) => {
       playing: false,
       selection: [],
       ready: true,
+      clipboardSize: 0,
     });
     clearHistory();
   },
 
   replaceProject: (spec) => {
     trackSeq = 100; // tránh trùng id khi thêm track mới sau khi mở file
+    clipboard = null; // K2: đổi project -> clipboard cũ không còn ý nghĩa
     set({
       spec,
       media: [],
@@ -942,6 +1015,7 @@ export const useStore = create<EditorState>()((set, get) => {
       selection: [],
       ready: true,
       missingAssets: null, // reset; caller gọi checkMissingMedia() sau
+      clipboardSize: 0,
     });
     clearHistory();
   },
