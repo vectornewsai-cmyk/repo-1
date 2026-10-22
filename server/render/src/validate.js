@@ -275,6 +275,24 @@ function validateSpec(spec) {
     }
   }
 
+  // K1 (Phase 6): opacity keyframes kết hợp transition — giống SR, unit đã
+  // merge không áp được keyframes opacity (timestamp của stream đã gộp
+  // không còn khớp thời gian cục bộ của từng clip) nên render bỏ qua và
+  // dùng opacity tĩnh của clip đích. Cảnh báo rõ thay vì render sai lặng lẽ.
+  for (const tr of transitions) {
+    const track = spec.tracks.find((t) => t.id === tr.trackId);
+    if (!track || !Array.isArray(track.clips)) continue;
+    for (const id of [tr.from, tr.to]) {
+      const c = track.clips.find((cl) => cl.id === id);
+      if (c && c.animations && c.animations.opacity) {
+        warn(`tracks "${track.id}" clips "${c.id}"`,
+          `có keyframes opacity và transition — đoạn chuyển cảnh được gộp qua xfade ` +
+          `nên keyframes opacity của clip này bị bỏ qua khi render (dùng opacity tĩnh ` +
+          `của clip đích, xem OPACITY_LIMITS.md)`);
+      }
+    }
+  }
+
   // Tổng thời lượng phải > 0
   let D = 0;
   for (const t of spec.tracks) {
@@ -374,11 +392,18 @@ function validateClip(track, clip, where, err, warn) {
         err(where, m);
     }
     // Keyframe animations (x/y/opacity/scale/rotation đều render thật cho video;
-    // scale/rotation bị bỏ qua nếu clip dính transition — cảnh báo ở vòng lặp
-    // transition phía dưới, xem KEYFRAMES_LIMITS.md)
+    // scale/rotation và opacity keyframes bị bỏ qua nếu clip dính transition —
+    // cảnh báo ở vòng lặp transition phía dưới, xem KEYFRAMES_LIMITS.md)
     if (clip.animations !== undefined) {
       for (const m of validateAnimations(clip.animations, clip.duration))
         err(where, m);
+      // K1: cả opacity tĩnh và keyframes opacity → keyframes thắng (tuyệt đối),
+      // opacity tĩnh bị bỏ qua. Cảnh báo để không ai tưởng chúng nhân với nhau.
+      if (clip.opacity !== undefined && clip.opacity < 1 - EPS &&
+          clip.animations.opacity) {
+        warn(where, `có cả opacity tĩnh (${clip.opacity}) và keyframes opacity — ` +
+          `render dùng keyframes (tuyệt đối), opacity tĩnh bị bỏ qua (xem OPACITY_LIMITS.md)`);
+      }
       const skf = clip.animations.scale && clip.animations.scale.keyframes;
       if (Array.isArray(skf)) {
         for (const kf of skf) {
@@ -495,15 +520,16 @@ function validateClip(track, clip, where, err, warn) {
     }
     if (!isTextFxAnimation(st.animation) && st.animation !== "typewriter")
       err(where, `style.animation không hỗ trợ: ${JSON.stringify(st.animation)}`);
-    // Keyframe animations cho text (x/y/opacity được render qua drawtext;
-    // scale/rotation của TEXT vẫn chưa render được — drawtext không hỗ trợ.
-    // Lưu ý: scale/rotation của VIDEO clip thì render thật, xem nhánh video.)
+    // Keyframe animations cho text: x/y/opacity render qua drawtext; scale/
+    // rotation nay render qua PNG path (K1, Phase 6) — TRỪ typewriter (ASS
+    // không hỗ trợ scale/rotate theo thời gian nên vẫn bị bỏ qua + cảnh báo).
     if (clip.animations !== undefined) {
       for (const m of validateAnimations(clip.animations, clip.duration))
         err(where, m);
-      if (clip.animations.scale || clip.animations.rotation)
-        warn(where, "keyframes scale/rotation của text clip hiện chỉ lưu trong spec, " +
-          "render worker chưa áp dụng cho text (drawtext không hỗ trợ scale/rotate theo thời gian)");
+      if ((clip.animations.scale || clip.animations.rotation) &&
+          clip.style.animation === "typewriter")
+        warn(where, "keyframes scale/rotation của text clip typewriter bị bỏ qua " +
+          "khi render (ASS không hỗ trợ scale/rotate theo thời gian)");
     }
   }
 }
