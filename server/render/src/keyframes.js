@@ -115,6 +115,12 @@ function validateAnimations(anims, duration) {
       if (!isFiniteNumber(kf.v)) {
         errors.push(`${w}.v phải là số hữu hạn, nhận được: ${JSON.stringify(kf.v)}`);
       }
+      // K1 (Phase 6): opacity keyframe là alpha tuyệt đối 0..1 — ngoài khoảng
+      // thì geq sẽ clamp lặng lẽ, nên chặn ngay từ validate (khớp validateOpacity
+      // của opacity tĩnh). Các prop khác (x/y/scale/rotation) không clamp ở đây.
+      if (key === "opacity" && isFiniteNumber(kf.v) && (kf.v < 0 || kf.v > 1)) {
+        errors.push(`${w}.v phải trong 0..1 (opacity), nhận được: ${JSON.stringify(kf.v)}`);
+      }
       if (!EASINGS.includes(kf.easing)) {
         errors.push(`${w}.easing phải là một trong ${EASINGS.join(" | ")}, nhận được: ${JSON.stringify(kf.easing)}`);
       }
@@ -218,7 +224,7 @@ function hasScaleRotation(animations) {
  *   mở rộng keepAlpha cho clip có scale/rotation) để góc xoay + vùng
  *   letterbox không vẽ đè hình chữ nhật đen lên nội dung bên dưới.
  */
-function buildKeyframeTransform(animations) {
+function buildKeyframeTransform(animations, opts = {}) {
   if (!hasScaleRotation(animations)) return "";
   const parts = [];
   if (animations.scale) {
@@ -230,7 +236,15 @@ function buildKeyframeTransform(animations) {
   }
   if (animations.rotation) {
     const r = buildInterpExpr(animations.rotation, "t");
-    parts.push(`rotate=a='(${r})*PI/180':fillcolor='black@0'`);
+    // rotateExpand (K1 — CHỈ dùng cho PNG text): rotate mặc định giữ iw/ih
+    // nên cắt nội dung khi xoay PNG crop sát. Mở output ra hình vuông
+    // đường chéo (làm tròn chẵn cho yuva420p) để chứa đủ nội dung ở mọi
+    // góc. Video KHÔNG dùng option này (giữ hành vi Phase 5: xoay trong
+    // khung full-frame, cắt góc là đúng cho video).
+    const ow = opts.rotateExpand
+      ? ":ow='ceil(hypot(iw,ih)/2)*2':oh='ceil(hypot(iw,ih)/2)*2'"
+      : "";
+    parts.push(`rotate=a='(${r})*PI/180':fillcolor='black@0'${ow}`);
   }
   return parts.join(",");
 }
@@ -316,6 +330,18 @@ function selfTest() {
   // 12. validateAnimations
   assert.deepStrictEqual(validateAnimations(undefined, 5), []);
   assert.deepStrictEqual(validateAnimations(null, 5), []);
+  // K1: opacity keyframe ngoài [0,1] bị chặn (x/y/scale không chặn ở đây)
+  assert.ok(validateAnimations(
+    { opacity: { keyframes: [{ t: 0, v: 1.5, easing: "linear" }] } }, 5)
+    .some((m) => m.includes("0..1")), "opacity v=1.5 phải bị chặn");
+  assert.ok(validateAnimations(
+    { opacity: { keyframes: [{ t: 0, v: -0.2, easing: "linear" }] } }, 5)
+    .some((m) => m.includes("0..1")), "opacity v=-0.2 phải bị chặn");
+  assert.strictEqual(validateAnimations(
+    { opacity: { keyframes: [{ t: 0, v: 0, easing: "linear" }, { t: 5, v: 1, easing: "linear" }] } }, 5).length, 0);
+  assert.strictEqual(validateAnimations(
+    { x: { keyframes: [{ t: 0, v: 3, easing: "linear" }] } }, 5).length, 0,
+    "x ngoài [0,1] vẫn hợp lệ (bay ra ngoài khung)");
   assert.ok(validateAnimations({ x: { keyframes: [{ t: 0, v: 0, easing: "linear" }] } }, 5).length === 0);
   assert.ok(validateAnimations({ z: {} }, 5).some((m) => m.includes("không hỗ trợ")));
   assert.ok(validateAnimations({ x: { keyframes: [] } }, 5).some((m) => m.includes("rỗng")));
@@ -344,6 +370,14 @@ function selfTest() {
   assert.ok(tr.includes("rotate=a='(") && tr.includes("*PI/180"), `rotation sai: ${tr}`);
   assert.ok(tr.includes("fillcolor='black@0'"), `rotation thiếu fill trong suốt: ${tr}`);
   assert.ok(!tr.includes("scale="), `không có scale keyframes thì không scale: ${tr}`);
+  // K1: mặc định KHÔNG mở rộng output (giữ hành vi video Phase 5); chỉ PNG
+  // text dùng rotateExpand để không cắt chữ khi xoay.
+  assert.ok(!tr.includes("ow="), `rotation video mặc định không có ow/oh: ${tr}`);
+  const trX = buildKeyframeTransform(
+    { rotation: { keyframes: [{ t: 0, v: 0, easing: "linear" }, { t: 4, v: 90, easing: "linear" }] } },
+    { rotateExpand: true });
+  assert.ok(trX.includes("ow='ceil(hypot(iw,ih)/2)*2'") && trX.includes("oh='ceil(hypot(iw,ih)/2)*2'"),
+    `rotateExpand thiếu ow/oh đường chéo: ${trX}`);
   const tb = buildKeyframeTransform({
     scale: { keyframes: [{ t: 0, v: 1, easing: "linear" }] },
     rotation: { keyframes: [{ t: 0, v: 45, easing: "linear" }] },
