@@ -158,3 +158,53 @@ fetch "https://github.com/google/fonts/raw/main/ofl/victormono/VictorMono%5Bwght
 echo ""
 echo "Hoàn tất! Kiểm tra font tiếng Việt:"
 echo "  fc-list \"$OUT_DIR\" family | head"
+
+# --- K6 Phase 6: 16 fonts OFL có Vietnamese subset (verify qua METADATA.pb) ---
+
+# Work Sans [Sans Serif]
+fetch "https://github.com/google/fonts/raw/main/ofl/worksans/WorkSans%5Bwght%5D.ttf" "work-sans-regular.ttf"
+
+# Archivo [Sans Serif]
+fetch "https://github.com/google/fonts/raw/main/ofl/archivo/Archivo%5Bwdth%2Cwght%5D.ttf" "archivo-regular.ttf"
+
+# Public Sans [Sans Serif]
+fetch "https://github.com/google/fonts/raw/main/ofl/publicsans/PublicSans%5Bwght%5D.ttf" "public-sans-regular.ttf"
+
+# Fira Sans [Sans Serif]
+fetch "https://github.com/google/fonts/raw/main/ofl/firasans/FiraSans-Regular.ttf" "fira-sans-regular.ttf"
+
+# Lato [Sans Serif]
+fetch "https://github.com/google/fonts/raw/main/ofl/lato/Lato-Regular.ttf" "lato-regular.ttf"
+
+# Raleway [Sans Serif]
+fetch "https://github.com/google/fonts/raw/main/ofl/raleway/Raleway%5Bwght%5D.ttf" "raleway-regular.ttf"
+
+# Cabin [Sans Serif]
+fetch "https://github.com/google/fonts/raw/main/ofl/cabin/Cabin%5Bwdth%2Cwght%5D.ttf" "cabin-regular.ttf"
+
+# Mulish [Sans Serif]
+fetch "https://github.com/google/fonts/raw/main/ofl/mulish/Mulish%5Bwght%5D.ttf" "mulish-regular.ttf"
+
+# Source Sans 3 [Sans Serif]
+fetch "https://github.com/google/fonts/raw/main/ofl/sourcesans3/SourceSans3%5Bwght%5D.ttf" "source-sans-3-regular.ttf"
+
+# IBM Plex Sans [Sans Serif]
+fetch "https://github.com/google/fonts/raw/main/ofl/ibmplexsans/IBMPlexSans%5Bwdth%2Cwght%5D.ttf" "ibm-plex-sans-regular.ttf"
+
+# Cormorant Garamond [Serif]
+fetch "https://github.com/google/fonts/raw/main/ofl/cormorantgaramond/CormorantGaramond%5Bwght%5D.ttf" "cormorant-garamond-regular.ttf"
+
+# Bitter [Serif]
+fetch "https://github.com/google/fonts/raw/main/ofl/bitter/Bitter%5Bwght%5D.ttf" "bitter-regular.ttf"
+
+# Indie Flower [Handwriting]
+fetch "https://github.com/google/fonts/raw/main/ofl/indieflower/IndieFlower-Regular.ttf" "indie-flower-regular.ttf"
+
+# Inconsolata [Monospace]
+fetch "https://github.com/google/fonts/raw/main/ofl/inconsolata/Inconsolata%5Bwdth%2Cwght%5D.ttf" "inconsolata-regular.ttf"
+
+# Source Code Pro [Monospace]
+fetch "https://github.com/google/fonts/raw/main/ofl/sourcecodepro/SourceCodePro%5Bwght%5D.ttf" "source-code-pro-regular.ttf"
+
+# Comfortaa [Display]
+fetch "https://github.com/google/fonts/raw/main/ofl/comfortaa/Comfortaa%5Bwght%5D.ttf" "comfortaa-regular.ttf"
