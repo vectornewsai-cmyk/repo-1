@@ -27,4 +27,11 @@ Biến trong chuỗi: `t("topbar.undoWith", { label: "Xoá clip" })`.
 ## Phạm vi hiện tại
 
 Đã dịch: TopBar, màn hình splash, MediaBin, nút đóng modal (`common.*`).
-Chưa dịch (vẫn tiếng Việt hardcode): Inspector panels, Timeline labels, CaptionModal/SilenceModal/SceneModal/ExportPanel nội dung chi tiết, thông báo lỗi. Hạ tầng đã sẵn — dịch dần theo nhu cầu.
+Q2 Phase 8: Inspector chính + Timeline chính đã dịch xong (`inspector.*` 85 keys,
+`timeline.*` 28 keys, cả vi lẫn en; xem `Q2_LIMITS.md` trong `src/lib/`).
+Chưa dịch (vẫn tiếng Việt hardcode): các sub-panel nhúng trong Inspector
+(TransitionPanel, SpeedPanel, KeyframePanel/KeyframeGraph, ChromaPanel,
+BgRemovePanel, TextAnimPicker, LutPicker, ColorAdjustPanel, EffectPanel,
+StickerPanel, AudioFxPanel, MaskPanel, FontPicker, SceneModal, TtsButton),
+lý do từ chối drop trong `lib/drop.ts`, CaptionModal/SilenceModal/ExportPanel
+nội dung chi tiết, thông báo lỗi. Hạ tầng đã sẵn — dịch dần theo nhu cầu.

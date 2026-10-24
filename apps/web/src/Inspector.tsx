@@ -6,6 +6,7 @@
  */
 import { useState, type ReactNode } from "react";
 import { useStore } from "./store";
+import { t, useLang } from "./i18n";
 import { fmtTime } from "./lib";
 import { TransitionPanel } from "./components/transitions";
 import { SpeedPanel } from "./components/speed";
@@ -19,6 +20,8 @@ import { EffectPanel } from "./components/effects";
 import { StickerPanel } from "./components/sticker";
 import { AudioFxPanel } from "./components/audiofx";
 import { SceneModal } from "./components/SceneModal";
+import { BeatSyncModal } from "./components/BeatSyncModal";
+import { TrackPanel } from "./components/sticker/TrackPanel";
 import { MaskPanel } from "./components/mask";
 import { FontPicker } from "./components/FontPicker";
 
@@ -83,39 +86,40 @@ function Section({
 }
 
 function ProjectInfo() {
+  useLang();
   const spec = useStore((s) => s.spec);
   const st = useStore.getState();
   const clips = spec.tracks.reduce((n, t) => n + t.clips.length, 0);
   return (
     <div className="inspector">
-      <div className="panel-head">ℹ️ Dự án</div>
+      <div className="panel-head">{t("inspector.projectTitle")}</div>
       <div className="info-rows">
-        <div><span>Kích thước</span><b>{spec.meta.width} × {spec.meta.height}</b></div>
+        <div><span>{t("inspector.size")}</span><b>{spec.meta.width} × {spec.meta.height}</b></div>
         <div><span>FPS</span><b>{spec.meta.fps}</b></div>
-        <div><span>Thời lượng</span><b>{fmtTime(st.duration())}</b></div>
-        <div><span>Track</span><b>{spec.tracks.length}</b></div>
-        <div><span>Clip</span><b>{clips}</b></div>
+        <div><span>{t("inspector.duration")}</span><b>{fmtTime(st.duration())}</b></div>
+        <div><span>{t("inspector.track")}</span><b>{spec.tracks.length}</b></div>
+        <div><span>{t("inspector.clip")}</span><b>{clips}</b></div>
       </div>
-      <div className="panel-head" style={{ marginTop: 16 }}>⌨️ Phím tắt</div>
+      <div className="panel-head" style={{ marginTop: 16 }}>{t("inspector.shortcutsTitle")}</div>
       <ul className="shortcuts">
-        <li><kbd>Space</kbd> / <kbd>K</kbd> phát / tạm dừng</li>
-        <li><kbd>S</kbd> tách clip tại playhead</li>
-        <li><kbd>Delete</kbd> xoá clip đang chọn</li>
-        <li><kbd>J</kbd> / <kbd>L</kbd> tua lại / tới 5 giây</li>
-        <li><kbd>←</kbd> / <kbd>→</kbd> tua từng frame</li>
-        <li><kbd>Home</kbd> / <kbd>End</kbd> về đầu / cuối video</li>
-        <li><kbd>F</kbd> xem preview toàn màn hình</li>
-        <li><kbd>Shift</kbd>+click thêm clip vào vùng chọn</li>
-        <li><kbd>Ctrl</kbd>+click bật/tắt chọn từng clip</li>
-        <li>Kéo vùng trống trên timeline để chọn nhiều</li>
-        <li><kbd>Ctrl</kbd>+<kbd>A</kbd> chọn tất cả clip</li>
-        <li>Kéo mép clip để trim in/out</li>
-        <li>Kéo chữ ngay trên preview để di chuyển</li>
+        <li><kbd>Space</kbd> / <kbd>K</kbd> {t("inspector.scPlayPause")}</li>
+        <li><kbd>S</kbd> {t("inspector.scSplit")}</li>
+        <li><kbd>Delete</kbd> {t("inspector.scDelete")}</li>
+        <li><kbd>J</kbd> / <kbd>L</kbd> {t("inspector.scShuttle")}</li>
+        <li><kbd>←</kbd> / <kbd>→</kbd> {t("inspector.scFrame")}</li>
+        <li><kbd>Home</kbd> / <kbd>End</kbd> {t("inspector.scHomeEnd")}</li>
+        <li><kbd>F</kbd> {t("inspector.scFullscreen")}</li>
+        <li><kbd>Shift</kbd>+click {t("inspector.scShiftClick")}</li>
+        <li><kbd>Ctrl</kbd>+click {t("inspector.scCtrlClick")}</li>
+        <li>{t("inspector.scBoxSelect")}</li>
+        <li><kbd>Ctrl</kbd>+<kbd>A</kbd> {t("inspector.scSelectAll")}</li>
+        <li>{t("inspector.scTrim")}</li>
+        <li>{t("inspector.scDragText")}</li>
       </ul>
-      <div className="panel-head" style={{ marginTop: 16 }}>🌟 Sticker</div>
+      <div className="panel-head" style={{ marginTop: 16 }}>{t("inspector.stickerHead")}</div>
       <StickerPanel />
       <p className="tips">
-        Bấm vào một clip trên timeline để chỉnh thuộc tính của nó ở đây.
+        {t("inspector.selectTip")}
       </p>
     </div>
   );
@@ -123,6 +127,7 @@ function ProjectInfo() {
 
 /** Panel khi chọn nhiều clip (R1-052): đếm theo loại + thao tác hàng loạt. */
 function MultiSelectInfo() {
+  useLang();
   const selection = useStore((s) => s.selection);
   const spec = useStore((s) => s.spec);
   const undoDepth = useStore((s) => s.undoDepth);
@@ -136,47 +141,49 @@ function MultiSelectInfo() {
     if (clip) kindCount.set(clip.kind, (kindCount.get(clip.kind) ?? 0) + 1);
   }
   const kindLabel: Record<string, string> = {
-    video: "🎬 Video", audio: "🎵 Âm thanh", text: "🔤 Chữ",
-    sticker: "🌟 Sticker", image: "🖼️ Ảnh",
+    video: t("inspector.kindVideo"), audio: t("inspector.kindAudio"), text: t("inspector.kindText"),
+    sticker: t("inspector.kindSticker"), image: t("inspector.kindImage"),
   };
 
   return (
     <div className="inspector">
-      <div className="panel-head">🎯 Đã chọn {selection.length} clip</div>
+      <div className="panel-head">{t("inspector.selectedHead", { n: String(selection.length) })}</div>
       <div className="info-rows">
         {[...kindCount.entries()].map(([k, n]) => (
           <div key={k}><span>{kindLabel[k] ?? k}</span><b>{n}</b></div>
         ))}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
-        <button onClick={() => st.deleteSelection()} title="Xoá tất cả clip đang chọn (Delete)">
-          🗑 Xoá {selection.length} clip
+        <button onClick={() => st.deleteSelection()} title={t("inspector.deleteAllTitle")}>
+          {t("inspector.deleteN", { n: String(selection.length) })}
         </button>
         {undoDepth > 0 && (
           <button
             onClick={() => st.undo()}
-            title={undoLabel ? `Hoàn tác: ${undoLabel} (Ctrl+Z)` : "Hoàn tác (Ctrl+Z)"}
+            title={undoLabel ? t("inspector.undoTitleWith", { label: undoLabel }) : t("inspector.undoTitle")}
           >
-            ↩ Hoàn tác{undoLabel ? `: ${undoLabel}` : ""}
+            {undoLabel ? t("inspector.undoBtnWith", { label: undoLabel }) : t("inspector.undoBtn")}
           </button>
         )}
         <button onClick={() => st.clearSelection()}>
-          Bỏ chọn
+          {t("inspector.deselect")}
         </button>
       </div>
       <p className="tips">
-        Kéo một clip đang chọn để di chuyển cả nhóm (giữ offset tương đối).
-        Chọn 1 clip để chỉnh thuộc tính chi tiết.
+        {t("inspector.multiTip1")}
+        {t("inspector.multiTip2")}
       </p>
     </div>
   );
 }
 
 export function Inspector() {
+  useLang();
   const selection = useStore((s) => s.selection);
   const spec = useStore((s) => s.spec);
   const st = useStore.getState();
   const [sceneOpen, setSceneOpen] = useState(false);
+  const [beatOpen, setBeatOpen] = useState(false);
 
   if (selection.length === 0) return <ProjectInfo />;
   if (selection.length > 1) return <MultiSelectInfo />;
@@ -192,13 +199,13 @@ export function Inspector() {
   return (
     <div className="inspector">
       <div className="panel-head">
-        {clip.kind === "text" ? "🔤 Chữ" : clip.kind === "video" ? "🎬 Video" : clip.kind === "sticker" ? "🌟 Sticker" : clip.kind === "image" ? "🖼️ Ảnh" : "🎵 Âm thanh"}
+{clip.kind === "text" ? t("inspector.kindText") : clip.kind === "video" ? t("inspector.kindVideo") : clip.kind === "sticker" ? t("inspector.kindSticker") : clip.kind === "image" ? t("inspector.kindImage") : t("inspector.kindAudio")}
       </div>
 
       {clip.kind === "text" && (
         <>
           <label className="field">
-            <span>Nội dung</span>
+            <span>{t("inspector.content")}</span>
             <textarea
               rows={2}
               value={clip.text}
@@ -210,7 +217,7 @@ export function Inspector() {
             onChange={(family) => st.patchTextStyle(track.id, clip.id, { fontFamily: family })}
           />
           <label className="field">
-            <span>Cỡ chữ: {clip.style.fontSize}px</span>
+            <span>{t("inspector.fontSize", { n: String(clip.style.fontSize) })}</span>
             <input
               type="range" min={16} max={160}
               value={clip.style.fontSize}
@@ -219,7 +226,7 @@ export function Inspector() {
           </label>
           <div className="field-row">
             <label className="field">
-              <span>Màu chữ</span>
+              <span>{t("inspector.textColor")}</span>
               <input
                 type="color"
                 value={clip.style.color}
@@ -227,7 +234,7 @@ export function Inspector() {
               />
             </label>
             <label className="field">
-              <span>Màu nền</span>
+              <span>{t("inspector.bgColor")}</span>
               <input
                 type="color"
                 value={clip.style.backgroundColor ?? "#000000"}
@@ -239,34 +246,34 @@ export function Inspector() {
             <button
               className={clip.style.bold ? "toggle on" : "toggle"}
               onClick={() => st.patchTextStyle(track.id, clip.id, { bold: !clip.style.bold })}
-              title="In đậm"
+              title={t("inspector.bold")}
             ><b>B</b></button>
             <button
               className={clip.style.italic ? "toggle on" : "toggle"}
               onClick={() => st.patchTextStyle(track.id, clip.id, { italic: !clip.style.italic })}
-              title="In nghiêng"
+              title={t("inspector.italic")}
             ><i>I</i></button>
             <button
               className="toggle"
-              title={clip.style.backgroundColor ? "Tắt nền chữ" : "Bật nền chữ"}
+              title={clip.style.backgroundColor ? t("inspector.bgOn") : t("inspector.bgOff")}
               onClick={() =>
                 st.patchTextStyle(track.id, clip.id, {
                   backgroundColor: clip.style.backgroundColor ? undefined : "#000000aa",
                 })
               }
             >
-              {clip.style.backgroundColor ? "⊠ Nền" : "☐ Nền"}
+              {clip.style.backgroundColor ? t("inspector.bgHas") : t("inspector.bgNone")}
             </button>
           </div>
           <label className="field">
-            <span>Hiệu ứng xuất hiện</span>
+            <span>{t("inspector.anim")}</span>
             <TextAnimPicker
               value={clip.style.animation ?? "none"}
               onChange={(anim) => st.patchTextStyle(track.id, clip.id, { animation: anim as never })}
             />
           </label>
           <label className="field">
-            <span>Vị trí ngang: {Math.round((clip.style.x ?? 0.5) * 100)}%</span>
+            <span>{t("inspector.posX", { n: String(Math.round((clip.style.x ?? 0.5) * 100)) })}</span>
             <input
               type="range" min={0} max={100}
               value={Math.round((clip.style.x ?? 0.5) * 100)}
@@ -274,16 +281,16 @@ export function Inspector() {
             />
           </label>
           <label className="field">
-            <span>Vị trí dọc: {Math.round((clip.style.y ?? 0.5) * 100)}%</span>
+            <span>{t("inspector.posY", { n: String(Math.round((clip.style.y ?? 0.5) * 100)) })}</span>
             <input
               type="range" min={0} max={100}
               value={Math.round((clip.style.y ?? 0.5) * 100)}
               onChange={(e) => st.patchTextStyle(track.id, clip.id, { y: Number(e.target.value) / 100 })}
             />
           </label>
-          <p className="tips">💡 Mẹo: kéo chữ trực tiếp trên preview cũng được.</p>
+          <p className="tips">{t("inspector.textTip")}</p>
           <TtsButton text={clip.text} />
-          <Section title="🎞️ Keyframe animation">
+          <Section title={t("inspector.secKeyframe")}>
             <KeyframePanel />
           </Section>
         </>
@@ -292,7 +299,7 @@ export function Inspector() {
       {clip.kind === "video" && (
         <>
           <label className="field">
-            <span>Độ mờ: {Math.round((clip.opacity ?? 1) * 100)}%</span>
+            <span>{t("inspector.opacity", { n: String(Math.round((clip.opacity ?? 1) * 100)) })}</span>
             <input
               type="range" min={5} max={100}
               value={Math.round((clip.opacity ?? 1) * 100)}
@@ -300,16 +307,16 @@ export function Inspector() {
             />
           </label>
           <label className="field">
-            <span>🔊 Âm thanh gốc</span>
+            <span>{t("inspector.sourceAudio")}</span>
             <select
               value={clip.sourceAudioMode ?? "inherit"}
               onChange={(e) => patch({ sourceAudioMode: e.target.value as "inherit" | "mute" })}
             >
-              <option value="inherit">Giữ tiếng gốc</option>
-              <option value="mute">Tắt tiếng gốc</option>
+              <option value="inherit">{t("inspector.keepAudio")}</option>
+              <option value="mute">{t("inspector.muteAudio")}</option>
             </select>
           </label>
-          <Section title="🔀 Chuyển cảnh">
+          <Section title={t("inspector.secTransition")}>
             <TransitionPanel
               value={clip.transitionOut?.type ?? "none"}
               duration={clip.transitionOut?.duration ?? 0.5}
@@ -318,21 +325,21 @@ export function Inspector() {
               }
             />
           </Section>
-          <Section title="⏩ Tốc độ">
+          <Section title={t("inspector.secSpeed")}>
             <SpeedPanel />
           </Section>
-          <Section title="🎚️ Hiệu ứng âm thanh (tiếng gốc)">
+          <Section title={t("inspector.secAudioFxOrig")}>
             <AudioFxPanel />
           </Section>
-          <Section title="🎭 Xoá phông">
+          <Section title={t("inspector.secChroma")}>
             <ChromaPanel />
           </Section>
-          <Section title="🤖 Xoá nền AI">
+          <Section title={t("inspector.secBgRemove")}>
             <BgRemovePanel
               mediaItem={st.media.find((m) => m.name === clip.src)}
             />
           </Section>
-          <Section title="🎨 Bộ lọc màu">
+          <Section title={t("inspector.secLut")}>
             <LutPicker
               value={clip.filter?.lut}
               onChange={(lut) => {
@@ -343,7 +350,7 @@ export function Inspector() {
               }}
             />
           </Section>
-          <Section title="🎚️ Chỉnh màu thủ công">
+          <Section title={t("inspector.secColor")}>
             <ColorAdjustPanel
               value={clip.filter?.color}
               onChange={(color) => {
@@ -354,19 +361,19 @@ export function Inspector() {
               }}
             />
           </Section>
-          <Section title="✨ Hiệu ứng">
+          <Section title={t("inspector.secEffect")}>
             <EffectPanel />
           </Section>
-          <Section title="🎞️ Keyframe animation">
+          <Section title={t("inspector.secKeyframe")}>
             <KeyframePanel />
           </Section>
           {/* Phase 7 P4: mask cho clip video */}
-          <Section title="🎭 Mask">
+          <Section title={t("inspector.secMask")}>
             <MaskPanel />
           </Section>
-          <Section title="🎬 Tách cảnh">
+          <Section title={t("inspector.secScene")}>
             <button onClick={() => setSceneOpen(true)}>
-              🔍 Tự động tách cảnh…
+              {t("inspector.sceneBtn")}
             </button>
             {sceneOpen && (
               <SceneModal
@@ -382,7 +389,7 @@ export function Inspector() {
       {clip.kind === "audio" && (
         <>
           <label className="field">
-            <span>Âm lượng: {Math.round((clip.volume ?? 1) * 100)}%</span>
+            <span>{t("inspector.volume", { n: String(Math.round((clip.volume ?? 1) * 100)) })}</span>
             <input
               type="range" min={0} max={100}
               value={Math.round((clip.volume ?? 1) * 100)}
@@ -390,40 +397,53 @@ export function Inspector() {
             />
           </label>
           <div className="field-row">
-            <NumField label="Mờ vào (s)" value={clip.fadeIn ?? 0} onChange={(v) => patch({ fadeIn: Math.max(0, v) })} />
-            <NumField label="Mờ ra (s)" value={clip.fadeOut ?? 0} onChange={(v) => patch({ fadeOut: Math.max(0, v) })} />
+            <NumField label={t("inspector.fadeIn")} value={clip.fadeIn ?? 0} onChange={(v) => patch({ fadeIn: Math.max(0, v) })} />
+            <NumField label={t("inspector.fadeOut")} value={clip.fadeOut ?? 0} onChange={(v) => patch({ fadeOut: Math.max(0, v) })} />
           </div>
           {/* Phase 7 P3: đường cong fade (mặc định linear = afade cũ). */}
           <div className="field-row">
             <label className="field">
-              <span>Đường cong mờ vào</span>
+              <span>{t("inspector.fadeInCurve")}</span>
               <select
                 value={clip.fadeInCurve ?? "linear"}
                 onChange={(e) => patch({ fadeInCurve: e.target.value as "linear" | "ease-in" | "ease-out" | "sine" })}
               >
-                <option value="linear">Tuyến tính</option>
-                <option value="ease-in">Ease-in (chậm → nhanh)</option>
-                <option value="ease-out">Ease-out (nhanh → chậm)</option>
-                <option value="sine">Sine (mượt)</option>
+                <option value="linear">{t("inspector.curveLinear")}</option>
+                <option value="ease-in">{t("inspector.curveEaseIn")}</option>
+                <option value="ease-out">{t("inspector.curveEaseOut")}</option>
+                <option value="sine">{t("inspector.curveSine")}</option>
               </select>
             </label>
             <label className="field">
-              <span>Đường cong mờ ra</span>
+              <span>{t("inspector.fadeOutCurve")}</span>
               <select
                 value={clip.fadeOutCurve ?? "linear"}
                 onChange={(e) => patch({ fadeOutCurve: e.target.value as "linear" | "ease-in" | "ease-out" | "sine" })}
               >
-                <option value="linear">Tuyến tính</option>
-                <option value="ease-in">Ease-in (chậm → nhanh)</option>
-                <option value="ease-out">Ease-out (nhanh → chậm)</option>
-                <option value="sine">Sine (mượt)</option>
+                <option value="linear">{t("inspector.curveLinear")}</option>
+                <option value="ease-in">{t("inspector.curveEaseIn")}</option>
+                <option value="ease-out">{t("inspector.curveEaseOut")}</option>
+                <option value="sine">{t("inspector.curveSine")}</option>
               </select>
             </label>
           </div>
-          <Section title="🎚️ Hiệu ứng âm thanh">
+          <Section title={t("inspector.secAudioFx")}>
             <AudioFxPanel />
           </Section>
-          <Section title="⏩ Tốc độ">
+          {/* Phase 8 Q5: cắt clip nhạc theo beat */}
+          <Section title="🎵 Cắt theo beat">
+            <button onClick={() => setBeatOpen(true)}>
+              Phân tích beat &amp; cắt clip
+            </button>
+            {beatOpen && (
+              <BeatSyncModal
+                trackId={track.id}
+                clipId={clip.id}
+                onClose={() => setBeatOpen(false)}
+              />
+            )}
+          </Section>
+          <Section title={t("inspector.secSpeed")}>
             <SpeedPanel />
           </Section>
         </>
@@ -431,14 +451,16 @@ export function Inspector() {
 
       {clip.kind === "sticker" && (
         <>
-          <div className="panel-head" style={{ marginTop: 12 }}>🌟 Sticker</div>
+          <div className="panel-head" style={{ marginTop: 12 }}>{t("inspector.stickerHead")}</div>
           <StickerPanel />
+          {/* Phase 8 Q5: gắn quỹ đạo motion tracking */}
+          <TrackPanel />
         </>
       )}
 
       {/* Phase 7 P4: mask cho clip ảnh */}
       {clip.kind === "image" && (
-        <Section title="🎭 Mask">
+        <Section title={t("inspector.secMask")}>
           <MaskPanel />
         </Section>
       )}
@@ -446,33 +468,33 @@ export function Inspector() {
       {/* Phase 7 P3: âm lượng track — nhân vào mọi clip audio trên track
           (và tiếng kế thừa của clip video). 0 = câm track, tối đa 200%. */}
       {(clip.kind === "audio" || clip.kind === "video") && (
-        <Section title="🔊 Âm lượng track">
+        <Section title={t("inspector.secTrackVolume")}>
           <label className="field">
-            <span>Track “{track.label ?? track.kind}”: {Math.round((track.volume ?? 1) * 100)}%</span>
+            <span>{t("inspector.trackVolume", { label: track.label ?? track.kind, n: String(Math.round((track.volume ?? 1) * 100)) })}</span>
             <input
               type="range" min={0} max={200}
               value={Math.round((track.volume ?? 1) * 100)}
               onChange={(e) => st.patchTrack(track.id, { volume: Number(e.target.value) / 100 })}
             />
           </label>
-          <p className="tips">Nhân với âm lượng từng clip. Chuẩn hoá loudness nằm ở panel Xuất MP4.</p>
+          <p className="tips">{t("inspector.trackVolumeTip")}</p>
         </Section>
       )}
 
-      <Section title="⏱️ Thời gian">
+      <Section title={t("inspector.secTime")}>
         <div className="field-row">
-          <NumField label="Bắt đầu (s)" value={clip.start} onChange={(v) => patch({ start: Math.max(0, v) })} />
-          <NumField label="Độ dài (s)" value={clip.duration} onChange={(v) => patch({ duration: Math.max(0.2, v) })} />
+          <NumField label={t("inspector.start")} value={clip.start} onChange={(v) => patch({ start: Math.max(0, v) })} />
+          <NumField label={t("inspector.length")} value={clip.duration} onChange={(v) => patch({ duration: Math.max(0.2, v) })} />
         </div>
         {clip.kind !== "text" && clip.kind !== "sticker" && clip.kind !== "image" && (
           <div className="field-row">
-            <NumField label="In (s)" value={(clip as { in: number }).in} onChange={(v) => patch({ in: Math.max(0, v), out: Math.max(0, v) + clip.duration } as Partial<typeof clip>)} />
-            <NumField label="Out (s)" value={(clip as { out: number }).out} onChange={(v) => { const cin = (clip as { in: number }).in; patch({ out: Math.max(cin + 0.2, v), duration: Math.max(0.2, v - cin) } as Partial<typeof clip>); }} />
+            <NumField label={t("inspector.inPoint")} value={(clip as { in: number }).in} onChange={(v) => patch({ in: Math.max(0, v), out: Math.max(0, v) + clip.duration } as Partial<typeof clip>)} />
+            <NumField label={t("inspector.outPoint")} value={(clip as { out: number }).out} onChange={(v) => { const cin = (clip as { in: number }).in; patch({ out: Math.max(cin + 0.2, v), duration: Math.max(0.2, v - cin) } as Partial<typeof clip>); }} />
           </div>
         )}
       </Section>
       <button className="danger-btn" onClick={() => st.deleteSelection()}>
-        🗑 Xoá clip này
+        {t("inspector.deleteClip")}
       </button>
     </div>
   );

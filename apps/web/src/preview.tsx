@@ -4,7 +4,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import type { TextClip, VideoClip, VideoSpec } from "@repo-1/video-spec";
-import { isSpeedable, sourceTimeAt, stickerUrl } from "@repo-1/video-spec";
+import { isSpeedable, stickerUrl } from "@repo-1/video-spec";
 import type { ImageClip, StickerClip } from "@repo-1/video-spec";
 import { useStore } from "./store";
 import type { MediaItem } from "./media";
@@ -15,8 +15,11 @@ import { AudioEngine, computeClipGain, toPreviewFx } from "./lib/audioEngine";
 import type { ActiveAudioSource } from "./lib/audioEngine";
 import {
   applyChromaKey,
+  applyMask,
   imageClipFit,
   letterboxFit,
+  rampSourceTimeAt,
+  rampSpeedAt,
   stickerVisual,
   textClipVisual,
   videoClipVisual,
@@ -95,6 +98,49 @@ function chromaKeyedSource(
   applyChromaKey(img, chroma);
   cctx.putImageData(img, 0, 0);
   return chromaCanvas;
+}
+
+// ---- Mask: unit offscreen + pixel shader (Q1 Phase 8) ----
+// Render áp mask lên unit đã letterbox về W×H, trước SR/overlay (mask.js).
+// Preview mirror đúng thứ tự đó: vẽ nội dung đã letterbox vào offscreen
+// unit (đã gồm cssFilter LUT/effects + chroma), nhân alpha bằng
+// applyMask (cùng công thức geq), rồi composite unit lên canvas chính
+// (có hoặc không có transform SR). Unit giới hạn 640px chiều rộng như
+// chroma (giữ 30fps): feather co giãn theo tỉ lệ nên độ mềm tương đối
+// giữ nguyên; viền cứng bị mềm ~hệ số phóng đại khi upscale (xem LIMITS).
+const MASK_MAX_W = 640;
+let maskCanvas: HTMLCanvasElement | null = null;
+
+function maskedUnitSource(
+  drawSrc: CanvasImageSource,
+  dx: number,
+  dy: number,
+  dw: number,
+  dh: number,
+  cssFilter: string,
+  mask: NonNullable<VideoClip["mask"]>,
+  W: number,
+  H: number,
+): HTMLCanvasElement | null {
+  if (typeof document === "undefined") return null;
+  if (!maskCanvas) maskCanvas = document.createElement("canvas");
+  const s = Math.min(1, MASK_MAX_W / W);
+  const w = Math.max(2, Math.round(W * s));
+  const h = Math.max(2, Math.round(H * s));
+  if (maskCanvas.width !== w || maskCanvas.height !== h) {
+    maskCanvas.width = w;
+    maskCanvas.height = h;
+  }
+  const mctx = maskCanvas.getContext("2d", { willReadFrequently: true });
+  if (!mctx) return null;
+  mctx.clearRect(0, 0, w, h);
+  setCtxFilter(mctx, cssFilter);
+  mctx.drawImage(drawSrc, dx * s, dy * s, dw * s, dh * s);
+  setCtxFilter(mctx, "");
+  const img = mctx.getImageData(0, 0, w, h);
+  applyMask(img, mask);
+  mctx.putImageData(img, 0, 0);
+  return maskCanvas;
 }
 
 // ---- Vignette: radial gradient xấp xỉ FFmpeg vignette ----
@@ -319,6 +365,37 @@ function drawVideoClip(
     const keyed = chromaKeyedSource(srcEl, mw, mh, vis.chroma);
     if (keyed) drawSrc = keyed;
   }
+  // Q1 (Phase 8): mask — unit offscreen đã nhân alpha mask, rồi composite
+  // như đường vẽ thường (SR hay không đều qua unit, khớp render: mask
+  // trước SR). Unit null (không có document/context) → rơi xuống đường
+  // vẽ thường, mask bị bỏ qua ở frame đó.
+  if (clip.mask) {
+    const unit = maskedUnitSource(drawSrc, dx, dy, dw, dh, vis.cssFilter, clip.mask, W, H);
+    if (unit) {
+      ctx.save();
+      ctx.globalAlpha = clamp(alpha * vis.opacity, 0, 1);
+      if (clip.animations?.scale || clip.animations?.rotation) {
+        const pl = videoElementPlacement(clip, localT, W, H, W, H);
+        ctx.translate(pl.centerX, pl.centerY);
+        if (pl.rotationDeg) ctx.rotate((pl.rotationDeg * Math.PI) / 180);
+        if (pl.scale !== 1) ctx.scale(pl.scale, pl.scale);
+        ctx.drawImage(unit, -W / 2, -H / 2, W, H);
+        if (vis.vignette != null) {
+          drawVignette(ctx, dx - W / 2, dy - H / 2, dw, dh, vis.vignette);
+        }
+        ctx.restore();
+        warnSkippedEffects(vis.skippedEffects);
+        return;
+      }
+      ctx.drawImage(unit, 0, 0, W, H);
+      ctx.restore();
+      if (vis.vignette != null) {
+        drawVignette(ctx, dx + vis.offsetX, dy + vis.offsetY, dw, dh, vis.vignette);
+      }
+      warnSkippedEffects(vis.skippedEffects);
+      return;
+    }
+  }
   ctx.save();
   ctx.globalAlpha = clamp(alpha * vis.opacity, 0, 1);
   setCtxFilter(ctx, vis.cssFilter);
@@ -369,6 +446,15 @@ function drawImageClip(
     W,
     H,
   );
+  // Q1 (Phase 8): mask cho image clip — render CÓ áp mask cho ảnh (P4) nên
+  // preview cũng áp (không kèm LUT/effects/opacity như video, khớp render).
+  if (clip.mask) {
+    const unit = maskedUnitSource(img, dx, dy, dw, dh, "", clip.mask, W, H);
+    if (unit) {
+      ctx.drawImage(unit, 0, 0, W, H);
+      return;
+    }
+  }
   ctx.drawImage(img, dx, dy, dw, dh);
 }
 
@@ -377,11 +463,13 @@ function drawStickerClip(
   ctx: CanvasRenderingContext2D,
   spec: VideoSpec,
   clip: StickerClip,
+  /** Thời gian timeline hiện tại — để sticker bám quỹ đạo track (Q5). */
+  t?: number,
 ) {
   const { width: W, height: H } = spec.meta;
   const img = stickerImageFor(clip.src);
   if (!img || !img.complete || !img.naturalWidth) return;
-  const sv = stickerVisual(clip, W, H);
+  const sv = stickerVisual(clip, W, H, t);
   const hPx = (sv.wPx * img.naturalHeight) / img.naturalWidth;
   ctx.save();
   ctx.globalAlpha = clamp(sv.opacity, 0, 1);
@@ -435,7 +523,7 @@ function renderFrame(
     for (const clip of track.clips) {
       if (clip.kind !== "sticker") continue;
       if (t < clip.start || t >= clip.start + clip.duration) continue;
-      drawStickerClip(ctx, spec, clip);
+      drawStickerClip(ctx, spec, clip, t);
     }
   }
   for (const track of spec.tracks) {
@@ -485,15 +573,18 @@ function collectActives(
       const item = mediaByName.get(clip.src);
       if (!item) continue;
       // R1-013: dùng sourceTimeAt — đúng với mọi speed/reverse.
+      // Q1 (Phase 8): speed ramp — target theo ∫speed (rampSourceTimeAt)
+      // và playbackRate theo speedAt tại thời điểm output; không dùng
+      // sourcePosAt của video-spec (bug đoạn con, xem previewEngine).
       // P1 (Phase 7): HTMLVideoElement không phát ngược được. Khi phát,
       // syncMedia giữ element reverse ở trạng thái pause và seek từng frame
       // tới target (đúng chiều, không mượt); khi pause/scrub, seek đã đúng
       // từ trước qua sourceTimeAt.
       const speedable = isSpeedable(clip);
-      const speed = speedable ? (clip.speed ?? 1) : 1;
+      const speed = speedable ? rampSpeedAt(clip, t - clip.start) : 1;
       const reverse = speedable ? (clip.reverse ?? false) : false;
       const target =
-        clip.kind === "image" ? 0 : speedable ? sourceTimeAt(clip, t) : 0;
+        clip.kind === "image" ? 0 : speedable ? rampSourceTimeAt(clip, t) : 0;
       const elapsed = t - clip.start;
       if (track.kind === "video" && clip.kind === "video" && item.kind === "video") {
         const el = pool.videoFor(item);
@@ -646,6 +737,12 @@ export function PreviewCanvas() {
     s.spec.tracks.reduce((n, t) => n + t.clips.length, 0),
   );
   const poolRef = useRef<MediaPool | null>(null);
+  // Q8: cache mediaByName theo identity mảng media (tránh build Map mới mỗi
+  // frame rAF khi project có nhiều media) + badge PROXY cập nhật qua DOM
+  // trực tiếp (không qua React state để tránh re-render mỗi frame).
+  const mediaByNameRef = useRef<{ arr: MediaItem[]; map: Map<string, MediaItem> } | null>(null);
+  const proxyBadgeRef = useRef<HTMLDivElement | null>(null);
+  const lastBadgeRef = useRef<string>("");
   const dragRef = useRef<{ trackId: string; clipId: string; dx: number; dy: number } | null>(null);
   const engineRef = useRef<AudioEngine | null>(null);
   const vuBarRef = useRef<HTMLDivElement>(null);
@@ -700,10 +797,37 @@ export function PreviewCanvas() {
       if (!ctx) return;
       const spec = useStore.getState().spec;
       const media = useStore.getState().media;
-      const mediaByName = new Map(media.map((m) => [m.name, m]));
+      // Q8: chỉ build lại Map khi mảng media đổi identity (import/xoá/gắn proxy).
+      let mediaByName: Map<string, MediaItem>;
+      if (mediaByNameRef.current && mediaByNameRef.current.arr === media) {
+        mediaByName = mediaByNameRef.current.map;
+      } else {
+        mediaByName = new Map(media.map((m) => [m.name, m]));
+        mediaByNameRef.current = { arr: media, map: mediaByName };
+      }
       const pool = poolRef.current!;
       const t = useStore.getState().playhead;
       const playing = useStore.getState().playing;
+      // Q8: badge PROXY — chỉ ghi DOM khi text đổi (không re-render React).
+      {
+        let badgeText = "";
+        for (const track of spec.tracks) {
+          if (track.hidden || track.kind !== "video") continue;
+          for (const clip of track.clips) {
+            if (clip.kind !== "video") continue;
+            if (t < clip.start || t >= clip.start + clip.duration) continue;
+            const it = mediaByName.get(clip.src);
+            if (it?.proxyUrl) { badgeText = `PROXY ${it.proxyHeight ?? 720}p`; break; }
+          }
+          if (badgeText) break;
+        }
+        const badge = proxyBadgeRef.current;
+        if (badge && lastBadgeRef.current !== badgeText) {
+          lastBadgeRef.current = badgeText;
+          badge.textContent = badgeText;
+          badge.style.display = badgeText ? "block" : "none";
+        }
+      }
       // R1-063: mở AudioContext khi phát (nút play = user gesture).
       const engine = engineRef.current!;
       if (playing) engine.ensure();
@@ -863,6 +987,28 @@ export function PreviewCanvas() {
       <div className="vu-meter" title="Mức âm thanh preview">
         <div ref={vuBarRef} className="vu-meter-fill" />
       </div>
+      {/* Q8: badge PROXY — báo rõ khi clip đang xem dùng bản proxy nhẹ.
+          Export cuối vẫn dùng file gốc. Cập nhật qua ref trong vòng lặp. */}
+      <div
+        ref={proxyBadgeRef}
+        className="preview-proxy-badge"
+        title="Đang preview bằng bản proxy nhẹ — export cuối vẫn dùng file gốc đủ phân giải"
+        style={{
+          display: "none",
+          position: "absolute",
+          left: 8,
+          top: 8,
+          padding: "2px 8px",
+          borderRadius: 4,
+          background: "rgba(255,170,0,0.9)",
+          color: "#111",
+          fontSize: 12,
+          fontWeight: 700,
+          zIndex: 5,
+          pointerEvents: "none",
+        }}
+        aria-hidden="true"
+      />
       {/* K5: nút fullscreen góc trên-phải (phím F cũng bật/tắt được). */}
       <button
         className="preview-fs-btn"

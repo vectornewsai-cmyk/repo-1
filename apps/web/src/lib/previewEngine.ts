@@ -17,10 +17,15 @@ import {
   LUT_IDS,
   STICKER_DEFAULTS,
   interpolateKeyframes,
+  sourceTimeAt,
+  speedAt,
   type ChromaKey,
+  type ClipMask,
   type ColorAdjust,
   type ImageClip,
   type LutId,
+  type SpeedableClip,
+  type SpeedCurve,
   type StickerClip,
   type TextClip,
   type VideoClip,
@@ -41,6 +46,57 @@ export const PREVIEW_TRANSFORM_ORDER = [
 
 export function clamp01(v: number): number {
   return Math.min(1, Math.max(0, v));
+}
+
+// ---------------------------------------------------------------------------
+// Q8: memo nội suy keyframe cho preview (KHÔNG dùng cho render).
+// Vấn đề: 1 clip có SR bị nội suy lặp — videoClipVisual nội suy
+// scale/rotation/x/y/opacity, rồi videoElementPlacement nội suy lại cùng
+// các keyframes đó ở cùng localT. Khi scrub/pause vẽ lại cùng frame,
+// mọi nội suy lặp lại dù kết quả không đổi.
+// Cách làm: cache theo identity mảng keyframes (WeakMap → clip bị xoá
+// thì cache tự giải phóng) + frame index lượng tử ở 120Hz (sai số tối
+// đa ~4ms, dưới ngưỡng nhận biết của preview; frame 60fps vẫn phân
+// biệt được). Clip bị sửa → store tạo mảng keyframes mới → cache cũ
+// hết hiệu lực, không có giá trị stale. Giới hạn 256 entry/mảng (FIFO).
+// Render worker KHÔNG dùng hàm này nên không ảnh hưởng độ chính xác
+// của bản export.
+// ---------------------------------------------------------------------------
+const KEYFRAME_MEMO_MAX = 256;
+const keyframeMemo = new WeakMap<object, Map<number, number>>();
+let keyframeMemoHits = 0;
+let keyframeMemoMisses = 0;
+export function memoInterpolateKeyframes(
+  kfs: Parameters<typeof interpolateKeyframes>[0],
+  t: number,
+): number {
+  const frame = Math.round(t * 120);
+  let per = keyframeMemo.get(kfs as object);
+  if (!per) {
+    per = new Map<number, number>();
+    keyframeMemo.set(kfs as object, per);
+  }
+  const hit = per.get(frame);
+  if (hit !== undefined) {
+    keyframeMemoHits++;
+    return hit;
+  }
+  keyframeMemoMisses++;
+  const v = interpolateKeyframes(kfs, t);
+  per.set(frame, v);
+  if (per.size > KEYFRAME_MEMO_MAX) {
+    const oldest = per.keys().next().value;
+    if (oldest !== undefined) per.delete(oldest);
+  }
+  return v;
+}
+/** Thống kê cache (phục vụ bench, không ảnh hưởng logic). */
+export function keyframeMemoStats(): { hits: number; misses: number } {
+  return { hits: keyframeMemoHits, misses: keyframeMemoMisses };
+}
+export function resetKeyframeMemoStats(): void {
+  keyframeMemoHits = 0;
+  keyframeMemoMisses = 0;
 }
 
 /** Letterbox-fit: giữ tỉ lệ, vừa khít khung hình (mirror render scale=decrease + pad). */
@@ -74,166 +130,193 @@ export function coverFit(
 // ---------------------------------------------------------------------------
 
 /**
- * Ánh xạ 104 LUT sang CSS filter gần đúng về "cảm giác màu".
+ * Ánh xạ LUT sang CSS filter gần đúng về "cảm giác màu".
  * KHÔNG pixel-perfect so với file .cube — muốn chính xác phải xem bản render.
+ * (Q1 Phase 8: 110/174 mục đã được fit lại từ dữ liệu .cube thật bằng
+ * least squares trên lưới màu + 500 màu held-out — script
+ * apps/web/scripts/fit-lut-css.py, báo cáo fit-lut-css-report.json.
+ * RMSE held-out trung bình: 24.73 → 15.98 (thang 0-255/kênh); 64 mục
+ * không đạt ngưỡng cải thiện 30% nên giữ nguyên xấp xỉ viết tay, gồm
+ * các LUT phi tuyến mạnh như vcut-solarized (100.35) và LUT phim đen
+ * trắng (~40-54). Chi tiết xem Q1_LIMITS.md §3.)
  */
 const LUT_CSS: Record<LutId, string> = {
   "cartcut-mono-neutral": "grayscale(1)",
-  "cartcut-blockbuster": "contrast(1.25) saturate(1.35)",
-  "cartcut-teal-orange": "sepia(0.35) saturate(1.5) hue-rotate(-12deg)",
-  "cartcut-nordic-noir": "saturate(0.55) contrast(1.12) brightness(0.92)",
-  "cartcut-honey": "sepia(0.4) saturate(1.35) brightness(1.06)",
-  "cartcut-golden-hour": "sepia(0.55) saturate(1.6) brightness(1.05)",
-  "cartcut-winter-blue": "saturate(0.85) brightness(1.04) hue-rotate(8deg)",
-  "cartcut-ocean": "saturate(1.35) hue-rotate(12deg)",
-  "cartcut-faded-seventies": "sepia(0.45) contrast(0.85) brightness(1.08)",
-  "cartcut-super-eight": "sepia(0.55) contrast(1.12) saturate(0.9)",
+  "cartcut-blockbuster": "contrast(1.95) saturate(1.11)",
+  "cartcut-teal-orange": "sepia(0.01) saturate(1.25) hue-rotate(-1.1deg)",
+  "cartcut-nordic-noir": "saturate(0.62) contrast(0.98) brightness(1.05)",
+  "cartcut-honey": "sepia(0.2) saturate(1.37) brightness(1)",
+  "cartcut-golden-hour": "sepia(0.12) saturate(1.25) brightness(1.08)",
+  "cartcut-winter-blue": "saturate(0.82) brightness(1.02) hue-rotate(-0.5deg)",
+  "cartcut-ocean": "saturate(1.17) hue-rotate(-0.1deg)",
+  "cartcut-faded-seventies": "sepia(0.23) contrast(0.88) brightness(1)",
+  "cartcut-super-eight": "sepia(0.17) contrast(0.88) saturate(1.01)",
   // vcut-*: xấp xỉ cảm giác màu của file .cube tự tạo
-  "vcut-cinematic": "contrast(1.2) saturate(1.15) sepia(0.25)",
-  "vcut-vintage-fade": "sepia(0.4) contrast(0.85) brightness(1.1) saturate(0.85)",
+  "vcut-cinematic": "contrast(1.33) saturate(1.12) sepia(0.1)",
+  "vcut-vintage-fade": "sepia(0.31) contrast(0.71) brightness(1.05) saturate(1.2)",
   "vcut-noir-contrast": "grayscale(1) contrast(1.5)",
-  "vcut-cyberpunk": "saturate(1.5) contrast(1.15) hue-rotate(-20deg)",
-  "vcut-pastel-dream": "saturate(0.7) brightness(1.1) contrast(0.9)",
-  "vcut-sunset-glow": "sepia(0.5) saturate(1.4) brightness(1.05)",
-  "vcut-arctic": "saturate(0.9) brightness(1.05) hue-rotate(15deg)",
-  "vcut-faded-film": "sepia(0.3) contrast(0.8) brightness(1.05) saturate(0.8)",
-  "vcut-moody-forest": "saturate(0.95) contrast(1.15) brightness(0.9) hue-rotate(-10deg)",
-  "vcut-warm-bloom": "sepia(0.3) saturate(1.15) brightness(1.08)",
-  "slay-amber": "sepia(0.4) saturate(1.3)",
-  "slay-fade": "sepia(0.3) contrast(0.85) brightness(1.05)",
-  "slay-neon": "saturate(1.6) contrast(1.2)",
-  "slay-film": "sepia(0.25) contrast(1.1) saturate(1.1)",
-  "slay-portrait": "sepia(0.15) saturate(1.05) brightness(1.03)",
-  "derby-acid": "saturate(1.6) hue-rotate(-30deg) contrast(1.2)",
+  "vcut-cyberpunk": "saturate(1.38) contrast(1.15) hue-rotate(0.8deg)",
+  "vcut-pastel-dream": "saturate(0.7) brightness(1.34) contrast(0.56)",
+  "vcut-sunset-glow": "sepia(0.41) saturate(2.11) brightness(1.02)",
+  "vcut-arctic": "saturate(0.86) brightness(1.04) hue-rotate(-0.1deg)",
+  "vcut-faded-film": "sepia(0.29) contrast(0.63) brightness(1.05) saturate(1.11)",
+  "vcut-moody-forest": "saturate(0.94) contrast(1.18) brightness(0.85) hue-rotate(0deg)",
+  "vcut-warm-bloom": "sepia(0.29) saturate(1.47) brightness(1.06)",
+  "slay-amber": "sepia(0.24) saturate(1.48)",
+  "slay-fade": "sepia(0.15) contrast(0.81) brightness(1.01)",
+  "slay-neon": "saturate(1.18) contrast(1.25)",
+  "slay-film": "sepia(0.07) contrast(1.1) saturate(1.09)",
+  "slay-portrait": "sepia(0.19) saturate(1.2) brightness(0.96)",
+  "derby-acid": "saturate(0.72) hue-rotate(-1.8deg) contrast(0.91)",
   "derby-after": "saturate(0.8) brightness(1.05) hue-rotate(10deg)",
-  "derby-club": "saturate(1.4) contrast(1.25) brightness(0.95)",
+  "derby-club": "saturate(0.81) contrast(0.81) brightness(1.09)",
   "derby-fever": "sepia(0.5) saturate(1.4) contrast(1.15)",
-  "derby-flash": "contrast(1.3) brightness(1.05)",
-  "derby-hush": "saturate(0.7) contrast(0.9) brightness(0.95)",
+  "derby-flash": "contrast(1.02) brightness(0.99)",
+  "derby-hush": "saturate(0.91) contrast(0.69) brightness(1.16)",
   "derby-rush": "sepia(0.3) saturate(1.3) contrast(1.1)",
   "glassmeter-cinestill-400d": "sepia(0.2) saturate(1.2) contrast(1.1)",
-  "glassmeter-cinestill-50d": "saturate(1.1) contrast(1.05) brightness(1.02)",
+  "glassmeter-cinestill-50d": "saturate(1.14) contrast(1.25) brightness(1.02)",
   "glassmeter-cinestill-800t": "sepia(0.15) saturate(1.25) hue-rotate(-10deg)",
   "glassmeter-fuji-acros-100-ii": "grayscale(1) contrast(1.1)",
   "glassmeter-fuji-industrial-100": "saturate(1.0) contrast(1.05)",
-  "glassmeter-fuji-pro-400h": "sepia(0.1) saturate(1.05) brightness(1.02)",
-  "glassmeter-fuji-provia-100f": "saturate(1.15) contrast(1.1)",
+  "glassmeter-fuji-pro-400h": "sepia(0.13) saturate(0.81) brightness(1.05)",
+  "glassmeter-fuji-provia-100f": "saturate(1.08) contrast(1.46)",
   "glassmeter-fuji-superia-xtra-400": "saturate(1.2) hue-rotate(-8deg)",
-  "glassmeter-fuji-velvia-100": "saturate(1.5) contrast(1.15)",
-  "glassmeter-fuji-velvia-50": "saturate(1.55) contrast(1.2)",
+  "glassmeter-fuji-velvia-100": "saturate(1.23) contrast(1.78)",
+  "glassmeter-fuji-velvia-50": "saturate(1.22) contrast(2.07)",
   "glassmeter-ilford-delta-100-v2": "grayscale(1) contrast(1.08)",
-  "glassmeter-ilford-delta-3200-v2": "grayscale(1) contrast(1.2) brightness(0.95)",
+  "glassmeter-ilford-delta-3200-v2": "grayscale(0.8) contrast(0.59) brightness(1.19)",
   "glassmeter-ilford-delta-400": "grayscale(1) contrast(1.12)",
   "glassmeter-ilford-fp4-125-v2": "grayscale(1) contrast(1.05)",
   "glassmeter-ilford-hp5-400-v2": "grayscale(1) contrast(1.15)",
   "glassmeter-ilford-panf-50": "grayscale(1) contrast(1.03) brightness(1.02)",
   "glassmeter-ilford-xp2-super-400": "grayscale(1) contrast(1.1) sepia(0.05)",
-  "glassmeter-kodak-colorplus-200": "sepia(0.25) saturate(1.15)",
+  "glassmeter-kodak-colorplus-200": "sepia(0.15) saturate(1.38)",
   "glassmeter-kodak-double-x-v2": "grayscale(1) contrast(1.18)",
-  "glassmeter-kodak-ektachrome-e100": "saturate(1.1) hue-rotate(8deg) contrast(1.08)",
+  "glassmeter-kodak-ektachrome-e100": "saturate(1.08) hue-rotate(-0.4deg) contrast(1.48)",
   "glassmeter-kodak-ektar-100": "saturate(1.4) contrast(1.12)",
-  "glassmeter-kodak-gold-200": "sepia(0.3) saturate(1.2)",
-  "glassmeter-kodak-portra-160": "sepia(0.12) saturate(1.0) brightness(1.02)",
+  "glassmeter-kodak-gold-200": "sepia(0.17) saturate(1.35)",
+  "glassmeter-kodak-portra-160": "sepia(0.12) saturate(0.83) brightness(1.02)",
   "glassmeter-kodak-portra-400": "sepia(0.15) saturate(1.05)",
   "glassmeter-kodak-portra-800": "sepia(0.18) saturate(1.08) brightness(1.01)",
   "glassmeter-kodak-tmax-100-v2": "grayscale(1) contrast(1.12)",
   "glassmeter-kodak-tmax-400-v2": "grayscale(1) contrast(1.1)",
-  "glassmeter-kodak-tmax-p3200": "grayscale(1) contrast(1.25) brightness(0.97)",
+  "glassmeter-kodak-tmax-p3200": "grayscale(0.82) contrast(0.69) brightness(1.23)",
   "glassmeter-kodak-trix-400-v2": "grayscale(1) contrast(1.2)",
   "glassmeter-kodak-ultramax-400": "saturate(1.45) contrast(1.1)",
-  "vcut-desert-heat": "sepia(0.45) saturate(1.3) contrast(1.15)",
+  "vcut-desert-heat": "sepia(0.48) saturate(2.12) contrast(1.3)",
   "vcut-emerald-city": "saturate(1.2) hue-rotate(-12deg) contrast(1.1)",
-  "vcut-crimson-dusk": "sepia(0.3) saturate(1.3) hue-rotate(-15deg) contrast(1.2)",
+  "vcut-crimson-dusk": "sepia(0.11) saturate(1.26) hue-rotate(-1.5deg) contrast(1.29)",
   "vcut-steel-blue": "saturate(0.85) hue-rotate(10deg) contrast(1.15)",
-  "vcut-amber-noir": "sepia(0.35) contrast(1.35) brightness(0.92)",
-  "vcut-violet-haze": "saturate(1.05) hue-rotate(25deg) brightness(1.05)",
-  "vcut-copper-tone": "sepia(0.4) saturate(1.2) contrast(1.1)",
-  "vcut-midnight-teal": "saturate(1.15) hue-rotate(-18deg) contrast(1.25) brightness(0.9)",
+  "vcut-amber-noir": "sepia(0.17) contrast(1.33) brightness(0.86)",
+  "vcut-violet-haze": "saturate(0.85) hue-rotate(0.2deg) brightness(1.1)",
+  "vcut-copper-tone": "sepia(0.21) saturate(1.46) contrast(1.16)",
+  "vcut-midnight-teal": "saturate(1.15) hue-rotate(-2.1deg) contrast(1.12) brightness(0.86)",
   "vcut-sepia-classic": "sepia(0.8) contrast(1.05)",
   "vcut-kodachrome-pop": "saturate(1.4) contrast(1.2)",
-  "vcut-polaroid-fade": "sepia(0.25) contrast(0.8) brightness(1.08) saturate(0.75)",
+  "vcut-polaroid-fade": "sepia(0.26) contrast(0.61) brightness(1.12) saturate(0.99)",
   "vcut-lomography": "saturate(1.5) contrast(1.25)",
-  "vcut-cross-process": "saturate(1.2) hue-rotate(-10deg) contrast(1.1)",
+  "vcut-cross-process": "saturate(1.17) hue-rotate(0.7deg) contrast(1.15)",
   "vcut-bleach-warm": "sepia(0.3) contrast(1.15) saturate(0.9)",
-  "vcut-retro-neon": "saturate(1.5) hue-rotate(-20deg) contrast(1.2)",
+  "vcut-retro-neon": "saturate(1.54) hue-rotate(-1.2deg) contrast(1.14)",
   "vcut-vhs-tracking": "sepia(0.15) saturate(1.1) contrast(0.9)",
   "vcut-bw-high-contrast": "grayscale(1) contrast(1.6)",
-  "vcut-bw-soft": "grayscale(1) contrast(0.9) brightness(1.05)",
+  "vcut-bw-soft": "grayscale(1) contrast(0.84) brightness(1)",
   "vcut-bw-selenium": "grayscale(1) sepia(0.3) contrast(1.15)",
   "vcut-bw-warm": "grayscale(1) sepia(0.25) contrast(1.1)",
   "vcut-bw-cold": "grayscale(1) hue-rotate(15deg) contrast(1.1)",
-  "vcut-bw-infrared": "grayscale(1) contrast(1.3) brightness(1.05)",
+  "vcut-bw-infrared": "grayscale(0.92) contrast(1.01) brightness(1.11)",
   "vcut-forest-mist": "saturate(0.85) hue-rotate(-8deg) brightness(1.05)",
-  "vcut-ocean-deep": "saturate(1.25) hue-rotate(-12deg) contrast(1.15)",
-  "vcut-desert-dusk": "sepia(0.35) saturate(1.2) hue-rotate(-8deg)",
-  "vcut-autumn-glow": "sepia(0.35) saturate(1.35) contrast(1.1)",
+  "vcut-ocean-deep": "saturate(1.18) hue-rotate(-0.8deg) contrast(1.18)",
+  "vcut-desert-dusk": "sepia(0.51) saturate(2.27) hue-rotate(0.8deg)",
+  "vcut-autumn-glow": "sepia(0.22) saturate(1.56) contrast(1.15)",
   "vcut-spring-fresh": "saturate(1.2) hue-rotate(-5deg) brightness(1.03)",
-  "vcut-winter-frost": "saturate(0.8) hue-rotate(12deg) brightness(1.04)",
-  "vcut-neon-nights": "saturate(1.6) contrast(1.25) hue-rotate(-15deg)",
+  "vcut-winter-frost": "saturate(0.74) hue-rotate(0deg) brightness(1.07)",
+  "vcut-neon-nights": "saturate(1.61) contrast(1.05) hue-rotate(-0.9deg)",
   "vcut-tokyo-drift": "saturate(1.35) hue-rotate(-10deg) contrast(1.2)",
-  "vcut-urban-decay": "sepia(0.2) saturate(0.7) contrast(0.85)",
-  "vcut-rooftop-dawn": "sepia(0.3) saturate(1.15) brightness(1.03)",
-  "vcut-subway-green": "saturate(0.95) hue-rotate(-15deg) contrast(1.2) brightness(0.92)",
-  "vcut-street-sodium": "sepia(0.55) saturate(1.15) contrast(1.1)",
-  "vcut-skin-glow": "sepia(0.12) saturate(1.05) brightness(1.03)",
-  "vcut-soft-beauty": "sepia(0.1) saturate(0.9) brightness(1.05) contrast(0.92)",
-  "vcut-golden-skin": "sepia(0.3) saturate(1.15)",
-  "vcut-porcelain": "saturate(0.75) brightness(1.06) contrast(0.92)",
-  "vcut-duotone-magenta": "grayscale(0.7) sepia(0.6) hue-rotate(140deg) saturate(1.8)",
+  "vcut-urban-decay": "sepia(0.23) saturate(0.89) contrast(0.7)",
+  "vcut-rooftop-dawn": "sepia(0.11) saturate(1.16) brightness(1.04)",
+  "vcut-subway-green": "saturate(0.95) hue-rotate(0.1deg) contrast(1.12) brightness(0.87)",
+  "vcut-street-sodium": "sepia(0.6) saturate(2.51) contrast(1.18)",
+  "vcut-skin-glow": "sepia(0.15) saturate(1.18) brightness(1.02)",
+  "vcut-soft-beauty": "sepia(0.13) saturate(1.03) brightness(1.1) contrast(0.77)",
+  "vcut-golden-skin": "sepia(0.13) saturate(1.31)",
+  "vcut-porcelain": "saturate(0.74) brightness(1.27) contrast(0.63)",
+  "vcut-duotone-magenta": "grayscale(0.92) sepia(0) hue-rotate(180deg) saturate(0.08)",
   "vcut-duotone-cyan-orange": "grayscale(0.6) sepia(0.7) saturate(1.8) contrast(1.1)",
-  "vcut-infrared-false": "hue-rotate(180deg) saturate(1.3)",
+  "vcut-infrared-false": "hue-rotate(110.2deg) saturate(1.07)",
   "vcut-solarized": "invert(0.15) saturate(1.2) contrast(1.1)",
   // vcut-*: batch K6 Phase 6 (gen_vcut_luts3.py)
   "vcut-lagoon": "saturate(1.35) hue-rotate(8deg)",
   "vcut-deep-sea": "saturate(1.1) brightness(0.92) hue-rotate(12deg)",
-  "vcut-coral-reef": "sepia(0.25) saturate(1.5)",
-  "vcut-santorini": "saturate(1.2) brightness(1.04) hue-rotate(10deg)",
-  "vcut-bali-sunset": "sepia(0.45) saturate(1.4)",
-  "vcut-coffee-roast": "sepia(0.3) contrast(1.2) saturate(1.1)",
-  "vcut-matcha": "saturate(1.3) hue-rotate(-15deg)",
+  "vcut-coral-reef": "sepia(0.33) saturate(2.16)",
+  "vcut-santorini": "saturate(1.21) brightness(1.08) hue-rotate(0.1deg)",
+  "vcut-bali-sunset": "sepia(0.51) saturate(2.7)",
+  "vcut-coffee-roast": "sepia(0.38) contrast(1.16) saturate(1.73)",
+  "vcut-matcha": "saturate(1.28) hue-rotate(0deg)",
   "vcut-candy-pop": "saturate(1.7) contrast(1.2)",
-  "vcut-champagne": "sepia(0.25) brightness(1.08) saturate(0.9)",
-  "vcut-blood-moon": "sepia(0.4) saturate(1.2) brightness(0.92)",
+  "vcut-champagne": "sepia(0.34) brightness(1.03) saturate(1.19)",
+  "vcut-blood-moon": "sepia(0.41) saturate(1.81) brightness(0.96)",
   "vcut-graveyard-fog": "grayscale(0.55) brightness(1.1)",
-  "vcut-toxic-green": "saturate(1.5) hue-rotate(-20deg)",
-  "vcut-midnight-purple": "saturate(1.1) brightness(0.9) hue-rotate(20deg)",
-  "vcut-crt-green": "grayscale(1) sepia(0.6) saturate(2) hue-rotate(60deg)",
-  "vcut-terminal-amber": "grayscale(1) sepia(0.8) saturate(2)",
+  "vcut-toxic-green": "saturate(1.44) hue-rotate(-0.1deg)",
+  "vcut-midnight-purple": "saturate(0.95) brightness(0.96) hue-rotate(0deg)",
+  "vcut-crt-green": "grayscale(1) sepia(0.58) saturate(2.18) hue-rotate(77.2deg)",
+  "vcut-terminal-amber": "grayscale(1) sepia(0.56) saturate(2.15)",
   "vcut-floppy-purple": "saturate(1.25) hue-rotate(15deg)",
   "vcut-vaporwave-sunset": "sepia(0.3) saturate(1.5) hue-rotate(15deg)",
   "vcut-blush-pink": "sepia(0.2) saturate(1) brightness(1.08)",
   "vcut-ivory": "sepia(0.15) brightness(1.1) saturate(0.85)",
   "vcut-silk-white": "saturate(0.7) brightness(1.06)",
   "vcut-stadium-night": "saturate(1.3) contrast(1.25)",
-  "vcut-concert-laser": "saturate(1.6) hue-rotate(10deg) contrast(1.15)",
-  "vcut-vinyl-warm": "sepia(0.35) saturate(1.05)",
+  "vcut-concert-laser": "saturate(1.58) hue-rotate(0deg) contrast(1.15)",
+  "vcut-vinyl-warm": "sepia(0.43) saturate(1.65)",
   "vcut-bw-blueprint": "grayscale(1) sepia(0.5) hue-rotate(160deg) saturate(2)",
-  "vcut-bw-sepia-deep": "grayscale(1) sepia(0.9)",
-  "vcut-bw-night-green": "grayscale(1) sepia(0.5) hue-rotate(70deg) saturate(2)",
-  "vcut-solar-flare": "sepia(0.4) saturate(1.4) brightness(1.1)",
+  "vcut-bw-sepia-deep": "grayscale(0.98) sepia(0.4)",
+  "vcut-bw-night-green": "grayscale(1) sepia(0.35) hue-rotate(79deg) saturate(3)",
+  "vcut-solar-flare": "sepia(0.49) saturate(2.59) brightness(1.11)",
   "vcut-prism": "saturate(1.4) hue-rotate(-10deg)",
-  "vcut-acid-rain": "saturate(1.55) hue-rotate(-15deg)",
+  "vcut-acid-rain": "saturate(1.57) hue-rotate(1.1deg)",
   "vcut-synthwave-grid": "sepia(0.25) saturate(1.45) hue-rotate(18deg)",
-  "vcut-monsoon-rain": "saturate(1.1) hue-rotate(10deg) brightness(0.95)",
+  "vcut-monsoon-rain": "saturate(0.99) hue-rotate(0.3deg) brightness(0.97)",
   "vcut-saigon-night": "saturate(1.45) hue-rotate(10deg) contrast(1.1)",
-  "vcut-hanoi-autumn": "sepia(0.3) saturate(1.15)",
-  "vcut-lantern-fest": "sepia(0.35) saturate(1.3) brightness(1.05)",
+  "vcut-hanoi-autumn": "sepia(0.44) saturate(1.97)",
+  "vcut-lantern-fest": "sepia(0.44) saturate(2.24) brightness(1.07)",
   "vcut-rice-terrace": "saturate(1.35) hue-rotate(-10deg)",
   "vcut-midnight-market": "saturate(1.4) contrast(1.05)",
   "vcut-cherry-festival": "sepia(0.2) saturate(1.25) brightness(1.05)",
-  "vcut-glacier-blue": "saturate(1.2) hue-rotate(15deg) brightness(1.02)",
+  "vcut-glacier-blue": "saturate(1.11) hue-rotate(0.2deg) brightness(1.05)",
   "vcut-meadow-light": "saturate(1.3) brightness(1.06)",
-  "vcut-bamboo-green": "saturate(1.35) hue-rotate(-15deg)",
-  "vcut-lotus-pink": "sepia(0.15) saturate(1.1) brightness(1.06)",
-  "vcut-bubble-tea": "sepia(0.3) saturate(1.1) brightness(1.04)",
-  "vcut-honey-glow": "sepia(0.35) saturate(1.2) brightness(1.04)",
+  "vcut-bamboo-green": "saturate(1.32) hue-rotate(-0.1deg)",
+  "vcut-lotus-pink": "sepia(0.16) saturate(1.12) brightness(1.2)",
+  "vcut-bubble-tea": "sepia(0.35) saturate(1.53) brightness(1.11)",
+  "vcut-honey-glow": "sepia(0.4) saturate(1.91) brightness(1.07)",
   "vcut-chili-ember": "saturate(1.45) hue-rotate(-10deg) contrast(1.1)",
-  "vcut-typhoon-grey": "saturate(0.55) hue-rotate(5deg) brightness(1.03)",
-  "vcut-ember-night": "sepia(0.25) saturate(1.1) brightness(0.92)",
+  "vcut-typhoon-grey": "saturate(0.52) hue-rotate(-0.2deg) brightness(1.12)",
+  "vcut-ember-night": "sepia(0.35) saturate(1.54) brightness(0.93)",
   "vcut-noir-smoke": "saturate(0.3) contrast(1.15)",
-  "vcut-silk-road": "sepia(0.3) saturate(1.05)",
-  "vcut-opal-dream": "saturate(1.2) hue-rotate(15deg) brightness(1.08)",
-  "vcut-coral-dawn": "sepia(0.25) saturate(1.35)",
+  "vcut-silk-road": "sepia(0.39) saturate(1.66)",
+  "vcut-opal-dream": "saturate(0.95) hue-rotate(0deg) brightness(1.3)",
+  "vcut-coral-dawn": "sepia(0.37) saturate(2.05)",
+  "vcut-da-lat-mist": "saturate(0.81) hue-rotate(0deg) brightness(1.17)",
+  "vcut-pho-hanoi": "sepia(0.39) saturate(1.81) brightness(1.05)",
+  "vcut-sea-breeze": "saturate(1.19) hue-rotate(0.4deg) brightness(1.14)",
+  "vcut-sunset-beach": "sepia(0.43) saturate(2.32) hue-rotate(0.3deg)",
+  "vcut-forest-deep": "saturate(1.21) hue-rotate(0.1deg) brightness(0.95)",
+  "vcut-desert-sand": "sepia(0.48) saturate(1.76) brightness(1.14)",
+  "vcut-winter-snow": "saturate(0.73) hue-rotate(-0.4deg) brightness(1.29)",
+  "vcut-neon-city": "saturate(1.55) hue-rotate(10deg) contrast(1.1)",
+  "vcut-coffee-brown": "sepia(0.41) saturate(1.57) contrast(1.04)",
+  "vcut-lavender-field": "saturate(1.07) hue-rotate(0.5deg) brightness(1.18)",
+  "vcut-golden-harvest": "sepia(0.54) saturate(2.5) brightness(1.02)",
+  "vcut-midnight-blue": "saturate(1.11) hue-rotate(0.2deg) brightness(0.97)",
+  "vcut-rose-dusk": "sepia(0.2) saturate(1.3) hue-rotate(-5deg)",
+  "vcut-mint-fresh": "saturate(1.09) hue-rotate(0.6deg) brightness(1.22)",
+  "vcut-amber-glow": "sepia(0.45) saturate(2.26) brightness(1.08)",
+  "vcut-slate-grey": "saturate(0.6) contrast(1.08)",
+  "vcut-peach-blush": "sepia(0.35) saturate(1.59) brightness(1.16)",
+  "vcut-aurora": "saturate(1.32) hue-rotate(0.1deg)",
+  "vcut-iced-matcha": "saturate(1.06) hue-rotate(0.3deg) brightness(1.17)",
+  "vcut-reef-glow": "saturate(1.5) hue-rotate(5deg) brightness(1.03)",
 };
 
 
@@ -317,8 +400,28 @@ export function effectsVisual(effects?: VideoEffect[]): EffectsVisual {
         break;
       case "sharpen":
       case "noise":
+      case "glitch":
+      case "rgb-shift":
+      case "shake":
+      case "pixelate":
+      case "mirror":
+      case "edgedetect":
         // sharpen: không có CSS tương đương; noise: nhiễu thời gian, vẽ từng frame sẽ sai
+        // Q4: glitch/rgb-shift/shake/pixelate/mirror/edgedetect cũng không có CSS filter
+        // tương đương (lệch kênh, crop động, neighbor, hflip, biên) → preview bỏ qua
         if (!skipped.includes(e.type)) skipped.push(e.type);
+        break;
+      case "invert":
+        // render: lutrgb nội suy val → 255-val; CSS invert() cùng ngữ nghĩa
+        parts.push(`invert(${t.toFixed(3)})`);
+        break;
+      case "hue-rotate":
+        // render: hue=h=(t-0.5)*180; CSS hue-rotate cùng đơn vị độ
+        parts.push(`hue-rotate(${((t - 0.5) * 180).toFixed(1)}deg)`);
+        break;
+      case "old-film":
+        // render: noise + nhạt màu + tối góc; CSS chỉ xấp xỉ phần màu
+        parts.push(`sepia(0.3) saturate(0.8)`);
         break;
       default: {
         // type lạ: bỏ qua lặng lẽ nhưng báo để test bắt được nếu EFFECT_TYPES đổi
@@ -406,10 +509,10 @@ export function videoClipVisual(
   // Unit trong render đã pad đúng WxH nên (frame-unit) = 0 → không di chuyển.
   // Giữ công thức tổng quát để đúng cả khi render đổi pipeline.
   const offsetX = a?.x
-    ? interpolateKeyframes(a.x.keyframes, localT) * (frameW - unitW)
+    ? memoInterpolateKeyframes(a.x.keyframes, localT) * (frameW - unitW)
     : 0;
   const offsetY = a?.y
-    ? interpolateKeyframes(a.y.keyframes, localT) * (frameH - unitH)
+    ? memoInterpolateKeyframes(a.y.keyframes, localT) * (frameH - unitH)
     : 0;
   const colorCss = colorAdjustCssFilter(clip.filter?.color);
   const lutCss = clip.filter?.lut ? (lutCssFilter(clip.filter.lut) ?? "") : "";
@@ -419,17 +522,17 @@ export function videoClipVisual(
   // render K1); validate chặn giá trị ngoài [0,1] nhưng vẫn clamp phòng thủ
   // (geq của render cũng clamp lặng lẽ).
   const opacity = a?.opacity
-    ? clamp01(interpolateKeyframes(a.opacity.keyframes, localT))
+    ? clamp01(memoInterpolateKeyframes(a.opacity.keyframes, localT))
     : (clip.opacity ?? 1);
   return {
     opacity,
     offsetX,
     offsetY,
     scale: a?.scale
-      ? clampRenderScale(interpolateKeyframes(a.scale.keyframes, localT))
+      ? clampRenderScale(memoInterpolateKeyframes(a.scale.keyframes, localT))
       : 1,
     rotation: a?.rotation
-      ? interpolateKeyframes(a.rotation.keyframes, localT)
+      ? memoInterpolateKeyframes(a.rotation.keyframes, localT)
       : 0,
     cssFilter,
     chroma: clip.chromaKey ? normalizeChroma(clip.chromaKey) : null,
@@ -472,10 +575,10 @@ export function videoElementPlacement(
 ): VideoElementPlacement {
   const a = clip.animations;
   const scale = a?.scale
-    ? clampRenderScale(interpolateKeyframes(a.scale.keyframes, localT))
+    ? clampRenderScale(memoInterpolateKeyframes(a.scale.keyframes, localT))
     : 1;
   const rotationDeg = a?.rotation
-    ? interpolateKeyframes(a.rotation.keyframes, localT)
+    ? memoInterpolateKeyframes(a.rotation.keyframes, localT)
     : 0;
   const rad = (rotationDeg * Math.PI) / 180;
   const ew = unitW * scale;
@@ -486,8 +589,8 @@ export function videoElementPlacement(
   const bboxH = ew * sin + eh * cos;
   // Mirror buildOverlayExprs: có keyframe x/y thì dùng phân số nội suy,
   // không có thì căn giữa (0.5) — áp lên khoảng (frame − bbox) như overlay.
-  const xf = a?.x ? interpolateKeyframes(a.x.keyframes, localT) : 0.5;
-  const yf = a?.y ? interpolateKeyframes(a.y.keyframes, localT) : 0.5;
+  const xf = a?.x ? memoInterpolateKeyframes(a.x.keyframes, localT) : 0.5;
+  const yf = a?.y ? memoInterpolateKeyframes(a.y.keyframes, localT) : 0.5;
   const topLeftX = xf * (frameW - bboxW);
   const topLeftY = yf * (frameH - bboxH);
   return {
@@ -538,6 +641,234 @@ export function applyChromaKey(img: ImageData, p: ChromaParams): void {
       d[i + 3] = Math.round(255 * ((dist - inner) / (outer - inner)));
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Mask — mirror CHÍNH XÁC công thức render (server/render/src/mask.js).
+// Tọa độ mask tương đối theo KHUNG OUTPUT (unit đã letterbox về đúng WxH):
+// x/y = tâm (0..1), w/h = kích thước (0..1 theo W/H), feather: dải chuyển
+// tiếp = feather × cạnh ngắn hơn của mask (px). Render nhân alpha gốc với
+// alpha mask (alphamerge) nên preview cũng NHÂN, không ghi đè.
+// Lấy mẫu tại tọa độ nguyên (X, Y) như geq của FFmpeg — khác lấy mẫu tại
+// tâm pixel nửa px, và khớp đúng trường hợp viền cứng (d = 0 → ngoài).
+// Mask không hợp lệ (shape lạ, w/h <= 0, số không hữu hạn) → alpha = 1
+// (bỏ qua mask, không làm đen canvas); render validator sẽ báo lỗi riêng.
+// ---------------------------------------------------------------------------
+
+/** Alpha mask (0..1) tại 1 pixel của khung W×H — cùng công thức geq render. */
+export function maskAlphaAt(
+  mask: ClipMask,
+  W: number,
+  H: number,
+  px: number,
+  py: number,
+): number {
+  const shape = mask.shape;
+  const x = mask.x ?? 0.5;
+  const y = mask.y ?? 0.5;
+  const w = mask.w ?? 1;
+  const h = mask.h ?? 1;
+  const feather = mask.feather ?? 0;
+  const invert = mask.invert ?? false;
+  if (
+    (shape !== "rect" && shape !== "ellipse") ||
+    !Number.isFinite(x) || !Number.isFinite(y) ||
+    !Number.isFinite(w) || !Number.isFinite(h) ||
+    !Number.isFinite(feather) ||
+    w <= 0 || h <= 0
+  ) {
+    return 1;
+  }
+  const wPx = w * W;
+  const hPx = h * H;
+  const cx = x * W;
+  const cy = y * H;
+  const band = Math.min(1, Math.max(0, feather)) * Math.min(wPx, hPx);
+  let alpha: number;
+  if (shape === "rect") {
+    const x0 = (x - w / 2) * W;
+    const x1 = (x + w / 2) * W;
+    const y0 = (y - h / 2) * H;
+    const y1 = (y + h / 2) * H;
+    // Khoảng cách Chebyshev có dấu tới biên (âm = trong hình).
+    const d = Math.max(Math.max(x0 - px, px - x1), Math.max(y0 - py, py - y1));
+    alpha = band <= 1e-6 ? (d < 0 ? 1 : 0) : clamp01(0.5 - d / band);
+  } else {
+    const rx = wPx / 2;
+    const ry = hPx / 2;
+    const nx = (px - cx) / rx;
+    const ny = (py - cy) / ry;
+    const r = Math.sqrt(nx * nx + ny * ny);
+    const gx = (px - cx) / (rx * rx);
+    const gy = (py - cy) / (ry * ry);
+    const grad = Math.sqrt(gx * gx + gy * gy);
+    // d = khoảng cách xấp xỉ bậc nhất tới biên ellipse (như render).
+    // Tại tâm grad = 0: render chia (-1)/0 = -inf → alpha clamp về 1;
+    // giữ -Infinity/+Infinity ở đây để khớp render (không dùng -1: sẽ
+    // cho 0.5 + 1/band thay vì 1).
+    const d = grad > 0 ? (r - 1) / grad : (r < 1 ? -Infinity : Infinity);
+    alpha = band <= 1e-6 ? (r < 1 ? 1 : 0) : clamp01(0.5 - d / band);
+  }
+  return invert ? 1 - alpha : alpha;
+}
+
+/**
+ * Nhân alpha của từng pixel trong ImageData với alpha mask.
+ * ImageData PHẢI có kích thước đúng bằng khung unit (W×H) mà mask tham
+ * chiếu tới — preview.tsx vẽ unit đã letterbox về W×H rồi mới gọi hàm này
+ * (khớp render: mask áp lên unit, trước SR/overlay).
+ */
+export function applyMask(img: ImageData, mask: ClipMask): void {
+  const W = img.width;
+  const H = img.height;
+  const d = img.data;
+  for (let yy = 0; yy < H; yy++) {
+    for (let xx = 0; xx < W; xx++) {
+      const i = (yy * W + xx) * 4;
+      if (d[i + 3] === 0) continue;
+      d[i + 3] = Math.round(d[i + 3] * maskAlphaAt(mask, W, H, xx, yy));
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Speed ramp — mirror render Phase 7 P3 (tự tích phân từ speedAt;
+// sourcePosAt của video-spec nay cũng đúng sau sửa Phase 8 Q3).
+// ---------------------------------------------------------------------------
+
+/**
+ * Clip mang được speed ramp: video clip (AudioClip hiện không có field
+ * speedKeyframes trong type, nhưng hàm vẫn chạy theo cấu trúc nếu có).
+ */
+export interface RampableClip {
+  start: number;
+  in: number;
+  speed?: number;
+  reverse?: boolean;
+  speedKeyframes?: SpeedCurve;
+}
+
+/** true khi clip có speedKeyframes dùng được (mảng keyframes không rỗng). */
+export function hasSpeedRamp(clip: RampableClip): boolean {
+  const k = clip.speedKeyframes?.keyframes;
+  return !!k && k.length > 0;
+}
+
+/**
+ * Tốc độ phát tại localT (giây từ đầu clip, thời gian OUTPUT).
+ * Có ramp → speedAt theo đường cong (ghi đè speed hằng như render);
+ * không có → speed hằng (mặc định 1).
+ */
+export function rampSpeedAt(clip: RampableClip, localT: number): number {
+  if (hasSpeedRamp(clip)) {
+    try {
+      return speedAt(clip.speedKeyframes!, localT);
+    } catch {
+      /* keyframes lỗi → fallback speed hằng */
+    }
+  }
+  return clip.speed ?? 1;
+}
+
+/**
+ * Tích phân tốc độ trên [a, b] — ĐÚNG cho đoạn con nằm trong 1 segment.
+ *
+ * LƯU Ý LỊCH SỬ: `integrateSpeed`/`sourcePosAt` từng tính SAI đoạn con
+ * (segment linear 1→2 trên [0,4]: integrateSpeed(0,2) trả 3 thay vì 2.5)
+ * — Phase 8 Q3 đã sửa ở cả 3 bản mirror (speedcurve.ts, speedcurve.js,
+ * speedramp.js) bằng nguyên hàm theo easing trên đoạn con; kết quả đoạn
+ * đầy đủ không đổi, và captionFollow nay dùng sourcePosAt trực tiếp.
+ * Hàm này vẫn tự tích phân từ speedAt nên không phụ thuộc vào bản sửa.
+ * Công thức chính xác từng easing trên đoạn con [x0,x1] ⊂ [t0,t1]:
+ * linear: hình thang trên v(x0), v(x1); ease-in: ∫u²; ease-out: ∫(2u-u²);
+ * bezier: Simpson 64 (giống bản gốc, vốn đã đúng).
+ */
+export function integrateRampSpeed(
+  curve: SpeedCurve,
+  a: number,
+  b: number,
+): number {
+  if (b <= a) return 0;
+  const ks = [...curve.keyframes].sort((p, q) => p.t - q.t);
+  // Trùng t: keyframe sau thắng (cùng quy ước normalizeSpeedKeyframes).
+  const norm: typeof ks = [];
+  for (const k of ks) {
+    const last = norm[norm.length - 1];
+    if (last && last.t === k.t) norm[norm.length - 1] = k;
+    else norm.push(k);
+  }
+  if (norm.length === 0) throw new Error("integrateRampSpeed: mảng keyframes rỗng");
+  if (norm.length === 1) return norm[0].v * (b - a);
+  const cuts = [a];
+  for (const k of norm) if (k.t > a && k.t < b) cuts.push(k.t);
+  cuts.push(b);
+  let total = 0;
+  for (let i = 0; i < cuts.length - 1; i++) {
+    const x0 = cuts[i];
+    const x1 = cuts[i + 1];
+    const span = x1 - x0;
+    let seg: { t0: number; t1: number; v0: number; v1: number; easing: string; bezier?: [number, number, number, number] } | null = null;
+    for (let j = 0; j < norm.length - 1; j++) {
+      if (x0 >= norm[j].t - 1e-12 && x1 <= norm[j + 1].t + 1e-12) {
+        seg = { t0: norm[j].t, t1: norm[j + 1].t, v0: norm[j].v, v1: norm[j + 1].v, easing: norm[j].easing, bezier: norm[j].bezier };
+        break;
+      }
+    }
+    if (!seg) {
+      // Ngoài khoảng keyframe: tốc độ hằng = giá trị biên (speedAt clamp).
+      total += speedAt(curve, (x0 + x1) / 2) * span;
+      continue;
+    }
+    const segSpan = seg.t1 - seg.t0;
+    if (segSpan <= 0) {
+      total += seg.v0 * span;
+      continue;
+    }
+    const u0 = (x0 - seg.t0) / segSpan;
+    const u1 = (x1 - seg.t0) / segSpan;
+    if (seg.easing === "linear") {
+      total += span * ((speedAt(curve, x0) + speedAt(curve, x1)) / 2);
+    } else if (seg.easing === "ease-in") {
+      // v = v0 + (v1-v0)u² → ∫ = span*v0 + (v1-v0)*segSpan*(u1³-u0³)/3
+      total += span * seg.v0 + (seg.v1 - seg.v0) * segSpan * ((u1 ** 3 - u0 ** 3) / 3);
+    } else if (seg.easing === "ease-out") {
+      // v = v0 + (v1-v0)(2u-u²) → ∫ = span*v0 + (v1-v0)*segSpan*[(u²-u³/3)]
+      const f = (u: number) => u * u - (u ** 3) / 3;
+      total += span * seg.v0 + (seg.v1 - seg.v0) * segSpan * (f(u1) - f(u0));
+    } else {
+      // bezier: Simpson 64 trên [x0,x1] (giống bản gốc).
+      const n = 64;
+      const h = span / n;
+      let s = speedAt(curve, x0) + speedAt(curve, x1);
+      for (let k = 1; k < n; k++) {
+        s += (k % 2 === 0 ? 2 : 4) * speedAt(curve, x0 + k * h);
+      }
+      total += (s * h) / 3;
+    }
+  }
+  return total;
+}
+
+/**
+ * Vị trí nguồn (tính từ clip.in) ứng với thời điểm output localT.
+ * Có ramp (và không reverse — validator chặn reverse+ramp) → in +
+ * ∫speed; không có ramp → sourceTimeAt chuẩn (speed hằng/reverse).
+ * Reverse + ramp: render báo lỗi nên preview fallback về mapping hằng.
+ */
+export function rampSourceTimeAt(
+  clip: RampableClip,
+  timelineT: number,
+): number {
+  const localT = timelineT - clip.start;
+  if (hasSpeedRamp(clip) && !clip.reverse) {
+    try {
+      if (localT <= 0) return clip.in;
+      return clip.in + integrateRampSpeed(clip.speedKeyframes!, 0, localT);
+    } catch {
+      /* keyframes lỗi → fallback mapping hằng */
+    }
+  }
+  return sourceTimeAt(clip as SpeedableClip, timelineT);
 }
 
 // ---------------------------------------------------------------------------
@@ -604,10 +935,10 @@ export function textSrPlacement(
 ): TextSrPlacement {
   const a = clip.animations;
   const scale = a?.scale
-    ? clampRenderScale(interpolateKeyframes(a.scale.keyframes, localT))
+    ? clampRenderScale(memoInterpolateKeyframes(a.scale.keyframes, localT))
     : 1;
   const rotationDeg = a?.rotation
-    ? interpolateKeyframes(a.rotation.keyframes, localT)
+    ? memoInterpolateKeyframes(a.rotation.keyframes, localT)
     : 0;
   const pad = Math.max(4, Math.round(clip.style.fontSize / 4));
   const pngW = m.textW + 2 * pad;
@@ -619,8 +950,8 @@ export function textSrPlacement(
   const sin = Math.abs(Math.sin(rad));
   const bboxW = ew * cos + eh * sin;
   const bboxH = ew * sin + eh * cos;
-  const xf = a?.x ? interpolateKeyframes(a.x.keyframes, localT) : 0.5;
-  const yf = a?.y ? interpolateKeyframes(a.y.keyframes, localT) : 0.5;
+  const xf = a?.x ? memoInterpolateKeyframes(a.x.keyframes, localT) : 0.5;
+  const yf = a?.y ? memoInterpolateKeyframes(a.y.keyframes, localT) : 0.5;
   const topLeftX = xf * (frameW - bboxW);
   const topLeftY = yf * (frameH - bboxH);
   return {
@@ -676,7 +1007,7 @@ export function textClipVisual(
   if (a && (a.scale || a.rotation) && st.animation !== "typewriter") {
     const pl = textSrPlacement(clip, localT, frameW, frameH, m);
     const srAlpha = a.opacity
-      ? interpolateKeyframes(a.opacity.keyframes, localT)
+      ? memoInterpolateKeyframes(a.opacity.keyframes, localT)
       : 1;
     return {
       cx: pl.centerX,
@@ -694,9 +1025,9 @@ export function textClipVisual(
   // 1. Keyframes ưu tiên hơn mọi animation (giống render.js).
   //    drawtext: x = (w-text_w)*interp — đây là MÉP TRÁI; đổi sang tâm để vẽ canvas.
   if (a && (a.x || a.y || a.opacity)) {
-    const xr = a.x ? interpolateKeyframes(a.x.keyframes, localT) : (st.x ?? 0.5);
-    const yr = a.y ? interpolateKeyframes(a.y.keyframes, localT) : (st.y ?? 0.5);
-    const alpha = a.opacity ? interpolateKeyframes(a.opacity.keyframes, localT) : 1;
+    const xr = a.x ? memoInterpolateKeyframes(a.x.keyframes, localT) : (st.x ?? 0.5);
+    const yr = a.y ? memoInterpolateKeyframes(a.y.keyframes, localT) : (st.y ?? 0.5);
+    const alpha = a.opacity ? memoInterpolateKeyframes(a.opacity.keyframes, localT) : 1;
     return {
       cx: (frameW - m.textW) * xr + m.textW / 2,
       cy: (frameH - m.textH) * yr + m.textH / 2,
@@ -824,14 +1155,53 @@ export function stickerVisual(
   clip: StickerClip,
   frameW: number,
   frameH: number,
+  /** Thời gian timeline (giây, optional). Có thì sticker bám quỹ đạo track. */
+  timelineT?: number,
 ): StickerVisual {
+  // Phase 8 Q5: có track + biết thời gian thì nội suy quỹ đạo theo thời
+  // gian cục bộ (t - start), khớp ngữ nghĩa render (tracking.js).
+  let cx = (clip.x ?? STICKER_DEFAULTS.x) * frameW;
+  let cy = (clip.y ?? STICKER_DEFAULTS.y) * frameH;
+  if (clip.track && timelineT !== undefined) {
+    const pts = clip.track.points;
+    const lt = timelineT - clip.start;
+    const pos = interpolateTrackPoints(pts, lt);
+    cx = pos.x * frameW;
+    cy = pos.y * frameH;
+  }
   return {
-    cx: (clip.x ?? STICKER_DEFAULTS.x) * frameW,
-    cy: (clip.y ?? STICKER_DEFAULTS.y) * frameH,
+    cx,
+    cy,
     wPx: (clip.scale ?? STICKER_DEFAULTS.scale) * frameW,
     opacity: clip.opacity ?? STICKER_DEFAULTS.opacity,
     rotation: clip.rotation ?? STICKER_DEFAULTS.rotation,
   };
+}
+
+/**
+ * Nội suy quỹ đạo track (mirror interpolateTrack của video-spec, viết lại
+ * ở đây để previewEngine không phụ thuộc thêm module — cùng luật: tuyến
+ * tính giữa 2 điểm, kẹp ngoài khoảng).
+ */
+export function interpolateTrackPoints(
+  points: { t: number; x: number; y: number }[],
+  t: number,
+): { x: number; y: number } {
+  const pts = [...points].sort((a, b) => a.t - b.t);
+  if (pts.length === 0) return { x: 0.5, y: 0.5 };
+  if (t <= pts[0].t) return { x: pts[0].x, y: pts[0].y };
+  const last = pts[pts.length - 1];
+  if (t >= last.t) return { x: last.x, y: last.y };
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i];
+    const b = pts[i + 1];
+    if (t >= a.t && t <= b.t) {
+      const span = b.t - a.t;
+      const p = span <= 0 ? 0 : (t - a.t) / span;
+      return { x: a.x + (b.x - a.x) * p, y: a.y + (b.y - a.y) * p };
+    }
+  }
+  return { x: last.x, y: last.y };
 }
 
 // ---------------------------------------------------------------------------

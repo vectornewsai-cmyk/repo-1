@@ -18,14 +18,19 @@ Tài liệu này liệt kê **chính xác** những gì preview canvas làm đư
 | Opacity clip + fade transition | ✅ | ✅ | |
 | Video keyframe `opacity` (P1 Phase 7) | ✅ | ✅ | keyframes thắng tuyệt đối tĩnh (khớp K1); lệch duy nhất ở clip đã merge transition — xem mục 6 |
 | Text keyframes scale/rotation (P1 Phase 7) | ✅ | ✅ | mirror nhánh PNG SR của render (`textSrPlacement`); typewriter + SR → SR bị bỏ qua ở cả hai |
+| Mask rect/ellipse/feather (Q1 Phase 8) | ✅ | ✅ | cùng công thức geq render (`maskAlphaAt`/`applyMask`); unit preview giới hạn 640px nên viền cứng mềm hơn render — xem `Q1_LIMITS.md` §1 |
+| Speed ramp `speedKeyframes` (Q1 Phase 8) | ✅ | ✅ | `rampSpeedAt` + `rampSourceTimeAt` (tích phân đúng); playbackRate nhảy theo bậc mỗi frame RAF, drift chặn bằng re-seek 0.35s — xem `Q1_LIMITS.md` §2 |
 | Phát ngược từng clip (P1 Phase 7) | ✅ (bước từng frame) | ✅ (areverse + reverse) | video: seek từng frame khi phát; audio reverse bị mute khi phát — xem mục 10 |
 | Track hidden/muted | ✅ | ✅ | |
 
 ## Chưa parity / chỉ xấp xỉ (nói thẳng)
 
-1. **LUT chỉ là xấp xỉ.** Preview ánh xạ 104 LUT sang CSS filter
+1. **LUT chỉ là xấp xỉ.** Preview ánh xạ 174 LUT sang CSS filter
    (`grayscale()`, `sepia()`, `contrast()`…). Cảm giác màu gần đúng nhưng
    **không pixel-perfect** so với file `.cube`. Muốn chính xác phải xem bản render.
+   (Q1 Phase 8: 110/174 mục đã được fit từ dữ liệu `.cube` thật bằng least
+   squares — RMSE held-out trung bình 24.73 → 15.98; chi tiết và các LUT
+   vẫn sai xa xem `Q1_LIMITS.md` §3.)
 2. **Effect `sharpen` và `noise` không hiển thị trong preview** (không có
    CSS/canvas tương đương; noise thời gian vẽ từng frame sẽ sai). Console warn
    1 lần. Bản render vẫn có đầy đủ.

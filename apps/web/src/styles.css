@@ -172,6 +172,16 @@ input[type="color"] {
   border-bottom: 1px solid var(--border-soft);
   position: relative;
   z-index: 30;
+  /* Q2 Phase 8: thanh công cụ dài hơn viewport laptop (2384px nội dung
+     trên màn 1440px) nhưng body overflow:hidden nên các nút bên phải
+     (ngôn ngữ, Xuất bản) từng không bấm tới được. Cho topbar cuộn ngang
+     nội bộ thay vì để nút rơi ra ngoài màn hình. */
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.topbar > * {
+  flex-shrink: 0;
 }
 
 .brand {
