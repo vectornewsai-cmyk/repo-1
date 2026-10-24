@@ -157,6 +157,26 @@ const LUT_IDS = [
   "vcut-prism",
   "vcut-acid-rain",
   "vcut-synthwave-grid",
+  "vcut-monsoon-rain",
+  "vcut-saigon-night",
+  "vcut-hanoi-autumn",
+  "vcut-lantern-fest",
+  "vcut-rice-terrace",
+  "vcut-midnight-market",
+  "vcut-cherry-festival",
+  "vcut-glacier-blue",
+  "vcut-meadow-light",
+  "vcut-bamboo-green",
+  "vcut-lotus-pink",
+  "vcut-bubble-tea",
+  "vcut-honey-glow",
+  "vcut-chili-ember",
+  "vcut-typhoon-grey",
+  "vcut-ember-night",
+  "vcut-noir-smoke",
+  "vcut-silk-road",
+  "vcut-opal-dream",
+  "vcut-coral-dawn",
 ];
 
 const LUT_META = {
@@ -484,7 +504,7 @@ function buildColorAdjustFilter(c) {
 // ---------------------------------------------------------------------------
 function selfTest() {
   // 1. Catalog đủ 20
-  assert.strictEqual(LUT_IDS.length, 134, "catalog phải có đúng 134 LUT");
+  assert.strictEqual(LUT_IDS.length, 154, "catalog phải có đúng 154 LUT");
   // 2. isLutId
   assert.ok(isLutId("cartcut-teal-orange"));
   assert.ok(isLutId("cartcut-mono-neutral"));
@@ -562,7 +582,7 @@ function selfTest() {
     "eq=brightness=0.1,colorbalance=rm=-0.2:bm=0.2"
   );
 
-  console.log("✅ lut.js self-test: tất cả assertion pass (134 LUT + color adjust, file .cube đầy đủ)");
+  console.log("✅ lut.js self-test: tất cả assertion pass (154 LUT + color adjust, file .cube đầy đủ)");
 }
 
 if (require.main === module) {

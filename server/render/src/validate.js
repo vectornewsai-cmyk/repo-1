@@ -24,6 +24,13 @@ const { validateSticker } = require("./sticker");
 const { validateSourceAudioMode, validateAudioEffects } = require("./audioroute");
 const { validateImage } = require("./image");
 const { validateOpacity } = require("./opacity");
+// Phase 7 P2: clip enhancement (deinterlace/stabilize/denoise)
+const { validateEnhance } = require("./enhance");
+// Phase 7 P4: mask cho clip video/image.
+const { validateMask } = require("./mask");
+// Phase 7 P3: speed ramp — chỉ dùng hàm toán (không dùng chain builder) để
+// tính nguồn tiêu thụ cho cảnh báo out lệch.
+const { sourceConsumed } = require("./speedramp");
 
 const SPEC_VERSION = "0.2.0";
 /** Các version cũ vẫn đọc được (backward compat). */
@@ -173,6 +180,11 @@ function validateSpec(spec) {
       if (track[flag] !== undefined && typeof track[flag] !== "boolean") {
         err(`${tw}.${flag}`, "phải là boolean");
       }
+    }
+    // Phase 7 P3: track volume (0..2, mặc định 1) — nhân vào gain mọi clip trên track.
+    if (track.volume !== undefined &&
+        (!isFiniteNumber(track.volume) || track.volume < 0 || track.volume > 2)) {
+      err(`${tw}.volume`, `phải trong khoảng 0..2, nhận được: ${track.volume}`);
     }
     if (track.kind === "audio" && track.hidden === true) {
       warn(`${tw}: hidden không có tác dụng với track audio (chỉ mute mới tắt tiếng)`);
@@ -335,6 +347,64 @@ function validateVolumeKeyframes(v, duration) {
   return msgs;
 }
 
+// ---------------------------------------------------------------------------
+// Phase 7 P3: validate speedKeyframes (speed ramp) cho VideoClip/AudioClip.
+// Trả về { errors, warnings } (tách riêng để caller ghi warn đúng kênh).
+// ---------------------------------------------------------------------------
+function validateSpeedKeyframes(v, duration) {
+  const errors = [];
+  const warnings = [];
+  if (typeof v !== "object" || v === null || !Array.isArray(v.keyframes)) {
+    errors.push("speedKeyframes phải là object { keyframes: [...] }");
+    return { errors, warnings };
+  }
+  const kfs = v.keyframes;
+  if (kfs.length === 0) errors.push("speedKeyframes.keyframes: mảng rỗng — cần ít nhất 1 keyframe");
+  if (kfs.length > 128) errors.push("speedKeyframes.keyframes: quá 128 keyframe");
+  let shapeOk = true;
+  kfs.forEach((kf, i) => {
+    const w = `speedKeyframes.keyframes[${i}]`;
+    if (typeof kf !== "object" || kf === null) {
+      errors.push(`${w} phải là object { t, v, easing }`);
+      shapeOk = false;
+      return;
+    }
+    if (!isFiniteNumber(kf.t) || kf.t < 0 || kf.t > duration + EPS) {
+      errors.push(`${w}.t phải trong [0, ${duration}] (nhận được: ${kf.t})`);
+      shapeOk = false;
+    }
+    if (!isFiniteNumber(kf.v) || kf.v < SPEED_MIN || kf.v > SPEED_MAX) {
+      errors.push(`${w}.v phải trong ${SPEED_MIN}..${SPEED_MAX} (nhận được: ${kf.v})`);
+      shapeOk = false;
+    }
+    if (!["linear", "ease-in", "ease-out", "bezier"].includes(kf.easing)) {
+      errors.push(`${w}.easing phải là linear | ease-in | ease-out | bezier (nhận được: ${JSON.stringify(kf.easing)})`);
+      shapeOk = false;
+    }
+    if (kf.easing === "bezier") {
+      const b = kf.bezier;
+      if (!Array.isArray(b) || b.length !== 4 || !b.every((x) => isFiniteNumber(x) && x >= 0 && x <= 1)) {
+        errors.push(`${w}.bezier phải là [x1, y1, x2, y2], mỗi số trong [0, 1] (nhận được: ${JSON.stringify(b)})`);
+        shapeOk = false;
+      }
+    }
+  });
+  if (shapeOk && kfs.length > 0 && isFiniteNumber(duration) && duration > 0) {
+    // Thông tin nguồn tiêu thụ (ramp mode bỏ qua out, dùng in + ∫speed).
+    try {
+      const consumed = sourceConsumed({ keyframes: kfs }, duration);
+      if (isFiniteNumber(consumed)) {
+        warnings.push(
+          `speedKeyframes đang bật: nguồn tiêu thụ = ${consumed.toFixed(3)}s ` +
+          `(∫speed trên duration=${duration}s) — render dùng in + nguồn tiêu thụ, ` +
+          `không dùng out (xem P3_LIMITS.md)`
+        );
+      }
+    } catch { /* toán lỗi → shape đã báo ở trên, không cảnh báo thêm */ }
+  }
+  return { errors, warnings };
+}
+
 /** Validate một clip theo kind của track. */
 function validateClip(track, clip, where, err, warn) {
   if (typeof clip !== "object" || clip === null) {
@@ -350,6 +420,9 @@ function validateClip(track, clip, where, err, warn) {
     err(where, `start phải là số >= 0, nhận được: ${clip.start}`);
   if (!isFiniteNumber(clip.duration) || clip.duration <= 0)
     err(where, `duration phải là số > 0, nhận được: ${clip.duration}`);
+  // Phase 7 P2: enhance chỉ dùng cho video clip.
+  if (track.kind !== "video" && clip.enhance !== undefined)
+    err(where, "enhance chỉ dùng cho video clip");
 
   if (track.kind === "video" || track.kind === "audio") {
     if (typeof clip.src !== "string" || clip.src.length === 0)
@@ -366,7 +439,20 @@ function validateClip(track, clip, where, err, warn) {
       if (typeof clip.reverse !== "undefined" && typeof clip.reverse !== "boolean")
         err(where, `reverse phải là boolean, nhận được: ${JSON.stringify(clip.reverse)}`);
     }
-    if (isFiniteNumber(clip.duration) && isFiniteNumber(clip.in) && isFiniteNumber(clip.out) &&
+    // Phase 7 P3: speed ramp — ghi đè speed hằng, không dùng chung với reverse.
+    // Kiểm tra duration-vs-nguồn của speed hằng BỊ BỎ QUA ở ramp mode (out không
+    // còn là biên nguồn; render dùng in + ∫speed).
+    const hasRamp = clip.speedKeyframes !== undefined;
+    if (hasRamp) {
+      const r = validateSpeedKeyframes(clip.speedKeyframes, clip.duration);
+      for (const m of r.errors) err(where, m);
+      for (const m of r.warnings) warn(where, m);
+      if (clip.reverse === true)
+        err(where, "speedKeyframes không dùng chung được với reverse=true (chưa hỗ trợ)");
+      if (clip.speed !== undefined)
+        warn(where, "có cả speed và speedKeyframes — render dùng speedKeyframes, speed hằng bị bỏ qua");
+    }
+    if (!hasRamp && isFiniteNumber(clip.duration) && isFiniteNumber(clip.in) && isFiniteNumber(clip.out) &&
         isFiniteNumber(spd) && spd > 0 &&
         clip.duration > (clip.out - clip.in) / spd + EPS)
       err(where, `duration (${clip.duration}s) vượt quá đoạn nguồn hiệu dụng ` +
@@ -437,6 +523,21 @@ function validateClip(track, clip, where, err, warn) {
       for (const m of validateVideoEffects(clip.effects))
         err(where, m);
     }
+    // Phase 7 P4: mask (rect/ellipse + feather) — render thật qua mask.js.
+    if (clip.mask !== undefined) {
+      for (const m of validateMask(clip.mask))
+        err(where, m);
+    }
+    // Phase 7 P2: clip enhancement (deinterlace/stabilize/denoise)
+    if (clip.enhance !== undefined) {
+      for (const m of validateEnhance(clip.enhance))
+        err(where, m);
+      // Phase 7 P3: stabilize + ramp không tương thích (vidstab detect theo trim
+      // gốc, không khớp các đoạn ramp) — chặn sớm thay vì render sai transform.
+      if (clip.speedKeyframes !== undefined && clip.enhance.stabilize !== undefined)
+        err(where, "speedKeyframes không dùng chung được với enhance.stabilize " +
+          "(vidstab detect theo trim gốc, không khớp các đoạn ramp)");
+    }
     // R1-015: audio routing cho video nguồn
     if (clip.sourceAudioMode !== undefined) {
       for (const m of validateSourceAudioMode(clip.sourceAudioMode))
@@ -467,6 +568,14 @@ function validateClip(track, clip, where, err, warn) {
       err(where, m);
   }
 
+  // Phase 7 P4: mask chỉ render cho video/image. Text clip dùng drawtext vẽ
+  // trực tiếp nên không qua pipeline alpha — mask bị bỏ qua (cảnh báo, không
+  // lỗi, để project cũ vẫn render). Sticker/audio cũng vậy.
+  if (clip.mask !== undefined && track.kind !== "video" && track.kind !== "image") {
+    warn(where, `mask chưa hỗ trợ cho clip ${track.kind} — mask sẽ bị bỏ qua ` +
+      `(chỉ video/image render mask, xem MASK_LIMITS.md)`);
+  }
+
   if (track.kind === "audio") {
     const vol = clip.volume === undefined ? 1 : clip.volume;
     if (!isFiniteNumber(vol) || vol < 0 || vol > 1)
@@ -478,13 +587,17 @@ function validateClip(track, clip, where, err, warn) {
       else if (isFiniteNumber(clip.duration) && f > clip.duration + EPS)
         err(where, `${key} (${f}s) dài hơn duration của clip (${clip.duration}s)`);
     }
-    // R1-063: volumeKeyframes — validate hình dạng, nhưng render worker CHƯA áp dụng
-    // (chỉ preview Web Audio áp dụng). Cảnh báo để user không bất ngờ khi export.
+    // Phase 7 P3: đường cong fade (mặc định linear).
+    for (const key of ["fadeInCurve", "fadeOutCurve"]) {
+      const c = clip[key];
+      if (c !== undefined && !["linear", "ease-in", "ease-out", "sine"].includes(c))
+        err(where, `${key} phải là linear | ease-in | ease-out | sine (nhận được: ${JSON.stringify(c)})`);
+    }
+    // Phase 7 P3: volumeKeyframes đã được RENDER áp dụng (volume eval=frame),
+    // không còn chỉ preview như R1-063 — bỏ cảnh báo cũ.
     if (clip.volumeKeyframes !== undefined) {
       for (const m of validateVolumeKeyframes(clip.volumeKeyframes, clip.duration))
         err(where, m);
-      warn(where, "volumeKeyframes hiện chỉ được preview áp dụng (Web Audio), " +
-        "render worker chưa áp dụng — export sẽ dùng volume/fade tĩnh (xem AUDIOPREVIEW_LIMITS.md)");
     }
     // R1-076: audio effects cho audio clip
     if (clip.audioEffects !== undefined) {
@@ -531,14 +644,55 @@ function validateClip(track, clip, where, err, warn) {
         warn(where, "keyframes scale/rotation của text clip typewriter bị bỏ qua " +
           "khi render (ASS không hỗ trợ scale/rotate theo thời gian)");
     }
+    // Phase 7 P6: captionOf chỉ là metadata của editor (render vẽ TextClip
+    // theo start/duration sẵn có, không đọc link). Chỉ cảnh báo nếu link
+    // sai hình dạng — không chặn render vì câu chữ vẫn hiển thị đúng.
+    if (clip.captionOf !== undefined) {
+      const l = clip.captionOf;
+      if (typeof l !== "object" || l === null || typeof l.clipId !== "string" ||
+          !Number.isFinite(l.mediaStart) || !Number.isFinite(l.mediaEnd) ||
+          l.mediaEnd <= l.mediaStart) {
+        warn(where, "captionOf sai hình dạng (cần {clipId: string, mediaStart, " +
+          "mediaEnd: number, mediaEnd > mediaStart}) — render vẫn vẽ câu chữ " +
+          "theo start/duration, nhưng editor sẽ không bám link này");
+      }
+    }
   }
 }
 
 /**
  * Giải quyết đường dẫn media: src tương đối → dưới mediaDir; src tuyệt đối → dùng nguyên.
  * Chặn path traversal (../ thoát khỏi mediaDir).
+ *
+ * P7 — src dạng `asset:<id>` (kho asset của editor):
+ *  1. Tra assetMap trước (map do bridge/export truyền kèm qua --asset-map):
+ *     value tuyệt đối → dùng thẳng (map do caller tin cậy cung cấp);
+ *     value tương đối → resolve dưới mediaDir, vẫn chặn traversal.
+ *  2. Không có map (hoặc id không có trong map) → fallback: file cùng tên
+ *     `<id>` trong mediaDir (trường hợp bridge/export đã copy file asset
+ *     vào mediaDir kèm spec).
+ *  3. Không tìm thấy ở đâu → vẫn trả về đường dẫn fallback dưới mediaDir
+ *     để validateMedia báo lỗi thiếu asset rõ ràng (thay vì fail khó hiểu).
+ * Trả về null chỉ khi: src rỗng, id asset rỗng, hoặc traversal.
  */
-function resolveSrc(src, mediaDir) {
+function resolveSrc(src, mediaDir, assetMap) {
+  if (typeof src === "string" && src.startsWith("asset:")) {
+    const id = src.slice("asset:".length);
+    if (!id) return null;
+    if (assetMap && Object.prototype.hasOwnProperty.call(assetMap, id)) {
+      const mapped = assetMap[id];
+      if (typeof mapped !== "string" || !mapped) return null;
+      if (path.isAbsolute(mapped)) return mapped;
+      const abs = path.resolve(mediaDir, mapped);
+      const root = path.resolve(mediaDir) + path.sep;
+      if (!abs.startsWith(root)) return null; // traversal qua map
+      return abs;
+    }
+    const abs = path.resolve(mediaDir, id);
+    const root = path.resolve(mediaDir) + path.sep;
+    if (!abs.startsWith(root)) return null; // traversal qua id
+    return abs;
+  }
   if (path.isAbsolute(src)) return src;
   const abs = path.resolve(mediaDir, src);
   const root = path.resolve(mediaDir) + path.sep;
@@ -561,9 +715,12 @@ function probeFile(ffprobeBin, absPath) {
 
 /**
  * Validate file media thực tế: tồn tại, đúng loại stream, đủ dài cho in/out.
+ * P7: thêm `assetMap` (xem resolveSrc) và kiểm tra tồn tại cho sticker clip
+ * (trước đây sticker thiếu file chỉ fail khó hiểu ở ffmpeg; nay fail fast
+ * với thông báo rõ). Sticker chỉ kiểm tra tồn tại, không probe stream.
  * @returns {{ ok: boolean, errors: string[], warnings: string[], probes: Map<string, object> }}
  */
-function validateMedia(spec, mediaDir, ffprobeBin) {
+function validateMedia(spec, mediaDir, ffprobeBin, assetMap) {
   const errors = [];
   const warnings = [];
   /** @type {Map<string, object>} */
@@ -573,7 +730,7 @@ function validateMedia(spec, mediaDir, ffprobeBin) {
 
   const jobs = [];
   for (const track of spec.tracks) {
-    if (track.kind !== "video" && track.kind !== "audio" && track.kind !== "image") continue;
+    if (track.kind !== "video" && track.kind !== "audio" && track.kind !== "image" && track.kind !== "sticker") continue;
     for (const clip of track.clips) {
       jobs.push({ track, clip });
     }
@@ -581,16 +738,35 @@ function validateMedia(spec, mediaDir, ffprobeBin) {
 
   for (const { track, clip } of jobs) {
     const where = `clip "${clip.id}" (src: ${clip.src})`;
-    const abs = resolveSrc(clip.src, mediaDir);
+    const abs = resolveSrc(clip.src, mediaDir, assetMap);
+    const isAsset = typeof clip.src === "string" && clip.src.startsWith("asset:");
     if (!abs) {
-      err(`[${where}] đường dẫn thoát khỏi media-dir (không cho phép "../")`);
+      if (isAsset) {
+        err(`[${where}] asset "${clip.src.slice("asset:".length)}" không hợp lệ (id rỗng hoặc thoát khỏi media-dir)`);
+      } else {
+        err(`[${where}] đường dẫn thoát khỏi media-dir (không cho phép "../")`);
+      }
       continue;
     }
     let stat;
     try {
       stat = fs.statSync(abs);
     } catch {
-      err(`[${where}] không tìm thấy file: ${abs}`);
+      if (isAsset) {
+        // P7: báo tên asset + cách sửa, thay vì chỉ in đường dẫn fallback.
+        err(`[${where}] không tìm thấy asset "${clip.src.slice("asset:".length)}": ` +
+          `không có trong asset map và không có file cùng tên trong media-dir ` +
+          `(upload file asset kèm spec, hoặc truyền asset map cho render worker)`);
+      } else {
+        err(`[${where}] không tìm thấy file: ${abs}`);
+      }
+      continue;
+    }
+    // P7: sticker chỉ cần tồn tại (ảnh PNG/APNG); không probe stream.
+    if (track.kind === "sticker") {
+      if (!stat.isFile()) {
+        err(`[${where}] không phải file thường: ${abs}`);
+      }
       continue;
     }
     if (!stat.isFile()) {

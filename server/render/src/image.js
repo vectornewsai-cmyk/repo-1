@@ -79,6 +79,11 @@ function validateImage(c) {
     errors.push(`${where}: duration phải là số > 0`);
   if (c.fit !== undefined && !isImageFit(c.fit))
     errors.push(`${where}: fit phải là "contain" | "cover", nhận được: ${JSON.stringify(c.fit)}`);
+  // Phase 7 P4: mask (rect/ellipse + feather) — validate qua mask.js.
+  if (c.mask !== undefined) {
+    const { validateMask } = require("./mask");
+    for (const m of validateMask(c.mask)) errors.push(`${where}: ${m}`);
+  }
   return errors;
 }
 

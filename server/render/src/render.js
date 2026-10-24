@@ -54,8 +54,19 @@ const { buildAudioEffectsFilters } = require("./audioroute");
 const { buildImageChain } = require("./image");
 // R1-011: opacity/alpha cho video clip.
 const { buildOpacityFilter, buildOpacityKeyframesChain } = require("./opacity");
+// Phase 7 P4: mask cho clip video/image.
+const { buildMaskChain } = require("./mask");
 // Batch J plugin wiring: nối PluginRegistry vào pipeline (chỉ khi spec có `plugins`).
 const { createPluginHost } = require("./plugins");
+// Phase 7 P2: clip enhancement (deinterlace/stabilize/denoise) + encode GPU.
+const {
+  hasStabilize, buildEnhancePreChain, buildEnhancePostChain,
+  runStabilizeDetect, probeFilterSupport,
+} = require("./enhance");
+// Phase 7 P3: speed ramp (đường cong tốc độ) + audio mixer (gain expr, normalize).
+const { buildSpeedRampVideo, buildSpeedRampAudio } = require("./speedramp");
+const { buildGainFilter, buildNormalizeFilter } = require("./audiomix");
+const { probeGpuEncoder, buildVideoEncodeArgs, tryEncode } = require("./gpuencode");
 
 // ---------------------------------------------------------------------------
 // Tiện ích
@@ -116,12 +127,22 @@ Cách dùng:
 Tùy chọn:
   --media-dir <dir>   Thư mục chứa file media; src tương đối trong spec được
                       giải quyết từ đây (mặc định: <thư-mục-chứa-spec>/media)
+  --asset-map <json>  P7: map asset id → file (JSON object) để resolve src
+                      dạng "asset:<id>"; không có map thì fallback file cùng
+                      tên trong --media-dir
   --ffmpeg <path>     Đường dẫn ffmpeg (mặc định: ffmpeg trên PATH)
   --ffprobe <path>    Đường dẫn ffprobe (mặc định: ffprobe trên PATH)
   --crf <0..51>       Chất lượng H.264 (CRF; số càng nhỏ càng đẹp, mặc định 20)
   --x264-preset <p>   ultrafast|superfast|veryfast|faster|fast|medium|slow|slower|veryslow
                       (mặc định medium)
   --audio-bitrate <b> Bitrate audio AAC, vd 128k (32k..512k, mặc định 128k)
+  --encoder <e>     auto|libx264|h264_nvenc|h264_qsv|h264_vaapi (mặc định auto:
+                      probe encode GPU thật, fail → fallback libx264, không fail job)
+  --normalize <m>   P3: off|loudnorm|dynaudnorm (mặc định off) — chuẩn hoá loudness
+                      toàn bộ audio đã mix, áp sau amix (không áp khi không có audio)
+  --normalize-target <dB>  P3: target LUFS cho loudnorm (mặc định -14)
+  --normalize-tp <dB>      P3: true peak ceiling cho loudnorm (mặc định -1.5)
+  --normalize-lra <dB>     P3: loudness range cho loudnorm (mặc định 11)
   -y, --overwrite     Ghi đè file output nếu đã tồn tại
   -q, --quiet         Ẩn log chi tiết của ffmpeg
   --dry-run           Chỉ in câu lệnh ffmpeg, không chạy
@@ -137,10 +158,14 @@ const X264_PRESETS = [
 ];
 
 function parseArgs(argv) {
+  const ENCODERS = ["auto", "libx264", "h264_nvenc", "h264_qsv", "h264_vaapi"];
   const args = {
-    spec: null, out: null, mediaDir: null,
+    spec: null, out: null, mediaDir: null, assetMapPath: null,
     ffmpeg: "ffmpeg", ffprobe: "ffprobe",
     crf: 20, x264Preset: "medium", audioBitrate: "128k",
+    encoder: "auto",
+    // Phase 7 P3: normalize export (mặc định off).
+    normalize: "off", normalizeTarget: -14, normalizeTp: -1.5, normalizeLra: 11,
     overwrite: false, quiet: false, dryRun: false,
   };
   const needInt = (name, raw, min, max) => {
@@ -177,11 +202,52 @@ function parseArgs(argv) {
     if (a === "--spec") args.spec = need();
     else if (a === "--out") args.out = need();
     else if (a === "--media-dir") args.mediaDir = need();
+    else if (a === "--asset-map") args.assetMapPath = need(); // P7: map asset id → file
     else if (a === "--ffmpeg") args.ffmpeg = need();
     else if (a === "--ffprobe") args.ffprobe = need();
     else if (a === "--crf") args.crf = needInt("--crf", need(), 0, 51);
     else if (a === "--x264-preset") args.x264Preset = needX264Preset(need());
     else if (a === "--audio-bitrate") args.audioBitrate = needAudioBitrate(need());
+    else if (a === "--encoder") {
+      const e = need();
+      if (!ENCODERS.includes(e)) {
+        console.error(`❌ --encoder phải thuộc: ${ENCODERS.join(", ")} (nhận: ${e})`);
+        process.exit(2);
+      }
+      args.encoder = e;
+    }
+    else if (a === "--normalize") {
+      const m = need();
+      if (!["off", "loudnorm", "dynaudnorm"].includes(m)) {
+        console.error(`❌ --normalize phải thuộc: off|loudnorm|dynaudnorm (nhận: ${m})`);
+        process.exit(2);
+      }
+      args.normalize = m;
+    }
+    else if (a === "--normalize-target") {
+      const n = Number(need());
+      if (!Number.isFinite(n) || n < -70 || n > 0) {
+        console.error(`❌ --normalize-target phải trong -70..0 LUFS`);
+        process.exit(2);
+      }
+      args.normalizeTarget = n;
+    }
+    else if (a === "--normalize-tp") {
+      const n = Number(need());
+      if (!Number.isFinite(n) || n < -9 || n > 0) {
+        console.error(`❌ --normalize-tp phải trong -9..0 dB`);
+        process.exit(2);
+      }
+      args.normalizeTp = n;
+    }
+    else if (a === "--normalize-lra") {
+      const n = Number(need());
+      if (!Number.isFinite(n) || n < 1 || n > 20) {
+        console.error(`❌ --normalize-lra phải trong 1..20`);
+        process.exit(2);
+      }
+      args.normalizeLra = n;
+    }
     else if (a === "-y" || a === "--overwrite") args.overwrite = true;
     else if (a === "-q" || a === "--quiet") args.quiet = true;
     else if (a === "--dry-run") args.dryRun = true;
@@ -309,6 +375,12 @@ function buildFilterGraph(spec, ctx) {
       const lutChain = clip.filter?.lut ? `,${buildLutFilter(clip.filter.lut, ctx.assetsDir, ctx.userLutsDir)}` : "";
       const fxChain = buildEffectsChain(clip.effects);
       const effectsChain = fxChain ? `,${fxChain}` : "";
+      // Phase 7 P2: enhancement — deinterlace + vidstabtransform áp TRƯỚC
+      // speed (cùng đoạn nguồn đã phân tích ở pass detect), denoise áp SAU
+      // scale/pad cùng vị trí effects (trên pixel output).
+      const enhPre = buildEnhancePreChain(
+        clip.enhance, ctx.stabTrf ? ctx.stabTrf.get(clip.id) : undefined);
+      const enhPost = buildEnhancePostChain(clip.enhance);
       // Plugin (Batch J wiring): filters từ hook onClipRender của các plugin
       // trong spec.plugins. Vị trí: SAU effects — tức sau toàn bộ pipeline
       // pixel của chính clip (speed → chroma → scale/pad → color → LUT →
@@ -336,18 +408,57 @@ function buildFilterGraph(spec, ctx) {
         (hasScaleRotation(clip.animations) && !mergeInvolved.has(clip.id));
       const padColor = keepAlpha ? "black@0" : "black";
       const outFormat = keepAlpha ? "yuva420p" : "yuv420p";
+      // Phase 7 P3: speed ramp — clip chia thành đoạn ~0.2s, mỗi đoạn tốc độ hằng
+      // rồi concat. Đường thường (không ramp) giữ nguyên 100% bên dưới.
+      const isRamp = clip.speedKeyframes && clip.speedKeyframes.keyframes &&
+        clip.speedKeyframes.keyframes.length > 0;
+      if (isRamp) {
+        // enhance pre-chain vẫn áp trước speed trong từng đoạn (giống thứ tự gốc).
+        // stabilize + ramp bị chặn ở cả validator và đây (trf detect không khớp đoạn ramp).
+        if (hasStabilize(clip.enhance)) {
+          throw new Error(`clip "${clip.id}": speedKeyframes không dùng chung được với enhance.stabilize (vidstab detect theo trim gốc, không khớp các đoạn ramp)`);
+        }
+        const { lines, label } = buildSpeedRampVideo(`[${idx}:v]`, clip, {
+          W, H, fps, outFormat, padColor, lbl,
+          enhPreChain: enhPre,
+          preScaleChain: chromaChain,
+          postChain: `${colorChain}${lutChain}${effectsChain}${enhPost}${pluginChain}`,
+        });
+        fc.push(...lines);
+        let unitLabel = label;
+        if (clip.mask) {
+          const mc = buildMaskChain(unitLabel, clip.mask, W, H, lbl);
+          fc.push(...mc.entries);
+          unitLabel = mc.outLabel;
+        }
+        return {
+          label: unitLabel, clip,
+          start: clip.start, duration: clip.duration,
+          declaredEnd: clip.start + clip.duration,
+        };
+      }
       fc.push(
         `[${idx}:v]` +
         `trim=start=${num(clip.in)}:end=${num(clip.in + clip.duration * (clip.speed ?? 1))},` +
-        `setpts=PTS-STARTPTS${speedChain}${chromaChain},` +
+        `setpts=PTS-STARTPTS${enhPre}${speedChain}${chromaChain},` +
         // Giữ tỉ lệ gốc, letterbox bằng nền đen (hoặc trong suốt nếu chroma) cho vừa khít khung hình output.
         `scale=${W}:${H}:force_original_aspect_ratio=decrease,` +
         `pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=${padColor},` +
-        `setsar=1,fps=${fps},format=${outFormat}${colorChain}${lutChain}${effectsChain}${pluginChain}` +
+        `setsar=1,fps=${fps},format=${outFormat}${colorChain}${lutChain}${effectsChain}${enhPost}${pluginChain}` +
         `[${v}]`
       );
+      // Phase 7 P4: mask — áp SAU effects/plugin, trên pixel WxH đã chuẩn hoá,
+      // trước xfade/timeline, nên mask là thuộc tính của clip và đi qua
+      // transition cùng clip. Mask chain xuất yuva420p (cần alpha để overlay
+      // composite đúng); alpha gốc được giữ, không ghi đè.
+      let unitLabel = `[${v}]`;
+      if (clip.mask) {
+        const mc = buildMaskChain(unitLabel, clip.mask, W, H, lbl);
+        fc.push(...mc.entries);
+        unitLabel = mc.outLabel;
+      }
       return {
-        label: `[${v}]`, clip,
+        label: unitLabel, clip,
         start: clip.start, duration: clip.duration,
         declaredEnd: clip.start + clip.duration, // vị trí kết thúc theo spec (để kiểm tra kề nhau)
       };
@@ -460,8 +571,16 @@ function buildFilterGraph(spec, ctx) {
       const idx = mediaIndex.get(absOf(clip.src));
       const v = lbl("img");
       fc.push(`[${idx}:v]${buildImageChain(clip, W, H, fps)}[${v}]`);
+      // Phase 7 P4: mask cho image — áp sau khi ảnh đã lấp đầy khung hình,
+      // trước setpts/overlay (giống pattern video unit).
+      let imgLabel = `[${v}]`;
+      if (clip.mask) {
+        const mc = buildMaskChain(imgLabel, clip.mask, W, H, lbl);
+        fc.push(...mc.entries);
+        imgLabel = mc.outLabel;
+      }
       const p = lbl("imgp"), b = lbl("imgb");
-      fc.push(`[${v}]setpts=PTS+${num(clip.start)}/TB[${p}]`);
+      fc.push(`${imgLabel}setpts=PTS+${num(clip.start)}/TB[${p}]`);
       fc.push(`${base}[${p}]overlay=0:0:eof_action=pass[${b}]`);
       base = `[${b}]`;
     }
@@ -587,6 +706,9 @@ function buildFilterGraph(spec, ctx) {
   // ===== AUDIO =====
   // Mỗi clip: cắt [in, in+duration*speed) → speed/reverse → chuẩn 48kHz stereo
   // → volume → afade → adelay tới vị trí start trên timeline. Rồi trộn bằng amix.
+  // Phase 7 P3: clip có speedKeyframes → chia đoạn concat (không dùng speed hằng);
+  // clip có volumeKeyframes hoặc fade cong → 1 filter volume eval=frame thay cho
+  // volume + afade; track.volume nhân vào gain; normalize áp sau amix.
   //
   // R1-015: audio của VIDEO clip được xử lý theo `sourceAudioMode`:
   // - "inherit" (mặc định): trích audio từ video source, áp cùng trim/speed/reverse.
@@ -594,23 +716,41 @@ function buildFilterGraph(spec, ctx) {
   const aseg = [];
   // Helper dựng chain audio cho 1 clip (dùng chung cho audio clip và video inherit).
   // streamRef: `[idx:a]` — audio stream của file nguồn.
-  const buildAudioChain = (streamRef, clip, label) => {
+  // Phase 7 P3: thêm trackVolume (nhân vào gain) + speed ramp (segment concat)
+  // + gain expression (volumeKeyframes / fade cong). Không ramp, không keyframes,
+  // không fade cong → chain cũ 100% (volume + afade tĩnh).
+  const buildAudioChain = (streamRef, clip, label, trackVolume = 1) => {
     const a = lbl(label);
-    const spd = clip.speed ?? 1;
-    const spdF = buildSpeedFilter(spd, clip.reverse ?? false);
-    const speedChain = spdF.audio ? `,${spdF.audio}` : "";
-    let chain =
-      `${streamRef}` +
-      `atrim=start=${num(clip.in)}:end=${num(clip.in + clip.duration * spd)},` +
-      `asetpts=PTS-STARTPTS${speedChain},aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo`;
+    const isRamp = clip.speedKeyframes && clip.speedKeyframes.keyframes &&
+      clip.speedKeyframes.keyframes.length > 0;
+    let chain;
+    if (isRamp) {
+      const { lines, label: rlab } = buildSpeedRampAudio(streamRef, clip, { lbl });
+      fc.push(...lines);
+      chain = `${rlab}aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo`;
+    } else {
+      const spd = clip.speed ?? 1;
+      const spdF = buildSpeedFilter(spd, clip.reverse ?? false);
+      const speedChain = spdF.audio ? `,${spdF.audio}` : "";
+      chain =
+        `${streamRef}` +
+        `atrim=start=${num(clip.in)}:end=${num(clip.in + clip.duration * spd)},` +
+        `asetpts=PTS-STARTPTS${speedChain},aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo`;
+    }
     // R1-076: audio effects (bass → treble → noiseReduction → compressor → reverb),
     // áp dụng sau aformat, trước volume.
     chain += buildAudioEffectsFilters(clip.audioEffects);
-    const vol = clip.volume ?? 1;
-    if (Math.abs(vol - 1) > EPS) chain += `,volume=${num(vol)}`;
-    if ((clip.fadeIn ?? 0) > EPS) chain += `,afade=t=in:st=0:d=${num(clip.fadeIn)}`;
-    if ((clip.fadeOut ?? 0) > EPS)
-      chain += `,afade=t=out:st=${num(clip.duration - clip.fadeOut)}:d=${num(clip.fadeOut)}`;
+    const gainFilter = buildGainFilter(clip, trackVolume);
+    if (gainFilter) {
+      // Đường expression thay thế HOÀN TOÀN volume + afade tĩnh (đã gộp trong expr).
+      chain += `,${gainFilter}`;
+    } else {
+      const vol = (clip.volume ?? 1) * trackVolume;
+      if (Math.abs(vol - 1) > EPS) chain += `,volume=${num(vol)}`;
+      if ((clip.fadeIn ?? 0) > EPS) chain += `,afade=t=in:st=0:d=${num(clip.fadeIn)}`;
+      if ((clip.fadeOut ?? 0) > EPS)
+        chain += `,afade=t=out:st=${num(clip.duration - clip.fadeOut)}:d=${num(clip.fadeOut)}`;
+    }
     chain += `,adelay=${Math.round(clip.start * 1000)}:all=1[${a}]`;
     fc.push(chain);
     aseg.push(`[${a}]`);
@@ -619,7 +759,7 @@ function buildFilterGraph(spec, ctx) {
   for (const track of spec.tracks.filter((t) => t.kind === "audio" && !t.muted)) {
     for (const clip of track.clips) {
       const idx = mediaIndex.get(absOf(clip.src));
-      buildAudioChain(`[${idx}:a]`, clip, "ac");
+      buildAudioChain(`[${idx}:a]`, clip, "ac", track.volume ?? 1);
     }
   }
   // Audio inherit từ video clip (R1-015).
@@ -647,7 +787,7 @@ function buildFilterGraph(spec, ctx) {
       const abs = absOf(clip.src);
       if (!hasAudioStream(abs)) continue; // file câm → không add [idx:a]
       const idx = mediaIndex.get(abs);
-      buildAudioChain(`[${idx}:a]`, clip, "va");
+      buildAudioChain(`[${idx}:a]`, clip, "va", track.volume ?? 1);
     }
   }
   let aout;
@@ -658,14 +798,26 @@ function buildFilterGraph(spec, ctx) {
   } else {
     const mixed = lbl("amx");
     // amix duration=longest: output dài bằng clip kết thúc muộn nhất; apad bù câm tới D.
+    // Phase 7 P3: normalize (export option) áp SAU apad/atrim, trên stream đã mix.
+    const normFilter = buildNormalizeFilter(ctx.normalize || null);
+    const normChain = normFilter ? `,${normFilter}` : "";
     fc.push(
       `${aseg.join("")}amix=inputs=${aseg.length}:duration=longest:dropout_transition=0,` +
-      `apad=whole_dur=${num(D)},atrim=0:${num(D)}[${mixed}]`
+      `apad=whole_dur=${num(D)},atrim=0:${num(D)}${normChain}[${mixed}]`
     );
     aout = `[${mixed}]`;
   }
 
-  return { filterComplex: fc.join(";"), vout: vcur, aout, assFile };
+  // Phase 7 P2: VA-API cần upload frame lên hardware ở cuối graph (sau mọi
+  // xử lý pixel, trước encoder). Chỉ khi ctx.vaapi (encoder h264_vaapi).
+  let vfinal = vcur;
+  if (ctx.vaapi) {
+    const hv = lbl("hw");
+    fc.push(`${vcur}format=nv12,hwupload[${hv}]`);
+    vfinal = `[${hv}]`;
+  }
+
+  return { filterComplex: fc.join(";"), vout: vfinal, aout, assFile };
 }
 
 // ---------------------------------------------------------------------------
@@ -696,6 +848,27 @@ function main() {
       `cần { version: "${SPEC_VERSION}", meta: {...}, tracks: [...] }`
     );
     process.exit(1);
+  }
+
+  // 2a. P7: nạp asset map nếu có (map asset id → file, do bridge/export
+  // truyền kèm). File hỏng / không phải object → fail fast, không đoán.
+  let assetMap = null;
+  if (args.assetMapPath) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(args.assetMapPath, "utf8"));
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("asset map phải là JSON object { assetId: file }");
+      }
+      for (const [k, val] of Object.entries(parsed)) {
+        if (typeof val !== "string" || !val) {
+          throw new Error(`asset map: giá trị của "${k}" phải là chuỗi đường dẫn khác rỗng`);
+        }
+      }
+      assetMap = parsed;
+    } catch (e) {
+      console.error(`❌ Không nạp được asset map (${args.assetMapPath}): ${e.message}`);
+      process.exit(2);
+    }
   }
 
   // 2. Validate cấu trúc
@@ -734,16 +907,91 @@ function main() {
   const mediaDir = args.mediaDir
     ? path.resolve(args.mediaDir)
     : path.join(path.dirname(path.resolve(args.spec)), "media");
-  const absOf = (src) => resolveSrc(src, mediaDir);
+  const absOf = (src) => resolveSrc(src, mediaDir, assetMap);
 
   // 3. Validate media
-  const mv = validateMedia(spec, mediaDir, args.ffprobe);
+  const mv = validateMedia(spec, mediaDir, args.ffprobe, assetMap);
   for (const w of mv.warnings) console.error(`⚠️  ${w}`);
   if (!mv.ok) {
     console.error(`\n❌ Media không hợp lệ (${mv.errors.length} lỗi):`);
     mv.errors.forEach((e, i) => console.error(`  ${i + 1}. ${e}`));
     process.exit(1);
   }
+
+  // 3b. Phase 7 P2: enhancement — kiểm tra filter có sẵn + pass 1 vidstabdetect.
+  // Detect phân tích đúng đoạn nguồn mà graph chính sẽ dùng (cùng trim), nên
+  // phải chạy TRƯỚC khi dựng graph. Fail fast (không lặng lẽ bỏ stabilize):
+  // user đã khai stabilize thì render thiếu nó là sai hợp đồng.
+  const stabTrf = new Map(); // clipId -> trfPath
+  const stabTrfPaths = [];
+  {
+    const videoClips = [];
+    for (const track of spec.tracks.filter((t) => t.kind === "video" && !t.hidden))
+      for (const clip of track.clips) videoClips.push(clip);
+    const needsStab = videoClips.filter((c) => hasStabilize(c.enhance));
+    const needsYadif = videoClips.some((c) => c.enhance && c.enhance.deinterlace !== undefined);
+    const needsDenoise = videoClips.some((c) => c.enhance && c.enhance.denoise !== undefined);
+    if (needsStab.length > 0 || needsYadif || needsDenoise) {
+      const sup = probeFilterSupport(args.ffmpeg);
+      if (needsYadif && !sup.yadif) {
+        console.error("❌ FFmpeg build này thiếu filter yadif — không render được deinterlace");
+        process.exit(1);
+      }
+      if (needsDenoise && !sup.hqdn3d) {
+        console.error("❌ FFmpeg build này thiếu filter hqdn3d — không render được denoise");
+        process.exit(1);
+      }
+      if (needsStab.length > 0) {
+        if (!sup.vidstabdetect || !sup.vidstabtransform) {
+          console.error(`❌ FFmpeg build này thiếu filter vidstab (detect=${sup.vidstabdetect}, transform=${sup.vidstabtransform}) — không render được stabilize`);
+          process.exit(1);
+        }
+        for (const clip of needsStab) {
+          const safeId = clip.id.replace(/[^A-Za-z0-9_-]/g, "_");
+          const trfPath = path.join(os.tmpdir(), `repo1-vidstab-${process.pid}-${safeId}.trf`);
+          if (args.dryRun) {
+            // Dry-run chỉ in câu lệnh: không chạy detect thật, graph vẫn
+            // hiện vidstabtransform với đường dẫn placeholder.
+            stabTrf.set(clip.id, trfPath);
+            stabTrfPaths.push(trfPath);
+            continue;
+          }
+          const r = runStabilizeDetect(args.ffmpeg, absOf(clip.src), clip, trfPath);
+          if (!r.ok) {
+            console.error(`❌ vidstabdetect cho clip "${clip.id}" thất bại: ${r.error}`);
+            process.exit(1);
+          }
+          stabTrf.set(clip.id, trfPath);
+          stabTrfPaths.push(trfPath);
+          log(`   stabilize "${clip.id}" → ${trfPath}`);
+        }
+      }
+    }
+  }
+
+  // 3c. Phase 7 P2: chọn encoder video — auto probe GPU thật, fail → libx264.
+  // Ép tay encoder mà probe fail → cảnh báo + fallback libx264 (KHÔNG fail job).
+  let videoEncoder = "libx264";
+  let encoderNote = "libx264 (CPU)";
+  if (args.encoder === "auto") {
+    const gp = probeGpuEncoder(args.ffmpeg);
+    if (gp.encoder) {
+      videoEncoder = gp.encoder;
+      encoderNote = `${gp.encoder} (GPU auto-detect: ${gp.detail})`;
+    } else {
+      encoderNote = `libx264 (CPU — ${gp.detail})`;
+    }
+  } else if (args.encoder !== "libx264") {
+    if (tryEncode(args.ffmpeg, args.encoder)) {
+      videoEncoder = args.encoder;
+      encoderNote = `${args.encoder} (ép tay, probe OK)`;
+    } else {
+      console.error(`⚠️  encoder ép tay ${args.encoder} probe thất bại → fallback libx264 (không fail job)`);
+      encoderNote = `libx264 (CPU — ${args.encoder} probe thất bại, fallback)`;
+    }
+  }
+  const encArgs = buildVideoEncodeArgs(videoEncoder, { crf: args.crf, preset: args.x264Preset });
+  log(`   🎥 encoder video: ${encoderNote}`);
 
   // 4. Resolve font cho các text clip dùng drawtext (fail fast trước khi render)
   // R1-054: bỏ qua text track bị hidden (không render nên không cần font).
@@ -835,6 +1083,16 @@ function main() {
       : null,
     // K1: map clipId -> input index của PNG text SR (rỗng nếu không có clip SR).
     textSrPng: textSrPngIdx,
+    // Phase 7 P2: map clipId -> file .trf vidstabdetect + cờ VA-API.
+    stabTrf,
+    vaapi: videoEncoder === "h264_vaapi",
+    // Phase 7 P3: normalize export (áp sau amix; off = không đổi).
+    normalize: {
+      mode: args.normalize,
+      target: args.normalizeTarget,
+      tp: args.normalizeTp,
+      lra: args.normalizeLra,
+    },
   });
 
   // Plugin: lỗi hook onClipRender gom được khi dựng graph — in ra stderr
@@ -855,12 +1113,18 @@ function main() {
   // server luôn parse được tiến trình (time=/frame=) từ stderr — ai đó thêm
   // "-v error" sau này cũng không làm mất progress.
   ffArgs.push("-stats");
+  // Phase 7 P2: VA-API cần device trước inputs.
+  if (videoEncoder === "h264_vaapi") ffArgs.push("-vaapi_device", "/dev/dri/renderD128");
   for (const m of orderedMedia) ffArgs.push("-i", m);
   ffArgs.push(
     "-filter_complex", filterComplex,
     "-map", vout, "-map", aout,
-    "-c:v", "libx264", "-preset", args.x264Preset, "-crf", String(args.crf),
-    "-pix_fmt", "yuv420p", "-r", String(meta.fps),
+    ...encArgs.args,
+  );
+  // VA-API tự quản lý surface (pixFmt null) — không ép -pix_fmt.
+  if (encArgs.pixFmt) ffArgs.push("-pix_fmt", encArgs.pixFmt);
+  ffArgs.push(
+    "-r", String(meta.fps),
     "-c:a", "aac", "-b:a", args.audioBitrate, "-ar", "48000", "-ac", "2",
     "-movflags", "+faststart",
     "-t", num(D),
@@ -876,7 +1140,7 @@ function main() {
   log(`🎬 Render "${meta.name}" → ${outAbs}`);
   log(`   ${meta.width}x${meta.height} @ ${meta.fps}fps, thời lượng ${num(D)}s, ` +
     `${orderedMedia.length} file media, ${v.transitions.length} transition, ` +
-    `crf=${args.crf} preset=${args.x264Preset} audio=${args.audioBitrate}`);
+    `encoder=${videoEncoder} crf=${args.crf} preset=${args.x264Preset} audio=${args.audioBitrate}`);
   const t0 = Date.now();
   // Plugin: onExportStart (quan sát, ngay trước khi ffmpeg chạy; dry-run đã
   // return ở trên nên hook không cháy khi không export thật). Lỗi hook chỉ
@@ -921,6 +1185,14 @@ function main() {
     for (const p of textSrPngPaths) { try { fs.unlinkSync(p); } catch { /* bỏ qua */ } }
   } else if (textSrPngPaths.length > 0) {
     console.error(`   (giữ PNG text SR tạm để debug: ${textSrPngPaths.join(", ")})`);
+  }
+  // Phase 7 P2: dọn file .trf vidstab tạm (giữ lại khi lỗi để debug).
+  // Dry-run return sớm ở trên nên không tới đây — file trf dry-run chỉ là
+  // placeholder, không tồn tại thật nên không cần dọn.
+  if (r.status === 0) {
+    for (const p of stabTrfPaths) { try { fs.unlinkSync(p); } catch { /* bỏ qua */ } }
+  } else if (stabTrfPaths.length > 0) {
+    console.error(`   (giữ file .trf vidstab tạm để debug: ${stabTrfPaths.join(", ")})`);
   }
 
   if (r.error) {

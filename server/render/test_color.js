@@ -79,7 +79,7 @@ const lut = require("./src/lut");
   eq(lut.validateVideoFilter({ color: { brightness: 20 } }).length, 0, "filter.color hợp lệ");
   ok("filter.color sai → lỗi", lut.validateVideoFilter({ color: { brightness: 999 } }).length > 0);
   ok("isColorNoop", lut.isColorNoop({}) && lut.isColorNoop(undefined) && !lut.isColorNoop({ brightness: 1 }));
-  eq(lut.LUT_IDS.length, 20, "catalog 20 LUT");
+  eq(lut.LUT_IDS.length, 154, "catalog 154 LUT");
 }
 
 // ---- B. Parity JS vs TS ----

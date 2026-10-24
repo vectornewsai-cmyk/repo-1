@@ -25,7 +25,7 @@ function num(x) {
  * Catalog đầy đủ. `xfade: null` nghĩa là "không phải hiệu ứng xfade"
  * (vd "none" — không có transition).
  *
- * @type {Array<{type:string, xfade:string|null, label:string, description:string, category:string}>}
+ * @type {Array<{type:string, xfade:string|null, expr?:string, label:string, description:string, category:string}>}
  */
 const TRANSITIONS = [
   {
@@ -444,6 +444,86 @@ const TRANSITIONS = [
     description: "Cảnh cũ trượt lên, hé lộ cảnh mới bên dưới",
     category: "slide",
   },
+  // ============ P5 (Phase 7): 9 transition custom expr ============
+  // FFmpeg 8.1.2 chỉ có 58 transition xfade built-in (đã dùng hết ở trên).
+  // 9 transition này dùng xfade transition=custom + expr (chỉ tính toán trên
+  // từng pixel: X, Y, W, H, A, B, P) — KHÔNG cần shader, KHÔNG cần gltransition.
+  // Mỗi expr đã render thật bằng ffmpeg + kiểm chứng pixel (xem test_p5_transitions.py):
+  // frame giữa transition khác cả 2 frame gốc, và blinds/bars có pattern xen kẽ đúng.
+  // LƯU Ý QUOTING: expr chứa dấu phẩy nên PHẢI bọc trong '...' khi build filter
+  // (xem buildXfadeFilter) — nếu không, dấu phẩy bị parser hiểu là tách filter.
+  {
+    type: "blinds-h",
+    xfade: "custom",
+    expr: "if(lt(mod(Y,H/8),P*H/8),B,A)",
+    label: "Mành ngang",
+    description: "Cảnh mới hiện qua các lá mành ngang mở dần",
+    category: "wipe",
+  },
+  {
+    type: "bars-v",
+    xfade: "custom",
+    expr: "if(lt(mod(X,W/8),P*W/8),B,A)",
+    label: "Thanh dọc",
+    description: "Cảnh mới hiện qua các thanh dọc mở dần",
+    category: "wipe",
+  },
+  {
+    type: "checker",
+    xfade: "custom",
+    expr: "if(gt(P*4,mod(floor(X/(W/8))+floor(Y/(H/8)),4)),B,A)",
+    label: "Bàn cờ",
+    description: "Cảnh mới hiện dần theo các ô bàn cờ lan chéo",
+    category: "fx",
+  },
+  {
+    type: "diamond",
+    xfade: "custom",
+    expr: "if(lte(abs(X-W/2)+abs(Y-H/2),P*(W+H)/2),B,A)",
+    label: "Hình thoi",
+    description: "Cảnh mới nở ra từ hình thoi ở giữa",
+    category: "fx",
+  },
+  {
+    type: "plus",
+    xfade: "custom",
+    expr: "if(lte(min(abs(X-W/2),abs(Y-H/2)),P*min(W,H)/2),B,A)",
+    label: "Dấu cộng",
+    description: "Cảnh mới hiện theo hình dấu cộng lan ra",
+    category: "fx",
+  },
+  {
+    type: "grid",
+    xfade: "custom",
+    expr: "if(lte(max(mod(X,min(W,H)/8),mod(Y,min(W,H)/8)),P*min(W,H)/8),B,A)",
+    label: "Lưới ô vuông",
+    description: "Cảnh mới hiện qua các ô lưới vuông nở dần",
+    category: "fx",
+  },
+  {
+    type: "clock",
+    xfade: "custom",
+    expr: "if(lt(atan2(Y-H/2,X-W/2),-PI+2*PI*P),B,A)",
+    label: "Quét đồng hồ",
+    description: "Cảnh mới quét tròn như kim đồng hồ",
+    category: "fx",
+  },
+  {
+    type: "circle-soft",
+    xfade: "custom",
+    expr: "A*(1-clip((sqrt(pow(X-W/2,2)+pow(Y-H/2,2))-P*sqrt(pow(W/2,2)+pow(H/2,2)))/(0.15*sqrt(pow(W/2,2)+pow(H/2,2))),0,1))+B*clip((sqrt(pow(X-W/2,2)+pow(Y-H/2,2))-P*sqrt(pow(W/2,2)+pow(H/2,2)))/(0.15*sqrt(pow(W/2,2)+pow(H/2,2))),0,1)",
+    label: "Vòng tròn mềm",
+    description: "Vòng tròn mở với viền mờ mềm (không cắt cứng)",
+    category: "fx",
+  },
+  {
+    type: "bars-fade",
+    xfade: "custom",
+    expr: "if(lt(mod(X,W/8),P*W/8),B,A*(1-P)+B*P)",
+    label: "Thanh dọc + mờ",
+    description: "Thanh dọc mở dần trên nền crossfade",
+    category: "fx",
+  },
 ];
 
 /** @type {Map<string, object>} */
@@ -496,7 +576,15 @@ function buildXfadeFilter(type, duration, offset) {
     throw new Error(`duration phải > 0, nhận được: ${duration}`);
   if (!(offset >= 0))
     throw new Error(`offset phải >= 0, nhận được: ${offset}`);
-  return `xfade=transition=${t.xfade}:duration=${num(duration)}:offset=${num(offset)}`;
+  let f = `xfade=transition=${t.xfade}:duration=${num(duration)}:offset=${num(offset)}`;
+  if (t.expr) {
+    // P5: expr chứa dấu phẩy (if(a,b,c)) nên PHẢI bọc trong '...' — nếu không
+    // parser filtergraph sẽ hiểu dấu phẩy là tách filter và render lỗi.
+    if (t.expr.includes("'"))
+      throw new Error(`expr của transition "${type}" chứa dấu ' — không quote được`);
+    f += `:expr='${t.expr}'`;
+  }
+  return f;
 }
 
 module.exports = {
