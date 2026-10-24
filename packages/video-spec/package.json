@@ -3,6 +3,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./speed": "./src/speed.ts",
+    "./speedcurve": "./src/speedcurve.ts",
     "./timebase": "./src/timebase.ts",
     "./color": "./src/color.ts"
   },

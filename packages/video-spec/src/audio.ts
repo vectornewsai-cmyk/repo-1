@@ -8,6 +8,19 @@
  * - "detach": (chưa hỗ trợ) tách audio thành clip riêng để chỉnh độc lập.
  */
 
+/**
+ * Phase 7 P3 — Đường cong fade (áp cho fadeIn/fadeOut của AudioClip).
+ * - "linear": tuyến tính (khớp afade cũ).
+ * - "ease-in": p^2 (mở đầu chậm, về cuối nhanh).
+ * - "ease-out": 1-(1-p)^2 (mở đầu nhanh, về cuối chậm).
+ * - "sine": sin(p·π/2) cho fade-in, sin(q·π/2) cho fade-out (mượt kiểu equal-power).
+ * Mặc định khi không khai: "linear".
+ */
+export const FADE_CURVES = ["linear", "ease-in", "ease-out", "sine"] as const;
+
+/** Đường cong fade cho fadeIn/fadeOut. */
+export type FadeCurve = (typeof FADE_CURVES)[number];
+
 export const SOURCE_AUDIO_MODES = ["inherit", "mute", "detach"] as const;
 
 /** Cách xử lý audio trong file video nguồn. */

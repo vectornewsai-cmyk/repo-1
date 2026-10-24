@@ -23,6 +23,8 @@ export * from "./migrations.js";
 // Re-export các module tính năng (Phase 3): transitions, speed, keyframes.
 export * from "./transitions.js";
 export * from "./speed.js";
+// Phase 7 P3: speed ramp (đường cong tốc độ).
+export * from "./speedcurve.js";
 export * from "./keyframes.js";
 // Phase 3b: chroma key, text animations.
 export * from "./chroma.js";
@@ -35,6 +37,10 @@ export * from "./sticker.js";
 export * from "./color.js";
 // P0-03: image clip (ảnh tĩnh thành media type chính thức).
 export * from "./image.js";
+// Phase 7 P4: mask cho clip video/image.
+export * from "./mask.js";
+// Phase 7 P2: clip enhancement (deinterlace/stabilize/denoise).
+export * from "./enhance.js";
 // R1-015: audio routing cho video nguồn (inherit/mute/detach).
 export * from "./audio.js";
 // R1-055: frame-accurate timebase (snap theo frame, timecode).
@@ -50,7 +56,10 @@ import type { VideoFilter } from "./lut.js";
 import type { VideoEffect } from "./effects.js";
 import type { StickerClip } from "./sticker.js";
 import type { ImageClip } from "./image.js";
-import type { SourceAudioMode, AudioEffects } from "./audio.js";
+import type { ClipMask } from "./mask.js";
+import type { ClipEnhance } from "./enhance.js";
+import type { SourceAudioMode, AudioEffects, FadeCurve } from "./audio.js";
+import type { SpeedCurve } from "./speedcurve.js";
 
 export interface VideoMeta {
   /** Tên dự án */
@@ -80,6 +89,12 @@ export interface Track {
    */
   locked?: boolean;
   /**
+   * Phase 7 P3 — Âm lượng tổng của track (0..2, mặc định 1): nhân vào gain
+   * của mọi clip audio trên track (và audio kế thừa của clip video).
+   * 0 = câm track (tương đương muted nhưng giữ nguyên muted flag).
+   */
+  volume?: number;
+  /**
    * Ẩn track (R1-054): track không hiện trong preview và không được render.
    * Chỉ có ý nghĩa với track hình ảnh (video/text/sticker/image). Mặc định false.
    */
@@ -107,14 +122,30 @@ export interface VideoClip {
   opacity?: number;
   /** Tốc độ phát 0.25–4, mặc định 1. duration hiệu dụng = (out - in) / speed */
   speed?: number;
+  /**
+   * Phase 7 P3 — Đường cong tốc độ (speed ramp): khi có, GHI ĐÈ `speed` hằng số.
+   * Keyframe t = thời gian output tính từ đầu clip; duration vẫn là thời lượng
+   * output, nguồn tiêu thụ = ∫ speed(t) dt. Không dùng chung với reverse.
+   */
+  speedKeyframes?: SpeedCurve;
   /** Phát ngược đoạn nguồn (đảo frame), mặc định false */
   reverse?: boolean;
   /** Keyframe animation (x, y, opacity) — xem ClipAnimations */
   animations?: ClipAnimations;
+  /**
+   * Mask che ngoài hình (rect/ellipse + feather) — xem ClipMask.
+   * Áp cho clip video; text clip chưa hỗ trợ (validator cảnh báo, bỏ qua).
+   */
+  mask?: ClipMask;
   /** Bộ lọc màu LUT — xem VideoFilter */
   filter?: VideoFilter;
   /** Hiệu ứng video — xem VideoEffect[] */
   effects?: VideoEffect[];
+  /**
+   * Enhancement: khử răng cưa / chống rung / khử nhiễu — xem ClipEnhance.
+   * Chỉ dùng cho video clip (validator báo lỗi ở track khác).
+   */
+  enhance?: ClipEnhance;
   /**
    * Cách xử lý audio trong file video nguồn — xem SourceAudioMode.
    * "inherit" (mặc định): giữ tiếng gốc; "mute": bỏ tiếng; "detach": chưa hỗ trợ.
@@ -140,14 +171,24 @@ export interface AudioClip {
   volume?: number;
   fadeIn?: number;
   fadeOut?: number;
+  /** Phase 7 P3 — Đường cong fade (mặc định "linear"). Xem FadeCurve. */
+  fadeInCurve?: FadeCurve;
+  /** Phase 7 P3 — Đường cong fade (mặc định "linear"). Xem FadeCurve. */
+  fadeOutCurve?: FadeCurve;
   /**
    * Keyframe volume (giá trị 0..1, thời gian tính từ ĐẦU CLIP).
    * Khi có, GHI ĐÈ `volume` tĩnh (ngữ nghĩa giống keyframes.ts).
-   * R1-063: preview (Web Audio) áp dụng; render worker chưa (validate.js warn).
+   * Phase 7 P3: render worker đã áp dụng (volume eval=frame), không còn
+   * chỉ preview như R1-063.
    */
   volumeKeyframes?: KeyframedValue;
   /** Tốc độ phát 0.25–4, mặc định 1. duration hiệu dụng = (out - in) / speed */
   speed?: number;
+  /**
+   * Phase 7 P3 — Đường cong tốc độ (speed ramp), giống VideoClip.speedKeyframes.
+   * Khi có, GHI ĐÈ `speed` hằng số. Không dùng chung với reverse.
+   */
+  speedKeyframes?: SpeedCurve;
   /** Phát ngược đoạn nguồn (đảo mẫu audio), mặc định false */
   reverse?: boolean;
   /**
@@ -156,6 +197,26 @@ export interface AudioClip {
    * (bass/treble/compressor) qua Web Audio — xem AUDIOFX_LIMITS.md.
    */
   audioEffects?: AudioEffects;
+}
+
+/**
+ * Liên kết phụ đề — Phase 7 P6: câu phụ đề bám theo clip nguồn.
+ *
+ * Khi có captionOf, editor tự tính lại vị trí timeline của clip chữ từ
+ * đoạn media [mediaStart, mediaEnd) của clip nguồn mỗi khi clip nguồn bị
+ * trim/move/split/speed-change — phụ đề không còn lệch khỏi tiếng nói.
+ * Render worker và preview KHÔNG đọc field này: chúng chỉ vẽ TextClip ở
+ * start/duration đã được editor tính sẵn (giống mọi clip chữ khác).
+ * CaptionOf trỏ tới clipId không còn tồn tại (clip nguồn đã bị xoá) thì
+ * được coi là "mồ côi" — clip chữ đứng yên ở vị trí cuối, không bị xoá.
+ */
+export interface CaptionLink {
+  /** id của clip video/audio nguồn mà câu phụ đề này bám theo */
+  clipId: string;
+  /** thời gian bắt đầu của câu trong file nguồn (giây, gốc 0 = đầu file) */
+  mediaStart: number;
+  /** thời gian kết thúc của câu trong file nguồn (giây) */
+  mediaEnd: number;
 }
 
 /** Clip chữ trên timeline */
@@ -168,6 +229,11 @@ export interface TextClip {
   style: TextStyle;
   /** Keyframe animation (x, y, opacity) — xem ClipAnimations */
   animations?: ClipAnimations;
+  /**
+   * Liên kết phụ đề (Phase 7 P6, optional). Chỉ caption tạo từ auto-caption
+   * mới có field này; chữ gõ tay không có và không bị bám theo clip nào.
+   */
+  captionOf?: CaptionLink;
 }
 
 export type Clip = VideoClip | AudioClip | TextClip | StickerClip | ImageClip;

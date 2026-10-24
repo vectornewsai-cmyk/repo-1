@@ -10,6 +10,8 @@
  * rồi đặt lên timeline như video unit.
  */
 
+import { validateMask } from "./mask.js";
+
 /** Cách lấp đầy khung hình khi tỉ lệ ảnh khác tỉ lệ output. */
 export type ImageFit = "contain" | "cover";
 
@@ -29,6 +31,11 @@ export interface ImageClip {
    * - "cover": phóng to lấp đầy khung hình, crop phần thừa ở giữa
    */
   fit?: ImageFit;
+  /**
+   * Mask che ngoài hình (rect/ellipse + feather) — xem ClipMask (mask.ts).
+   * Áp sau khi ảnh đã lấp đầy khung hình.
+   */
+  mask?: import("./mask.js").ClipMask;
 }
 
 export interface ImageTrack {
@@ -59,7 +66,7 @@ function isFiniteNumber(x: unknown): x is number {
 }
 
 /** Chuẩn hoá image clip: điền giá trị mặc định cho các trường optional. */
-export function normalizeImageClip(c: ImageClip): Required<ImageClip> {
+export function normalizeImageClip(c: ImageClip): Required<Omit<ImageClip, "mask">> & { mask?: import("./mask.js").ClipMask } {
   return {
     kind: "image",
     id: c.id,
@@ -67,6 +74,8 @@ export function normalizeImageClip(c: ImageClip): Required<ImageClip> {
     start: c.start,
     duration: c.duration,
     fit: c.fit ?? IMAGE_DEFAULTS.fit,
+    // Phase 7 P4: giữ mask qua chuẩn hoá (không làm rơi field).
+    ...(c.mask ? { mask: c.mask } : {}),
   };
 }
 
@@ -92,5 +101,9 @@ export function validateImageClip(c: unknown): string[] {
     errors.push(
       `${where}: fit phải là "contain" | "cover", nhận được: ${JSON.stringify(s["fit"])}`
     );
+  // Phase 7 P4: mask (rect/ellipse + feather).
+  if (s["mask"] !== undefined) {
+    for (const m of validateMask(s["mask"])) errors.push(`${where}: ${m}`);
+  }
   return errors;
 }

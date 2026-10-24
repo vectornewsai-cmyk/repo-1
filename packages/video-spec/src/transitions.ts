@@ -72,6 +72,16 @@ export const TRANSITION_TYPES = [
   "revealright",
   "revealup",
   "revealdown",
+  // P5 (Phase 7): 9 transition custom expr — đã kiểm chứng bằng MP4 thật
+  "blinds-h",
+  "bars-v",
+  "checker",
+  "diamond",
+  "plus",
+  "grid",
+  "clock",
+  "circle-soft",
+  "bars-fade",
 ] as const;
 
 export type TransitionType = (typeof TRANSITION_TYPES)[number];
@@ -142,6 +152,16 @@ export const TRANSITION_META: Record<
   revealright: { label: "Hé lộ sang phải", description: "Cảnh cũ trượt sang trái, hé lộ cảnh mới bên phải", category: "slide" },
   revealup: { label: "Hé lộ lên trên", description: "Cảnh cũ trượt xuống, hé lộ cảnh mới bên trên", category: "slide" },
   revealdown: { label: "Hé lộ xuống dưới", description: "Cảnh cũ trượt lên, hé lộ cảnh mới bên dưới", category: "slide" },
+  // P5 (Phase 7): custom expr
+  "blinds-h": { label: "Mành ngang", description: "Cảnh mới hiện qua các lá mành ngang mở dần", category: "wipe" },
+  "bars-v": { label: "Thanh dọc", description: "Cảnh mới hiện qua các thanh dọc mở dần", category: "wipe" },
+  checker: { label: "Bàn cờ", description: "Cảnh mới hiện dần theo các ô bàn cờ lan chéo", category: "fx" },
+  diamond: { label: "Hình thoi", description: "Cảnh mới nở ra từ hình thoi ở giữa", category: "fx" },
+  plus: { label: "Dấu cộng", description: "Cảnh mới hiện theo hình dấu cộng lan ra", category: "fx" },
+  grid: { label: "Lưới ô vuông", description: "Cảnh mới hiện qua các ô lưới vuông nở dần", category: "fx" },
+  clock: { label: "Quét đồng hồ", description: "Cảnh mới quét tròn như kim đồng hồ", category: "fx" },
+  "circle-soft": { label: "Vòng tròn mềm", description: "Vòng tròn mở với viền mờ mềm (không cắt cứng)", category: "fx" },
+  "bars-fade": { label: "Thanh dọc + mờ", description: "Thanh dọc mở dần trên nền crossfade", category: "fx" },
 };
 
 /** Kiểm tra một giá trị có phải TransitionType hợp lệ không. */

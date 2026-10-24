@@ -151,6 +151,26 @@ export const LUT_IDS = [
   "vcut-prism",
   "vcut-acid-rain",
   "vcut-synthwave-grid",
+  "vcut-monsoon-rain",
+  "vcut-saigon-night",
+  "vcut-hanoi-autumn",
+  "vcut-lantern-fest",
+  "vcut-rice-terrace",
+  "vcut-midnight-market",
+  "vcut-cherry-festival",
+  "vcut-glacier-blue",
+  "vcut-meadow-light",
+  "vcut-bamboo-green",
+  "vcut-lotus-pink",
+  "vcut-bubble-tea",
+  "vcut-honey-glow",
+  "vcut-chili-ember",
+  "vcut-typhoon-grey",
+  "vcut-ember-night",
+  "vcut-noir-smoke",
+  "vcut-silk-road",
+  "vcut-opal-dream",
+  "vcut-coral-dawn",
 ] as const;
 
 export type LutId = (typeof LUT_IDS)[number];
@@ -717,6 +737,86 @@ export const LUT_META: Record<LutId, { label: string; description: string }> = {
   "vcut-synthwave-grid": {
     label: "Lưới synthwave",
     description: "Hồng tím neon thập niên 80",
+  },
+  "vcut-monsoon-rain": {
+    label: "Mưa mùa hạ",
+    description: "Mưa lạnh, xanh dương",
+  },
+  "vcut-saigon-night": {
+    label: "Đêm Sài Gòn",
+    description: "Neon đêm, tương phản cao",
+  },
+  "vcut-hanoi-autumn": {
+    label: "Thu Hà Nội",
+    description: "Vàng ấm, dịu",
+  },
+  "vcut-lantern-fest": {
+    label: "Đèn lồng",
+    description: "Đỏ vàng rực",
+  },
+  "vcut-rice-terrace": {
+    label: "Ruộng bậc thang",
+    description: "Xanh lá tươi",
+  },
+  "vcut-midnight-market": {
+    label: "Chợ đêm",
+    description: "Neon ấm, đậm",
+  },
+  "vcut-cherry-festival": {
+    label: "Lễ hội anh đào",
+    description: "Hồng sáng, dịu",
+  },
+  "vcut-glacier-blue": {
+    label: "Băng hà xanh",
+    description: "Xanh băng lạnh",
+  },
+  "vcut-meadow-light": {
+    label: "Đồng cỏ sáng",
+    description: "Xanh sáng, nhẹ",
+  },
+  "vcut-bamboo-green": {
+    label: "Tre xanh",
+    description: "Xanh tre đậm",
+  },
+  "vcut-lotus-pink": {
+    label: "Sen hồng",
+    description: "Hồng dịu, sáng",
+  },
+  "vcut-bubble-tea": {
+    label: "Trà sữa",
+    description: "Nâu sữa ấm, sáng",
+  },
+  "vcut-honey-glow": {
+    label: "Mật ong sáng",
+    description: "Vàng mật ong",
+  },
+  "vcut-chili-ember": {
+    label: "Ớt than hồng",
+    description: "Đỏ gắt, tương phản",
+  },
+  "vcut-typhoon-grey": {
+    label: "Xám bão",
+    description: "Khử bão hoà, lạnh",
+  },
+  "vcut-ember-night": {
+    label: "Than đêm",
+    description: "Đỏ tối, trầm",
+  },
+  "vcut-noir-smoke": {
+    label: "Khói noir",
+    description: "Gần đơn sắc, khói",
+  },
+  "vcut-silk-road": {
+    label: "Con đường tơ lụa",
+    description: "Ấm cổ điển",
+  },
+  "vcut-opal-dream": {
+    label: "Mơ đá opal",
+    description: "Tím xanh mơ, sáng",
+  },
+  "vcut-coral-dawn": {
+    label: "Bình minh san hô",
+    description: "Hồng cam bình minh",
   },
 };
 
