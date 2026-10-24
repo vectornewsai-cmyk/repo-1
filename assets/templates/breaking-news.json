@@ -1,0 +1,114 @@
+{
+  "template": {
+    "id": "breaking-news",
+    "name": "Tin nóng",
+    "description": "Khung tin truyền hình: video nền + headline + dòng chạy.",
+    "category": "broadcast",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "tin tức",
+      "breaking",
+      "truyền hình"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 6,
+    "placeholders": [
+      {
+        "id": "footage",
+        "kind": "video",
+        "label": "Video hiện trường",
+        "default": "news-footage.mp4"
+      },
+      {
+        "id": "headline",
+        "kind": "text",
+        "label": "Tiêu đề tin",
+        "default": "TIN NÓNG: SỰ KIỆN VỪA XẢY RA"
+      },
+      {
+        "id": "ticker",
+        "kind": "text",
+        "label": "Dòng chạy dưới",
+        "default": "Cập nhật liên tục — theo dõi kênh để nhận tin mới nhất"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Tin nóng",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Hiện trường",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{footage}}",
+            "start": 0,
+            "duration": 6,
+            "in": 0,
+            "out": 6
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Headline",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{headline}}",
+            "start": 0.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 58,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.12,
+              "animation": "slideInLeft",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#DC2626"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Dòng chạy",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{ticker}}",
+            "start": 0.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 30,
+              "color": "#FDE68A",
+              "x": 0.5,
+              "y": 0.92,
+              "animation": "slideInRight",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

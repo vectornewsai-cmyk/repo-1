@@ -1,4 +1,4 @@
-# Templates — 10 mẫu video VCut Studio
+# Templates — 30 mẫu video VCut Studio
 
 Tất cả do VCut Studio thiết kế gốc (**MIT**), không sao chép layout hay
 preset độc quyền của CapCut.
@@ -17,6 +17,26 @@ preset độc quyền của CapCut.
 | product-showcase | Giới thiệu sản phẩm | 1:1 | 10s | Sản phẩm, tên, giá, CTA |
 | travel-vlog-intro | Mở đầu Vlog du lịch | 16:9 | 6s | Cảnh quay, địa điểm, thời gian |
 | podcast-audiogram | Audiogram Podcast | 1:1 | 30s | Audio, bìa, tên tập, khách mời |
+| wedding-teaser | Teaser đám cưới | 16:9 | 8s | Video, tên cặp đôi, ngày cưới |
+| food-reel | Reel món ăn | 9:16 | 12s | 3 cảnh, hook, tên món |
+| gaming-highlight | Highlight game | 9:16 | 10s | 2 pha, tỉ số |
+| breaking-news | Tin nóng | 16:9 | 6s | Video, headline, dòng chạy |
+| quote-card | Thẻ trích dẫn | 1:1 | 6s | Ảnh nền, trích dẫn, tác giả |
+| tutorial-vertical | Hướng dẫn dọc | 9:16 | 12s | 3 bước, 3 nhãn |
+| unboxing | Mở hộp sản phẩm | 1:1 | 10s | Video, tên, giá |
+| fitness-promo | Quảng cáo gym | 16:9 | 8s | Video, khẩu hiệu, CTA |
+| lofi-visual | Nhạc lofi thư giãn | 16:9 | 12s | Ảnh nền, nhạc, tên bài, nghệ sĩ |
+| album-teaser | Teaser album | 1:1 | 8s | Ảnh bìa, tên album, ngày phát hành |
+| interview-cut | Cắt phỏng vấn | 16:9 | 12s | 2 góc máy, 2 tên |
+| audiobook-promo | Quảng cáo sách nói | 1:1 | 8s | Ảnh bìa, tên sách, giọng đọc |
+| event-invite | Thiệp mời sự kiện | 9:16 | 8s | Ảnh, tên sự kiện, thời gian/địa điểm |
+| real-estate-tour | Tour bất động sản | 16:9 | 12s | 3 không gian, địa chỉ, giá |
+| recipe-card | Công thức nấu ăn | 9:16 | 12s | Video, tên món, nguyên liệu |
+| travel-diary | Nhật ký du lịch | 16:9 | 12s | 4 ảnh, 2 chú thích |
+| birthday-card | Thiệp sinh nhật | 1:1 | 6s | Ảnh nền, tên, lời chúc |
+| sale-banner | Banner giảm giá | 16:9 | 6s | Video, mức giảm, điều kiện |
+| documentary-title | Tiêu đề phim tài liệu | 16:9 | 6s | Video, tên phim, số tập |
+| outro-creator | Kết video creator | 16:9 | 8s | Video, cảm ơn, kênh, đăng ký |
 
 ## Định dạng
 
@@ -39,12 +59,15 @@ File media chưa nạp sẽ được RelinkPanel báo để chọn lại file.
 
 ## Phát triển / đồng bộ
 
-- Sửa template: sửa trong `gen_templates.py` rồi chạy lại
-  `python3 gen_templates.py` (sinh JSON), sau đó
+  - Vòng 1 (10 mẫu): `gen_templates.py`.
+  - Vòng 2 (20 mẫu, P5 Phase 7): `gen_templates2.py`.
+- Sửa template: sửa trong `gen_templates.py` (vòng 1) hoặc `gen_templates2.py`
+  (vòng 2) rồi chạy lại script tương ứng (sinh JSON), sau đó
   `python3 build_templates_ts.py` (sinh `apps/web/src/lib/templates.ts`
   — bản nhúng cho web app, đừng sửa tay).
 - Kiểm chứng:
   - `bash apps/web/scripts/test-templates.sh` — 10 assertions cho engine
-    + validation cả 10 template.
-  - Cả 10 template đã qua `validateSpec` (zod của render worker) và
-    youtube-intro đã render thật thành MP4.
+    + validation cả 30 template.
+  - Cả 30 template đã qua `validateSpec` (zod của render worker) và
+    youtube-intro đã render thật thành MP4 (vòng 1); 20 template vòng 2
+    render thật thành MP4 bằng test_p5_templates (xem P5_LIMITS.md).

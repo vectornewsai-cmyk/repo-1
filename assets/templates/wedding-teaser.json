@@ -1,0 +1,116 @@
+{
+  "template": {
+    "id": "wedding-teaser",
+    "name": "Teaser đám cưới",
+    "description": "Mở đầu video cưới: khoảnh khắc + tên cô dâu chú rể.",
+    "category": "cinematic",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "đám cưới",
+      "teaser",
+      "lãng mạn"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 8,
+    "placeholders": [
+      {
+        "id": "footage",
+        "kind": "video",
+        "label": "Video khoảnh khắc",
+        "default": "wedding-moment.mp4"
+      },
+      {
+        "id": "couple",
+        "kind": "text",
+        "label": "Tên cô dâu & chú rể",
+        "default": "Minh & An"
+      },
+      {
+        "id": "date",
+        "kind": "text",
+        "label": "Ngày cưới",
+        "default": "12 . 12 . 2026"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Teaser đám cưới",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Nền",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{footage}}",
+            "start": 0,
+            "duration": 8,
+            "in": 0,
+            "out": 8,
+            "filter": {
+              "lut": "vcut-blush-pink"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{couple}}",
+            "start": 1.0,
+            "duration": 6.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 88,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.42,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Ngày",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{date}}",
+            "start": 2.0,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 40,
+              "color": "#FBCFE8",
+              "x": 0.5,
+              "y": 0.58,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

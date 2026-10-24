@@ -1,0 +1,129 @@
+{
+  "template": {
+    "id": "event-invite",
+    "name": "Thiệp mời sự kiện",
+    "description": "Video dọc mời tham dự: ảnh + tên + ngày/địa điểm.",
+    "category": "social",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "sự kiện",
+      "thiệp mời",
+      "dọc"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 8,
+    "placeholders": [
+      {
+        "id": "bg",
+        "kind": "image",
+        "label": "Ảnh sự kiện",
+        "default": "event-bg.jpg"
+      },
+      {
+        "id": "event",
+        "kind": "text",
+        "label": "Tên sự kiện",
+        "default": "ĐÊM NHẠC MÙA THU"
+      },
+      {
+        "id": "when",
+        "kind": "text",
+        "label": "Thời gian & địa điểm",
+        "default": "20h — 15.11.2026 | Nhà hát Lớn HN"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Thiệp mời sự kiện",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Nền",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{bg}}",
+            "start": 0,
+            "duration": 8,
+            "fit": "cover"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên sự kiện",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{event}}",
+            "start": 0.5,
+            "duration": 7.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 64,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.3,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Thời gian",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{when}}",
+            "start": 1.5,
+            "duration": 6.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 36,
+              "color": "#FDE68A",
+              "x": 0.5,
+              "y": 0.45,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "s1",
+        "kind": "sticker",
+        "label": "Trang trí",
+        "clips": [
+          {
+            "kind": "sticker",
+            "id": "s1",
+            "src": "sparkle.png",
+            "start": 2.0,
+            "duration": 5.0,
+            "x": 0.85,
+            "y": 0.15,
+            "scale": 0.12
+          }
+        ]
+      }
+    ]
+  }
+}

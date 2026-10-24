@@ -1,0 +1,129 @@
+{
+  "template": {
+    "id": "birthday-card",
+    "name": "Thiệp sinh nhật",
+    "description": "Ảnh vuông sinh nhật: tên + lời chúc + sticker.",
+    "category": "social",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "sinh nhật",
+      "thiệp",
+      "vuông"
+    ],
+    "aspect": "1080:1080",
+    "durationSec": 6,
+    "placeholders": [
+      {
+        "id": "bg",
+        "kind": "image",
+        "label": "Ảnh nền",
+        "default": "birthday-bg.jpg"
+      },
+      {
+        "id": "name",
+        "kind": "text",
+        "label": "Tên người nhận",
+        "default": "Chúc mừng sinh nhật Linh!"
+      },
+      {
+        "id": "wish",
+        "kind": "text",
+        "label": "Lời chúc",
+        "default": "Tuổi mới nhiều niềm vui và thành công nhé!"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Thiệp sinh nhật",
+      "width": 1080,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Nền",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{bg}}",
+            "start": 0,
+            "duration": 6,
+            "fit": "cover"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{name}}",
+            "start": 0.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 64,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.35,
+              "animation": "bounce",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Lời chúc",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{wish}}",
+            "start": 1.5,
+            "duration": 4.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 36,
+              "color": "#FDE68A",
+              "x": 0.5,
+              "y": 0.52,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "s1",
+        "kind": "sticker",
+        "label": "Trang trí",
+        "clips": [
+          {
+            "kind": "sticker",
+            "id": "s1",
+            "src": "heart.png",
+            "start": 1.0,
+            "duration": 4.5,
+            "x": 0.5,
+            "y": 0.22,
+            "scale": 0.15
+          }
+        ]
+      }
+    ]
+  }
+}

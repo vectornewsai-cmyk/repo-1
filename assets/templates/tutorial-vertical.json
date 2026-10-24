@@ -1,0 +1,171 @@
+{
+  "template": {
+    "id": "tutorial-vertical",
+    "name": "Hướng dẫn dọc",
+    "description": "Video dọc 3 bước: mỗi bước 1 cảnh + chữ bước.",
+    "category": "social",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "tutorial",
+      "hướng dẫn",
+      "dọc",
+      "how-to"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 12,
+    "placeholders": [
+      {
+        "id": "step1",
+        "kind": "video",
+        "label": "Bước 1",
+        "default": "step-1.mp4"
+      },
+      {
+        "id": "step2",
+        "kind": "video",
+        "label": "Bước 2",
+        "default": "step-2.mp4"
+      },
+      {
+        "id": "step3",
+        "kind": "video",
+        "label": "Bước 3",
+        "default": "step-3.mp4"
+      },
+      {
+        "id": "label1",
+        "kind": "text",
+        "label": "Nhãn bước 1",
+        "default": "Bước 1: Chuẩn bị"
+      },
+      {
+        "id": "label2",
+        "kind": "text",
+        "label": "Nhãn bước 2",
+        "default": "Bước 2: Thực hiện"
+      },
+      {
+        "id": "label3",
+        "kind": "text",
+        "label": "Nhãn bước 3",
+        "default": "Bước 3: Hoàn thành"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Hướng dẫn dọc",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Các bước",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{step1}}",
+            "start": 0,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "transitionOut": {
+              "type": "slideleft",
+              "duration": 0.4
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v2",
+            "src": "{{step2}}",
+            "start": 4,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "transitionOut": {
+              "type": "slideleft",
+              "duration": 0.4
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v3",
+            "src": "{{step3}}",
+            "start": 8,
+            "duration": 4,
+            "in": 0,
+            "out": 4
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Nhãn bước",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{label1}}",
+            "start": 0.5,
+            "duration": 3.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 52,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.88,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          },
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{label2}}",
+            "start": 4.5,
+            "duration": 3.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 52,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.88,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          },
+          {
+            "kind": "text",
+            "id": "t3",
+            "text": "{{label3}}",
+            "start": 8.5,
+            "duration": 3.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 52,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.88,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

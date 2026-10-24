@@ -1,0 +1,113 @@
+{
+  "template": {
+    "id": "audiobook-promo",
+    "name": "Quảng cáo sách nói",
+    "description": "Ảnh bìa vuông + tên sách + giọng đọc.",
+    "category": "podcast",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "audiobook",
+      "sách nói",
+      "vuông"
+    ],
+    "aspect": "1080:1080",
+    "durationSec": 8,
+    "placeholders": [
+      {
+        "id": "cover",
+        "kind": "image",
+        "label": "Ảnh bìa sách",
+        "default": "book-cover.jpg"
+      },
+      {
+        "id": "book",
+        "kind": "text",
+        "label": "Tên sách",
+        "default": "Đắc Nhân Tâm — Bản sách nói"
+      },
+      {
+        "id": "narrator",
+        "kind": "text",
+        "label": "Giọng đọc",
+        "default": "Giọng đọc: Minh Đức"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Quảng cáo sách nói",
+      "width": 1080,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Bìa",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{cover}}",
+            "start": 0,
+            "duration": 8,
+            "fit": "cover"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên sách",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{book}}",
+            "start": 0.5,
+            "duration": 7.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 52,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.78,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Giọng đọc",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{narrator}}",
+            "start": 1.5,
+            "duration": 6.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 34,
+              "color": "#E9D5FF",
+              "x": 0.5,
+              "y": 0.88,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

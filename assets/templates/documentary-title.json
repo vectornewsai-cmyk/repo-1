@@ -1,0 +1,116 @@
+{
+  "template": {
+    "id": "documentary-title",
+    "name": "Tiêu đề phim tài liệu",
+    "description": "Mở đầu tài liệu: cảnh quay + tên phim + số tập.",
+    "category": "cinematic",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "tài liệu",
+      "documentary",
+      "mở đầu"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 6,
+    "placeholders": [
+      {
+        "id": "footage",
+        "kind": "video",
+        "label": "Cảnh quay",
+        "default": "doc-footage.mp4"
+      },
+      {
+        "id": "title",
+        "kind": "text",
+        "label": "Tên phim",
+        "default": "DÒNG SÔNG KỂ CHUYỆN"
+      },
+      {
+        "id": "episode",
+        "kind": "text",
+        "label": "Số tập",
+        "default": "Tập 1 — Thượng nguồn"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Tiêu đề phim tài liệu",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Cảnh quay",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{footage}}",
+            "start": 0,
+            "duration": 6,
+            "in": 0,
+            "out": 6,
+            "filter": {
+              "lut": "vcut-monsoon-rain"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên phim",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{title}}",
+            "start": 1.0,
+            "duration": 4.5,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 72,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.42,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Số tập",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{episode}}",
+            "start": 2.0,
+            "duration": 3.5,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 38,
+              "color": "#E9D5FF",
+              "x": 0.5,
+              "y": 0.58,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

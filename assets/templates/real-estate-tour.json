@@ -1,0 +1,152 @@
+{
+  "template": {
+    "id": "real-estate-tour",
+    "name": "Tour bất động sản",
+    "description": "Video ngang 3 không gian + địa chỉ + giá.",
+    "category": "ads",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "bất động sản",
+      "nhà đất",
+      "tour"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 12,
+    "placeholders": [
+      {
+        "id": "room1",
+        "kind": "video",
+        "label": "Phòng khách",
+        "default": "living.mp4"
+      },
+      {
+        "id": "room2",
+        "kind": "video",
+        "label": "Phòng ngủ",
+        "default": "bedroom.mp4"
+      },
+      {
+        "id": "room3",
+        "kind": "video",
+        "label": "Bếp & sân",
+        "default": "kitchen.mp4"
+      },
+      {
+        "id": "address",
+        "kind": "text",
+        "label": "Địa chỉ",
+        "default": "Căn hộ Skyline — Quận 2, TP.HCM"
+      },
+      {
+        "id": "price",
+        "kind": "text",
+        "label": "Giá",
+        "default": "4.8 tỷ — Liên hệ 0900 xxx xxx"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Tour bất động sản",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Không gian",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{room1}}",
+            "start": 0,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "transitionOut": {
+              "type": "wipeleft",
+              "duration": 0.5
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v2",
+            "src": "{{room2}}",
+            "start": 4,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "transitionOut": {
+              "type": "wipeleft",
+              "duration": 0.5
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v3",
+            "src": "{{room3}}",
+            "start": 8,
+            "duration": 4,
+            "in": 0,
+            "out": 4
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Địa chỉ",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{address}}",
+            "start": 0.5,
+            "duration": 11.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 44,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.08,
+              "animation": "slideInDown",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Giá",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{price}}",
+            "start": 8.5,
+            "duration": 3.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 48,
+              "color": "#FACC15",
+              "x": 0.5,
+              "y": 0.88,
+              "animation": "popIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -21,7 +21,7 @@ for fname in sorted(os.listdir(HERE)):
 
 lines = []
 lines.append("/**")
-lines.append(" * templates.ts — catalog 10 template mẫu của VCut Studio.")
+lines.append(" * templates.ts — catalog 30 template mẫu của VCut Studio.")
 lines.append(" *")
 lines.append(" * TỰ ĐỘNG SINH — đừng sửa tay. Chạy:")
 lines.append(" *   python3 assets/templates/build_templates_ts.py")

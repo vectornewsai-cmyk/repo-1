@@ -1,0 +1,116 @@
+{
+  "template": {
+    "id": "sale-banner",
+    "name": "Banner giảm giá",
+    "description": "Video ngang sale: nền + chữ giảm giá lớn + điều kiện.",
+    "category": "ads",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "sale",
+      "giảm giá",
+      "banner"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 6,
+    "placeholders": [
+      {
+        "id": "footage",
+        "kind": "video",
+        "label": "Video nền",
+        "default": "sale-bg.mp4"
+      },
+      {
+        "id": "sale",
+        "kind": "text",
+        "label": "Mức giảm",
+        "default": "SALE 50%"
+      },
+      {
+        "id": "terms",
+        "kind": "text",
+        "label": "Điều kiện",
+        "default": "Áp dụng đến hết 31.10 — toàn bộ cửa hàng"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Banner giảm giá",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Nền",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{footage}}",
+            "start": 0,
+            "duration": 6,
+            "in": 0,
+            "out": 6,
+            "filter": {
+              "lut": "vcut-chili-ember"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Mức giảm",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{sale}}",
+            "start": 0.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 110,
+              "color": "#FACC15",
+              "x": 0.5,
+              "y": 0.38,
+              "animation": "popIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Điều kiện",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{terms}}",
+            "start": 1.5,
+            "duration": 4.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 36,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.62,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "template": {
+    "id": "quote-card",
+    "name": "Thẻ trích dẫn",
+    "description": "Ảnh vuông trích dẫn: câu nói + tên tác giả.",
+    "category": "cinematic",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "quote",
+      "trích dẫn",
+      "vuông"
+    ],
+    "aspect": "1080:1080",
+    "durationSec": 6,
+    "placeholders": [
+      {
+        "id": "bg",
+        "kind": "image",
+        "label": "Ảnh nền",
+        "default": "quote-bg.jpg"
+      },
+      {
+        "id": "quote",
+        "kind": "text",
+        "label": "Câu trích dẫn",
+        "default": "“Hãy làm điều bạn sợ nhất.”"
+      },
+      {
+        "id": "author",
+        "kind": "text",
+        "label": "Tác giả",
+        "default": "— Người truyền cảm hứng"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Thẻ trích dẫn",
+      "width": 1080,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Nền",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{bg}}",
+            "start": 0,
+            "duration": 6,
+            "fit": "cover"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Trích dẫn",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{quote}}",
+            "start": 0.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 64,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.42,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": true
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Tác giả",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{author}}",
+            "start": 1.5,
+            "duration": 4.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 36,
+              "color": "#E9D5FF",
+              "x": 0.5,
+              "y": 0.62,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "template": {
+    "id": "gaming-highlight",
+    "name": "Highlight game",
+    "description": "Video dọc highlight: 2 pha xử lý + tỉ số nổi bật.",
+    "category": "social",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "game",
+      "highlight",
+      "dọc"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 10,
+    "placeholders": [
+      {
+        "id": "clip1",
+        "kind": "video",
+        "label": "Pha 1",
+        "default": "game-1.mp4"
+      },
+      {
+        "id": "clip2",
+        "kind": "video",
+        "label": "Pha 2 (cao trào)",
+        "default": "game-2.mp4"
+      },
+      {
+        "id": "score",
+        "kind": "text",
+        "label": "Tỉ số / kết quả",
+        "default": "PENTAKILL!"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Highlight game",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Gameplay",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{clip1}}",
+            "start": 0,
+            "duration": 5,
+            "in": 0,
+            "out": 5,
+            "filter": {
+              "lut": "vcut-neon-nights"
+            },
+            "transitionOut": {
+              "type": "fade",
+              "duration": 0.3
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v2",
+            "src": "{{clip2}}",
+            "start": 5,
+            "duration": 5,
+            "in": 0,
+            "out": 5,
+            "filter": {
+              "lut": "vcut-neon-nights"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tỉ số",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{score}}",
+            "start": 5.5,
+            "duration": 4.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 72,
+              "color": "#FACC15",
+              "x": 0.5,
+              "y": 0.15,
+              "animation": "bounce",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "template": {
+    "id": "travel-diary",
+    "name": "Nhật ký du lịch",
+    "description": "Slideshow ngang 4 ảnh + chú thích từng điểm đến.",
+    "category": "slideshow",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "du lịch",
+      "slideshow",
+      "kỷ niệm"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 12,
+    "placeholders": [
+      {
+        "id": "photo1",
+        "kind": "image",
+        "label": "Ảnh 1",
+        "default": "trip-1.jpg"
+      },
+      {
+        "id": "photo2",
+        "kind": "image",
+        "label": "Ảnh 2",
+        "default": "trip-2.jpg"
+      },
+      {
+        "id": "photo3",
+        "kind": "image",
+        "label": "Ảnh 3",
+        "default": "trip-3.jpg"
+      },
+      {
+        "id": "photo4",
+        "kind": "image",
+        "label": "Ảnh 4",
+        "default": "trip-4.jpg"
+      },
+      {
+        "id": "cap1",
+        "kind": "text",
+        "label": "Chú thích 1",
+        "default": "Hà Giang — đèo Mã Pí Lèng"
+      },
+      {
+        "id": "cap2",
+        "kind": "text",
+        "label": "Chú thích 2",
+        "default": "Hội An — phố đèn lồng"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Nhật ký du lịch",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Ảnh",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{photo1}}",
+            "start": 0,
+            "duration": 3,
+            "fit": "cover"
+          },
+          {
+            "kind": "image",
+            "id": "i2",
+            "src": "{{photo2}}",
+            "start": 3,
+            "duration": 3,
+            "fit": "cover"
+          },
+          {
+            "kind": "image",
+            "id": "i3",
+            "src": "{{photo3}}",
+            "start": 6,
+            "duration": 3,
+            "fit": "cover"
+          },
+          {
+            "kind": "image",
+            "id": "i4",
+            "src": "{{photo4}}",
+            "start": 9,
+            "duration": 3,
+            "fit": "cover"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Chú thích",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{cap1}}",
+            "start": 0.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 44,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.88,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          },
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{cap2}}",
+            "start": 6.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 44,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.88,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

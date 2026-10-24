@@ -1,0 +1,127 @@
+{
+  "template": {
+    "id": "interview-cut",
+    "name": "Cắt phỏng vấn",
+    "description": "Video ngang 2 góc máy xen kẽ + tên người nói.",
+    "category": "podcast",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "phỏng vấn",
+      "interview",
+      "talkshow"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 12,
+    "placeholders": [
+      {
+        "id": "host",
+        "kind": "video",
+        "label": "Góc máy host",
+        "default": "host.mp4"
+      },
+      {
+        "id": "guest",
+        "kind": "video",
+        "label": "Góc máy khách",
+        "default": "guest.mp4"
+      },
+      {
+        "id": "name1",
+        "kind": "text",
+        "label": "Tên host",
+        "default": "MC Thanh Huyền"
+      },
+      {
+        "id": "name2",
+        "kind": "text",
+        "label": "Tên khách",
+        "default": "Khách mời: Đạo diễn Lâm"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Cắt phỏng vấn",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Góc máy",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{host}}",
+            "start": 0,
+            "duration": 6,
+            "in": 0,
+            "out": 6,
+            "transitionOut": {
+              "type": "fade",
+              "duration": 0.4
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v2",
+            "src": "{{guest}}",
+            "start": 6,
+            "duration": 6,
+            "in": 0,
+            "out": 6
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên người nói",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{name1}}",
+            "start": 0.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 40,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.88,
+              "animation": "slideInLeft",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          },
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{name2}}",
+            "start": 6.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 40,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.88,
+              "animation": "slideInLeft",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

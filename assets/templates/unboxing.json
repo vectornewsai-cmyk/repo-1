@@ -1,0 +1,117 @@
+{
+  "template": {
+    "id": "unboxing",
+    "name": "Mở hộp sản phẩm",
+    "description": "Video vuông unbox: cảnh mở hộp + tên + giá.",
+    "category": "ads",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "unboxing",
+      "mở hộp",
+      "sản phẩm",
+      "vuông"
+    ],
+    "aspect": "1080:1080",
+    "durationSec": 10,
+    "placeholders": [
+      {
+        "id": "footage",
+        "kind": "video",
+        "label": "Video mở hộp",
+        "default": "unbox.mp4"
+      },
+      {
+        "id": "product",
+        "kind": "text",
+        "label": "Tên sản phẩm",
+        "default": "Tai nghe Aurora X"
+      },
+      {
+        "id": "price",
+        "kind": "text",
+        "label": "Giá",
+        "default": "1.290.000đ"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Mở hộp sản phẩm",
+      "width": 1080,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Mở hộp",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{footage}}",
+            "start": 0,
+            "duration": 10,
+            "in": 0,
+            "out": 10,
+            "filter": {
+              "lut": "vcut-skin-glow"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên sản phẩm",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{product}}",
+            "start": 1.0,
+            "duration": 8.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 60,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.1,
+              "animation": "slideInDown",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Giá",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{price}}",
+            "start": 7.0,
+            "duration": 2.5,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 72,
+              "color": "#FACC15",
+              "x": 0.5,
+              "y": 0.85,
+              "animation": "popIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "template": {
+    "id": "lofi-visual",
+    "name": "Nhạc lofi thư giãn",
+    "description": "Ảnh nền tĩnh + tên bài + nhạc nền (audio placeholder).",
+    "category": "music",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "lofi",
+      "nhạc",
+      "thư giãn"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 12,
+    "placeholders": [
+      {
+        "id": "bg",
+        "kind": "image",
+        "label": "Ảnh nền",
+        "default": "lofi-bg.jpg"
+      },
+      {
+        "id": "track",
+        "kind": "audio",
+        "label": "File nhạc",
+        "default": "lofi-track.mp3"
+      },
+      {
+        "id": "song",
+        "kind": "text",
+        "label": "Tên bài",
+        "default": "Đêm mưa lofi"
+      },
+      {
+        "id": "artist",
+        "kind": "text",
+        "label": "Nghệ sĩ",
+        "default": "by Lofi Vietnam"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Nhạc lofi thư giãn",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Nền",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{bg}}",
+            "start": 0,
+            "duration": 12,
+            "fit": "cover"
+          }
+        ]
+      },
+      {
+        "id": "a1",
+        "kind": "audio",
+        "label": "Nhạc",
+        "clips": [
+          {
+            "kind": "audio",
+            "id": "a1",
+            "src": "{{track}}",
+            "start": 0,
+            "duration": 12,
+            "in": 0,
+            "out": 12
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên bài",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{song}}",
+            "start": 0.5,
+            "duration": 11.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 64,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.42,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Nghệ sĩ",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{artist}}",
+            "start": 1.5,
+            "duration": 10.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 36,
+              "color": "#E9D5FF",
+              "x": 0.5,
+              "y": 0.56,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

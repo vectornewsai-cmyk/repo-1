@@ -1,0 +1,153 @@
+{
+  "template": {
+    "id": "food-reel",
+    "name": "Reel món ăn",
+    "description": "Video dọc review món: 3 cảnh cắt nhanh + hook + tên món.",
+    "category": "social",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "food",
+      "reel",
+      "dọc",
+      "review"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 12,
+    "placeholders": [
+      {
+        "id": "clip1",
+        "kind": "video",
+        "label": "Cảnh 1 (mở đầu)",
+        "default": "food-1.mp4"
+      },
+      {
+        "id": "clip2",
+        "kind": "video",
+        "label": "Cảnh 2",
+        "default": "food-2.mp4"
+      },
+      {
+        "id": "clip3",
+        "kind": "video",
+        "label": "Cảnh 3 (chốt)",
+        "default": "food-3.mp4"
+      },
+      {
+        "id": "hook",
+        "kind": "text",
+        "label": "Câu hook",
+        "default": "MÓN NÀY NGON BẤT NGỜ!"
+      },
+      {
+        "id": "dish",
+        "kind": "text",
+        "label": "Tên món",
+        "default": "Bánh mì chảo"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Reel món ăn",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Món ăn",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{clip1}}",
+            "start": 0,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "transitionOut": {
+              "type": "dissolve",
+              "duration": 0.4
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v2",
+            "src": "{{clip2}}",
+            "start": 4,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "transitionOut": {
+              "type": "dissolve",
+              "duration": 0.4
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v3",
+            "src": "{{clip3}}",
+            "start": 8,
+            "duration": 4,
+            "in": 0,
+            "out": 4
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Hook",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{hook}}",
+            "start": 0.5,
+            "duration": 3.5,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 64,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.12,
+              "animation": "popIn",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Tên món",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{dish}}",
+            "start": 8.5,
+            "duration": 3.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 56,
+              "color": "#FDE68A",
+              "x": 0.5,
+              "y": 0.85,
+              "animation": "slideUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

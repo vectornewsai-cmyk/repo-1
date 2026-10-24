@@ -1,0 +1,117 @@
+{
+  "template": {
+    "id": "recipe-card",
+    "name": "Công thức nấu ăn",
+    "description": "Video dọc nấu ăn: cảnh nấu + tên món + nguyên liệu.",
+    "category": "social",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "nấu ăn",
+      "recipe",
+      "dọc",
+      "food"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 12,
+    "placeholders": [
+      {
+        "id": "footage",
+        "kind": "video",
+        "label": "Video nấu ăn",
+        "default": "cooking.mp4"
+      },
+      {
+        "id": "dish",
+        "kind": "text",
+        "label": "Tên món",
+        "default": "Cơm tấm sườn nướng"
+      },
+      {
+        "id": "ingredients",
+        "kind": "text",
+        "label": "Nguyên liệu chính",
+        "default": "Sườn • Trứng • Đồ chua • Cơm tấm"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Công thức nấu ăn",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Nấu ăn",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{footage}}",
+            "start": 0,
+            "duration": 12,
+            "in": 0,
+            "out": 12,
+            "filter": {
+              "lut": "vcut-honey-glow"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên món",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{dish}}",
+            "start": 0.5,
+            "duration": 11.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 60,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.1,
+              "animation": "slideInDown",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Nguyên liệu",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{ingredients}}",
+            "start": 1.5,
+            "duration": 10.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 36,
+              "color": "#FDE68A",
+              "x": 0.5,
+              "y": 0.9,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

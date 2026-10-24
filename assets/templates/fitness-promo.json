@@ -1,0 +1,116 @@
+{
+  "template": {
+    "id": "fitness-promo",
+    "name": "Quảng cáo gym",
+    "description": "Video ngang tập luyện: khẩu hiệu + kêu gọi đăng ký.",
+    "category": "ads",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "fitness",
+      "gym",
+      "quảng cáo"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 8,
+    "placeholders": [
+      {
+        "id": "footage",
+        "kind": "video",
+        "label": "Video tập luyện",
+        "default": "workout.mp4"
+      },
+      {
+        "id": "slogan",
+        "kind": "text",
+        "label": "Khẩu hiệu",
+        "default": "KHÔNG CÓ GIỚI HẠN"
+      },
+      {
+        "id": "cta",
+        "kind": "text",
+        "label": "Kêu gọi",
+        "default": "Đăng ký hôm nay — buổi đầu miễn phí"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Quảng cáo gym",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Tập luyện",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{footage}}",
+            "start": 0,
+            "duration": 8,
+            "in": 0,
+            "out": 8,
+            "filter": {
+              "lut": "vcut-stadium-night"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Khẩu hiệu",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{slogan}}",
+            "start": 0.5,
+            "duration": 7.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 84,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.38,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Kêu gọi",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{cta}}",
+            "start": 1.5,
+            "duration": 6.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 40,
+              "color": "#FDE68A",
+              "x": 0.5,
+              "y": 0.58,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
