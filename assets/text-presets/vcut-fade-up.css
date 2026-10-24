@@ -1,0 +1,16 @@
+/* Mờ + trượt từ dưới lên.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-23 (P5, Phase 7)
+ * Cách dùng: gắn class "text-preset vcut-fade-up" vào element chữ.
+ * Port sang drawtext: ⚠️ alpha + y nội suy */
+
+@keyframes vcut-fade-up {
+  0% { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.text-preset.vcut-fade-up {
+  font-weight: 700;
+  animation: vcut-fade-up 0.7s ease-out both;
+}

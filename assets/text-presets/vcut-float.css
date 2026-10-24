@@ -1,0 +1,16 @@
+/* Trôi lơ lửng nhẹ.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-23 (P5, Phase 7)
+ * Cách dùng: gắn class "text-preset vcut-float" vào element chữ.
+ * Port sang drawtext: ⚠️ y dao động chậm */
+
+@keyframes vcut-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.text-preset.vcut-float {
+  font-weight: 700; display: inline-block;
+  animation: vcut-float 2.4s ease-in-out infinite;
+}

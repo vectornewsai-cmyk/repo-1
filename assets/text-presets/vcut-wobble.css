@@ -1,0 +1,17 @@
+/* Chao đảo liên tục.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-23 (P5, Phase 7)
+ * Cách dùng: gắn class "text-preset vcut-wobble" vào element chữ.
+ * Port sang drawtext: ❌ (cần rotate) */
+
+@keyframes vcut-wobble {
+  0%, 100% { transform: rotate(0deg) translateX(0); }
+  25% { transform: rotate(2deg) translateX(2px); }
+  75% { transform: rotate(-2deg) translateX(-2px); }
+}
+
+.text-preset.vcut-wobble {
+  font-weight: 700; display: inline-block;
+  animation: vcut-wobble 1.8s ease-in-out infinite;
+}

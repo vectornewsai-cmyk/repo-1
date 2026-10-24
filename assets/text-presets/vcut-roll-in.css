@@ -1,0 +1,16 @@
+/* Lăn từ trái vào.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-23 (P5, Phase 7)
+ * Cách dùng: gắn class "text-preset vcut-roll-in" vào element chữ.
+ * Port sang drawtext: ❌ (cần rotate + translate) */
+
+@keyframes vcut-roll-in {
+  0% { opacity: 0; transform: translateX(-80px) rotate(-120deg); }
+  100% { opacity: 1; transform: translateX(0) rotate(0deg); }
+}
+
+.text-preset.vcut-roll-in {
+  font-weight: 700;
+  animation: vcut-roll-in 0.7s ease-out both;
+}

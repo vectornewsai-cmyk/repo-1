@@ -1,0 +1,19 @@
+/* Rung lắc ngang liên tục.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-23 (P5, Phase 7)
+ * Cách dùng: gắn class "text-preset vcut-shake" vào element chữ.
+ * Port sang drawtext: ⚠️ x dao động */
+
+@keyframes vcut-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.text-preset.vcut-shake {
+  font-weight: 700; display: inline-block;
+  animation: vcut-shake 0.8s ease-in-out infinite;
+}

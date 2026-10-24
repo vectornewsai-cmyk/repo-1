@@ -1,6 +1,6 @@
 # Text Presets — VCut Studio
 
-Thư viện 56 preset chữ CSS thuần (không dependency), dùng cho preview web của editor.
+Thư viện 76 preset chữ CSS thuần (không dependency), dùng cho preview web của editor.
 Render video (FFmpeg drawtext) chỉ port được một phần — xem ghi chú "Port sang drawtext"
 trong từng file.
 
@@ -9,11 +9,11 @@ trong từng file.
 - File `animate-css-*.css`: gắn class `text-preset` vào element chữ.
 - File `vcut-*.css`: gắn class `text-preset vcut-<tên>` vào element chữ.
 - Mỗi phiên preview chỉ load 1 file preset (các file animate-css dùng chung class `.text-preset`).
-- Mở `_test_all.html` bằng browser để xem toàn bộ 56 preset.
+- Mở `_test_all.html` bằng browser để xem toàn bộ 76 preset.
 
 ## Danh mục
 
-### Entrance — xuất hiện (30)
+### Entrance — xuất hiện (42)
 
 | File | Hiệu ứng | Port drawtext |
 |---|---|---|
@@ -45,13 +45,26 @@ trong từng file.
 | vcut-stamp.css | đóng dấu | ⚠️ scale + box |
 | vcut-tracking-expand.css | giãn cách ký tự | ❌ (cần letter-spacing) |
 
+| vcut-fade-up.css | mờ + trượt từ dưới lên | ⚠️ alpha + y nội suy |
+| vcut-zoom-in.css | phóng to từ xa vào | ⚠️ fontsize nội suy |
+| vcut-spin-in.css | xoay 360° vào | ❌ (drawtext không xoay chữ) |
+| vcut-flip-in.css | lật theo trục X vào | ❌ (cần rotateX 3D) |
+| vcut-skew-in.css | nghiêng rồi thẳng vào | ❌ (drawtext không skew) |
+| vcut-drop-in.css | rơi từ trên xuống + nảy nhẹ | ⚠️ y nội suy + nảy |
+| vcut-roll-in.css | lăn từ trái vào | ❌ (cần rotate + translate) |
+| vcut-slide-up.css | trượt từ dưới lên | ⚠️ y nội suy |
+| vcut-slide-down.css | trượt từ trên xuống | ⚠️ y nội suy |
+| vcut-jump-in.css | nhảy bật vào | ⚠️ y nội suy |
+| vcut-bounce-in.css | nảy vào nhiều nhịp | ⚠️ y + fontsize nội suy |
+| vcut-stretch-in.css | co giãn ngang vào | ❌ (drawtext không scaleX riêng) |
+
 ### Exit — biến mất (1)
 
 | File | Hiệu ứng | Port drawtext |
 |---|---|---|
 | animate-css-fadeOutDown.css | mờ + trượt xuống | ✅ |
 
-### Attention — thu hút, lặp (13)
+### Attention — thu hút, lặp (21)
 
 | File | Hiệu ứng | Port drawtext |
 |---|---|---|
@@ -88,6 +101,15 @@ trong từng file.
 | vcut-glitch.css | glitch RGB | ⚠️ vẽ chồng lệch kênh |
 | vcut-typewriter-caret.css | con trỏ gõ máy | ✅ (caret vẽ riêng) |
 | vcut-underline-draw.css | gạch chân vẽ dần | ⚠️ underline width theo t |
+
+| vcut-shake.css | rung lắc ngang liên tục | ⚠️ x dao động |
+| vcut-bounce-soft.css | nảy nhẹ liên tục | ⚠️ y dao động |
+| vcut-rotate-swing.css | lắc lư như con lắc | ❌ (cần rotate) |
+| vcut-blink.css | nhấp nháy hiện/ẩn | ✅ alpha nhấp nháy |
+| vcut-pulse-glow.css | phát sáng theo nhịp | ⚠️ alpha + shadow (không glow thật) |
+| vcut-wobble.css | chao đảo liên tục | ❌ (cần rotate) |
+| vcut-float.css | trôi lơ lửng nhẹ | ⚠️ y dao động chậm |
+| vcut-heartbeat.css | đập như nhịp tim | ⚠️ fontsize nhịp đôi |
 
 ## Nguồn & giấy phép
 

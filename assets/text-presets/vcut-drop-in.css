@@ -1,0 +1,17 @@
+/* Rơi từ trên xuống + nảy nhẹ.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-23 (P5, Phase 7)
+ * Cách dùng: gắn class "text-preset vcut-drop-in" vào element chữ.
+ * Port sang drawtext: ⚠️ y nội suy + nảy */
+
+@keyframes vcut-drop-in {
+  0% { opacity: 0; transform: translateY(-60px); }
+  70% { opacity: 1; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.text-preset.vcut-drop-in {
+  font-weight: 800;
+  animation: vcut-drop-in 0.7s ease-out both;
+}

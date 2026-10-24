@@ -1,0 +1,16 @@
+/* Phát sáng theo nhịp.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-23 (P5, Phase 7)
+ * Cách dùng: gắn class "text-preset vcut-pulse-glow" vào element chữ.
+ * Port sang drawtext: ⚠️ alpha + shadow (không glow thật) */
+
+@keyframes vcut-pulse-glow {
+  0%, 100% { text-shadow: 0 0 4px rgba(255,255,255,0.4); }
+  50% { text-shadow: 0 0 18px rgba(255,255,255,0.9); }
+}
+
+.text-preset.vcut-pulse-glow {
+  font-weight: 800; display: inline-block;
+  animation: vcut-pulse-glow 1.4s ease-in-out infinite;
+}

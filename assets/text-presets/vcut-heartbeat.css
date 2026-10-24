@@ -1,0 +1,19 @@
+/* Đập như nhịp tim.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-23 (P5, Phase 7)
+ * Cách dùng: gắn class "text-preset vcut-heartbeat" vào element chữ.
+ * Port sang drawtext: ⚠️ fontsize nhịp đôi */
+
+@keyframes vcut-heartbeat {
+  0%, 100% { transform: scale(1); }
+  14% { transform: scale(1.15); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.12); }
+  70% { transform: scale(1); }
+}
+
+.text-preset.vcut-heartbeat {
+  font-weight: 800; display: inline-block;
+  animation: vcut-heartbeat 1.2s ease-in-out infinite;
+}

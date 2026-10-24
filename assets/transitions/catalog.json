@@ -3,8 +3,8 @@
   "generated": "2026-10-19",
   "engine": "ffmpeg-xfade",
   "ffmpeg_version_tested": "8.1.2",
-  "total": 58,
-  "note": "Tất cả transitions render thật qua filter xfade của FFmpeg. 21 GLSL transitions trong assets/transitions/*.glsl KHÔNG dùng được (FFmpeg thiếu gltransition) — xem TRANSITIONS_LIMITS.md.",
+  "total": 67,
+  "note": "Tất cả transitions render thật qua filter xfade của FFmpeg. 9 transition P5 (Phase 7) dùng xfade transition=custom + expr (không cần shader). 21 GLSL transitions trong assets/transitions/*.glsl KHÔNG dùng được (FFmpeg thiếu gltransition) — xem TRANSITIONS_LIMITS.md.",
   "categories": {
     "none": "Không hiệu ứng",
     "fade": "Mờ dần / hòa trộn",
@@ -476,6 +476,87 @@
       "description": "Cảnh cũ trượt lên, hé lộ cảnh mới bên dưới",
       "category": "slide",
       "filter_example": "xfade=transition=revealdown:duration=1:offset=2"
+    },
+    {
+      "type": "blinds-h",
+      "xfade": "custom",
+      "expr": "if(lt(mod(Y,H/8),P*H/8),B,A)",
+      "label": "Mành ngang",
+      "description": "Cảnh mới hiện qua các lá mành ngang mở dần",
+      "category": "wipe",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lt(mod(Y,H/8),P*H/8),B,A)'"
+    },
+    {
+      "type": "bars-v",
+      "xfade": "custom",
+      "expr": "if(lt(mod(X,W/8),P*W/8),B,A)",
+      "label": "Thanh dọc",
+      "description": "Cảnh mới hiện qua các thanh dọc mở dần",
+      "category": "wipe",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lt(mod(X,W/8),P*W/8),B,A)'"
+    },
+    {
+      "type": "checker",
+      "xfade": "custom",
+      "expr": "if(gt(P*4,mod(floor(X/(W/8))+floor(Y/(H/8)),4)),B,A)",
+      "label": "Bàn cờ",
+      "description": "Cảnh mới hiện dần theo các ô bàn cờ lan chéo",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(gt(P*4,mod(floor(X/(W/8))+floor(Y/(H/8)),4)),B,A)'"
+    },
+    {
+      "type": "diamond",
+      "xfade": "custom",
+      "expr": "if(lte(abs(X-W/2)+abs(Y-H/2),P*(W+H)/2),B,A)",
+      "label": "Hình thoi",
+      "description": "Cảnh mới nở ra từ hình thoi ở giữa",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lte(abs(X-W/2)+abs(Y-H/2),P*(W+H)/2),B,A)'"
+    },
+    {
+      "type": "plus",
+      "xfade": "custom",
+      "expr": "if(lte(min(abs(X-W/2),abs(Y-H/2)),P*min(W,H)/2),B,A)",
+      "label": "Dấu cộng",
+      "description": "Cảnh mới hiện theo hình dấu cộng lan ra",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lte(min(abs(X-W/2),abs(Y-H/2)),P*min(W,H)/2),B,A)'"
+    },
+    {
+      "type": "grid",
+      "xfade": "custom",
+      "expr": "if(lte(max(mod(X,min(W,H)/8),mod(Y,min(W,H)/8)),P*min(W,H)/8),B,A)",
+      "label": "Lưới ô vuông",
+      "description": "Cảnh mới hiện qua các ô lưới vuông nở dần",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lte(max(mod(X,min(W,H)/8),mod(Y,min(W,H)/8)),P*min(W,H)/8),B,A)'"
+    },
+    {
+      "type": "clock",
+      "xfade": "custom",
+      "expr": "if(lt(atan2(Y-H/2,X-W/2),-PI+2*PI*P),B,A)",
+      "label": "Quét đồng hồ",
+      "description": "Cảnh mới quét tròn như kim đồng hồ",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lt(atan2(Y-H/2,X-W/2),-PI+2*PI*P),B,A)'"
+    },
+    {
+      "type": "circle-soft",
+      "xfade": "custom",
+      "expr": "A*(1-clip((sqrt(pow(X-W/2,2)+pow(Y-H/2,2))-P*sqrt(pow(W/2,2)+pow(H/2,2)))/(0.15*sqrt(pow(W/2,2)+pow(H/2,2))),0,1))+B*clip((sqrt(pow(X-W/2,2)+pow(Y-H/2,2))-P*sqrt(pow(W/2,2)+pow(H/2,2)))/(0.15*sqrt(pow(W/2,2)+pow(H/2,2))),0,1)",
+      "label": "Vòng tròn mềm",
+      "description": "Vòng tròn mở với viền mờ mềm (không cắt cứng)",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='A*(1-clip((sqrt(pow(X-W/2,2)+pow(Y-H/2,2))-P*sqrt(pow(W/2,2)+pow(H/2,2)))/(0.15*sqrt(pow(W/2,2)+pow(H/2,2))),0,1))+B*clip((sqrt(pow(X-W/2,2)+pow(Y-H/2,2))-P*sqrt(pow(W/2,2)+pow(H/2,2)))/(0.15*sqrt(pow(W/2,2)+pow(H/2,2))),0,1)'"
+    },
+    {
+      "type": "bars-fade",
+      "xfade": "custom",
+      "expr": "if(lt(mod(X,W/8),P*W/8),B,A*(1-P)+B*P)",
+      "label": "Thanh dọc + mờ",
+      "description": "Thanh dọc mở dần trên nền crossfade",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lt(mod(X,W/8),P*W/8),B,A*(1-P)+B*P)'"
     }
   ],
   "custom_needed": []

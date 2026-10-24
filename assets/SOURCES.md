@@ -667,3 +667,90 @@ Verify qua METADATA.pb gốc trên google/fonts (subsets chứa "vietnamese") + 
 - Inconsolata (Monospace) — OFL-1.1, Google Fonts, file Inconsolata[wdth,wght].ttf, vietnamese: true.
 - Source Code Pro (Monospace) — OFL-1.1, Google Fonts, file SourceCodePro[wght].ttf, vietnamese: true.
 - Comfortaa (Display) — OFL-1.1, Google Fonts, file Comfortaa[wght].ttf, vietnamese: true.
+
+## P5 (Phase 7) — Kho nội dung vòng 2 (2026-10-23, tài sản gốc VCut — MIT)
+
+Không dùng nguồn ngoài cho vòng này nên không có LICENSE ngoài cần đọc:
+toàn bộ dưới đây là tác phẩm gốc của VCut Studio (tổng hợp/tự thiết kế),
+license MIT (repo). Không clone template/preset/LUT của CapCut hay bất kỳ
+sản phẩm nào. 21 transition GLSL vẫn KHÔNG dùng được (thiếu gltransition) —
+xem `server/render/src/TRANSITIONS_LIMITS.md`.
+
+### Templates vòng 2 (20 mẫu, `assets/templates/gen_templates2.py`)
+
+| File | Tên | Nguồn | Tác giả | License | Ngày |
+|---|---|---|---|---|---|
+| `templates/wedding-teaser.json` | Teaser đám cưới | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/food-reel.json` | Reel món ăn | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/gaming-highlight.json` | Highlight game | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/breaking-news.json` | Tin nóng | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/quote-card.json` | Thẻ trích dẫn | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/tutorial-vertical.json` | Hướng dẫn dọc | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/unboxing.json` | Mở hộp sản phẩm | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/fitness-promo.json` | Quảng cáo gym | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/lofi-visual.json` | Nhạc lofi thư giãn | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/album-teaser.json` | Teaser album | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/interview-cut.json` | Cắt phỏng vấn | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/audiobook-promo.json` | Quảng cáo sách nói | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/event-invite.json` | Thiệp mời sự kiện | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/real-estate-tour.json` | Tour bất động sản | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/recipe-card.json` | Công thức nấu ăn | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/travel-diary.json` | Nhật ký du lịch | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/birthday-card.json` | Thiệp sinh nhật | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/sale-banner.json` | Banner giảm giá | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/documentary-title.json` | Tiêu đề phim tài liệu | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+| `templates/outro-creator.json` | Kết video creator | Tự thiết kế | VCut Studio | MIT | 2026-10-23 |
+
+### Text preset vòng 2 (20 file, keyframes gốc, MIT)
+
+`vcut-fade-up`, `vcut-zoom-in`, `vcut-spin-in`, `vcut-flip-in`, `vcut-skew-in`,
+`vcut-drop-in`, `vcut-roll-in`, `vcut-slide-up`, `vcut-slide-down`,
+`vcut-jump-in`, `vcut-bounce-in`, `vcut-stretch-in` (entrance) +
+`vcut-shake`, `vcut-bounce-soft`, `vcut-rotate-swing`, `vcut-blink`,
+`vcut-pulse-glow`, `vcut-wobble`, `vcut-float`, `vcut-heartbeat` (attention).
+Ghi chú port drawtext trong từng file (✅/⚠️/❌). Tổng presets: 76.
+
+### LUT tự chế đợt 4 (20 LUT, `assets/filters/gen_vcut_luts4.py`, lưới 17³)
+
+- `vcut-monsoon-rain.cube` — Mưa mùa hạ — VCut original, MIT.
+- `vcut-saigon-night.cube` — Đêm Sài Gòn — VCut original, MIT.
+- `vcut-hanoi-autumn.cube` — Thu Hà Nội — VCut original, MIT.
+- `vcut-lantern-fest.cube` — Đèn lồng — VCut original, MIT.
+- `vcut-rice-terrace.cube` — Ruộng bậc thang — VCut original, MIT.
+- `vcut-midnight-market.cube` — Chợ đêm — VCut original, MIT.
+- `vcut-cherry-festival.cube` — Lễ hội anh đào — VCut original, MIT.
+- `vcut-glacier-blue.cube` — Băng hà xanh — VCut original, MIT.
+- `vcut-meadow-light.cube` — Đồng cỏ sáng — VCut original, MIT.
+- `vcut-bamboo-green.cube` — Tre xanh — VCut original, MIT.
+- `vcut-lotus-pink.cube` — Sen hồng — VCut original, MIT.
+- `vcut-bubble-tea.cube` — Trà sữa — VCut original, MIT.
+- `vcut-honey-glow.cube` — Mật ong sáng — VCut original, MIT.
+- `vcut-chili-ember.cube` — Ớt than hồng — VCut original, MIT.
+- `vcut-typhoon-grey.cube` — Xám bão — VCut original, MIT.
+- `vcut-ember-night.cube` — Than đêm — VCut original, MIT.
+- `vcut-noir-smoke.cube` — Khói noir — VCut original, MIT.
+- `vcut-silk-road.cube` — Con đường tơ lụa — VCut original, MIT.
+- `vcut-opal-dream.cube` — Mơ đá opal — VCut original, MIT.
+- `vcut-coral-dawn.cube` — Bình minh san hô — VCut original, MIT.
+Tổng LUT: 154.
+
+### Sound tổng hợp gốc vòng 2 (30 file, `assets/sounds/gen_vcut_sounds2.py`)
+
+riser: `riser-air`, `riser-bright`, `riser-dark`, `riser-pulse`,
+`riser-shimmer`, `riser-drop`. impact: `impact-slam`, `impact-crash`,
+`impact-stomp`, `impact-metal`, `impact-wood-hit`, `impact-deep-boom`,
+`impact-snap`. transition: `transition-flip`, `transition-slide`,
+`transition-spin`, `transition-warp`, `transition-zoom`, `transition-blip`.
+sweep: `sweep-rise`, `sweep-fall`, `sweep-band`, `sweep-whoosh-soft`.
+downer: `downer-deep`, `downer-echo`, `downer-final`. stinger:
+`stinger-brass`, `stinger-hit`, `stinger-reveal`, `stinger-twinkle`.
+Tất cả `vcut-synth-*.ogg` trong assets/audio/, VCut original, MIT.
+Tổng sound: 1013.
+
+### Transition custom expr (9, `xfade=transition=custom`, không cần shader)
+
+`blinds-h`, `bars-v`, `checker`, `diamond`, `plus`, `grid`, `clock`,
+`circle-soft`, `bars-fade` — đã render thật + kiểm chứng pixel
+(`server/render/test_p5_transitions.py`, 9/9). Tổng transition: 67
+(58 xfade built-in + 9 custom). Lưu ý: expr chứa dấu phẩy nên phải bọc
+trong `'...'` khi build filter (xem `buildXfadeFilter`).

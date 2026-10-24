@@ -1,0 +1,16 @@
+/* Nhấp nháy hiện/ẩn.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-23 (P5, Phase 7)
+ * Cách dùng: gắn class "text-preset vcut-blink" vào element chữ.
+ * Port sang drawtext: ✅ alpha nhấp nháy */
+
+@keyframes vcut-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
+.text-preset.vcut-blink {
+  font-weight: 700; display: inline-block;
+  animation: vcut-blink 1s steps(1) infinite;
+}

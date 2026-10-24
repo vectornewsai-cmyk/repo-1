@@ -1,0 +1,16 @@
+/* Trượt từ dưới lên.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-23 (P5, Phase 7)
+ * Cách dùng: gắn class "text-preset vcut-slide-up" vào element chữ.
+ * Port sang drawtext: ⚠️ y nội suy */
+
+@keyframes vcut-slide-up {
+  0% { opacity: 0; transform: translateY(40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.text-preset.vcut-slide-up {
+  font-weight: 700;
+  animation: vcut-slide-up 0.6s ease-out both;
+}

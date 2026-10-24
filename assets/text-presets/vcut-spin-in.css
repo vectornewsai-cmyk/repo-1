@@ -1,0 +1,16 @@
+/* Xoay 360° vào.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-23 (P5, Phase 7)
+ * Cách dùng: gắn class "text-preset vcut-spin-in" vào element chữ.
+ * Port sang drawtext: ❌ (drawtext không xoay chữ) */
+
+@keyframes vcut-spin-in {
+  0% { opacity: 0; transform: rotate(-360deg) scale(0.5); }
+  100% { opacity: 1; transform: rotate(0deg) scale(1); }
+}
+
+.text-preset.vcut-spin-in {
+  font-weight: 700;
+  animation: vcut-spin-in 0.8s ease-out both;
+}
