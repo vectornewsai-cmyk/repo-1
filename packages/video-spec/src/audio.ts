@@ -81,6 +81,23 @@ export interface AudioEffects {
   compressor?: AudioCompressorSettings;
   /** Reverb 0..1, mặc định 0 = tắt. Render: `aecho` 2 taps. */
   reverb?: number;
+  /** Đổi giọng (Phase 8 Q5) — undefined = tắt. Render: xem voicefx.js. */
+  voice?: VoiceEffect;
+}
+
+/**
+ * VoiceEffect — đổi giọng cho clip (Phase 8 Q5).
+ * Tất cả field đều optional; không có field nào bật = tắt.
+ */
+export interface VoiceEffect {
+  /** Đổi cao độ (semitone, -12..12, 0 = tắt). Render: rubberband, giữ tốc độ. */
+  pitch?: number;
+  /** Giọng robot: true hoặc { rate (Hz, 5..60, mặc định 25), depth (0..1, mặc định 0.6) }. Render: vibrato. */
+  robot?: boolean | { rate?: number; depth?: number };
+  /** Giọng điện thoại: chỉ giữ dải 300–3400 Hz. Render: highpass + lowpass. */
+  telephone?: boolean;
+  /** Vang giọng: true hoặc { delayMs (50..1000, mặc định 200), decay (0..1, mặc định 0.5) }. Render: aecho 1 tap. */
+  echo?: boolean | { delayMs?: number; decay?: number };
 }
 
 /** true nếu có ít nhất 1 effect đang bật. */
@@ -91,7 +108,8 @@ export function hasAudioEffects(fx?: AudioEffects | null): boolean {
     Math.abs(fx.treble ?? 0) > 1e-9 ||
     (fx.noiseReduction ?? 0) > 1e-9 ||
     fx.compressor !== undefined ||
-    (fx.reverb ?? 0) > 1e-9
+    (fx.reverb ?? 0) > 1e-9 ||
+    fx.voice !== undefined
   );
 }
 
@@ -114,6 +132,65 @@ export function validateAudioEffects(v: unknown): string[] {
   numIn("treble", -12, 12);
   numIn("noiseReduction", 0, 1);
   numIn("reverb", 0, 1);
+  // Phase 8 Q5: voice effects.
+  const voice = fx["voice"];
+  if (voice !== undefined) {
+    if (typeof voice !== "object" || voice === null || Array.isArray(voice)) {
+      errs.push("audioEffects.voice phải là object");
+    } else {
+      const vv = voice as Record<string, unknown>;
+      const vnum = (key: string, min: number, max: number) => {
+        const val = vv[key];
+        if (val === undefined) return;
+        if (typeof val !== "number" || !Number.isFinite(val) || val < min || val > max) {
+          errs.push(
+            `audioEffects.voice.${key} phải là số trong [${min}, ${max}], nhận được: ${JSON.stringify(val)}`,
+          );
+        }
+      };
+      vnum("pitch", -12, 12);
+      const r = vv["robot"];
+      if (r !== undefined && r !== true && r !== false) {
+        if (typeof r !== "object" || r === null || Array.isArray(r)) {
+          errs.push("audioEffects.voice.robot phải là true hoặc object { rate?, depth? }");
+        } else {
+          const rr = r as Record<string, unknown>;
+          const rnum = (key: string, min: number, max: number) => {
+            const val = rr[key];
+            if (val === undefined) return;
+            if (typeof val !== "number" || !Number.isFinite(val) || val < min || val > max) {
+              errs.push(
+                `audioEffects.voice.robot.${key} phải là số trong [${min}, ${max}], nhận được: ${JSON.stringify(val)}`,
+              );
+            }
+          };
+          rnum("rate", 5, 60);
+          rnum("depth", 0, 1);
+        }
+      }
+      if (vv["telephone"] !== undefined && typeof vv["telephone"] !== "boolean")
+        errs.push("audioEffects.voice.telephone phải là boolean");
+      const e = vv["echo"];
+      if (e !== undefined && e !== true && e !== false) {
+        if (typeof e !== "object" || e === null || Array.isArray(e)) {
+          errs.push("audioEffects.voice.echo phải là true hoặc object { delayMs?, decay? }");
+        } else {
+          const ee = e as Record<string, unknown>;
+          const enm = (key: string, min: number, max: number) => {
+            const val = ee[key];
+            if (val === undefined) return;
+            if (typeof val !== "number" || !Number.isFinite(val) || val < min || val > max) {
+              errs.push(
+                `audioEffects.voice.echo.${key} phải là số trong [${min}, ${max}], nhận được: ${JSON.stringify(val)}`,
+              );
+            }
+          };
+          enm("delayMs", 50, 1000);
+          enm("decay", 0, 1);
+        }
+      }
+    }
+  }
   const c = fx["compressor"];
   if (c !== undefined) {
     if (typeof c !== "object" || c === null || Array.isArray(c)) {

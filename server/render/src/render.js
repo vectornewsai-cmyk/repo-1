@@ -597,14 +597,20 @@ function buildFilterGraph(spec, ctx) {
     // Register sticker PNG files as inputs (cần absOf + mediaIndex — dùng register pattern)
     // Lưu ý: sticker src được resolve qua absOf (mediaDir). Đảm bảo file đã register ở main.
     for (const clip of stickerClips) {
-      const { filter, x, y } = buildStickerOverlay(clip, W, H);
+      const { filter, x, y, tracked } = buildStickerOverlay(clip, W, H);
       const idx = mediaIndex.get(absOf(clip.src));
       const s = lbl("stk");
       // filter đã bao gồm loop/scale/rotate/opacity; overlay với enable theo thời gian
       const S = clip.start, E = clip.start + clip.duration;
       fc.push(`[${idx}:v]${filter}[${s}]`);
       const o = lbl("stko");
-      fc.push(`${vcur_sticker}[${s}]overlay=${x}:${y}:enable='between(t,${num(S)},${num(E)})':eof_action=pass[${o}]`);
+      // Phase 8 Q5: biểu thức track chứa dấu phẩy nên phải quote x/y; sticker
+      // thường giữ dạng cũ không quote để không regression.
+      if (tracked) {
+        fc.push(`${vcur_sticker}[${s}]overlay=x='${x}':y='${y}':enable='between(t,${num(S)},${num(E)})':eof_action=pass[${o}]`);
+      } else {
+        fc.push(`${vcur_sticker}[${s}]overlay=${x}:${y}:enable='between(t,${num(S)},${num(E)})':eof_action=pass[${o}]`);
+      }
       vcur_sticker = `[${o}]`;
     }
   }

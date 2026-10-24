@@ -34,6 +34,12 @@ export interface StickerClip {
   opacity?: number;
   /** Góc xoay (độ), mặc định 0 */
   rotation?: number;
+  /**
+   * Quỹ đạo motion tracking (Phase 8 Q5, optional). Khi có track, vị trí
+   * sticker bám theo quỹ đạo (nội suy tuyến tính theo thời gian cục bộ),
+   * thắng x/y tĩnh. Quỹ đạo do server/tracking/track.py sinh ra.
+   */
+  track?: import("./tracking.js").TrackAttachment;
 }
 
 export interface StickerTrack {
@@ -334,8 +340,10 @@ function isFiniteNumber(x: unknown): x is number {
   return typeof x === "number" && Number.isFinite(x);
 }
 
-/** Chuẩn hoá sticker: điền giá trị mặc định cho các trường optional. */
-export function normalizeStickerClip(c: StickerClip): Required<StickerClip> {
+/** Chuẩn hoá sticker: điền giá trị mặc định cho các trường optional.
+ * track giữ nguyên optional (quỹ đạo có thể không gắn) nên return type
+ * trừ track khỏi Required — ép track thành bắt buộc sẽ nói dối type. */
+export function normalizeStickerClip(c: StickerClip): Required<Omit<StickerClip, "track">> & Pick<StickerClip, "track"> {
   return {
     kind: "sticker",
     id: c.id,
@@ -347,6 +355,7 @@ export function normalizeStickerClip(c: StickerClip): Required<StickerClip> {
     scale: c.scale ?? STICKER_DEFAULTS.scale,
     opacity: c.opacity ?? STICKER_DEFAULTS.opacity,
     rotation: c.rotation ?? STICKER_DEFAULTS.rotation,
+    track: c.track,
   };
 }
 

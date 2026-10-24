@@ -41,12 +41,20 @@ function fmtNum(v) {
 /** true nếu có ít nhất 1 effect đang bật. */
 function hasAudioEffects(fx) {
   if (!fx || typeof fx !== "object") return false;
+  // Phase 8 Q5: voice effects cũng là AudioEffects.
+  let voice = false;
+  try {
+    voice = require("./voicefx").hasVoiceEffect(fx.voice);
+  } catch {
+    voice = false;
+  }
   return (
     Math.abs(Number(fx.bass ?? 0)) > 1e-9 ||
     Math.abs(Number(fx.treble ?? 0)) > 1e-9 ||
     Number(fx.noiseReduction ?? 0) > 1e-9 ||
     fx.compressor !== undefined ||
-    Number(fx.reverb ?? 0) > 1e-9
+    Number(fx.reverb ?? 0) > 1e-9 ||
+    voice
   );
 }
 
@@ -101,6 +109,12 @@ function buildAudioEffectsFilters(fx) {
     const d3 = fmtNum(0.08 + 0.22 * rev);
     parts.push(`aecho=in_gain=0.8:out_gain=0.9:delays=30|60|120:decays=${d1}|${d2}|${d3}`);
   }
+  // Phase 8 Q5: voice effects đứng sau reverb, trước volume (xem voicefx.js).
+  if (fx.voice !== undefined) {
+    const { buildVoiceFilters } = require("./voicefx");
+    const vf = buildVoiceFilters(fx.voice);
+    if (vf) parts.push(vf.slice(1)); // bỏ dấu phẩy đầu (parts tự nối bằng ",")
+  }
   return parts.length ? "," + parts.join(",") : "";
 }
 
@@ -122,6 +136,11 @@ function validateAudioEffects(v) {
   numIn("treble", -12, 12);
   numIn("noiseReduction", 0, 1);
   numIn("reverb", 0, 1);
+  // Phase 8 Q5: voice effects (mirror voicefx.js).
+  if (v.voice !== undefined) {
+    const { validateVoice } = require("./voicefx");
+    for (const m of validateVoice(v.voice)) errs.push(`audioEffects.${m}`);
+  }
   const c = v.compressor;
   if (c !== undefined) {
     if (typeof c !== "object" || c === null || Array.isArray(c)) {

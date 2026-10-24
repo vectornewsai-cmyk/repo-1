@@ -54,6 +54,8 @@ function normalizeSticker(st) {
     scale: st.scale ?? STICKER_DEFAULTS.scale,
     opacity: st.opacity ?? STICKER_DEFAULTS.opacity,
     rotation: st.rotation ?? STICKER_DEFAULTS.rotation,
+    // Phase 8 Q5: giữ nguyên quỹ đạo tracking nếu có.
+    ...(st.track !== undefined ? { track: st.track } : {}),
   };
 }
 
@@ -83,6 +85,11 @@ function validateSticker(st) {
     errors.push(`${where}: opacity phải trong khoảng 0..1, nhận được: ${st.opacity}`);
   if (st.rotation !== undefined && !isFiniteNumber(st.rotation))
     errors.push(`${where}: rotation phải là số (độ), nhận được: ${st.rotation}`);
+  // Phase 8 Q5: quỹ đạo tracking (mirror tracking_validate.js).
+  if (st.track !== undefined) {
+    const { validateTrackAttachment } = require("./tracking_validate");
+    for (const m of validateTrackAttachment(st.track)) errors.push(`${where}: ${m}`);
+  }
   return errors;
 }
 
@@ -125,10 +132,16 @@ function buildStickerOverlay(st, W, H) {
   }
   parts.push("setpts=PTS-STARTPTS");
 
-  // Vị trí: TÂM sticker tại (W*x, H*y).
+  // Vị trí: TÂM sticker tại (W*x, H*y). Có track thì bám quỹ đạo (thắng x/y tĩnh).
+  // Biểu thức track chứa dấu phẩy nên render.js phải dùng dạng overlay có quote.
+  if (s.track !== undefined) {
+    const { buildTrackOverlayExprs } = require("./tracking");
+    const te = buildTrackOverlayExprs(s.track, s.start);
+    return { filter: parts.join(","), x: te.x, y: te.y, tracked: true };
+  }
   const x = `(main_w*${num(s.x)}-overlay_w/2)`;
   const y = `(main_h*${num(s.y)}-overlay_h/2)`;
-  return { filter: parts.join(","), x, y };
+  return { filter: parts.join(","), x, y, tracked: false };
 }
 
 // ---------------------------------------------------------------------------

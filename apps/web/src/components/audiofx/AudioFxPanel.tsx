@@ -110,6 +110,28 @@ export function AudioFxPanel() {
 
   const comp = fx.compressor;
 
+  // Phase 8 Q5: voice effects (render: rubberband/vibrato/bandpass/aecho).
+  // Robot ở đây là vibrato xấp xỉ, KHÔNG phải vocoder thật — xem Q5_LIMITS.md.
+  const voice = fx.voice ?? {};
+  const setVoice = (patch: Partial<NonNullable<AudioEffects["voice"]>>) => {
+    const next = { ...voice, ...patch };
+    if (next.pitch === 0) delete next.pitch;
+    set({ voice: next });
+  };
+  const toggleVoiceFlag = (key: "robot" | "telephone" | "echo") => {
+    if (voice[key]) {
+      const next = { ...voice };
+      delete next[key];
+      set({ voice: next });
+    } else if (key === "robot") {
+      setVoice({ robot: { rate: 25, depth: 0.6 } });
+    } else if (key === "echo") {
+      setVoice({ echo: { delayMs: 200, decay: 0.5 } });
+    } else {
+      setVoice({ telephone: true });
+    }
+  };
+
   return (
     <div className="fx-panel">
       <FxSlider
@@ -171,6 +193,73 @@ export function AudioFxPanel() {
             step={0.5}
             unit=":1"
             onChange={(v) => setComp({ ratio: v })}
+          />
+        </div>
+      )}
+      {/* Phase 8 Q5: voice effects */}
+      <div className="panel-head" style={{ marginTop: 12 }}>🎭 Đổi giọng</div>
+      <FxSlider
+        label="🎹 Cao độ"
+        value={voice.pitch ?? 0}
+        min={-12}
+        max={12}
+        step={1}
+        unit=" semitone"
+        onChange={(v) => setVoice({ pitch: v })}
+      />
+      <label className="fx-check">
+        <input type="checkbox" checked={!!voice.robot} onChange={() => toggleVoiceFlag("robot")} />
+        <span>🤖 Robot (vibrato xấp xỉ, không phải vocoder thật)</span>
+      </label>
+      {voice.robot && typeof voice.robot === "object" && (
+        <div className="fx-sub">
+          <FxSlider
+            label="Tốc độ rung"
+            value={voice.robot.rate ?? 25}
+            min={5}
+            max={60}
+            step={1}
+            unit=" Hz"
+            onChange={(v) => setVoice({ robot: { rate: v, depth: (typeof voice.robot === "object" ? voice.robot.depth : undefined) ?? 0.6 } })}
+          />
+          <FxSlider
+            label="Độ sâu rung"
+            value={Math.round(((typeof voice.robot === "object" ? voice.robot.depth : undefined) ?? 0.6) * 100)}
+            min={0}
+            max={100}
+            step={5}
+            unit="%"
+            onChange={(v) => setVoice({ robot: { rate: (typeof voice.robot === "object" ? voice.robot.rate : undefined) ?? 25, depth: v / 100 } })}
+          />
+        </div>
+      )}
+      <label className="fx-check">
+        <input type="checkbox" checked={!!voice.telephone} onChange={() => toggleVoiceFlag("telephone")} />
+        <span>📞 Điện thoại (băng tần 300–3400 Hz)</span>
+      </label>
+      <label className="fx-check">
+        <input type="checkbox" checked={!!voice.echo} onChange={() => toggleVoiceFlag("echo")} />
+        <span>🔁 Vang (echo)</span>
+      </label>
+      {voice.echo && typeof voice.echo === "object" && (
+        <div className="fx-sub">
+          <FxSlider
+            label="Độ trễ vang"
+            value={voice.echo.delayMs ?? 200}
+            min={50}
+            max={1000}
+            step={10}
+            unit=" ms"
+            onChange={(v) => setVoice({ echo: { delayMs: v, decay: (typeof voice.echo === "object" ? voice.echo.decay : undefined) ?? 0.5 } })}
+          />
+          <FxSlider
+            label="Độ suy giảm vang"
+            value={Math.round(((typeof voice.echo === "object" ? voice.echo.decay : undefined) ?? 0.5) * 100)}
+            min={0}
+            max={100}
+            step={5}
+            unit="%"
+            onChange={(v) => setVoice({ echo: { delayMs: (typeof voice.echo === "object" ? voice.echo.delayMs : undefined) ?? 200, decay: v / 100 } })}
           />
         </div>
       )}
