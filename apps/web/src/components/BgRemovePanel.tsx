@@ -20,9 +20,14 @@ const BRIDGE_URL =
 
 type Status = "idle" | "running" | "error";
 
+type BgSession = "auto" | "birefnet-general" | "u2net";
+
 export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined }) {
   const [status, setStatus] = useState<Status>("idle");
   const [msg, setMsg] = useState("");
+  // Phase 7 P6: chọn session — "auto" (mặc định) thử birefnet trước, lỗi/OOM
+  // thì bridge tự chuyển sang u2net và báo qua header X-Bgremove-*.
+  const [session, setSession] = useState<BgSession>("auto");
   const abortRef = useRef<AbortController | null>(null);
 
   const run = async () => {
@@ -46,7 +51,7 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
     try {
       const form = new FormData();
       form.append("media", mediaItem.file, mediaItem.file.name);
-      form.append("session", "birefnet-general"); // MIT — xem BGREMOVE_LIMITS.md
+      form.append("session", session); // MIT — xem BGREMOVE_LIMITS.md
       const res = await fetch(`${BRIDGE_URL}/api/bgremove`, {
         method: "POST",
         body: form,
@@ -59,6 +64,10 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
           : null;
         throw new Error(j?.error || `Bridge lỗi HTTP ${res.status}.`);
       }
+      // Phase 7 P6: bridge báo session thực sự đã dùng qua header — hiển
+      // thị rõ nếu đã fallback (đừng để user tưởng vẫn là birefnet).
+      const sessionUsed = res.headers.get("X-Bgremove-Session-Used") || session;
+      const fallbackFrom = res.headers.get("X-Bgremove-Fallback-From") || "";
       const blob = await res.blob();
       const dot = mediaItem.name.lastIndexOf(".");
       const base = dot > 0 ? mediaItem.name.slice(0, dot) : mediaItem.name;
@@ -74,7 +83,12 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
         st.patchClip(sel.trackId, sel.clipId, { src: added.name });
       }
       setStatus("idle");
-      setMsg(`Xong! Clip đã dùng video "${added?.name ?? file.name}" (nền trong suốt).`);
+      setMsg(
+        `Xong! Clip đã dùng video "${added?.name ?? file.name}" (nền trong suốt, session ${sessionUsed}).` +
+        (fallbackFrom
+          ? ` Lưu ý: ${fallbackFrom} thất bại trên máy này nên đã tự chuyển sang ${sessionUsed} — chất lượng tách nền có thể kém hơn một chút.`
+          : "")
+      );
     } catch (e) {
       if ((e as Error).name === "AbortError") {
         setStatus("idle");
@@ -96,6 +110,18 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
         AI tách chủ thể khỏi nền (rembg + BiRefNet, chạy 100% trên máy bạn, không gửi
         video đi đâu). Kết quả có nền trong suốt, đặt lên track trên để ghép.
       </p>
+      <label style={{ fontSize: 12, display: "block", margin: "0 0 8px" }}>
+        Model tách nền{" "}
+        <select
+          value={session}
+          onChange={(e) => setSession(e.target.value as BgSession)}
+          disabled={status === "running"}
+        >
+          <option value="auto">Tự động (birefnet, lỗi thì u2net)</option>
+          <option value="birefnet-general">birefnet-general (nét nhất, nặng RAM)</option>
+          <option value="u2net">u2net (nhẹ, chạy được máy yếu)</option>
+        </select>
+      </label>
       {status === "running" ? (
         <div>
           <p style={{ fontSize: 12 }}>{msg}</p>

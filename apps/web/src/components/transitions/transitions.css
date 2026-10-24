@@ -390,3 +390,54 @@
 @keyframes tr-revealright { 0%,20% { transform: translateX(0); } 79%,100% { transform: translateX(-100%); } }
 @keyframes tr-revealup { 0%,20% { transform: translateY(0); } 79%,100% { transform: translateY(100%); } }
 @keyframes tr-revealdown { 0%,20% { transform: translateY(0); } 79%,100% { transform: translateY(-100%); } }
+
+/* P5 (Phase 7): minh họa CSS cho 9 transition custom expr.
+ * CHỈ LÀ MINH HỌA trong panel — hiệu ứng thật là xfade expr trong render worker.
+ * Các rule này dùng clip-path/steps để gợi đúng cảm giác (mành, thanh, thoi, đồng hồ...). */
+.tr-card[data-type="blinds-h"] .tr-new { animation: tr-blinds-h 2.4s steps(8) infinite; }
+.tr-card[data-type="bars-v"] .tr-new { animation: tr-bars-v 2.4s steps(8) infinite; }
+.tr-card[data-type="checker"] .tr-new { animation: tr-checker 2.4s steps(4) infinite; }
+.tr-card[data-type="diamond"] .tr-new { animation: tr-diamond 2.4s ease-in-out infinite; }
+.tr-card[data-type="plus"] .tr-new { animation: tr-plus 2.4s ease-in-out infinite; }
+.tr-card[data-type="grid"] .tr-new { animation: tr-grid 2.4s steps(4) infinite; }
+.tr-card[data-type="clock"] .tr-new { animation: tr-clock 2.4s linear infinite; }
+.tr-card[data-type="circle-soft"] .tr-new { animation: tr-circle-soft 2.4s ease-in-out infinite; }
+.tr-card[data-type="bars-fade"] .tr-new { animation: tr-bars-fade 2.4s steps(8) infinite; }
+
+@keyframes tr-blinds-h {
+  0%, 20% { clip-path: inset(100% 0 0 0); }
+  79%, 100% { clip-path: inset(0 0 0 0); }
+}
+@keyframes tr-bars-v {
+  0%, 20% { clip-path: inset(0 100% 0 0); }
+  79%, 100% { clip-path: inset(0 0 0 0); }
+}
+@keyframes tr-checker {
+  0%, 20% { opacity: 0; }
+  79%, 100% { opacity: 1; }
+}
+@keyframes tr-diamond {
+  0%, 20% { clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%); }
+  79%, 100% { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); }
+}
+@keyframes tr-plus {
+  0%, 20% { clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%); }
+  79%, 100% { clip-path: polygon(40% 0%, 60% 0%, 60% 40%, 100% 40%, 100% 60%, 60% 60%, 60% 100%, 40% 100%, 40% 60%, 0% 60%, 0% 40%, 40% 40%); }
+}
+@keyframes tr-grid {
+  0%, 20% { clip-path: inset(45% 45% 45% 45%); }
+  79%, 100% { clip-path: inset(0 0 0 0); }
+}
+@keyframes tr-clock {
+  0%, 20% { clip-path: polygon(50% 50%, 50% 0%, 50% 0%); }
+  50% { clip-path: polygon(50% 50%, 50% 0%, 100% 50%); }
+  79%, 100% { clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%); }
+}
+@keyframes tr-circle-soft {
+  0%, 20% { clip-path: circle(0% at 50% 50%); filter: blur(6px); }
+  79%, 100% { clip-path: circle(75% at 50% 50%); filter: blur(0); }
+}
+@keyframes tr-bars-fade {
+  0%, 20% { clip-path: inset(0 100% 0 0); opacity: 0.3; }
+  79%, 100% { clip-path: inset(0 0 0 0); opacity: 1; }
+}

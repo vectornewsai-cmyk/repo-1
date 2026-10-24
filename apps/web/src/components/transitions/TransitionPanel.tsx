@@ -78,6 +78,16 @@ export const TRANSITION_OPTIONS: TransitionOption[] = [
   { type: "revealright", label: "Hé lộ →", description: "Trượt hé lộ cảnh mới bên phải" },
   { type: "revealup", label: "Hé lộ ↑", description: "Trượt hé lộ cảnh mới bên trên" },
   { type: "revealdown", label: "Hé lộ ↓", description: "Trượt hé lộ cảnh mới bên dưới" },
+  // P5 (Phase 7): 9 transition custom expr (render thật bằng xfade expr)
+  { type: "blinds-h", label: "Mành ngang", description: "Lá mành ngang mở dần" },
+  { type: "bars-v", label: "Thanh dọc", description: "Thanh dọc mở dần" },
+  { type: "checker", label: "Bàn cờ", description: "Ô bàn cờ lan chéo" },
+  { type: "diamond", label: "Hình thoi", description: "Hình thoi nở từ giữa" },
+  { type: "plus", label: "Dấu cộng", description: "Dấu cộng lan ra" },
+  { type: "grid", label: "Lưới ô vuông", description: "Ô lưới vuông nở dần" },
+  { type: "clock", label: "Quét đồng hồ", description: "Quét tròn như kim đồng hồ" },
+  { type: "circle-soft", label: "Vòng tròn mềm", description: "Vòng tròn mở, viền mờ mềm" },
+  { type: "bars-fade", label: "Thanh dọc + mờ", description: "Thanh dọc trên nền crossfade" },
 ];
 
 export interface TransitionPanelProps {

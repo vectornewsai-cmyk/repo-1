@@ -194,3 +194,63 @@
   margin-left: 12px;
   margin-right: 12px;
 }
+
+/* KeyframeGraph (Phase 7 P4) */
+.kf-graph-wrap {
+  margin: 10px 12px 0;
+}
+.kf-graph-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.kf-graph-hint {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 11px;
+}
+.kf-graph {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: #11131a;
+  border: 1px solid #2a2e3f;
+  border-radius: 8px;
+  cursor: crosshair;
+  touch-action: none;
+}
+.kf-graph-grid {
+  stroke: #2a2e3f;
+  stroke-width: 1;
+}
+.kf-graph-axis {
+  fill: #9aa0b5;
+  font-size: 10px;
+}
+.kf-graph-curve {
+  stroke: #7c5cff;
+  stroke-width: 2;
+}
+.kf-graph-playhead {
+  stroke: #ff5c5c;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+.kf-graph-point {
+  fill: #e8e6ff;
+  stroke: #7c5cff;
+  stroke-width: 2;
+  cursor: grab;
+}
+.kf-graph-point.sel {
+  fill: #7c5cff;
+  stroke: #ffffff;
+}
+.kf-graph-empty {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 6px 0 0;
+}

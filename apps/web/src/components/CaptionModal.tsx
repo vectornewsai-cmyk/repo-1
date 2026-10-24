@@ -224,12 +224,41 @@ export function CaptionModal({ onClose }: Props) {
     if (kept.length === 0 || applying) return;
     setApplying(true);
     try {
-      useStore.getState().addCaptionTrack(kept);
+      // Phase 7 P6 (caption follow): tìm clip timeline cùng file nguồn để
+      // phụ đề bám theo clip (trim/move/split tự kéo phụ đề). Ưu tiên clip
+      // đang chọn; nếu không có thì clip cùng file đầu tiên. Không có clip
+      // nào (caption file chưa lên timeline) thì giữ hành vi cũ: chữ tự do.
+      const st = useStore.getState();
+      const item = candidates.find((m) => m.id === mediaId);
+      let source: { trackId: string; clipId: string } | undefined;
+      if (item) {
+        const sel = st.selection[0];
+        const selTrack = sel
+          ? st.spec.tracks.find((t) => t.id === sel.trackId)
+          : undefined;
+        const selClip = selTrack?.clips.find((c) => c.id === sel?.clipId) as
+          | { kind?: string; src?: string }
+          | undefined;
+        if (selClip && (selClip.kind === "video" || selClip.kind === "audio") && selClip.src === item.name && sel) {
+          source = { trackId: sel.trackId, clipId: sel.clipId };
+        } else {
+          outer: for (const t of st.spec.tracks) {
+            for (const c of t.clips) {
+              if ((c.kind === "video" || c.kind === "audio") && (c as { src?: string }).src === item.name) {
+                source = { trackId: t.id, clipId: c.id };
+                break outer;
+              }
+            }
+          }
+        }
+      }
+      useStore.getState().addCaptionTrack(kept, source ? { source } : undefined);
       // R1-080: track phụ đề dịch (nếu có) — undo riêng từng track.
       if (targetLang && keptEn.length > 0) {
         useStore.getState().addCaptionTrack(keptEn, {
           label: translatedTrackLabel(targetLang),
           historyLabel: `Dịch phụ đề sang ${targetLang.toUpperCase()}`,
+          ...(source ? { source } : {}),
         });
       }
       onClose();

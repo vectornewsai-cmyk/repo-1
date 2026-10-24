@@ -1,0 +1,33 @@
+/* mask.css — style riêng cho MaskPanel (Phase 7 P4). */
+.mask-panel .mask-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mask-panel .mask-check input {
+  width: auto;
+  accent-color: #7c5cff;
+}
+.mask-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #11131a;
+  border: 1px solid #2a2e3f;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+.mask-preview-shape {
+  position: absolute;
+  background: rgba(255, 60, 60, 0.55);
+  border: 1.5px dashed rgba(255, 255, 255, 0.85);
+  box-sizing: border-box;
+}
+.mask-preview-note {
+  position: absolute;
+  left: 6px;
+  bottom: 4px;
+  font-size: 11px;
+  color: #9aa0b5;
+}

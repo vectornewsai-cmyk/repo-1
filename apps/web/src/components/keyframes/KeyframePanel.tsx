@@ -27,6 +27,7 @@ import {
   type Keyframe,
 } from "@repo-1/video-spec";
 import "./keyframes.css";
+import { KeyframeGraph } from "./KeyframeGraph";
 
 function NumField({
   label,
@@ -89,9 +90,10 @@ export function KeyframePanel() {
   useEffect(() => {
     setSelIdx(-1);
     dragRef.current = -1;
-  }, [selection?.clipId, activeProp]);
+  }, [selection[0]?.clipId, activeProp]);
 
-  if (!selection) {
+  const primary = selection[0] ?? null;
+  if (!primary) {
     return (
       <div className="kf-panel">
         <div className="panel-head">🔑 Keyframe</div>
@@ -99,8 +101,8 @@ export function KeyframePanel() {
       </div>
     );
   }
-  const track = spec.tracks.find((t) => t.id === selection.trackId);
-  const clip = track?.clips.find((c) => c.id === selection.clipId);
+  const track = spec.tracks.find((t) => t.id === primary.trackId);
+  const clip = track?.clips.find((c) => c.id === primary.clipId);
   if (!track || !clip) {
     return (
       <div className="kf-panel">
@@ -109,11 +111,11 @@ export function KeyframePanel() {
       </div>
     );
   }
-  if (clip.kind === "audio" || clip.kind === "sticker") {
+  if (clip.kind === "audio" || clip.kind === "sticker" || clip.kind === "image") {
     return (
       <div className="kf-panel">
         <div className="panel-head">🔑 Keyframe</div>
-        <p className="tips">Keyframe chưa hỗ trợ cho {clip.kind === "audio" ? "clip âm thanh" : "sticker"} (chỉ video và chữ).</p>
+        <p className="tips">Keyframe chưa hỗ trợ cho {clip.kind === "audio" ? "clip âm thanh" : clip.kind === "sticker" ? "sticker" : "ảnh"} (chỉ video và chữ).</p>
       </div>
     );
   }
@@ -165,6 +167,20 @@ export function KeyframePanel() {
     const arr = kfs.filter((k) => k !== selKf);
     writeProp(activeProp, arr.length > 0 ? arr : undefined);
     setSelIdx(-1);
+  };
+
+  // Phase 7 P4: kéo điểm trên đồ thị — đổi cả thời gian và giá trị.
+  const updatePoint = (i: number, patch: { t: number; v: number }) => {
+    if (i < 0 || i >= kfs.length) return;
+    const updated: Keyframe = {
+      ...kfs[i],
+      t: clamp(patch.t, 0, clip.duration),
+      v: clamp(patch.v, meta.min, meta.max),
+    };
+    const arr = normalizeKeyframes(kfs.map((k, j) => (j === i ? updated : k)));
+    writeProp(activeProp, arr);
+    const idx = arr.indexOf(updated);
+    setSelIdx(idx >= 0 ? idx : nearestIdx(arr, updated.t));
   };
 
   const laneTime = (clientX: number): number => {
@@ -249,6 +265,18 @@ export function KeyframePanel() {
           <div className="kf-lane-empty">Nhấp đúp (hoặc nút +) để thêm keyframe</div>
         )}
       </div>
+
+      {/* Phase 7 P4: đồ thị đường cong keyframe (kéo-thả điểm đổi t + v). */}
+      <KeyframeGraph
+        prop={activeProp}
+        kfs={kfs}
+        duration={clip.duration}
+        localT={localT}
+        selectedIdx={selIdx}
+        onSelect={setSelIdx}
+        onMovePoint={updatePoint}
+        onAddAt={addKeyframeAt}
+      />
 
       <div className="btn-row kf-actions">
         <button className="primary" onClick={() => addKeyframeAt(localT)} title="Thêm keyframe tại vị trí playhead">
