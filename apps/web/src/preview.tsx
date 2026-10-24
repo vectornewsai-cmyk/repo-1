@@ -190,6 +190,41 @@ function drawTextClip(
   const boxW = textW + 24;
   const boxH = textH + 16;
 
+  // P1 (Phase 7): clip SR — vẽ qua transform translate→rotate→scale quanh
+  // tâm hình bao (mirror nhánh PNG SR của render: PNG đã xoay quanh tâm,
+  // overlay đặt hình bao). Box + chữ vẽ tại gốc sau transform.
+  if (vis.sr) {
+    ctx.save();
+    ctx.globalAlpha = clamp(vis.alpha, 0, 1);
+    ctx.translate(vis.cx, vis.cy);
+    if (vis.rotationDeg) ctx.rotate((vis.rotationDeg * Math.PI) / 180);
+    if (vis.scale !== 1) ctx.scale(vis.scale, vis.scale);
+    if (s.backgroundColor) {
+      ctx.fillStyle = s.backgroundColor;
+      ctx.beginPath();
+      ctx.roundRect(-boxW / 2, -boxH / 2, boxW, boxH, 10);
+      ctx.fill();
+    }
+    ctx.font = textFont(clip);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = s.color;
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
+    if (selected) {
+      ctx.save();
+      ctx.strokeStyle = "#8b7cf6";
+      ctx.lineWidth = 2 / computeScaleHack(ctx);
+      ctx.setLineDash([8, 6]);
+      // Outline theo hình bao đã xoay (xấp xỉ trục song song, xem LIMITS).
+      const ow = vis.bboxW ?? boxW;
+      const oh = vis.bboxH ?? boxH;
+      ctx.strokeRect(vis.cx - ow / 2, vis.cy - oh / 2, ow, oh);
+      ctx.restore();
+    }
+    return;
+  }
+
   ctx.save();
   ctx.globalAlpha = clamp(vis.alpha, 0, 1);
   if (s.backgroundColor) {
@@ -235,7 +270,10 @@ function drawVideoClip(
   const item = mediaByName.get(clip.src);
   const localT = t - clip.start;
   // Fade transition (preview chỉ mô phỏng fade; xfade loại khác xem PREVIEW_LIMITS.md).
-  let alpha = clip.opacity ?? 1;
+  // P1 (Phase 7): opacity hiệu dụng lấy từ vis.opacity (đã gồm keyframes
+  // thắng tĩnh); ở đây chỉ nhân thêm hệ số fade — trước đây nhân cả
+  // clip.opacity rồi lại nhân vis.opacity nên opacity tĩnh bị bình phương.
+  let alpha = 1;
   if (clip.transitionIn?.type === "fade" && clip.transitionIn.duration > 0) {
     alpha *= clamp(localT / clip.transitionIn.duration, 0, 1);
   }
@@ -447,9 +485,10 @@ function collectActives(
       const item = mediaByName.get(clip.src);
       if (!item) continue;
       // R1-013: dùng sourceTimeAt — đúng với mọi speed/reverse.
-      // LƯU Ý: HTMLVideoElement không phát ngược được. Khi clip.reverse=true và
-      // đang phát (playing), preview chỉ seek đúng khi pause/scrub; lúc phát
-      // sẽ chạy xuôi (giới hạn đã ghi trong SPEED_INVARIANT.md).
+      // P1 (Phase 7): HTMLVideoElement không phát ngược được. Khi phát,
+      // syncMedia giữ element reverse ở trạng thái pause và seek từng frame
+      // tới target (đúng chiều, không mượt); khi pause/scrub, seek đã đúng
+      // từ trước qua sourceTimeAt.
       const speedable = isSpeedable(clip);
       const speed = speedable ? (clip.speed ?? 1) : 1;
       const reverse = speedable ? (clip.reverse ?? false) : false;
@@ -463,8 +502,9 @@ function collectActives(
           // R1-063: audio kế thừa qua engine. Render bỏ audio khi track muted
           // hoặc sourceAudioMode="mute" → preview gain 0 cho khớp.
           // R1-076: truyền audioEffects (bass/treble/compressor) cho preview.
+          // Phase 7 P3: nhân track.volume (render cũng nhân vào audio kế thừa).
           const vclip = clip as VideoClip;
-          const gain = (track.muted || (vclip.sourceAudioMode ?? "inherit") === "mute") ? 0 : 1;
+          const gain = (track.muted || (vclip.sourceAudioMode ?? "inherit") === "mute") ? 0 : (track.volume ?? 1);
           audioSources.push({ el, gain, fx: toPreviewFx(vclip.audioEffects) });
         }
       } else if (track.kind === "audio" && clip.kind === "audio" && item.kind === "audio") {
@@ -473,9 +513,10 @@ function collectActives(
           actives.push({ el, target, speed, reverse });
           // R1-063: gain = volume × fadeIn × fadeOut × volumeKeyframes × mute (khớp render).
           // R1-076: truyền audioEffects (bass/treble/compressor) cho preview.
+          // Phase 7 P3: thêm fade curves + track.volume (computeClipGain đã nhận).
           audioSources.push({
             el,
-            gain: computeClipGain(clip, elapsed, !!track.muted),
+            gain: computeClipGain(clip, elapsed, !!track.muted, track.volume ?? 1),
             fx: toPreviewFx(clip.audioEffects),
           });
         }
@@ -523,20 +564,36 @@ function syncMedia(
       /* bỏ qua nếu trình duyệt không hỗ trợ */
     }
     if (playing) {
-      // R1-063: forceSeek khi vừa bấm play → seek chính xác mọi source rồi mới phát,
-      // các source "start cùng lúc với offset chính xác". Khi đang phát bình thường
-      // chỉ re-seek khi drift > 0.35s để tránh giật.
-      if (forceSeek || Math.abs(a.el.currentTime - a.target) > 0.35) {
-        try {
-          a.el.currentTime = a.target;
-        } catch {
-          /* seek chưa sẵn sàng */
+      if (a.reverse) {
+        // P1 (Phase 7): phát ngược từng frame — giữ element ở trạng thái
+        // pause và seek tới target mỗi frame (target giảm dần theo
+        // sourceTimeAt). Không mượt như phát xuôi (seek từng frame, phụ thuộc
+        // mật độ keyframe), nhưng đúng chiều và đúng vị trí — trước đây clip
+        // reverse phát XUÔI (sai hoàn toàn).
+        a.el.pause();
+        if (Math.abs(a.el.currentTime - a.target) > 0.03) {
+          try {
+            a.el.currentTime = a.target;
+          } catch {
+            /* seek chưa sẵn sàng */
+          }
         }
-      }
-      if (a.el.paused) {
-        void a.el.play().catch(() => {
-          /* trình duyệt chặn autoplay — người dùng bấm play là có gesture nên hiếm */
-        });
+      } else {
+        // R1-063: forceSeek khi vừa bấm play → seek chính xác mọi source rồi mới phát,
+        // các source "start cùng lúc với offset chính xác". Khi đang phát bình thường
+        // chỉ re-seek khi drift > 0.35s để tránh giật.
+        if (forceSeek || Math.abs(a.el.currentTime - a.target) > 0.35) {
+          try {
+            a.el.currentTime = a.target;
+          } catch {
+            /* seek chưa sẵn sàng */
+          }
+        }
+        if (a.el.paused) {
+          void a.el.play().catch(() => {
+            /* trình duyệt chặn autoplay — người dùng bấm play là có gesture nên hiếm */
+          });
+        }
       }
     } else {
       // R1-062: chỉ pause ở đây. Seek chính xác do Seeker xử lý (lib/seek.ts):
@@ -546,8 +603,22 @@ function syncMedia(
       a.el.pause();
     }
   }
+  // P1 (Phase 7): audio của clip reverse không thể phát ngược qua Web Audio
+  // (render dùng areverse) — khi đang phát thì mute để khỏi phát xuôi lệch
+  // với hình bước ngược; khi pause thì element vốn đã dừng nên gain không
+  // ảnh hưởng gì.
+  const outSources = playing
+    ? (() => {
+        const revEls = new Set(
+          actives.filter((a) => a.reverse).map((a) => a.el),
+        );
+        return audioSources.map((s) =>
+          revEls.has(s.el) ? { ...s, gain: 0 } : s,
+        );
+      })()
+    : audioSources;
   // R1-063: đẩy gain vào Web Audio graph (mượt bằng setTargetAtTime) + VU meter.
-  engine.update(audioSources);
+  engine.update(outSources);
   if (!playing) pool.pauseAll();
 }
 
@@ -722,8 +793,10 @@ export function PreviewCanvas() {
         const textW = Math.max(1, ctx.measureText(clip.text || " ").width);
         const textH = clip.style.fontSize * 1.35;
         const vis = textClipVisual(clip, t - clip.start, W, H, { textW, textH });
-        const w = textW + 24;
-        const h = textH + 16;
+        // P1 (Phase 7): clip SR hit-test theo hình bao đã xoay (xấp xỉ trục
+        // song song — chữ xoay xiên vẫn trúng trong hình bao, hơi rộng tay).
+        const w = vis.sr && vis.bboxW != null ? vis.bboxW : textW + 24;
+        const h = vis.sr && vis.bboxH != null ? vis.bboxH : textH + 16;
         if (Math.abs(p.x - vis.cx) <= w / 2 && Math.abs(p.y - vis.cy) <= h / 2) {
           return { clip, trackId: track.id, x: vis.cx, y: vis.cy, w, h };
         }

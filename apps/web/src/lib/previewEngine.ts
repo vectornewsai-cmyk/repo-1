@@ -214,7 +214,28 @@ const LUT_CSS: Record<LutId, string> = {
   "vcut-prism": "saturate(1.4) hue-rotate(-10deg)",
   "vcut-acid-rain": "saturate(1.55) hue-rotate(-15deg)",
   "vcut-synthwave-grid": "sepia(0.25) saturate(1.45) hue-rotate(18deg)",
+  "vcut-monsoon-rain": "saturate(1.1) hue-rotate(10deg) brightness(0.95)",
+  "vcut-saigon-night": "saturate(1.45) hue-rotate(10deg) contrast(1.1)",
+  "vcut-hanoi-autumn": "sepia(0.3) saturate(1.15)",
+  "vcut-lantern-fest": "sepia(0.35) saturate(1.3) brightness(1.05)",
+  "vcut-rice-terrace": "saturate(1.35) hue-rotate(-10deg)",
+  "vcut-midnight-market": "saturate(1.4) contrast(1.05)",
+  "vcut-cherry-festival": "sepia(0.2) saturate(1.25) brightness(1.05)",
+  "vcut-glacier-blue": "saturate(1.2) hue-rotate(15deg) brightness(1.02)",
+  "vcut-meadow-light": "saturate(1.3) brightness(1.06)",
+  "vcut-bamboo-green": "saturate(1.35) hue-rotate(-15deg)",
+  "vcut-lotus-pink": "sepia(0.15) saturate(1.1) brightness(1.06)",
+  "vcut-bubble-tea": "sepia(0.3) saturate(1.1) brightness(1.04)",
+  "vcut-honey-glow": "sepia(0.35) saturate(1.2) brightness(1.04)",
+  "vcut-chili-ember": "saturate(1.45) hue-rotate(-10deg) contrast(1.1)",
+  "vcut-typhoon-grey": "saturate(0.55) hue-rotate(5deg) brightness(1.03)",
+  "vcut-ember-night": "sepia(0.25) saturate(1.1) brightness(0.92)",
+  "vcut-noir-smoke": "saturate(0.3) contrast(1.15)",
+  "vcut-silk-road": "sepia(0.3) saturate(1.05)",
+  "vcut-opal-dream": "saturate(1.2) hue-rotate(15deg) brightness(1.08)",
+  "vcut-coral-dawn": "sepia(0.25) saturate(1.35)",
 };
+
 
 /** Mọi LUT id trong catalog đều phải có ánh xạ CSS (test sẽ kiểm tra). */
 export function lutCssFilter(lut: LutId | string): string | null {
@@ -331,7 +352,15 @@ export function normalizeChroma(c: ChromaKey): ChromaParams {
 }
 
 export interface VideoClipVisual {
-  /** opacity tĩnh của clip (video keyframe opacity: render bỏ qua → preview bỏ qua). */
+  /**
+   * Opacity HIỆU DỤNG của clip tại localT. P1 (Phase 7): render K1 đã áp
+   * opacity keyframes thật (alphaextract→geq→alphamerge) nên preview cũng áp:
+   * có keyframes opacity thì nội suy theo thời gian và THẮNG TUYỆT ĐỐI
+   * opacity tĩnh (khớp render.js + validate.js); không có thì dùng tĩnh.
+   * Lưu ý: clip đã merge transition thì render fallback về opacity tĩnh
+   * (xem PREVIEW_LIMITS.md) — preview không biết trạng thái merge nên vẫn
+   * áp keyframes, lệch render ở đoạn chuyển cảnh đó.
+   */
   opacity: number;
   /** Offset px từ keyframes x/y — mirror buildOverlayExprs: v*(frame-unit). */
   offsetX: number;
@@ -386,8 +415,14 @@ export function videoClipVisual(
   const lutCss = clip.filter?.lut ? (lutCssFilter(clip.filter.lut) ?? "") : "";
   const fx = effectsVisual(clip.effects);
   const cssFilter = [colorCss, lutCss, fx.css].filter(Boolean).join(" ");
+  // P1 (Phase 7): opacity keyframes thắng tuyệt đối opacity tĩnh (khớp
+  // render K1); validate chặn giá trị ngoài [0,1] nhưng vẫn clamp phòng thủ
+  // (geq của render cũng clamp lặng lẽ).
+  const opacity = a?.opacity
+    ? clamp01(interpolateKeyframes(a.opacity.keyframes, localT))
+    : (clip.opacity ?? 1);
   return {
-    opacity: clip.opacity ?? 1,
+    opacity,
     offsetX,
     offsetY,
     scale: a?.scale
@@ -521,6 +556,83 @@ export interface TextClipVisual {
   alpha: number;
   /** typewriter: số ký tự hiện ra; null = hiện toàn bộ text. */
   revealChars: number | null;
+  /**
+   * P1 (Phase 7): true khi clip đi nhánh PNG SR của render (có keyframes
+   * scale/rotation, không phải typewriter). Khi đó drawTextClip phải áp
+   * transform translate→rotate→scale quanh tâm (xem textSrPlacement).
+   */
+  sr: boolean;
+  /** Hệ số scale đã nội suy + clamp (chỉ có nghĩa khi sr=true). */
+  scale: number;
+  /** Góc xoay đã nội suy, độ, dương = kim đồng hồ (chỉ khi sr=true). */
+  rotationDeg: number;
+  /** Kích thước hình bao sau scale + xoay (chỉ khi sr=true; null nếu không). */
+  bboxW: number | null;
+  bboxH: number | null;
+}
+
+// ---------------------------------------------------------------------------
+// Vị trí element chữ khi có scale/rotation — mirror nhánh PNG SR của render
+// (K1, Phase 6): chữ vẽ trước ra PNG trong suốt (pad = max(4, fontSize/4)
+// mỗi phía, khớp boxborderw của drawtext), rồi qua pipeline overlay giống
+// video có SR: scale eval=frame + rotate với rotateExpand (mở output ra
+// hình vuông đường chéo để không cắt chữ), overlay đặt HÌNH BAO theo phân
+// số x/y trên khoảng trống (frame − bbox) — buildOverlayExprs: có keyframes
+// x/y thì dùng phân số nội suy, KHÔNG có thì CĂN GIỮA (bỏ qua style.x/y
+// tĩnh — đây là hành vi của render, preview mirror theo, xem PREVIEW_LIMITS).
+// Canvas không cần làm tròn chẵn như FFmpeg (không có chroma subsampling)
+// nên bbox lệch render tối đa ~1px.
+// ---------------------------------------------------------------------------
+
+export interface TextSrPlacement {
+  scale: number;
+  rotationDeg: number;
+  bboxW: number;
+  bboxH: number;
+  topLeftX: number;
+  topLeftY: number;
+  centerX: number;
+  centerY: number;
+}
+
+export function textSrPlacement(
+  clip: TextClip,
+  localT: number,
+  frameW: number,
+  frameH: number,
+  m: TextMeasure,
+): TextSrPlacement {
+  const a = clip.animations;
+  const scale = a?.scale
+    ? clampRenderScale(interpolateKeyframes(a.scale.keyframes, localT))
+    : 1;
+  const rotationDeg = a?.rotation
+    ? interpolateKeyframes(a.rotation.keyframes, localT)
+    : 0;
+  const pad = Math.max(4, Math.round(clip.style.fontSize / 4));
+  const pngW = m.textW + 2 * pad;
+  const pngH = m.textH + 2 * pad;
+  const rad = (rotationDeg * Math.PI) / 180;
+  const ew = pngW * scale;
+  const eh = pngH * scale;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+  const bboxW = ew * cos + eh * sin;
+  const bboxH = ew * sin + eh * cos;
+  const xf = a?.x ? interpolateKeyframes(a.x.keyframes, localT) : 0.5;
+  const yf = a?.y ? interpolateKeyframes(a.y.keyframes, localT) : 0.5;
+  const topLeftX = xf * (frameW - bboxW);
+  const topLeftY = yf * (frameH - bboxH);
+  return {
+    scale,
+    rotationDeg,
+    bboxW,
+    bboxH,
+    topLeftX,
+    topLeftY,
+    centerX: topLeftX + bboxW / 2,
+    centerY: topLeftY + bboxH / 2,
+  };
 }
 
 /**
@@ -556,9 +668,31 @@ export function textClipVisual(
   // Batch G (R1-070): tiến trình outro trong d giây cuối clip.
   const exitP = (d: number) => clamp01(Math.max(0, (localT - (clip.duration - d)) / d));
 
+  // 0. P1 (Phase 7): scale/rotation keyframes — render đi nhánh PNG SR
+  //    (bỏ qua textfx animation, chỉ còn opacity keyframes + x/y overlay).
+  //    Typewriter ngoại lệ: render dùng ASS, SR bị bỏ qua (validator cảnh
+  //    báo) nên typewriter KHÔNG vào nhánh này.
+  const a = clip.animations;
+  if (a && (a.scale || a.rotation) && st.animation !== "typewriter") {
+    const pl = textSrPlacement(clip, localT, frameW, frameH, m);
+    const srAlpha = a.opacity
+      ? interpolateKeyframes(a.opacity.keyframes, localT)
+      : 1;
+    return {
+      cx: pl.centerX,
+      cy: pl.centerY,
+      alpha: clamp01(srAlpha),
+      revealChars: null,
+      sr: true,
+      scale: pl.scale,
+      rotationDeg: pl.rotationDeg,
+      bboxW: pl.bboxW,
+      bboxH: pl.bboxH,
+    };
+  }
+
   // 1. Keyframes ưu tiên hơn mọi animation (giống render.js).
   //    drawtext: x = (w-text_w)*interp — đây là MÉP TRÁI; đổi sang tâm để vẽ canvas.
-  const a = clip.animations;
   if (a && (a.x || a.y || a.opacity)) {
     const xr = a.x ? interpolateKeyframes(a.x.keyframes, localT) : (st.x ?? 0.5);
     const yr = a.y ? interpolateKeyframes(a.y.keyframes, localT) : (st.y ?? 0.5);
@@ -568,6 +702,7 @@ export function textClipVisual(
       cy: (frameH - m.textH) * yr + m.textH / 2,
       alpha: clamp01(alpha),
       revealChars: null,
+      sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null,
     };
   }
 
@@ -581,6 +716,7 @@ export function textClipVisual(
       cy: frameH * (st.y ?? 0.5),
       alpha: 1,
       revealChars: Math.max(0, shown),
+      sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null,
     };
   }
 
@@ -592,24 +728,24 @@ export function textClipVisual(
   switch (st.animation) {
     case "fadeUp": {
       const k = p(0.6);
-      return { cx: cx0, cy: cy0 - 30 * (1 - k), alpha: k, revealChars: null };
+      return { cx: cx0, cy: cy0 - 30 * (1 - k), alpha: k, revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     }
     case "fadeIn":
-      return { cx: cx0, cy: cy0, alpha: p(0.8), revealChars: null };
+      return { cx: cx0, cy: cy0, alpha: p(0.8), revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     case "slideInLeft": {
       const q = p(0.7);
       const left = xt - (1 - q) * (xt + m.textW);
-      return { cx: left + m.textW / 2, cy: cy0, alpha: q, revealChars: null };
+      return { cx: left + m.textW / 2, cy: cy0, alpha: q, revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     }
     case "slideInRight": {
       const q = p(0.7);
       const left = xt + (1 - q) * (frameW - xt);
-      return { cx: left + m.textW / 2, cy: cy0, alpha: q, revealChars: null };
+      return { cx: left + m.textW / 2, cy: cy0, alpha: q, revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     }
     case "slideUp": {
       const q = p(0.7);
       const top = yt + (1 - q) * (frameH - yt);
-      return { cx: cx0, cy: top + m.textH / 2, alpha: q, revealChars: null };
+      return { cx: cx0, cy: top + m.textH / 2, alpha: q, revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     }
     case "bounce": {
       const q = p(1.0);
@@ -619,54 +755,55 @@ export function textClipVisual(
         cy: cy0 - 140 * decay + 40 * decay * Math.abs(Math.sin(q * 2 * Math.PI)),
         alpha: p(0.3),
         revealChars: null,
+        sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null,
       };
     }
     // ---- Batch G (R1-070): 10 animation mới — mirror textfx.js ----
     case "slideInDown": {
       const k = p(0.7);
       const top = yt - (1 - k) * (yt + m.textH);
-      return { cx: cx0, cy: top + m.textH / 2, alpha: k, revealChars: null };
+      return { cx: cx0, cy: top + m.textH / 2, alpha: k, revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     }
     case "popIn": {
       // Giả lập pop (không scale thật — xem TEXTFX_LIMITS.md §1).
       const k = p(0.5);
       const decay = (1 - k) * (1 - k);
-      return { cx: cx0, cy: cy0 - 24 * decay, alpha: Math.min(1, localT / 0.25), revealChars: null };
+      return { cx: cx0, cy: cy0 - 24 * decay, alpha: Math.min(1, localT / 0.25), revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     }
     case "fadeOut": {
       const k = exitP(0.8);
-      return { cx: cx0, cy: cy0, alpha: 1 - k, revealChars: null };
+      return { cx: cx0, cy: cy0, alpha: 1 - k, revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     }
     case "fadeOutUp": {
       const k = exitP(0.8);
-      return { cx: cx0, cy: cy0 - 30 * k, alpha: 1 - k, revealChars: null };
+      return { cx: cx0, cy: cy0 - 30 * k, alpha: 1 - k, revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     }
     case "slideOutRight": {
       const k = exitP(0.7);
       const left = xt + k * (frameW - xt);
-      return { cx: left + m.textW / 2, cy: cy0, alpha: 1 - k, revealChars: null };
+      return { cx: left + m.textW / 2, cy: cy0, alpha: 1 - k, revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     }
     case "slideOutDown": {
       const k = exitP(0.7);
       const top = yt + k * (frameH - yt);
-      return { cx: cx0, cy: top + m.textH / 2, alpha: 1 - k, revealChars: null };
+      return { cx: cx0, cy: top + m.textH / 2, alpha: 1 - k, revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     }
     case "wave":
       // Wave cả dòng chữ (không từng ký tự — xem TEXTFX_LIMITS.md §3).
-      return { cx: cx0, cy: cy0 + 12 * Math.sin((localT * 2 * Math.PI) / 1.2), alpha: 1, revealChars: null };
+      return { cx: cx0, cy: cy0 + 12 * Math.sin((localT * 2 * Math.PI) / 1.2), alpha: 1, revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     case "blink":
-      return { cx: cx0, cy: cy0, alpha: localT % 1 < 0.5 ? 1 : 0.15, revealChars: null };
+      return { cx: cx0, cy: cy0, alpha: localT % 1 < 0.5 ? 1 : 0.15, revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     case "shake": {
       const decay = Math.max(0, 1 - localT / 0.5);
-      return { cx: cx0 + 10 * Math.sin(localT * 40) * decay, cy: cy0, alpha: 1, revealChars: null };
+      return { cx: cx0 + 10 * Math.sin(localT * 40) * decay, cy: cy0, alpha: 1, revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     }
     case "fadeInOut": {
       const pin = p(0.5);
       const pout = exitP(0.5);
-      return { cx: cx0, cy: cy0, alpha: Math.min(pin, 1 - pout), revealChars: null };
+      return { cx: cx0, cy: cy0, alpha: Math.min(pin, 1 - pout), revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
     }
     default:
-      return { cx: cx0, cy: cy0, alpha: 1, revealChars: null };
+      return { cx: cx0, cy: cy0, alpha: 1, revealChars: null, sr: false, scale: 1, rotationDeg: 0, bboxW: null, bboxH: null };
   }
 }
 

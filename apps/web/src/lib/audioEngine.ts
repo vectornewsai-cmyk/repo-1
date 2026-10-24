@@ -2,8 +2,8 @@
  * audioEngine.ts — Web Audio graph cho preview (R1-063, mở rộng R1-076).
  *
  * Mục tiêu: "nghe đúng những gì sẽ xuất" — preview audio phải khớp render worker
- * ở các tham số: volume, fadeIn/fadeOut, volumeKeyframes, track muted, speed,
- * và (R1-076) audio effects: bass/treble/compressor.
+ * ở các tham số: volume, fadeIn/fadeOut (+ đường cong fade P3), volumeKeyframes,
+ * track muted, track volume (P3), speed, và (R1-076) audio effects: bass/treble/compressor.
  *
  * Kiến trúc:
  *   HTMLMediaElement (từ MediaPool, gồm cả <video> cho audio kế thừa)
@@ -24,7 +24,7 @@
  * Fallback trung thực: nếu Web Audio không khả dụng (trình duyệt chặn,
  * AudioContext chưa được mở), update() gán el.volume trực tiếp như code cũ.
  */
-import type { KeyframedValue } from "@repo-1/video-spec";
+import type { KeyframedValue, FadeCurve } from "@repo-1/video-spec";
 import { interpolateKeyframes } from "@repo-1/video-spec";
 
 function clamp(v: number, min: number, max: number): number {
@@ -36,21 +36,34 @@ export interface VolumeEnvelopeInput {
   volume?: number;
   fadeIn?: number;
   fadeOut?: number;
+  fadeInCurve?: FadeCurve;
+  fadeOutCurve?: FadeCurve;
   duration: number;
   volumeKeyframes?: KeyframedValue;
 }
 
+/** Hệ số fade tại tiến trình p (mirror audiomix.js fadeCurveFactor). */
+export function fadeCurveFactor(curve: FadeCurve, p: number): number {
+  const c = clamp(p, 0, 1);
+  if (curve === "ease-in") return c * c;
+  if (curve === "ease-out") return 1 - (1 - c) * (1 - c);
+  if (curve === "sine") return Math.sin((c * Math.PI) / 2);
+  return c; // linear
+}
+
 /**
- * Tính gain mục tiêu 0..1 cho 1 clip audio tại `elapsed` giây (tính từ đầu clip).
+ * Tính gain mục tiêu cho 1 clip audio tại `elapsed` giây (tính từ đầu clip).
  *
- * Thứ tự khớp render worker (server/render/src/render.js):
- *   volume → afade in → afade out → (track muted ? 0 : 1)
- * volumeKeyframes (nếu có) GHI ĐÈ volume tĩnh — ngữ nghĩa keyframes.ts.
+ * Thứ tự khớp render worker (server/render/src/render.js + audiomix.js):
+ *   (volumeKeyframes GHI ĐÈ volume tĩnh) × fadeIn(curve) × fadeOut(curve)
+ *   × trackVolume → (track muted ? 0 : gain)
+ * Clamp về [0, 2] vì track.volume cho phép tới 2 (render cũng không clamp trên 1).
  */
 export function computeClipGain(
   clip: VolumeEnvelopeInput,
   elapsed: number,
   trackMuted: boolean,
+  trackVolume = 1,
 ): number {
   if (trackMuted) return 0;
   const el = clamp(elapsed, 0, Math.max(0, clip.duration));
@@ -62,16 +75,16 @@ export function computeClipGain(
     v = clip.volume ?? 1;
   }
   const fadeIn = clip.fadeIn ?? 0;
-  if (fadeIn > 0) v *= clamp(el / fadeIn, 0, 1);
+  if (fadeIn > 0) v *= fadeCurveFactor(clip.fadeInCurve ?? "linear", el / fadeIn);
   const fadeOut = clip.fadeOut ?? 0;
-  if (fadeOut > 0) v *= clamp((clip.duration - el) / fadeOut, 0, 1);
-  return clamp(v, 0, 1);
+  if (fadeOut > 0) v *= fadeCurveFactor(clip.fadeOutCurve ?? "linear", (clip.duration - el) / fadeOut);
+  return clamp(v * trackVolume, 0, 2);
 }
 
 /** 1 nguồn audio đang active tại frame hiện tại. */
 export interface ActiveAudioSource {
   el: HTMLMediaElement;
-  /** Gain mục tiêu 0..1 (đã gồm volume × fades × keyframes × mute). */
+  /** Gain mục tiêu 0..2 (đã gồm volume × fades × keyframes × trackVolume × mute). */
   gain: number;
   /** Hiệu ứng audio cho preview (R1-076) — subset của AudioEffects. */
   fx?: PreviewAudioFx;

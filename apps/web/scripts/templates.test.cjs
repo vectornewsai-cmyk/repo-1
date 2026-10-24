@@ -1,4 +1,4 @@
-// templates.test.cjs — test templateEngine.ts + 10 templates (R1-104/R1-105).
+// templates.test.cjs — test templateEngine.ts + 30 templates (R1-104/R1-105).
 "use strict";
 
 const assert = require("node:assert/strict");
@@ -17,9 +17,9 @@ function ok(name, fn) {
   }
 }
 
-console.log("== 10 templates ==");
-ok("đúng 10 templates", () => {
-  assert.equal(TEMPLATES.length, 10);
+console.log("== 30 templates ==");
+ok("đúng 30 templates", () => {
+  assert.equal(TEMPLATES.length, 30);
 });
 
 ok("mỗi template có id duy nhất + placeholders hợp lệ", () => {
@@ -122,6 +122,16 @@ ok("aspect ratio đúng từng template", () => {
     "lyric-video": [1920, 1080], "lower-third": [1920, 1080],
     "title-card": [1920, 1080], "product-showcase": [1080, 1080],
     "travel-vlog-intro": [1920, 1080], "podcast-audiogram": [1080, 1080],
+    "wedding-teaser": [1920, 1080], "food-reel": [1080, 1920],
+    "gaming-highlight": [1080, 1920], "breaking-news": [1920, 1080],
+    "quote-card": [1080, 1080], "tutorial-vertical": [1080, 1920],
+    "unboxing": [1080, 1080], "fitness-promo": [1920, 1080],
+    "lofi-visual": [1920, 1080], "album-teaser": [1080, 1080],
+    "interview-cut": [1920, 1080], "audiobook-promo": [1080, 1080],
+    "event-invite": [1080, 1920], "real-estate-tour": [1920, 1080],
+    "recipe-card": [1080, 1920], "travel-diary": [1920, 1080],
+    "birthday-card": [1080, 1080], "sale-banner": [1920, 1080],
+    "documentary-title": [1920, 1080], "outro-creator": [1920, 1080],
   };
   for (const t of TEMPLATES) {
     const [w, h] = expect[t.template.id];

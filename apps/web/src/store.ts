@@ -22,10 +22,20 @@ import {
   snapToFrameFloor,
 } from "@repo-1/video-spec";
 import {
+  CAPTION_DEFAULT_STYLE,
   CAPTION_TRACK_LABEL,
   segmentsToTextClips,
   type CaptionSegment,
 } from "./lib/captions";
+import {
+  isLinkedCaption,
+  isSourceClip,
+  linkSegmentsToClips,
+  refollowCaptionsInSpec,
+  shiftCaptionsForMovedClips,
+  splitLinkedCaptionsInSpec,
+  unlinkCaptionInSpec,
+} from "./lib/captionFollow";
 import {
   isSpeedable,
   maxTrimLeft,
@@ -234,6 +244,8 @@ interface EditorState {
   removeTrack: (trackId: string) => void;
   /** Bật/tắt mute/lock/hide trên track (R1-054). */
   toggleTrackFlag: (trackId: string, flag: TrackFlag) => void;
+  /** Phase 7 P3: sửa thuộc tính track (volume...) — 1 bước undo, tôn trọng track khóa. */
+  patchTrack: (trackId: string, patch: Partial<Track>) => void;
   addMediaToTrack: (mediaId: string, trackId: string, at: number) => void;
   addMediaAtPlayhead: (mediaId: string) => void;
   addTextClip: (trackId?: string) => void;
@@ -242,7 +254,15 @@ interface EditorState {
    * Mỗi segment → 1 text clip; toàn bộ là 1 bước undo duy nhất.
    * Trả về id của track vừa tạo.
    */
-  addCaptionTrack: (segments: CaptionSegment[], opts?: { label?: string; historyLabel?: string }) => string;
+  addCaptionTrack: (
+    segments: CaptionSegment[],
+    opts?: {
+      label?: string;
+      historyLabel?: string;
+      /** Phase 7 P6: clip nguồn để phụ đề bám theo (trim/move/split). */
+      source?: { trackId: string; clipId: string };
+    },
+  ) => string;
 
   /**
    * Cắt các khoảng lặng khỏi 1 clip video/audio (R1-084).
@@ -481,6 +501,23 @@ export const useStore = create<EditorState>()((set, get) => {
     });
   },
 
+  // Phase 7 P3: patchTrack — sửa thuộc tính track (hiện dùng cho volume).
+  patchTrack: (trackId, patch) => {
+    const st = get();
+    const track = st.spec.tracks.find((t) => t.id === trackId);
+    if (!track) return;
+    if (isTrackLocked(track)) return; // track khóa → không sửa (giống patchClip)
+    const rec = track as unknown as Record<string, unknown>;
+    const prec = patch as unknown as Record<string, unknown>;
+    const keys = Object.keys(patch);
+    if (!keys.some((k) => rec[k] !== prec[k])) return; // không đổi → bỏ qua
+    execCommand({
+      label: keys.length === 1 && keys[0] === "volume" ? "Chỉnh âm lượng track" : "Chỉnh thuộc tính track",
+      mergeKey: `patchTrack:${trackId}`,
+      apply: (spec) => withTrack(spec, trackId, (t) => ({ ...t, ...patch })),
+    });
+  },
+
   addMediaToTrack: (mediaId, trackId, at) => {
     const { spec, media } = get();
     const item = media.find((m) => m.id === mediaId);
@@ -578,7 +615,19 @@ export const useStore = create<EditorState>()((set, get) => {
   },
 
   addCaptionTrack: (segments, opts) => {
-    const clips = segmentsToTextClips(segments);
+    // Phase 7 P6: nếu caller cho biết clip nguồn, sinh câu phụ đề CÓ LINK
+    // (captionOf) để trim/move/split clip nguồn tự kéo phụ đề theo.
+    // Không có source (vd: import SRT tay) thì giữ hành vi cũ: chữ tự do.
+    let clips: TextClip[] = segmentsToTextClips(segments);
+    if (opts?.source) {
+      const srcFound = findClip(get().spec, opts.source.trackId, opts.source.clipId);
+      if (srcFound && isSourceClip(srcFound.clip)) {
+        const linked = linkSegmentsToClips(segments, srcFound.clip, CAPTION_DEFAULT_STYLE);
+        // Nếu mọi câu đều nằm ngoài clip nguồn (vd: caption file khác) thì
+        // giữ hành vi cũ thay vì tạo track rỗng.
+        if (linked.length > 0) clips = linked;
+      }
+    }
     const id = nextTrackId("text");
     const count = get().spec.tracks.filter((t) => t.kind === "text").length + 1;
     // R1-080: track dịch có label riêng (vd: "Phụ đề (EN)"); tránh trùng label.
@@ -635,10 +684,19 @@ export const useStore = create<EditorState>()((set, get) => {
       label: "Di chuyển clip",
       // Gộp theo thời gian để phòng khi caller quên begin/endHistoryGroup.
       mergeKey: `move:${trackId}:${clipId}`,
-      apply: (spec) => withTrack(spec, trackId, (t) => ({
-        ...t,
-        clips: t.clips.map((c) => (c.id === clipId ? { ...c, start } : c)),
-      })),
+      apply: (spec) => {
+        const moved = withTrack(spec, trackId, (t) => ({
+          ...t,
+          clips: t.clips.map((c) => (c.id === clipId ? { ...c, start } : c)),
+        }));
+        const movedClip = findClip(moved, trackId, clipId)?.clip;
+        if (!movedClip) return moved;
+        // Phase 7 P6 (caption follow): user tự kéo chính câu phụ đề → hủy
+        // link, câu thành chữ tự do; kéo clip nguồn → phụ đề bám theo.
+        if (isLinkedCaption(movedClip)) return unlinkCaptionInSpec(moved, clipId);
+        if (isSourceClip(movedClip)) return refollowCaptionsInSpec(moved, movedClip);
+        return moved;
+      },
     });
   },
 
@@ -654,7 +712,21 @@ export const useStore = create<EditorState>()((set, get) => {
     execCommand({
       label: allowed.length > 1 ? `Di chuyển ${allowed.length} clip` : "Di chuyển clip",
       mergeKey: `movesel:${allowed.map((m) => m.clipId).sort().join(",")}`,
-      apply: (s) => moveClipsBy(s, allowed, dxSec, (t) => snapToFrame(t, fps)),
+      apply: (s) => {
+        let out = moveClipsBy(s, allowed, dxSec, (t) => snapToFrame(t, fps));
+        // Phase 7 P6 (caption follow): clip được kéo trực tiếp mà là câu
+        // phụ đề → hủy link trước; sau đó câu bám theo các clip nguồn vừa
+        // kéo mới được tính lại (thứ tự này tránh kéo lại câu vừa hủy link).
+        for (const m of allowed) {
+          const c = findClip(out, m.trackId, m.clipId)?.clip;
+          if (c && isLinkedCaption(c)) out = unlinkCaptionInSpec(out, m.clipId);
+        }
+        for (const m of allowed) {
+          const c = findClip(out, m.trackId, m.clipId)?.clip;
+          if (c && isSourceClip(c)) out = refollowCaptionsInSpec(out, c);
+        }
+        return out;
+      },
     });
   },
 
@@ -688,9 +760,18 @@ export const useStore = create<EditorState>()((set, get) => {
       execCommand({
         label: "Cắt clip",
         mergeKey: `trim:${trackId}:${clipId}`,
-        apply: (spec) => withTrack(spec, trackId, (t) => ({
-          ...t, clips: t.clips.map((c) => (c.id === clipId ? patchOne(c, patch) : c)),
-        })),
+        apply: (spec) => {
+          const trimmed = withTrack(spec, trackId, (t) => ({
+            ...t, clips: t.clips.map((c) => (c.id === clipId ? patchOne(c, patch) : c)),
+          }));
+          const tc = findClip(trimmed, trackId, clipId)?.clip;
+          if (!tc) return trimmed;
+          // Phase 7 P6 (caption follow): trim trực tiếp câu phụ đề → hủy
+          // link; trim clip nguồn → phụ đề bám theo hình học mới.
+          if (isLinkedCaption(tc)) return unlinkCaptionInSpec(trimmed, clipId);
+          if (isSourceClip(tc)) return refollowCaptionsInSpec(trimmed, tc);
+          return trimmed;
+        },
       });
     } else {
       let newDur = Math.max(0.2, clip.duration + deltaSec);
@@ -725,16 +806,31 @@ export const useStore = create<EditorState>()((set, get) => {
             const foundNow = findClip(spec, trackId, clipId);
             if (!foundNow) return spec;
             const r = rippleTrimRight(spec, trackId, clipId, patchOne(foundNow.clip, patch));
-            return r ? r.spec : spec;
+            if (!r) return spec;
+            // Phase 7 P6: câu của clip bị trim tính lại theo hình học mới;
+            // câu của các clip bị dồn/đẩy chỉ dịch theo delta start.
+            let out = r.spec;
+            const tc = findClip(out, trackId, clipId)?.clip;
+            if (tc && isSourceClip(tc)) out = refollowCaptionsInSpec(out, tc);
+            else if (tc && isLinkedCaption(tc)) out = unlinkCaptionInSpec(out, clipId);
+            return shiftCaptionsForMovedClips(spec, out, new Set([clipId]));
           },
         });
       } else {
         execCommand({
           label: "Cắt clip",
           mergeKey: `trim:${trackId}:${clipId}`,
-          apply: (spec) => withTrack(spec, trackId, (t) => ({
-            ...t, clips: t.clips.map((c) => (c.id === clipId ? patchOne(c, patch) : c)),
-          })),
+          apply: (spec) => {
+            const trimmed = withTrack(spec, trackId, (t) => ({
+              ...t, clips: t.clips.map((c) => (c.id === clipId ? patchOne(c, patch) : c)),
+            }));
+            const tc = findClip(trimmed, trackId, clipId)?.clip;
+            if (!tc) return trimmed;
+            // Phase 7 P6 (caption follow) — như mép trái.
+            if (isLinkedCaption(tc)) return unlinkCaptionInSpec(trimmed, clipId);
+            if (isSourceClip(tc)) return refollowCaptionsInSpec(trimmed, tc);
+            return trimmed;
+          },
         });
       }
     }
@@ -758,10 +854,27 @@ export const useStore = create<EditorState>()((set, get) => {
       label,
       // Gộp các lần kéo slider liên tiếp thành 1 entry.
       mergeKey: `patch:${trackId}:${clipId}`,
-      apply: (spec) => withTrack(spec, trackId, (t) => ({
-        ...t,
-        clips: t.clips.map((c) => (c.id === clipId ? patchOne(c, patch) : c)),
-      })),
+      apply: (spec) => {
+        const patched = withTrack(spec, trackId, (t) => ({
+          ...t,
+          clips: t.clips.map((c) => (c.id === clipId ? patchOne(c, patch) : c)),
+        }));
+        const pc = findClip(patched, trackId, clipId)?.clip;
+        if (!pc) return patched;
+        // Phase 7 P6 (caption follow): đổi speed/reverse của clip nguồn →
+        // phụ đề co/giãn/đảo theo; sửa start/duration của chính câu phụ đề
+        // qua Inspector → hủy link (user tự định vị câu).
+        if (isSourceClip(pc) && ("speed" in patch || "reverse" in patch)) {
+          return refollowCaptionsInSpec(patched, pc);
+        }
+        if (
+          isLinkedCaption(pc) &&
+          ("start" in patch || "duration" in patch)
+        ) {
+          return unlinkCaptionInSpec(patched, clipId);
+        }
+        return patched;
+      },
     });
   },
 
@@ -820,10 +933,25 @@ export const useStore = create<EditorState>()((set, get) => {
     execCommand(
       {
         label: "Tách clip",
-        apply: (spec) => withTrack(spec, track.id, (tr) => ({
-          ...tr,
-          clips: [...tr.clips.filter((c) => c.id !== clip.id), left, right],
-        })),
+        apply: (spec) => {
+          const split = withTrack(spec, track.id, (tr) => ({
+            ...tr,
+            clips: [...tr.clips.filter((c) => c.id !== clip.id), left, right],
+          }));
+          // Phase 7 P6 (caption follow): tách clip nguồn → câu vắt qua
+          // điểm cắt tách thành 2 theo từng nửa; tách trực tiếp câu phụ đề
+          // → 2 nửa đều hủy link (user tự chia câu).
+          if (isSourceClip(left) && isSourceClip(right)) {
+            return splitLinkedCaptionsInSpec(split, clip.id, [left, right]);
+          }
+          if (isLinkedCaption(clip)) {
+            return unlinkCaptionInSpec(
+              unlinkCaptionInSpec(split, left.id),
+              right.id,
+            );
+          }
+          return split;
+        },
       },
       [{ trackId: track.id, clipId: right.id }],
     );
@@ -844,10 +972,10 @@ export const useStore = create<EditorState>()((set, get) => {
     let applied = 0;
     execCommand({
       label: `Tách cảnh (${sorted.length} điểm)`,
-      apply: (spec) => withTrack(spec, trackId, (tr) => {
-        const clip = tr.clips.find((c) => c.id === clipId);
-        if (!clip) return tr;
-        let pieces: Clip[] = [clip];
+      apply: (spec) => {
+        const orig = findClip(spec, trackId, clipId)?.clip;
+        if (!orig) return spec;
+        let pieces: Clip[] = [orig];
         for (const t of sorted) {
           let done = false;
           const next: Clip[] = [];
@@ -865,12 +993,28 @@ export const useStore = create<EditorState>()((set, get) => {
           }
           pieces = next;
         }
-        if (applied === 0) return tr;
-        return {
+        if (applied === 0) return spec;
+        const replaced = withTrack(spec, trackId, (tr) => ({
           ...tr,
           clips: [...tr.clips.filter((c) => c.id !== clipId), ...pieces],
-        };
-      }),
+        }));
+        // Phase 7 P6 (caption follow): tách clip nguồn tại nhiều điểm →
+        // câu vắt qua nhiều mảnh tách theo từng mảnh; tách câu phụ đề →
+        // mọi mảnh hủy link.
+        if (pieces.every((p) => isSourceClip(p))) {
+          return splitLinkedCaptionsInSpec(
+            replaced,
+            clipId,
+            pieces as (VideoClip | AudioClip)[],
+          );
+        }
+        if (isLinkedCaption(orig)) {
+          let out = replaced;
+          for (const p of pieces) out = unlinkCaptionInSpec(out, p.id);
+          return out;
+        }
+        return replaced;
+      },
     });
     return applied;
   },
@@ -938,7 +1082,9 @@ export const useStore = create<EditorState>()((set, get) => {
             const r = rippleDelete(cur, x.trackId, x.clipId);
             if (r) cur = r.spec;
           }
-          return cur;
+          // Phase 7 P6: câu bám theo các clip bị dồn dịch theo delta start;
+          // câu của clip vừa bị xoá thành mồ côi (đứng yên, không bị xoá).
+          return shiftCaptionsForMovedClips(s, cur);
         },
       }, []);
       return;
@@ -963,7 +1109,8 @@ export const useStore = create<EditorState>()((set, get) => {
         label: "Xoá clip (ripple)",
         apply: (s) => {
           const r = rippleDelete(s, trackId, clipId);
-          return r ? r.spec : s;
+          // Phase 7 P6: như deleteSelection ripple — dịch câu theo clip bị dồn.
+          return r ? shiftCaptionsForMovedClips(s, r.spec) : s;
         },
       },
       st.selection.filter((x) => x.clipId !== clipId),

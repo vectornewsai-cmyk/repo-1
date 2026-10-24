@@ -19,6 +19,7 @@ import { EffectPanel } from "./components/effects";
 import { StickerPanel } from "./components/sticker";
 import { AudioFxPanel } from "./components/audiofx";
 import { SceneModal } from "./components/SceneModal";
+import { MaskPanel } from "./components/mask";
 import { FontPicker } from "./components/FontPicker";
 
 function NumField({
@@ -359,6 +360,10 @@ export function Inspector() {
           <Section title="🎞️ Keyframe animation">
             <KeyframePanel />
           </Section>
+          {/* Phase 7 P4: mask cho clip video */}
+          <Section title="🎭 Mask">
+            <MaskPanel />
+          </Section>
           <Section title="🎬 Tách cảnh">
             <button onClick={() => setSceneOpen(true)}>
               🔍 Tự động tách cảnh…
@@ -388,6 +393,33 @@ export function Inspector() {
             <NumField label="Mờ vào (s)" value={clip.fadeIn ?? 0} onChange={(v) => patch({ fadeIn: Math.max(0, v) })} />
             <NumField label="Mờ ra (s)" value={clip.fadeOut ?? 0} onChange={(v) => patch({ fadeOut: Math.max(0, v) })} />
           </div>
+          {/* Phase 7 P3: đường cong fade (mặc định linear = afade cũ). */}
+          <div className="field-row">
+            <label className="field">
+              <span>Đường cong mờ vào</span>
+              <select
+                value={clip.fadeInCurve ?? "linear"}
+                onChange={(e) => patch({ fadeInCurve: e.target.value as "linear" | "ease-in" | "ease-out" | "sine" })}
+              >
+                <option value="linear">Tuyến tính</option>
+                <option value="ease-in">Ease-in (chậm → nhanh)</option>
+                <option value="ease-out">Ease-out (nhanh → chậm)</option>
+                <option value="sine">Sine (mượt)</option>
+              </select>
+            </label>
+            <label className="field">
+              <span>Đường cong mờ ra</span>
+              <select
+                value={clip.fadeOutCurve ?? "linear"}
+                onChange={(e) => patch({ fadeOutCurve: e.target.value as "linear" | "ease-in" | "ease-out" | "sine" })}
+              >
+                <option value="linear">Tuyến tính</option>
+                <option value="ease-in">Ease-in (chậm → nhanh)</option>
+                <option value="ease-out">Ease-out (nhanh → chậm)</option>
+                <option value="sine">Sine (mượt)</option>
+              </select>
+            </label>
+          </div>
           <Section title="🎚️ Hiệu ứng âm thanh">
             <AudioFxPanel />
           </Section>
@@ -402,6 +434,29 @@ export function Inspector() {
           <div className="panel-head" style={{ marginTop: 12 }}>🌟 Sticker</div>
           <StickerPanel />
         </>
+      )}
+
+      {/* Phase 7 P4: mask cho clip ảnh */}
+      {clip.kind === "image" && (
+        <Section title="🎭 Mask">
+          <MaskPanel />
+        </Section>
+      )}
+
+      {/* Phase 7 P3: âm lượng track — nhân vào mọi clip audio trên track
+          (và tiếng kế thừa của clip video). 0 = câm track, tối đa 200%. */}
+      {(clip.kind === "audio" || clip.kind === "video") && (
+        <Section title="🔊 Âm lượng track">
+          <label className="field">
+            <span>Track “{track.label ?? track.kind}”: {Math.round((track.volume ?? 1) * 100)}%</span>
+            <input
+              type="range" min={0} max={200}
+              value={Math.round((track.volume ?? 1) * 100)}
+              onChange={(e) => st.patchTrack(track.id, { volume: Number(e.target.value) / 100 })}
+            />
+          </label>
+          <p className="tips">Nhân với âm lượng từng clip. Chuẩn hoá loudness nằm ở panel Xuất MP4.</p>
+        </Section>
       )}
 
       <Section title="⏱️ Thời gian">

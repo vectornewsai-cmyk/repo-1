@@ -5,7 +5,7 @@
  * Phase P0-01: thêm xuất MP4 thật qua bridge server (server/bridge/).
  * Bridge nhận spec + file media, chạy render worker, trả về MP4.
  */
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { VideoSpec } from "@repo-1/video-spec";
 import { isVideoSpec, projectDuration, SPEC_VERSION } from "@repo-1/video-spec";
 import { useStore } from "./store";
@@ -30,6 +30,28 @@ const BRIDGE_URL =
 
 type RenderStatus = "idle" | "uploading" | "rendering" | "done" | "error" | "cancelled";
 
+/** 1 điểm trajectory từ reframe.py --analyze-only (tọa độ pixel nguồn). */
+interface TrajPoint {
+  frame: number;
+  t: number;
+  x0: number;
+  y0: number;
+  w: number;
+  h: number;
+  x_center_norm: number;
+}
+
+/** Summary JSON của /api/reframe/analyze (Phase 7 P6). */
+interface TrajSummary {
+  aspect: string;
+  source_size: [number, number];
+  duration_sec: number;
+  detections: { face: number; motion: number; none: number };
+  crop_window: [number, number];
+  trajectory: TrajPoint[];
+  trajectory_points: number;
+}
+
 /** R1-083/R1-085: Auto-reframe — crop video theo chủ thể qua bridge /api/reframe. */
 function ReframeSection({ media, bridgeUrl }: { media: import("./media").MediaItem[]; bridgeUrl: string }) {
   const videos = media.filter((m) => m.kind === "video" && m.file);
@@ -37,6 +59,93 @@ function ReframeSection({ media, bridgeUrl }: { media: import("./media").MediaIt
   const [aspect, setAspect] = useState<string>("9:16");
   const [status, setStatus] = useState<"idle" | "working" | "done" | "error">("idle");
   const [message, setMessage] = useState<string>("");
+  // Phase 7 P6: trajectory preview — xem trước quỹ đạo crop trước khi render.
+  const [traj, setTraj] = useState<TrajSummary | null>(null);
+  const [trajStatus, setTrajStatus] = useState<"idle" | "working" | "error">("idle");
+  const [trajError, setTrajError] = useState<string>("");
+  const trajCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const previewTrajectory = async () => {
+    const item = videos.find((m) => m.name === videoName);
+    if (!item?.file || trajStatus === "working") return;
+    setTrajStatus("working");
+    setTrajError("");
+    try {
+      const form = new FormData();
+      form.append("media", item.file, item.file.name);
+      form.append("aspect", aspect);
+      const res = await fetch(`${bridgeUrl}/api/reframe/analyze`, { method: "POST", body: form });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Bridge trả lỗi ${res.status}`);
+      }
+      setTraj((await res.json()) as TrajSummary);
+      setTrajStatus("idle");
+    } catch (e) {
+      setTrajStatus("error");
+      setTrajError(e instanceof Error ? e.message :
+        `Không kết nối được bridge server (${bridgeUrl}).`);
+    }
+  };
+
+  // Vẽ overlay quỹ đạo: khung nguồn + các crop rect mờ + đường tâm crop.
+  useEffect(() => {
+    const canvas = trajCanvasRef.current;
+    if (!canvas || !traj) return;
+    const [W, H] = traj.source_size;
+    const cw = 480;
+    const ch = Math.max(120, Math.round((480 * H) / W));
+    canvas.width = cw;
+    canvas.height = ch;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const sx = (x: number) => (x * cw) / W;
+    const sy = (y: number) => (y * ch) / H;
+    ctx.fillStyle = "#141414";
+    ctx.fillRect(0, 0, cw, ch);
+    ctx.strokeStyle = "#666";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5, 0.5, cw - 1, ch - 1);
+    const pts = traj.trajectory;
+    if (pts.length === 0) return;
+    // Crop rect mờ (lấy mẫu tối đa 48 rect để không rối).
+    const step = Math.max(1, Math.floor(pts.length / 48));
+    ctx.fillStyle = "rgba(76, 195, 138, 0.07)";
+    ctx.strokeStyle = "rgba(76, 195, 138, 0.35)";
+    for (let i = 0; i < pts.length; i += step) {
+      const p = pts[i];
+      ctx.fillRect(sx(p.x0), sy(p.y0), sx(p.w), sy(p.h));
+      ctx.strokeRect(sx(p.x0), sy(p.y0), sx(p.w), sy(p.h));
+    }
+    // Đường tâm crop (xanh lá) + điểm đầu/cuối.
+    ctx.strokeStyle = "#4cc38a";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    pts.forEach((p, i) => {
+      const x = sx(p.x0 + p.w / 2);
+      const y = sy(p.y0 + p.h / 2);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    const dot = (p: TrajPoint, color: string) => {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(sx(p.x0 + p.w / 2), sy(p.y0 + p.h / 2), 5, 0, Math.PI * 2);
+      ctx.fill();
+    };
+    dot(pts[0], "#30a46c");
+    dot(pts[pts.length - 1], "#e5484d");
+    // Rect đầu/cuối đậm để thấy rõ window bắt đầu/kết thúc ở đâu.
+    ctx.strokeStyle = "#30a46c";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(sx(pts[0].x0), sy(pts[0].y0), sx(pts[0].w), sy(pts[0].h));
+    ctx.strokeStyle = "#e5484d";
+    ctx.strokeRect(
+      sx(pts[pts.length - 1].x0), sy(pts[pts.length - 1].y0),
+      sx(pts[pts.length - 1].w), sy(pts[pts.length - 1].h)
+    );
+  }, [traj]);
 
   const start = async () => {
     const item = videos.find((m) => m.name === videoName);
@@ -80,7 +189,7 @@ function ReframeSection({ media, bridgeUrl }: { media: import("./media").MediaIt
         <select
           id="reframe-video"
           value={videoName}
-          onChange={(e) => setVideoName(e.target.value)}
+          onChange={(e) => { setVideoName(e.target.value); setTraj(null); }}
           disabled={status === "working"}
         >
           {videos.map((v) => (
@@ -91,18 +200,38 @@ function ReframeSection({ media, bridgeUrl }: { media: import("./media").MediaIt
         <select
           id="reframe-aspect"
           value={aspect}
-          onChange={(e) => setAspect(e.target.value)}
+          onChange={(e) => { setAspect(e.target.value); setTraj(null); }}
           disabled={status === "working"}
         >
           <option value="9:16">9:16 (TikTok/Reels)</option>
           <option value="1:1">1:1 (Instagram)</option>
           <option value="4:5">4:5 (Facebook)</option>
         </select>
+        <button onClick={previewTrajectory} disabled={trajStatus === "working" || !videoName}>
+          {trajStatus === "working" ? "⏳ Đang phân tích…" : "👁 Xem trước quỹ đạo"}
+        </button>
         <button className="primary" onClick={start} disabled={status === "working" || !videoName}>
           {status === "working" ? "⏳ Đang reframe…" : "🔍 Auto-reframe"}
         </button>
       </div>
       {message && <p className="tips">{message}</p>}
+      {trajStatus === "error" && <p className="tips">❌ {trajError}</p>}
+      {traj && (
+        <div style={{ marginTop: 8 }}>
+          <canvas ref={trajCanvasRef} style={{ maxWidth: "100%", borderRadius: 4 }} />
+          <p className="tips">
+            Khung nguồn {traj.source_size[0]}×{traj.source_size[1]} — window crop{" "}
+            {traj.crop_window[0]}×{traj.crop_window[1]} ({traj.aspect}),{" "}
+            {traj.trajectory_points} điểm / {traj.duration_sec}s. Đường xanh lá là
+            tâm vùng cắt theo thời gian (● bắt đầu → ● kết thúc); các khung mờ
+            là vùng cắt tại các thời điểm mẫu. Phát hiện: mặt{" "}
+            {traj.detections.face}, chuyển động {traj.detections.motion}, không
+            thấy {traj.detections.none} mẫu.
+            {traj.crop_window[0] >= traj.source_size[0] &&
+              " Nguồn đã hẹp hơn tỉ lệ đích nên window là toàn khung hình — không có quỹ đạo di chuyển để xem."}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -167,6 +296,9 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
   // --- R1-042: export preset ---
   const [presetId, setPresetId] = useState<string>("1080p");
   const [custom, setCustom] = useState<ExportPreset>(() => defaultCustomPreset());
+  // --- Phase 7 P3: normalize loudness (tùy chọn export, áp sau amix) ---
+  const [normalize, setNormalize] = useState<"off" | "loudnorm" | "dynaudnorm">("off");
+  const [normalizeTarget, setNormalizeTarget] = useState<number>(-14);
 
   /** Preset đang có hiệu lực (custom lấy từ form tay). */
   const activePreset: ExportPreset =
@@ -259,6 +391,9 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
         crf: activePreset.crf,
         x264Preset: activePreset.x264Preset,
         audioBitrateKbps: activePreset.audioBitrateKbps,
+        // Phase 7 P3: normalize export (bridge whitelist kiểm tra lại).
+        normalize,
+        normalizeTarget,
       }));
       for (const f of files) form.append("media", f, f.name);
 
@@ -481,6 +616,37 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
               📦 Dung lượng ước tính: <b>{formatBytes(estimateSize(activePreset, dur))}</b>
               {" "}<span title="Ước tính theo công thức bitrate × thời lượng, file thật có thể chênh lệch theo nội dung video">(ước tính)</span>
             </p>
+          )}
+
+          {/* --- Phase 7 P3: Chuẩn hoá âm thanh (normalize) --- */}
+          <div className="preset-row">
+            <label htmlFor="export-normalize">Chuẩn hoá âm thanh:</label>
+            <select
+              id="export-normalize"
+              value={normalize}
+              onChange={(e) => setNormalize(e.target.value as "off" | "loudnorm" | "dynaudnorm")}
+              disabled={renderStatus === "uploading" || renderStatus === "rendering"}
+            >
+              <option value="off">Tắt (giữ nguyên âm lượng)</option>
+              <option value="loudnorm">Loudnorm — về target LUFS</option>
+              <option value="dynaudnorm">Dynaudnorm — cân bằng động</option>
+            </select>
+          </div>
+          {normalize === "loudnorm" && (
+            <div className="preset-row">
+              <label htmlFor="export-normalize-target">Target (LUFS):</label>
+              <input
+                id="export-normalize-target"
+                type="number" min={-70} max={0} step={1}
+                value={normalizeTarget}
+                onChange={(e) => setNormalizeTarget(Number(e.target.value) || -14)}
+                disabled={renderStatus === "uploading" || renderStatus === "rendering"}
+              />
+              <p className="tips preset-desc">
+                Chuẩn EBU R128: -14 LUFS, true peak -1.5 dB. Chỉ áp khi có audio;
+                project câm thì bỏ qua.
+              </p>
+            </div>
           )}
 
           {/* --- R1-083/R1-085: Auto-reframe 9:16 --- */}

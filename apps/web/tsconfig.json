@@ -30,6 +30,7 @@
   ],
   "exclude": [
     "src/lib/assetStore.test.ts",
+    "src/lib/captionFollow.test.ts",
     "src/lib/clipboard.test.ts"
   ]
 }

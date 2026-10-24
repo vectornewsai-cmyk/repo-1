@@ -49,9 +49,13 @@ Giờ đây: pause tất cả media → set `currentTime` đã snap về frame �
    frame sai), nhưng khác CapCut ở chỗ CapCut vẫn cập nhật hình khi scrub.
 5. **Audio seek "cùng lúc" ở mức JS** (`Promise.all`), không đảm bảo đồng bộ
    mẫu (sample-accurate) ở mức phần cứng — hai element có thể lệch vài ms.
-6. **Reverse playback**: khi pause/scrub, seek vẫn đúng (dùng `sourceTimeAt`);
-   khi phát, trình duyệt không phát ngược được (giới hạn đã ghi trong
-   SPEED limits, thuộc R1-062 gốc của master plan — ngoài phạm vi task này).
+6. **Reverse playback (P1 Phase 7 — đã cải thiện, xem PREVIEW_LIMITS.md
+   mục 10):** khi pause/scrub, seek vẫn đúng (dùng `sourceTimeAt`); khi
+   phát, `syncMedia` giữ element reverse ở trạng thái pause và seek từng
+   frame tới target — đúng chiều, đúng vị trí, nhưng không mượt như phát
+   xuôi (phụ thuộc mật độ keyframe); audio clip reverse bị mute khi phát.
+   Transport phát ngược toàn cục (shuttle phát ngược, khác với reverse từng
+   clip) vẫn chưa có.
 7. **Debounce 80ms**: click đơn vào timeline cũng chờ ~80ms mới seek — độ trễ
    nhỏ nhưng cảm nhận được trên máy yếu. Có thể giảm xuống nếu cần.
 8. **Chưa test trên browser thật** (nợ chung của dự án): seek dùng `seeked`

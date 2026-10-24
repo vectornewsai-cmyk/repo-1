@@ -48,13 +48,13 @@ eq(
   approx(c.dx, -106.67, 0.01, "cover dx (crop giữa)");
 }
 
-// --- 3. LUT: đủ 104 id (20 gốc + 84 harvest/gen2), id lạ → null ---
+// --- 3. LUT: đủ 154 id, id lạ → null ---
 {
   for (const id of spec.LUT_IDS) {
     const css = pe.lutCssFilter(id);
     ok(typeof css === "string" && css.length > 0, `LUT ${id} có CSS`);
   }
-  eq(spec.LUT_IDS.length, 104, "đủ 104 LUT");
+  eq(spec.LUT_IDS.length, 154, "đủ 154 LUT");
   eq(pe.lutCssFilter("khong-co"), null, "LUT lạ → null");
 }
 
@@ -339,6 +339,96 @@ eq(
     "placement: x=0 → element sát trái");
   eq(pe.videoElementPlacement(xClip, 4, 640, 360, 640, 360).topLeftX, 320,
     "placement: x=1 → element sát phải (640-320)");
+}
+
+// --- 11. P1 (Phase 7): video opacity keyframes + text SR ---
+{
+  const vbase = { kind: "video", id: "c", src: "a.mp4", start: 0, duration: 4, in: 0, out: 4 };
+  // tĩnh giữ nguyên
+  eq(pe.videoClipVisual({ ...vbase, opacity: 0.5 }, 1, 640, 360, 640, 360).opacity, 0.5,
+    "P1: opacity tĩnh 0.5 giữ nguyên");
+  // keyframes 1→0: giữa đoạn = 0.5
+  const okf = {
+    ...vbase,
+    animations: { opacity: { keyframes: [{ t: 0, v: 1, easing: "linear" }, { t: 4, v: 0, easing: "linear" }] } },
+  };
+  eq(pe.videoClipVisual(okf, 2, 640, 360, 640, 360).opacity, 0.5,
+    "P1: opacity keyframes 1→0 tại giữa = 0.5");
+  eq(pe.videoClipVisual(okf, 4, 640, 360, 640, 360).opacity, 0,
+    "P1: opacity keyframes cuối = 0");
+  // keyframes THẮNG TUYỆT ĐỐI tĩnh (khớp render K1)
+  const both = { ...vbase, opacity: 0.3, animations: okf.animations };
+  eq(pe.videoClipVisual(both, 0, 640, 360, 640, 360).opacity, 1,
+    "P1: keyframes thắng tĩnh (tĩnh 0.3, keyframes t=0 → 1)");
+  // ease-in: p=0.5 → 0.25 → 1 - 0.25 = 0.75
+  const ease = {
+    ...vbase,
+    animations: { opacity: { keyframes: [{ t: 0, v: 1, easing: "ease-in" }, { t: 4, v: 0, easing: "ease-in" }] } },
+  };
+  approx(pe.videoClipVisual(ease, 2, 640, 360, 640, 360).opacity, 0.75, 1e-9,
+    "P1: opacity ease-in p=0.5 → 0.75");
+
+  // --- text SR ---
+  const tbase = {
+    kind: "text", id: "t", start: 0, duration: 4, text: "Xin chào",
+    style: { x: 0.5, y: 0.5, fontSize: 48, fontFamily: "Inter", color: "#fff", animation: "none" },
+  };
+  const m = { textW: 200, textH: 64.8 };
+  // pad = max(4, 48/4) = 12 → PNG 224 x 88.8
+  const sr = {
+    ...tbase,
+    animations: {
+      scale: { keyframes: [{ t: 0, v: 1, easing: "linear" }, { t: 4, v: 2, easing: "linear" }] },
+      rotation: { keyframes: [{ t: 0, v: 0, easing: "linear" }, { t: 4, v: 90, easing: "linear" }] },
+    },
+  };
+  const s0 = pe.textClipVisual(sr, 0, 1280, 720, m);
+  eq(s0.sr, true, "P1: text SR flag true");
+  eq(s0.scale, 1, "P1: text SR scale t=0");
+  eq(s0.rotationDeg, 0, "P1: text SR rotation t=0");
+  approx(s0.cx, 640, 0.01, "P1: text SR căn giữa ngang khi không có x keyframes");
+  approx(s0.cy, 360, 0.01, "P1: text SR căn giữa dọc khi không có y keyframes");
+  approx(s0.bboxW, 224, 0.01, "P1: text SR bboxW t=0 (PNG 224)");
+  approx(s0.bboxH, 88.8, 0.01, "P1: text SR bboxH t=0 (PNG 88.8)");
+  const s4 = pe.textClipVisual(sr, 4, 1280, 720, m);
+  eq(s4.scale, 2, "P1: text SR scale t=4");
+  eq(s4.rotationDeg, 90, "P1: text SR rotation t=4");
+  // scale 2 → 448 x 177.6, xoay 90° → bbox hoán đổi
+  approx(s4.bboxW, 177.6, 0.01, "P1: text SR bboxW sau xoay 90°");
+  approx(s4.bboxH, 448, 0.01, "P1: text SR bboxH sau xoay 90°");
+  approx(s4.cx, 640, 0.01, "P1: text SR tâm vẫn giữa sau xoay");
+  // textSrPlacement trực tiếp: x keyframes có tác dụng khi element nhỏ hơn khung
+  // (clip này KHÔNG xoay — xoay 90° sẽ hoán đổi bbox, xem case trên)
+  const plClip = {
+    ...tbase,
+    animations: {
+      scale: { keyframes: [{ t: 0, v: 0.5, easing: "linear" }] },
+      x: { keyframes: [{ t: 0, v: 0, easing: "linear" }, { t: 4, v: 1, easing: "linear" }] },
+    },
+  };
+  const pl = pe.textSrPlacement(plClip, 4, 1280, 720, m);
+  approx(pl.bboxW, 112, 0.01, "P1: textSrPlacement bboxW scale 0.5");
+  approx(pl.topLeftX, 1280 - 112, 0.01, "P1: textSrPlacement x=1 → sát phải");
+  // SR bỏ qua style.x/y tĩnh khi không có x/y keyframes (hành vi render)
+  const srOff = { ...sr, style: { ...tbase.style, x: 0.2, y: 0.2 } };
+  const sOff = pe.textClipVisual(srOff, 0, 1280, 720, m);
+  approx(sOff.cx, 640, 0.01, "P1: text SR không x keyframes → căn giữa, bỏ qua style.x=0.2");
+  // SR + opacity keyframes → alpha nội suy
+  const srOp = {
+    ...sr,
+    animations: { ...sr.animations, opacity: { keyframes: [{ t: 0, v: 1, easing: "linear" }, { t: 4, v: 0, easing: "linear" }] } },
+  };
+  approx(pe.textClipVisual(srOp, 2, 1280, 720, m).alpha, 0.5, 1e-9,
+    "P1: text SR + opacity keyframes tại giữa = 0.5");
+  // typewriter + SR → SR bị bỏ qua (render dùng ASS)
+  const twSr = { ...sr, style: { ...tbase.style, animation: "typewriter" } };
+  eq(pe.textClipVisual(twSr, 1, 1280, 720, m).sr, false,
+    "P1: typewriter + SR → sr=false (render dùng ASS)");
+  // clip thường (không SR) giữ sr=false
+  eq(pe.textClipVisual(tbase, 1, 1280, 720, m).sr, false,
+    "P1: text thường → sr=false");
+  eq(pe.textClipVisual(tbase, 1, 1280, 720, m).scale, 1,
+    "P1: text thường → scale=1");
 }
 
 console.log(`\n✅ preview-engine: ${pass} assertions pass`);
