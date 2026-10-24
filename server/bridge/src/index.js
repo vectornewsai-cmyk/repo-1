@@ -73,6 +73,7 @@ const {
 // R1-083/R1-085: auto-reframe (OpenCV, chạy local qua reframe.py)
 const {
   runReframe,
+  analyzeReframe,
   validateAspect,
   reframeAvailable,
   REFRAME_ASPECTS,
@@ -323,10 +324,14 @@ const X264_PRESETS = [
 
 /**
  * Parse + validate field "preset" (JSON string, optional).
- * Trả về { crf, x264Preset, audioBitrate } đã sanitize, hoặc throw Error → 400.
+ * Trả về { crf, x264Preset, audioBitrate, normalize... } đã sanitize, hoặc throw Error → 400.
+ * Phase 7 P3: thêm normalize export (whitelist giống các field khác).
  */
 function parsePreset(raw) {
-  const defaults = { crf: 20, x264Preset: "medium", audioBitrate: "128k" };
+  const defaults = {
+    crf: 20, x264Preset: "medium", audioBitrate: "128k",
+    normalize: "off", normalizeTarget: -14, normalizeTp: -1.5, normalizeLra: 11,
+  };
   if (raw === undefined || raw === null || raw === "") return defaults;
   let p;
   try {
@@ -351,6 +356,30 @@ function parsePreset(raw) {
     if (!Number.isInteger(p.audioBitrateKbps) || p.audioBitrateKbps < 32 || p.audioBitrateKbps > 512)
       throw new Error("preset.audioBitrateKbps phải là số nguyên 32..512.");
     out.audioBitrate = `${p.audioBitrateKbps}k`;
+  }
+  // Phase 7 P3: normalize export — whitelist chặt như các field khác.
+  if (p.normalize !== undefined) {
+    if (typeof p.normalize !== "string" || !["off", "loudnorm", "dynaudnorm"].includes(p.normalize))
+      throw new Error("preset.normalize phải thuộc: off|loudnorm|dynaudnorm.");
+    out.normalize = p.normalize;
+  }
+  if (p.normalizeTarget !== undefined) {
+    if (typeof p.normalizeTarget !== "number" || !Number.isFinite(p.normalizeTarget) ||
+        p.normalizeTarget < -70 || p.normalizeTarget > 0)
+      throw new Error("preset.normalizeTarget phải trong -70..0.");
+    out.normalizeTarget = p.normalizeTarget;
+  }
+  if (p.normalizeTp !== undefined) {
+    if (typeof p.normalizeTp !== "number" || !Number.isFinite(p.normalizeTp) ||
+        p.normalizeTp < -9 || p.normalizeTp > 0)
+      throw new Error("preset.normalizeTp phải trong -9..0.");
+    out.normalizeTp = p.normalizeTp;
+  }
+  if (p.normalizeLra !== undefined) {
+    if (typeof p.normalizeLra !== "number" || !Number.isFinite(p.normalizeLra) ||
+        p.normalizeLra < 1 || p.normalizeLra > 20)
+      throw new Error("preset.normalizeLra phải trong 1..20.");
+    out.normalizeLra = p.normalizeLra;
   }
   return out;
 }
@@ -396,6 +425,9 @@ const service = new RenderJobService({
       "--ffprobe", FFPROBE,
       "-y",
     ];
+    // P7: asset map của job (nếu client gửi kèm) → render worker resolve "asset:".
+    const jobAssetMap = path.join(job.dir, "asset-map.json");
+    if (fs.existsSync(jobAssetMap)) args.push("--asset-map", jobAssetMap);
     // R1-042: quality params đã sanitize ở parsePreset (job recover → dùng default).
     const preset = job.preset || { crf: 20, x264Preset: "medium", audioBitrate: "128k" };
     args.push(
@@ -403,6 +435,17 @@ const service = new RenderJobService({
       "--x264-preset", preset.x264Preset,
       "--audio-bitrate", preset.audioBitrate,
     );
+    // Phase 7 P3: normalize export (chỉ push khi khác default để log gọn).
+    if (preset.normalize && preset.normalize !== "off") {
+      args.push("--normalize", preset.normalize);
+      if (preset.normalize === "loudnorm") {
+        args.push(
+          "--normalize-target", String(preset.normalizeTarget ?? -14),
+          "--normalize-tp", String(preset.normalizeTp ?? -1.5),
+          "--normalize-lra", String(preset.normalizeLra ?? 11),
+        );
+      }
+    }
     // detached: true → process group riêng, để cancel kill được cả ffmpeg con.
     // (xem killProcessTree trong jobQueue.js)
     return spawn(process.execPath, args, {
@@ -414,11 +457,14 @@ const service = new RenderJobService({
   },
 });
 
-// Phục hồi job dở dang sau restart (best-effort), rồi bật janitor dọn TTL.
+// P7: phục hồi job bền vững sau restart (job.json), rồi bật janitor dọn TTL.
 try {
   fs.mkdirSync(WORK_ROOT, { recursive: true });
   const n = service.recover(WORK_ROOT);
-  if (n > 0) console.log(`♻️  Phục hồi ${n} job dở dang từ lần chạy trước (render lại từ đầu).`);
+  const st = service.recoverStats || {};
+  if (n > 0) console.log(`♻️  Phục hồi ${n} job từ lần chạy trước: ` +
+    `${st.queued || 0} queued (render lại), ${st.interrupted || 0} interrupted, ` +
+    `${st.restored || 0} giữ nguyên trạng thái, ${st.legacy || 0} legacy.`);
 } catch (e) {
   console.error("⚠️  Không phục hồi được job cũ:", e.message);
 }
@@ -594,6 +640,29 @@ app.post("/api/render",
     });
   }
 
+  // 1a. P7: asset map optional (JSON object { assetId: file }) — map do
+  // client/export truyền kèm để render worker resolve src "asset:<id>".
+  // Sai định dạng → 400 (không đoán). Map chỉ được ghi, không được thực thi.
+  let assetMap = null;
+  if (req.body.assetMap !== undefined) {
+    try {
+      const parsed = typeof req.body.assetMap === "string"
+        ? JSON.parse(req.body.assetMap)
+        : req.body.assetMap;
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("assetMap phải là JSON object { assetId: file }.");
+      }
+      for (const [k, val] of Object.entries(parsed)) {
+        if (!k || typeof val !== "string" || !val || val.includes("\0")) {
+          throw new Error(`assetMap: giá trị của "${k}" phải là chuỗi đường dẫn khác rỗng.`);
+        }
+      }
+      assetMap = parsed;
+    } catch (e) {
+      return res.status(400).json({ error: `assetMap không hợp lệ: ${e.message}` });
+    }
+  }
+
   // 1. Parse + kiểm tra spec
   let spec;
   try {
@@ -660,10 +729,13 @@ app.post("/api/render",
     }
   }
 
-  // 4. Ghi spec.json
+  // 4. Ghi spec.json (+ asset-map.json nếu có — P7)
   const specPath = path.join(dir, "spec.json");
   try {
     fs.writeFileSync(specPath, JSON.stringify(spec));
+    if (assetMap) {
+      fs.writeFileSync(path.join(dir, "asset-map.json"), JSON.stringify(assetMap));
+    }
   } catch (e) {
     console.error(`[bridge] không ghi được spec:`, e.message);
     cleanupJobDir(dir);
@@ -846,6 +918,68 @@ app.post(
   }
 );
 
+// --- POST /api/reframe/analyze (Phase 7 P6) -------------------------------------
+// Nhận 1 file VIDEO (multipart field "media") + field "aspect".
+// Chỉ phân tích + tính trajectory (KHÔNG encode) rồi trả JSON summary của
+// reframe.py (gồm trajectory, crop_window, source_size, detections).
+// UI dùng JSON này vẽ overlay quỹ đạo lên preview trước khi user render thật.
+app.post(
+  "/api/reframe/analyze",
+  rateLimit(RATE_MAX_RENDER),
+  uploadMiddleware(upload.single("media")),
+  async (req, res) => {
+    let aspect;
+    try {
+      aspect = validateAspect(req.body.aspect);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+    const f = req.file;
+    if (!f) {
+      return res.status(400).json({ error: "Thiếu file video (field 'media')." });
+    }
+    const safe = sanitizeFilename(f.originalname);
+    if (!safe) {
+      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+    }
+    const ext = path.extname(safe).toLowerCase();
+    if (!VIDEO_EXTS.has(ext)) {
+      return res.status(400).json({
+        error: `Reframe cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
+      });
+    }
+    const magicErr = checkMagicBytes(safe, readUploadHead(f));
+    if (magicErr) return res.status(400).json({ error: magicErr });
+    const avail = reframeAvailable();
+    if (!avail.available) {
+      return res.status(503).json({ error: `Reframe chưa sẵn sàng: ${avail.reason}` });
+    }
+
+    const dir = path.join(
+      WORK_ROOT,
+      `reframe-an-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+    );
+    const inputPath = path.join(dir, safe);
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      moveUploadTo(f, inputPath);
+    } catch (e) {
+      console.error(`[bridge] không lưu được file reframe/analyze:`, e.message);
+      cleanupJobDir(dir);
+      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+    }
+
+    try {
+      const data = await analyzeReframe({ inputPath, aspect });
+      cleanupJobDir(dir);
+      return res.json(data);
+    } catch (e) {
+      cleanupJobDir(dir);
+      return res.status(500).json({ error: e.message || "Phân tích reframe thất bại." });
+    }
+  }
+);
+
 // --- POST /api/bgremove (R1-084) ------------------------------------------------
 // Nhận 1 file VIDEO (multipart field "media") + field "session" (optional).
 // Chạy bgremove.py (rembg MIT + birefnet-general MIT, 100% local) rồi trả về
@@ -900,8 +1034,18 @@ app.post(
     }
 
     try {
-      await runBgremove({ inputPath, outputPath, session });
-      console.log(`[bridge] bgremove xong: ${outName} (session=${session})`);
+      // Phase 7 P6: runBgremove tự fallback u2net khi birefnet chết — báo
+      // cho UI qua header để user thấy rõ session thực sự đã dùng.
+      const result = await runBgremove({ inputPath, outputPath, session });
+      console.log(
+        `[bridge] bgremove xong: ${outName} (yêu cầu=${session}, ` +
+        `thực dùng=${result.sessionUsed}${result.fallbackFrom ? `, fallback từ ${result.fallbackFrom}` : ""})`
+      );
+      res.setHeader("X-Bgremove-Session-Used", result.sessionUsed || session);
+      if (result.fallbackFrom) {
+        res.setHeader("X-Bgremove-Fallback-From", result.fallbackFrom);
+        res.setHeader("X-Bgremove-Fallback-Reason", encodeURIComponent(result.fallbackReason || ""));
+      }
       res.download(outputPath, outName, (err) => {
         if (err) console.error(`[bridge] lỗi download bgremove:`, err.message);
         cleanupJobDir(dir);

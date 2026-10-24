@@ -28,6 +28,12 @@ const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000;
 // Session bị CẤM (non-commercial) — phải khớp với FORBIDDEN_SESSIONS trong bgremove.py
 const FORBIDDEN_SESSIONS = new Set(["bria-rmbg", "rmbg-2.0", "bria"]);
 const DEFAULT_SESSION = "birefnet-general";
+// Phase 7 P6: session nặng RAM — kernel OOM-kill (SIGKILL) không bắt được
+// trong tiến trình Python, nên bridge retry 1 lần bằng u2net khi lần chạy
+// birefnet chết (exit != 0 hoặc bị signal). Timeout thì KHÔNG retry
+// (chậm chứ không phải OOM — retry chỉ tốn thêm thời gian).
+const BIREFNET_SESSIONS = new Set(["birefnet-general", "birefnet-general-lite"]);
+const FALLBACK_SESSION = "u2net";
 
 function bgremoveConfigFromEnv(env = process.env) {
   const t = parseInt(env.BGREMOVE_TIMEOUT_MS || "", 10);
@@ -40,9 +46,10 @@ function bgremoveConfigFromEnv(env = process.env) {
   };
 }
 
-/** Validate session; throw → endpoint trả 400. */
+/** Validate session; throw → endpoint trả 400. "auto" = thử birefnet rồi fallback u2net. */
 function validateSession(raw) {
   const s = String(raw ?? DEFAULT_SESSION).trim().toLowerCase() || DEFAULT_SESSION;
+  if (s === "auto") return "auto";
   if (FORBIDDEN_SESSIONS.has(s)) {
     throw new Error(
       `Session "${raw}" BỊ CẤM: weights non-commercial, không được dùng. ` +
@@ -55,6 +62,16 @@ function validateSession(raw) {
   return s;
 }
 
+/** Đọc marker machine-readable mà bgremove.py in ra stderr. */
+function parseSessionMarkers(stderrText) {
+  const used = stderrText.match(/\[bgremove\]\s+session_used=([a-z0-9_-]+)/);
+  const fb = stderrText.match(/\[bgremove\]\s+fallback_from=([a-z0-9_-]+)/);
+  return {
+    sessionUsed: used ? used[1] : null,
+    fallbackFrom: fb ? fb[1] : null,
+  };
+}
+
 function bgremoveAvailable(cfg = bgremoveConfigFromEnv()) {
   if (!fs.existsSync(cfg.bgremovePy)) {
     return { available: false, reason: "thiếu server/bgremove/bgremove.py" };
@@ -63,11 +80,10 @@ function bgremoveAvailable(cfg = bgremoveConfigFromEnv()) {
 }
 
 /**
- * Chạy bgremove.py. onPhase({phase, message}) được gọi khi có tiến trình.
- * Resolve: { outputPath }. Reject: Error.
+ * 1 lần chạy bgremove.py. Resolve: { outputPath, sessionUsed, fallbackFrom }.
+ * Reject: Error có thêm .code/.signal/.timedOut để caller quyết định retry.
  */
-function runBgremove({ inputPath, outputPath, session, onPhase }) {
-  const cfg = bgremoveConfigFromEnv();
+function runAttempt({ inputPath, outputPath, session, onPhase, cfg }) {
   return new Promise((resolve, reject) => {
     const args = [
       cfg.bgremovePy,
@@ -82,13 +98,18 @@ function runBgremove({ inputPath, outputPath, session, onPhase }) {
     const child = spawn(cfg.pythonBin, args, { stdio: ["ignore", "ignore", "pipe"] });
 
     let stderrBuf = "";
+    // Buffer đầy đủ (không cắt) để đọc marker session_used/fallback_from
+    // cuối tiến trình — buffer parse progress ở dưới có cắt bớt.
+    let stderrAll = "";
+    let timedOut = false;
     const timer = setTimeout(() => {
+      timedOut = true;
       child.kill("SIGKILL");
-      reject(new Error("Xóa nền quá thời gian (timeout) — thử video ngắn hơn."));
     }, cfg.timeoutMs);
 
     child.stderr.on("data", (d) => {
       stderrBuf += d.toString();
+      stderrAll += d.toString();
       // Parse dòng "[bgremove] 30/90 (33%)" để báo tiến trình
       const m = stderrBuf.match(/\[bgremove\]\s+(\d+)\/(\d+|\?)\s+\(([^)]+)\)/);
       if (m && onPhase) {
@@ -105,19 +126,87 @@ function runBgremove({ inputPath, outputPath, session, onPhase }) {
 
     child.on("error", (e) => {
       clearTimeout(timer);
-      reject(new Error(`Không chạy được bgremove.py: ${e.message}`));
+      const err = new Error(`Không chạy được bgremove.py: ${e.message}`);
+      err.timedOut = timedOut;
+      reject(err);
     });
 
-    child.on("close", (code) => {
+    child.on("close", (code, signal) => {
       clearTimeout(timer);
+      const markers = parseSessionMarkers(stderrAll);
       if (code === 0 && fs.existsSync(outputPath)) {
-        resolve({ outputPath });
-      } else {
-        const tail = stderrBuf.trim().split("\n").slice(-3).join("\n");
-        reject(new Error(`Xóa nền thất bại (exit ${code}). ${tail}`));
+        resolve({
+          outputPath,
+          sessionUsed: markers.sessionUsed || session,
+          fallbackFrom: markers.fallbackFrom || null,
+        });
+        return;
       }
+      const tail = stderrAll.trim().split("\n").slice(-3).join("\n");
+      const err = new Error(
+        timedOut
+          ? "Xóa nền quá thời gian (timeout) — thử video ngắn hơn."
+          : `Xóa nền thất bại (exit ${code}${signal ? `, signal ${signal}` : ""}). ${tail}`
+      );
+      err.code = code;
+      err.signal = signal || null;
+      err.timedOut = timedOut;
+      err.stderrTail = tail;
+      reject(err);
     });
   });
+}
+
+/**
+ * Chạy bgremove.py, tự fallback u2net 1 lần khi session birefnet chết
+ * (exit != 0 hoặc bị signal như OOM-kill SIGKILL — trừ timeout).
+ * onPhase({phase, message}) được gọi khi có tiến trình.
+ * Resolve: { outputPath, sessionUsed, fallbackFrom, fallbackReason }.
+ * Reject: Error (đã thử cả 2 session, hoặc lỗi không retry được).
+ */
+async function runBgremove({ inputPath, outputPath, session, onPhase }) {
+  const cfg = bgremoveConfigFromEnv();
+  const requested = session === "auto" ? DEFAULT_SESSION : session;
+  const attempt = (s) => runAttempt({ inputPath, outputPath, session: s, onPhase, cfg });
+  let first;
+  try {
+    first = await attempt(requested);
+  } catch (e) {
+    const retryable = BIREFNET_SESSIONS.has(requested) && !e.timedOut;
+    if (!retryable) throw e;
+    // Xoá output dở dang (nếu có) rồi chạy lại bằng u2net.
+    try { fs.unlinkSync(outputPath); } catch { /* chưa có file */ }
+    if (onPhase) {
+      onPhase({
+        phase: "fallback",
+        message: `Session ${requested} thất bại (${e.signal ? `bị ${e.signal}` : `exit ${e.code}`}) — tự chuyển sang u2net (nhẹ hơn).`,
+      });
+    }
+    try {
+      const second = await attempt(FALLBACK_SESSION);
+      return {
+        ...second,
+        fallbackFrom: requested,
+        fallbackReason: e.signal
+          ? `session ${requested} bị ${e.signal} (nghi OOM-kill trên máy ít RAM)`
+          : `session ${requested} lỗi (exit ${e.code})`,
+      };
+    } catch (e2) {
+      throw new Error(
+        `Xóa nền thất bại cả 2 session (${requested}: ${e.message}; ` +
+        `${FALLBACK_SESSION}: ${e2.message})`
+      );
+    }
+  }
+  // Lần đầu thành công — nhưng Python có thể đã tự fallback trong tiến
+  // trình (in-process) thì báo luôn để UI/MCP hiển thị đúng.
+  if (first.fallbackFrom) {
+    return {
+      ...first,
+      fallbackReason: `session ${first.fallbackFrom} lỗi trong quá trình chạy — đã tự dùng u2net`,
+    };
+  }
+  return { ...first, fallbackFrom: null, fallbackReason: null };
 }
 
 module.exports = {
@@ -125,6 +214,9 @@ module.exports = {
   bgremoveAvailable,
   runBgremove,
   validateSession,
+  parseSessionMarkers,
   DEFAULT_SESSION,
   FORBIDDEN_SESSIONS,
+  BIREFNET_SESSIONS,
+  FALLBACK_SESSION,
 };

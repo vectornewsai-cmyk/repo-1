@@ -15,8 +15,12 @@
  *    (spawnSync bên trong render.js) cũng chết theo, không bị mồ côi.
  *  - Retry thủ công: chỉ từ trạng thái error (thư mục job còn nguyên).
  *    Cancel xóa thư mục job → không retry được, phải tạo job mới.
- *  - In-memory: restart server làm mất job đang chạy; job queued được
- *    phục hồi best-effort từ WORK_ROOT (render lại từ đầu).
+ *  - P7: trạng thái job được LƯU ĐĨA (job.json trong thư mục job, ghi
+ *    tmp + rename cho atomic) mỗi lần đổi trạng thái. Restart server:
+ *    queued → xếp hàng lại (giữ nguyên id), running → "interrupted"
+ *    (trạng thái cuối, retry được, KHÔNG giả vờ chạy tiếp), done/error →
+ *    khôi phục nguyên trạng, không render lại. Dir legacy (trước P7,
+ *    chưa có job.json) giữ hành vi cũ: quét spec.json, render lại từ đầu.
  *
  * R1-065: tiến trình export thời gian thực — parse time=/frame= từ stderr
  * ffmpeg (chuẩn hóa \r), progress đơn điệu 0→0.99 (1 khi done), ETA ước lượng
@@ -32,7 +36,71 @@ const os = require("os");
 const path = require("path");
 const { verifyOutput } = require("./outputQA"); // R1-043: QA output sau render
 
-const TERMINAL = new Set(["done", "error", "cancelled"]);
+const TERMINAL = new Set(["done", "error", "cancelled", "interrupted"]);
+
+/** P7: các trạng thái job.json hợp lệ khi khôi phục. */
+const KNOWN_STATUSES = new Set([
+  "queued", "running", "done", "error", "cancelled", "interrupted",
+]);
+
+/**
+ * P7: trích các field có thể serialize của job record (bỏ proc, timers,
+ * stderr tail, samples — progress thời gian thực không cần bền vững).
+ */
+function serializeJobState(job) {
+  return {
+    id: job.id,
+    dir: job.dir,
+    mediaDir: job.mediaDir,
+    specPath: job.specPath,
+    outPath: job.outPath,
+    status: job.status,
+    progress: job.progress,
+    totalDuration: job.totalDuration,
+    attempts: job.attempts,
+    error: job.error,
+    outputName: job.outputName,
+    outputSize: job.outputSize,
+    createdAt: job.createdAt,
+    startedAt: job.startedAt,
+    finishedAt: job.finishedAt,
+    note: job.note,
+    preset: job.preset,
+    qaReport: job.qaReport || null,
+  };
+}
+
+/**
+ * P7: ghi job.json atomically (tmp + rename). Lỗi ghi KHÔNG được làm
+ * hỏng job đang chạy — chỉ log, trạng thái bộ nhớ vẫn đúng.
+ */
+function saveJobState(job) {
+  try {
+    fs.mkdirSync(job.dir, { recursive: true });
+    const tmp = path.join(job.dir, `.job.json.tmp-${process.pid}`);
+    fs.writeFileSync(tmp, JSON.stringify(serializeJobState(job)));
+    fs.renameSync(tmp, path.join(job.dir, "job.json"));
+  } catch (e) {
+    console.error(`[bridge] không ghi được job.json cho job ${job.id}:`, e.message);
+  }
+}
+
+/**
+ * P7: đọc job.json của 1 thư mục job. Trả về object đã validate sơ bộ,
+ * hoặc null nếu không có file / file hỏng / id/status không hợp lệ.
+ */
+function loadJobState(dir) {
+  let raw;
+  try {
+    raw = JSON.parse(fs.readFileSync(path.join(dir, "job.json"), "utf8"));
+  } catch {
+    return null;
+  }
+  if (!raw || typeof raw !== "object") return null;
+  if (typeof raw.id !== "string" || !/^[0-9a-f]{16}$/.test(raw.id)) return null;
+  if (typeof raw.status !== "string" || !KNOWN_STATUSES.has(raw.status)) return null;
+  return raw;
+}
 
 /** Tạo job id ngẫu nhiên (16 ký tự hex). */
 function newJobId() {
@@ -234,7 +302,7 @@ class RenderJobService {
    * Xếp job mới vào hàng đợi. Ném lỗi QueueFullError khi hàng đợi đầy.
    * @returns job record (status: "queued")
    */
-  enqueue({ id, dir, mediaDir, specPath, outPath, totalDuration, note, preset }) {
+  enqueue({ id, dir, mediaDir, specPath, outPath, totalDuration, note, preset, createdAt, attempts, recovered }) {
     if (this.fifo.length >= this.maxQueueLength) {
       const err = new Error(
         `Hàng đợi đầy (${this.maxQueueLength} job đang chờ) — thử lại sau.`
@@ -273,18 +341,18 @@ class RenderJobService {
       totalFps: 0,        // R1-065: fps từ spec.meta (frame= fallback)
       _samples: [],       // R1-065: sample progress cho ETA (không serialize)
       queuePosition: null,
-      attempts: 0,
+      attempts: attempts || 0, // P7: recover giữ nguyên số lần thử đã lưu
       error: null,
       outputName: null,
       outputSize: null,
-      createdAt: Date.now(),
+      createdAt: createdAt || Date.now(), // P7: recover giữ nguyên thời điểm tạo
       seq: ++this._seq, // tiebreak cho list() khi createdAt trùng
       startedAt: null,
       finishedAt: null,
       totalDuration: totalDuration > 0 ? totalDuration : 0,
       note: note || null,
       preset: preset || null, // R1-042: quality params đã sanitize (crf/x264Preset/audioBitrate)
-      recovered: false,
+      recovered: !!recovered, // P7: recover() truyền true để job.json ghi đúng 1 lần
       proc: null,       // ChildProcess khi running (không serialize)
       _stderrTail: "",
       _killTimer: null,
@@ -292,6 +360,7 @@ class RenderJobService {
     this.jobs.set(id, job);
     this.fifo.push(id);
     this._refreshQueuePositions();
+    saveJobState(job); // P7: bền vững ngay từ lúc xếp hàng
     this._pump();
     return job;
   }
@@ -354,8 +423,9 @@ class RenderJobService {
   }
 
   /**
-   * Chạy lại job bị lỗi. Chỉ cho phép từ trạng thái "error"
-   * (thư mục job còn nguyên sau lỗi; sau cancel thư mục đã bị xóa).
+   * Chạy lại job bị lỗi hoặc bị gián đoạn. Cho phép từ trạng thái "error"
+   * và "interrupted" (P7 — cả hai đều còn nguyên thư mục job; sau cancel
+   * thư mục đã bị xóa nên không retry được).
    * @returns job record đã được xếp hàng lại.
    * @throws nếu job không tồn tại hoặc không ở trạng thái cho phép.
    */
@@ -366,9 +436,9 @@ class RenderJobService {
       err.code = "NOT_FOUND";
       throw err;
     }
-    if (job.status !== "error") {
+    if (job.status !== "error" && job.status !== "interrupted") {
       const err = new Error(
-        `Chỉ retry được job ở trạng thái "error" (hiện tại: "${job.status}").` +
+        `Chỉ retry được job ở trạng thái "error" hoặc "interrupted" (hiện tại: "${job.status}").` +
         (job.status === "cancelled"
           ? " Job đã hủy thì thư mục tạm đã bị xóa — hãy tạo job mới."
           : "")
@@ -392,60 +462,178 @@ class RenderJobService {
     job._stderrTail = "";
     this.fifo.push(job.id);
     this._refreshQueuePositions();
+    saveJobState(job); // P7
     this._pump();
     return job;
   }
 
   /**
-   * Phục hồi best-effort sau khi server restart: quét workRoot, mỗi thư mục
-   * có spec.json được xếp hàng lại (render lại từ đầu, xóa output.mp4 cũ
-   * nếu có để tránh file dở dang).
-   * @returns số job đã phục hồi.
+   * P7: phục hồi sau khi server restart, dựa trên job.json bền vững:
+   *  - queued → xếp hàng lại (giữ nguyên id, createdAt, preset), render lại
+   *    từ đầu, xóa output.mp4 cũ nếu có (file dở dang).
+   *  - running → "interrupted" (trạng thái cuối, retry được): process cũ
+   *    đã chết theo server, KHÔNG giả vờ chạy tiếp, KHÔNG tự render lại.
+   *    Output dở dang bị xóa để không ai nhầm là file hoàn chỉnh.
+   *  - done/error → khôi phục nguyên trạng trong bộ nhớ (không spawn,
+   *    không render lại). Riêng done: media có thể đã bị prune (R1-040)
+   *    nhưng record + output vẫn phục vụ download bình thường.
+   *  - cancelled → thư mục đã bị xóa khi cancel nên không gặp; nếu gặp
+   *    (job.json còn sót) thì khôi phục nguyên trạng, không render lại.
+   *  - Dir legacy (chưa có job.json, từ trước P7): giữ hành vi cũ —
+   *    có spec.json thì xếp hàng lại, render từ đầu; ngoại lệ: có
+   *    output.mp4 + media đã bị prune (dấu hiệu job done cũ) thì khôi
+   *    phục thành "done" thay vì render lại rồi lỗi thiếu media.
+   *  - Dir không có spec.json và không có job.json → bỏ qua.
+   *  - job.json hỏng / id sai định dạng → bỏ qua + log cảnh báo.
+   *
+   * Trả về TỔNG số record đã khôi phục (giữ tương thích test cũ kiểm
+   * tra `n === 2`); chi tiết nằm ở `this.recoverStats`
+   * ({ queued, interrupted, restored, legacy, skipped }).
    */
   recover(workRoot) {
-    let count = 0;
+    const stats = { queued: 0, interrupted: 0, restored: 0, legacy: 0, skipped: 0 };
+    this.recoverStats = stats;
     let entries = [];
     try {
       entries = fs.readdirSync(workRoot, { withFileTypes: true });
     } catch {
       return 0;
     }
+    const seenDir = (dir) => {
+      for (const j of this.jobs.values()) if (j.dir === dir) return true;
+      return false;
+    };
+    const restoreRecord = (saved, dir) => {
+      // Khôi phục record terminal/không-chạy vào bộ nhớ, không spawn.
+      const job = {
+        id: saved.id,
+        dir,
+        mediaDir: saved.mediaDir || path.join(dir, "media"),
+        specPath: saved.specPath || path.join(dir, "spec.json"),
+        outPath: saved.outPath || path.join(dir, "output.mp4"),
+        status: saved.status,
+        progress: typeof saved.progress === "number" ? saved.progress : 0,
+        etaSeconds: null,
+        totalFps: 0,
+        _samples: [],
+        queuePosition: null,
+        attempts: saved.attempts || 0,
+        error: saved.error || null,
+        outputName: saved.outputName || null,
+        outputSize: saved.outputSize || null,
+        createdAt: saved.createdAt || Date.now(),
+        seq: ++this._seq,
+        startedAt: saved.startedAt || null,
+        finishedAt: saved.finishedAt || Date.now(),
+        totalDuration: saved.totalDuration || 0,
+        note: saved.note || null,
+        preset: saved.preset || null,
+        qaReport: saved.qaReport || null,
+        recovered: true,
+        proc: null,
+        _stderrTail: "",
+        _killTimer: null,
+      };
+      this.jobs.set(job.id, job);
+      return job;
+    };
+    const dropPartialOutput = (dir) => {
+      try {
+        const outPath = path.join(dir, "output.mp4");
+        if (fs.existsSync(outPath)) fs.unlinkSync(outPath);
+      } catch { /* bỏ qua */ }
+    };
+
     for (const e of entries) {
       if (!e.isDirectory()) continue;
       const dir = path.join(workRoot, e.name);
+      if (seenDir(dir)) continue; // recover gọi 2 lần → bỏ qua job đã có
+      const saved = loadJobState(dir);
+      if (saved) {
+        if (saved.status === "queued") {
+          // Cần spec.json mới render lại được; thiếu spec → lỗi rõ ràng.
+          if (!fs.existsSync(saved.specPath || path.join(dir, "spec.json"))) {
+            const job = restoreRecord({ ...saved, status: "error",
+              error: "spec.json bị thiếu sau khi server restart — không render lại được, hãy tạo job mới." }, dir);
+            job.finishedAt = Date.now();
+            stats.restored++;
+            continue;
+          }
+          try {
+            this.enqueue({
+              id: saved.id,
+              dir,
+              mediaDir: saved.mediaDir || path.join(dir, "media"),
+              specPath: saved.specPath || path.join(dir, "spec.json"),
+              outPath: saved.outPath || path.join(dir, "output.mp4"),
+              totalDuration: saved.totalDuration || 0,
+              note: saved.note || "Phục hồi sau khi server restart — render lại từ đầu.",
+              preset: saved.preset || null,
+              createdAt: saved.createdAt,
+              attempts: saved.attempts || 0,
+              recovered: true,
+            });
+            dropPartialOutput(dir);
+            stats.queued++;
+          } catch {
+            // Hàng đợi đầy → bỏ qua job phục hồi còn lại
+            break;
+          }
+        } else if (saved.status === "running") {
+          // Process cũ đã chết theo server: đánh dấu gián đoạn, không tự chạy lại.
+          dropPartialOutput(dir);
+          const job = restoreRecord({ ...saved, status: "interrupted",
+            error: "Bị gián đoạn do bridge restart — dùng retry để render lại từ đầu." }, dir);
+          job.finishedAt = Date.now();
+          saveJobState(job); // ghi đè "running" cũ → "interrupted" bền vững
+          stats.interrupted++;
+        } else {
+          // done / error / cancelled: khôi phục nguyên trạng, không spawn.
+          restoreRecord(saved, dir);
+          stats.restored++;
+        }
+        continue;
+      }
+      // --- Legacy: chưa có job.json ---
       const specPath = path.join(dir, "spec.json");
-      if (!fs.existsSync(specPath)) continue;
-      // Xóa output cũ (có thể dở dang do restart giữa chừng)
+      if (!fs.existsSync(specPath)) { stats.skipped++; continue; }
       const outPath = path.join(dir, "output.mp4");
-      try {
-        if (fs.existsSync(outPath)) fs.unlinkSync(outPath);
-      } catch { /* bỏ qua */ }
+      const mediaDir = path.join(dir, "media");
+      let outSize = 0;
+      try { outSize = fs.statSync(outPath).size; } catch { /* không có output */ }
+      let mediaGone = false;
+      try { mediaGone = !fs.existsSync(mediaDir); } catch { mediaGone = false; }
+      if (outSize > 0 && mediaGone && /^[0-9a-f]{16}$/.test(e.name)) {
+        // Dấu hiệu job done cũ (media đã prune theo R1-040): khôi phục "done".
+        restoreRecord({ id: e.name, status: "done", outputName: `vcut-${e.name}.mp4`,
+          outputSize: outSize, createdAt: Date.now() }, dir);
+        stats.legacy++;
+        continue;
+      }
+      // Hành vi cũ: xóa output dở dang, xếp hàng render lại từ đầu.
+      dropPartialOutput(dir);
       let totalDuration = 0;
       try {
         const spec = JSON.parse(fs.readFileSync(specPath, "utf8"));
         totalDuration = specDuration(spec);
       } catch { /* giữ 0 */ }
-      // Tránh trùng nếu recover được gọi 2 lần
-      let dup = false;
-      for (const j of this.jobs.values()) if (j.dir === dir) { dup = true; break; }
-      if (dup) continue;
       try {
-        const job = this.enqueue({
+        this.enqueue({
           dir,
-          mediaDir: path.join(dir, "media"),
+          mediaDir,
           specPath,
           outPath,
           totalDuration,
           note: "Phục hồi sau khi server restart — render lại từ đầu.",
+          recovered: true,
         });
-        job.recovered = true;
-        count++;
+        stats.legacy++;
       } catch {
         // Hàng đợi đầy → bỏ qua job phục hồi còn lại
         break;
       }
     }
-    return count;
+    return stats.queued + stats.interrupted + stats.restored + stats.legacy;
   }
 
   /** Dọn job terminal đã hết TTL. Trả về số job đã xóa. */
@@ -517,6 +705,7 @@ class RenderJobService {
     job._stderrTail = "";
     job.etaSeconds = null; // R1-065
     job._samples = [];     // R1-065
+    saveJobState(job); // P7: crash sau điểm này → restart thấy "running" → interrupted
     // R1-065: đọc fps từ spec để làm frame= fallback khi ffmpeg thiếu time=
     job.totalFps = 0;
     try {
@@ -632,6 +821,7 @@ class RenderJobService {
     job.outputName = `vcut-${id}.mp4`;
     job.outputSize = outputSize;
     if (this.onDone) { try { this.onDone(job); } catch { /* bỏ qua */ } } // R1-040
+    saveJobState(job); // P7: restart sau điểm này → khôi phục "done", không render lại
     this._pump();
   }
 
@@ -646,6 +836,7 @@ class RenderJobService {
     console.error(`[bridge] job ${id} lỗi:`, message);
     job.error = String(message).split(" Chi tiết:")[0].split(" (file lỗi")[0];
     job.finishedAt = Date.now();
+    saveJobState(job); // P7
     this._pump();
   }
 }
