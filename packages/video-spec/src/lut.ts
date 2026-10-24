@@ -171,6 +171,26 @@ export const LUT_IDS = [
   "vcut-silk-road",
   "vcut-opal-dream",
   "vcut-coral-dawn",
+  "vcut-da-lat-mist",
+  "vcut-pho-hanoi",
+  "vcut-sea-breeze",
+  "vcut-sunset-beach",
+  "vcut-forest-deep",
+  "vcut-desert-sand",
+  "vcut-winter-snow",
+  "vcut-neon-city",
+  "vcut-coffee-brown",
+  "vcut-lavender-field",
+  "vcut-golden-harvest",
+  "vcut-midnight-blue",
+  "vcut-rose-dusk",
+  "vcut-mint-fresh",
+  "vcut-amber-glow",
+  "vcut-slate-grey",
+  "vcut-peach-blush",
+  "vcut-aurora",
+  "vcut-iced-matcha",
+  "vcut-reef-glow",
 ] as const;
 
 export type LutId = (typeof LUT_IDS)[number];
@@ -817,6 +837,86 @@ export const LUT_META: Record<LutId, { label: string; description: string }> = {
   "vcut-coral-dawn": {
     label: "Bình minh san hô",
     description: "Hồng cam bình minh",
+  },
+  "vcut-da-lat-mist": {
+    label: "Sương Đà Lạt",
+    description: "Lạnh nhẹ, sáng sương",
+  },
+  "vcut-pho-hanoi": {
+    label: "Phở Hà Nội",
+    description: "Ấm nước dùng",
+  },
+  "vcut-sea-breeze": {
+    label: "Gió biển",
+    description: "Xanh ngọc sáng",
+  },
+  "vcut-sunset-beach": {
+    label: "Hoàng hôn biển",
+    description: "Cam hồng hoàng hôn",
+  },
+  "vcut-forest-deep": {
+    label: "Rừng sâu",
+    description: "Xanh lá đậm",
+  },
+  "vcut-desert-sand": {
+    label: "Cát sa mạc",
+    description: "Vàng cát ấm",
+  },
+  "vcut-winter-snow": {
+    label: "Tuyết trắng",
+    description: "Lạnh sáng, nhạt màu",
+  },
+  "vcut-neon-city": {
+    label: "Thành phố neon",
+    description: "Rực magenta/cyan",
+  },
+  "vcut-coffee-brown": {
+    label: "Cà phê nâu",
+    description: "Nâu trầm ấm",
+  },
+  "vcut-lavender-field": {
+    label: "Đồng oải hương",
+    description: "Tím mềm sáng",
+  },
+  "vcut-golden-harvest": {
+    label: "Mùa gặt vàng",
+    description: "Vàng óng",
+  },
+  "vcut-midnight-blue": {
+    label: "Xanh nửa đêm",
+    description: "Xanh đậm tối",
+  },
+  "vcut-rose-dusk": {
+    label: "Hồng hoàng hôn",
+    description: "Hồng chiều",
+  },
+  "vcut-mint-fresh": {
+    label: "Bạc hà tươi",
+    description: "Xanh bạc hà sáng",
+  },
+  "vcut-amber-glow": {
+    label: "Hổ phách sáng",
+    description: "Hổ phách rực",
+  },
+  "vcut-slate-grey": {
+    label: "Xám đá",
+    description: "Xám trung tính",
+  },
+  "vcut-peach-blush": {
+    label: "Đào ửng",
+    description: "Đào sáng mềm",
+  },
+  "vcut-aurora": {
+    label: "Cực quang",
+    description: "Xanh tím cực quang",
+  },
+  "vcut-iced-matcha": {
+    label: "Matcha đá",
+    description: "Xanh matcha lạnh, sáng",
+  },
+  "vcut-reef-glow": {
+    label: "San hô phát sáng",
+    description: "Rực ngọc/cam phát sáng",
   },
 };
 

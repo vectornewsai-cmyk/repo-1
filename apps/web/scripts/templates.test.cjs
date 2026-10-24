@@ -1,4 +1,4 @@
-// templates.test.cjs — test templateEngine.ts + 30 templates (R1-104/R1-105).
+// templates.test.cjs — test templateEngine.ts + 50 templates (R1-104/R1-105, Q4).
 "use strict";
 
 const assert = require("node:assert/strict");
@@ -17,9 +17,9 @@ function ok(name, fn) {
   }
 }
 
-console.log("== 30 templates ==");
-ok("đúng 30 templates", () => {
-  assert.equal(TEMPLATES.length, 30);
+console.log("== 50 templates ==");
+ok("đúng 50 templates", () => {
+  assert.equal(TEMPLATES.length, 50);
 });
 
 ok("mỗi template có id duy nhất + placeholders hợp lệ", () => {
@@ -132,6 +132,16 @@ ok("aspect ratio đúng từng template", () => {
     "recipe-card": [1080, 1920], "travel-diary": [1920, 1080],
     "birthday-card": [1080, 1080], "sale-banner": [1920, 1080],
     "documentary-title": [1920, 1080], "outro-creator": [1920, 1080],
+    "album-cover": [1080, 1080], "app-launch": [1080, 1920],
+    "book-trailer": [1920, 1080], "charity-appeal": [1920, 1080],
+    "concert-teaser": [1080, 1920], "cooking-show": [1080, 1920],
+    "desk-setup": [1080, 1920], "family-slideshow": [1920, 1080],
+    "fashion-lookbook": [1080, 1920], "graduation-celebration": [1080, 1920],
+    "gym-transformation": [1080, 1920], "intro-logo": [1920, 1080],
+    "morning-news": [1920, 1080], "outro-subscribe": [1920, 1080],
+    "podcast-highlight": [1080, 1920], "podcast-studio": [1920, 1080],
+    "sale-countdown": [1080, 1920], "travel-montage": [1920, 1080],
+    "webinar-invite": [1920, 1080], "wedding-vows": [1920, 1080],
   };
   for (const t of TEMPLATES) {
     const [w, h] = expect[t.template.id];

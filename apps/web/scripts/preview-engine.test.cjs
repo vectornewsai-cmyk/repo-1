@@ -48,13 +48,13 @@ eq(
   approx(c.dx, -106.67, 0.01, "cover dx (crop giữa)");
 }
 
-// --- 3. LUT: đủ 154 id, id lạ → null ---
+// --- 3. LUT: đủ 174 id, id lạ → null ---
 {
   for (const id of spec.LUT_IDS) {
     const css = pe.lutCssFilter(id);
     ok(typeof css === "string" && css.length > 0, `LUT ${id} có CSS`);
   }
-  eq(spec.LUT_IDS.length, 154, "đủ 154 LUT");
+  eq(spec.LUT_IDS.length, 174, "đủ 174 LUT");
   eq(pe.lutCssFilter("khong-co"), null, "LUT lạ → null");
 }
 
@@ -429,6 +429,102 @@ eq(
     "P1: text thường → sr=false");
   eq(pe.textClipVisual(tbase, 1, 1280, 720, m).scale, 1,
     "P1: text thường → scale=1");
+}
+
+// --- 12. Q1 (Phase 8): mask — cùng công thức geq render (mask.js) ---
+{
+  const rect = { shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0 };
+  // Khung 640x360 → biên x 160..480, y 90..270 (như self-test của mask.js).
+  eq(pe.maskAlphaAt(rect, 640, 360, 320, 180), 1, "mask rect cứng: tâm trong → 1");
+  eq(pe.maskAlphaAt(rect, 640, 360, 0, 0), 0, "mask rect cứng: góc ngoài → 0");
+  eq(pe.maskAlphaAt(rect, 640, 360, 160, 180), 0, "mask rect cứng: đúng biên (d=0) → ngoài (như geq if lt)");
+  eq(pe.maskAlphaAt(rect, 640, 360, 161, 180), 1, "mask rect cứng: trong biên 1px → 1");
+  eq(pe.maskAlphaAt(rect, 640, 360, 480, 180), 0, "mask rect cứng: biên phải → 0");
+  // Feather 0.2 → band = 0.2 * min(320,180) = 36.
+  const soft = { ...rect, feather: 0.2 };
+  eq(pe.maskAlphaAt(soft, 640, 360, 160, 180), 0.5, "mask rect feather: đúng biên → 0.5");
+  approx(pe.maskAlphaAt(soft, 640, 360, 151, 180), 0.25, 1e-9, "mask rect feather: ngoài biên 9px → 0.25");
+  approx(pe.maskAlphaAt(soft, 640, 360, 169, 180), 0.75, 1e-9, "mask rect feather: trong biên 9px → 0.75");
+  eq(pe.maskAlphaAt(soft, 640, 360, 142, 180), 0, "mask rect feather: ngoài biên 18px → 0");
+  eq(pe.maskAlphaAt(soft, 640, 360, 178, 180), 1, "mask rect feather: trong biên 18px → 1");
+  // Ellipse cứng: tâm (320,180), rx=160, ry=180.
+  const el = { shape: "ellipse", x: 0.5, y: 0.5, w: 0.5, h: 1, feather: 0 };
+  eq(pe.maskAlphaAt(el, 640, 360, 320, 180), 1, "mask ellipse cứng: tâm → 1");
+  eq(pe.maskAlphaAt(el, 640, 360, 320, 0), 0, "mask ellipse cứng: đúng biên dọc → 0");
+  eq(pe.maskAlphaAt(el, 640, 360, 320, 10), 1, "mask ellipse cứng: trong biên dọc → 1");
+  eq(pe.maskAlphaAt(el, 640, 360, 0, 180), 0, "mask ellipse cứng: ngoài ngang → 0");
+  // Ellipse feather: band = 0.2 * min(320,360) = 64; đúng biên ngang → 0.5.
+  const elSoft = { ...el, feather: 0.2 };
+  eq(pe.maskAlphaAt(elSoft, 640, 360, 480, 180), 0.5, "mask ellipse feather: đúng biên → 0.5");
+  approx(pe.maskAlphaAt(elSoft, 640, 360, 470, 180), 0.667, 0.01, "mask ellipse feather: trong biên ~10.7px → ~0.667");
+  eq(pe.maskAlphaAt(elSoft, 640, 360, 320, 180), 1, "mask ellipse feather: tâm → 1");
+  // Invert.
+  const inv = { ...rect, invert: true };
+  eq(pe.maskAlphaAt(inv, 640, 360, 320, 180), 0, "mask invert: tâm → 0");
+  eq(pe.maskAlphaAt(inv, 640, 360, 0, 0), 1, "mask invert: góc → 1");
+  // Mask không hợp lệ → bỏ qua (alpha 1), không làm đen canvas.
+  eq(pe.maskAlphaAt({ shape: "circle", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0 }, 640, 360, 0, 0), 1, "mask shape lạ → bỏ qua");
+  eq(pe.maskAlphaAt({ shape: "rect", x: 0.5, y: 0.5, w: 0, h: 0.5, feather: 0 }, 640, 360, 0, 0), 1, "mask w=0 → bỏ qua");
+  // applyMask: nhân alpha (không ghi đè), alpha 0 giữ nguyên.
+  const mkImg = (w, h, alpha) => ({
+    width: w, height: h,
+    data: new Uint8ClampedArray(w * h * 4).map((_, i) => (i % 4 === 3 ? alpha : 200)),
+  });
+  const m4 = mkImg(4, 4, 255);
+  m4.data[0 * 4 + 3] = 0; // pixel (0,0) đã trong suốt → giữ 0
+  pe.applyMask(m4, { shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0.5 });
+  // Khung 4x4: biên x 1..3, y 1..3; band = 0.5*min(2,2) = 1.
+  eq(m4.data[(2 * 4 + 2) * 4 + 3], 255, "applyMask: tâm (d=-1) → alpha giữ 255");
+  eq(m4.data[(1 * 4 + 2) * 4 + 3], 128, "applyMask: biên (d=0) → 255*0.5 = 128");
+  eq(m4.data[(3 * 4 + 3) * 4 + 3], 128, "applyMask: góc trong (d=0) → 128");
+  eq(m4.data[0 * 4 + 3], 0, "applyMask: alpha 0 giữ nguyên 0");
+}
+
+// --- 13. Q1 (Phase 8): speed ramp — tốc độ + vị trí nguồn theo ∫speed ---
+{
+  const lin = { keyframes: [{ t: 0, v: 1, easing: "linear" }, { t: 4, v: 2, easing: "linear" }] };
+  // hasSpeedRamp / rampSpeedAt
+  eq(pe.hasSpeedRamp({ start: 0, in: 0 }), false, "ramp: không có curve → false");
+  eq(pe.hasSpeedRamp({ start: 0, in: 0, speedKeyframes: { keyframes: [] } }), false, "ramp: keyframes rỗng → false");
+  eq(pe.hasSpeedRamp({ start: 0, in: 0, speedKeyframes: lin }), true, "ramp: có curve → true");
+  eq(pe.rampSpeedAt({ start: 0, in: 0, speed: 2 }, 1), 2, "ramp: không curve → speed hằng");
+  eq(pe.rampSpeedAt({ start: 0, in: 0 }, 1), 1, "ramp: không curve, không speed → 1");
+  eq(pe.rampSpeedAt({ start: 0, in: 0, speedKeyframes: lin }, 2), 1.5, "ramp: linear 1→2 tại giữa = 1.5");
+  eq(pe.rampSpeedAt({ start: 0, in: 0, speedKeyframes: lin }, 10), 2, "ramp: ngoài khoảng → clamp biên");
+  const easeIn = { keyframes: [{ t: 0, v: 1, easing: "ease-in" }, { t: 4, v: 3, easing: "linear" }] };
+  eq(pe.rampSpeedAt({ start: 0, in: 0, speedKeyframes: easeIn }, 2), 1.5, "ramp: ease-in p=0.5 → 1 + 2*0.25");
+  // integrateRampSpeed: linear 1→2 trên [0,4]: ∫ = t + t²/8.
+  // ĐÂY là case bug thượng nguồn: sourcePosAt cũ trả 3 thay vì 2.5.
+  approx(pe.integrateRampSpeed(lin, 0, 2), 2.5, 1e-9, "ramp ∫: linear đoạn con [0,2] = 2.5 (không phải 3)");
+  approx(pe.integrateRampSpeed(lin, 0, 4), 6, 1e-9, "ramp ∫: linear toàn đoạn [0,4] = 6");
+  approx(pe.integrateRampSpeed(lin, 1, 3), 3, 1e-9, "ramp ∫: linear đoạn con [1,3] = 3");
+  // ease-in 1→3 trên [0,4]: ∫ = 4 + 8/3; đoạn con [1,3] = 2 + 8*(0.75³-0.25³)/3.
+  approx(pe.integrateRampSpeed(easeIn, 0, 4), 4 + 8 / 3, 1e-9, "ramp ∫: ease-in toàn đoạn");
+  approx(pe.integrateRampSpeed(easeIn, 1, 3), 2 + 8 * (0.75 ** 3 - 0.25 ** 3) / 3, 1e-9, "ramp ∫: ease-in đoạn con [1,3]");
+  // ease-out 1→3 trên [0,4]: ∫ = 4 + 16/3.
+  const easeOut = { keyframes: [{ t: 0, v: 1, easing: "ease-out" }, { t: 4, v: 3, easing: "linear" }] };
+  approx(pe.integrateRampSpeed(easeOut, 0, 4), 4 + 16 / 3, 1e-9, "ramp ∫: ease-out toàn đoạn");
+  // bezier: đối chiếu brute-force (trapezoid 2000 khoảng trên speedAt).
+  const bez = { keyframes: [{ t: 0, v: 1, easing: "bezier", bezier: [0.25, 0.1, 0.25, 1] }, { t: 4, v: 2, easing: "linear" }] };
+  let brute = 0;
+  const N = 2000;
+  for (let i = 0; i < N; i++) {
+    const x0 = (i / N) * 3;
+    const x1 = ((i + 1) / N) * 3;
+    brute += ((pe.rampSpeedAt({ start: 0, in: 0, speedKeyframes: bez }, x0) + pe.rampSpeedAt({ start: 0, in: 0, speedKeyframes: bez }, x1)) / 2) * (x1 - x0);
+  }
+  approx(pe.integrateRampSpeed(bez, 0, 3), brute, 0.01, "ramp ∫: bezier khớp brute-force");
+  // rampSourceTimeAt
+  approx(pe.rampSourceTimeAt({ start: 10, in: 100, speedKeyframes: lin }, 12), 102.5, 1e-9,
+    "ramp target: in=100 + ∫[0,2] = 102.5");
+  eq(pe.rampSourceTimeAt({ start: 10, in: 100, speed: 2 }, 11), 102,
+    "ramp target: không curve → mapping hằng");
+  eq(pe.rampSourceTimeAt({ start: 10, in: 100, out: 104, speed: 2, reverse: true }, 11), 102,
+    "ramp target: reverse không curve → out - offset");
+  eq(pe.rampSourceTimeAt({ start: 10, in: 100, out: 104, speed: 2, reverse: true, speedKeyframes: lin }, 11), 102,
+    "ramp target: reverse + ramp → fallback hằng (render chặn combo này)");
+  eq(pe.rampSourceTimeAt({ start: 10, in: 100, speedKeyframes: lin }, 9), 100,
+    "ramp target: trước clip → in");
 }
 
 console.log(`\n✅ preview-engine: ${pass} assertions pass`);

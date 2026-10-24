@@ -18,6 +18,16 @@ export const EFFECT_TYPES = [
   "vignette",
   "noise",
   "brightness",
+  // Q4 (Phase 8): 9 effect mới — xem server/render/src/effects.js
+  "glitch",
+  "rgb-shift",
+  "shake",
+  "pixelate",
+  "mirror",
+  "old-film",
+  "invert",
+  "edgedetect",
+  "hue-rotate",
 ] as const;
 
 export type VideoEffectType = (typeof EFFECT_TYPES)[number];
@@ -34,6 +44,15 @@ export const EFFECT_META: Record<
   vignette: { label: "Tối góc", description: "Tối dần 4 góc, nổi bật trung tâm" },
   noise: { label: "Nhiễu hạt", description: "Hạt nhiễu kiểu phim cũ" },
   brightness: { label: "Sáng / tối", description: "Tăng giảm độ sáng (0.5 = giữ nguyên)" },
+  glitch: { label: "Nhiễu sóng", description: "Lệch kênh màu + nhiễu sọc kiểu glitch" },
+  "rgb-shift": { label: "Lệch kênh màu", description: "Tách kênh đỏ/xanh dương ngược chiều" },
+  shake: { label: "Rung lắc", description: "Khung hình rung theo thời gian (viền đen mỏng)" },
+  pixelate: { label: "Pixel hóa", description: "Khối pixel lớn kiểu kiểm duyệt / retro" },
+  mirror: { label: "Lật ngang", description: "Lật toàn khung hình theo chiều ngang" },
+  "old-film": { label: "Phim cũ", description: "Nhiễu hạt + nhạt màu + tối góc kiểu phim xưa" },
+  invert: { label: "Đảo màu", description: "Đảo ngược màu (âm bản, nội suy theo cường độ)" },
+  edgedetect: { label: "Viền nét", description: "Chỉ giữ lại đường biên sáng trên nền tối" },
+  "hue-rotate": { label: "Xoay tông màu", description: "Xoay vòng màu (0.5 = giữ nguyên)" },
 };
 
 /** Cường độ mặc định khi không chỉ định (0..1). */
@@ -97,9 +116,9 @@ export function validateVideoEffects(v: unknown): string[] {
 // ---------------------------------------------------------------------------
 // `effects?` được khai báo qua module augmentation (không sửa index.ts trực tiếp).
 // ---------------------------------------------------------------------------
-import "./index";
+import "./index.js";
 
-declare module "./index" {
+declare module "./index.js" {
   interface VideoClip {
     /** Danh sách video effects áp theo thứ tự (từ đầu đến cuối). */
     effects?: VideoEffect[];

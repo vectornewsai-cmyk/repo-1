@@ -27,6 +27,16 @@ const EFFECT_TYPES = [
   "vignette",
   "noise",
   "brightness",
+  // Q4 (Phase 8): 9 effect mới, tất cả filter native FFmpeg, đã pixel-verify.
+  "glitch",
+  "rgb-shift",
+  "shake",
+  "pixelate",
+  "mirror",
+  "old-film",
+  "invert",
+  "edgedetect",
+  "hue-rotate",
 ];
 
 const DEFAULT_INTENSITY = 0.5;
@@ -108,6 +118,58 @@ function buildEffectFilter(effect) {
       const b = (t - 0.5) * 0.7;
       return `eq=brightness=${num(b)}`;
     }
+    case "rgb-shift": {
+      // Tách kênh R/B ngược chiều nhau (mốc màu kiểu 3D lỗi thời).
+      // rgbashift: rh/bh là độ lệch ngang (pixel) của kênh đỏ/xanh dương.
+      const s = 2 + t * 14;
+      return `rgbashift=rh=${num(s)}:bh=${num(-s)}`;
+    }
+    case "glitch": {
+      // rgb-shift + nhiễu hạt thời gian: vừa lệch kênh vừa nhiễu sọc.
+      const s = 6 + t * 10;
+      const ns = Math.round(10 + t * 20);
+      return `rgbashift=rh=${num(s)}:bh=${num(-s)},noise=alls=${ns}:allf=t`;
+    }
+    case "shake": {
+      // Rung lắc: cửa sổ crop di chuyển theo sin/cos theo thời gian, rồi pad
+      // cố định khôi phục đúng kích thước gốc (pad không hiểu biến t nên cửa
+      // sổ crop mới là phần chuyển động; viền đen 12px là tác dụng phụ thật).
+      return `crop=w=iw-24:h=ih-24:x='12+12*sin(2*PI*t*9)':y='12+12*cos(2*PI*t*7)',pad=iw+24:ih+24:x=12:y=12:color=black`;
+    }
+    case "pixelate": {
+      // Thu nhỏ rồi phóng lại bằng neighbor: khối pixel rõ rệt.
+      // Dùng iw/iw*K (không cần biết W/H tuyệt đối): scale thứ 2 nhân ngược
+      // đúng hệ số nên kích thước ra bằng kích thước vào.
+      const k = 2 + Math.round(t * 14); // 2..16
+      return `scale=iw/${k}:ih/${k}:flags=neighbor,scale=iw*${k}:ih*${k}:flags=neighbor`;
+    }
+    case "mirror": {
+      // Lật ngang toàn khung hình (không có tham số cường độ — hflip nhị phân).
+      return `hflip`;
+    }
+    case "old-film": {
+      // Phim cũ: nhiễu hạt + giảm bão hòa + tăng tương phản nhẹ + tối góc.
+      const ns = Math.round(8 + t * 12);
+      const sat = 0.7 - t * 0.2;
+      const con = 1.05 + t * 0.1;
+      return `noise=alls=${ns}:allf=t,eq=saturation=${num(sat)}:contrast=${num(con)},vignette=angle=${num(Math.PI / 5)}`;
+    }
+    case "invert": {
+      // Đảo màu nội suy: t=0 giữ nguyên, t=1 đảo hoàn toàn (255-val).
+      const e = `val+${num(t)}*(255-2*val)`;
+      return `lutrgb=r='${e}':g='${e}':b='${e}'`;
+    }
+    case "edgedetect": {
+      // Phát hiện biên: nền tối, biên sáng. Ngưỡng theo cường độ.
+      const low = 0.1 + t * 0.2;
+      const high = 0.3 + t * 0.3;
+      return `edgedetect=low=${num(low)}:high=${num(high)}`;
+    }
+    case "hue-rotate": {
+      // Xoay tông màu: t=0.5 giữ nguyên, < 0.5 xoay âm, > 0.5 xoay dương (±90°).
+      const h = (t - 0.5) * 180;
+      return `hue=h=${num(h)}`;
+    }
     default:
       throw new Error(`effect không hỗ trợ: ${JSON.stringify(effect.type)}`);
   }
@@ -177,6 +239,23 @@ function selfTest() {
   // brightness 0.5 → 0 (giữ nguyên)
   assert.ok(buildEffectFilter({ type: "brightness", intensity: 0.5 }).includes("brightness=0"));
 
+  // Q4: 9 effect mới build đúng filter + intensity có tác dụng
+  assert.ok(buildEffectFilter({ type: "rgb-shift" }).startsWith("rgbashift="));
+  assert.ok(buildEffectFilter({ type: "glitch" }).includes("rgbashift="));
+  assert.ok(buildEffectFilter({ type: "glitch" }).includes("noise=alls="));
+  assert.ok(buildEffectFilter({ type: "shake" }).includes("crop="));
+  assert.ok(buildEffectFilter({ type: "shake" }).includes("pad="));
+  assert.ok(buildEffectFilter({ type: "pixelate" }).includes("flags=neighbor"));
+  assert.strictEqual(buildEffectFilter({ type: "mirror" }), "hflip");
+  assert.ok(buildEffectFilter({ type: "old-film" }).includes("vignette="));
+  assert.ok(buildEffectFilter({ type: "invert", intensity: 1 }).includes("255-2*val"));
+  assert.ok(buildEffectFilter({ type: "edgedetect" }).startsWith("edgedetect="));
+  assert.ok(buildEffectFilter({ type: "hue-rotate", intensity: 0.5 }).includes("h=0"));
+  assert.ok(buildEffectFilter({ type: "hue-rotate", intensity: 1 }).includes("h=90"));
+  assert.ok(buildEffectFilter({ type: "pixelate", intensity: 0 }).includes("iw/2"));
+  assert.ok(buildEffectFilter({ type: "pixelate", intensity: 1 }).includes("iw/16"));
+  assert.ok(validateEffects([{ type: "glitch" }, { type: "mirror" }]).length === 0);
+
   // 4. Chain nối nhiều effect
   const chain = buildEffectsChain([
     { type: "grayscale", intensity: 1 },
@@ -187,7 +266,7 @@ function selfTest() {
   assert.strictEqual(buildEffectsChain(undefined), null);
 
   // 5. Từ chối input sai
-  assert.throws(() => buildEffectFilter({ type: "glitch" }), /không hỗ trợ/);
+  assert.throws(() => buildEffectFilter({ type: "khong-ho-tro" }), /không hỗ trợ/);
   assert.throws(() => buildEffectFilter({ type: "blur", intensity: 2 }), /intensity/);
   assert.throws(() => buildEffectFilter({ type: "blur", intensity: -0.1 }), /intensity/);
   assert.throws(() => buildEffectsChain("không phải mảng"), /mảng/);
@@ -196,7 +275,7 @@ function selfTest() {
   assert.deepStrictEqual(validateEffects(undefined), []);
   assert.deepStrictEqual(validateEffects([]), []);
   assert.deepStrictEqual(validateEffects([{ type: "blur" }]), []);
-  assert.ok(validateEffects([{ type: "glitch" }]).length > 0);
+  assert.ok(validateEffects([{ type: "khong-ho-tro" }]).length > 0);
   assert.ok(validateEffects([{ type: "blur" }, { type: "blur" }]).some((m) => m.includes("trùng")));
   assert.ok(validateEffects([{ type: "noise", intensity: 5 }]).some((m) => m.includes("intensity")));
   assert.ok(validateEffects("x").length > 0);

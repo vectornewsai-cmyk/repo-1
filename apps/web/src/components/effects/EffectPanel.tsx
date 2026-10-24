@@ -5,7 +5,7 @@
  *   {clip.kind === "video" && <EffectPanel />}
  *
  * Hành vi (khớp ngữ nghĩa trong packages/video-spec/src/effects.ts):
- * - Danh sách 7 hiệu ứng, mỗi cái có toggle bật/tắt + slider cường độ 0..1.
+ * - Danh sách 16 hiệu ứng, mỗi cái có toggle bật/tắt + slider cường độ 0..1.
  * - Bật: thêm { type, intensity } vào clip.effects (mỗi loại 1 lần).
  * - Tắt: xóa khỏi mảng; mảng rỗng → effects = undefined (sạch spec).
  * - Slider: cập nhật intensity của effect đã bật.
@@ -30,9 +30,10 @@ export function EffectPanel() {
   const spec = useStore((s) => s.spec);
   const [warn, setWarn] = useState<string | null>(null);
 
-  if (!selection) return null;
-  const track = spec.tracks.find((t) => t.id === selection.trackId);
-  const clip = track?.clips.find((c) => c.id === selection.clipId);
+  const primary = selection[0] ?? null;
+  if (!primary) return null;
+  const track = spec.tracks.find((t) => t.id === primary.trackId);
+  const clip = track?.clips.find((c) => c.id === primary.clipId);
   if (!track || !clip || clip.kind !== "video") return null;
 
   const st = useStore.getState();
