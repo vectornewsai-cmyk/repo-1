@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { VideoSpec } from "@repo-1/video-spec";
 import { isVideoSpec, projectDuration, SPEC_VERSION } from "@repo-1/video-spec";
+import { buildSharePage, downloadSharePage, SHARE_EMBED_MAX_BYTES } from "./lib/sharePage";
 import { useStore } from "./store";
 import { fmtTime } from "./lib";
 import {
@@ -291,6 +292,8 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
   const [queuePos, setQueuePos] = useState<number | null>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [shareStatus, setShareStatus] = useState<"idle" | "working" | "done" | "error">("idle");
+  const [shareMsg, setShareMsg] = useState<string>("");
   const pollRef = useRef<number | null>(null);
 
   // --- R1-042: export preset ---
@@ -468,6 +471,52 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
     document.body.appendChild(a);
     a.click();
     a.remove();
+  };
+
+  /** Q7: Xuất trang chia sẻ HTML tĩnh từ video vừa render xong. */
+  const doExportSharePage = async () => {
+    if (!jobId) return;
+    setShareStatus("working");
+    setShareMsg("Đang tải video đã render để đóng gói trang chia sẻ…");
+    try {
+      const res = await fetch(`${BRIDGE_URL}/api/render/${jobId}/download`);
+      if (!res.ok) throw new Error(`Không tải được video (bridge trả ${res.status}).`);
+      const blob = await res.blob();
+      const title = spec.meta.name || "Video VCut";
+      if (blob.size > SHARE_EMBED_MAX_BYTES) {
+        // Video lớn: trang linked + nhắc user tải MP4 đặt cạnh.
+        const { html, warnings } = buildSharePage({
+          title, spec, videoMime: "video/mp4", videoFileName: "video.mp4",
+        });
+        downloadSharePage(html, title);
+        setShareStatus("done");
+        setShareMsg(
+          `Video ${(blob.size / 1048576).toFixed(0)}MB nên trang dùng chế độ linked: ` +
+            `hãy bấm "Tải xuống MP4", đổi tên thành video.mp4 và đặt cùng thư mục với file HTML. ` +
+            warnings.join(" "),
+        );
+        return;
+      }
+      const buf = new Uint8Array(await blob.arrayBuffer());
+      // btoa theo chunk để không tràn stack với video vài chục MB.
+      let binary = "";
+      const CHUNK = 0x8000;
+      for (let i = 0; i < buf.length; i += CHUNK) {
+        binary += String.fromCharCode(...buf.subarray(i, i + CHUNK));
+      }
+      const { html, warnings } = buildSharePage({
+        title, spec, videoMime: "video/mp4", videoBase64: btoa(binary),
+      });
+      downloadSharePage(html, title);
+      setShareStatus("done");
+      setShareMsg(
+        `Đã xuất trang chia sẻ 1 file (${(blob.size / 1048576).toFixed(1)}MB video nhúng trong HTML). ` +
+          warnings.join(" "),
+      );
+    } catch (e) {
+      setShareStatus("error");
+      setShareMsg("Không xuất được trang chia sẻ: " + (e as Error).message);
+    }
   };
 
   // Dọn polling khi đóng panel
@@ -677,7 +726,13 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
           )}
           {renderStatus === "done" && (
             <div className="valid-banner ok">
-              ✅ Render xong! <button className="primary" onClick={downloadMp4}>⬇ Tải xuống MP4</button>
+              ✅ Render xong! <button className="primary" onClick={downloadMp4}>⬇ Tải xuống MP4</button>{" "}
+              <button onClick={() => void doExportSharePage()} disabled={shareStatus === "working"}>
+                🌐 Xuất trang chia sẻ
+              </button>
+              {shareMsg && (
+                <div className={shareStatus === "error" ? "valid-banner bad" : "tips"}>{shareMsg}</div>
+              )}
             </div>
           )}
           {renderStatus === "error" && renderError && (

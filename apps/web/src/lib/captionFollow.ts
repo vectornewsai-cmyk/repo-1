@@ -11,12 +11,17 @@
  * của câu từ captionOf + hình học mới. Toàn bộ hàm ở đây là thuần
  * (không DOM/store) — test được bằng Node, theo mẫu clipboard.ts.
  *
- * Ngữ nghĩa thời gian (khớp speed.ts):
- *   forward: timeline offset = (media - in) / speed
- *   reverse: timeline offset = (out - media) / speed
- * Đoạn media của clip luôn là [in, out] bất kể chiều phát.
- * GIỚI HẠN: clip có speedKeyframes (P3) vẫn map bằng `speed` hằng số —
- * chưa theo đường cong tích phân (xem CAPTIONFOLLOW_LIMITS.md).
+ * Ngữ nghĩa thời gian (khớp speed.ts và speedcurve.ts):
+ *   forward, speed hằng: timeline offset = (media - in) / speed
+ *   reverse, speed hằng: timeline offset = (out - media) / speed
+ *   speedKeyframes (không reverse): media m ↔ offset output o sao cho
+ *     sourcePosAt(curve, o) = m - in  (đảo bằng tìm kiếm nhị phân, vì
+ *     sourcePosAt đơn điệu tăng theo o khi speed ≥ 0.25 > 0).
+ * Đoạn media của clip luôn là [in, out] bất kể chiều phát — TRỪ khi có
+ * speedKeyframes: lúc đó render dùng in + ∫speed nên đoạn nguồn thấy được
+ * là [in, in + sourcePosAt(curve, duration)] và `out` không còn là biên.
+ * GIỚI HẠN: reverse + speedKeyframes bị validator render cấm nên mapping
+ * rơi về speed hằng số (giữ hành vi cũ, không đoán ngữ nghĩa cấm).
  *
  * Quy tắc khi edit clip nguồn:
  * - Move: captionOf giữ nguyên, timeline dịch theo delta start.
@@ -39,6 +44,8 @@ import type {
   VideoClip,
   VideoSpec,
 } from "@repo-1/video-spec";
+import type { SpeedCurve } from "@repo-1/video-spec/speedcurve";
+import { sourcePosAt } from "@repo-1/video-spec/speedcurve";
 
 // Sinh id nội bộ thay vì import uid từ ../lib: module này phải chạy được
 // bằng Node thuần (type-stripping) cho test, mà "../lib" là directory
@@ -77,16 +84,70 @@ export function isLinkedCaption(clip: Clip): clip is TextClip & {
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
+/** true nếu clip có đường cong tốc độ dùng được (không reverse — cấm). */
+function hasUsableSpeedCurve(source: SourceClip): source is SourceClip & {
+  speedKeyframes: SpeedCurve;
+} {
+  const curve = (source as { speedKeyframes?: SpeedCurve }).speedKeyframes;
+  return (
+    !!curve &&
+    Array.isArray(curve.keyframes) &&
+    curve.keyframes.length > 0 &&
+    !(source.reverse ?? false)
+  );
+}
+
+/**
+ * Đảo sourcePosAt: tìm offset output o ∈ [0, duration] sao cho
+ * sourcePosAt(curve, o) = target (target = độ dài nguồn tính từ clip.in).
+ * sourcePosAt đơn điệu tăng (speed ≥ 0.25) nên tìm kiếm nhị phân hội tụ.
+ * Trả về duration nếu target vượt tổng tiêu thụ (đã kẹp trước khi gọi).
+ */
+export function outputOffsetForMedia(
+  curve: SpeedCurve,
+  target: number,
+  duration: number
+): number {
+  if (target <= 0) return 0;
+  if (duration <= 0) return 0;
+  let lo = 0;
+  let hi = duration;
+  for (let i = 0; i < 64; i++) {
+    const mid = (lo + hi) / 2;
+    if (sourcePosAt(curve, mid) < target) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
 /**
  * Ánh xạ đoạn media [a, b) của clip nguồn sang vị trí timeline.
- * Trả về null nếu đoạn nằm ngoài [in, out] của clip (câu đã bị cắt hết).
+ * Trả về null nếu đoạn nằm ngoài đoạn nguồn thấy được (câu đã bị cắt hết).
  * Kết quả đã kẹp vào đoạn nguồn của clip; phần ngoài bị bỏ.
+ * - Speed hằng: công thức speed.ts (xuôi/ngược).
+ * - SpeedKeyframes (không reverse): đảo tích phân theo speedcurve.ts;
+ *   đoạn nguồn thấy được là [in, in + sourcePosAt(curve, duration)].
  */
 export function mapMediaRangeToTimeline(
   source: SourceClip,
   mediaStart: number,
   mediaEnd: number
 ): { start: number; duration: number; visStart: number; visEnd: number } | null {
+  if (hasUsableSpeedCurve(source)) {
+    const curve = source.speedKeyframes;
+    const consumed = sourcePosAt(curve, source.duration);
+    const s = Math.max(mediaStart, source.in);
+    const e = Math.min(mediaEnd, source.in + consumed);
+    if (e - s < 0.01) return null; // ngoài hẳn hoặc quá ngắn để hiển thị
+    const o1 = outputOffsetForMedia(curve, s - source.in, source.duration);
+    const o2 = outputOffsetForMedia(curve, e - source.in, source.duration);
+    return {
+      start: r2(source.start + o1),
+      duration: r2(o2 - o1),
+      visStart: s,
+      visEnd: e,
+    };
+  }
   const speed = source.speed ?? 1;
   if (!(speed > 0)) return null;
   const s = Math.max(mediaStart, source.in);

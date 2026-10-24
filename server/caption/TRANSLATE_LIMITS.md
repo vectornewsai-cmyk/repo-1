@@ -26,14 +26,26 @@
 7. **Ngôn ngữ nguồn** theo whitelist của bridge (`vi, en, auto, zh, ja, ko, th,
    id, ms, fr, de, es`). Nguồn đã là tiếng Anh → translate vẫn chạy (viết lại
    câu, chuẩn hóa chính tả) nhưng ít giá trị.
-8. **Chưa có en→vi.** `argos-translate` (MIT, offline) là ứng viên cho cặp
-   vi↔en nhưng chưa được bundle/verify trong repo — để dành future work, không
-   hứa hẹn trong UI.
-9. **Chưa verify với model thật trong môi trường dev hiện tại**
-   (`faster_whisper` chưa cài ở VM này — giống tình trạng caption.py). Pipeline
-   đã được kiểm chứng end-to-end bằng stub (`test-translate-stub.py`):
-   bridge → NDJSON → 5 segments tiếng Anh đúng nội dung. Chất lượng dịch thật
-   cần kiểm chứng trên máy đã cài model.
+8. **Chưa có en→vi — kết luận Phase 8 Q3 (2026-10-24): KHÔNG mở rộng được
+   trong phạm vi task.** `translate` task của Whisper chỉ ra tiếng Anh theo
+   thiết kế (không phải thiếu config). Engine MT offline khác duy nhất đạt
+   tiêu chí brief (model sẵn có, không API trả phí, không license NC) là
+   `argos-translate` (MIT), nhưng kiểm chứng trực tiếp: KHÔNG có trong
+   `server/caption/.venv` (`ModuleNotFoundError`), và cài thử trong venv
+   sạch thất bại (`No matching distribution found for argos-translate` —
+   môi trường exec không tới được PyPI). Bundle argos đồng nghĩa thêm
+   dependency + tải model từng cặp ngôn ngữ + verify chất lượng trên audio
+   thật + thêm option target-language ở bridge/UI — vượt phạm vi "model sẵn
+   có" của task, nên KHÔNG làm; giữ nguyên hành vi `translate.py`.
+   Hướng tương lai (không hứa trong UI): argos-translate vi↔en, verify chất
+   lượng trước khi gắn vào bridge.
+9. **Đã có model thật trong môi trường dev hiện tại (cập nhật Q3).**
+   `faster_whisper` 1.2.1 đã cài trong `server/caption/.venv` và thư mục
+   model `models/fw-small` đã tồn tại — ghi chú cũ "chưa cài ở VM này" không
+   còn đúng. Pipeline từng được kiểm chứng end-to-end bằng stub
+   (`test-translate-stub.py`): bridge → NDJSON → 5 segments tiếng Anh đúng
+   nội dung. Chất lượng dịch thật bằng model fw-small vẫn cần kiểm chứng
+   trên audio thật trước khi tuyên bố con số chất lượng.
 
 ## Quyết định thiết kế
 

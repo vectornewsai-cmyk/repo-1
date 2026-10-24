@@ -122,7 +122,7 @@ function integrateSpeed(curve, a, b) {
     let seg = null;
     for (let j = 0; j < ks.length - 1; j++) {
       if (x0 >= ks[j].t - 1e-12 && x1 <= ks[j + 1].t + 1e-12) {
-        seg = { v0: ks[j].v, v1: ks[j + 1].v, easing: ks[j].easing, bezier: ks[j].bezier };
+        seg = { v0: ks[j].v, v1: ks[j + 1].v, easing: ks[j].easing, bezier: ks[j].bezier, t0: ks[j].t, segSpan: ks[j + 1].t - ks[j].t };
         break;
       }
     }
@@ -130,12 +130,18 @@ function integrateSpeed(curve, a, b) {
       total += speedAt(curve, (x0 + x1) / 2) * span;
       continue;
     }
-    if (seg.easing === "linear") {
-      total += span * ((seg.v0 + seg.v1) / 2);
-    } else if (seg.easing === "ease-in") {
-      total += span * (seg.v0 + (seg.v1 - seg.v0) / 3);
-    } else if (seg.easing === "ease-out") {
-      total += span * (seg.v0 + (seg.v1 - seg.v0) * (2 / 3));
+    if (seg.easing === "linear" || seg.easing === "ease-in" || seg.easing === "ease-out") {
+      // SỬA Phase 8 Q3 (mirror speedcurve.ts): tích phân ĐÚNG trên đoạn con
+      // bằng nguyên hàm theo easing; đoạn đầy đủ cho kết quả y hệt bản cũ.
+      const { v0, v1, easing } = seg;
+      const S = seg.segSpan;
+      const p0 = S <= 0 ? 0 : (x0 - seg.t0) / S;
+      const p1 = S <= 0 ? 0 : (x1 - seg.t0) / S;
+      const anti = (p) =>
+        easing === "linear" ? (p * p) / 2
+        : easing === "ease-in" ? (p * p * p) / 3
+        : p + Math.pow(1 - p, 3) / 3;
+      total += v0 * span + (v1 - v0) * S * (anti(p1) - anti(p0));
     } else {
       const n = 64;
       const h = span / n;

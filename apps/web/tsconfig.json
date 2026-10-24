@@ -31,6 +31,11 @@
   "exclude": [
     "src/lib/assetStore.test.ts",
     "src/lib/captionFollow.test.ts",
-    "src/lib/clipboard.test.ts"
+    "src/lib/clipboard.test.ts",
+    "src/lib/projectHistory.test.ts",
+    "src/lib/sharePage.test.ts",
+    "src/lib/silenceFollow.test.ts",
+    "src/lib/syncProtocol.test.ts",
+    "src/lib/beatSync.test.ts"
   ]
 }

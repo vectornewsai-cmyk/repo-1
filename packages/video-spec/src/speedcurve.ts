@@ -159,10 +159,10 @@ export function integrateSpeed(curve: SpeedCurve, a: number, b: number): number 
     const span = x1 - x0;
     // Tìm đoạn keyframe chứa [x0, x1] (sau khi cắt, mỗi khoảng nằm gọn trong
     // 1 đoạn keyframe hoặc ngoài khoảng keyframe → tốc độ hằng).
-    let seg: { v0: number; v1: number; easing: SpeedEasing; bezier?: [number, number, number, number] } | null = null;
+    let seg: { v0: number; v1: number; easing: SpeedEasing; bezier?: [number, number, number, number]; t0: number; segSpan: number } | null = null;
     for (let j = 0; j < ks.length - 1; j++) {
       if (x0 >= ks[j].t - 1e-12 && x1 <= ks[j + 1].t + 1e-12) {
-        seg = { v0: ks[j].v, v1: ks[j + 1].v, easing: ks[j].easing, bezier: ks[j].bezier };
+        seg = { v0: ks[j].v, v1: ks[j + 1].v, easing: ks[j].easing, bezier: ks[j].bezier, t0: ks[j].t, segSpan: ks[j + 1].t - ks[j].t };
         break;
       }
     }
@@ -171,12 +171,23 @@ export function integrateSpeed(curve: SpeedCurve, a: number, b: number): number 
       total += speedAt(curve, (x0 + x1) / 2) * span;
       continue;
     }
-    if (seg.easing === "linear") {
-      total += span * ((seg.v0 + seg.v1) / 2);
-    } else if (seg.easing === "ease-in") {
-      total += span * (seg.v0 + (seg.v1 - seg.v0) / 3);
-    } else if (seg.easing === "ease-out") {
-      total += span * (seg.v0 + (seg.v1 - seg.v0) * (2 / 3));
+    if (seg.easing === "linear" || seg.easing === "ease-in" || seg.easing === "ease-out") {
+      // SỬA Phase 8 Q3 (bug P3/P1 đã ghi nhận): bản cũ dùng trung bình 2 đầu
+      // mút segment cho MỌI đoạn con (integrateSpeed(0,2) trên segment
+      // linear 1→2 [0,4] trả 3 thay vì 2.5). Tích phân ĐÚNG trên đoạn con
+      // [x0,x1] ⊂ segment bằng nguyên hàm theo easing:
+      //   linear: p²/2; ease-in: p³/3; ease-out: p + (1-p)³/3.
+      // Đoạn đầy đủ cho kết quả Y HỆT bản cũ (1/2, 1/3, 2/3) nên các
+      // consumer cũ (sourceConsumed cả clip, validate) không đổi.
+      const { v0, v1, easing } = seg;
+      const S = seg.segSpan;
+      const p0 = S <= 0 ? 0 : (x0 - seg.t0) / S;
+      const p1 = S <= 0 ? 0 : (x1 - seg.t0) / S;
+      const anti = (p: number) =>
+        easing === "linear" ? (p * p) / 2
+        : easing === "ease-in" ? (p * p * p) / 3
+        : p + Math.pow(1 - p, 3) / 3;
+      total += v0 * span + (v1 - v0) * S * (anti(p1) - anti(p0));
     } else {
       // Simpson 64 khoảng cho bezier.
       const n = 64;

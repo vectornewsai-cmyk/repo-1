@@ -248,6 +248,8 @@ interface EditorState {
   patchTrack: (trackId: string, patch: Partial<Track>) => void;
   addMediaToTrack: (mediaId: string, trackId: string, at: number) => void;
   addMediaAtPlayhead: (mediaId: string) => void;
+  /** Q8: gắn proxy cho 1 media (chỉ ảnh hưởng preview, không đổi spec/export). */
+  setMediaProxy: (mediaId: string, proxyUrl: string, proxyHeight: number) => void;
   addTextClip: (trackId?: string) => void;
   /**
    * Chèn track "Phụ đề" mới từ segments auto-caption (R1-072).
@@ -434,6 +436,13 @@ export const useStore = create<EditorState>()((set, get) => {
 
   setProjectName: (name) =>
     set((s) => ({ spec: { ...s.spec, meta: { ...s.spec.meta, name } } })),
+
+  setMediaProxy: (mediaId, proxyUrl, proxyHeight) =>
+    set((s) => ({
+      media: s.media.map((m) =>
+        m.id === mediaId ? { ...m, proxyUrl, proxyHeight } : m,
+      ),
+    })),
 
   importFiles: async (files) => {
     const items: MediaItem[] = [];
@@ -655,16 +664,37 @@ export const useStore = create<EditorState>()((set, get) => {
   },
 
   removeSilence: (trackId, clipId, silences) => {
-    const res = removeSilenceFromClip(get().spec, trackId, clipId, silences, (p) =>
+    const oldSpec = get().spec;
+    const res = removeSilenceFromClip(oldSpec, trackId, clipId, silences, (p) =>
       uid(p)
     );
     if (!res) return null;
+    // Phase 8 Q3: caption bám theo sau khi cắt khoảng lặng (trước đây câu
+    // link tới clip bị cắt bị bỏ rơi ở vị trí cũ).
+    // - Câu link tới clip gốc được CHIA theo các đoạn giữ: đoạn giữ = clip
+    //   trên track đích có id KHÔNG nằm trong track cũ (removeSilence cấp
+    //   id mới cho mọi đoạn giữ); câu nằm gọn trong khoảng lặng bị cắt
+    //   thì RỚT (không caption ma), câu cắt ngang khoảng lặng bị chẻ theo
+    //   đoạn giữ (xem splitLinkedCaptionsMulti).
+    // - Clip sau trên cùng track bị ripple trái → caption của chúng dịch
+    //   theo qua shiftCaptionsForMovedClips (đoạn giữ là id mới nên bị
+    //   bước shift bỏ qua đúng như ý; clip gốc đã biến mất cũng bị bỏ qua).
+    const oldTrack = oldSpec.tracks.find((t) => t.id === trackId);
+    const oldIds = new Set(oldTrack?.clips.map((c) => c.id) ?? []);
+    const newTrack = res.spec.tracks.find((t) => t.id === trackId);
+    // Đoạn giữ là clip nguồn (video/audio) nên lọc qua isSourceClip để
+    // đúng kiểu SourceClip mà splitLinkedCaptionsInSpec yêu cầu.
+    const pieces = (newTrack?.clips ?? [])
+      .filter((c) => !oldIds.has(c.id))
+      .filter(isSourceClip);
+    let next = splitLinkedCaptionsInSpec(res.spec, clipId, pieces);
+    next = shiftCaptionsForMovedClips(oldSpec, next);
     // 1 bước undo duy nhất cho toàn bộ thao tác cắt.
     get().beginHistoryGroup("Cắt khoảng lặng");
     try {
       execCommand({
         label: "Cắt khoảng lặng",
-        apply: () => res.spec,
+        apply: () => next,
       });
     } finally {
       get().endHistoryGroup();

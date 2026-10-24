@@ -24,8 +24,20 @@
  *   cũng được dán/nhân bản cùng lúc và vẫn kề nhau sau khi đặt; mọi
  *   transition ở biên khối đều bị strip. Nếu không, validator render sẽ
  *   báo lỗi cứng (transitionOut không có clip kề ngay sau).
+ * - Caption đính kèm (Phase 8 Q3): copy clip nguồn thì các câu phụ đề link
+ *   tới nó cũng được copy theo (cả khi câu đã chọn trực tiếp — paste sẽ
+ *   dedupe, xem copyClips). Lúc
+ *   paste, mỗi câu tạo lại link tới id MỚI của clip nguồn đã dán, giữ
+ *   nguyên đoạn media, dịch timeline đúng bằng shift của khối (paste giữ
+ *   nguyên in/out/speed/curve nên mapping chỉ tịnh tiến theo start —
+ *   đúng cả speed hằng, reverse và speedKeyframes mà không cần tính lại
+ *   tích phân). Câu chữ copy TRỰC TIẾP mà nguồn của nó cũng được dán
+ *   cùng lúc thì bị bỏ qua (tránh nhân đôi — bản đính kèm đã tạo đúng);
+ *   câu copy trực tiếp mà nguồn KHÔNG dán cùng thì bị HỦY LINK thành chữ
+ *   tự do (tránh trạng thái link trỏ về clip cũ nhưng vị trí đã dịch).
+ *   Duplicate KHÔNG mang caption theo (xem CLIPBOARD_LIMITS.md).
  */
-import type { Clip, Track, VideoSpec } from "@repo-1/video-spec";
+import type { Clip, TextClip, Track, VideoSpec } from "@repo-1/video-spec";
 import type { Selection } from "./multiselect";
 
 /**
@@ -61,9 +73,21 @@ export interface CopiedClip {
   sourceStart: number;
 }
 
-/** Nội dung clipboard: các clip + mốc neo (start nhỏ nhất). */
+/** Một câu phụ đề copy kèm theo clip nguồn (không nằm trong selection). */
+export interface CopiedCaption {
+  /** Track chứa câu lúc copy (paste giữ nguyên track này). */
+  trackId: string;
+  /** Bản sao sâu của câu chữ lúc copy (kèm captionOf gốc). */
+  clip: Clip;
+  /** id clip nguồn lúc copy (để map sang id mới lúc paste). */
+  sourceClipId: string;
+}
+
+/** Nội dung clipboard: các clip + caption đính kèm + mốc neo. */
 export interface ClipboardContent {
   clips: CopiedClip[];
+  /** Câu phụ đề link tới các clip nguồn đã copy (có thể rỗng). */
+  captions: CopiedCaption[];
   /** start nhỏ nhất trong các clip đã copy. */
   anchorStart: number;
 }
@@ -103,7 +127,23 @@ export function copyClips(spec: VideoSpec, sels: Selection[]): ClipboardContent 
   const trackOrder = new Map(spec.tracks.map((t, i) => [t.id, i]));
   clips.sort((a, b) => (trackOrder.get(a.trackId) ?? 0) - (trackOrder.get(b.trackId) ?? 0)
     || a.sourceStart - b.sourceStart);
-  return { clips, anchorStart: Math.min(...clips.map((c) => c.sourceStart)) };
+  // Caption đính kèm: MỌI câu chữ có captionOf trỏ tới 1 clip nguồn vừa
+  // copy — kể cả câu đã chọn trực tiếp (vẫn có trong `clips`). Lúc paste,
+  // bản trực tiếp bị bỏ qua khi nguồn cùng dán và bản đính kèm tạo đúng
+  // 1 câu mới, nên không nhân đôi; thu thập cả câu đã chọn là bắt buộc,
+  // nếu không câu chọn kèm nguồn sẽ bị mất hẳn (bản trực tiếp bị skip
+  // mà không có bản đính kèm nào tạo lại).
+  const copiedIds = new Set(clips.map((c) => c.clip.id));
+  const captions: CopiedCaption[] = [];
+  for (const t of spec.tracks) {
+    for (const c of t.clips) {
+      if (c.kind !== "text") continue;
+      const link = (c as TextClip).captionOf;
+      if (!link || !copiedIds.has(link.clipId)) continue;
+      captions.push({ trackId: t.id, clip: deepCloneClip(c), sourceClipId: link.clipId });
+    }
+  }
+  return { clips, captions, anchorStart: Math.min(...clips.map((c) => c.sourceStart)) };
 }
 
 export interface PasteResult {
@@ -131,6 +171,18 @@ export function pasteClips(
     isPasteTarget(spec.tracks.find((t) => t.id === c.trackId)));
   if (placeable.length === 0) return null;
 
+  // Caption đính kèm sẽ thực sự được dán (nguồn đã dán + track đích nhận)
+  // cũng tham gia tính shift, để câu dán ra không chồng lấn câu chữ sẵn có
+  // trên track đích — cả khối (nguồn + caption) dịch cùng nhau.
+  const placeableOrig = new Set(placeable.map((c) => c.clip.id));
+  const attached = (clipboard.captions ?? []).filter((cap) =>
+    placeableOrig.has(cap.sourceClipId)
+    && isPasteTarget(spec.tracks.find((t) => t.id === cap.trackId)));
+  const blockItems = [
+    ...placeable.map((c) => ({ trackId: c.trackId, sourceStart: c.sourceStart, duration: c.clip.duration })),
+    ...attached.map((cap) => ({ trackId: cap.trackId, sourceStart: cap.clip.start, duration: cap.clip.duration })),
+  ];
+
   // Dịch khối sang phải cho tới khi hết chồng lấn (chỉ tăng, không giảm,
   // nên luôn hội tụ trong tối đa số clip hiện có + 1 vòng).
   let shift = anchor - clipboard.anchorStart;
@@ -138,12 +190,12 @@ export function pasteClips(
   for (const t of spec.tracks) existing.set(t.id, t);
   for (let round = 0; round <= spec.tracks.reduce((n, t) => n + t.clips.length, 0) + 1; round++) {
     let needed = 0;
-    for (const c of placeable) {
+    for (const c of blockItems) {
       const track = existing.get(c.trackId);
       if (!track) continue;
       const start = c.sourceStart + shift;
       for (const o of track.clips) {
-        if (start < o.start + o.duration && start + c.clip.duration > o.start) {
+        if (start < o.start + o.duration && start + c.duration > o.start) {
           needed = Math.max(needed, o.start + o.duration - start);
         }
       }
@@ -169,16 +221,58 @@ export function pasteClips(
 
   const pasted: Selection[] = [];
   const newClipsByTrack = new Map<string, Clip[]>();
+  // Map id gốc clip nguồn → bản sao mới (để caption đính kèm link đúng).
+  const newSourceByOrig = new Map<string, Clip>();
   for (const c of placeable) {
     const clip = deepCloneClip(c.clip);
     clip.id = idGen();
     clip.start = c.sourceStart + shift;
+    if (clip.kind === "video" || clip.kind === "audio") {
+      newSourceByOrig.set(c.clip.id, clip);
+    }
+    // Caption copy TRỰC TIẾP: nguồn của nó cũng dán cùng lúc → bỏ qua
+    // (bản đính kèm bên dưới sẽ tạo đúng 1 câu link tới id mới);
+    // nguồn không dán cùng → HỦY LINK thành chữ tự do (tránh link trỏ
+    // về clip cũ trong khi vị trí đã dịch theo khối).
+    if (clip.kind === "text") {
+      const link = (clip as TextClip).captionOf;
+      if (link) {
+        if (placeableOrig.has(link.clipId)) continue;
+        delete (clip as TextClip).captionOf;
+      }
+    }
     if (!hasSuccessor(c)) delete (clip as { transitionOut?: unknown }).transitionOut;
     if (!hasPredecessor(c)) delete (clip as { transitionIn?: unknown }).transitionIn;
     const arr = newClipsByTrack.get(c.trackId) ?? [];
     arr.push(clip);
     newClipsByTrack.set(c.trackId, arr);
     pasted.push({ trackId: c.trackId, clipId: clip.id });
+  }
+
+  // Caption đính kèm: mỗi câu tạo lại link tới id MỚI của clip nguồn đã
+  // dán, giữ nguyên đoạn media, dịch timeline đúng bằng shift của khối
+  // (paste giữ nguyên geometry nên mapping chỉ tịnh tiến theo start —
+  // đúng cả speed hằng, reverse và speedKeyframes). Câu bị bỏ qua khi
+  // nguồn không được dán hoặc track đích không nhận — nguồn vẫn dán
+  // bình thường. `attached` đã lọc 2 điều kiện này nên vòng này không rớt
+  // thêm, chỉ kiểm tra captionOf gốc còn nguyên.
+  for (const cap of attached) {
+    const ns = newSourceByOrig.get(cap.sourceClipId);
+    if (!ns) continue;
+    const origLink = (cap.clip as TextClip).captionOf;
+    if (!origLink) continue;
+    const nc = deepCloneClip(cap.clip);
+    nc.id = idGen();
+    nc.start = cap.clip.start + shift;
+    (nc as TextClip).captionOf = {
+      clipId: ns.id,
+      mediaStart: origLink.mediaStart,
+      mediaEnd: origLink.mediaEnd,
+    };
+    const arr = newClipsByTrack.get(cap.trackId) ?? [];
+    arr.push(nc);
+    newClipsByTrack.set(cap.trackId, arr);
+    pasted.push({ trackId: cap.trackId, clipId: nc.id });
   }
 
   const tracks = spec.tracks.map((t) => {

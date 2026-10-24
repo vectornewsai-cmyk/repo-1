@@ -1,6 +1,6 @@
-# CLIPBOARD_LIMITS.md — Giới hạn trung thực của copy/paste/duplicate (K2, Phase 6)
+# CLIPBOARD_LIMITS.md — Giới hạn trung thực của copy/paste/duplicate (K2, Phase 6 + Phase 8 Q3)
 
-## Đã làm (test thật: `node apps/web/src/lib/clipboard.test.ts` — 12/12 pass)
+## Đã làm (test thật: `node apps/web/src/lib/clipboard.test.ts` — 18/18 pass)
 
 - **Copy (Ctrl+C / nút 📋 Sao chép)**: lưu selection (1 hoặc nhiều clip, nhiều
   track) vào clipboard nội bộ, giữ nguyên mọi thuộc tính qua deep copy
@@ -24,8 +24,27 @@
 - **Phím tắt**: Ctrl/Cmd+C/V/D trong App.tsx; handler đã return sớm khi focus
   trong input/textarea/select/contentEditable nên copy/paste văn bản gốc của
   trình duyệt vẫn hoạt động.
+- **Paste mang caption theo (Phase 8 Q3)**: copy clip nguồn thì mọi câu chữ
+  có `captionOf` trỏ tới nó cũng được copy kèm (kể cả câu đã chọn trực
+  tiếp — paste dedupe để chỉ tạo đúng 1 câu mới). Lúc paste, câu mới link
+  tới id MỚI của nguồn đã dán, giữ nguyên đoạn media, dịch timeline đúng
+  bằng shift của khối (paste giữ nguyên in/out/speed/curve nên mapping chỉ
+  tịnh tiến — đúng cả speed hằng, reverse và speedKeyframes). Câu copy
+  trực tiếp mà nguồn KHÔNG dán cùng thì bị HỦY LINK thành chữ tự do (tránh
+  link trỏ về clip cũ nhưng vị trí đã dịch). Caption đính kèm cũng tham
+  gia tính shift chống chồng lấn trên track đích; track đích khóa/ẩn thì
+  câu bị bỏ, nguồn vẫn dán bình thường. Test: 6 case paste-caption mới
+  trong `clipboard.test.ts` (kể cả case copy nguồn+câu cùng lúc — test này
+  từng bắt được bug thật: bản đầu bỏ sót câu khi chọn kèm nguồn, đã sửa
+  bằng cách thu thập đính kèm cả khi câu đã chọn).
 
 ## Giới hạn (trung thực)
+
+0. **Duplicate KHÔNG mang caption theo** (Phase 8 Q3, quyết định có chủ ý):
+   duplicate đẩy các clip sau sang phải nhưng không ripple track chữ, nên
+   mang caption theo cần thiết kế riêng (ánh xạ caption sang bản sao +
+   quyết định có đẩy câu của clip sau hay không). Chỉ paste mang caption;
+   duplicate xong user cần tạo phụ đề lại cho bản sao nếu muốn.
 
 1. **Clipboard nội bộ, không phải system clipboard**: không dán được clip
    sang ứng dụng khác, không copy được từ ứng dụng khác vào. Clip là object
@@ -60,14 +79,12 @@
    được kiểm chứng ở mức unit test + tsc (xem mục dưới). Click-test editor
    trên browser thật vẫn nghẽn hạ tầng chung của repo.
 
-## Trạng thái kiểm chứng lúc giao
+## Trạng thái kiểm chứng lúc giao (cập nhật Phase 8 Q3)
 
-- `node apps/web/src/lib/clipboard.test.ts`: **12/12 pass**.
-- `npx tsc --noEmit`: **0 lỗi trong các file K2 chạm tới**
-  (`clipboard.ts`, `clipboard.test.ts`, `store.ts`, `App.tsx`, `TopBar.tsx`,
-  `i18n/*.json`, `tsconfig.json`).
-- `npx vite build`: **CHƯA PASS toàn app** — lỗi parse nằm ở
-  `packages/video-spec/src/sticker.ts` (agent K6 đang sửa dở, thêm batch
-  sticker ngoài array literal) và lỗi type LUT `user-` ở `Inspector.tsx`
-  (agent K3 đang làm). Cả hai đều ngoài phạm vi K2, không phải do file K2
-  gây ra; cần chạy lại sau khi K3/K6 hoàn tất.
+- `node apps/web/src/lib/clipboard.test.ts`: **18/18 pass** (12 cũ + 6 mới).
+- `npx tsc --noEmit` + `npx vite build`: xem mục kiểm chứng cuối của
+  CAPTIONFOLLOW_LIMITS.md (chạy lại toàn app ở cuối Q3).
+- Trạng thái cũ (K2, Phase 6): tsc 0 lỗi trong các file K2 chạm tới; vite
+  build khi đó CHƯA PASS toàn app do lỗi ở `sticker.ts` (K6) và type LUT
+  ở `Inspector.tsx` (K3) — cả hai đều ngoài phạm vi K2 và đã được các
+  phase sau sửa.

@@ -252,6 +252,118 @@ function main(): void {
     eq(duplicateClips(s2, [{ trackId: "v1", clipId: "không-có" }], counterIdGen()), null, "id lạ");
   });
 
+  console.log("\n== paste mang caption (Phase 8 Q3) ==");
+  // Câu link tới nguồn v, đoạn media 1..3, ở timeline 1..3.
+  const linkedCap = (id: string, start: number): Clip => ({
+    ...textClip(id, start, 2),
+    captionOf: { clipId: "v", mediaStart: 1, mediaEnd: 3 },
+  } as Clip);
+  const capOf = (c: Clip): { clipId: string; mediaStart: number; mediaEnd: number } | undefined =>
+    (c as { captionOf?: { clipId: string; mediaStart: number; mediaEnd: number } }).captionOf;
+
+  test("paste mang caption: câu mới link id mới, cùng media, dịch theo shift", () => {
+    const s = spec([
+      track("v1", "video", [videoClip("v", 0, 10)]),
+      track("t1", "text", [linkedCap("cap", 1)]),
+    ]);
+    const cb = copyClips(s, [{ trackId: "v1", clipId: "v" }]);
+    assert(cb !== null && cb.captions.length === 1, "copy thu thập 1 caption đính kèm");
+    const r = pasteClips(s, cb!, 20, counterIdGen());
+    assert(r !== null, "paste được");
+    eq(r!.pasted.length, 2, "selection gồm nguồn + câu mới");
+    const nv = r!.spec.tracks[0].clips.find((c) => c.id === "n1")!;
+    eq(nv.start, 20, "nguồn dán ở 20");
+    const nc = r!.spec.tracks[1].clips.find((c) => c.id === "n2")!;
+    eq(nc.start, 21, "câu dịch cùng shift (+20)");
+    eq(nc.duration, 2, "câu giữ duration");
+    eq(capOf(nc)?.clipId, "n1", "câu link tới id MỚI của nguồn");
+    eq(capOf(nc)?.mediaStart, 1, "giữ mediaStart");
+    eq(capOf(nc)?.mediaEnd, 3, "giữ mediaEnd");
+    // Gốc không đổi (deep copy).
+    eq(capOf(s.tracks[1].clips[0])?.clipId, "v", "câu gốc vẫn link v");
+  });
+
+  test("copy nguồn + câu cùng lúc: đúng 1 câu mới, không nhân đôi", () => {
+    const s = spec([
+      track("v1", "video", [videoClip("v", 0, 10)]),
+      track("t1", "text", [linkedCap("cap", 1)]),
+    ]);
+    const cb = copyClips(s, [
+      { trackId: "v1", clipId: "v" },
+      { trackId: "t1", clipId: "cap" },
+    ]);
+    assert(cb !== null && cb.captions.length === 1, "câu đã chọn trực tiếp vẫn thu đính kèm (paste dedupe)");
+    const r = pasteClips(s, cb!, 20, counterIdGen());
+    assert(r !== null, "paste được");
+    eq(r!.spec.tracks[1].clips.length, 2, "track chữ: gốc + đúng 1 câu mới");
+    const nc = r!.spec.tracks[1].clips.find((c) => c.id !== "cap")!;
+    eq(capOf(nc)?.clipId, "n1", "câu mới link id mới (không phải bản copy trực tiếp giữ link cũ)");
+  });
+
+  test("copy câu một mình: paste thành chữ tự do (hủy link)", () => {
+    const s = spec([
+      track("v1", "video", [videoClip("v", 0, 10)]),
+      track("t1", "text", [linkedCap("cap", 1)]),
+    ]);
+    const cb = copyClips(s, [{ trackId: "t1", clipId: "cap" }]);
+    assert(cb !== null, "copy được");
+    const r = pasteClips(s, cb!, 21, counterIdGen());
+    assert(r !== null, "paste được");
+    const nc = r!.spec.tracks[1].clips.find((c) => c.id === "n1")!;
+    eq(nc.start, 21, "chữ dán ở 21");
+    assert(capOf(nc) === undefined, "đã hủy link (không trỏ về clip cũ)");
+  });
+
+  test("track caption khóa: nguồn vẫn dán, câu bị bỏ", () => {
+    const s = spec([
+      track("v1", "video", [videoClip("v", 0, 10)]),
+      track("t1", "text", [linkedCap("cap", 1)], { locked: true }),
+    ]);
+    const cb = copyClips(s, [{ trackId: "v1", clipId: "v" }]);
+    assert(cb !== null, "copy được từ track khóa (chỉ đọc)");
+    const r = pasteClips(s, cb!, 20, counterIdGen());
+    assert(r !== null, "paste được nguồn");
+    eq(r!.pasted.length, 1, "chỉ nguồn được dán");
+    eq(r!.spec.tracks[1].clips.length, 1, "track khóa không thêm câu");
+  });
+
+  test("paste caption tránh chồng lấn câu sẵn có: cả khối dịch thêm", () => {
+    const s = spec([
+      track("v1", "video", [videoClip("v", 0, 10)]),
+      track("t1", "text", [linkedCap("cap", 1), textClip("old", 21, 2)]),
+    ]);
+    const cb = copyClips(s, [{ trackId: "v1", clipId: "v" }]);
+    const r = pasteClips(s, cb!, 20, counterIdGen());
+    assert(r !== null, "paste được");
+    const nv = r!.spec.tracks[0].clips.find((c) => c.id === "n1")!;
+    const nc = r!.spec.tracks[1].clips.find((c) => c.id === "n2")!;
+    eq(nc.start, 23, "câu dịch tới sau câu sẵn có (21..23)");
+    eq(nv.start, 22, "nguồn dịch cùng khối (+22 thay vì +20)");
+    eq(capOf(nc)?.clipId, "n1", "câu vẫn link đúng nguồn mới");
+  });
+
+  test("paste mang caption khi nguồn có speedKeyframes: giữ curve + link mới", () => {
+    const s = spec([
+      track("v1", "video", [videoClip("v", 0, 10, {
+        speedKeyframes: {
+          keyframes: [
+            { t: 0, v: 1, easing: "linear" },
+            { t: 4, v: 2, easing: "linear" },
+          ],
+        },
+      } as Partial<Clip>)]),
+      track("t1", "text", [linkedCap("cap", 1)]),
+    ]);
+    const cb = copyClips(s, [{ trackId: "v1", clipId: "v" }]);
+    const r = pasteClips(s, cb!, 20, counterIdGen());
+    assert(r !== null, "paste được");
+    const nv = r!.spec.tracks[0].clips.find((c) => c.id === "n1")!;
+    eq(((nv as { speedKeyframes?: { keyframes: unknown[] } }).speedKeyframes?.keyframes.length), 2, "giữ nguyên curve");
+    const nc = r!.spec.tracks[1].clips.find((c) => c.id === "n2")!;
+    eq(capOf(nc)?.clipId, "n1", "câu link nguồn mới");
+    eq(capOf(nc)?.mediaStart, 1, "giữ đoạn media (không tính lại tích phân)");
+  });
+
   console.log(`\n== KẾT QUẢ: ${pass} pass, ${fail} fail ==`);
   if (fail > 0) {
     console.error("Failed:", failedNames.join(", "));

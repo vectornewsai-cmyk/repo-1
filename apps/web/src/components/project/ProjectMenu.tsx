@@ -3,7 +3,7 @@
  *
  * Đặt trong TopBar. Mọi thao tác hỏi xác nhận trước khi bỏ thay đổi chưa lưu.
  */
-import { useEffect, useReducer, useRef } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { useStore } from "../../store";
 import {
   autosave,
@@ -21,6 +21,13 @@ import {
   importArchive,
 } from "../../lib/archive";
 import { pushToast } from "../../lib/toast";
+import { HistoryPanel } from "./HistoryPanel";
+import {
+  getCurrentProjectId,
+  getHistoryStore,
+  rotateProjectId,
+  setProjectIdForFile,
+} from "../../lib/projectHistory";
 
 /** Lưu project hiện tại thành file. Trả về warnings để caller hiển thị. */
 export function saveCurrentProject(): string[] {
@@ -49,6 +56,7 @@ export function ProjectMenu() {
 
   const dirty = isDirty(spec);
   const lastAuto = getLastAutosaveAt();
+  const [showHistory, setShowHistory] = useState(false);
 
   const confirmDiscard = (): boolean => {
     const st = useStore.getState();
@@ -60,6 +68,7 @@ export function ProjectMenu() {
     if (!confirmDiscard()) return;
     const st = useStore.getState();
     st.newProject();
+    rotateProjectId(); // project mới → chuỗi lịch sử mới (Q7)
     clearAutosave();
     markSaved(useStore.getState().spec);
     force();
@@ -80,6 +89,7 @@ export function ProjectMenu() {
     const st = useStore.getState();
     st.replaceProject(res.spec);
     st.setProjectName(res.name);
+    setProjectIdForFile(f.name, res.spec); // mở lại cùng file → tiếp tục chuỗi lịch sử (Q7)
     markSaved(res.spec);
     clearAutosave();
     autosave(res.spec, res.name); // ghi ngay để reload khôi phục đúng project vừa mở
@@ -90,6 +100,10 @@ export function ProjectMenu() {
 
   const doSave = () => {
     warnList(saveCurrentProject());
+    // Q7: lưu file cũng snapshot lịch sử (best-effort, trùng hash thì tự bỏ qua).
+    void getHistoryStore()
+      .saveVersion(getCurrentProjectId(), useStore.getState().spec, "")
+      .catch(() => { /* lịch sử lỗi không được làm hỏng thao tác lưu */ });
     force();
   };
 
@@ -174,6 +188,13 @@ export function ProjectMenu() {
       >
         📥 Nhập bản nén
       </button>
+      <button
+        title="Lịch sử phiên bản project (lưu local, chưa đồng bộ cloud)"
+        onClick={() => setShowHistory((v) => !v)}
+      >
+        🕘 Lịch sử
+      </button>
+      {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
       <input
         ref={fileRef}
         type="file"

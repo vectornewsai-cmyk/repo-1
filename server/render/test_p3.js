@@ -126,6 +126,18 @@ const sr = require("./src/speedramp");
   ok("planSegments: đoạn ~0.2s cho clip 4s", segs.length === 20, `nhận ${segs.length}`);
   ok("sourceConsumed = integrate(0, duration)",
     approx(sr.sourceConsumed(lin, 4), 6, 1e-9));
+  // Hồi quy Phase 8 Q3: tích phân ĐOẠN CON trong 1 segment (bug cũ dùng
+  // trung bình 2 đầu mút segment → linear (0,2) trả 3 thay vì 2.5).
+  ok("integrate linear đoạn con (0,2) = 2.5",
+    approx(sr.integrateSpeed(lin, 0, 2), 2.5, 1e-9));
+  ok("integrate linear đoạn con giữa (1,3) = 3",
+    approx(sr.integrateSpeed(lin, 1, 3), 3, 1e-9));
+  ok("integrate ease-in đoạn con (0,2) = 2.1667",
+    approx(sr.integrateSpeed(ein, 0, 2), 2 + 1 / 6, 1e-9));
+  ok("integrate ease-out đoạn con (0,2) = 2.8333",
+    approx(sr.integrateSpeed(eout, 0, 2), 17 / 6, 1e-9));
+  ok("sourcePosAt đoạn con linear = 2.5 tại t=2",
+    approx(sr.sourcePosAt(lin, 2), 2.5, 1e-9));
 }
 
 // ===========================================================================
