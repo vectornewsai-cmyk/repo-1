@@ -1,9 +1,15 @@
 /** Thư viện media: nhập file từ máy, xem trước, thêm vào timeline (bấm hoặc kéo-thả). */
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useStore } from "./store";
 import type { MediaItem } from "./media";
 import { fmtTime } from "./lib";
 import { t, useLang } from "./i18n";
+import { pushToast } from "./lib/toast";
+
+/** Địa chỉ bridge server (cùng mẫu ExportPanel/BgRemovePanel). */
+const BRIDGE_URL =
+  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_BRIDGE_URL ||
+  "http://127.0.0.1:8787";
 
 const KIND_ICON: Record<MediaItem["kind"], string> = {
   video: "🎬",
@@ -13,6 +19,32 @@ const KIND_ICON: Record<MediaItem["kind"], string> = {
 
 function MediaCard({ item }: { item: MediaItem }) {
   const st = useStore.getState();
+  const [proxyBusy, setProxyBusy] = useState(false);
+  // Q8: tạo proxy 720p qua bridge rồi gắn vào item — preview dùng proxy,
+  // export cuối vẫn dùng file gốc. Chỉ video có File gốc mới tạo được.
+  const makeProxy = async () => {
+    if (!item.file || proxyBusy) return;
+    setProxyBusy(true);
+    try {
+      const form = new FormData();
+      form.append("file", item.file);
+      form.append("height", "720");
+      const res = await fetch(`${BRIDGE_URL}/api/proxy`, { method: "POST", body: form });
+      const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : `Bridge trả ${res.status}`);
+      if (data.skipped) {
+        pushToast(`"${item.name}" đã đủ nhỏ, không cần proxy.`, "info");
+        return;
+      }
+      if (typeof data.proxyUrl !== "string") throw new Error("Bridge không trả proxyUrl.");
+      st.setMediaProxy(item.id, `${BRIDGE_URL}${data.proxyUrl}`, Number(data.proxyHeight) || 720);
+      pushToast(`Đã gắn proxy ${data.proxyHeight ?? 720}p cho "${item.name}" — preview sẽ mượt hơn.`, "success");
+    } catch (e) {
+      pushToast(`Không tạo được proxy: ${e instanceof Error ? e.message : "lỗi không rõ"} (bridge: ${BRIDGE_URL})`, "error");
+    } finally {
+      setProxyBusy(false);
+    }
+  };
   return (
     <div
       className="media-card"
@@ -42,6 +74,17 @@ function MediaCard({ item }: { item: MediaItem }) {
       >
         {t("mediabin.addShort")}
       </button>
+      {item.kind === "video" && item.file && (
+        <button
+          className="media-proxy"
+          title={item.proxyUrl ? `Đang dùng proxy ${item.proxyHeight ?? 720}p cho preview` : "Tạo bản proxy 720p qua bridge để preview mượt hơn (export vẫn dùng file gốc)"}
+          aria-label={`Tạo proxy cho ${item.name}`}
+          onClick={() => void makeProxy()}
+          disabled={proxyBusy}
+        >
+          {proxyBusy ? "…" : item.proxyUrl ? `✓ PROXY ${item.proxyHeight ?? 720}p` : "Proxy 720p"}
+        </button>
+      )}
     </div>
   );
 }

@@ -78,6 +78,11 @@ const {
   reframeAvailable,
   REFRAME_ASPECTS,
 } = require("./reframe");
+// Phase 8 Q5: beat detection (numpy-only, chạy local qua beat.py)
+const {
+  analyzeBeats,
+  beatsAvailable,
+} = require("./beats");
 // R1-084: AI background removal (rembg MIT + birefnet-general MIT, chạy local qua bgremove.py)
 const {
   runBgremove,
@@ -980,6 +985,80 @@ app.post(
   }
 );
 
+// --- POST /api/beats/analyze (Phase 8 Q5) ---------------------------------------
+// Nhận 1 file AUDIO/VIDEO (multipart field "media"). Chỉ phân tích beat
+// (KHÔNG cắt, KHÔNG encode) rồi trả JSON của beat.py { bpm, beats, ... }.
+// UI dùng JSON này để cắt clip theo beat (beatSync.ts).
+app.post(
+  "/api/beats/analyze",
+  rateLimit(RATE_MAX_RENDER),
+  uploadMiddleware(upload.single("media")),
+  async (req, res) => {
+    const f = req.file;
+    if (!f) {
+      return res.status(400).json({ error: "Thiếu file audio/video (field 'media')." });
+    }
+    const safe = sanitizeFilename(f.originalname);
+    if (!safe) {
+      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+    }
+    const ext = path.extname(safe).toLowerCase();
+    if (!AUDIO_VIDEO_EXTS.has(ext)) {
+      return res.status(400).json({
+        error: `Beat detection cần file AUDIO/VIDEO (${[...AUDIO_VIDEO_EXTS].join(", ")}).`,
+      });
+    }
+    const magicErr = checkMagicBytes(safe, readUploadHead(f));
+    if (magicErr) return res.status(400).json({ error: magicErr });
+    const avail = beatsAvailable();
+    if (!avail.available) {
+      return res.status(503).json({ error: `Beat detection chưa sẵn sàng: ${avail.reason}` });
+    }
+    // BPM range từ form (optional, mặc định beat.py: 40–240).
+    const parseBpm = (raw, fallback) => {
+      if (raw === undefined || raw === "") return fallback;
+      const v = Number(raw);
+      if (!Number.isFinite(v) || v < 30 || v > 300) {
+        throw new Error(`BPM không hợp lệ: "${raw}" (30–300).`);
+      }
+      return v;
+    };
+    let minBpm, maxBpm;
+    try {
+      minBpm = parseBpm(req.body.minBpm, undefined);
+      maxBpm = parseBpm(req.body.maxBpm, undefined);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+    if (minBpm !== undefined && maxBpm !== undefined && minBpm >= maxBpm) {
+      return res.status(400).json({ error: "BPM tối thiểu phải nhỏ hơn BPM tối đa." });
+    }
+
+    const dir = path.join(
+      WORK_ROOT,
+      `beats-an-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+    );
+    const inputPath = path.join(dir, safe);
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      moveUploadTo(f, inputPath);
+    } catch (e) {
+      console.error(`[bridge] không lưu được file beats/analyze:`, e.message);
+      cleanupJobDir(dir);
+      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+    }
+
+    try {
+      const data = await analyzeBeats({ inputPath, minBpm, maxBpm });
+      cleanupJobDir(dir);
+      return res.json(data);
+    } catch (e) {
+      cleanupJobDir(dir);
+      return res.status(500).json({ error: e.message || "Phân tích beat thất bại." });
+    }
+  }
+);
+
 // --- POST /api/bgremove (R1-084) ------------------------------------------------
 // Nhận 1 file VIDEO (multipart field "media") + field "session" (optional).
 // Chạy bgremove.py (rembg MIT + birefnet-general MIT, 100% local) rồi trả về
@@ -1439,6 +1518,63 @@ app.get("/api/openapi.json", (req, res) => {
     console.error("[bridge] không đọc được openapi.yaml:", e.message);
     res.status(500).json({ error: "Không đọc được OpenAPI spec." });
   }
+});
+
+// --- Proxy editing (Phase 8 Q8) ---------------------------------------------
+// POST /api/proxy: upload 1 video (field "file") + height (480|720, mặc
+// định 720) → tạo bản proxy nhẹ trong WORK_ROOT/proxies, trả về URL để
+// web app dùng làm preview. File gốc upload lên được giữ nguyên trong
+// cùng thư mục (làm "nguồn" cho lần generate sau); export cuối vẫn dùng
+// file gốc do client upload kèm spec — bridge KHÔNG tự thay src bằng
+// proxy ở /api/render (xem PROXY_LIMITS.md).
+// GET /api/proxy/file/:name: stream file proxy (chỉ .mp4 trong thư mục
+// proxies, chặn traversal bằng whitelist ký tự + kiểm tra prefix).
+const PROXY_DIR = path.join(WORK_ROOT, "proxies");
+const { generateProxy } = require("../../render/src/proxy");
+app.post("/api/proxy",
+  uploadMiddleware(upload.single("file")),
+  async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "Thiếu file video (field 'file')." });
+      const height = parseInt(req.body.height, 10) || 720;
+      if (![480, 720].includes(height)) {
+        return res.status(400).json({ error: "height phải là 480 hoặc 720." });
+      }
+      fs.mkdirSync(PROXY_DIR, { recursive: true });
+      const safe = sanitizeFilename(req.file.originalname);
+      const srcPath = path.join(PROXY_DIR, safe);
+      moveUploadTo(req.file, srcPath);
+      const r = generateProxy(srcPath, PROXY_DIR, { height });
+      if (r.skipped) {
+        return res.json({ skipped: true, reason: r.reason, sourceHeight: r.sourceHeight, file: safe });
+      }
+      return res.json({
+        skipped: false,
+        file: safe,
+        proxy: path.basename(r.proxy),
+        proxyUrl: `/api/proxy/file/${encodeURIComponent(path.basename(r.proxy))}`,
+        sourceWidth: r.sourceWidth,
+        sourceHeight: r.sourceHeight,
+        proxyWidth: r.proxyWidth,
+        proxyHeight: r.proxyHeight,
+        fps: r.fps,
+      });
+    } catch (e) {
+      console.error("[bridge] /api/proxy lỗi:", e.message);
+      return res.status(500).json({ error: e.message || "Tạo proxy thất bại." });
+    }
+  });
+app.get("/api/proxy/file/:name", (req, res) => {
+  const name = req.params.name || "";
+  if (!/^[A-Za-z0-9._-]+\.mp4$/.test(name)) {
+    return res.status(400).json({ error: "Tên file proxy không hợp lệ." });
+  }
+  const full = path.join(PROXY_DIR, name);
+  if (!full.startsWith(PROXY_DIR + path.sep) || !fs.existsSync(full)) {
+    return res.status(404).json({ error: "Không tìm thấy file proxy." });
+  }
+  res.setHeader("Content-Type", "video/mp4");
+  res.sendFile(full);
 });
 
 // R1-040: 404 cho API không tồn tại → JSON (thay vì HTML của Express)

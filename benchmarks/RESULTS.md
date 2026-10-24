@@ -115,3 +115,73 @@ project 1080p có LUT + effect). Mục này sẽ điền khi có số đo trên 
    cần máy đủ mạnh.
 4. Muốn so sánh công bằng cần: cùng một máy có GPU, cùng một project mẫu, đo cả hai.
    Đợt benchmark này chưa làm được việc đó — ghi rõ để không ai trích dẫn sai.
+
+---
+
+## 7. Phase 8 refresh (2026-10-24) — proxy + tính năng Phase 7
+
+> Máy đo: cùng VM như mục trên (AMD EPYC 7D13, 2 vCPU, 7.8GB RAM, không GPU,
+> FFmpeg 8.1.2). Spec khác đợt 2026-10-20: **clip 5s, 1 video + text overlay**
+> (đợt cũ: 10s, 2 clip + fade) — **không so sánh trực tiếp 2 đợt theo số tuyệt đối**.
+> Mỗi cấu hình: 1 warm-up + 1 lần đo. Số liệu thô: `benchmarks/results/phase8.jsonl`.
+> Script: `benchmarks/render/bench_phase8.sh`.
+
+### 7.1 Render với tính năng Phase 7 (veryfast/CRF23, testsrc2)
+
+| Cấu hình | Độ dài | Wall | FPS | Ghi chú |
+|---|---|---|---|---|
+| base-720p (1 clip + text) | 5s | 4.39s | **34.15 fps** | baseline mới |
+| base-1080p (1 clip + text) | 5s | 11.96s | **12.54 fps** | baseline mới |
+| mask-720p (+ mask ellipse, feather 0.2) | 5s | 154.59s | **0.97 fps** | ⚠️ xem cảnh báo dưới |
+| denoise-720p (+ enhance denoise 0.5) | 5s | 16.24s | **9.24 fps** | hqdn3d |
+| ramp-720p (+ speedKeyframes 1 → 1.5) | 5s | 16.33s | **9.19 fps** | split segment + concat |
+
+**⚠️ Mask render cực chậm là số thật, không phải lỗi đo.** Mask dùng `geq`
+tính alpha từng pixel mỗi frame (feather làm biểu thức nặng thêm) — 720p 5s
+mất 154.6s, chậm ~35× so với baseline cùng spec. Mask tĩnh không feather
+sẽ nhanh hơn (chưa đo riêng); hướng tối ưu tương lai: tạo alpha mask
+1 lần bằng PNG rồi overlay thay vì `geq` mỗi frame. Cho đến lúc đó, **không
+nên mask clip dài trên máy yếu** — đây là giới hạn đã ghi trong Q8/P4 docs.
+
+**Độ biến động giữa các lần chạy (ghi rõ để khỏi trích sai):** lần chạy đầu
+tiên của đợt này — khi các agent Phase 8 khác đang chạy test render cùng lúc
+trên VM — cho base-720p **7.17 fps** và base-1080p **5.92 fps** (chậm 2–5× so
+với lần chạy lại). Số bảng trên là lần chạy lại khi VM rảnh hơn. Kết luận:
+số tuyệt đối trên VM chia sẻ chỉ mang tính tham chiếu, không phải lab-grade.
+
+### 7.2 Proxy generation (Q8)
+
+| Nguồn | Đích | Thời gian | Dung lượng |
+|---|---|---|---|
+| 1080p 10s testsrc2 (6.4MB) | 720p proxy, CRF 23, veryfast | 21.55s | 1.3MB (**21%** nguồn) |
+
+Proxy giữ nguyên fps/duration nguồn (đồng bộ 1:1 với timeline). Export cuối
+**không dùng proxy** — đã chứng minh bằng test `server/render/test_proxy_q8.js`
+(spec trỏ file gốc trong thư mục đã có proxy → output vẫn 1920×1080).
+
+### 7.3 Preview perf — logic thuần bằng Node (KHÔNG phải FPS browser)
+
+> ⚠️ Các số dưới đây đo bằng Node (`apps/web/scripts/bench-preview-perf.cjs`),
+> chỉ tính hàm `videoClipVisual` + `videoElementPlacement` (không DOM, không
+> decode video, không canvas). **Không được trích dẫn như "preview nhanh hơn X
+> lần trên trình duyệt"** — FPS browser thật vẫn CHƯA ĐO (mục 5 giữ nguyên).
+
+| Bài đo | Kết quả |
+|---|---|
+| Scrub/vẽ lại cùng frame (memo keyframe, 30 thời điểm × 300 rep) | 163.2ms, hits 80,850 / misses 150 |
+| Nội suy thô không memo (81,000 lần gọi, cùng số lần nội suy) | 531.2ms → memo nhanh hơn **~3.25×** ở phần nội suy |
+| (Chạy lại kiểm chứng, VM rảnh hơn) | Run 1: 42.9ms, raw: 181.4ms → tỉ lệ ~4.2×; cấu trúc hit/miss **không đổi** (80,850/150; playback 36,145/44,855) — số tuyệt đối dao động theo tải VM, tỉ lệ và hit/miss mới là phần ổn định |
+| Playback nối tiếp 30fps, 9,000 frame | 752.4ms; hits 36,145 / misses 44,855 (≈44.6% nội suy được chia sẻ trong cùng 1 frame) |
+| `mediaByName`: build Map mới mỗi tick vs cache theo identity mảng (6,000 lần, 500 item) | 304.2ms → 0.9ms cho micro-op này |
+
+**Kết luận trung thực:** memo keyframe giúp rõ rệt khi scrub/pause/vẽ lại và
+giảm ~45% số lần nội suy khi playback (nhờ chia sẻ trong cùng 1 frame), nhưng
+**không biến playback xuôi đều thành nhanh hơn nhiều lần** — mỗi frame mới vẫn
+phải tính mới. Nút thắt thật của preview trên browser (decode video, `ctx.filter`,
+canvas full-res) nằm ngoài phạm vi đo này.
+
+### 7.4 Những gì Phase 8 refresh KHÔNG làm (không claim)
+- Không refresh 4K (số 4K 2.71 fps từ 2026-10-20 giữ nguyên làm tham chiếu).
+- GPU encode (NVENC/QSV/VAAPI) vẫn **chưa test trên phần cứng thật** — VM không
+  có GPU, chỉ logic detect + fallback đã verify ở Phase 7 P2.
+- FPS preview trên browser thật vẫn chưa đo (cần browser + đo tay).

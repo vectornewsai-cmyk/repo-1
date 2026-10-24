@@ -1,0 +1,273 @@
+/**
+ * Q6 (Phase 8) — Lớp mobile-web cho VCut Studio.
+ *
+ * Nguyên tắc: file này nạp SAU styles.css nên chỉ override khi cần, không sửa
+ * layout desktop. Mọi rule touch-action ngoài media query đều an toàn cho
+ * chuột (chuột không bị touch-action ảnh hưởng).
+ */
+
+/* ============ Touch nền tảng (mọi viewport) ============ */
+
+/* Clip + tay cầm trim kéo bằng Pointer Events: chặn trình duyệt cuộn/zoom
+   khi bắt đầu kéo trên clip, nếu không ngón tay sẽ cuộn trang thay vì kéo. */
+.tl-clip,
+.clip-handle {
+  touch-action: none;
+}
+
+/* Ruler scrub + pinch: tự xử lý gesture, không để trình duyệt giành. */
+.tl-ruler {
+  touch-action: none;
+}
+
+/* Làn timeline: 1 ngón cuộn ngang bình thường; 2 ngón được giao cho handler
+   pinch-zoom của Timeline (touch-action chỉ liệt kê pan-x nên trình duyệt
+   không giành gesture chụm — xem MOBILE_LIMITS.md). */
+.tl-scroll,
+.tl-lanes {
+  touch-action: pan-x;
+}
+
+/* Nút bấm: bỏ độ trễ double-tap-zoom trên mobile. */
+button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ============ Bottom sheet + nút nổi (chỉ render khi mobile) ============ */
+
+.m-fabbar {
+  position: fixed;
+  right: 12px;
+  bottom: 262px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.m-fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+.m-fab.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent-hover);
+}
+
+.m-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.m-sheet {
+  width: 100%;
+  max-height: 72dvh;
+  background: var(--bg1);
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.5);
+}
+
+.m-sheet-grabber {
+  width: 44px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--border);
+  margin: 10px auto 2px;
+  flex: none;
+}
+
+.m-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px 8px;
+  flex: none;
+}
+
+.m-sheet-title {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.m-sheet-close {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 10px;
+  font-size: 16px;
+}
+
+/* Panel gốc bên trong sheet: bỏ chiều rộng desktop, choán chiều cao sheet. */
+.m-sheet .mediabin,
+.m-sheet .inspector {
+  width: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ============ Layout mobile (<=768px) ============ */
+
+@media (max-width: 768px) {
+  .app {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* Editor chỉ còn preview (MediaBin/Inspector đã thành sheet nổi). */
+  .editor-main {
+    flex-direction: column;
+  }
+
+  .preview-col {
+    padding: 8px;
+  }
+
+  /* TopBar 2 hàng: hàng 1 brand + tên project + actions, hàng 2 transport. */
+  .topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .brand-name {
+    display: none;
+  }
+
+  .project-name {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    font-size: 16px;
+  }
+
+  .transport {
+    order: 3;
+    flex-basis: 100%;
+    margin: 0;
+    justify-content: center;
+  }
+
+  .tbtn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .tbtn.play {
+    width: 48px;
+    height: 48px;
+  }
+
+  .topbar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .topbar-actions button {
+    min-height: 44px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  /* iOS tự zoom khi focus input <16px — ép 16px để khỏi nhảy layout. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* Timeline gọn: gutter hẹp, ẩn hint dài, tay cầm to bằng ngón tay. */
+  .timeline {
+    height: 250px;
+  }
+
+  .tl-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 6px 10px;
+  }
+
+  .tl-hint {
+    display: none;
+  }
+
+  .tl-gutter {
+    width: 92px;
+  }
+
+  .tl-track-label {
+    display: none;
+  }
+
+  .tl-track-head {
+    padding-left: 8px;
+    gap: 4px;
+  }
+
+  .tl-track-flag,
+  .tl-track-del {
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .tl-zoom {
+    margin-left: 0;
+  }
+
+  .tl-zoom button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .tl-zoom input[type="range"] {
+    width: 90px;
+  }
+
+  .tl-add-track button,
+  .tl-ripple button {
+    min-height: 40px;
+  }
+
+  .clip-handle {
+    width: 22px;
+  }
+
+  /* Modal chiếm gần hết màn hình, cuộn được bên trong. */
+  .modal {
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+  }
+
+  .modal-backdrop {
+    align-items: flex-end;
+    padding-bottom: 0;
+  }
+
+  /* Nút chung đủ lớn cho ngón tay (trừ nút trong sheet-head đã riêng). */
+  button,
+  .mini-btn,
+  .ghost-btn {
+    min-height: 44px;
+  }
+
+  .section-head {
+    min-height: 44px;
+  }
+}

@@ -13,6 +13,7 @@ import { SilenceModal } from "./components/SilenceModal";
 import { TemplatePicker } from "./components/TemplatePicker";
 import { Toasts } from "./components/Toasts";
 import { pushToast } from "./lib/toast";
+import { useIsMobile } from "./lib/useIsMobile";
 import { togglePreviewFullscreen } from "./preview";
 import { autosave, loadAutosave, markSaved } from "./lib/projectRepo";
 import { saveCurrentProject } from "./components/project/ProjectMenu";
@@ -25,6 +26,11 @@ export default function App() {
   const [captionOpen, setCaptionOpen] = useState(false);
   const [silenceOpen, setSilenceOpen] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
+  // Q6 (Phase 8): mobile — MediaBin/Inspector thành bottom sheet, mặc định đóng
+  // để preview + timeline chiếm màn hình; desktop giữ layout cũ nguyên vẹn.
+  const isMobile = useIsMobile();
+  const [mediaOpen, setMediaOpen] = useState(false);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
 
   // Khởi tạo: ưu tiên khôi phục autosave; chỉ tải project mẫu khi chưa có autosave.
   // (Không tự ghi đè project đang làm bằng sample khi reload.)
@@ -166,13 +172,67 @@ export default function App() {
     <div className="app">
       <TopBar onExport={() => setExportOpen(true)} onCaption={() => setCaptionOpen(true)} onSilence={() => setSilenceOpen(true)} onTemplate={() => setTemplateOpen(true)} />
       <div className="editor-main">
-        <MediaBin />
+        {!isMobile && <MediaBin />}
         <div className="preview-col">
           <PreviewCanvas />
         </div>
-        <Inspector />
+        {!isMobile && <Inspector />}
       </div>
       <Timeline />
+      {isMobile && (
+        <div className="m-fabbar" role="group" aria-label="Panel mobile">
+          <button
+            type="button"
+            className={`m-fab${mediaOpen ? " active" : ""}`}
+            title="Thư viện media"
+            aria-label="Mở thư viện media"
+            aria-expanded={mediaOpen}
+            onClick={() => {
+              setMediaOpen(!mediaOpen);
+              setInspectorOpen(false);
+            }}
+          >
+            📁
+          </button>
+          <button
+            type="button"
+            className={`m-fab${inspectorOpen ? " active" : ""}`}
+            title="Thuộc tính clip"
+            aria-label="Mở panel thuộc tính"
+            aria-expanded={inspectorOpen}
+            onClick={() => {
+              setInspectorOpen(!inspectorOpen);
+              setMediaOpen(false);
+            }}
+          >
+            ⚙️
+          </button>
+        </div>
+      )}
+      {isMobile && mediaOpen && (
+        <div className="m-sheet-backdrop" onClick={() => setMediaOpen(false)}>
+          <div className="m-sheet" role="dialog" aria-modal="true" aria-label="Thư viện media" onClick={(e) => e.stopPropagation()}>
+            <div className="m-sheet-grabber" aria-hidden="true" />
+            <div className="m-sheet-head">
+              <span className="m-sheet-title">📁 Thư viện</span>
+              <button type="button" className="m-sheet-close" aria-label="Đóng thư viện" onClick={() => setMediaOpen(false)}>✕</button>
+            </div>
+            <MediaBin />
+          </div>
+        </div>
+      )}
+      {isMobile && inspectorOpen && (
+        <div className="m-sheet-backdrop" onClick={() => setInspectorOpen(false)}>
+          <div className="m-sheet" role="dialog" aria-modal="true" aria-label="Thuộc tính clip" onClick={(e) => e.stopPropagation()}>
+            <div className="m-sheet-grabber" aria-hidden="true" />
+            <div className="m-sheet-head">
+              <span className="m-sheet-title">⚙️ Thuộc tính</span>
+              <button type="button" className="m-sheet-close" aria-label="Đóng panel thuộc tính" onClick={() => setInspectorOpen(false)}>✕</button>
+            </div>
+            <Inspector />
+          </div>
+        </div>
+      )}
       {exportOpen && <ExportPanel onClose={() => setExportOpen(false)} />}
       {captionOpen && <CaptionModal onClose={() => setCaptionOpen(false)} />}
       {silenceOpen && <SilenceModal onClose={() => setSilenceOpen(false)} />}

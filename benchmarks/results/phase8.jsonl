@@ -1,0 +1,9 @@
+{"label":"base-720p","dur_s":5,"wall_s":20.93,"fps":7.17}
+{"label":"base-1080p","dur_s":5,"wall_s":25.34,"fps":5.92}
+{"label":"base-720p","dur_s":5,"wall_s":4.39,"fps":34.15}
+{"label":"base-1080p","dur_s":5,"wall_s":11.96,"fps":12.54}
+{"label":"mask-720p","dur_s":5,"wall_s":154.59,"fps":0.97}
+{"label":"denoise-720p","dur_s":5,"wall_s":16.24,"fps":9.24}
+{"label":"ramp-720p","dur_s":5,"wall_s":16.33,"fps":9.19}
+| proxy-gen 1080p10s→720p | 21.6s | 6.4MB → 1.3MB (21%) |
+{"label": "proxy-gen", "src_s": 10, "wall_s": 21.55, "src_MB": 6.4, "proxy_MB": 1.3, "ratio_pct": 21}

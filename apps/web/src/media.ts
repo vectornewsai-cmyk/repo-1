@@ -21,6 +21,14 @@ export interface MediaItem {
   thumbnail?: string;
   /** File gốc — dùng để upload lên bridge server khi xuất MP4 (P0-01). */
   file?: File;
+  /**
+   * Q8 proxy: URL tới bản proxy nhẹ (vd: từ bridge /api/proxy/file/...).
+   * Chỉ dùng cho PREVIEW — export cuối vẫn dùng file gốc (xem PROXY_LIMITS.md).
+   * Khi có proxyUrl, MediaPool.videoFor() sẽ phát proxy thay cho bản gốc.
+   */
+  proxyUrl?: string;
+  /** Chiều cao của proxy (480|720) — để hiển thị badge PROXY. */
+  proxyHeight?: number;
 }
 
 function kindOf(file: File): MediaKind | null {
@@ -137,16 +145,33 @@ export class MediaPool {
   private videos = new Map<string, HTMLVideoElement>();
   private audios = new Map<string, HTMLAudioElement>();
   private images = new Map<string, HTMLImageElement>();
+  /** Item mới nhất theo id — để error handler của proxy đọc đúng item hiện tại. */
+  private videoItems = new Map<string, MediaItem>();
 
   videoFor(item: MediaItem): HTMLVideoElement | null {
     if (item.kind !== "video") return null;
+    this.videoItems.set(item.id, item);
+    // Q8: preview ưu tiên proxy nhẹ (cùng fps/duration nên đồng bộ không đổi).
+    const want = item.proxyUrl ?? item.url;
     let el = this.videos.get(item.id);
     if (!el) {
       el = document.createElement("video");
-      el.src = item.url;
       el.preload = "auto";
       el.playsInline = true;
+      // Fallback 1 lần: proxy lỗi (mạng/file thiếu) → quay về file gốc.
+      el.addEventListener("error", () => {
+        const cur = this.videoItems.get(item.id);
+        if (cur?.proxyUrl && el!.dataset.proxyFallback !== "1") {
+          el!.dataset.proxyFallback = "1";
+          el!.src = cur.url;
+        }
+      });
       this.videos.set(item.id, el);
+    }
+    if (el.dataset.srcKey !== want) {
+      el.dataset.srcKey = want;
+      el.dataset.proxyFallback = "";
+      el.src = want;
     }
     return el;
   }
