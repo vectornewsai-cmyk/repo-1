@@ -39,10 +39,21 @@ faster-whisper 462MB.
 - **Hệ quả:** trên máy RAM ≤ 8GB, dùng session `u2net` (176MB, nội bộ
   320×320): **2.2 giây/frame** trên CPU, mask đã kiểm chứng bằng mắt là
   sạch (silhouette người + chai + ly đầy đủ).
-- `bgremove.py` mặc định `--session birefnet-general` (chất lượng tốt nhất
-  theo benchmark), nhưng user máy yếu nên chủ động chọn `--session u2net`.
-  Bridge endpoint `/api/bgremove` hiện hardcode `birefnet-general` ở UI —
-  TODO: cho user chọn session trong BgRemovePanel.
+- **Phase 7 P6 — fallback tự động (không còn bắt user tự chọn tay):**
+  `bgremove.py` mặc định `--session birefnet-general` nhưng khi session
+  birefnet lỗi (exception Python) thì tự chạy lại từ đầu bằng `u2net` và
+  in marker `[bgremove] FALLBACK ...` + `[bgremove] session_used=u2net`
+  ra stderr. Kernel OOM-kill (SIGKILL) không bắt được trong tiến trình
+  Python nên bridge (`server/bridge/src/bgremove.js`) và MCP tool
+  `remove_background` retry 1 lần bằng u2net khi lần chạy birefnet chết
+  (exit != 0 hoặc bị signal; timeout thì KHÔNG retry vì đó là chậm chứ
+  không phải OOM). UI BgRemovePanel có picker session (Tự động /
+  birefnet-general / u2net) và hiển thị rõ khi đã fallback qua header
+  `X-Bgremove-Session-Used` / `X-Bgremove-Fallback-From`. Tắt fallback
+  bằng `--no-fallback` (CLI) hoặc chọn thẳng `u2net`.
+  Test: `server/bgremove/test_bgremove_fallback.py` (7 test, stub run_once,
+  không cần rembg) và `server/bridge/test/test-bgremove-fallback.cjs`
+  (19 assert, stub Python — gồm case tự SIGKILL mô phỏng OOM).
 
 ### 2.2. Tốc độ CPU
 
@@ -77,7 +88,8 @@ các frame, không giật.
 
 ## 3. Những gì CHƯA làm
 
-- [ ] Cho user chọn session (birefnet-general / u2net) trong UI BgRemovePanel
+- [x] ~~Cho user chọn session trong UI~~ — xong ở Phase 7 P6 (picker +
+      fallback tự động, xem 2.1)
 - [ ] Progress bar thời gian thực ở UI (endpoint hiện đồng bộ, UI chỉ hiện
       "đang chạy")
 - [ ] Hủy job giữa chừng từ UI (AbortController có ở client nhưng bridge

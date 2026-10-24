@@ -65,12 +65,19 @@ async function resolveMediaFile(mediaDir: string, src: string): Promise<string> 
   return abs;
 }
 
-/** Chạy script Python với argv cố định, timeout, trả stdout. */
-function runPython(
+/** Kết quả chạy script Python: stdout + stderr + exit/signal (để xét fallback). */
+interface PythonRun {
+  stdout: string;
+  stderr: string;
+  status: number | null;
+  signal: string | null;
+}
+
+function runPythonFull(
   scriptKey: keyof typeof SCRIPTS,
   argv: string[],
   timeoutMs: number
-): string {
+): PythonRun {
   const script = SCRIPTS[scriptKey];
   const python = pickPython(scriptKey);
   const r = spawnSync(python, [script, ...argv], {
@@ -78,12 +85,37 @@ function runPython(
     timeout: timeoutMs,
     maxBuffer: 32 * 1024 * 1024,
   });
+  return {
+    stdout: String(r.stdout ?? ""),
+    stderr: String(r.stderr ?? ""),
+    status: r.status,
+    signal: (r.signal as string | null) ?? null,
+  };
+}
+
+/** Chạy script Python với argv cố định, timeout, trả stdout. */
+function runPython(
+  scriptKey: keyof typeof SCRIPTS,
+  argv: string[],
+  timeoutMs: number
+): string {
+  const r = runPythonFull(scriptKey, argv, timeoutMs);
   if (r.status !== 0) {
-    const err = String(r.stderr ?? r.stdout ?? r.error ?? "unknown").slice(-1500);
+    const err = String(r.stderr || r.stdout || "unknown").slice(-1500);
     throw new ValidationError(`${scriptKey} thất bại (exit ${r.status}): ${err}`);
   }
-  return r.stdout as string;
+  return r.stdout;
 }
+
+/** Marker machine-readable mà bgremove.py in ra stderr. */
+function parseBgremoveMarkers(stderr: string): { sessionUsed: string | null; fallbackFrom: string | null } {
+  const used = stderr.match(/\[bgremove\]\s+session_used=([a-z0-9_-]+)/);
+  const fb = stderr.match(/\[bgremove\]\s+fallback_from=([a-z0-9_-]+)/);
+  return { sessionUsed: used ? used[1] : null, fallbackFrom: fb ? fb[1] : null };
+}
+
+// Session birefnet nặng RAM — xem BGREMOVE_LIMITS.md (OOM-kill trên máy 8GB).
+const BGREMOVE_BIREFNET = new Set(["birefnet-general", "birefnet-general-lite"]);
 
 /** Đọc JSON output của script. */
 async function readJsonOut(outPath: string): Promise<unknown> {
@@ -204,11 +236,15 @@ export function registerAiTools(server: McpServer): void {
   // -------------------------------------------------------------------------
   server.tool(
     "remove_background",
-    "Xoá nền video bằng rembg + BiRefNet (MIT, 100% local). Trả về file MOV có kênh alpha.",
+    "Xoá nền video bằng rembg (MIT, 100% local). Trả về file MOV có kênh alpha. " +
+    "Mặc định session \"auto\": thử birefnet-general trước, nếu lỗi/OOM-kill thì tự " +
+    "chuyển sang u2net (nhẹ hơn) và báo rõ trong session_used/warning.",
     {
       project_id: projectIdSchema,
       src: z.string().describe("Tên file video trong media_dir"),
       out_name: z.string().optional().describe('Tên file MOV đầu ra (mặc định "<src>_no_bg.mov")'),
+      session: z.enum(["auto", "birefnet-general", "birefnet-general-lite", "u2net"]).optional()
+        .describe('Session rembg (mặc định "auto": birefnet trước, u2net fallback)'),
     },
     async (args) => {
       try {
@@ -222,18 +258,56 @@ export function registerAiTools(server: McpServer): void {
         const rel = path.relative(meta.mediaDir, outAbs);
         if (rel.startsWith("..") || path.isAbsolute(rel))
           throw new ValidationError(`out_name không hợp lệ (đã bị chặn)`);
-        runPython("bgremove", [
+        // Phase 7 P6: fallback u2net cho birefnet. Lưu ý: bgremove.py đã tự
+        // fallback trong tiến trình khi lỗi Python; còn OOM-kill (SIGKILL)
+        // thì tiến trình chết hẳn nên MCP retry 1 lần ở đây (spawnSync báo
+        // signal). Cả 2 đường đều báo qua session_used/warning.
+        const requested = args.session ?? "auto";
+        const firstSession = requested === "auto" ? "birefnet-general" : requested;
+        const runOnce = (session: string) => runPythonFull("bgremove", [
           "--input", mediaFile,
           "--output", outAbs,
           "--mode", "alpha",
-          "--session", "birefnet-general",
+          "--session", session,
         ], 30 * 60 * 1000);
+        let run = runOnce(firstSession);
+        let markers = parseBgremoveMarkers(run.stderr);
+        let fallbackReason: string | null = null;
+        if (run.status !== 0 && BGREMOVE_BIREFNET.has(firstSession)) {
+          const reason = run.signal
+            ? `session ${firstSession} bị ${run.signal} (nghi OOM-kill trên máy ít RAM)`
+            : `session ${firstSession} lỗi (exit ${run.status})`;
+          try { await fs.unlink(outAbs); } catch { /* chưa có file */ }
+          const second = runOnce("u2net");
+          if (second.status === 0) {
+            run = second;
+            markers = parseBgremoveMarkers(second.stderr);
+            fallbackReason = reason;
+          } else {
+            const tail = String(second.stderr || second.stdout || "").slice(-800);
+            throw new ValidationError(
+              `remove_background thất bại cả 2 session (${reason}; u2net lỗi: ${tail})`
+            );
+          }
+        }
+        if (run.status !== 0) {
+          const tail = String(run.stderr || run.stdout || "unknown").slice(-1500);
+          throw new ValidationError(`bgremove thất bại (exit ${run.status}): ${tail}`);
+        }
+        const sessionUsed = markers.sessionUsed ?? firstSession;
+        const fallbackFrom = markers.fallbackFrom ?? (fallbackReason ? firstSession : null);
         const st = await fs.stat(outAbs);
         return ok({
           project_id: args.project_id,
           input: args.src,
           output: outName,
           size_bytes: st.size,
+          session_requested: requested,
+          session_used: sessionUsed,
+          fallback_used: fallbackFrom !== null,
+          ...(fallbackFrom
+            ? { warning: `Session ${fallbackFrom} thất bại (${fallbackReason ?? "lỗi trong quá trình chạy"}) — đã tự dùng u2net (chất lượng tách nền có thể kém hơn birefnet một chút).` }
+            : {}),
           hint: `thay src của clip video thành "${outName}" để dùng bản đã xoá nền`,
         });
       } catch (e) {
@@ -265,18 +339,38 @@ export function registerAiTools(server: McpServer): void {
         const rel = path.relative(meta.mediaDir, outAbs);
         if (rel.startsWith("..") || path.isAbsolute(rel))
           throw new ValidationError(`out_name không hợp lệ (đã bị chặn)`);
+        // Phase 7 P6: kèm trajectory JSON để agent biết vùng cắt di chuyển
+        // ra sao (lưu cạnh output để không phình MCP response).
+        const trajName = `${base}_reframe_${aspect.replace(":", "x")}_trajectory.json`;
+        const trajAbs = path.resolve(meta.mediaDir, trajName);
         runPython("reframe", [
           "--input", mediaFile,
           "--output", outAbs,
           "--aspect", aspect,
+          "--json-out", trajAbs,
         ], 15 * 60 * 1000);
         const st = await fs.stat(outAbs);
+        let trajInfo: { trajectory_points?: number; crop_window?: [number, number]; detections?: unknown } = {};
+        try {
+          const summary = JSON.parse(await fs.readFile(trajAbs, "utf8")) as {
+            trajectory_points?: number;
+            crop_window?: [number, number];
+            detections?: unknown;
+          };
+          trajInfo = {
+            trajectory_points: summary.trajectory_points,
+            crop_window: summary.crop_window,
+            detections: summary.detections,
+          };
+        } catch { /* trajectory là phụ — render mới là chính */ }
         return ok({
           project_id: args.project_id,
           input: args.src,
           output: outName,
           aspect,
           size_bytes: st.size,
+          trajectory_file: trajName,
+          ...trajInfo,
         });
       } catch (e) {
         return handleError(e);

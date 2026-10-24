@@ -14,7 +14,17 @@ Video test 3 cảnh màu phẳng (đỏ→xanh lá→xanh dương): ở threshol
 detect được xanh lá→xanh dương, **đỏ→xanh lá bị miss ở mọi ngưỡng ≥ 0.1**
 (dù frame khác nhau hoàn toàn: RGB (253,0,0) vs (0,127,0)). Với nội dung
 tự nhiên (smptebars/testsrc/gradients) thì detect đúng ở 0.3–0.5.
-→ Đừng kỳ vọng detect cắt giữa 2 slide màu trơn / màn hình đen→trắng.
+
+**Phase 7 P6 — ĐÃ KHẮC PHỤC bằng color pass (mặc định bật):** scene.py
+thêm pass thứ hai lấy mẫu 3fps ở 32×32, nhận cắt khi mean RGB nhảy ≥ 60
+VÀ ổn định cả 2 phía (lệch ≤ 15) — điều kiện ổn định loại fade/chuyển
+động. Trên video màu phẳng trên: FFmpeg-only vẫn miss cắt ~2.0s, có
+color pass thì đủ 2 cắt ~2.0s/~4.0s; test cũ (15/15) vẫn pass, không thêm
+cắt giả trên testsrc/gradients chuyển động liên tục. Tắt bằng
+`--no-color-pass`. JSON thêm field `color_pass` (bool) và `color_cuts`
+(các cắt do color pass THÊM MỚI, sau khi dedup với cắt FFmpeg).
+Giới hạn còn lại: timestamp color pass chỉ chính xác ~±0.17s (lấy mẫu
+3fps); đoạn màu ngắn hơn ~0.7s có thể không đủ 2 frame mỗi phía để nhận.
 
 ## 3. Độ chính xác timestamp: ±1 frame
 Điểm cắt là timestamp của frame ĐẦU TIÊN của cảnh mới (theo pts của

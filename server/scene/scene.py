@@ -19,11 +19,23 @@ Ngưỡng (threshold): 0.05..0.95, mặc định 0.4. Ngưỡng càng thấp cà
 (nhiều cảnh giả do chuyển động mạnh); càng cao càng bỏ sót cảnh chuyển nhẹ
 (fade/dissolve). 0.3–0.5 hợp với đa số video quay thật.
 
+Phase 7 P6 — pass màu phẳng (color pass): metric scene của FFmpeg cho điểm
+rất thấp với cảnh màu phẳng (đỏ→xanh lá thậm chí < 0.1) nên các cắt này
+luôn bị bỏ sót. Pass thứ hai lấy mẫu frame 3fps ở 32×32, tính mean RGB mỗi
+frame: một điểm cắt được nhận khi (a) mean màu nhảy một bước lớn giữa 2
+frame liên tiếp VÀ (b) màu ỔN ĐỊNH ở cả 2 phía (cửa sổ 3 frame mỗi phía,
+lệch khỏi mean của phía mình ≤ 15/255). Điều kiện (b) loại fade/dissolve
+(màu biến đổi liên tục trong cửa sổ) và chuyển động máy (mean trôi dần).
+Chỉ dùng ffmpeg + stdlib (không cv2/numpy) để bridge chạy được mọi nơi.
+Cắt của color pass được hợp nhất với cắt FFmpeg (trùng trong 0.5s thì giữ
+timestamp FFmpeg vì chính xác tới frame). Tắt pass này bằng --no-color-pass.
+
 Khi chạy, in các dòng "[scene] ..." ra stdout để bridge parse tiến trình.
 """
 
 import argparse
 import json
+import math
 import os
 import re
 import subprocess
@@ -35,6 +47,14 @@ MAX_THRESHOLD = 0.95
 # Hai điểm cắt quá gần nhau (< ngần này giây) thì giữ điểm đầu, bỏ điểm sau —
 # tránh tách cảnh vụn do nhiễu/chớp sáng.
 MIN_SCENE_GAP = 0.3
+
+# --- Phase 7 P6: tham số color pass (màu phẳng) ---
+COLOR_FPS = 3.0          # lấy mẫu 3 frame/giây (đủ cho cắt màu, rẻ)
+COLOR_SIZE = 32          # thu frame về 32x32 trước khi tính mean
+COLOR_STEP_MIN = 60.0    # bước nhảy mean RGB tối thiểu (thang 0..255/kênh)
+COLOR_STABLE_MAX = 15.0  # lệch tối đa của 1 frame khỏi mean phía của nó
+COLOR_WINDOW = 3         # số frame mỗi phía dùng để kiểm tra ổn định
+COLOR_DEDUP_GAP = 0.5    # cắt color trùng cắt FFmpeg trong khoảng này → giữ FFmpeg
 
 # Dòng showinfo của 1 frame được select: "pts_time:12.345 ..."
 PTS_RE = re.compile(r"pts_time:(\d+(?:\.\d+)?)")
@@ -116,6 +136,100 @@ def detect_cuts(input_path, threshold, start=None, end=None):
     return merged, cut_candidates
 
 
+def _rgb_dist(a, b):
+    return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
+
+
+def sample_frame_means(input_path, fps=COLOR_FPS, size=COLOR_SIZE):
+    """Lấy mẫu frame (fps, size×size) qua ffmpeg rawvideo, trả về
+    [(t, (r, g, b)), ...] với mean RGB mỗi frame. Lỗi/empty → [] (không
+    làm hỏng pass chính — caller tự quyết định)."""
+    cmd = ["ffmpeg", "-hide_banner", "-i", input_path,
+           "-vf", f"fps={fps},scale={size}:{size}",
+           "-f", "rawvideo", "-pix_fmt", "rgb24", "-"]
+    try:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    except Exception:
+        return []
+    frame_bytes = size * size * 3
+    samples = []
+    idx = 0
+    try:
+        while True:
+            buf = p.stdout.read(frame_bytes)
+            if len(buf) < frame_bytes:
+                break
+            n = size * size
+            samples.append((idx / fps,
+                            (sum(buf[0::3]) / n, sum(buf[1::3]) / n, sum(buf[2::3]) / n)))
+            idx += 1
+    except Exception:
+        return []
+    finally:
+        try:
+            p.wait(timeout=30)
+        except Exception:
+            try:
+                p.kill()
+            except Exception:
+                pass
+    return samples
+
+
+def detect_color_cuts(samples):
+    """Tìm cắt màu phẳng từ mean RGB đã lấy mẫu.
+
+    Một biên giữa frame i và i+1 là cắt khi: mean màu 2 phía nhảy >=
+    COLOR_STEP_MIN VÀ mọi frame trong cửa sổ mỗi phía lệch khỏi mean phía
+    mình <= COLOR_STABLE_MAX (màu phẳng thật, không phải fade/chuyển động).
+    Timestamp = thời gian frame đầu của màu mới (khớp quy ước FFmpeg).
+    """
+    cuts = []
+    for i in range(len(samples) - 1):
+        before = samples[max(0, i - COLOR_WINDOW + 1):i + 1]
+        after = samples[i + 1:i + 1 + COLOR_WINDOW]
+        if len(before) < 2 or len(after) < 2:
+            continue
+        mean_b = tuple(sum(c[k] for _, c in before) / len(before) for k in range(3))
+        mean_a = tuple(sum(c[k] for _, c in after) / len(after) for k in range(3))
+        if _rgb_dist(mean_b, mean_a) < COLOR_STEP_MIN:
+            continue
+        if any(_rgb_dist(c, mean_b) > COLOR_STABLE_MAX for _, c in before):
+            continue
+        if any(_rgb_dist(c, mean_a) > COLOR_STABLE_MAX for _, c in after):
+            continue
+        cuts.append(samples[i + 1][0])
+    return cuts
+
+
+def merge_cuts(ffmpeg_cuts, color_cuts, start=None, end=None):
+    """Hợp nhất 2 nguồn cắt: lọc color theo [start, end], bỏ color trùng
+    FFmpeg trong COLOR_DEDUP_GAP (giữ timestamp FFmpeg), gộp theo
+    MIN_SCENE_GAP. Trả về (merged, color_added)."""
+    kept_color = []
+    for c in color_cuts:
+        if start is not None and c < start - 1e-3:
+            continue
+        if end is not None and c > end + 1e-3:
+            continue
+        kept_color.append(c)
+    out = list(ffmpeg_cuts)
+    added = []
+    for c in kept_color:
+        if all(abs(c - o) >= COLOR_DEDUP_GAP for o in out):
+            out.append(c)
+            added.append(c)
+    out.sort()
+    merged = []
+    for c in out:
+        if merged and c - merged[-1] < MIN_SCENE_GAP:
+            continue
+        merged.append(c)
+    # Color cut bị gộp mất do quá gần cắt FFmpeg thì không tính là "added".
+    added = [c for c in added if any(abs(c - m) < 1e-6 for m in merged)]
+    return merged, added
+
+
 def main():
     ap = argparse.ArgumentParser(description="Scene detection (FFmpeg, local).")
     ap.add_argument("--input", required=True, help="File video đầu vào.")
@@ -126,6 +240,8 @@ def main():
     ap.add_argument("--end", type=float, default=None,
                     help="Chỉ xét cảnh đến giây này (tuyệt đối theo file).")
     ap.add_argument("--out", required=True, help="File JSON đầu ra.")
+    ap.add_argument("--no-color-pass", action="store_true",
+                    help="Tắt pass màu phẳng (Phase 7 P6) — chỉ dùng FFmpeg scene.")
     args = ap.parse_args()
 
     if not os.path.isfile(args.input):
@@ -148,12 +264,26 @@ def main():
         if duration is None:
             log("cảnh báo: không đọc được duration (ffprobe).")
         cuts, candidates = detect_cuts(args.input, args.threshold, args.start, args.end)
+        # Phase 7 P6: pass màu phẳng — chỉ bổ sung, không bao giờ bớt cắt
+        # của FFmpeg; lỗi ở pass này chỉ cảnh báo, không fail toàn bộ.
+        color_added = []
+        if not args.no_color_pass:
+            try:
+                samples = sample_frame_means(args.input)
+                raw_color = detect_color_cuts(samples)
+                cuts, color_added = merge_cuts(cuts, raw_color, args.start, args.end)
+                log(f"color pass: {len(samples)} mẫu, {len(raw_color)} cắt thô, "
+                    f"+{len(color_added)} cắt mới.")
+            except Exception as e:
+                log(f"cảnh báo: color pass lỗi, bỏ qua ({e}).")
         log(f"xong: {len(cuts)} điểm cắt, {candidates} ứng viên.")
         result = {
             "cuts": [round(c, 3) for c in cuts],
             "duration": round(duration, 3) if duration is not None else None,
             "threshold": args.threshold,
             "cut_candidates": candidates,
+            "color_pass": not args.no_color_pass,
+            "color_cuts": [round(c, 3) for c in color_added],
         }
         with open(args.out, "w", encoding="utf-8") as f:
             json.dump(result, f, ensure_ascii=False, indent=2)

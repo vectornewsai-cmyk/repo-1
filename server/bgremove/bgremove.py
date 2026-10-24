@@ -31,6 +31,11 @@ import sys
 
 FORBIDDEN_SESSIONS = {"bria-rmbg", "rmbg-2.0", "bria"}
 DEFAULT_SESSION = "birefnet-general"
+# Session rembg nặng RAM — trên máy 8GB, birefnet-general từng bị kernel
+# OOM-kill (SIGKILL, xem BGREMOVE_LIMITS.md). Khi các session này lỗi,
+# tự fallback sang u2net (nhẹ hơn nhiều, vẫn MIT) thay vì báo lỗi khô.
+BIREFNET_SESSIONS = {"birefnet-general", "birefnet-general-lite"}
+FALLBACK_SESSION = "u2net"
 
 
 def parse_args(argv=None):
@@ -48,21 +53,27 @@ def parse_args(argv=None):
                    help="Thu nhỏ cạnh dài về tối đa bấy nhiêu px để chạy nhanh (0 = giữ nguyên)")
     p.add_argument("--model-dir", default=None,
                    help="Thư mục chứa/tải model (mặc định ~/.u2net của rembg)")
+    p.add_argument("--no-fallback", action="store_true",
+                   help="Tắt fallback tự động sang u2net khi session birefnet lỗi "
+                        "(mặc định: bật — xem BGREMOVE_LIMITS.md)")
     return p.parse_args(argv)
 
 
-def main(argv=None):
+def _fail(msg):
+    """Lỗi chạy: raise thay vì sys.exit để main() bắt được và fallback."""
+    raise RuntimeError(msg)
+
+
+def run_once(args, session_name):
+    """Chạy toàn bộ pipeline xóa nền với 1 session. Raise khi lỗi.
+
+    Được tách riêng để main() thử lại từ đầu bằng u2net khi session
+    birefnet lỗi: session, VideoCapture và writer ffmpeg đều mở lại mới,
+    file output dở dang của lần trước đã bị main() xóa trước khi retry.
+    """
     import cv2
     import numpy as np
     from PIL import Image
-
-    args = parse_args(argv)
-
-    if args.session.strip().lower() in FORBIDDEN_SESSIONS:
-        sys.exit(
-            f"Session '{args.session}' BỊ CẤM: weights non-commercial, "
-            "không được dùng trong repo MIT này. Dùng 'birefnet-general'."
-        )
 
     if args.model_dir:
         os.environ["U2NET_HOME"] = args.model_dir
@@ -70,21 +81,21 @@ def main(argv=None):
     try:
         from rembg import new_session
     except ImportError:
-        sys.exit("Thiếu rembg. Cài: pip install \"rembg[cpu]\"  (xem requirements.txt)")
+        _fail("Thiếu rembg. Cài: pip install \"rembg[cpu]\"  (xem requirements.txt)")
 
-    print(f"[bgremove] khởi tạo session '{args.session}'...", file=sys.stderr, flush=True)
-    session = new_session(args.session)
+    print(f"[bgremove] khởi tạo session '{session_name}'...", file=sys.stderr, flush=True)
+    session = new_session(session_name)
 
     cap = cv2.VideoCapture(args.input)
     if not cap.isOpened():
-        sys.exit(f"Không mở được video: {args.input}")
+        _fail(f"Không mở được video: {args.input}")
     fps = cap.get(cv2.CAP_PROP_FPS)
     if not fps or fps != fps:
         fps = 30.0
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     ok, frame = cap.read()
     if not ok:
-        sys.exit("Video đầu vào không có frame nào.")
+        _fail("Video đầu vào không có frame nào.")
 
     ih, iw = frame.shape[:2]
     scale = 1.0
@@ -96,7 +107,7 @@ def main(argv=None):
         bg_rgb = tuple(int(x) for x in args.bg.split(","))
         assert len(bg_rgb) == 3
     except Exception:
-        sys.exit("--bg phải có dạng R,G,B, ví dụ 0,177,64")
+        _fail("--bg phải có dạng R,G,B, ví dụ 0,177,64")
 
     if args.mode == "alpha":
         # PNG trong MOV: giữ alpha lossless.
@@ -120,7 +131,7 @@ def main(argv=None):
     try:
         writer = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     except FileNotFoundError:
-        sys.exit("Không tìm thấy ffmpeg trong PATH.")
+        _fail("Không tìm thấy ffmpeg trong PATH.")
 
     idx = 0
     try:
@@ -162,6 +173,67 @@ def main(argv=None):
         writer.wait()
 
     print(f"[bgremove] xong: {args.output} ({idx} frames)", file=sys.stderr)
+    # Marker machine-readable cho bridge/MCP: session thực sự đã dùng.
+    print(f"[bgremove] session_used={session_name}", file=sys.stderr, flush=True)
+
+
+def _remove_partial(path):
+    try:
+        if path and os.path.exists(path):
+            os.remove(path)
+    except OSError:
+        pass
+
+
+def decide_fallback(requested, fallback_enabled=True):
+    """Logic fallback thuần (để test không cần rembg): trả về session
+    fallback ("u2net") nếu requested là birefnet và fallback đang bật,
+    ngược lại None. --no-fallback hoặc session đã là u2net → không retry."""
+    if not fallback_enabled:
+        return None
+    if requested.strip().lower() in BIREFNET_SESSIONS:
+        return FALLBACK_SESSION
+    return None
+
+
+def main(argv=None):
+    args = parse_args(argv)
+
+    if args.session.strip().lower() in FORBIDDEN_SESSIONS:
+        sys.exit(
+            f"Session '{args.session}' BỊ CẤM: weights non-commercial, "
+            "không được dùng trong repo MIT này. Dùng 'birefnet-general'."
+        )
+
+    requested = args.session.strip().lower()
+    fallback = decide_fallback(requested, fallback_enabled=not args.no_fallback)
+
+    try:
+        run_once(args, requested)
+        return
+    except (Exception, SystemExit) as e:
+        first_err = e.code if isinstance(e, SystemExit) else str(e)
+        if not first_err:
+            first_err = f"exit {e.code}"
+        if not fallback:
+            _remove_partial(args.output)
+            sys.exit(f"Xóa nền thất bại (session {requested}): {first_err}")
+        # Fallback: chạy lại từ đầu bằng u2net, báo rõ trên stderr.
+        print(f"[bgremove] FALLBACK session={requested} -> {fallback} "
+              f"(lý do: {first_err})", file=sys.stderr, flush=True)
+        _remove_partial(args.output)
+        try:
+            run_once(args, fallback)
+        except (Exception, SystemExit) as e2:
+            second_err = e2.code if isinstance(e2, SystemExit) else str(e2)
+            _remove_partial(args.output)
+            sys.exit(
+                f"Xóa nền thất bại cả 2 session ({requested} lỗi: {first_err}; "
+                f"{fallback} lỗi: {second_err}). Thử video ngắn hơn hoặc "
+                "chạy trực tiếp với --session u2net."
+            )
+        # Marker fallback cho bridge/MCP (ngoài session_used= của run_once).
+        print(f"[bgremove] fallback_from={requested}", file=sys.stderr, flush=True)
 
 
 if __name__ == "__main__":
