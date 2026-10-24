@@ -1,0 +1,18 @@
+/* Bật vào với độ nảy đàn hồi.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-24 (Q4, Phase 8)
+ * Cách dùng: gắn class "text-preset vcut-elastic-in" vào element chữ.
+ * Port sang drawtext: ⚠️ fontsize nội suy */
+
+@keyframes vcut-elastic-in {
+  0% { opacity: 0; transform: scale(0.3); }
+  55% { opacity: 1; transform: scale(1.15); }
+  75% { transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.text-preset.vcut-elastic-in {
+  font-weight: 800; display: inline-block;
+  animation: vcut-elastic-in 0.9s ease-out both;
+}

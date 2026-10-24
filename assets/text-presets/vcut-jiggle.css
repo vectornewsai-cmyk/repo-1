@@ -1,0 +1,17 @@
+/* Rung giật nhanh nhẹ.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-24 (Q4, Phase 8)
+ * Cách dùng: gắn class "text-preset vcut-jiggle" vào element chữ.
+ * Port sang drawtext: ❌ (cần rotate) */
+
+@keyframes vcut-jiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(3deg); }
+  75% { transform: rotate(-3deg); }
+}
+
+.text-preset.vcut-jiggle {
+  font-weight: 800; display: inline-block;
+  animation: vcut-jiggle 0.5s ease-in-out infinite;
+}

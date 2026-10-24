@@ -1,0 +1,112 @@
+{
+  "template": {
+    "id": "intro-logo",
+    "name": "Mở đầu logo",
+    "description": "Video ngang mở đầu: logo + tên kênh + slogan.",
+    "category": "intro",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "intro",
+      "logo",
+      "ngang"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 5,
+    "placeholders": [
+      {
+        "id": "logo",
+        "kind": "image",
+        "label": "Ảnh logo",
+        "default": "logo.png"
+      },
+      {
+        "id": "channel",
+        "kind": "text",
+        "label": "Tên kênh",
+        "default": "KÊNH SÁNG TẠO"
+      },
+      {
+        "id": "slogan",
+        "kind": "text",
+        "label": "Slogan",
+        "default": "Mỗi ngày một ý tưởng mới"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Mở đầu logo",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Logo",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{logo}}",
+            "start": 0,
+            "duration": 5,
+            "fit": "contain"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên kênh",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{channel}}",
+            "start": 0.5,
+            "duration": 4.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 68,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.6,
+              "animation": "bounce",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Slogan",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{slogan}}",
+            "start": 1.5,
+            "duration": 3.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 36,
+              "color": "#E9D5FF",
+              "x": 0.5,
+              "y": 0.78,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+/* Ánh kim chạy ngang chữ.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-24 (Q4, Phase 8)
+ * Cách dùng: gắn class "text-preset vcut-shimmer-text" vào element chữ.
+ * Port sang drawtext: ❌ (cần đổi màu theo t) */
+
+@keyframes vcut-shimmer-text {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+.text-preset.vcut-shimmer-text {
+  font-weight: 800; display: inline-block;
+  background: linear-gradient(90deg,#fff 30%,#fde68a 50%,#fff 70%); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: vcut-shimmer-text 2.5s linear infinite;
+}

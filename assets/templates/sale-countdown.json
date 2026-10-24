@@ -1,0 +1,117 @@
+{
+  "template": {
+    "id": "sale-countdown",
+    "name": "Đếm ngược sale",
+    "description": "Video dọc đếm ngược: sản phẩm + mức giảm + thời gian.",
+    "category": "ads",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "sale",
+      "đếm ngược",
+      "dọc"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 6,
+    "placeholders": [
+      {
+        "id": "product",
+        "kind": "video",
+        "label": "Video sản phẩm",
+        "default": "product.mp4"
+      },
+      {
+        "id": "discount",
+        "kind": "text",
+        "label": "Mức giảm",
+        "default": "GIẢM ĐẾN 50%"
+      },
+      {
+        "id": "deadline",
+        "kind": "text",
+        "label": "Thời hạn",
+        "default": "CHỈ TRONG 24H — KẾT THÚC 23:59"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Đếm ngược sale",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Sản phẩm",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{product}}",
+            "start": 0,
+            "duration": 6,
+            "in": 0,
+            "out": 6,
+            "filter": {
+              "lut": "vcut-chili-ember"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Mức giảm",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{discount}}",
+            "start": 0.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 68,
+              "color": "#FCA5A5",
+              "x": 0.5,
+              "y": 0.15,
+              "animation": "bounce",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#7F1D1D"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Thời hạn",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{deadline}}",
+            "start": 1.5,
+            "duration": 4.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 38,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.85,
+              "animation": "wave",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

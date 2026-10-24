@@ -1,0 +1,112 @@
+{
+  "template": {
+    "id": "book-trailer",
+    "name": "Trailer sách",
+    "description": "Video ngang trailer sách: ảnh bìa + trích đoạn + tên sách.",
+    "category": "cinematic",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "sách",
+      "trailer",
+      "ngang"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 7,
+    "placeholders": [
+      {
+        "id": "cover",
+        "kind": "image",
+        "label": "Ảnh bìa sách",
+        "default": "book-cover.jpg"
+      },
+      {
+        "id": "quote",
+        "kind": "text",
+        "label": "Trích đoạn",
+        "default": "“Cuốn sách thay đổi cách bạn nhìn thế giới.”"
+      },
+      {
+        "id": "title",
+        "kind": "text",
+        "label": "Tên sách",
+        "default": "NHỮNG NGÀY NẮNG"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Trailer sách",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Bìa sách",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{cover}}",
+            "start": 0,
+            "duration": 7,
+            "fit": "cover"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Trích đoạn",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{quote}}",
+            "start": 0.5,
+            "duration": 6.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 52,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.35,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": true
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Tên sách",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{title}}",
+            "start": 1.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 44,
+              "color": "#FDE68A",
+              "x": 0.5,
+              "y": 0.6,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

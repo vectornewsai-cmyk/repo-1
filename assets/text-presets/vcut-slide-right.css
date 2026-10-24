@@ -1,0 +1,16 @@
+/* Trượt từ trái sang phải vào vị trí.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-24 (Q4, Phase 8)
+ * Cách dùng: gắn class "text-preset vcut-slide-right" vào element chữ.
+ * Port sang drawtext: ⚠️ x nội suy */
+
+@keyframes vcut-slide-right {
+  from { opacity: 0; transform: translateX(-60px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.text-preset.vcut-slide-right {
+  font-weight: 800; display: inline-block;
+  animation: vcut-slide-right 0.7s ease-out both;
+}

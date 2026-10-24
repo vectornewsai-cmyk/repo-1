@@ -1,0 +1,121 @@
+{
+  "template": {
+    "id": "fashion-lookbook",
+    "name": "Lookbook thời trang",
+    "description": "Video dọc lookbook: 3 set đồ + tên bộ sưu tập.",
+    "category": "social",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "thời trang",
+      "lookbook",
+      "dọc"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 9,
+    "placeholders": [
+      {
+        "id": "look1",
+        "kind": "video",
+        "label": "Set 1",
+        "default": "look-1.mp4"
+      },
+      {
+        "id": "look2",
+        "kind": "video",
+        "label": "Set 2",
+        "default": "look-2.mp4"
+      },
+      {
+        "id": "look3",
+        "kind": "video",
+        "label": "Set 3",
+        "default": "look-3.mp4"
+      },
+      {
+        "id": "collection",
+        "kind": "text",
+        "label": "Tên bộ sưu tập",
+        "default": "THU ĐÔNG 2026"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Lookbook thời trang",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Các set",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{look1}}",
+            "start": 0,
+            "duration": 3,
+            "in": 0,
+            "out": 3,
+            "transitionOut": {
+              "type": "dissolve",
+              "duration": 0.3
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v2",
+            "src": "{{look2}}",
+            "start": 3,
+            "duration": 3,
+            "in": 0,
+            "out": 3,
+            "transitionOut": {
+              "type": "dissolve",
+              "duration": 0.3
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v3",
+            "src": "{{look3}}",
+            "start": 6,
+            "duration": 3,
+            "in": 0,
+            "out": 3
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Bộ sưu tập",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{collection}}",
+            "start": 6.5,
+            "duration": 2.5,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 56,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.12,
+              "animation": "slideInRight",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

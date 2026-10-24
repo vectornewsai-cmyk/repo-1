@@ -1,0 +1,139 @@
+{
+  "template": {
+    "id": "concert-teaser",
+    "name": "Teaser concert",
+    "description": "Video dọc teaser đêm nhạc: 2 cảnh sân khấu + tên nghệ sĩ + ngày diễn.",
+    "category": "music",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "concert",
+      "nhạc",
+      "teaser",
+      "dọc"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 8,
+    "placeholders": [
+      {
+        "id": "stage1",
+        "kind": "video",
+        "label": "Cảnh sân khấu 1",
+        "default": "stage-1.mp4"
+      },
+      {
+        "id": "stage2",
+        "kind": "video",
+        "label": "Cảnh sân khấu 2",
+        "default": "stage-2.mp4"
+      },
+      {
+        "id": "artist",
+        "kind": "text",
+        "label": "Tên nghệ sĩ",
+        "default": "LIVE: MINH TUẤN"
+      },
+      {
+        "id": "date",
+        "kind": "text",
+        "label": "Ngày diễn",
+        "default": "20.12.2026 — SVĐ MỸ ĐÌNH"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Teaser concert",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Sân khấu",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{stage1}}",
+            "start": 0,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "filter": {
+              "lut": "vcut-neon-nights"
+            },
+            "transitionOut": {
+              "type": "dissolve",
+              "duration": 0.4
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v2",
+            "src": "{{stage2}}",
+            "start": 4,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "filter": {
+              "lut": "vcut-neon-nights"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Nghệ sĩ",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{artist}}",
+            "start": 0.5,
+            "duration": 7.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 68,
+              "color": "#FACC15",
+              "x": 0.5,
+              "y": 0.18,
+              "animation": "bounce",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Ngày diễn",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{date}}",
+            "start": 4.5,
+            "duration": 3.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 38,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.85,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

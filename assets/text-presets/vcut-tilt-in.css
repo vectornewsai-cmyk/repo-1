@@ -1,0 +1,16 @@
+/* Nghiêng -12° rồi thẳng dần vào.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-24 (Q4, Phase 8)
+ * Cách dùng: gắn class "text-preset vcut-tilt-in" vào element chữ.
+ * Port sang drawtext: ❌ (cần rotate) */
+
+@keyframes vcut-tilt-in {
+  from { opacity: 0; transform: rotate(-12deg) translateY(20px); }
+  to { opacity: 1; transform: rotate(0deg) translateY(0); }
+}
+
+.text-preset.vcut-tilt-in {
+  font-weight: 800; display: inline-block;
+  animation: vcut-tilt-in 0.7s ease-out both;
+}

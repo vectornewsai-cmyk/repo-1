@@ -1,0 +1,110 @@
+{
+  "template": {
+    "id": "family-slideshow",
+    "name": "Slideshow gia đình",
+    "description": "Video ngang slideshow: 3 ảnh kỷ niệm + lời nhắn.",
+    "category": "slideshow",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "gia đình",
+      "slideshow",
+      "ảnh"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 9,
+    "placeholders": [
+      {
+        "id": "photo1",
+        "kind": "image",
+        "label": "Ảnh 1",
+        "default": "family-1.jpg"
+      },
+      {
+        "id": "photo2",
+        "kind": "image",
+        "label": "Ảnh 2",
+        "default": "family-2.jpg"
+      },
+      {
+        "id": "photo3",
+        "kind": "image",
+        "label": "Ảnh 3",
+        "default": "family-3.jpg"
+      },
+      {
+        "id": "message",
+        "kind": "text",
+        "label": "Lời nhắn",
+        "default": "GIA ĐÌNH LÀ NƠI BÌNH YÊN NHẤT"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Slideshow gia đình",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Các ảnh",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{photo1}}",
+            "start": 0,
+            "duration": 3,
+            "fit": "cover"
+          },
+          {
+            "kind": "image",
+            "id": "i2",
+            "src": "{{photo2}}",
+            "start": 3,
+            "duration": 3,
+            "fit": "cover"
+          },
+          {
+            "kind": "image",
+            "id": "i3",
+            "src": "{{photo3}}",
+            "start": 6,
+            "duration": 3,
+            "fit": "cover"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Lời nhắn",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{message}}",
+            "start": 6.5,
+            "duration": 2.5,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 52,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.85,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

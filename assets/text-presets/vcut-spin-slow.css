@@ -1,0 +1,16 @@
+/* Xoay chậm liên tục.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-24 (Q4, Phase 8)
+ * Cách dùng: gắn class "text-preset vcut-spin-slow" vào element chữ.
+ * Port sang drawtext: ❌ (cần rotate) */
+
+@keyframes vcut-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.text-preset.vcut-spin-slow {
+  font-weight: 800; display: inline-block;
+  animation: vcut-spin-slow 6s linear infinite;
+}

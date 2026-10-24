@@ -1,0 +1,117 @@
+{
+  "template": {
+    "id": "morning-news",
+    "name": "Bản tin sáng",
+    "description": "Mở đầu bản tin: video thành phố + tên chương trình + ngày.",
+    "category": "broadcast",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "tin tức",
+      "sáng",
+      "truyền hình"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 7,
+    "placeholders": [
+      {
+        "id": "city",
+        "kind": "video",
+        "label": "Video thành phố sáng",
+        "default": "city-morning.mp4"
+      },
+      {
+        "id": "show",
+        "kind": "text",
+        "label": "Tên chương trình",
+        "default": "BẢN TIN SÁNG"
+      },
+      {
+        "id": "date",
+        "kind": "text",
+        "label": "Ngày phát sóng",
+        "default": "Thứ Bảy, 24/10/2026"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Bản tin sáng",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Thành phố",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{city}}",
+            "start": 0,
+            "duration": 7,
+            "in": 0,
+            "out": 7,
+            "filter": {
+              "lut": "vcut-cinematic"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên chương trình",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{show}}",
+            "start": 0.5,
+            "duration": 6.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 72,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.15,
+              "animation": "popIn",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#1E3A8A"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Ngày",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{date}}",
+            "start": 1.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 36,
+              "color": "#BFDBFE",
+              "x": 0.5,
+              "y": 0.82,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

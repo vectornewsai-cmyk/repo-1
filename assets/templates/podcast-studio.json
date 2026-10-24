@@ -1,0 +1,133 @@
+{
+  "template": {
+    "id": "podcast-studio",
+    "name": "Studio podcast",
+    "description": "Tập podcast ngang: 2 góc máy + tên tập + tên khách mời.",
+    "category": "podcast",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "podcast",
+      "studio",
+      "trò chuyện"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 10,
+    "placeholders": [
+      {
+        "id": "cam1",
+        "kind": "video",
+        "label": "Góc máy 1 (host)",
+        "default": "host-cam.mp4"
+      },
+      {
+        "id": "cam2",
+        "kind": "video",
+        "label": "Góc máy 2 (khách)",
+        "default": "guest-cam.mp4"
+      },
+      {
+        "id": "episode",
+        "kind": "text",
+        "label": "Tên tập",
+        "default": "TẬP 12: KHỞI NGHIỆP"
+      },
+      {
+        "id": "guest",
+        "kind": "text",
+        "label": "Tên khách mời",
+        "default": "Khách mời: Lan Anh"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Studio podcast",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Góc máy",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{cam1}}",
+            "start": 0,
+            "duration": 5,
+            "in": 0,
+            "out": 5,
+            "transitionOut": {
+              "type": "fade",
+              "duration": 0.4
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v2",
+            "src": "{{cam2}}",
+            "start": 5,
+            "duration": 5,
+            "in": 0,
+            "out": 5
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên tập",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{episode}}",
+            "start": 0.5,
+            "duration": 4.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 56,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.12,
+              "animation": "slideInLeft",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#111827"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Khách mời",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{guest}}",
+            "start": 5.5,
+            "duration": 4.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 40,
+              "color": "#FDE68A",
+              "x": 0.5,
+              "y": 0.85,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

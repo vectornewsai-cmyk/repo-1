@@ -1,0 +1,113 @@
+{
+  "template": {
+    "id": "graduation-celebration",
+    "name": "Mừng tốt nghiệp",
+    "description": "Video dọc mừng tốt nghiệp: cảnh lễ + tên + niên khóa.",
+    "category": "social",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "tốt nghiệp",
+      "dọc",
+      "kỷ niệm"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 6,
+    "placeholders": [
+      {
+        "id": "ceremony",
+        "kind": "video",
+        "label": "Video buổi lễ",
+        "default": "graduation.mp4"
+      },
+      {
+        "id": "name",
+        "kind": "text",
+        "label": "Tên người tốt nghiệp",
+        "default": "CHÚC MỪNG THU HẰNG!"
+      },
+      {
+        "id": "year",
+        "kind": "text",
+        "label": "Niên khóa",
+        "default": "KHÓA 2022 — 2026"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Mừng tốt nghiệp",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Buổi lễ",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{ceremony}}",
+            "start": 0,
+            "duration": 6,
+            "in": 0,
+            "out": 6
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{name}}",
+            "start": 0.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 60,
+              "color": "#FDE68A",
+              "x": 0.5,
+              "y": 0.2,
+              "animation": "bounce",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Niên khóa",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{year}}",
+            "start": 1.5,
+            "duration": 4.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 38,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.85,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

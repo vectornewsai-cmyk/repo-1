@@ -1,0 +1,102 @@
+{
+  "template": {
+    "id": "desk-setup",
+    "name": "Góc làm việc",
+    "description": "Video dọc khoe góc setup: 2 cảnh bàn làm việc + tên chủ góc.",
+    "category": "social",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "setup",
+      "bàn làm việc",
+      "dọc"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 8,
+    "placeholders": [
+      {
+        "id": "desk1",
+        "kind": "video",
+        "label": "Cảnh bàn 1",
+        "default": "desk-1.mp4"
+      },
+      {
+        "id": "desk2",
+        "kind": "video",
+        "label": "Cảnh bàn 2",
+        "default": "desk-2.mp4"
+      },
+      {
+        "id": "owner",
+        "kind": "text",
+        "label": "Tên chủ góc",
+        "default": "GÓC CỦA TUẤN"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Góc làm việc",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Góc làm việc",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{desk1}}",
+            "start": 0,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "transitionOut": {
+              "type": "fade",
+              "duration": 0.4
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v2",
+            "src": "{{desk2}}",
+            "start": 4,
+            "duration": 4,
+            "in": 0,
+            "out": 4
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Chủ góc",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{owner}}",
+            "start": 4.5,
+            "duration": 3.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 56,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.85,
+              "animation": "slideUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

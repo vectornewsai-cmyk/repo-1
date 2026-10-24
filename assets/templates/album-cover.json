@@ -1,0 +1,112 @@
+{
+  "template": {
+    "id": "album-cover",
+    "name": "Bìa album",
+    "description": "Video vuông giới thiệu album: ảnh bìa + tên album + tên nghệ sĩ.",
+    "category": "music",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "album",
+      "nhạc",
+      "vuông"
+    ],
+    "aspect": "1080:1080",
+    "durationSec": 6,
+    "placeholders": [
+      {
+        "id": "cover",
+        "kind": "image",
+        "label": "Ảnh bìa album",
+        "default": "album-cover.jpg"
+      },
+      {
+        "id": "album",
+        "kind": "text",
+        "label": "Tên album",
+        "default": "ĐÊM PHỐ"
+      },
+      {
+        "id": "artist",
+        "kind": "text",
+        "label": "Tên nghệ sĩ",
+        "default": "Hà My"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Bìa album",
+      "width": 1080,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Bìa",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{cover}}",
+            "start": 0,
+            "duration": 6,
+            "fit": "cover"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên album",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{album}}",
+            "start": 0.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 72,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.38,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Nghệ sĩ",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{artist}}",
+            "start": 1.5,
+            "duration": 4.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 40,
+              "color": "#FBCFE8",
+              "x": 0.5,
+              "y": 0.58,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "template": {
+    "id": "podcast-highlight",
+    "name": "Highlight podcast dọc",
+    "description": "Video dọc cắt highlight: 1 đoạn nói + câu quote nổi bật.",
+    "category": "podcast",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "podcast",
+      "highlight",
+      "dọc"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 7,
+    "placeholders": [
+      {
+        "id": "clip",
+        "kind": "video",
+        "label": "Đoạn highlight",
+        "default": "highlight.mp4"
+      },
+      {
+        "id": "quote",
+        "kind": "text",
+        "label": "Câu quote",
+        "default": "“THÀNH CÔNG LÀ 99% KIÊN TRÌ.”"
+      },
+      {
+        "id": "show",
+        "kind": "text",
+        "label": "Tên show",
+        "default": "PODCAST KHỞI NGHIỆP — TẬP 12"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Highlight podcast dọc",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Highlight",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{clip}}",
+            "start": 0,
+            "duration": 7,
+            "in": 0,
+            "out": 7
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Quote",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{quote}}",
+            "start": 0.5,
+            "duration": 6.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 56,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.25,
+              "animation": "popIn",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Tên show",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{show}}",
+            "start": 1.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 34,
+              "color": "#FDE68A",
+              "x": 0.5,
+              "y": 0.88,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

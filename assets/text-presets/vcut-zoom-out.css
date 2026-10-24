@@ -1,0 +1,16 @@
+/* Từ lớn thu nhỏ về cỡ chuẩn.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-24 (Q4, Phase 8)
+ * Cách dùng: gắn class "text-preset vcut-zoom-out" vào element chữ.
+ * Port sang drawtext: ⚠️ fontsize nội suy */
+
+@keyframes vcut-zoom-out {
+  from { opacity: 0; transform: scale(1.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.text-preset.vcut-zoom-out {
+  font-weight: 800; display: inline-block;
+  animation: vcut-zoom-out 0.7s ease-out both;
+}

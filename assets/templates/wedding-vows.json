@@ -1,0 +1,116 @@
+{
+  "template": {
+    "id": "wedding-vows",
+    "name": "Lời thề đám cưới",
+    "description": "Video ngang khoảnh khắc lễ cưới: video lễ + lời thề + tên đôi.",
+    "category": "cinematic",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "đám cưới",
+      "lễ cưới",
+      "ngang"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 8,
+    "placeholders": [
+      {
+        "id": "ceremony",
+        "kind": "video",
+        "label": "Video buổi lễ",
+        "default": "ceremony.mp4"
+      },
+      {
+        "id": "vow",
+        "kind": "text",
+        "label": "Lời thề",
+        "default": "“Dù giàu sang hay nghèo khó, anh vẫn ở đây.”"
+      },
+      {
+        "id": "couple",
+        "kind": "text",
+        "label": "Tên đôi",
+        "default": "Minh & An — 12.12.2026"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Lời thề đám cưới",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Buổi lễ",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{ceremony}}",
+            "start": 0,
+            "duration": 8,
+            "in": 0,
+            "out": 8,
+            "filter": {
+              "lut": "vcut-blush-pink"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Lời thề",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{vow}}",
+            "start": 0.5,
+            "duration": 7.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 52,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.35,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": true
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Tên đôi",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{couple}}",
+            "start": 1.5,
+            "duration": 6.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 38,
+              "color": "#FBCFE8",
+              "x": 0.5,
+              "y": 0.62,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

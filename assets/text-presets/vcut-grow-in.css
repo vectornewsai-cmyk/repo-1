@@ -1,0 +1,16 @@
+/* Mọc từ đáy lên (scaleY 0→1).
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-24 (Q4, Phase 8)
+ * Cách dùng: gắn class "text-preset vcut-grow-in" vào element chữ.
+ * Port sang drawtext: ❌ (drawtext không scaleY riêng) */
+
+@keyframes vcut-grow-in {
+  from { opacity: 0; transform: scaleY(0); transform-origin: bottom; }
+  to { opacity: 1; transform: scaleY(1); transform-origin: bottom; }
+}
+
+.text-preset.vcut-grow-in {
+  font-weight: 800; display: inline-block;
+  animation: vcut-grow-in 0.7s ease-out both;
+}

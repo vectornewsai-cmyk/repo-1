@@ -1,0 +1,152 @@
+{
+  "template": {
+    "id": "cooking-show",
+    "name": "Show nấu ăn dọc",
+    "description": "Video dọc nấu ăn: 3 bước + tên món + tip nhanh.",
+    "category": "social",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "nấu ăn",
+      "dọc",
+      "công thức"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 12,
+    "placeholders": [
+      {
+        "id": "step1",
+        "kind": "video",
+        "label": "Bước 1",
+        "default": "cook-1.mp4"
+      },
+      {
+        "id": "step2",
+        "kind": "video",
+        "label": "Bước 2",
+        "default": "cook-2.mp4"
+      },
+      {
+        "id": "step3",
+        "kind": "video",
+        "label": "Bước 3 (thành phẩm)",
+        "default": "cook-3.mp4"
+      },
+      {
+        "id": "dish",
+        "kind": "text",
+        "label": "Tên món",
+        "default": "CƠM GÀ XỐI MỠ"
+      },
+      {
+        "id": "tip",
+        "kind": "text",
+        "label": "Mẹo nhanh",
+        "default": "TIP: Ướp gà 30 phút trước khi chiên"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Show nấu ăn dọc",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Các bước",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{step1}}",
+            "start": 0,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "transitionOut": {
+              "type": "slideleft",
+              "duration": 0.4
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v2",
+            "src": "{{step2}}",
+            "start": 4,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "transitionOut": {
+              "type": "slideleft",
+              "duration": 0.4
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v3",
+            "src": "{{step3}}",
+            "start": 8,
+            "duration": 4,
+            "in": 0,
+            "out": 4
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên món",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{dish}}",
+            "start": 0.5,
+            "duration": 3.5,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 60,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.1,
+              "animation": "popIn",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#000000"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Mẹo",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{tip}}",
+            "start": 8.5,
+            "duration": 3.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 36,
+              "color": "#FDE68A",
+              "x": 0.5,
+              "y": 0.88,
+              "animation": "slideUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

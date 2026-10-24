@@ -1,0 +1,16 @@
+/* Phồng nhẹ liên tục.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-24 (Q4, Phase 8)
+ * Cách dùng: gắn class "text-preset vcut-pulse-soft" vào element chữ.
+ * Port sang drawtext: ⚠️ fontsize dao động */
+
+@keyframes vcut-pulse-soft {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.text-preset.vcut-pulse-soft {
+  font-weight: 800; display: inline-block;
+  animation: vcut-pulse-soft 1.6s ease-in-out infinite;
+}

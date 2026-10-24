@@ -1,0 +1,16 @@
+/* Lật trục X từ 90° về phẳng.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-24 (Q4, Phase 8)
+ * Cách dùng: gắn class "text-preset vcut-flip-up" vào element chữ.
+ * Port sang drawtext: ❌ (cần rotateX 3D) */
+
+@keyframes vcut-flip-up {
+  from { opacity: 0; transform: perspective(600px) rotateX(90deg); }
+  to { opacity: 1; transform: perspective(600px) rotateX(0deg); }
+}
+
+.text-preset.vcut-flip-up {
+  font-weight: 800; display: inline-block;
+  animation: vcut-flip-up 0.8s ease-out both;
+}

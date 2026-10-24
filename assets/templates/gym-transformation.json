@@ -1,0 +1,132 @@
+{
+  "template": {
+    "id": "gym-transformation",
+    "name": "Hành trình gym",
+    "description": "Video dọc before/after: 2 cảnh tập + số kg + slogan.",
+    "category": "social",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "gym",
+      "thể hình",
+      "dọc"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 8,
+    "placeholders": [
+      {
+        "id": "before",
+        "kind": "video",
+        "label": "Cảnh trước",
+        "default": "gym-before.mp4"
+      },
+      {
+        "id": "after",
+        "kind": "video",
+        "label": "Cảnh sau",
+        "default": "gym-after.mp4"
+      },
+      {
+        "id": "result",
+        "kind": "text",
+        "label": "Kết quả",
+        "default": "-15KG TRONG 6 THÁNG"
+      },
+      {
+        "id": "slogan",
+        "kind": "text",
+        "label": "Slogan",
+        "default": "KHÔNG BỎ CUỘC"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Hành trình gym",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Hành trình",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{before}}",
+            "start": 0,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "transitionOut": {
+              "type": "wipeleft",
+              "duration": 0.5
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v2",
+            "src": "{{after}}",
+            "start": 4,
+            "duration": 4,
+            "in": 0,
+            "out": 4
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Kết quả",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{result}}",
+            "start": 4.5,
+            "duration": 3.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 64,
+              "color": "#4ADE80",
+              "x": 0.5,
+              "y": 0.15,
+              "animation": "popIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Slogan",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{slogan}}",
+            "start": 0.5,
+            "duration": 3.5,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 48,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.85,
+              "animation": "bounce",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

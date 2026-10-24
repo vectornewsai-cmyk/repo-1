@@ -1,6 +1,6 @@
 # Text Presets — VCut Studio
 
-Thư viện 76 preset chữ CSS thuần (không dependency), dùng cho preview web của editor.
+Thư viện 96 preset chữ CSS thuần (không dependency), dùng cho preview web của editor.
 Render video (FFmpeg drawtext) chỉ port được một phần — xem ghi chú "Port sang drawtext"
 trong từng file.
 
@@ -9,11 +9,11 @@ trong từng file.
 - File `animate-css-*.css`: gắn class `text-preset` vào element chữ.
 - File `vcut-*.css`: gắn class `text-preset vcut-<tên>` vào element chữ.
 - Mỗi phiên preview chỉ load 1 file preset (các file animate-css dùng chung class `.text-preset`).
-- Mở `_test_all.html` bằng browser để xem toàn bộ 76 preset.
+- Mở `_test_all.html` bằng browser để xem toàn bộ 96 preset.
 
 ## Danh mục
 
-### Entrance — xuất hiện (42)
+### Entrance — xuất hiện (54)
 
 | File | Hiệu ứng | Port drawtext |
 |---|---|---|
@@ -58,13 +58,26 @@ trong từng file.
 | vcut-bounce-in.css | nảy vào nhiều nhịp | ⚠️ y + fontsize nội suy |
 | vcut-stretch-in.css | co giãn ngang vào | ❌ (drawtext không scaleX riêng) |
 
+| vcut-fade-down.css | mờ + trượt từ trên xuống | ⚠️ alpha + y nội suy |
+| vcut-zoom-out.css | từ lớn thu nhỏ về cỡ chuẩn | ⚠️ fontsize nội suy |
+| vcut-slide-left.css | trượt từ phải sang trái | ⚠️ x nội suy |
+| vcut-slide-right.css | trượt từ trái sang phải | ⚠️ x nội suy |
+| vcut-swirl-in.css | xoáy -180° + phóng to vào | ❌ (cần rotate) |
+| vcut-tilt-in.css | nghiêng -12° rồi thẳng vào | ❌ (cần rotate) |
+| vcut-grow-in.css | mọc từ đáy lên (scaleY) | ❌ (drawtext không scaleY riêng) |
+| vcut-flip-up.css | lật trục X 90° về phẳng | ❌ (cần rotateX 3D) |
+| vcut-curtain-in.css | màn kéo mở từ giữa | ❌ (cần clip-path) |
+| vcut-elastic-in.css | bật vào đàn hồi | ⚠️ fontsize nội suy |
+| vcut-zoom-blur-in.css | vừa phóng to vừa hết mờ | ⚠️ chỉ fade |
+| vcut-skew-pop.css | nghiêng + bật thẳng kèm phóng to | ❌ (drawtext không skew) |
+
 ### Exit — biến mất (1)
 
 | File | Hiệu ứng | Port drawtext |
 |---|---|---|
 | animate-css-fadeOutDown.css | mờ + trượt xuống | ✅ |
 
-### Attention — thu hút, lặp (21)
+### Attention — thu hút, lặp (29)
 
 | File | Hiệu ứng | Port drawtext |
 |---|---|---|
@@ -81,6 +94,15 @@ trong từng file.
 | vcut-flicker-sign.css | bảng hiệu chập chờn | ✅ alpha nhấp nháy |
 | vcut-karaoke.css | karaoke quét sáng | ⚠️ 2 lớp drawtext chồng |
 | vcut-shine.css | vệt sáng quét | ❌ (cần mask quét) |
+
+| vcut-pulse-soft.css | phồng nhẹ liên tục | ⚠️ fontsize dao động |
+| vcut-sway.css | đung đưa ngang chậm | ⚠️ x dao động |
+| vcut-bob.css | nhún lên xuống nhẹ | ⚠️ y dao động |
+| vcut-flicker-soft.css | nhấp nháy nhẹ không đều | ✅ alpha nhấp nháy |
+| vcut-shimmer-text.css | ánh kim chạy ngang chữ | ❌ (cần đổi màu theo t) |
+| vcut-spin-slow.css | xoay chậm liên tục | ❌ (cần rotate) |
+| vcut-tada-soft.css | lắc + phóng nhẹ kiểu tada | ❌ (cần rotate) |
+| vcut-jiggle.css | rung giật nhanh nhẹ | ❌ (cần rotate) |
 
 ### Static style — kiểu chữ tĩnh (12)
 

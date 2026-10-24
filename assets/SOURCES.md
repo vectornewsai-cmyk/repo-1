@@ -732,7 +732,7 @@ Ghi chú port drawtext trong từng file (✅/⚠️/❌). Tổng presets: 76.
 - `vcut-silk-road.cube` — Con đường tơ lụa — VCut original, MIT.
 - `vcut-opal-dream.cube` — Mơ đá opal — VCut original, MIT.
 - `vcut-coral-dawn.cube` — Bình minh san hô — VCut original, MIT.
-Tổng LUT: 154.
+Tổng LUT: 174.
 
 ### Sound tổng hợp gốc vòng 2 (30 file, `assets/sounds/gen_vcut_sounds2.py`)
 
@@ -745,7 +745,7 @@ sweep: `sweep-rise`, `sweep-fall`, `sweep-band`, `sweep-whoosh-soft`.
 downer: `downer-deep`, `downer-echo`, `downer-final`. stinger:
 `stinger-brass`, `stinger-hit`, `stinger-reveal`, `stinger-twinkle`.
 Tất cả `vcut-synth-*.ogg` trong assets/audio/, VCut original, MIT.
-Tổng sound: 1013.
+Tổng sound: 1043.
 
 ### Transition custom expr (9, `xfade=transition=custom`, không cần shader)
 
@@ -754,3 +754,92 @@ Tổng sound: 1013.
 (`server/render/test_p5_transitions.py`, 9/9). Tổng transition: 67
 (58 xfade built-in + 9 custom). Lưu ý: expr chứa dấu phẩy nên phải bọc
 trong `'...'` khi build filter (xem `buildXfadeFilter`).
+
+### Templates vòng 3 (20 mẫu, `assets/templates/gen_templates3.py`, Q4 Phase 8)
+
+| File | Tên | Nguồn | Tác giả | License | Ngày |
+|---|---|---|---|---|---|
+| `templates/podcast-studio.json` | Studio podcast | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/morning-news.json` | Bản tin sáng | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/concert-teaser.json` | Teaser concert | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/album-cover.json` | Bìa album | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/cooking-show.json` | Show nấu ăn | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/travel-montage.json` | Montage du lịch | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/gym-transformation.json` | Biến đổi gym | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/book-trailer.json` | Trailer sách | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/webinar-invite.json` | Mời webinar | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/charity-appeal.json` | Kêu gọi từ thiện | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/app-launch.json` | Ra mắt app | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/fashion-lookbook.json` | Lookbook thời trang | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/wedding-vows.json` | Lời thề cưới | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/graduation-celebration.json` | Lễ tốt nghiệp | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/podcast-highlight.json` | Highlight podcast | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/desk-setup.json` | Góc làm việc | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/outro-subscribe.json` | Outro đăng ký | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/intro-logo.json` | Intro logo | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/family-slideshow.json` | Slideshow gia đình | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+| `templates/sale-countdown.json` | Đếm ngược sale | Tự thiết kế | VCut Studio | MIT | 2026-10-24 |
+
+Chỉ dùng 9 category có sẵn, animation/text/transition/LUT/sticker có sẵn.
+Tổng templates: 50.
+
+### Text preset vòng 3 (20 file, keyframes gốc, MIT, Q4 Phase 8)
+
+`vcut-fade-down`, `vcut-zoom-out`, `vcut-slide-left`, `vcut-slide-right`,
+`vcut-swirl-in`, `vcut-tilt-in`, `vcut-grow-in`, `vcut-flip-up`,
+`vcut-curtain-in`, `vcut-elastic-in`, `vcut-zoom-blur-in`, `vcut-skew-pop`
+(entrance) + `vcut-pulse-soft`, `vcut-sway`, `vcut-bob`, `vcut-flicker-soft`,
+`vcut-shimmer-text`, `vcut-spin-slow`, `vcut-tada-soft`, `vcut-jiggle`
+(attention). Ghi chú port drawtext trong từng file (✅/⚠️/❌).
+Tổng presets: 96.
+
+### LUT tự chế đợt 5 (20 LUT, `assets/filters/gen_vcut_luts5.py`, lưới 17³)
+
+- `vcut-da-lat-mist.cube` — Sương Đà Lạt — VCut original, MIT.
+- `vcut-pho-hanoi.cube` — Phở Hà Nội — VCut original, MIT.
+- `vcut-sea-breeze.cube` — Gió biển — VCut original, MIT.
+- `vcut-sunset-beach.cube` — Hoàng hôn biển — VCut original, MIT.
+- `vcut-forest-deep.cube` — Rừng sâu — VCut original, MIT.
+- `vcut-desert-sand.cube` — Cát sa mạc — VCut original, MIT.
+- `vcut-winter-snow.cube` — Tuyết trắng — VCut original, MIT.
+- `vcut-neon-city.cube` — Thành phố neon — VCut original, MIT.
+- `vcut-coffee-brown.cube` — Cà phê nâu — VCut original, MIT.
+- `vcut-iced-matcha.cube` — Matcha đá — VCut original, MIT.
+- `vcut-lavender-field.cube` — Đồng oải hương — VCut original, MIT.
+- `vcut-reef-glow.cube` — San hô phát sáng — VCut original, MIT.
+- `vcut-golden-harvest.cube` — Mùa gặt vàng — VCut original, MIT.
+- `vcut-midnight-blue.cube` — Xanh nửa đêm — VCut original, MIT.
+- `vcut-rose-dusk.cube` — Hồng hoàng hôn — VCut original, MIT.
+- `vcut-mint-fresh.cube` — Bạc hà tươi — VCut original, MIT.
+- `vcut-amber-glow.cube` — Hổ phách sáng — VCut original, MIT.
+- `vcut-slate-grey.cube` — Xám đá — VCut original, MIT.
+- `vcut-peach-blush.cube` — Đào ửng — VCut original, MIT.
+- `vcut-aurora.cube` — Cực quang — VCut original, MIT.
+Tổng LUT: 174 (120 vcut.cube ↔ 120 id vcut, 0 orphan, `lut.js --self-test` xanh).
+
+### Sound tổng hợp gốc vòng 3 (30 file, `assets/sounds/gen_vcut_sounds3.py`)
+
+riser: `riser-vapor`, `riser-spark`, `riser-tight`, `riser-glide`,
+`riser-echo`. impact: `impact-thud`, `impact-crack`, `impact-boom`,
+`impact-tick`, `impact-gong`. transition: `transition-zip`,
+`transition-sweep`, `transition-flick`, `transition-morph`. sweep:
+`sweep-shimmer`, `sweep-dip`, `sweep-glide`, `sweep-pulse`. downer:
+`downer-soft`, `downer-long`, `downer-drop`, `downer-fade`. stinger:
+`stinger-chime`, `stinger-pop`, `stinger-flare`, `stinger-ding`. whoosh:
+`whoosh-spin`, `whoosh-burst`. chime: `chime-bright`, `chime-deep`.
+Tất cả `vcut-synth-*.ogg` trong assets/audio/, VCut original, MIT.
+Tổng sound: 1043 (manifest `assets/sounds/index.json`: kenney 12 +
+uisfx 936 + vcut-synth 95 = 1043; lưu ý vòng P5 từng để count vcut-synth
+là 35 dù đã có 65 file — Q4 sửa thành 95 cho khớp thực tế).
+
+### Video effects vòng 1 (9 effect, `server/render/src/effects.js`, Q4 Phase 8)
+
+`glitch` (rgbashift + noise), `rgb-shift` (rgbashift), `shake` (crop
+dao động + pad), `pixelate` (down/up-scale), `mirror` (hflip),
+`old-film` (noise + eq + vignette), `invert` (lutrgb nội suy theo
+intensity), `edgedetect` (edgedetect), `hue-rotate` (hue). Đều là filter
+FFmpeg có sẵn (không shader ngoài, không GLSL). Render pixel-verified
+(`server/render/test_q4_effects.js`, 10/10 render + 13/13 pixel check).
+Tổng effect: 16 (7 cũ + 9 mới). Giới hạn: `posterize` bị loại vì filter
+không tồn tại trong FFmpeg 8.1.2; shake có viền đen cố định 12px;
+mirror bỏ qua intensity (hflip nhị phân).

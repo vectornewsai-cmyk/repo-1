@@ -1,0 +1,130 @@
+{
+  "template": {
+    "id": "travel-montage",
+    "name": "Montage du lịch",
+    "description": "Video ngang montage: 3 điểm đến + tên chuyến đi.",
+    "category": "cinematic",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "du lịch",
+      "montage",
+      "ngang"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 12,
+    "placeholders": [
+      {
+        "id": "place1",
+        "kind": "video",
+        "label": "Điểm 1",
+        "default": "place-1.mp4"
+      },
+      {
+        "id": "place2",
+        "kind": "video",
+        "label": "Điểm 2",
+        "default": "place-2.mp4"
+      },
+      {
+        "id": "place3",
+        "kind": "video",
+        "label": "Điểm 3",
+        "default": "place-3.mp4"
+      },
+      {
+        "id": "trip",
+        "kind": "text",
+        "label": "Tên chuyến đi",
+        "default": "HÀ GIANG — MÙA HOA TAM GIÁC MẠCH"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Montage du lịch",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Các điểm",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{place1}}",
+            "start": 0,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "filter": {
+              "lut": "vcut-sunset-glow"
+            },
+            "transitionOut": {
+              "type": "fade",
+              "duration": 0.5
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v2",
+            "src": "{{place2}}",
+            "start": 4,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "filter": {
+              "lut": "vcut-sunset-glow"
+            },
+            "transitionOut": {
+              "type": "fade",
+              "duration": 0.5
+            }
+          },
+          {
+            "kind": "video",
+            "id": "v3",
+            "src": "{{place3}}",
+            "start": 8,
+            "duration": 4,
+            "in": 0,
+            "out": 4,
+            "filter": {
+              "lut": "vcut-sunset-glow"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên chuyến",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{trip}}",
+            "start": 8.5,
+            "duration": 3.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 52,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.85,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

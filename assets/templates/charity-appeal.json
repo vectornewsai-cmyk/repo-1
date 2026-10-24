@@ -1,0 +1,116 @@
+{
+  "template": {
+    "id": "charity-appeal",
+    "name": "Kêu gọi từ thiện",
+    "description": "Video ngang kêu gọi: cảnh thực địa + thông điệp + số tài khoản.",
+    "category": "ads",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "từ thiện",
+      "kêu gọi",
+      "cộng đồng"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 7,
+    "placeholders": [
+      {
+        "id": "field",
+        "kind": "video",
+        "label": "Video thực địa",
+        "default": "field.mp4"
+      },
+      {
+        "id": "message",
+        "kind": "text",
+        "label": "Thông điệp",
+        "default": "MỘT BỮA ĂN — MỘT TƯƠNG LAI"
+      },
+      {
+        "id": "cta",
+        "kind": "text",
+        "label": "Lời kêu gọi",
+        "default": "Chung tay ngay hôm nay"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Kêu gọi từ thiện",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Thực địa",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{field}}",
+            "start": 0,
+            "duration": 7,
+            "in": 0,
+            "out": 7,
+            "filter": {
+              "lut": "vcut-warm-bloom"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Thông điệp",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{message}}",
+            "start": 0.5,
+            "duration": 6.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 58,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.3,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Kêu gọi",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{cta}}",
+            "start": 1.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 40,
+              "color": "#FECACA",
+              "x": 0.5,
+              "y": 0.75,
+              "animation": "fadeIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

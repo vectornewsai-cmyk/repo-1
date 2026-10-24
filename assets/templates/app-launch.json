@@ -1,0 +1,116 @@
+{
+  "template": {
+    "id": "app-launch",
+    "name": "Ra mắt ứng dụng",
+    "description": "Video dọc ra mắt app: màn hình app + tên app + tagline.",
+    "category": "ads",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "app",
+      "ra mắt",
+      "dọc"
+    ],
+    "aspect": "1080:1920",
+    "durationSec": 6,
+    "placeholders": [
+      {
+        "id": "screen",
+        "kind": "video",
+        "label": "Video màn hình app",
+        "default": "app-screen.mp4"
+      },
+      {
+        "id": "name",
+        "kind": "text",
+        "label": "Tên ứng dụng",
+        "default": "NOTA — GHI CHÚ THÔNG MINH"
+      },
+      {
+        "id": "tagline",
+        "kind": "text",
+        "label": "Tagline",
+        "default": "Nghĩ ít hơn, nhớ nhiều hơn"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Ra mắt ứng dụng",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "v1",
+        "kind": "video",
+        "label": "Màn hình",
+        "clips": [
+          {
+            "kind": "video",
+            "id": "v1",
+            "src": "{{screen}}",
+            "start": 0,
+            "duration": 6,
+            "in": 0,
+            "out": 6,
+            "filter": {
+              "lut": "vcut-cinematic"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Tên app",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{name}}",
+            "start": 0.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 60,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.15,
+              "animation": "popIn",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Tagline",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{tagline}}",
+            "start": 1.5,
+            "duration": 4.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 38,
+              "color": "#E9D5FF",
+              "x": 0.5,
+              "y": 0.85,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

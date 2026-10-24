@@ -1,0 +1,16 @@
+/* Nhún lên xuống nhẹ.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-24 (Q4, Phase 8)
+ * Cách dùng: gắn class "text-preset vcut-bob" vào element chữ.
+ * Port sang drawtext: ⚠️ y dao động */
+
+@keyframes vcut-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.text-preset.vcut-bob {
+  font-weight: 800; display: inline-block;
+  animation: vcut-bob 1.8s ease-in-out infinite;
+}

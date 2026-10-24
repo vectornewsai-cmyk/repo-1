@@ -1,0 +1,18 @@
+/* Lắc + phóng nhẹ kiểu tada.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-24 (Q4, Phase 8)
+ * Cách dùng: gắn class "text-preset vcut-tada-soft" vào element chữ.
+ * Port sang drawtext: ❌ (cần rotate) */
+
+@keyframes vcut-tada-soft {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  20% { transform: scale(1.06) rotate(-2deg); }
+  40% { transform: scale(1.06) rotate(2deg); }
+  60% { transform: scale(1.03) rotate(-1deg); }
+}
+
+.text-preset.vcut-tada-soft {
+  font-weight: 800; display: inline-block;
+  animation: vcut-tada-soft 2s ease-in-out infinite;
+}

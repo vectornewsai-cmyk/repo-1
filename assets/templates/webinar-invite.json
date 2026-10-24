@@ -1,0 +1,113 @@
+{
+  "template": {
+    "id": "webinar-invite",
+    "name": "Mời webinar",
+    "description": "Video ngang mời hội thảo trực tuyến: diễn giả + chủ đề + giờ.",
+    "category": "broadcast",
+    "version": "1.0.0",
+    "author": "VCut Studio",
+    "license": "MIT",
+    "tags": [
+      "webinar",
+      "mời",
+      "trực tuyến"
+    ],
+    "aspect": "1920:1080",
+    "durationSec": 6,
+    "placeholders": [
+      {
+        "id": "speaker",
+        "kind": "image",
+        "label": "Ảnh diễn giả",
+        "default": "speaker.jpg"
+      },
+      {
+        "id": "topic",
+        "kind": "text",
+        "label": "Chủ đề",
+        "default": "AI CHO NGƯỜI MỚI BẮT ĐẦU"
+      },
+      {
+        "id": "time",
+        "kind": "text",
+        "label": "Thời gian",
+        "default": "20:00 — Thứ 7, 31/10/2026"
+      }
+    ]
+  },
+  "spec": {
+    "version": "0.2.0",
+    "meta": {
+      "name": "Mời webinar",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    "tracks": [
+      {
+        "id": "i1",
+        "kind": "image",
+        "label": "Diễn giả",
+        "clips": [
+          {
+            "kind": "image",
+            "id": "i1",
+            "src": "{{speaker}}",
+            "start": 0,
+            "duration": 6,
+            "fit": "cover"
+          }
+        ]
+      },
+      {
+        "id": "t1",
+        "kind": "text",
+        "label": "Chủ đề",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t1",
+            "text": "{{topic}}",
+            "start": 0.5,
+            "duration": 5.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 60,
+              "color": "#ffffff",
+              "x": 0.5,
+              "y": 0.2,
+              "animation": "slideInLeft",
+              "bold": true,
+              "italic": false,
+              "backgroundColor": "#0F172A"
+            }
+          }
+        ]
+      },
+      {
+        "id": "t2",
+        "kind": "text",
+        "label": "Thời gian",
+        "clips": [
+          {
+            "kind": "text",
+            "id": "t2",
+            "text": "{{time}}",
+            "start": 1.5,
+            "duration": 4.0,
+            "style": {
+              "fontFamily": "Be Vietnam Pro",
+              "fontSize": 38,
+              "color": "#BFDBFE",
+              "x": 0.5,
+              "y": 0.85,
+              "animation": "fadeUp",
+              "bold": true,
+              "italic": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

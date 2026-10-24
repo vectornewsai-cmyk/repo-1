@@ -1,0 +1,16 @@
+/* Xoáy từ -180° vừa xoay vừa phóng to vào.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-24 (Q4, Phase 8)
+ * Cách dùng: gắn class "text-preset vcut-swirl-in" vào element chữ.
+ * Port sang drawtext: ❌ (cần rotate) */
+
+@keyframes vcut-swirl-in {
+  from { opacity: 0; transform: rotate(-180deg) scale(0.3); }
+  to { opacity: 1; transform: rotate(0deg) scale(1); }
+}
+
+.text-preset.vcut-swirl-in {
+  font-weight: 800; display: inline-block;
+  animation: vcut-swirl-in 0.8s ease-out both;
+}

@@ -1,0 +1,19 @@
+/* Nhấp nháy nhẹ không đều.
+ * TỰ LÀM 100% cho VCut Studio — keyframes gốc, không copy từ nguồn nào.
+ * Giấy phép: MIT (cùng giấy phép dự án VCut Studio).
+ * Ngày tạo: 2026-10-24 (Q4, Phase 8)
+ * Cách dùng: gắn class "text-preset vcut-flicker-soft" vào element chữ.
+ * Port sang drawtext: ✅ alpha nhấp nháy */
+
+@keyframes vcut-flicker-soft {
+  0%, 100% { opacity: 1; }
+  10% { opacity: 0.7; }
+  20% { opacity: 1; }
+  35% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+.text-preset.vcut-flicker-soft {
+  font-weight: 800; display: inline-block;
+  animation: vcut-flicker-soft 2s linear infinite;
+}
