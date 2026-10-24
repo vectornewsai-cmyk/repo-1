@@ -27,6 +27,31 @@ shader custom. Mỗi transition dưới đây đã render thật trong
 | `radial` | Xoay tỏa tròn | demo-fx |
 | `none` | Không hiệu ứng (cắt cứng) | — |
 
+## ✅ P5 (Phase 7): 9 transition custom expr — render thật, kiểm chứng pixel
+
+FFmpeg 8.1.2 chỉ có 58 transition xfade built-in (đã dùng hết). 9 transition
+mới này dùng `xfade=transition=custom` + biểu thức theo pixel (X, Y, W, H,
+A, B, P) — không cần shader, không cần gltransition. Mỗi expr đã render
+thật bằng ffmpeg và kiểm chứng bằng pixel (`server/render/test_p5_transitions.py`,
+9/9 pass): frame giữa transition khác cả 2 frame gốc, blinds/bars có pattern
+xen kẽ đúng. Một transition (`blinds-h`) cũng đã chạy qua render worker thật
+(spec 2 clip → MP4, frame giữa có đúng dải mành).
+
+| type | Hiệu ứng |
+|---|---|
+| `blinds-h` | Mành ngang mở dần |
+| `bars-v` | Thanh dọc mở dần |
+| `checker` | Bàn cờ lan chéo |
+| `diamond` | Hình thoi nở từ giữa |
+| `plus` | Dấu cộng lan ra |
+| `grid` | Lưới ô vuông nở dần |
+| `clock` | Quét tròn như kim đồng hồ |
+| `circle-soft` | Vòng tròn mở, viền mờ mềm |
+| `bars-fade` | Thanh dọc trên nền crossfade |
+
+Lưu ý kỹ thuật: expr chứa dấu phẩy nên `buildXfadeFilter` PHẢI bọc expr
+trong `'...'` — nếu không parser filtergraph hiểu dấu phẩy là tách filter.
+
 ## ❌ CHƯA HỖ TRỢ (và lý do thật)
 
 1. **21 transition GLSL trong `assets/transitions/`** (gl-transitions: cube,
