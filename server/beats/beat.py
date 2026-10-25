@@ -15,11 +15,18 @@ Pipeline:
   5. Beat tracking: quy hoạch động kiểu Ellis đơn giản — mỗi beat được
      chọn sao cho vừa rơi vào onset mạnh, vừa cách beat trước ~1 chu kỳ.
 
+Phase 9 D5 (gap A7): thêm trường "structure" từ structure.py —
+downbeat + meter (accent onset) và phân đoạn verse/chorus/drop kiểu
+heuristic (chroma + self-similarity + novelty). Lỗi ở bước cấu trúc
+không làm hỏng kết quả beat: khi đó structure = {"error": ...}.
+Xem D5_LIMITS.md để biết độ tin cậy thật (không claim hiểu nhạc).
+
 Cách dùng:
   python3 beat.py --input music.mp3 --out beats.json
   python3 beat.py --input music.mp3 --out beats.json --min-bpm 60 --max-bpm 180
 
-Output JSON: { bpm, beats: [giây...], duration, sample_rate, method }.
+Output JSON: { bpm, beats: [giây...], duration, sample_rate, method,
+                structure: { meter, meter_confidence, downbeats, sections } }.
 """
 
 import argparse
@@ -89,14 +96,20 @@ def estimate_tempo(env, min_bpm=40, max_bpm=240):
     # cả chu kỳ T và bội số 2T (thậm chí 4T). Peak ở 2T hay cao hơn peak ở T
     # một chút vì onset trùng khít hơn sau nhiều chu kỳ — nhưng tempo thật
     # là chu kỳ NGẮN nhất còn mạnh. Vì vậy cứ chia đôi lag chừng nào lag
-    # con vẫn giữ >= 85% giá trị peak (kiểm tra cả 2 bin kề vì peak thật
+    # con vẫn giữ >= 80% giá trị peak (kiểm tra cả 2 bin kề vì peak thật
     # có thể nằm giữa 2 bin rời rạc, vd chu kỳ 0.5s = 21.53 frame).
+    # Phase 9 D5: ngưỡng 80% thay vì 85% — nhạc 4/4 có downbeat nhấn mạnh
+    # (kick ô 1 to hơn) làm corr ở lag 2 beat cao hơn hẳn lag 1 beat
+    # (đo thật: 0.879 vs 0.736, tỉ lệ 0.837): ngưỡng 85% kẹt ở half-time
+    # 60 BPM cho bài 120 BPM, kéo theo downbeat thưa gấp đôi. Ngưỡng 80%
+    # vẫn chặn chia đôi khi lag con thực sự yếu (vd corr lag 0.25s âm),
+    # và test click đều của Q5 vẫn pass (xem test_beat.py + test_structure.py).
     best = int(np.argmax(window)) + min_lag
     best_val = corr[best]
     while best // 2 >= min_lag:
         half = best // 2
         half_val = max(corr[half], corr[half + 1] if half + 1 <= max_lag else 0)
-        if half_val >= 0.85 * best_val:
+        if half_val >= 0.80 * best_val:
             best = half if corr[half] >= corr[half + 1] else half + 1
             best_val = corr[best]
         else:
@@ -186,6 +199,12 @@ def main():
     env = onset_envelope(mag)
     bpm, period = estimate_tempo(env, args.min_bpm, args.max_bpm)
     beats = [round(b, 3) for b in track_beats(env, period) if b <= duration]
+    # Phase 9 D5: cấu trúc nhạc — lỗi ở đây không được hỏng beat.
+    try:
+        from structure import analyze_structure
+        structure = analyze_structure(mag, env, beats, period, duration)
+    except Exception as e:  # noqa: BLE001 — báo lỗi, vẫn trả beat
+        structure = {"error": f"phân tích cấu trúc thất bại: {e}"}
     out = {
         "version": 1,
         "method": "numpy-spectral-flux+dp",
@@ -195,6 +214,7 @@ def main():
         "bpm": round(bpm, 2),
         "period": round(period, 4),
         "beats": beats,
+        "structure": structure,
     }
     with open(args.out, "w") as f:
         json.dump(out, f, indent=2)

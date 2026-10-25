@@ -86,9 +86,9 @@ tự do, không link).
 - **Trim phá huỷ phần đã cắt:** câu bị trim mất không khôi phục khi kéo
   dài clip lại (giống như video bị trim). Đây là hành vi có chủ ý, không
   phải bug.
-- **Duplicate KHÔNG mang caption theo** (chỉ paste mang theo): duplicate
-  đẩy clip sau sang phải nhưng không ripple track chữ, nên mang caption
-  theo cần thiết kế riêng — để dành, không hứa.
+- **Duplicate MANG caption theo từ Phase 9 D6** (đảo ngược quyết định cũ):
+  xem D6_LIMITS.md — nhân bản nguồn thì câu đính kèm nhân bản theo, link
+  tới id mới, dịch đúng bằng độ dịch của bản sao nguồn.
 - **Caption translation chỉ tiếng Anh** (xem `server/caption/
   TRANSLATE_LIMITS.md`): kết luận Q3 là không mở rộng được bằng model sẵn
   có (argos-translate không cài được trong môi trường này).

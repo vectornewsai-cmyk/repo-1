@@ -29,7 +29,7 @@ export interface TrackPoint {
   score?: number;
 }
 
-/** Quỹ đạo gắn vào một clip overlay (hiện chỉ sticker). */
+/** Quỹ đạo gắn vào một clip overlay (Phase 9 D3: sticker, text, video). */
 export interface TrackAttachment {
   /** Các điểm mẫu, phải sắp xếp theo t tăng dần (validate sẽ kiểm tra). */
   points: TrackPoint[];

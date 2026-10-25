@@ -32,10 +32,27 @@ interface Props {
   onClose: () => void;
 }
 
+interface StructureSection {
+  start: number;
+  end: number;
+  label: string;
+  repeats?: number;
+  highest_energy?: boolean;
+}
+
+interface StructureResult {
+  meter?: number | null;
+  meter_confidence?: number;
+  downbeats?: number[];
+  sections?: StructureSection[];
+  error?: string;
+}
+
 interface BeatResult {
   bpm: number;
   beats: number[];
   duration: number;
+  structure?: StructureResult | null;
 }
 
 export function BeatSyncModal({ trackId, clipId, onClose }: Props) {
@@ -44,6 +61,7 @@ export function BeatSyncModal({ trackId, clipId, onClose }: Props) {
   const [maxBpm, setMaxBpm] = useState(240);
   const [result, setResult] = useState<BeatResult | null>(null);
   const [times, setTimes] = useState<number[]>([]);
+  const [downbeatOnly, setDownbeatOnly] = useState(false);
   const [dropped, setDropped] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -94,6 +112,18 @@ export function BeatSyncModal({ trackId, clipId, onClose }: Props) {
     );
   }
 
+  // Phase 9 D5: downbeat + cấu trúc — chỉ THÊM hiển thị, không đổi luồng cắt.
+  const downbeatTimes =
+    result?.structure?.downbeats && result.structure.downbeats.length > 0
+      ? beatsToTimelineTimes(result.structure.downbeats, clip)
+      : [];
+  const visibleTimes =
+    downbeatOnly && downbeatTimes.length > 0
+      ? times.filter((t) => downbeatTimes.some((d) => Math.abs(d - t) <= 0.06))
+      : times;
+  const toTimeline = (mediaT: number) =>
+    clip.start + (mediaT - ((clip as { in?: number }).in ?? 0));
+
   const startDetect = async () => {
     if (!mediaItem?.file) {
       setError("Không có file gốc của clip (media đã bị xóa hoặc relink).");
@@ -116,9 +146,10 @@ export function BeatSyncModal({ trackId, clipId, onClose }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `Lỗi ${res.status}`);
       const beats = Array.isArray(data.beats) ? data.beats : [];
-      setResult({ bpm: data.bpm, beats, duration: data.duration });
+      setResult({ bpm: data.bpm, beats, duration: data.duration, structure: data.structure ?? null });
       setTimes(beatsToTimelineTimes(beats, clip));
       setDropped(new Set());
+      setDownbeatOnly(false);
       setStep("review");
     } catch (e) {
       if ((e as Error).name === "AbortError") return;
@@ -128,7 +159,7 @@ export function BeatSyncModal({ trackId, clipId, onClose }: Props) {
   };
 
   const apply = () => {
-    const keep = times.filter((t) => !dropped.has(t));
+    const keep = visibleTimes.filter((t) => !dropped.has(t));
     if (keep.length === 0) {
       setError("Không còn điểm cắt nào — chọn lại ít nhất 1 điểm.");
       return;
@@ -197,11 +228,54 @@ export function BeatSyncModal({ trackId, clipId, onClose }: Props) {
           <>
             <p>
               Phát hiện <strong>{result.bpm.toFixed(1)} BPM</strong> — {result.beats.length} beat
-              trong {result.duration.toFixed(1)}s → {times.length} điểm cắt trong clip.
+              trong {result.duration.toFixed(1)}s → {visibleTimes.length} điểm cắt trong clip.
               Bỏ tick điểm nào không muốn cắt:
             </p>
+            {result.structure && !result.structure.error && (
+              <div>
+                <p>
+                  🎼 Cấu trúc (ước lượng heuristic, không phải hiểu nhạc thật):{" "}
+                  {result.structure.meter
+                    ? `nhịp ${result.structure.meter}/4 (tin cậy ${(result.structure.meter_confidence ?? 0).toFixed(2)})`
+                    : "không xác định được nhịp"}
+                  {downbeatTimes.length > 0 && ` — ${downbeatTimes.length} downbeat trong clip`}
+                </p>
+                {result.structure.sections && result.structure.sections.length > 1 && (
+                  <div style={{ maxHeight: 120, overflowY: "auto" }}>
+                    {result.structure.sections.map((s, i) => (
+                      <p key={i} style={{ margin: "2px 0" }}>
+                        Đoạn {s.label}: {formatBeatTime(toTimeline(s.start))} →{" "}
+                        {formatBeatTime(toTimeline(s.end))}
+                        {(s.repeats ?? 1) > 1 ? ` (lặp ×${s.repeats})` : ""}
+                        {s.highest_energy ? " (năng lượng cao nhất)" : ""}
+                      </p>
+                    ))}
+                  </div>
+                )}
+                {downbeatTimes.length > 0 && (
+                  <label className="field" style={{ display: "block" }}>
+                    <input
+                      type="checkbox"
+                      checked={downbeatOnly}
+                      onChange={(e) => setDownbeatOnly(e.target.checked)}
+                    />{" "}
+                    Chỉ giữ điểm cắt ở downbeat (cắt theo ô nhịp, ít điểm hơn)
+                  </label>
+                )}
+                <p className="tips">
+                  Nhãn đoạn (A/B/C, “lặp lại”, “năng lượng cao”) chỉ là gợi ý từ độ giống
+                  hòa âm và năng lượng — nhạc không theo cấu trúc pop có thể phân đoạn sai.
+                </p>
+              </div>
+            )}
+            {result.structure?.error && (
+              <p className="tips">
+                Không phân tích được cấu trúc ({result.structure.error}) — vẫn cắt theo beat
+                bình thường.
+              </p>
+            )}
             <div style={{ maxHeight: 240, overflowY: "auto" }}>
-              {times.map((t) => (
+              {visibleTimes.map((t) => (
                 <label key={t} className="field" style={{ display: "block" }}>
                   <input
                     type="checkbox"

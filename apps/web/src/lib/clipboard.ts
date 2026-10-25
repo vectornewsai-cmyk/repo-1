@@ -35,7 +35,14 @@
  *   cùng lúc thì bị bỏ qua (tránh nhân đôi — bản đính kèm đã tạo đúng);
  *   câu copy trực tiếp mà nguồn KHÔNG dán cùng thì bị HỦY LINK thành chữ
  *   tự do (tránh trạng thái link trỏ về clip cũ nhưng vị trí đã dịch).
- *   Duplicate KHÔNG mang caption theo (xem CLIPBOARD_LIMITS.md).
+ *   Duplicate MANG caption theo (Phase 9 D6, đổi từ quyết định cũ của
+ *   Phase 8 Q3 — xem D6_LIMITS.md): nhân bản clip nguồn thì các câu phụ đề
+ *   link tới nó cũng được nhân bản, link tới id MỚI của bản sao nguồn,
+ *   dịch timeline đúng bằng độ dịch của bản sao nguồn (karaoke giữ nguyên
+ *   vì clip-local + duration không đổi). Câu chữ nhân bản TRỰC TIẾP mà
+ *   nguồn của nó cũng nhân bản cùng lúc thì bị bỏ qua (tránh nhân đôi —
+ *   bản đính kèm đã tạo đúng); câu nhân bản trực tiếp mà nguồn KHÔNG nhân
+ *   bản cùng thì bị HỦY LINK thành chữ tự do (giống paste).
  */
 import type { Clip, TextClip, Track, VideoSpec } from "@repo-1/video-spec";
 import type { Selection } from "./multiselect";
@@ -294,6 +301,9 @@ export interface DuplicateResult {
  * Các clip sau (kể cả clip được chọn chưa nhân bản) bị đẩy sang phải đúng
  * bằng độ dài bản sao. Bản sao giữ nguyên mọi thuộc tính trừ transition
  * (transition thuộc về điểm nối, không thuộc về clip — xem ghi chú đầu file).
+ * Phase 9 D6: nhân bản clip nguồn thì caption đính kèm cũng nhân bản theo
+ * (link tới id mới của bản sao nguồn, dịch timeline đúng bằng độ dịch của
+ * bản sao nguồn, karaoke giữ nguyên vì clip-local + duration không đổi).
  * Trả về null khi không nhân bản được clip nào (selection rỗng, track khóa/ẩn).
  */
 export function duplicateClips(
@@ -313,6 +323,20 @@ export function duplicateClips(
   }
   if (byTrack.size === 0) return null;
 
+  // Snapshot start gốc của mọi clip nguồn sẽ nhân bản (để tính độ dịch của
+  // từng bản sao nguồn — cần cho caption đính kèm, vì các lần nhân bản
+  // trước đã đẩy clip sau sang phải).
+  const origStart = new Map<string, number>();
+  for (const [trackId, ids] of byTrack) {
+    const track = spec.tracks.find((t) => t.id === trackId);
+    for (const c of track?.clips ?? []) {
+      if (ids.includes(c.id)) origStart.set(c.id, c.start);
+    }
+  }
+  const duplicatedSourceIds = new Set(origStart.keys());
+  // id gốc clip nguồn → bản sao mới + độ dịch (để caption đính kèm bám theo).
+  const newSourceByOrig = new Map<string, { newId: string; shift: number }>();
+
   const duplicated: Selection[] = [];
   const tracks = spec.tracks.map((t) => {
     const ids = byTrack.get(t.id);
@@ -325,6 +349,13 @@ export function duplicateClips(
       // Tìm lại vị trí hiện tại (đã bị đẩy bởi các lần nhân bản trước).
       const cur = clips.find((c) => c.id === orig.id);
       if (!cur) continue;
+      // D6: câu chữ nhân bản TRỰC TIẾP mà nguồn của nó cũng nhân bản cùng
+      // lúc → bỏ qua (bản đính kèm bên dưới sẽ tạo đúng 1 câu link tới id
+      // mới; giữ cả 2 sẽ nhân đôi phụ đề ở 2 vị trí khác nhau).
+      if (cur.kind === "text") {
+        const link = (cur as TextClip).captionOf;
+        if (link && duplicatedSourceIds.has(link.clipId)) continue;
+      }
       const insertAt = cur.start + cur.duration;
       // Đẩy các clip bắt đầu từ điểm chèn trở đi sang phải (trừ bản sao đã tạo).
       clips = clips.map((c) =>
@@ -336,12 +367,68 @@ export function duplicateClips(
       copy.start = insertAt;
       delete (copy as { transitionIn?: unknown }).transitionIn;
       delete (copy as { transitionOut?: unknown }).transitionOut;
+      // D6: câu nhân bản trực tiếp mà nguồn KHÔNG nhân bản cùng → HỦY LINK
+      // thành chữ tự do (giống paste: tránh link trỏ về clip cũ trong khi
+      // vị trí đã dịch theo điểm chèn).
+      if (copy.kind === "text") {
+        const link = (copy as TextClip).captionOf;
+        if (link && !duplicatedSourceIds.has(link.clipId)) {
+          delete (copy as TextClip).captionOf;
+        }
+      }
       copyIds.add(copy.id);
       clips = [...clips, copy].sort((a, b) => a.start - b.start);
       duplicated.push({ trackId: t.id, clipId: copy.id });
+      // Ghi độ dịch của bản sao nguồn (tính từ start GỐC trước mọi lần đẩy).
+      if (cur.kind === "video" || cur.kind === "audio") {
+        const pre = origStart.get(cur.id);
+        if (pre !== undefined) {
+          newSourceByOrig.set(cur.id, { newId: copy.id, shift: copy.start - pre });
+        }
+      }
     }
     return { ...t, clips };
   });
   if (duplicated.length === 0) return null;
+
+  // D6: caption đính kèm — mọi câu chữ (trên mọi track hợp lệ) link tới 1
+  // clip nguồn vừa nhân bản đều được nhân bản theo: link tới id MỚI của
+  // bản sao nguồn, giữ nguyên đoạn media, dịch timeline đúng bằng độ dịch
+  // của bản sao nguồn đó. Karaoke giữ nguyên qua deep clone (clip-local +
+  // duration không đổi nên thời gian từ vẫn đúng). Câu trên track khóa/ẩn
+  // bị bỏ qua (không tạo clip user không thấy/không sửa được).
+  if (newSourceByOrig.size > 0) {
+    const captionCopiesByTrack = new Map<string, Clip[]>();
+    for (const t of spec.tracks) {
+      if (!isPasteTarget(t)) continue;
+      for (const c of t.clips) {
+        if (c.kind !== "text") continue;
+        const link = (c as TextClip).captionOf;
+        if (!link) continue;
+        const m = newSourceByOrig.get(link.clipId);
+        if (!m) continue;
+        const nc = deepCloneClip(c);
+        nc.id = idGen();
+        nc.start = c.start + m.shift;
+        (nc as TextClip).captionOf = {
+          clipId: m.newId,
+          mediaStart: link.mediaStart,
+          mediaEnd: link.mediaEnd,
+        };
+        const arr = captionCopiesByTrack.get(t.id) ?? [];
+        arr.push(nc);
+        captionCopiesByTrack.set(t.id, arr);
+        duplicated.push({ trackId: t.id, clipId: nc.id });
+      }
+    }
+    if (captionCopiesByTrack.size > 0) {
+      const merged = tracks.map((t) => {
+        const added = captionCopiesByTrack.get(t.id);
+        if (!added || added.length === 0) return t;
+        return sortClipsOf({ ...t, clips: [...t.clips, ...added] });
+      });
+      return { spec: { ...spec, tracks: merged }, duplicated };
+    }
+  }
   return { spec: { ...spec, tracks }, duplicated };
 }

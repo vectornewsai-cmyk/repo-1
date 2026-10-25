@@ -40,11 +40,13 @@
 
 ## Giới hạn (trung thực)
 
-0. **Duplicate KHÔNG mang caption theo** (Phase 8 Q3, quyết định có chủ ý):
-   duplicate đẩy các clip sau sang phải nhưng không ripple track chữ, nên
-   mang caption theo cần thiết kế riêng (ánh xạ caption sang bản sao +
-   quyết định có đẩy câu của clip sau hay không). Chỉ paste mang caption;
-   duplicate xong user cần tạo phụ đề lại cho bản sao nếu muốn.
+0. **Duplicate MANG caption theo** (Phase 9 D6 — ĐẢO NGƯỢC quyết định
+   Phase 8 Q3): nhân bản clip nguồn thì các câu link tới nó cũng nhân bản,
+   link tới id mới của bản sao nguồn, dịch timeline đúng bằng độ dịch của
+   bản sao nguồn, karaoke giữ nguyên. Câu nhân bản trực tiếp mà nguồn cũng
+   nhân bản cùng thì bị bỏ qua (tránh nhân đôi); câu nhân bản trực tiếp mà
+   nguồn không nhân bản cùng thì hủy link thành chữ tự do (giống paste).
+   Xem chi tiết + trường hợp biên trong D6_LIMITS.md.
 
 1. **Clipboard nội bộ, không phải system clipboard**: không dán được clip
    sang ứng dụng khác, không copy được từ ứng dụng khác vào. Clip là object

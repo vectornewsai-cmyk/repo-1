@@ -1,14 +1,19 @@
 /**
- * TrackPanel — Gắn quỹ đạo motion tracking vào sticker đang chọn (Phase 8 Q5).
+ * TrackPanel — Gắn quỹ đạo motion tracking vào clip đang chọn
+ * (Phase 8 Q5: sticker; Phase 9 D3 mở rộng sang text và video).
  *
  * Luồng: chạy `server/tracking/track.py` ngoài editor (xem Q5_LIMITS.md) để
  * tạo trajectory JSON, rồi nạp file JSON đó vào đây. Panel validate bằng
  * validateTrackAttachment của video-spec rồi gắn vào clip.track qua
  * store.patchClip (1 bước undo). Preview + render dùng cùng quỹ đạo:
  * preview nội suy tại thời gian playhead, render build biểu thức overlay.
+ * Ngữ nghĩa bám: TÂM clip (sticker/text) hoặc TÂM khung hình (video)
+ * bám điểm quỹ đạo theo thời gian cục bộ t - start.
  *
  * Giới hạn thật (không giấu): quỹ đạo chỉ bám vật thể có vân/khác biệt rõ;
  * vật phẳng/không vân, bị che khuất sẽ mất track — xem Q5_LIMITS.md.
+ * Text typewriter/karaoke và video dính transition không bám được ở render
+ * (xem D3_LIMITS.md); mask bám track vẫn chưa làm (việc của agent khác).
  */
 import { useRef, useState } from "react";
 import { useStore } from "../../store";
@@ -28,8 +33,9 @@ export function TrackPanel() {
     ? spec.tracks.find((t) => t.id === primary.trackId)
     : undefined;
   const rawClip = track?.clips.find((c) => c.id === primary?.clipId);
+  // Phase 9 D3: text và video cũng gắn được quỹ đạo (cùng field clip.track).
   const stickerClip =
-    rawClip && rawClip.kind === "sticker"
+    rawClip && (rawClip.kind === "sticker" || rawClip.kind === "text" || rawClip.kind === "video")
       ? (rawClip as { track?: TrackAttachment })
       : null;
   if (!primary || !track || !stickerClip) return null;
@@ -76,9 +82,9 @@ export function TrackPanel() {
           <p className="tips">
             Đã gắn quỹ đạo: {attached.points.length} điểm
             {attached.lost
-              ? " — ⚠️ track bị mất giữa chừng, sticker đứng yên từ điểm cuối."
+              ? " — ⚠️ track bị mất giữa chừng, clip đứng yên từ điểm cuối."
               : "."}{" "}
-            Sticker sẽ bám theo vật thể trong preview và render thật.
+            Clip sẽ bám theo vật thể trong preview và render thật.
           </p>
           <div className="field-row">
             <button onClick={() => fileRef.current?.click()}>Nạp quỹ đạo khác</button>
@@ -89,7 +95,7 @@ export function TrackPanel() {
         <>
           <p className="tips">
             Chạy <code>server/tracking/track.py</code> trên video gốc để tạo
-            trajectory JSON, rồi nạp file đó vào đây để sticker bám theo vật thể.
+            trajectory JSON, rồi nạp file đó vào đây để clip bám theo vật thể.
           </p>
           <button onClick={() => fileRef.current?.click()}>Nạp trajectory JSON…</button>
         </>
