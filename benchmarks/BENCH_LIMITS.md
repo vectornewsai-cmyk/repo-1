@@ -16,9 +16,10 @@
    u2net nhanh hơn nhưng mask kém chi tiết hơn — số fps KHÔNG đại diện cho chất lượng.
 6. **TTS bench**: VieNeu-TTS 0.5B trên CPU 2 nhân đạt ~0.4x realtime trên máy này;
    máy mạnh hơn sẽ nhanh hơn đáng kể (model ONNX scale tốt theo số nhân).
-7. **Preview FPS không đo được** trong môi trường subagent (không có browser thật).
-   Có script `preview/bench_preview.js` để chạy thủ công — mục tương ứng trong RESULTS.md
-   để trống cho đến khi có số đo.
+7. **Preview FPS — cập nhật Phase 9 R3:** đã đo được trên Chromium headless
+   bằng `apps/web/scripts/bench-preview-fps.mjs` (xem RESULTS.md mục 8).
+   Số headless là THAM CHIẾU (decode phần mềm, VM chia sẻ tải), KHÔNG đồng
+   nhất FPS trên máy người dùng / trình duyệt thật có màn hình.
 8. **So sánh CapCut là ước tính** từ tài liệu công khai (trang chủ, blog kỹ thuật),
    không phải đo cùng máy. Ghi rõ "ước tính" ở mọi chỗ.
 9. **Không đo**: thời gian import media, thumbnail generation, waveform, cold-start bridge,

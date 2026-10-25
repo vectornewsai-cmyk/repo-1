@@ -72,12 +72,55 @@ function validateMask(m) {
   if (m.invert !== undefined && typeof m.invert !== "boolean") {
     errors.push(`mask.invert phải là boolean, nhận được: ${JSON.stringify(m.invert)}`);
   }
+  // Phase 9 D4: keyframes (tùy chọn) — mirror bản TS.
+  if (m.keyframes !== undefined) {
+    if (!Array.isArray(m.keyframes)) {
+      errors.push(`mask.keyframes phải là mảng, nhận được: ${JSON.stringify(m.keyframes)}`);
+    } else {
+      m.keyframes.forEach((kf, i) => {
+        if (typeof kf !== "object" || kf === null || Array.isArray(kf)) {
+          errors.push(`mask.keyframes[${i}] phải là object { t, x, y, w, h }`);
+          return;
+        }
+        if (!isFiniteNumber(kf.t) || kf.t < 0) {
+          errors.push(`mask.keyframes[${i}].t phải là số >= 0, nhận được: ${JSON.stringify(kf.t)}`);
+        }
+        for (const key of ["x", "y"]) {
+          if (!isFiniteNumber(kf[key])) {
+            errors.push(`mask.keyframes[${i}].${key} phải là số hữu hạn, nhận được: ${JSON.stringify(kf[key])}`);
+          }
+        }
+        for (const key of ["w", "h"]) {
+          if (!isFiniteNumber(kf[key]) || kf[key] <= 0) {
+            errors.push(`mask.keyframes[${i}].${key} phải là số > 0, nhận được: ${JSON.stringify(kf[key])}`);
+          }
+        }
+      });
+    }
+  }
   return errors;
+}
+
+/** Sắp keyframe theo t, trùng t thì sau thắng (không mutate input). */
+function sortMaskKeyframes(kfs) {
+  const sorted = [...kfs].sort((a, b) => a.t - b.t);
+  const out = [];
+  for (const kf of sorted) {
+    const last = out[out.length - 1];
+    if (last && last.t === kf.t) out[out.length - 1] = { ...kf };
+    else out.push({ ...kf });
+  }
+  return out;
+}
+
+/** Mask có keyframe hình học không (ít nhất 1 keyframe). */
+function hasMaskKeyframes(m) {
+  return !!m && Array.isArray(m.keyframes) && m.keyframes.length > 0;
 }
 
 /** Chuẩn hoá mask thiếu field về default (không mutate input). */
 function normalizeMask(m) {
-  return {
+  const out = {
     shape: m.shape,
     x: m.x ?? 0.5,
     y: m.y ?? 0.5,
@@ -86,6 +129,52 @@ function normalizeMask(m) {
     feather: m.feather ?? 0,
     invert: m.invert ?? false,
   };
+  if (hasMaskKeyframes(m)) out.keyframes = sortMaskKeyframes(m.keyframes);
+  return out;
+}
+
+/**
+ * Nội suy tuyến tính hình học mask tại thời gian cục bộ t (giây) — mirror
+ * chính xác interpolateMaskAt() bản TS và mask_anim.py: hold ngoài đoạn.
+ */
+function interpolateMaskAt(m, t) {
+  const base = { x: m.x, y: m.y, w: m.w, h: m.h };
+  if (!hasMaskKeyframes(m)) return base;
+  const kfs = sortMaskKeyframes(m.keyframes);
+  if (t <= kfs[0].t) return { x: kfs[0].x, y: kfs[0].y, w: kfs[0].w, h: kfs[0].h };
+  const last = kfs[kfs.length - 1];
+  if (t >= last.t) return { x: last.x, y: last.y, w: last.w, h: last.h };
+  for (let i = 0; i < kfs.length - 1; i++) {
+    const a = kfs[i];
+    const b = kfs[i + 1];
+    if (t >= a.t && t <= b.t) {
+      const f = b.t === a.t ? 0 : (t - a.t) / (b.t - a.t);
+      return {
+        x: a.x + (b.x - a.x) * f,
+        y: a.y + (b.y - a.y) * f,
+        w: a.w + (b.w - a.w) * f,
+        h: a.h + (b.h - a.h) * f,
+      };
+    }
+  }
+  return base;
+}
+
+/** Mask đầy đủ tại thời gian t: shape/feather/invert giữ nguyên, x/y/w/h nội suy. */
+function maskGeometryAt(m, t) {
+  const g = interpolateMaskAt(m, t);
+  const out = { ...m, x: g.x, y: g.y, w: g.w, h: g.h };
+  delete out.keyframes;
+  return out;
+}
+
+/**
+ * Key dedup cho video mask animation (Phase 9 D4): cùng keyframe + khung +
+ * fps + duration → cùng 1 file video (số frame = round(duration×fps)).
+ */
+function maskAnimKey(mask, W, H, fps, duration) {
+  const m = normalizeMask(mask);
+  return JSON.stringify([m.shape, m.keyframes, m.feather, m.invert, W, H, fps, duration]);
 }
 
 /**
@@ -124,6 +213,99 @@ function buildMaskExpr(mask, W, H) {
   }
   if (m.invert) alpha = `(1-(${alpha}))`;
   return alpha;
+}
+
+/**
+ * Key dedup cho PNG mask: cùng mask + cùng khung hình → cùng 1 file PNG
+ * (render.js vẽ 1 lần, dùng chung cho mọi clip trùng mask).
+ */
+function maskKey(mask, W, H) {
+  const m = normalizeMask(mask);
+  return JSON.stringify([m.shape, m.x, m.y, m.w, m.h, m.feather, m.invert, W, H]);
+}
+
+/** Escape đường dẫn cho filter movie=... (mirror escapeFilterPath của enhance.js). */
+function escapeMoviePath(p) {
+  return p.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/:/g, "\\:");
+}
+
+/**
+ * Dựng các fc entry áp mask bằng PNG vẽ trước (Phase 9 R2 — đường nhanh).
+ * Giữ alpha gốc bằng cách nhân alpha nguồn với alpha mask (blend multiply),
+ * rồi alphamerge — tương đương phép nhân lum(X,Y)*(MASK_EXPR) của đường geq,
+ * chỉ khác lượng tử hoá 8-bit của PNG (~0.5/255).
+ *
+ *   <unit>format=rgba,split=2[base][a];
+ *   [a]alphaextract[sa];
+ *   movie=mask.png,format=gray,loop=loop=-1:size=1:start=0[mg];
+ *   [sa][mg]blend=all_mode=multiply[ca];
+ *   [base][ca]alphamerge,format=yuva420p[out]
+ *
+ * loop=-1 để frame mask duy nhất lặp vô hạn (movie của ảnh tĩnh chỉ có 1
+ * frame; không loop thì stream mask EOF sớm và blend không còn frame mới).
+ * @param {string} inputLabel label nguồn, vd "[cv0]"
+ * @param {string} pngPath đường dẫn tuyệt đối tới PNG mask W×H
+ * @param {function(string): string} lbl hàm cấp label (như render.js)
+ * @returns {{ entries: string[], outLabel: string }}
+ */
+function buildMaskPngChain(inputLabel, pngPath, lbl) {
+  const b = lbl("mskb"), a = lbl("mska"), sa = lbl("msksa");
+  const mp = lbl("mskmp"), mg = lbl("mskmg"), ca = lbl("mskca"), o = lbl("msko");
+  return {
+    entries: [
+      `${inputLabel}format=rgba,split=2[${b}][${a}]`,
+      `[${a}]alphaextract[${sa}]`,
+      `movie='${escapeMoviePath(pngPath)}',format=gray,loop=loop=-1:size=1:start=0[${mg}]`,
+      `[${sa}][${mg}]blend=all_mode=multiply[${ca}]`,
+      `[${b}][${ca}]alphamerge,format=yuva420p[${o}]`,
+    ],
+    outLabel: `[${o}]`,
+  };
+}
+
+/**
+ * Dựng các fc entry áp mask ANIMATION bằng video mask vẽ trước (Phase 9 D4).
+ * Cùng khung blend multiply + alphamerge giữ alpha gốc như đường PNG tĩnh,
+ * chỉ khác nguồn alpha là video (mỗi frame = mask nội suy tại thời điểm đó)
+ * thay vì 1 PNG lặp vô hạn. trim=end_frame=N chặn video mask dài hơn unit
+ * (làm tròn frame) khỏi tràn sang clip kề trên timeline; nếu unit dài hơn
+ * (làm tròn ngược), blend mặc định repeat frame mask cuối → hold đúng.
+ * Video mask đã encode đủ dài (round(duration×fps) frame, PTS từ 0) nên
+ * đồng bộ frame với unit (cũng bắt đầu PTS 0 sau trim/setpts + fps).
+ *
+ *   <unit>format=rgba,split=2[base][a];
+ *   [a]alphaextract[sa];
+ *   movie=maskanim.mkv,format=gray,trim=end_frame=N[mg];
+ *   [sa][mg]blend=all_mode=multiply[ca];
+ *   [base][ca]alphamerge,format=yuva420p[out]
+ * @param {string} inputLabel label nguồn, vd "[cv0]"
+ * @param {string} videoPath đường dẫn tuyệt đối tới video mask (ffv1 gray)
+ * @param {number} nFrames số frame mask = round(duration×fps), để trim
+ * @param {function(string): string} lbl hàm cấp label (như render.js)
+ */
+function buildMaskAnimChain(inputLabel, videoPath, nFrames, lbl) {
+  const b = lbl("mskb"), a = lbl("mska"), sa = lbl("msksa");
+  const mp = lbl("mskmp"), mg = lbl("mskmg"), ca = lbl("mskca"), o = lbl("msko");
+  return {
+    entries: [
+      `${inputLabel}format=rgba,split=2[${b}][${a}]`,
+      `[${a}]alphaextract[${sa}]`,
+      `movie='${escapeMoviePath(videoPath)}',format=gray,trim=end_frame=${Math.max(1, Math.round(nFrames))}[${mg}]`,
+      `[${sa}][${mg}]blend=all_mode=multiply[${ca}]`,
+      `[${b}][${ca}]alphamerge,format=yuva420p[${o}]`,
+    ],
+    outLabel: `[${o}]`,
+  };
+}
+
+/**
+ * Chọn đường mask: có pngPath → đường PNG nhanh, không có → đường geq cũ.
+ * render.js truyền pngPath từ ctx.maskPng (rỗng khi --mask-mode geq hoặc khi
+ * vẽ PNG thất bại → fallback geq, không fail job).
+ */
+function buildMaskChainFor(inputLabel, mask, W, H, lbl, pngPath) {
+  if (pngPath) return buildMaskPngChain(inputLabel, pngPath, lbl);
+  return buildMaskChain(inputLabel, mask, W, H, lbl);
 }
 
 /**
@@ -197,6 +379,76 @@ function selfTest() {
   // 7. mask lỗi → throw
   assert.throws(() => buildMaskExpr({ shape: "rect", x: 0.5, y: 0.5, w: 0, h: 0.5, feather: 0 }, 640, 360), /số > 0/);
 
+  // 8. Phase 9 R2 — đường PNG nhanh: key, chain, fallback
+  assert.strictEqual(
+    maskKey({ shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0.1 }, 640, 360),
+    maskKey({ shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0.1, invert: false }, 640, 360),
+    "maskKey phải chuẩn hoá field thiếu giống nhau"
+  );
+  assert.notStrictEqual(
+    maskKey({ shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0.1 }, 640, 360),
+    maskKey({ shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0.2 }, 640, 360),
+    "feather khác phải khác key"
+  );
+  let n2 = 0;
+  const lbl2 = (p) => `${p}${n2++}`;
+  const pc = buildMaskPngChain("[cv0]", "/tmp/mask test:1.png", lbl2);
+  assert.strictEqual(pc.entries.length, 5);
+  assert.ok(pc.entries[1].includes("alphaextract"), pc.entries[1]);
+  assert.ok(pc.entries[2].includes("movie=") && pc.entries[2].includes("loop=loop=-1"), pc.entries[2]);
+  assert.ok(pc.entries[2].includes("test\\:1.png"), `escape movie path sai: ${pc.entries[2]}`);
+  assert.ok(pc.entries[3].includes("blend=all_mode=multiply"), pc.entries[3]);
+  assert.ok(pc.entries[4].includes("alphamerge,format=yuva420p"), pc.entries[4]);
+  const withPng = buildMaskChainFor("[cv0]", { shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0 }, 640, 360, lbl2, "/tmp/m.png");
+  assert.ok(withPng.entries.some((e) => e.includes("movie=")), "có pngPath phải dùng đường PNG");
+  const noPng = buildMaskChainFor("[cv0]", { shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0 }, 640, 360, lbl2, undefined);
+  assert.ok(noPng.entries.some((e) => e.includes("geq=lum=")), "không pngPath phải fallback về geq");
+
+  // 9. Phase 9 D4 — mask keyframes: validate / normalize / nội suy / anim chain
+  const kfMask = {
+    shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0,
+    keyframes: [
+      { t: 2, x: 0.8, y: 0.5, w: 0.5, h: 0.5 },
+      { t: 0, x: 0.2, y: 0.5, w: 0.5, h: 0.5 },
+      { t: 2, x: 0.9, y: 0.5, w: 0.5, h: 0.5 },
+    ],
+  };
+  assert.deepStrictEqual(validateMask(kfMask), [], "keyframes hợp lệ phải pass");
+  assert.ok(validateMask({ ...kfMask, keyframes: [{ t: -1, x: 0.5, y: 0.5, w: 0.5, h: 0.5 }] }).length > 0, "t âm phải lỗi");
+  assert.ok(validateMask({ ...kfMask, keyframes: [{ t: 0, x: 0.5, y: 0.5, w: 0, h: 0.5 }] }).length > 0, "w=0 phải lỗi");
+  assert.ok(validateMask({ ...kfMask, keyframes: "x" }).length > 0, "keyframes không phải mảng phải lỗi");
+  assert.ok(hasMaskKeyframes(kfMask) && !hasMaskKeyframes({ shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0 }), "hasMaskKeyframes sai");
+  // normalize: sắp theo t, trùng t=2 thì sau thắng (x=0.9)
+  const norm = normalizeMask(kfMask);
+  assert.deepStrictEqual(norm.keyframes.map((k) => k.t), [0, 2], "normalize phải sắp + dedupe");
+  assert.strictEqual(norm.keyframes[1].x, 0.9, "trùng t thì sau thắng");
+  // nội suy: hold trước 0 (x=0.2), giữa 0→2 tại t=1 (x=0.55), hold sau 2 (x=0.9)
+  assert.strictEqual(interpolateMaskAt(kfMask, -1).x, 0.2, "hold trước keyframe đầu sai");
+  assert.strictEqual(interpolateMaskAt(kfMask, 1).x, 0.55, "nội suy giữa sai");
+  assert.strictEqual(interpolateMaskAt(kfMask, 5).x, 0.9, "hold sau keyframe cuối sai");
+  assert.strictEqual(interpolateMaskAt({ shape: "rect", x: 0.3, y: 0.5, w: 0.5, h: 0.5, feather: 0 }, 1).x, 0.3, "không keyframe phải trả tĩnh");
+  const g0 = maskGeometryAt(kfMask, 0);
+  assert.strictEqual(g0.x, 0.2, "geometryAt(0) sai");
+  assert.strictEqual(g0.shape, "rect", "geometryAt phải giữ shape");
+  assert.ok(!("keyframes" in g0), "geometryAt phải bỏ keyframes (đường fallback tĩnh)");
+  // anim key: khác duration/fps phải khác key; giống nhau phải cùng key
+  assert.strictEqual(
+    maskAnimKey(kfMask, 640, 360, 30, 2),
+    maskAnimKey(kfMask, 640, 360, 30, 2),
+    "anim key giống nhau phải bằng nhau",
+  );
+  assert.notStrictEqual(maskAnimKey(kfMask, 640, 360, 30, 2), maskAnimKey(kfMask, 640, 360, 30, 3), "khác duration phải khác key");
+  // anim chain: 5 entry, movie video + trim end_frame, blend multiply, alphamerge
+  let n3 = 0;
+  const lbl3 = (p) => `${p}${n3++}`;
+  const ac = buildMaskAnimChain("[cv0]", "/tmp/mask anim.mkv", 60, lbl3);
+  assert.strictEqual(ac.entries.length, 5);
+  assert.ok(ac.entries[2].includes("movie=") && ac.entries[2].includes(".mkv"), `anim chain thiếu movie video: ${ac.entries[2]}`);
+  assert.ok(ac.entries[2].includes("trim=end_frame=60"), `anim chain thiếu trim: ${ac.entries[2]}`);
+  assert.ok(!ac.entries[2].includes("loop="), "anim chain KHÔNG được loop (video có nhiều frame)");
+  assert.ok(ac.entries[3].includes("blend=all_mode=multiply"), ac.entries[3]);
+  assert.ok(ac.entries[4].includes("alphamerge,format=yuva420p"), ac.entries[4]);
+
   console.log("✅ mask.js self-test: tất cả assertion pass");
 }
 
@@ -208,4 +460,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { EPS, validateMask, normalizeMask, buildMaskExpr, buildMaskChain };
+module.exports = { EPS, validateMask, normalizeMask, buildMaskExpr, buildMaskChain, maskKey, buildMaskPngChain, buildMaskChainFor, sortMaskKeyframes, hasMaskKeyframes, interpolateMaskAt, maskGeometryAt, maskAnimKey, buildMaskAnimChain };

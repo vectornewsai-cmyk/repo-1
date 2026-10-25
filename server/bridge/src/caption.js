@@ -168,6 +168,32 @@ function validateSegments(raw) {
 }
 
 /**
+ * Phase 9 R4: validate + sanitize mảng words (word timestamps) từ JSON của
+ * caption.py. Words hỏng thì bỏ qua (không fail job); thiếu mảng words thì
+ * trả [] (caption cũ vẫn chạy, chỉ không có karaoke). Giới hạn 20000 từ.
+ */
+function validateWords(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const w of raw) {
+    const start = Number(w && w.start);
+    const end = Number(w && w.end);
+    const word = String((w && w.word) || "").trim();
+    if (!Number.isFinite(start) || !Number.isFinite(end)) continue;
+    if (start < 0 || end <= start) continue;
+    if (!word) continue;
+    out.push({
+      start: Math.round(start * 100) / 100,
+      end: Math.round(end * 100) / 100,
+      word: word.slice(0, 100),
+    });
+    if (out.length >= 20000) break;
+  }
+  out.sort((a, b) => a.start - b.start);
+  return out;
+}
+
+/**
  * Chạy caption.py cho 1 file local.
  *
  * @param {object} o
@@ -330,6 +356,8 @@ function runCaption({ inputPath, lang, onPhase, config } = {}) {
     audioDurationSec: Number(parsed.audio_duration_sec) || 0,
     transcribeTimeSec: Number(parsed.transcribe_time_sec) || 0,
     segments,
+    // R4: word timestamps để UI gắn karaoke (thiếu thì [] — không karaoke).
+    words: validateWords(parsed.words),
   }));
 }
 
@@ -389,6 +417,7 @@ module.exports = {
   captionConfigFromEnv,
   validateLang,
   validateSegments,
+  validateWords,
   phaseFromLine,
   captionAvailable,
   runCaption,

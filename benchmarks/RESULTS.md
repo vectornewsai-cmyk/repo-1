@@ -185,3 +185,52 @@ canvas full-res) nằm ngoài phạm vi đo này.
 - GPU encode (NVENC/QSV/VAAPI) vẫn **chưa test trên phần cứng thật** — VM không
   có GPU, chỉ logic detect + fallback đã verify ở Phase 7 P2.
 - FPS preview trên browser thật vẫn chưa đo (cần browser + đo tay).
+
+## 8. Phase 9 R3 — Preview FPS thật (headless) + GPU encode harness + proxy tự động
+
+> Đo ngày 2026-10-24 trên VM 2 vCPU, 8GB RAM, không GPU, Chromium headless
+> (Playwright cache chromium-1248), project mẫu 8s (2 video + 1 text).
+> Script: `apps/web/scripts/bench-preview-fps.mjs` (đếm rAF khi bấm Phát),
+> số thô: `benchmarks/results/preview-fps.json` (10s) và
+> `benchmarks/results/preview-fps-5s.json` (5s).
+
+### 8.1 Preview FPS headless — kết quả
+
+| Lần chạy | Cửa sổ đo | FPS trung bình | FPS min (cửa sổ 1s) | FPS max (1s) | Frame giật (>50ms) | Playhead trong cửa sổ |
+|---|---|---|---|---|---|---|
+| 5s (sạch nhất) | 5s, đang phát giữa project | **13.4** | 5 | 18 | 51/68 khoảng | 0.6s → 5.1s (phát gần realtime, nhưng canvas chỉ vẽ ~13fps) |
+| 10s | 10s, dài hơn phần còn lại của project (đuôi có idle ở cuối) | 28.46 | 9 | 61 | 53 | 1.7s → 8.0s (tới cuối project) |
+| Đầu tiên | 10s | 16.01 | 5 | 60 | 28 | (chỉ có log terminal — file JSON đã bị các lần chạy sau ghi đè) |
+
+**Đọc số đúng cách:**
+- Preview trên VM headless này GIẬT RÕ: ở lần chạy sạch nhất, 75% khoảng
+  giữa các frame vượt 50ms, FPS trung bình chỉ ~13. Nguyên nhân khả dĩ
+  (chưa tách được): decode video phần mềm trên 2 vCPU + canvas filter +
+  tải VM chia sẻ (nhiều agent Phase 9 chạy cùng lúc) — 3 lần chạy cho 3 số
+  khác nhau xa (13.4 / 16.01 / 28.46) đã chứng minh độ nhiễu.
+- **KHÔNG được trích các số này thành "VCut preview chỉ 13fps"** — đây là
+  headless, không màn hình thật, không GPU, VM yếu và đang tải nặng. Cần đo
+  lại trên máy thật / trình duyệt thật và khi VM rảnh để có baseline ổn định.
+- FPS meter trong editor: nút "📈 FPS" góc phải dưới (component
+  `apps/web/src/components/PerfOverlay.tsx`) — đo rAF của app, không phải
+  draw call trực tiếp của canvas preview (brief R3 cấm sửa preview.tsx).
+
+### 8.2 GPU encode — VẪN CHƯA test trên phần cứng thật
+
+Harness: `benchmarks/render/gpu_encode_harness.sh`, số thô:
+`benchmarks/results/gpu_encode.jsonl`. Kết quả trên VM này:
+- Encoder có trong build FFmpeg 8.1.2: h264_nvenc, hevc_nvenc, h264_qsv,
+  h264_vaapi đều liệt kê được.
+- Phần cứng: **không có** — không `nvidia-smi`, không `/dev/dri`.
+- Encode thật: cả 4 đều thất bại (nvenc/hevc_nvenc exit 255, qsv exit 171,
+  vaapi exit 218; đều lỗi -22 Invalid argument do thiếu thiết bị).
+- Kết luận: logic detect + fallback CPU của Phase 7 P2 vẫn là phần duy nhất
+  đã verify; **GPU encode chưa từng chạy thành công trên phần cứng thật**.
+
+### 8.3 Proxy tự động khi import — đã kiểm chứng end-to-end
+
+Script: `apps/web/scripts/check-proxy-auto.mjs`. Kết quả: checkbox "Tự tạo
+proxy 720p khi import video" mặc định BẬT; nạp video test 1080p 3s qua input
+của MediaBin → trạng thái tự chuyển sang "✓ PROXY 720p" (bridge tạo proxy
+thật, preview dùng proxy, export vẫn dùng file gốc theo cam kết Q8).
+Tắt checkbox (lưu localStorage `vcut-auto-proxy`) thì không tự tạo nữa.

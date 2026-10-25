@@ -49,8 +49,12 @@ const TTS_VOICES = [
 ];
 const DEFAULT_VOICE = "Hải Đăng"; // default_voice của model gốc
 const VOICE_NAMES = TTS_VOICES.map((v) => v.name);
-// Giới hạn text 1 lần gọi (đồng bộ với tts.py MAX_TEXT_LEN)
-const MAX_TEXT_LEN = 2000;
+// Giới hạn text 1 lần gọi (đồng bộ với tts.py MAX_TEXT_LEN — Phase 9 R4
+// nâng 2000 → 5000 vì tts.py tự chia câu + nối crossfade).
+const MAX_TEXT_LEN = 5000;
+// Giọng mẫu clone: tối đa 20MB (tts.py chặn tiếp ở 120s).
+const MAX_REF_AUDIO_BYTES = 20 * 1024 * 1024;
+const REF_AUDIO_EXTS = [".wav", ".mp3", ".m4a", ".ogg", ".flac", ".webm"];
 // ZeroTTS ~2x realtime trên CPU → text dài 2000 ký tự (~2-3 phút nói)
 // có thể mất ~1-2 phút. Timeout 10 phút cho chắc.
 const DEFAULT_TIMEOUT_MS = 10 * 60 * 1000;
@@ -70,9 +74,24 @@ function validateText(raw) {
   const s = String(raw ?? "").trim();
   if (!s) throw new Error("Text rỗng — nhập nội dung cần đọc.");
   if (s.length > MAX_TEXT_LEN) {
-    throw new Error(`Text quá dài (${s.length} > ${MAX_TEXT_LEN} ký tự). Chia nhỏ ra.`);
+    throw new Error(`Text quá dài (${s.length} > ${MAX_TEXT_LEN} ký tự).`);
   }
   return s;
+}
+
+/** Validate file giọng mẫu clone; throw → endpoint trả 400. */
+function validateRefAudio(file) {
+  if (!file || !file.path) {
+    throw new Error("Thiếu file giọng mẫu (field 'refAudio').");
+  }
+  if (file.size > MAX_REF_AUDIO_BYTES) {
+    throw new Error(`File giọng mẫu quá lớn (${(file.size / 1048576).toFixed(1)}MB > 20MB).`);
+  }
+  const ext = path.extname(file.originalname || "").toLowerCase();
+  if (!REF_AUDIO_EXTS.includes(ext)) {
+    throw new Error(`File giọng mẫu phải là audio (${REF_AUDIO_EXTS.join(", ")}).`);
+  }
+  return file.path;
 }
 
 /** Validate voice; throw → endpoint trả 400. */
@@ -100,15 +119,16 @@ function ttsAvailable(cfg = ttsConfigFromEnv()) {
  * Trả về { outPath, voice, chars, durationSec, synthSec, sampleRate }.
  * Ném Error khi tts.py exit != 0 hoặc timeout.
  */
-function runTts({ text, voice, outDir, onPhase, cfg = ttsConfigFromEnv() }) {
+/**
+ * Phase 9 R4: refAudioPath có thì chạy chế độ clone giọng (tts.py --ref-audio,
+ * bỏ --voice). Không có thì chạy giọng preset như cũ.
+ */
+function runTts({ text, voice, refAudioPath, outDir, onPhase, cfg = ttsConfigFromEnv() }) {
   return new Promise((resolve, reject) => {
     const outPath = path.join(outDir, `tts-${Date.now()}.wav`);
-    const args = [
-      cfg.ttsPy,
-      "--text", text,
-      "--voice", voice,
-      "--out", outPath,
-    ];
+    const args = refAudioPath
+      ? [cfg.ttsPy, "--text", text, "--ref-audio", refAudioPath, "--out", outPath]
+      : [cfg.ttsPy, "--text", text, "--voice", voice, "--out", outPath];
     const child = spawn(cfg.pythonBin, args, {
       stdio: ["ignore", "pipe", "pipe"],
       shell: false,
@@ -155,9 +175,12 @@ module.exports = {
   TTS_VOICES,
   DEFAULT_VOICE,
   MAX_TEXT_LEN,
+  MAX_REF_AUDIO_BYTES,
+  REF_AUDIO_EXTS,
   ttsConfigFromEnv,
   validateText,
   validateVoice,
+  validateRefAudio,
   ttsAvailable,
   runTts,
 };

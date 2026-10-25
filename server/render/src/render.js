@@ -55,7 +55,9 @@ const { buildImageChain } = require("./image");
 // R1-011: opacity/alpha cho video clip.
 const { buildOpacityFilter, buildOpacityKeyframesChain } = require("./opacity");
 // Phase 7 P4: mask cho clip video/image.
-const { buildMaskChain } = require("./mask");
+const { buildMaskChain, buildMaskChainFor, buildMaskAnimChain, buildMaskPngChain, maskKey, maskAnimKey, hasMaskKeyframes, maskGeometryAt, normalizeMask } = require("./mask");
+// Phase 9 D3: motion tracking cho video/text (cùng biểu thức sticker Q5).
+const { buildAxisExpr, buildTrackOverlayExprs } = require("./tracking");
 // Batch J plugin wiring: nối PluginRegistry vào pipeline (chỉ khi spec có `plugins`).
 const { createPluginHost } = require("./plugins");
 // Phase 7 P2: clip enhancement (deinterlace/stabilize/denoise) + encode GPU.
@@ -166,6 +168,8 @@ function parseArgs(argv) {
     encoder: "auto",
     // Phase 7 P3: normalize export (mặc định off).
     normalize: "off", normalizeTarget: -14, normalizeTp: -1.5, normalizeLra: 11,
+    // Phase 9 R2: đường mask — png (mặc định, vẽ PNG 1 lần) hoặc geq (cũ).
+    maskMode: "png",
     overwrite: false, quiet: false, dryRun: false,
   };
   const needInt = (name, raw, min, max) => {
@@ -248,6 +252,14 @@ function parseArgs(argv) {
       }
       args.normalizeLra = n;
     }
+    else if (a === "--mask-mode") {
+      const m = need();
+      if (!["png", "geq"].includes(m)) {
+        console.error(`❌ --mask-mode phải là png|geq (nhận: ${m})`);
+        process.exit(2);
+      }
+      args.maskMode = m;
+    }
     else if (a === "-y" || a === "--overwrite") args.overwrite = true;
     else if (a === "-q" || a === "--quiet") args.quiet = true;
     else if (a === "--dry-run") args.dryRun = true;
@@ -308,8 +320,90 @@ function buildTypewriterAss(clips, meta) {
 }
 
 // ---------------------------------------------------------------------------
+// Dựng file ASS cho các text clip karaoke (Phase 9 R4)
+// ---------------------------------------------------------------------------
+/**
+ * Karaoke THẬT bằng tag \k của ASS (libass hỗ trợ): mỗi từ là một âm tiết
+ * với thời lượng tính bằng centisecond. Style dùng PrimaryColour = màu tô
+ * sáng (phần đã hát) và SecondaryColour = màu chữ gốc (phần chưa hát);
+ * libass tự quét màu theo thời gian. Một dialogue cho một clip: bắt đầu ở
+ * clip.start (cộng khoảng trống trước từ đầu tiên bằng âm tiết khoảng
+ * trắng vô hình), kết thúc ở clip.start + clip.duration để dòng chữ giữ
+ * nguyên sau khi hát xong.
+ * Escape: \{ \} và \ trong từ (tránh phá cú pháp override của ASS).
+ */
+function escapeAssText(s) {
+  return String(s).replace(/\\/g, "\\\\").replace(/\{/g, "\\{").replace(/\}/g, "\\}");
+}
+
+function buildKaraokeAss(clips, meta) {
+  const L = [];
+  L.push("[Script Info]", "Title: repo1-karaoke", "ScriptType: v4.00+",
+    `PlayResX: ${meta.width}`, `PlayResY: ${meta.height}`, "ScaledBorderAndShadow: yes", "");
+  L.push("[V4+ Styles]");
+  L.push("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, " +
+    "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, " +
+    "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding");
+  clips.forEach((clip, ci) => {
+    const st = clip.style;
+    const borderStyle = st.backgroundColor ? 3 : 1; // 3 = hộp nền đục
+    const back = st.backgroundColor ? hexToAssColor(st.backgroundColor) : "&H00000000";
+    const hi = st.highlightColor || "#ffff00";
+    L.push(`Style: KA${ci},${st.fontFamily},${Math.round(st.fontSize)},` +
+      `${hexToAssColor(hi)},${hexToAssColor(st.color)},&H80000000,${back},` +
+      `${st.bold ? -1 : 0},${st.italic ? -1 : 0},0,0,100,100,0,0,` +
+      `${borderStyle},2,0,5,10,10,10,1`);
+  });
+  L.push("", "[Events]");
+  L.push("Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text");
+  clips.forEach((clip, ci) => {
+    const words = clip.karaoke;
+    const x = Math.round(meta.width * (clip.style.x ?? 0.5));
+    const y = Math.round(meta.height * (clip.style.y ?? 0.5));
+    let body = "";
+    // Khoảng trống trước từ đầu tiên: âm tiết khoảng trắng vô hình để dòng
+    // chữ hiện từ clip.start bằng màu gốc (chưa hát) thay vì xuất hiện muộn.
+    if (words[0].start > 0.05) {
+      body += `{\\k${Math.max(1, Math.round(words[0].start * 100))}} `;
+    }
+    for (const w of words) {
+      const cs = Math.max(1, Math.round((w.end - w.start) * 100));
+      body += `{\\k${cs}}${escapeAssText(w.word)} `;
+    }
+    body = body.replace(/ $/, ""); // bỏ khoảng trắng cuối (tránh lệch căn giữa)
+    const t0 = clip.start;
+    const t1 = clip.start + clip.duration;
+    L.push(`Dialogue: 0,${assTime(t0)},${assTime(t1)},KA${ci},,0,0,0,,{\\pos(${x},${y})}${body}`);
+  });
+  const file = path.join(os.tmpdir(), `repo1-karaoke-${process.pid}.ass`);
+  fs.writeFileSync(file, L.join("\n") + "\n", "utf8");
+  return file;
+}
+
+// ---------------------------------------------------------------------------
 // Dựng filter_complex
 // ---------------------------------------------------------------------------
+
+// Phase 9 D4: chọn đường mask cho 1 site (video thường / video ramp / image).
+// - Mask tĩnh → hành vi cũ (PNG nhanh, fallback geq).
+// - Mask có keyframes → video animation (đường nhanh, không geq); nếu vẽ
+//   video thất bại → PNG tĩnh tại t=0; nếu cả PNG cũng thất bại hoặc
+//   --mask-mode geq → geq tĩnh tại t=0. Không fail job vì mask animation.
+function maskChainForSite(unitLabel, mask, W, H, fps, duration, lbl, ctx) {
+  if (hasMaskKeyframes(mask)) {
+    const aKey = maskAnimKey(mask, W, H, fps, duration);
+    if (ctx.maskAnim && ctx.maskAnim.has(aKey)) {
+      return buildMaskAnimChain(unitLabel, ctx.maskAnim.get(aKey), duration * fps, lbl);
+    }
+    if (ctx.maskAnimFallback && ctx.maskAnimFallback.has(aKey)) {
+      return buildMaskPngChain(unitLabel, ctx.maskAnimFallback.get(aKey), lbl);
+    }
+    return buildMaskChain(unitLabel, maskGeometryAt(mask, 0), W, H, lbl);
+  }
+  return buildMaskChainFor(unitLabel, mask, W, H, lbl,
+    ctx.maskPng ? ctx.maskPng.get(maskKey(mask, W, H)) : undefined);
+}
+
 function buildFilterGraph(spec, ctx) {
   const { W, H, fps, D, mediaIndex, absOf, transitions, fontFiles, assetsDir, mediaProbes } = ctx;
   const fc = [];
@@ -427,7 +521,7 @@ function buildFilterGraph(spec, ctx) {
         fc.push(...lines);
         let unitLabel = label;
         if (clip.mask) {
-          const mc = buildMaskChain(unitLabel, clip.mask, W, H, lbl);
+          const mc = maskChainForSite(unitLabel, clip.mask, W, H, fps, clip.duration, lbl, ctx);
           fc.push(...mc.entries);
           unitLabel = mc.outLabel;
         }
@@ -453,7 +547,7 @@ function buildFilterGraph(spec, ctx) {
       // composite đúng); alpha gốc được giữ, không ghi đè.
       let unitLabel = `[${v}]`;
       if (clip.mask) {
-        const mc = buildMaskChain(unitLabel, clip.mask, W, H, lbl);
+        const mc = maskChainForSite(unitLabel, clip.mask, W, H, fps, clip.duration, lbl, ctx);
         fc.push(...mc.entries);
         unitLabel = mc.outLabel;
       }
@@ -547,7 +641,16 @@ function buildFilterGraph(spec, ctx) {
     // mặc định căn giữa của buildOverlayExprs) mới có tác dụng thật — đây cũng
     // là lúc keyframes x/y bắt đầu nhìn thấy được (trước đây unit luôn full
     // khung nên (main_w-overlay_w) = 0). Xem KEYFRAMES_LIMITS.md.
-    if (!u.merged && u.clip.animations &&
+    // Phase 9 D3: clip video có track → TÂM unit bám quỹ đạo (cùng biểu thức
+    // sticker: x = main_w*frac - overlay_w/2). Unit full-frame không SR thì
+    // overlay_w = main_w nên khung hình dịch chuyển để tâm bám điểm track;
+    // có SR thì tâm hình bao đã biến đổi bám điểm track. Track thắng
+    // keyframes x/y về vị trí; SR/opacity vẫn áp dụng bình thường. Unit đã
+    // merge (dính transition) thì bỏ qua track (validator đã cảnh báo).
+    if (!u.merged && u.clip.track) {
+      const te = buildTrackOverlayExprs(u.clip.track, u.clip.start);
+      ox = te.x; oy = te.y;
+    } else if (!u.merged && u.clip.animations &&
         (u.clip.animations.x || u.clip.animations.y ||
          u.clip.animations.scale || u.clip.animations.rotation)) {
       const oe = buildOverlayExprs(u.clip.animations, u.start);
@@ -575,7 +678,7 @@ function buildFilterGraph(spec, ctx) {
       // trước setpts/overlay (giống pattern video unit).
       let imgLabel = `[${v}]`;
       if (clip.mask) {
-        const mc = buildMaskChain(imgLabel, clip.mask, W, H, lbl);
+        const mc = maskChainForSite(imgLabel, clip.mask, W, H, fps, clip.duration, lbl, ctx);
         fc.push(...mc.entries);
         imgLabel = mc.outLabel;
       }
@@ -625,6 +728,7 @@ function buildFilterGraph(spec, ctx) {
   for (const track of spec.tracks.filter((t) => t.kind === "text" && !t.hidden)) {
     for (const clip of track.clips) {
       if (clip.style.animation === "typewriter") continue; // xử lý riêng bằng ASS bên dưới
+      if (Array.isArray(clip.karaoke) && clip.karaoke.length > 0) continue; // R4: ASS karaoke bên dưới
       const st = clip.style;
       const S = clip.start, E = clip.start + clip.duration;
       // K1 (Phase 6): text clip có keyframes scale/rotation — drawtext không
@@ -653,7 +757,13 @@ function buildFilterGraph(spec, ctx) {
         const srChainTxt = srT ? `${srT},` : "";
         const tp = lbl("txtp");
         fc.push(`${cur}${srChainTxt}trim=end=${num(clip.duration)},setpts=PTS+${num(S)}/TB[${tp}]`);
-        const oe = buildOverlayExprs(clip.animations, S);
+        // Phase 9 D3: text SR có track → tâm PNG bám quỹ đạo (cùng biểu thức
+        // sticker), thắng overlay keyframes x/y; opacity keyframes vẫn giữ
+        // (đã áp ở chain trên). Overlay đã quote sẵn nên biểu thức chứa
+        // dấu phẩy vẫn an toàn.
+        const oe = clip.track
+          ? buildTrackOverlayExprs(clip.track, S)
+          : buildOverlayExprs(clip.animations, S);
         const tb = lbl("txtb");
         fc.push(`${vcur}[${tp}]overlay=x='${oe.x}':y='${oe.y}':eof_action=pass[${tb}]`);
         vcur = `[${tb}]`;
@@ -678,6 +788,20 @@ function buildFilterGraph(spec, ctx) {
           fy = `(h-text_h)*${st.y ?? 0.5}-30*(1-${k})`;
           extra += `:alpha='${k}'`;
         }
+      }
+      // Phase 9 D3: text drawtext có track → TÂM dòng chữ bám quỹ đạo
+      // (x = w*frac - text_w/2, cùng ngữ nghĩa sticker). Track thắng vị trí
+      // tĩnh/keyframes x/y/textfx nhưng GIỮ alpha đã tính ở trên (fadeUp,
+      // keyframes opacity, textfx alpha vẫn có tác dụng). drawtext đã quote
+      // x/y bằng nháy đơn nên biểu thức chứa dấu phẩy vẫn an toàn.
+      // Typewriter/karaoke không qua nhánh này (vẽ bằng ASS, validator cảnh
+      // báo track bị bỏ qua).
+      if (clip.track) {
+        const lt = `(t-${num(S)})`;
+        const fracX = buildAxisExpr(clip.track.points, "x", lt);
+        const fracY = buildAxisExpr(clip.track.points, "y", lt);
+        fx = `(w*(${fracX})-text_w/2)`;
+        fy = `(h*(${fracY})-text_h/2)`;
       }
       if (st.backgroundColor) {
         extra += `:box=1:boxcolor=${st.backgroundColor}:boxborderw=${Math.max(4, Math.round(st.fontSize / 4))}`;
@@ -709,9 +833,29 @@ function buildFilterGraph(spec, ctx) {
     vcur = `[${s}]`;
   }
 
+  // ===== TEXT: karaoke qua file ASS + filter subtitles (Phase 9 R4) =====
+  // Nối sau typewriter (nếu có): 2 lớp subtitles chồng nhau, mỗi lớp vẽ
+  // đúng clip của mình (dialogue có Start/End riêng nên không đè nhau).
+  const kaClips = [];
+  for (const track of spec.tracks.filter((t) => t.kind === "text" && !t.hidden))
+    for (const clip of track.clips)
+      // Typewriter thắng khi cả hai cùng có (drawtext đã skip typewriter
+      // trước karaoke) — tránh vẽ 1 clip bằng cả 2 lớp ASS.
+      if (clip.style.animation !== "typewriter" &&
+          Array.isArray(clip.karaoke) && clip.karaoke.length > 0) kaClips.push(clip);
+  let karaokeAssFile = null;
+  if (kaClips.length > 0) {
+    karaokeAssFile = buildKaraokeAss(kaClips, { width: W, height: H });
+    const s = lbl("ksub");
+    fc.push(`${vcur}subtitles='${escapeFilterPath(karaokeAssFile)}'[${s}]`);
+    vcur = `[${s}]`;
+  }
+
   // ===== AUDIO =====
   // Mỗi clip: cắt [in, in+duration*speed) → speed/reverse → chuẩn 48kHz stereo
   // → volume → afade → adelay tới vị trí start trên timeline. Rồi trộn bằng amix.
+  // Audio ducking (spec.ducking, xem DUCKING_LIMITS.md): khi bật, mix tách
+  // thành nhánh voice + nhánh music, sidechaincompress rồi amix lại.
   // Phase 7 P3: clip có speedKeyframes → chia đoạn concat (không dùng speed hằng);
   // clip có volumeKeyframes hoặc fade cong → 1 filter volume eval=frame thay cho
   // volume + afade; track.volume nhân vào gain; normalize áp sau amix.
@@ -719,13 +863,49 @@ function buildFilterGraph(spec, ctx) {
   // R1-015: audio của VIDEO clip được xử lý theo `sourceAudioMode`:
   // - "inherit" (mặc định): trích audio từ video source, áp cùng trim/speed/reverse.
   // - "mute": bỏ qua. - "detach": chưa hỗ trợ (validate.js báo lỗi).
+  //
+  // ===== AUDIO DUCKING (cấp project, xem DUCKING_LIMITS.md) =====
+  // Khi enabled và voiceTrackId hợp lệ: tách mix thành 2 nhánh (voice mix
+  // từ track giọng, music mix từ các track audio còn lại + audio kế thừa
+  // video), áp sidechaincompress rồi amix lại. Mọi trường hợp còn lại
+  // (tắt / track giọng không tìm thấy / không phải audio / bị muted / trống
+  // / không có nhánh nhạc) → filtergraph Y HỆT cũ, chỉ khác 1 cảnh báo stderr.
+  // Param sai khoảng → fail fast (throw), không im lặng render sai.
+  const ducking = spec.ducking;
+  let duckingActive = false;
+  const voiceSeg = [];
+  const musicSeg = [];
+  if (ducking && ducking.enabled === true) {
+    const dkErrs = [];
+    const dkNum = (key, min, max) => {
+      const v = ducking[key];
+      if (v === undefined) return;
+      if (typeof v !== "number" || !Number.isFinite(v) || v < min || v > max)
+        dkErrs.push(`ducking.${key} phải là số trong [${min}, ${max}], nhận được: ${JSON.stringify(v)}`);
+    };
+    if (typeof ducking.voiceTrackId !== "string" || ducking.voiceTrackId.length === 0)
+      dkErrs.push(`ducking.enabled=true nhưng voiceTrackId không hợp lệ: ${JSON.stringify(ducking.voiceTrackId)}`);
+    dkNum("thresholdDb", -60, 0);
+    dkNum("ratio", 1, 20);
+    dkNum("attackMs", 0.1, 2000);
+    dkNum("releaseMs", 10, 9000);
+    dkNum("duckAmountDb", 0, 24);
+    if (dkErrs.length > 0)
+      throw new Error(`audio ducking không hợp lệ:\n  - ${dkErrs.join("\n  - ")}`);
+    const vt = spec.tracks.find((t) => t.id === ducking.voiceTrackId);
+    if (!vt) console.error(`⚠️  ducking: không tìm thấy track giọng "${ducking.voiceTrackId}" → bỏ qua ducking, render mix cũ`);
+    else if (vt.kind !== "audio") console.error(`⚠️  ducking: track giọng "${ducking.voiceTrackId}" không phải track audio (kind="${vt.kind}") → bỏ qua ducking, render mix cũ`);
+    else if (vt.muted) console.error(`⚠️  ducking: track giọng "${ducking.voiceTrackId}" đang bị muted → bỏ qua ducking, render mix cũ`);
+    else if (!vt.clips || vt.clips.length === 0) console.error(`⚠️  ducking: track giọng "${ducking.voiceTrackId}" không có clip → bỏ qua ducking, render mix cũ`);
+    else duckingActive = true;
+  }
   const aseg = [];
   // Helper dựng chain audio cho 1 clip (dùng chung cho audio clip và video inherit).
   // streamRef: `[idx:a]` — audio stream của file nguồn.
   // Phase 7 P3: thêm trackVolume (nhân vào gain) + speed ramp (segment concat)
   // + gain expression (volumeKeyframes / fade cong). Không ramp, không keyframes,
   // không fade cong → chain cũ 100% (volume + afade tĩnh).
-  const buildAudioChain = (streamRef, clip, label, trackVolume = 1) => {
+  const buildAudioChain = (streamRef, clip, label, trackVolume = 1, branchSeg) => {
     const a = lbl(label);
     const isRamp = clip.speedKeyframes && clip.speedKeyframes.keyframes &&
       clip.speedKeyframes.keyframes.length > 0;
@@ -760,12 +940,17 @@ function buildFilterGraph(spec, ctx) {
     chain += `,adelay=${Math.round(clip.start * 1000)}:all=1[${a}]`;
     fc.push(chain);
     aseg.push(`[${a}]`);
+    // Ducking: ghi thêm label vào nhánh voice/music (aseg vẫn giữ đủ để
+    // fallback về mix cũ khi ducking không kích hoạt được).
+    if (branchSeg) branchSeg.push(`[${a}]`);
   };
   // R1-054: track audio bị muted → bỏ qua toàn bộ (câm).
+  // Ducking: track giọng → voiceSeg, các track audio còn lại → musicSeg.
   for (const track of spec.tracks.filter((t) => t.kind === "audio" && !t.muted)) {
     for (const clip of track.clips) {
       const idx = mediaIndex.get(absOf(clip.src));
-      buildAudioChain(`[${idx}:a]`, clip, "ac", track.volume ?? 1);
+      buildAudioChain(`[${idx}:a]`, clip, "ac", track.volume ?? 1,
+        duckingActive ? (track.id === ducking.voiceTrackId ? voiceSeg : musicSeg) : undefined);
     }
   }
   // Audio inherit từ video clip (R1-015).
@@ -793,7 +978,8 @@ function buildFilterGraph(spec, ctx) {
       const abs = absOf(clip.src);
       if (!hasAudioStream(abs)) continue; // file câm → không add [idx:a]
       const idx = mediaIndex.get(abs);
-      buildAudioChain(`[${idx}:a]`, clip, "va", track.volume ?? 1);
+      // Ducking: audio kế thừa của video luôn thuộc nhánh nhạc.
+      buildAudioChain(`[${idx}:a]`, clip, "va", track.volume ?? 1, duckingActive ? musicSeg : undefined);
     }
   }
   let aout;
@@ -801,7 +987,54 @@ function buildFilterGraph(spec, ctx) {
     // Không có track audio: tạo track câm để output luôn có audio stream (đúng hợp đồng H.264+AAC).
     fc.push(`anullsrc=r=48000:cl=stereo:d=${num(D)}[aout0]`);
     aout = "[aout0]";
+  } else if (duckingActive && voiceSeg.length > 0 && musicSeg.length > 0) {
+    // DUCKING: music mix + voice mix → sidechaincompress → amix lại với voice.
+    // Cả 2 nhánh đều apad tới D: nếu 1 nhánh hết sớm, sidechain sẽ EOF và
+    // cắt luôn đầu ra — apad giữ cả 2 nhánh dài đúng D như mix cũ.
+    const mus = lbl("dmus");
+    const voi = lbl("dvoi");
+    const dk = lbl("ddk");
+    const mixed = lbl("amx");
+    // Phase 7 P3: normalize (export option) áp SAU apad/atrim, trên stream đã mix.
+    const normFilter = buildNormalizeFilter(ctx.normalize || null);
+    const normChain = normFilter ? `,${normFilter}` : "";
+    // threshold dB → linear cho sidechaincompress (giới hạn 0.000976563..1).
+    const th = Math.max(0.000976563, Math.pow(10, (ducking.thresholdDb ?? -20) / 20));
+    const ratio = ducking.ratio ?? 4;
+    const atk = ducking.attackMs ?? 20;
+    const rel = ducking.releaseMs ?? 250;
+    // duckAmountDb = mức giảm TỐI ĐA, map sang `mix` (dry/wet blend):
+    // mix = 1 - 10^(-duckAmountDb/20). Khi compressor nén hết, đầu ra còn
+    // (1-mix) phần dry → giảm đúng duckAmountDb. Đây là mức trần xấp xỉ,
+    // không phải knee cứng — xem DUCKING_LIMITS.md.
+    const mix = 1 - Math.pow(10, -(ducking.duckAmountDb ?? 12) / 20);
+    const branch = (seg, label) => {
+      fc.push(
+        `${seg.join("")}amix=inputs=${seg.length}:duration=longest:dropout_transition=0,` +
+        `apad=whole_dur=${num(D)},atrim=0:${num(D)},aresample=48000,` +
+        `aformat=sample_fmts=fltp:channel_layouts=stereo[${label}]`
+      );
+      return `[${label}]`;
+    };
+    const musRef = branch(musicSeg, mus);
+    const voiRef = branch(voiceSeg, voi);
+    // Nhánh giọng dùng 2 lần (sidechain + mix cuối) → bắt buộc asplit,
+    // vì 1 label output của FFmpeg chỉ được tiêu thụ 1 lần.
+    const voiSc = lbl("dvs");
+    const voiOut = lbl("dvo");
+    fc.push(`${voiRef}asplit=2[${voiSc}][${voiOut}]`);
+    fc.push(
+      `${musRef}[${voiSc}]sidechaincompress=threshold=${num(th)}:ratio=${num(ratio)}:` +
+      `attack=${num(atk)}:release=${num(rel)}:mix=${num(mix)}[${dk}]`
+    );
+    fc.push(
+      `[${dk}][${voiOut}]amix=inputs=2:duration=longest:dropout_transition=0,` +
+      `apad=whole_dur=${num(D)},atrim=0:${num(D)}${normChain}[${mixed}]`
+    );
+    aout = `[${mixed}]`;
   } else {
+    if (duckingActive)
+      console.error("⚠️  ducking: thiếu nhánh nhạc hoặc nhánh giọng sau khi dựng chain → bỏ qua ducking, render mix cũ");
     const mixed = lbl("amx");
     // amix duration=longest: output dài bằng clip kết thúc muộn nhất; apad bù câm tới D.
     // Phase 7 P3: normalize (export option) áp SAU apad/atrim, trên stream đã mix.
@@ -823,7 +1056,7 @@ function buildFilterGraph(spec, ctx) {
     vfinal = `[${hv}]`;
   }
 
-  return { filterComplex: fc.join(";"), vout: vfinal, aout, assFile };
+  return { filterComplex: fc.join(";"), vout: vfinal, aout, assFile, karaokeAssFile };
 }
 
 // ---------------------------------------------------------------------------
@@ -1024,6 +1257,7 @@ function main() {
   for (const track of spec.tracks.filter((t) => t.kind === "text" && !t.hidden)) {
     for (const clip of track.clips) {
       if (clip.style.animation === "typewriter") continue;
+      if (Array.isArray(clip.karaoke) && clip.karaoke.length > 0) continue; // R4: karaoke đi ASS, không PNG SR
       if (!(clip.animations && (clip.animations.scale || clip.animations.rotation))) continue;
       const fontFile = fontFiles.get(clip.id);
       if (!fontFile) continue; // font đã fail fast ở bước trên nên không tới đây
@@ -1052,6 +1286,106 @@ function main() {
     }
   }
 
+  // Phase 9 R2: mask đường PNG nhanh — vẽ mỗi mask phân biệt 1 lần ra PNG
+  // W×H (dedup theo maskKey), buildFilterGraph dùng movie+blend thay geq.
+  // Vẽ thất bại (thiếu python3/Pillow/numpy) → clip đó fallback về geq cũ,
+  // không fail job (giống pattern text SR PNG). --mask-mode geq → bỏ qua.
+  const maskPng = new Map(); // maskKey -> pngPath
+  const maskPngPaths = [];
+  if (args.maskMode === "png") {
+    const seen = new Set();
+    for (const track of spec.tracks.filter((t) => (t.kind === "video" || t.kind === "image") && !t.hidden)) {
+      for (const clip of track.clips) {
+        if (!clip.mask) continue;
+        const key = maskKey(clip.mask, meta.width, meta.height);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const pngPath = path.join(os.tmpdir(), `repo1-mask-${process.pid}-${seen.size}.png`);
+        const m = clip.mask;
+        const pyArgs = [
+          path.join(__dirname, "mask_png.py"),
+          "--shape", m.shape,
+          "--x", String(m.x ?? 0.5), "--y", String(m.y ?? 0.5),
+          "--w", String(m.w ?? 1), "--h", String(m.h ?? 1),
+          "--feather", String(m.feather ?? 0),
+          "--width", String(meta.width), "--height", String(meta.height),
+          "--out", pngPath,
+        ];
+        if (m.invert) pyArgs.push("--invert");
+        const pr = spawnSync("python3", pyArgs, { stdio: ["ignore", "pipe", "pipe"] });
+        if (pr.error || pr.status !== 0) {
+          console.error(`⚠️  mask "${clip.id}": không vẽ được PNG mask ` +
+            `(${(pr.stderr || "").toString().trim().slice(-200) || (pr.error && pr.error.message) || "lỗi không rõ"}) → fallback về geq`);
+          continue;
+        }
+        maskPng.set(key, pngPath);
+        maskPngPaths.push(pngPath);
+        log(`   mask PNG "${clip.id}" → ${pngPath}`);
+      }
+    }
+  }
+
+  // Phase 9 D4: mask animation — vẽ video mask (ffv1 gray) cho clip có
+  // keyframes, dedup theo maskAnimKey (khung + fps + duration + keyframe).
+  // Vẽ thất bại → fallback PNG tĩnh tại t=0 (hình học nội suy); cả 2 thất
+  // bại → site dùng geq tĩnh tại t=0, không fail job. --mask-mode geq →
+  // bỏ qua cả 2 (site dùng geq t=0 trực tiếp).
+  const maskAnim = new Map(); // maskAnimKey -> videoPath
+  const maskAnimFallback = new Map(); // maskAnimKey -> pngPath (t=0)
+  const maskAnimPaths = [];
+  if (args.maskMode === "png") {
+    const seenAnim = new Set();
+    for (const track of spec.tracks.filter((t) => (t.kind === "video" || t.kind === "image") && !t.hidden)) {
+      for (const clip of track.clips) {
+        if (!clip.mask || !hasMaskKeyframes(clip.mask)) continue;
+        const aKey = maskAnimKey(clip.mask, meta.width, meta.height, meta.fps, clip.duration);
+        if (seenAnim.has(aKey)) continue;
+        seenAnim.add(aKey);
+        const m = clip.mask;
+        const vidPath = path.join(os.tmpdir(), `repo1-maskan-${process.pid}-${seenAnim.size}.mkv`);
+        const pyArgs = [
+          path.join(__dirname, "mask_anim.py"),
+          "--shape", m.shape,
+          "--feather", String(m.feather ?? 0),
+          "--width", String(meta.width), "--height", String(meta.height),
+          "--fps", String(meta.fps), "--duration", String(clip.duration),
+          "--keyframes", JSON.stringify(normalizeMask(m).keyframes),
+          "--out", vidPath,
+        ];
+        if (m.invert) pyArgs.push("--invert");
+        const pr = spawnSync("python3", pyArgs, { stdio: ["ignore", "pipe", "pipe"] });
+        if (pr.error || pr.status !== 0) {
+          console.error(`⚠️  mask anim "${clip.id}": không vẽ được video mask ` +
+            `(${(pr.stderr || "").toString().trim().slice(-200) || (pr.error && pr.error.message) || "lỗi không rõ"}) → thử PNG tĩnh tại t=0`);
+          const g0 = maskGeometryAt(m, 0);
+          const fbPath = path.join(os.tmpdir(), `repo1-maskfb-${process.pid}-${seenAnim.size}.png`);
+          const fbArgs = [
+            path.join(__dirname, "mask_png.py"),
+            "--shape", m.shape,
+            "--x", String(g0.x), "--y", String(g0.y),
+            "--w", String(g0.w), "--h", String(g0.h),
+            "--feather", String(m.feather ?? 0),
+            "--width", String(meta.width), "--height", String(meta.height),
+            "--out", fbPath,
+          ];
+          if (m.invert) fbArgs.push("--invert");
+          const fb = spawnSync("python3", fbArgs, { stdio: ["ignore", "pipe", "pipe"] });
+          if (fb.error || fb.status !== 0) {
+            console.error(`⚠️  mask anim "${clip.id}": PNG fallback cũng thất bại → geq tĩnh tại t=0`);
+            continue;
+          }
+          maskAnimFallback.set(aKey, fbPath);
+          maskAnimPaths.push(fbPath);
+          log(`   mask anim fallback PNG t=0 "${clip.id}" → ${fbPath}`);
+          continue;
+        }
+        maskAnim.set(aKey, vidPath);
+        maskAnimPaths.push(vidPath);
+        log(`   mask anim "${clip.id}" → ${vidPath}`);
+      }
+    }
+  }
+
   // 5. Đánh chỉ số input cho từng file media (mỗi file chỉ -i một lần)
   const mediaIndex = new Map();
   const orderedMedia = [];
@@ -1076,7 +1410,7 @@ function main() {
   }
 
   // 6. Dựng filter graph
-  const { filterComplex, vout, aout, assFile } = buildFilterGraph(spec, {
+  const { filterComplex, vout, aout, assFile, karaokeAssFile } = buildFilterGraph(spec, {
     W: meta.width, H: meta.height, fps: meta.fps, D,
     mediaIndex, absOf, transitions: v.transitions, fontFiles,
     assetsDir: path.join(__dirname, "..", "..", "..", "assets"),
@@ -1091,6 +1425,11 @@ function main() {
     textSrPng: textSrPngIdx,
     // Phase 7 P2: map clipId -> file .trf vidstabdetect + cờ VA-API.
     stabTrf,
+    // Phase 9 R2: map maskKey -> PNG mask (rỗng khi --mask-mode geq).
+    maskPng,
+    // Phase 9 D4: map maskAnimKey -> video mask / PNG fallback t=0.
+    maskAnim,
+    maskAnimFallback,
     vaapi: videoEncoder === "h264_vaapi",
     // Phase 7 P3: normalize export (áp sau amix; off = không đổi).
     normalize: {
@@ -1186,11 +1525,28 @@ function main() {
   } else if (assFile) {
     console.error(`   (giữ file ASS tạm để debug: ${assFile})`);
   }
+  if (karaokeAssFile && r.status === 0) {
+    try { fs.unlinkSync(karaokeAssFile); } catch { /* bỏ qua */ }
+  } else if (karaokeAssFile) {
+    console.error(`   (giữ file ASS karaoke tạm để debug: ${karaokeAssFile})`);
+  }
   // Dọn PNG text SR tạm (giữ lại khi lỗi để debug, giống ASS).
   if (r.status === 0) {
     for (const p of textSrPngPaths) { try { fs.unlinkSync(p); } catch { /* bỏ qua */ } }
   } else if (textSrPngPaths.length > 0) {
     console.error(`   (giữ PNG text SR tạm để debug: ${textSrPngPaths.join(", ")})`);
+  }
+  // Phase 9 R2: dọn PNG mask tạm (giữ lại khi lỗi để debug, giống text SR).
+  if (r.status === 0) {
+    for (const p of maskPngPaths) { try { fs.unlinkSync(p); } catch { /* bỏ qua */ } }
+  } else if (maskPngPaths.length > 0) {
+    console.error(`   (giữ PNG mask tạm để debug: ${maskPngPaths.join(", ")})`);
+  }
+  // Phase 9 D4: dọn video mask animation + PNG fallback t=0 tạm (giữ khi lỗi).
+  if (r.status === 0) {
+    for (const p of maskAnimPaths) { try { fs.unlinkSync(p); } catch { /* bỏ qua */ } }
+  } else if (maskAnimPaths.length > 0) {
+    console.error(`   (giữ video/PNG mask anim tạm để debug: ${maskAnimPaths.join(", ")})`);
   }
   // Phase 7 P2: dọn file .trf vidstab tạm (giữ lại khi lỗi để debug).
   // Dry-run return sớm ở trên nên không tới đây — file trf dry-run chỉ là

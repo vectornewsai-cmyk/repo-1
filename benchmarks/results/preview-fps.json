@@ -1,0 +1,20 @@
+{
+  "url": "http://127.0.0.1:5173",
+  "durationSec": 10,
+  "chromium": "/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome",
+  "timestamp": "2026-10-24T07:13:28.464Z",
+  "perfOverlayButton": true,
+  "playing": true,
+  "timeDisplay": {
+    "before": "00:00.0 / 00:08.0",
+    "after": "00:01.7 / 00:08.0",
+    "end": "00:08.0 / 00:08.0"
+  },
+  "frames": 286,
+  "fpsAvg": 28.46,
+  "fpsMin1s": 9,
+  "fpsMax1s": 61,
+  "dropsOver50ms": 53,
+  "maxIntervalMs": 224.2,
+  "hardwareConcurrency": 2
+}

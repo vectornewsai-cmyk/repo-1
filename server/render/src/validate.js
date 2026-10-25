@@ -21,6 +21,7 @@ const { isTextFxAnimation } = require("./textfx");
 const { validateVideoFilter } = require("./lut");
 const { validateEffects: validateVideoEffects } = require("./effects");
 const { validateSticker } = require("./sticker");
+const { validateTrackAttachment } = require("./tracking_validate");
 const { validateSourceAudioMode, validateAudioEffects } = require("./audioroute");
 const { validateImage } = require("./image");
 const { validateOpacity } = require("./opacity");
@@ -576,6 +577,28 @@ function validateClip(track, clip, where, err, warn) {
       `(chỉ video/image render mask, xem MASK_LIMITS.md)`);
   }
 
+  // Phase 9 D3: motion tracking mở rộng từ sticker sang video/text.
+  // Sticker đã validate track trong validateSticker — ở đây chỉ xử lý
+  // video/text (và cảnh báo khi track gắn vào kind chưa hỗ trợ).
+  if (clip.track !== undefined && (track.kind === "video" || track.kind === "text")) {
+    for (const m of validateTrackAttachment(clip.track))
+      err(where, `track: ${m}`);
+    if (track.kind === "video" &&
+        (clip.transitionIn !== undefined || clip.transitionOut !== undefined)) {
+      warn(where, `clip video có track nhưng dính transition — track bị bỏ qua ` +
+        `ở unit đã merge (keyframes cũng vậy, xem D3_LIMITS.md)`);
+    }
+    if (track.kind === "text" &&
+        (clip.style?.animation === "typewriter" ||
+         (Array.isArray(clip.karaoke) && clip.karaoke.length > 0))) {
+      warn(where, `clip text có track nhưng vẽ bằng ASS (typewriter/karaoke) — ` +
+        `track bị bỏ qua, chữ giữ vị trí tĩnh (xem D3_LIMITS.md)`);
+    }
+  } else if (clip.track !== undefined && track.kind !== "sticker") {
+    warn(where, `track chưa hỗ trợ cho clip ${track.kind} — track sẽ bị bỏ qua ` +
+      `(chỉ video/text/sticker bám quỹ đạo, xem D3_LIMITS.md)`);
+  }
+
   if (track.kind === "audio") {
     const vol = clip.volume === undefined ? 1 : clip.volume;
     if (!isFiniteNumber(vol) || vol < 0 || vol > 1)
@@ -623,6 +646,8 @@ function validateClip(track, clip, where, err, warn) {
       err(where, `style.color phải là mã hex (#rgb hoặc #rrggbb), nhận được: ${JSON.stringify(st.color)}`);
     if (st.backgroundColor !== undefined && !isHexColor(st.backgroundColor))
       err(where, `style.backgroundColor phải là mã hex, nhận được: ${JSON.stringify(st.backgroundColor)}`);
+    if (st.highlightColor !== undefined && !isHexColor(st.highlightColor))
+      err(where, `style.highlightColor phải là mã hex, nhận được: ${JSON.stringify(st.highlightColor)}`);
     for (const key of ["bold", "italic"]) {
       if (st[key] !== undefined && typeof st[key] !== "boolean")
         err(where, `style.${key} phải là boolean, nhận được: ${JSON.stringify(st[key])}`);
@@ -643,6 +668,37 @@ function validateClip(track, clip, where, err, warn) {
           clip.style.animation === "typewriter")
         warn(where, "keyframes scale/rotation của text clip typewriter bị bỏ qua " +
           "khi render (ASS không hỗ trợ scale/rotate theo thời gian)");
+      if ((clip.animations.scale || clip.animations.rotation) &&
+          Array.isArray(clip.karaoke) && clip.karaoke.length > 0)
+        warn(where, "keyframes scale/rotation của text clip karaoke bị bỏ qua " +
+          "khi render (ASS không hỗ trợ scale/rotate theo thời gian)");
+    }
+    // Phase 9 R4: karaoke — từ kèm thời gian tô sáng (giây, tương đối clip.start).
+    if (clip.karaoke !== undefined) {
+      if (!Array.isArray(clip.karaoke) || clip.karaoke.length === 0) {
+        err(where, "karaoke phải là mảng không rỗng các {word, start, end}");
+      } else {
+        let prevEnd = -Infinity;
+        for (const w of clip.karaoke) {
+          if (typeof w !== "object" || w === null || typeof w.word !== "string" ||
+              w.word.length === 0 || !isFiniteNumber(w.start) ||
+              !isFiniteNumber(w.end) || w.end <= w.start) {
+            err(where, `karaoke word sai hình dạng (cần {word: string khác rỗng, ` +
+              `start, end: number, end > start}), nhận được: ${JSON.stringify(w)}`);
+            break;
+          }
+          if (w.start < -0.01 || w.end > clip.duration + 0.01) {
+            err(where, `karaoke word ngoài duration clip (${w.start}–${w.end} ` +
+              `trong khi duration=${clip.duration})`);
+            break;
+          }
+          if (w.start < prevEnd - 0.01) {
+            err(where, "karaoke words phải theo thứ tự thời gian không chồng lấn");
+            break;
+          }
+          prevEnd = w.end;
+        }
+      }
     }
     // Phase 7 P6: captionOf chỉ là metadata của editor (render vẽ TextClip
     // theo start/duration sẵn có, không đọc link). Chỉ cảnh báo nếu link

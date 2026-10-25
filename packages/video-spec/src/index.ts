@@ -39,10 +39,14 @@ export * from "./color.js";
 export * from "./image.js";
 // Phase 7 P4: mask cho clip video/image.
 export * from "./mask.js";
+// Phase 8 Q5: motion tracking cho sticker overlay.
+export * from "./tracking.js";
 // Phase 7 P2: clip enhancement (deinterlace/stabilize/denoise).
 export * from "./enhance.js";
 // R1-015: audio routing cho video nguồn (inherit/mute/detach).
 export * from "./audio.js";
+// Phase 9: marker/chapter trên timeline (dữ liệu thuần của editor).
+export * from "./markers.js";
 // R1-055: frame-accurate timebase (snap theo frame, timecode).
 export * from "./timebase.js";
 // Lưu ý: "./transitions" export `Transition` (type mở rộng) — dùng thay cho
@@ -59,6 +63,7 @@ import type { ImageClip } from "./image.js";
 import type { ClipMask } from "./mask.js";
 import type { ClipEnhance } from "./enhance.js";
 import type { SourceAudioMode, AudioEffects, FadeCurve } from "./audio.js";
+import type { Marker } from "./markers.js";
 import type { SpeedCurve } from "./speedcurve.js";
 
 export interface VideoMeta {
@@ -132,6 +137,16 @@ export interface VideoClip {
   reverse?: boolean;
   /** Keyframe animation (x, y, opacity) — xem ClipAnimations */
   animations?: ClipAnimations;
+  /**
+   * Phase 9 D3 — Quỹ đạo motion tracking: TÂM khung hình của clip bám theo
+   * vật thể (cùng ngữ nghĩa sticker: tâm unit tại (W*x, H*y) theo thời gian
+   * cục bộ t - start). Track thắng keyframes x/y về vị trí nhưng scale/
+   * rotation/opacity vẫn áp dụng. Clip dính transition (unit đã merge) thì
+   * track bị bỏ qua (validator cảnh báo). Thời gian quỹ đạo gắn với lúc
+   * clip xuất hiện, không gắn với thời gian nguồn — trim mép trái sẽ dời
+   * gốc thời gian của quỹ đạo theo (xem D3_LIMITS.md).
+   */
+  track?: import("./tracking.js").TrackAttachment;
   /**
    * Mask che ngoài hình (rect/ellipse + feather) — xem ClipMask.
    * Áp cho clip video; text clip chưa hỗ trợ (validator cảnh báo, bỏ qua).
@@ -219,6 +234,24 @@ export interface CaptionLink {
   mediaEnd: number;
 }
 
+/**
+ * Một từ trong karaoke — Phase 9 R4.
+ * start/end tính theo GIÂY TƯƠNG ĐỐI từ clip.start (timeline local), không
+ * phải thời gian media. Render và preview chỉ đọc field này: chúng vẽ
+ * TextClip ở start/duration đã được editor tính sẵn, giống captionOf.
+ * Khi caption bị refollow (đổi tốc độ clip nguồn), editor scale thời gian
+ * từ theo tỉ lệ duration mới/cũ (chính xác khi tốc độ hằng số trên câu,
+ * xấp xỉ khi dùng speed curve — xem captionFollow.ts).
+ */
+export interface KaraokeWord {
+  /** từ hiển thị (đã strip khoảng trắng thừa) */
+  word: string;
+  /** giây từ clip.start tới lúc từ bắt đầu được tô sáng */
+  start: number;
+  /** giây từ clip.start tới lúc từ hết được tô sáng */
+  end: number;
+}
+
 /** Clip chữ trên timeline */
 export interface TextClip {
   kind: "text";
@@ -230,10 +263,28 @@ export interface TextClip {
   /** Keyframe animation (x, y, opacity) — xem ClipAnimations */
   animations?: ClipAnimations;
   /**
+   * Phase 9 D3 — Quỹ đạo motion tracking cho clip chữ: TÂM dòng chữ bám
+   * theo vật thể (nội suy tuyến tính, kẹp ngoài khoảng — cùng biểu thức
+   * sticker). Áp cho nhánh drawtext và nhánh PNG SR; clip typewriter/
+   * karaoke vẽ bằng ASS nên track bị bỏ qua (validator cảnh báo). Track
+   * thắng vị trí tĩnh/keyframes x/y nhưng giữ alpha từ animation.
+   */
+  track?: import("./tracking.js").TrackAttachment;
+  /**
    * Liên kết phụ đề (Phase 7 P6, optional). Chỉ caption tạo từ auto-caption
    * mới có field này; chữ gõ tay không có và không bị bám theo clip nào.
    */
   captionOf?: CaptionLink;
+  /**
+   * Karaoke (Phase 9 R4, optional): danh sách từ kèm thời gian tô sáng.
+   * Chỉ caption tạo từ auto-caption (có word timestamps từ Whisper) mới có
+   * field này. Render vẽ bằng ASS \k, preview vẽ từng từ đổi màu.
+   * Clip có karaoke mà bị split nguồn thì chỉ mảnh nào giữ nguyên duration
+   * mới giữ karaoke (mảnh bị cắt dở mất highlight, giữ chữ thường) — xem
+   * splitLinkedCaptionsMulti. Clip karaoke bỏ qua keyframes scale/rotation
+   * khi render (giống typewriter, ASS không hỗ trợ).
+   */
+  karaoke?: KaraokeWord[];
 }
 
 export type Clip = VideoClip | AudioClip | TextClip | StickerClip | ImageClip;
@@ -249,6 +300,11 @@ export interface TextStyle {
   color: string;
   /** Hex, ví dụ "#000000" */
   backgroundColor?: string;
+  /**
+   * Màu tô sáng karaoke (Phase 9 R4, hex). Chỉ dùng khi clip có `karaoke`;
+   * mặc định "#ffff00" (vàng) nếu không đặt. Preview và render ASS đều đọc.
+   */
+  highlightColor?: string;
   bold?: boolean;
   italic?: boolean;
   /** Vị trí tương đối 0..1 (0.5 = giữa) */
@@ -283,6 +339,14 @@ export interface VideoSpec {
   version: typeof SPEC_VERSION;
   meta: VideoMeta;
   tracks: Track[];
+  /**
+   * Marker/chapter trên timeline (Phase 9, optional — xem markers.ts).
+   * Dữ liệu thuần của editor: lưu cùng project JSON, tự động survive
+   * save/load. Render worker hiện BỎ QUA field này (không export chapter
+   * ra file, không vẽ lên video) — xem MARKERS_LIMITS.md.
+   * Không có field này (project cũ) = không có marker, hoàn toàn hợp lệ.
+   */
+  markers?: Marker[];
   /**
    * Plugin áp dụng khi render (tùy chọn). Không có trường này = hành vi
    * render cũ 100%. Render worker nạp plugin qua PluginRegistry:

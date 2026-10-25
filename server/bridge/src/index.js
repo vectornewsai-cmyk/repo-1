@@ -67,6 +67,7 @@ const {
   DEFAULT_VOICE,
   validateText,
   validateVoice,
+  validateRefAudio,
   ttsAvailable,
   runTts,
 } = require("./tts");
@@ -87,6 +88,8 @@ const {
 const {
   runBgremove,
   validateSession,
+  validateTemporal,
+  validateFeather,
   bgremoveAvailable,
   DEFAULT_SESSION,
 } = require("./bgremove");
@@ -845,6 +848,8 @@ app.post(
         transcribeTimeSec: result.transcribeTimeSec,
         count: result.segments.length,
         segments: result.segments,
+        // Phase 9 R4: word timestamps để UI gắn karaoke.
+        words: result.words || [],
       });
     } catch (e) {
       send({ type: "error", error: e.message || "Caption thất bại." });
@@ -1068,9 +1073,11 @@ app.post(
   rateLimit(RATE_MAX_RENDER), // R1-040: tác vụ nặng, giới hạn như render
   uploadMiddleware(upload.single("media")),
   async (req, res) => {
-    let session;
+    let session, temporal, feather;
     try {
       session = validateSession(req.body.session);
+      temporal = validateTemporal(req.body.temporal);
+      feather = validateFeather(req.body.feather);
     } catch (e) {
       return res.status(400).json({ error: e.message });
     }
@@ -1115,7 +1122,7 @@ app.post(
     try {
       // Phase 7 P6: runBgremove tự fallback u2net khi birefnet chết — báo
       // cho UI qua header để user thấy rõ session thực sự đã dùng.
-      const result = await runBgremove({ inputPath, outputPath, session });
+      const result = await runBgremove({ inputPath, outputPath, session, temporal, feather });
       console.log(
         `[bridge] bgremove xong: ${outName} (yêu cầu=${session}, ` +
         `thực dùng=${result.sessionUsed}${result.fallbackFrom ? `, fallback từ ${result.fallbackFrom}` : ""})`
@@ -1497,6 +1504,63 @@ app.post("/api/tts", rateLimit(RATE_MAX_RENDER), async (req, res) => {
   });
 });
 
+// --- POST /api/tts/clone (Phase 9 R4) ------------------------------------------
+// Clone giọng từ file mẫu: multipart field "refAudio" (audio) + "text".
+// Chạy tts.py --ref-audio (VieNeu-TTS encode_reference, 100% local, model
+// Apache-2.0). File mẫu và WAV đích đều dọn sau khi gửi xong.
+app.post(
+  "/api/tts/clone",
+  rateLimit(RATE_MAX_RENDER),
+  uploadMiddleware(upload.single("refAudio")),
+  async (req, res) => {
+    let text;
+    let refPath;
+    try {
+      text = validateText(req.body && req.body.text);
+      refPath = validateRefAudio(req.file);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+    const avail = ttsAvailable();
+    if (!avail.available) {
+      return res.status(503).json({ error: `TTS chưa sẵn sàng: ${avail.reason}` });
+    }
+    const dir = path.join(
+      WORK_ROOT,
+      `tts-clone-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+    );
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch (e) {
+      console.error(`[bridge] không tạo được thư mục tts-clone:`, e.message);
+      return res.status(500).json({ error: "Lỗi máy chủ khi chuẩn bị TTS — thử lại sau." });
+    }
+    let result;
+    try {
+      result = await runTts({ text, voice: undefined, refAudioPath: refPath, outDir: dir });
+    } catch (e) {
+      cleanupJobDir(dir);
+      return res.status(500).json({ error: e.message || "TTS clone thất bại." });
+    }
+    const wavPath = result.outPath;
+    if (!fs.existsSync(wavPath)) {
+      cleanupJobDir(dir);
+      return res.status(500).json({ error: "TTS xong nhưng không thấy file WAV." });
+    }
+    res.setHeader("X-TTS-Voice", "clone");
+    res.setHeader("X-TTS-Duration", String(result.durationSec || 0));
+    res.setHeader("X-TTS-Chars", String(result.chars || text.length));
+    // Phase 9 D2: để client/UI kiểm chứng được đường clone + đa-chunk từ
+    // ngoài (runTts đã spread JSON của tts.py gồm chunks + cloned).
+    res.setHeader("X-TTS-Chunks", String(result.chunks ?? 1));
+    res.setHeader("X-TTS-Cloned", result.cloned ? "1" : "0");
+    res.download(wavPath, `tts-clone-${Date.now()}.wav`, (err) => {
+      cleanupJobDir(dir);
+      if (err) console.error(`[bridge] lỗi gửi file TTS clone:`, err.message);
+    });
+  }
+);
+
 // --- GET /api/openapi.json (R1-092) -------------------------------------------
 // Trả về OpenAPI 3.0 spec (server/bridge/openapi.yaml) dạng JSON — dùng cho
 // Swagger UI, Redoc hoặc codegen client. Đọc file mỗi lần gọi để luôn mới
@@ -1574,6 +1638,25 @@ app.get("/api/proxy/file/:name", (req, res) => {
     return res.status(404).json({ error: "Không tìm thấy file proxy." });
   }
   res.setHeader("Content-Type", "video/mp4");
+  res.sendFile(full);
+});
+
+// R5 (Phase 9): phục vụ file .cube cho preview WebGL LUT (local-first).
+// File đã nằm trong assets/filters/ nên bridge chỉ đọc + trả về, không bundle
+// ~20MB .cube vào web, không cần mạng ngoài. Id = tên file không đuôi
+// (khớp LutId của video-spec); regex chặn mọi ký tự phân cách thư mục nên
+// không thể traversal ra ngoài FILTERS_DIR.
+const FILTERS_DIR = path.resolve(__dirname, "..", "..", "..", "assets", "filters");
+app.get("/api/luts/:id", (req, res) => {
+  const id = req.params.id || "";
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(id)) {
+    return res.status(400).json({ error: "Id LUT không hợp lệ." });
+  }
+  const full = path.join(FILTERS_DIR, `${id}.cube`);
+  if (!full.startsWith(FILTERS_DIR + path.sep) || !fs.existsSync(full)) {
+    return res.status(404).json({ error: "Không tìm thấy LUT." });
+  }
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.sendFile(full);
 });
 
