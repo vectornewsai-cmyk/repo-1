@@ -178,6 +178,18 @@ export class AudioEngine {
   }
 
   /**
+   * Phase 9 (MixerMeter): AnalyserNode của master bus (SAU master gain,
+   * TRƯỚC loa — đúng tín hiệu người dùng nghe, tức mix TỔNG của mọi element
+   * đang phát trong preview). Null khi graph chưa mở (chưa bấm play lần nào
+   * trong phiên — AudioContext chỉ được tạo từ user gesture).
+   * Lưu ý: analyser này là mono-mix theo Web Audio (getByteTimeDomainData
+   * trả về kênh đã mix), không tách được L/R — xem MARKERS_LIMITS.md.
+   */
+  getAnalyser(): AnalyserNode | null {
+    return this.analyser;
+  }
+
+  /**
    * Mở AudioContext + dựng graph. PHẢI gọi từ user gesture (nút play)
    * nếu không trình duyệt giữ context ở trạng thái "suspended".
    * Trả về true khi graph sẵn sàng (hoặc đã sẵn sàng từ trước).

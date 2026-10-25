@@ -215,3 +215,111 @@ export function validateAudioEffects(v: unknown): string[] {
   }
   return errs;
 }
+
+// ---------------------------------------------------------------------------
+// Audio ducking — nhạc tự nhỏ khi có lời thoại (kiểu CapCut "ducking").
+// Cấp PROJECT (không phải cấp clip): một cài đặt duy nhất cho toàn project.
+// Render: server/render/src/render.js tách mix thành 2 nhánh (voice mix từ
+// track giọng + music mix từ các track audio còn lại và audio kế thừa của
+// video), áp FFmpeg `sidechaincompress` rồi amix lại — xem DUCKING_LIMITS.md.
+// Mặc định TẮT: không khai `ducking`, hoặc `enabled` khác true, thì render
+// y hệt cũ (filtergraph không đổi 1 ký tự).
+// ---------------------------------------------------------------------------
+
+/**
+ * Cài đặt audio ducking cho project.
+ * Mọi field đều optional; chỉ `enabled: true` mới bật.
+ */
+export interface DuckingSettings {
+  /** Bật ducking. Mặc định false (tắt). */
+  enabled?: boolean;
+  /**
+   * id của track audio chứa lời thoại (= sidechain source).
+   * Bắt buộc khi enabled=true. Chỉ track kind="audio" mới được tính;
+   * trỏ tới track video / track không tồn tại / track trống thì render
+   * worker cảnh báo và rơi về mix cũ (không ducking) — xem DUCKING_LIMITS.md.
+   */
+  voiceTrackId?: string;
+  /** Ngưỡng kích hoạt (dB), -60..0, mặc định -20. Render đổi sang linear cho sidechaincompress. */
+  thresholdDb?: number;
+  /** Tỉ lệ nén 1..20, mặc định 4. */
+  ratio?: number;
+  /** Attack (ms) 0.1..2000, mặc định 20. */
+  attackMs?: number;
+  /** Release (ms) 10..9000, mặc định 250. */
+  releaseMs?: number;
+  /**
+   * Mức giảm tối đa (dB), 0..24, mặc định 12. Render map sang `mix` của
+   * sidechaincompress (mix = 1 - 10^(-duckAmountDb/20)): đây là MỨC TRẦN
+   * xấp xỉ qua dry/wet blend, không phải knee cứng — xem DUCKING_LIMITS.md.
+   */
+  duckAmountDb?: number;
+}
+
+/** Giá trị mặc định của ducking khi field bị bỏ trống (enabled vẫn tắt). */
+export const DEFAULT_DUCKING_SETTINGS: Required<
+  Omit<DuckingSettings, "enabled" | "voiceTrackId">
+> = {
+  thresholdDb: -20,
+  ratio: 4,
+  attackMs: 20,
+  releaseMs: 250,
+  duckAmountDb: 12,
+};
+
+/** true khi ducking được bật rõ ràng (enabled === true). */
+export function isDuckingEnabled(d?: DuckingSettings | null): boolean {
+  return d?.enabled === true;
+}
+
+/** Validate DuckingSettings. Trả về danh sách lỗi (rỗng = hợp lệ). */
+export function validateDuckingSettings(v: unknown): string[] {
+  if (v === undefined || v === null) return [];
+  if (typeof v !== "object" || Array.isArray(v)) return ["ducking phải là object"];
+  const d = v as Record<string, unknown>;
+  const errs: string[] = [];
+  if (d["enabled"] !== undefined && typeof d["enabled"] !== "boolean") {
+    errs.push(`ducking.enabled phải là boolean, nhận được: ${JSON.stringify(d["enabled"])}`);
+  }
+  const vt = d["voiceTrackId"];
+  if (vt !== undefined && (typeof vt !== "string" || vt.length === 0)) {
+    errs.push(
+      `ducking.voiceTrackId phải là chuỗi id track khác rỗng, nhận được: ${JSON.stringify(vt)}`,
+    );
+  }
+  if (d["enabled"] === true && vt === undefined) {
+    errs.push("ducking.enabled=true nhưng thiếu voiceTrackId (chưa chọn track giọng)");
+  }
+  const numIn = (key: string, min: number, max: number) => {
+    const val = d[key];
+    if (val === undefined) return;
+    if (typeof val !== "number" || !Number.isFinite(val) || val < min || val > max) {
+      errs.push(
+        `ducking.${key} phải là số trong [${min}, ${max}], nhận được: ${JSON.stringify(val)}`,
+      );
+    }
+  };
+  numIn("thresholdDb", -60, 0);
+  numIn("ratio", 1, 20);
+  numIn("attackMs", 0.1, 2000);
+  numIn("releaseMs", 10, 9000);
+  numIn("duckAmountDb", 0, 24);
+  return errs;
+}
+
+// ---------------------------------------------------------------------------
+// Module augmentation: gắn `ducking?` vào VideoSpec mà KHÔNG sửa index.ts.
+// (index.ts thuộc sở hữu của agent chính — khi index.ts chính thức hỗ trợ
+// field này thì xóa block này đi. Cùng mẫu với chroma.ts / lut.ts.)
+// ---------------------------------------------------------------------------
+import "./index.js";
+
+declare module "./index.js" {
+  interface VideoSpec {
+    /**
+     * Audio ducking cấp project — xem DuckingSettings.
+     * Không có trường này = tắt, render y hệt cũ.
+     */
+    ducking?: DuckingSettings;
+  }
+}

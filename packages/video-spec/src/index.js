@@ -38,6 +38,8 @@ export * from "./mask.js";
 export * from "./enhance.js";
 // R1-015: audio routing cho video nguồn (inherit/mute/detach).
 export * from "./audio.js";
+// Phase 9: marker/chapter trên timeline (dữ liệu thuần của editor).
+export * from "./markers.js";
 // R1-055: frame-accurate timebase (snap theo frame, timecode).
 export * from "./timebase.js";
 /** Kiểm tra nhanh spec có hợp lệ tối thiểu không (validate đầy đủ bằng zod ở render worker). */
