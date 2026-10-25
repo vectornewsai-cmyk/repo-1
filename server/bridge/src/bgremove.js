@@ -62,6 +62,27 @@ function validateSession(raw) {
   return s;
 }
 
+/** Phase 9 đợt 2: validate tham số smoothing (khớp --temporal/--feather
+ * của bgremove.py); throw → endpoint trả 400. Mặc định temporal=0.4,
+ * feather=1 — giống mặc định của bgremove.py. */
+function validateTemporal(raw) {
+  if (raw === undefined || raw === null || raw === "") return 0.4;
+  const v = Number(raw);
+  if (!Number.isFinite(v) || v < 0 || v > 0.9) {
+    throw new Error(`Tham số temporal không hợp lệ: "${raw}" (phải trong [0, 0.9]).`);
+  }
+  return v;
+}
+
+function validateFeather(raw) {
+  if (raw === undefined || raw === null || raw === "") return 1;
+  const v = Number(raw);
+  if (!Number.isInteger(v) || v < 0 || v > 8) {
+    throw new Error(`Tham số feather không hợp lệ: "${raw}" (phải là số nguyên trong [0, 8]).`);
+  }
+  return v;
+}
+
 /** Đọc marker machine-readable mà bgremove.py in ra stderr. */
 function parseSessionMarkers(stderrText) {
   const used = stderrText.match(/\[bgremove\]\s+session_used=([a-z0-9_-]+)/);
@@ -83,7 +104,8 @@ function bgremoveAvailable(cfg = bgremoveConfigFromEnv()) {
  * 1 lần chạy bgremove.py. Resolve: { outputPath, sessionUsed, fallbackFrom }.
  * Reject: Error có thêm .code/.signal/.timedOut để caller quyết định retry.
  */
-function runAttempt({ inputPath, outputPath, session, onPhase, cfg }) {
+function runAttempt({ inputPath, outputPath, session, onPhase, cfg,
+                      temporal = 0.4, feather = 1 }) {
   return new Promise((resolve, reject) => {
     const args = [
       cfg.bgremovePy,
@@ -91,6 +113,8 @@ function runAttempt({ inputPath, outputPath, session, onPhase, cfg }) {
       "--output", outputPath,
       "--mode", "alpha",
       "--session", session,
+      "--temporal", String(temporal),
+      "--feather", String(feather),
     ];
     if (cfg.modelDir) {
       args.push("--model-dir", cfg.modelDir);
@@ -164,10 +188,12 @@ function runAttempt({ inputPath, outputPath, session, onPhase, cfg }) {
  * Resolve: { outputPath, sessionUsed, fallbackFrom, fallbackReason }.
  * Reject: Error (đã thử cả 2 session, hoặc lỗi không retry được).
  */
-async function runBgremove({ inputPath, outputPath, session, onPhase }) {
+async function runBgremove({ inputPath, outputPath, session, onPhase,
+                             temporal = 0.4, feather = 1 }) {
   const cfg = bgremoveConfigFromEnv();
   const requested = session === "auto" ? DEFAULT_SESSION : session;
-  const attempt = (s) => runAttempt({ inputPath, outputPath, session: s, onPhase, cfg });
+  const attempt = (s) => runAttempt({ inputPath, outputPath, session: s,
+                                      onPhase, cfg, temporal, feather });
   let first;
   try {
     first = await attempt(requested);
@@ -214,6 +240,8 @@ module.exports = {
   bgremoveAvailable,
   runBgremove,
   validateSession,
+  validateTemporal,
+  validateFeather,
   parseSessionMarkers,
   DEFAULT_SESSION,
   FORBIDDEN_SESSIONS,

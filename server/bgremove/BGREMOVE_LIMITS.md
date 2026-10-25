@@ -86,6 +86,35 @@ các frame, không giật.
 - Không có refine matting (không feather/guided filter sau inference) —
   viền có thể hơi cứng ở 1 số frame. TODO nếu cần.
 
+### 2.5. Phase 9 đợt 2 (24/10) — temporal smoothing + feather (ĐÃ LÀM)
+
+- **Cách làm:** sau mỗi frame rembg, alpha đi qua EMA
+  `out = 0.4*prev + 0.6*cur` (mặc định `--temporal 0.4`) rồi feather bằng
+  box blur tách được bán kính `--feather 1` (numpy thuần, không cần cv2
+  để test). Áp dụng TRƯỚC khi đưa alpha vào cả 3 mode (mask/composite/
+  alpha) nên mọi đầu ra đều được hưởng.
+- **Cắt cảnh không kéo bóng ma:** nếu mean |cur − prev| > 0.30
+  (`--scene-cut`) thì EMA reset, trả cur nguyên — test chứng minh
+  out mean = 1.0 khi chuyển từ toàn đen sang toàn trắng.
+- **Số đo thật (test thuần numpy, không cần model — `test_bgremove_smooth.py`
+  4/4 pass):** chuỗi matte nhiễu gauss σ=0.20 có mean inter-frame diff
+  **0.1136 → 0.0620 sau EMA (giảm 45%)**; feather radius=1 biến cạnh cứng
+  0/1 thành giá trị trung gian 0.333/0.667 quanh cạnh, vùng phẳng xa
+  viền không đổi.
+- **Trung thực — đây KHÔNG phải guided filter / RVM:** feather là box blur
+  nên làm mềm cả chi tiết tóc tơ một chút; EMA 0.4 có thể gây bóng ma nhẹ
+  khi chủ thể chuyển động rất nhanh (đổi `--temporal 0` để tắt, hoặc tắt
+  checkbox trong BgRemovePanel). Tốc độ inference vẫn ~2.2 s/frame trên
+  CPU (smoothing/feather rẻ, không đáng kể so với rembg) — chưa đo lại
+  end-to-end vì VM hiện không có cv2/rembg/model.
+- **Đường ra UI:** BgRemovePanel có checkbox "Mượt theo thời gian" (mặc
+  định bật) + chọn feather 0–3 px; bridge validate và truyền
+  `--temporal/--feather` sang `bgremove.py` (test
+  `server/bridge/test/test-bgremove-smooth.cjs` pass).
+- **Chưa làm:** temporal smoothing chưa test end-to-end với model thật
+  trên video người thật (cần máy có rembg + model); chưa có guided filter
+  theo biên ảnh (cần cv2.ximgproc, tốn thêm phụ thuộc).
+
 ## 3. Những gì CHƯA làm
 
 - [x] ~~Cho user chọn session trong UI~~ — xong ở Phase 7 P6 (picker +

@@ -56,7 +56,85 @@ def parse_args(argv=None):
     p.add_argument("--no-fallback", action="store_true",
                    help="Tắt fallback tự động sang u2net khi session birefnet lỗi "
                         "(mặc định: bật — xem BGREMOVE_LIMITS.md)")
+    # Phase 9 đợt 2 — mượt matte theo thời gian (xem BGREMOVE_LIMITS.md §2.5):
+    # EMA giữa các frame chống nhấp nháy + feather viền bằng box blur
+    # numpy thuần (không cần cv2) để test được mà không cần rembg/model.
+    p.add_argument("--temporal", type=_temporal_arg, default=0.4,
+                   help="Trọng số frame trước trong EMA alpha (0 = tắt, "
+                        "mặc định 0.4; cắt cảnh tự reset, không kéo bóng ma)")
+    p.add_argument("--feather", type=_feather_arg, default=1,
+                   help="Bán kính feather viền alpha, px ở độ phân giải xử lý "
+                        "(0 = tắt, mặc định 1)")
+    p.add_argument("--scene-cut", type=_scene_cut_arg, default=0.30,
+                   help="Ngưỡng mean |diff| alpha (0–1) để coi là cắt cảnh và "
+                        "reset EMA (mặc định 0.30)")
     return p.parse_args(argv)
+
+
+def _temporal_arg(s):
+    v = float(s)
+    if not 0.0 <= v <= 0.9:
+        raise argparse.ArgumentTypeError("--temporal phải trong [0, 0.9]")
+    return v
+
+
+def _feather_arg(s):
+    v = int(s)
+    if not 0 <= v <= 8:
+        raise argparse.ArgumentTypeError("--feather phải trong [0, 8]")
+    return v
+
+
+def _scene_cut_arg(s):
+    v = float(s)
+    if not 0.0 < v <= 1.0:
+        raise argparse.ArgumentTypeError("--scene-cut phải trong (0, 1]")
+    return v
+
+
+def smooth_alpha(prev, cur, strength, scene_cut=0.30):
+    """EMA 1 bước cho alpha matte (float 0–1, cùng shape).
+
+    - prev None → trả cur nguyên (frame đầu, không có gì để mượt).
+    - mean |cur - prev| > scene_cut → coi là cắt cảnh, trả cur nguyên
+      (không kéo bóng ma của cảnh cũ sang cảnh mới).
+    - Ngược lại: out = strength*prev + (1-strength)*cur.
+    Thuần numpy, không cần cv2/rembg — test được độc lập.
+    """
+    import numpy as np
+    cur = np.asarray(cur, dtype=np.float32)
+    if prev is None or strength <= 0.0:
+        return cur
+    prev = np.asarray(prev, dtype=np.float32)
+    if prev.shape != cur.shape:
+        return cur
+    if float(np.mean(np.abs(cur - prev))) > scene_cut:
+        return cur
+    return (strength * prev + (1.0 - strength) * cur).astype(np.float32)
+
+
+def feather_alpha(alpha, radius):
+    """Làm mềm viền alpha bằng box blur tách được (numpy thuần).
+
+    radius=0 → trả nguyên. Blur 2 lần (ngang + dọc) với kernel (2r+1);
+    biên dùng edge-padding nên vùng phẳng xa viền không đổi. Đây là
+    box blur, KHÔNG phải guided filter — trung thực ghi rõ ở LIMITS.
+    """
+    import numpy as np
+    a = np.asarray(alpha, dtype=np.float32)
+    if radius <= 0:
+        return a
+    k = 2 * radius + 1
+    pad = radius
+    padded = np.pad(a, pad, mode="edge")
+    # Blur ngang: cumsum theo trục 1.
+    c = np.cumsum(padded, axis=1, dtype=np.float32)
+    c = np.concatenate([np.zeros((c.shape[0], 1), np.float32), c], axis=1)
+    horiz = (c[:, k:] - c[:, :-k]) / k
+    padded2 = np.pad(horiz, ((pad, pad), (0, 0)), mode="edge")
+    c2 = np.cumsum(padded2, axis=0, dtype=np.float32)
+    c2 = np.concatenate([np.zeros((1, c2.shape[1]), np.float32), c2], axis=0)
+    return ((c2[k:, :] - c2[:-k, :]) / k).astype(np.float32)
 
 
 def _fail(msg):
@@ -134,6 +212,7 @@ def run_once(args, session_name):
         _fail("Không tìm thấy ffmpeg trong PATH.")
 
     idx = 0
+    prev_alpha = None  # Phase 9 đợt 2: EMA theo thời gian (float 0–1, HxW)
     try:
         while True:
             ok, frame = cap.read() if idx else (True, frame)
@@ -145,7 +224,16 @@ def run_once(args, session_name):
             # rembg session.predict nhận PIL, trả về mask PIL ("L")
             mask = session.predict(Image.fromarray(rgb))[0]
             mask_np = np.array(mask.resize((w, h), Image.Resampling.LANCZOS))
-            alpha = (mask_np.astype(np.float32) / 255.0)[..., None]
+            # Phase 9 đợt 2: EMA chống nhấp nháy rồi feather viền, trước
+            # khi đưa alpha vào mọi mode (mask/composite/alpha dùng chung).
+            raw_alpha = mask_np.astype(np.float32) / 255.0
+            smoothed = smooth_alpha(prev_alpha, raw_alpha,
+                                    getattr(args, "temporal", 0.4),
+                                    getattr(args, "scene_cut", 0.30))
+            smoothed = feather_alpha(smoothed, getattr(args, "feather", 1))
+            prev_alpha = smoothed
+            mask_np = np.clip(np.rint(smoothed * 255.0), 0, 255).astype(np.uint8)
+            alpha = smoothed[..., None]
 
             if args.mode == "mask":
                 writer.stdin.write(mask_np.tobytes())
