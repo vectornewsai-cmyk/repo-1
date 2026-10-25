@@ -19,6 +19,7 @@ import { useStore } from "../../store";
 import { uid } from "../../lib";
 import { detectAnimatedImage } from "../../lib/userLut";
 import "./sticker.css";
+import { t as i18nT, useLang } from "../../i18n";
 import {
   STICKER_CATEGORIES,
   STICKER_LIBRARY,
@@ -83,6 +84,7 @@ function addStickerToTimeline(src: string) {
 }
 
 function StickerEditor({ clip, trackId }: { clip: StickerClip; trackId: string }) {
+  useLang();
   const st = useStore.getState();
   const n = normalizeStickerClip(clip);
   const patch = (p: Partial<StickerClip>) =>
@@ -99,20 +101,20 @@ function StickerEditor({ clip, trackId }: { clip: StickerClip; trackId: string }
         <img src={previewSrc} alt="" className="sticker-thumb" />
         <div>
           <b>{clip.src.split("/").pop()}</b>
-          <div className="muted">Sticker đang chọn</div>
+          <div className="muted">{i18nT("sticker.editorSelected")}</div>
         </div>
       </div>
-      <NumRow label="Vị trí ngang" value={n.x} min={0} max={1} step={0.01}
+      <NumRow label={i18nT("sticker.posX")} value={n.x} min={0} max={1} step={0.01}
         format={(v) => `${Math.round(v * 100)}%`} onChange={(v) => patch({ x: v })} />
-      <NumRow label="Vị trí dọc" value={n.y} min={0} max={1} step={0.01}
+      <NumRow label={i18nT("sticker.posY")} value={n.y} min={0} max={1} step={0.01}
         format={(v) => `${Math.round(v * 100)}%`} onChange={(v) => patch({ y: v })} />
-      <NumRow label="Kích thước" value={n.scale} min={0.05} max={1} step={0.01}
+      <NumRow label={i18nT("sticker.size")} value={n.scale} min={0.05} max={1} step={0.01}
         format={(v) => `${Math.round(v * 100)}%`} onChange={(v) => patch({ scale: v })} />
-      <NumRow label="Độ mờ" value={n.opacity} min={0} max={1} step={0.01}
+      <NumRow label={i18nT("sticker.opacity")} value={n.opacity} min={0} max={1} step={0.01}
         format={(v) => `${Math.round(v * 100)}%`} onChange={(v) => patch({ opacity: v })} />
-      <NumRow label="Xoay" value={n.rotation} min={-180} max={180} step={1}
+      <NumRow label={i18nT("sticker.rotation")} value={n.rotation} min={-180} max={180} step={1}
         format={(v) => `${Math.round(v)}°`} onChange={(v) => patch({ rotation: v })} />
-      <p className="tips">💡 Sticker hiện khi render video. Preview trực tiếp trên canvas sẽ có sau khi agent chính tích hợp.</p>
+      <p className="tips">{i18nT("sticker.editorTip")}</p>
     </div>
   );
 }
@@ -124,6 +126,7 @@ function stickerPreviewSrc(src: string): string {
 }
 
 export function StickerPanel() {
+  useLang();
   const selection = useStore((s) => s.selection);
   const spec = useStore((s) => s.spec);
   const [err, setErr] = useState<string | null>(null);
@@ -146,7 +149,7 @@ export function StickerPanel() {
 
   const onUpload = async (f: File | undefined) => {
     if (!f) return;
-    if (!f.type.startsWith("image/")) { setErr("Chỉ nhận file ảnh (PNG trong suốt đẹp nhất)."); return; }
+    if (!f.type.startsWith("image/")) { setErr(i18nT("sticker.errImageOnly")); return; }
     // K3: phát hiện sticker động trước khi thêm.
     // - APNG động: render được thật qua FFmpeg → đăng ký vào media store để
     //   export tìm được file gốc (src = tên file, không dùng blob URL).
@@ -154,10 +157,7 @@ export function StickerPanel() {
     //   "image data not found" dù file hợp lệ) → từ chối rõ ràng, gợi ý APNG.
     const info = await detectAnimatedImage(f).catch(() => null);
     if (info?.format === "webp" && info.animated) {
-      setErr(
-        "WebP động chưa render được với FFmpeg hiện tại (lỗi demuxer) — " +
-        "hãy dùng APNG động hoặc WebP tĩnh thay thế.",
-      );
+      setErr(i18nT("sticker.errWebp"));
       return;
     }
     if (info?.format === "apng" && info.animated) {
@@ -190,11 +190,11 @@ export function StickerPanel() {
         <StickerEditor clip={stickerClip} trackId={track.id} />
       ) : (
         <>
-          <p className="tips">Bấm vào sticker để dán lên video tại vị trí playhead (3 giây).</p>
+          <p className="tips">{i18nT("sticker.libTip")}</p>
           <input
             className="sticker-search"
             type="search"
-            placeholder="🔍 Tìm sticker…"
+            placeholder={i18nT("sticker.searchPlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -203,7 +203,7 @@ export function StickerPanel() {
               className={tab === "all" ? "active" : ""}
               onClick={() => setTab("all")}
             >
-              Tất cả ({STICKER_LIBRARY.length})
+              {i18nT("sticker.allTab")} ({STICKER_LIBRARY.length})
             </button>
             {STICKER_CATEGORIES.map((c) => (
               <button
@@ -229,10 +229,10 @@ export function StickerPanel() {
             ))}
           </div>
           {visible.length === 0 && (
-            <p className="muted">Không tìm thấy sticker nào cho "{query}".</p>
+            <p className="muted">{i18nT("sticker.noResult", { q: query })}</p>
           )}
           <button className="toggle" onClick={() => fileRef.current?.click()}>
-            ⬆ Tải ảnh của bạn (PNG / APNG động)…
+            {i18nT("sticker.uploadBtn")}
           </button>
           <input
             ref={fileRef}
@@ -242,8 +242,7 @@ export function StickerPanel() {
             onChange={(e) => { void onUpload(e.target.files?.[0]); e.target.value = ""; }}
           />
           <p className="tips">
-            APNG động render được thật. WebP động chưa hỗ trợ (giới hạn FFmpeg) —
-            WebP tĩnh vẫn dùng bình thường.
+            {i18nT("sticker.footTip")}
           </p>
         </>
       )}

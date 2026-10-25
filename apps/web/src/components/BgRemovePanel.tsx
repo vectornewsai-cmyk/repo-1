@@ -13,6 +13,7 @@
 import { useRef, useState } from "react";
 import { useStore } from "../store";
 import type { MediaItem } from "../media";
+import { t as i18nT, useLang } from "../i18n";
 
 const BRIDGE_URL =
   (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_BRIDGE_URL ||
@@ -23,35 +24,39 @@ type Status = "idle" | "running" | "error";
 type BgSession = "auto" | "birefnet-general" | "u2net";
 
 export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined }) {
+  useLang();
   const [status, setStatus] = useState<Status>("idle");
   const [msg, setMsg] = useState("");
   // Phase 7 P6: chọn session — "auto" (mặc định) thử birefnet trước, lỗi/OOM
   // thì bridge tự chuyển sang u2net và báo qua header X-Bgremove-*.
   const [session, setSession] = useState<BgSession>("auto");
+  // Phase 9 đợt 2: mượt matte theo thời gian + feather viền (mặc định bật,
+  // khớp mặc định bgremove.py: temporal=0.4, feather=1).
+  const [temporal, setTemporal] = useState(true);
+  const [feather, setFeather] = useState(1);
   const abortRef = useRef<AbortController | null>(null);
 
   const run = async () => {
     if (!mediaItem?.file) {
       setStatus("error");
-      setMsg("Không tìm thấy file video gốc.");
+      setMsg(i18nT("bgremove.noFile"));
       return;
     }
     if (
-      !window.confirm(
-        "Xoá nền video bằng AI (chạy local, có thể mất vài phút)?\n" +
-          "Kết quả là video có nền trong suốt, thay thế clip hiện tại."
-      )
+      !window.confirm(i18nT("bgremove.confirm"))
     ) {
       return;
     }
     setStatus("running");
-    setMsg("Đang xoá nền bằng AI local… (có thể mất vài phút)");
+    setMsg(i18nT("bgremove.running"));
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     try {
       const form = new FormData();
       form.append("media", mediaItem.file, mediaItem.file.name);
       form.append("session", session); // MIT — xem BGREMOVE_LIMITS.md
+      form.append("temporal", temporal ? "0.4" : "0");
+      form.append("feather", String(feather));
       const res = await fetch(`${BRIDGE_URL}/api/bgremove`, {
         method: "POST",
         body: form,
@@ -62,7 +67,7 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
         const j = ct.includes("application/json")
           ? ((await res.json()) as { error?: string })
           : null;
-        throw new Error(j?.error || `Bridge lỗi HTTP ${res.status}.`);
+        throw new Error(j?.error || i18nT("bgremove.bridgeHttp", { status: String(res.status) }));
       }
       // Phase 7 P6: bridge báo session thực sự đã dùng qua header — hiển
       // thị rõ nếu đã fallback (đừng để user tưởng vẫn là birefnet).
@@ -84,18 +89,18 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
       }
       setStatus("idle");
       setMsg(
-        `Xong! Clip đã dùng video "${added?.name ?? file.name}" (nền trong suốt, session ${sessionUsed}).` +
+        i18nT("bgremove.done", { name: added?.name ?? file.name, session: sessionUsed }) +
         (fallbackFrom
-          ? ` Lưu ý: ${fallbackFrom} thất bại trên máy này nên đã tự chuyển sang ${sessionUsed} — chất lượng tách nền có thể kém hơn một chút.`
+          ? i18nT("bgremove.fallbackNote", { from: fallbackFrom, to: sessionUsed })
           : "")
       );
     } catch (e) {
       if ((e as Error).name === "AbortError") {
         setStatus("idle");
-        setMsg("Đã hủy.");
+        setMsg(i18nT("bgremove.aborted"));
       } else {
         setStatus("error");
-        setMsg((e as Error).message || "Xoá nền thất bại.");
+        setMsg((e as Error).message || i18nT("bgremove.failed"));
       }
     } finally {
       abortRef.current = null;
@@ -107,29 +112,50 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
   return (
     <div>
       <p style={{ fontSize: 12, opacity: 0.75, margin: "0 0 8px" }}>
-        AI tách chủ thể khỏi nền (rembg + BiRefNet, chạy 100% trên máy bạn, không gửi
-        video đi đâu). Kết quả có nền trong suốt, đặt lên track trên để ghép.
+        {i18nT("bgremove.desc")}
       </p>
       <label style={{ fontSize: 12, display: "block", margin: "0 0 8px" }}>
-        Model tách nền{" "}
+        {i18nT("bgremove.modelLabel")}{" "}
         <select
           value={session}
           onChange={(e) => setSession(e.target.value as BgSession)}
           disabled={status === "running"}
         >
-          <option value="auto">Tự động (birefnet, lỗi thì u2net)</option>
-          <option value="birefnet-general">birefnet-general (nét nhất, nặng RAM)</option>
-          <option value="u2net">u2net (nhẹ, chạy được máy yếu)</option>
+          <option value="auto">{i18nT("bgremove.optAuto")}</option>
+          <option value="birefnet-general">{i18nT("bgremove.optBirefnet")}</option>
+          <option value="u2net">{i18nT("bgremove.optU2net")}</option>
+        </select>
+      </label>
+      <label style={{ fontSize: 12, display: "block", margin: "0 0 8px" }}>
+        <input
+          type="checkbox"
+          checked={temporal}
+          onChange={(e) => setTemporal(e.target.checked)}
+          disabled={status === "running"}
+        />{" "}
+        {i18nT("bgremove.temporalLabel")}
+      </label>
+      <label style={{ fontSize: 12, display: "block", margin: "0 0 8px" }}>
+        {i18nT("bgremove.featherLabel")}{" "}
+        <select
+          value={feather}
+          onChange={(e) => setFeather(Number(e.target.value))}
+          disabled={status === "running"}
+        >
+          <option value={0}>0 px</option>
+          <option value={1}>1 px</option>
+          <option value={2}>2 px</option>
+          <option value={3}>3 px</option>
         </select>
       </label>
       {status === "running" ? (
         <div>
           <p style={{ fontSize: 12 }}>{msg}</p>
-          <button type="button" onClick={cancel}>Hủy</button>
+          <button type="button" onClick={cancel}>{i18nT("bgremove.cancel")}</button>
         </div>
       ) : (
         <button type="button" onClick={run} disabled={!mediaItem?.file}>
-          🤖 Xoá nền AI
+          {i18nT("bgremove.run")}
         </button>
       )}
       {status === "error" && (

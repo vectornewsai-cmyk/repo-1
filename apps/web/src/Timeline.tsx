@@ -3,8 +3,14 @@
  * trim 2 mép, snap, zoom, thêm/xoá track, kéo-thả media từ thư viện.
  */
 import { useEffect, useRef, useState } from "react";
-import type { Clip, Track, TrackKind } from "@repo-1/video-spec";
-import { formatTimecode, snapToFrame, stickerUrl } from "@repo-1/video-spec";
+import type { Clip, Marker, Track, TrackKind } from "@repo-1/video-spec";
+import {
+  DEFAULT_MARKER_COLOR,
+  formatTimecode,
+  MARKER_COLORS,
+  snapToFrame,
+  stickerUrl,
+} from "@repo-1/video-spec";
 import { useStore } from "./store";
 import { t as i18nT, useLang } from "./i18n";
 import type { MoveItem, Selection } from "./store";
@@ -21,7 +27,7 @@ const LANE_H: Record<TrackKind, number> = { video: 58, audio: 46, text: 46, stic
 type DragState =
   | { mode: "scrub" }
   | { mode: "move"; items: MoveItem[]; startClientX: number }
-  | { mode: "trim"; trackId: string; clipId: string; edge: "left" | "right"; startClientX: number };
+  | { mode: "trim"; trackId: string; clipId: string; edge: "left" | "right"; startClientX: number; origStart: number; origDuration: number };
 
 /** Snap điểm bắt đầu/kết thúc clip tới playhead, mép clip khác, hoặc 0. */
 function snapTime(
@@ -195,7 +201,19 @@ function ClipThumb({ clip }: { clip: Clip }) {
   );
 }
 
-function Ruler({ width, pxPerSec }: { width: number; pxPerSec: number }) {
+function Ruler({
+  width,
+  pxPerSec,
+  markers,
+  selectedMarkerId,
+  onSelectMarker,
+}: {
+  width: number;
+  pxPerSec: number;
+  markers: Marker[];
+  selectedMarkerId: string | null;
+  onSelectMarker: (id: string | null) => void;
+}) {
   const playhead = useStore((s) => s.playhead);
   const fps = useStore((s) => s.spec.meta.fps);
   const step = tickStep(pxPerSec);
@@ -278,6 +296,33 @@ function Ruler({ width, pxPerSec }: { width: number; pxPerSec: number }) {
           <span>{formatTimecode(snapToFrame(t, fps), fps)}</span>
         </div>
       ))}
+      {/* Phase 9: marker trên ruler — click để seek tới đó + mở panel sửa.
+          onPointerDown stopPropagation để không trigger scrub của ruler. */}
+      {markers.map((m) => {
+        const color = m.color ?? DEFAULT_MARKER_COLOR;
+        const selected = m.id === selectedMarkerId;
+        return (
+          <div
+            key={m.id}
+            className={`tl-marker${selected ? " is-selected" : ""}`}
+            style={{ left: m.time * pxPerSec, borderColor: color }}
+            title={m.label ?? i18nT("timeline.markerUntitled")}
+            role="button"
+            aria-label={m.label ?? i18nT("timeline.markerUntitled")}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              useStore.getState().setPlayhead(m.time);
+              onSelectMarker(m.id);
+            }}
+          >
+            <span className="tl-marker-flag" style={{ background: color }}>◆</span>
+            <span className="tl-marker-label" style={{ color }}>
+              {m.label ?? i18nT("timeline.markerUntitled")}
+            </span>
+          </div>
+        );
+      })}
       <div className="tl-playhead-handle" style={{ left: playhead * pxPerSec }} />
     </div>
   );
@@ -375,6 +420,56 @@ function TrackFlags({ track }: { track: Track }) {
   );
 }
 
+/**
+ * Phase 9: panel sửa marker đang chọn. Label commit khi blur/Enter (không
+ * commit từng phím — mỗi commit là 1 bước undo). Màu commit ngay khi bấm
+ * (1 bước undo cho mỗi lần đổi màu).
+ */
+function MarkerEditor({ marker, onClose }: { marker: Marker; onClose: () => void }) {
+  const [label, setLabel] = useState(marker.label ?? "");
+  const commit = () => {
+    const st = useStore.getState();
+    if (label !== (marker.label ?? "")) st.updateMarker(marker.id, { label });
+  };
+  return (
+    <div className="tl-marker-editor">
+      <span className="tl-marker-editor-title">{i18nT("timeline.markerEdit")}</span>
+      <span className="tl-marker-editor-time">{fmtTime(marker.time)}</span>
+      <input
+        value={label}
+        placeholder={i18nT("timeline.markerLabelPlaceholder")}
+        aria-label={i18nT("timeline.markerLabelPlaceholder")}
+        onChange={(e) => setLabel(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+        }}
+      />
+      <span className="tl-marker-colors" role="group" aria-label={i18nT("timeline.markerColor")}>
+        {MARKER_COLORS.map((c) => (
+          <button
+            key={c}
+            className={`tl-marker-swatch${(marker.color ?? DEFAULT_MARKER_COLOR) === c ? " is-active" : ""}`}
+            style={{ background: c }}
+            title={c}
+            aria-label={c}
+            onClick={() => useStore.getState().updateMarker(marker.id, { color: c })}
+          />
+        ))}
+      </span>
+      <button
+        onClick={() => {
+          useStore.getState().deleteMarker(marker.id);
+          onClose();
+        }}
+      >
+        {i18nT("timeline.markerDelete")}
+      </button>
+      <button onClick={onClose} aria-label={i18nT("timeline.markerClose")}>×</button>
+    </div>
+  );
+}
+
 export function Timeline() {
   useLang();
   const spec = useStore((s) => s.spec);
@@ -394,6 +489,10 @@ export function Timeline() {
   const [box, setBox] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
   /** K5: vị trí thả media đang rê trên lane (vạch chỉ) — null khi không rê. */
   const [dropAt, setDropAt] = useState<{ trackId: string; at: number } | null>(null);
+  /** Phase 9: marker đang chọn để sửa (null = không mở panel). */
+  const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
+  const markers = spec.markers ?? [];
+  const selectedMarker = markers.find((m) => m.id === selectedMarkerId) ?? null;
 
   const duration = useStore.getState().duration();
   const width = Math.max(duration * pxPerSec, 600) + 240;
@@ -436,7 +535,20 @@ export function Timeline() {
         const snapped = snapTime(primary.origStart + dxSec, clip.duration, track, clip.id, st.playhead, pps);
         st.moveSelectionBy(drag.items, snapped - primary.origStart);
       } else {
-        st.trimClip(drag.trackId, drag.clipId, drag.edge, dxSec);
+        // Phase 9 fix (bug R6 tìm ra): trimClip áp delta lên giá trị HIỆN
+        // TẠI, nên truyền dxSec tuyệt đối từ điểm bắt đầu kéo sẽ cộng dồn
+        // N lần (kéo 12 bước nhỏ → clip kẹp về min 0.2s). Sửa bằng cách
+        // tính delta từ đích tuyệt đối (snapshot lúc bắt đầu kéo) trừ giá
+        // trị hiện tại — trimClip giữ nguyên contract, snap theo frame
+        // vẫn tích lũy đúng vì nó luôn áp lên đích tuyệt đối.
+        const track = st.spec.tracks.find((t) => t.id === drag.trackId);
+        const clip = track?.clips.find((c) => c.id === drag.clipId);
+        if (!track || !clip) return;
+        const delta =
+          drag.edge === "right"
+            ? drag.origDuration + dxSec - clip.duration
+            : drag.origStart + dxSec - clip.start;
+        st.trimClip(drag.trackId, drag.clipId, drag.edge, delta);
       }
     };
     const onUp = (e: PointerEvent) => {
@@ -498,7 +610,7 @@ export function Timeline() {
   ) => {
     if (track.locked) return; // R1-054: track khóa không trim được (store cũng chặn)
     useStore.getState().select({ trackId: track.id, clipId: clip.id });
-    dragRef.current = { mode: "trim", trackId: track.id, clipId: clip.id, edge, startClientX: e.clientX };
+    dragRef.current = { mode: "trim", trackId: track.id, clipId: clip.id, edge, startClientX: e.clientX, origStart: clip.start, origDuration: clip.duration };
     // R1-051: gộp mọi bước trim trong lần kéo thành 1 entry
     useStore.getState().beginHistoryGroup(i18nT("timeline.histTrim"));
   };
@@ -581,13 +693,27 @@ export function Timeline() {
   const st = useStore.getState();
 
   return (
-    <section className="timeline">
+    <section className="timeline" data-tour="timeline">
       <div className="tl-toolbar">
         <div className="tl-add-track">
           <span className="tl-toolbar-label">{i18nT("timeline.toolbarTrack")}</span>
           <button onClick={() => st.addTrack("video")} title={i18nT("timeline.addVideo")}>＋ 🎬</button>
           <button onClick={() => st.addTrack("audio")} title={i18nT("timeline.addAudio")}>＋ 🎵</button>
           <button onClick={() => st.addTrack("text")} title={i18nT("timeline.addText")}>＋ 🔤</button>
+        </div>
+        {/* Phase 9: thêm marker tại playhead (phím tắt M — xem App.tsx). */}
+        <div className="tl-markers">
+          <button
+            onClick={() => {
+              const m = st.addMarkerAtPlayhead(
+                i18nT("timeline.markerDefault", { n: String(markers.length + 1) }),
+              );
+              if (m) setSelectedMarkerId(m.id);
+            }}
+            title={i18nT("timeline.markerAddTitle")}
+          >
+            {i18nT("timeline.markerAdd")}
+          </button>
         </div>
         <div className="tl-ripple">
           <button
@@ -617,6 +743,14 @@ export function Timeline() {
         <div className="tl-hint">{i18nT("timeline.hint")}</div>
       </div>
 
+      {selectedMarker && (
+        <MarkerEditor
+          key={selectedMarker.id}
+          marker={selectedMarker}
+          onClose={() => setSelectedMarkerId(null)}
+        />
+      )}
+
       <div className="tl-body">
         <div className="tl-gutter">
           <div className="tl-gutter-head">{i18nT("timeline.gutterTrack")}</div>
@@ -640,7 +774,13 @@ export function Timeline() {
         </div>
 
         <div className="tl-scroll">
-          <Ruler width={width} pxPerSec={pxPerSec} />
+          <Ruler
+            width={width}
+            pxPerSec={pxPerSec}
+            markers={markers}
+            selectedMarkerId={selectedMarkerId}
+            onSelectMarker={setSelectedMarkerId}
+          />
           <div
             ref={lanesRef}
             className="tl-lanes"

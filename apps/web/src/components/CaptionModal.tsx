@@ -17,11 +17,19 @@ import {
   TRANSLATE_TARGET_LANGS,
   translatedTrackLabel,
   validateCaptionSegments,
+  validateCaptionWords,
   type CaptionLangCode,
   type CaptionSegment,
+  type CaptionWord,
   type TranslateTargetCode,
 } from "../lib/captions";
 import { formatTimecode } from "@repo-1/video-spec";
+import {
+  collectProjectCaptions,
+  formatSrt,
+  formatVtt,
+  parseSubtitleFile,
+} from "../lib/subtitles";
 
 const BRIDGE_URL =
   (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_BRIDGE_URL ||
@@ -42,6 +50,7 @@ interface NdjsonEvent {
   transcribeTimeSec?: number;
   count?: number;
   segments?: unknown;
+  words?: unknown;
   error?: string;
 }
 
@@ -87,6 +96,13 @@ export function CaptionModal({ onClose }: Props) {
   const [elapsed, setElapsed] = useState(0);
   const [segments, setSegments] = useState<CaptionSegment[]>([]);
   const [dropped, setDropped] = useState<Set<number>>(new Set());
+  // Phase 9 R4: word timestamps từ lần caption (để gắn karaoke). Track
+  // dịch không có words nên không karaoke.
+  const [words, setWords] = useState<CaptionWord[]>([]);
+  const [karaokeEnabled, setKaraokeEnabled] = useState(true);
+  const [highlightColor, setHighlightColor] = useState("#ffff00");
+  // Phase 9 R4: ghi chú sau khi nhập SRT/VTT (vd: "bỏ 2 cue hỏng").
+  const [importNote, setImportNote] = useState<string | null>(null);
   // R1-080: bản dịch (null = không dịch)
   const [segmentsEn, setSegmentsEn] = useState<CaptionSegment[] | null>(null);
   const [droppedEn, setDroppedEn] = useState<Set<number>>(new Set());
@@ -97,6 +113,13 @@ export function CaptionModal({ onClose }: Props) {
 
   const kept = segments.filter((_, i) => !dropped.has(i));
   const keptEn = (segmentsEn ?? []).filter((_, i) => !droppedEn.has(i));
+
+  // Phase 9 D6: toàn bộ phụ đề của project (mọi track phụ đề) để xuất ở
+  // cấp project — khác với nút xuất ở bước review (chỉ segment đang giữ).
+  const projectCaptions = useMemo(
+    () => collectProjectCaptions(spec.tracks),
+    [spec.tracks]
+  );
 
   // Dọn timer/abort khi đóng modal giữa chừng.
   useEffect(() => {
@@ -159,6 +182,10 @@ export function CaptionModal({ onClose }: Props) {
           setPhaseMsg(evt.message || evt.phase || "Đang xử lý…");
         } else if (evt.type === "done") {
           got = validateCaptionSegments(evt.segments);
+          // R4: chỉ job caption gốc mới có words (job dịch thì không).
+          if (endpoint === "/api/caption") {
+            setWords(validateCaptionWords(evt.words));
+          }
         } else if (evt.type === "error") {
           throw new Error(evt.error || "Caption thất bại.");
         }
@@ -178,6 +205,7 @@ export function CaptionModal({ onClose }: Props) {
     setStep("running");
     setSegments([]);
     setDropped(new Set());
+    setWords([]);
     setSegmentsEn(null);
     setDroppedEn(new Set());
     setPhaseMsg("Đang gửi file lên bridge…");
@@ -220,6 +248,68 @@ export function CaptionModal({ onClose }: Props) {
     abortRef.current?.abort();
   };
 
+  /** Phase 9 R4: tải 1 file text xuống máy user (xuất SRT/VTT). */
+  const downloadText = (filename: string, content: string) => {
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  /** Phase 9 D6: xuất toàn bộ phụ đề project (không chỉ segment review). */
+  const exportProject = (fmt: "srt" | "vtt") => {
+    if (projectCaptions.cues.length === 0) return;
+    const base =
+      (spec.meta.name || "phu-de").trim().replace(/[\\/\\?%*:|"<>]/g, "") ||
+      "phu-de";
+    downloadText(
+      `${base}.${fmt}`,
+      fmt === "srt"
+        ? formatSrt(projectCaptions.cues)
+        : formatVtt(projectCaptions.cues)
+    );
+  };
+
+  /** Phase 9 R4: nhập file .srt/.vtt → danh sách câu để review/áp dụng. */
+  const importSubtitleFile = async (file: File) => {
+    setError(null);
+    setImportNote(null);
+    try {
+      const text = await file.text();
+      const { cues, errors } = parseSubtitleFile(text);
+      if (cues.length === 0) {
+        setError(
+          errors.length > 0
+            ? `Không đọc được cue nào: ${errors
+                .map((e) => `khối ${e.block}: ${e.reason}`)
+                .join("; ")}`
+            : "File không có cue phụ đề nào."
+        );
+        return;
+      }
+      setSegments(
+        cues.map((c) => ({ start: c.start, end: c.end, text: c.text }))
+      );
+      setDropped(new Set());
+      setWords([]); // SRT/VTT không chứa word timestamps → không karaoke.
+      setSegmentsEn(null);
+      setDroppedEn(new Set());
+      setImportNote(
+        errors.length > 0
+          ? `Đã nhập ${cues.length} câu, bỏ ${errors.length} cue hỏng: ${errors
+              .map((e) => `khối ${e.block}: ${e.reason}`)
+              .join("; ")}`
+          : `Đã nhập ${cues.length} câu từ ${file.name}.`
+      );
+      setStep("review");
+    } catch (e) {
+      setError(`Không đọc được file: ${(e as Error).message}`);
+    }
+  };
+
   const apply = () => {
     if (kept.length === 0 || applying) return;
     setApplying(true);
@@ -252,7 +342,18 @@ export function CaptionModal({ onClose }: Props) {
           }
         }
       }
-      useStore.getState().addCaptionTrack(kept, source ? { source } : undefined);
+      // Phase 9 R4: gắn karaoke khi bật + có word timestamps (mapping theo
+      // thời gian nên câu bị bỏ sẽ tự không nhận từ của nó).
+      const karaokeWords = karaokeEnabled && words.length > 0 ? words : undefined;
+      const styleOverride =
+        karaokeWords && highlightColor !== "#ffff00"
+          ? { highlightColor }
+          : undefined;
+      useStore.getState().addCaptionTrack(kept, {
+        ...(source ? { source } : {}),
+        ...(karaokeWords ? { words: karaokeWords } : {}),
+        ...(styleOverride ? { style: styleOverride } : {}),
+      });
       // R1-080: track phụ đề dịch (nếu có) — undo riêng từng track.
       if (targetLang && keptEn.length > 0) {
         useStore.getState().addCaptionTrack(keptEn, {
@@ -353,6 +454,53 @@ export function CaptionModal({ onClose }: Props) {
                 Nếu clip đã bị cắt/dời trên timeline, bạn có thể chọn các câu phụ
                 đề rồi kéo cho khớp.
               </p>
+              {/* Phase 9 R4: nhập SRT/VTT có sẵn, không cần chạy caption. */}
+              <p>
+                <span className="muted">Hoặc nhập file phụ đề có sẵn: </span>
+                <input
+                  type="file"
+                  accept=".srt,.vtt,text/plain"
+                  aria-label="Nhập file SRT hoặc VTT"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void importSubtitleFile(f);
+                    e.target.value = "";
+                  }}
+                />
+              </p>
+              {importNote && <p className="muted">{importNote}</p>}
+              {/* Phase 9 D6: xuất phụ đề cấp project — toàn bộ câu trên mọi
+                  track phụ đề (kể cả câu đã lên timeline từ trước), khác
+                  với nút xuất ở bước review (chỉ segment đang giữ). */}
+              <p>
+                <span className="muted">Xuất phụ đề của project: </span>
+                <button
+                  className="tbtn"
+                  onClick={() => exportProject("srt")}
+                  disabled={projectCaptions.cues.length === 0}
+                >
+                  ⬇ SRT project
+                </button>{" "}
+                <button
+                  className="tbtn"
+                  onClick={() => exportProject("vtt")}
+                  disabled={projectCaptions.cues.length === 0}
+                >
+                  ⬇ VTT project
+                </button>
+              </p>
+              {projectCaptions.cues.length > 0 ? (
+                <p className="muted small">
+                  Gồm {projectCaptions.cues.length} câu từ track:{" "}
+                  {projectCaptions.trackLabels.join(", ")}. Title/chữ tự do
+                  trên track khác không được xuất.
+                </p>
+              ) : (
+                <p className="muted small">
+                  Project chưa có phụ đề nào (tạo phụ đề hoặc nhập SRT/VTT
+                  trước).
+                </p>
+              )}
               {error && <p className="error">{error}</p>}
             </>
           )}
@@ -379,6 +527,34 @@ export function CaptionModal({ onClose }: Props) {
                 )}
                 . Kiểm tra lại rồi bấm Áp dụng:
               </p>
+              {/* Phase 9 R4: karaoke — chỉ có khi bridge trả word timestamps. */}
+              {words.length > 0 ? (
+                <p>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={karaokeEnabled}
+                      onChange={(e) => setKaraokeEnabled(e.target.checked)}
+                    />{" "}
+                    🎤 Tô sáng từng từ theo giọng nói (karaoke, {words.length}{" "}
+                    từ)
+                  </label>{" "}
+                  <label>
+                    Màu tô sáng:{" "}
+                    <input
+                      type="color"
+                      value={highlightColor}
+                      disabled={!karaokeEnabled}
+                      onChange={(e) => setHighlightColor(e.target.value)}
+                    />
+                  </label>
+                </p>
+              ) : (
+                <p className="muted">
+                  Lần caption này không có word timestamps nên không gắn được
+                  karaoke (chữ vẫn tạo bình thường).
+                </p>
+              )}
               <div className="caption-list">
                 {segments.map((s, i) => (
                   <div
@@ -406,6 +582,24 @@ export function CaptionModal({ onClose }: Props) {
                   </div>
                 ))}
               </div>
+              {/* Phase 9 R4: xuất các câu đang giữ ra SRT/VTT chuẩn. */}
+              <p>
+                <button
+                  className="tbtn"
+                  onClick={() => downloadText("phu-de.srt", formatSrt(kept))}
+                  disabled={kept.length === 0}
+                >
+                  ⬇ Xuất SRT
+                </button>{" "}
+                <button
+                  className="tbtn"
+                  onClick={() => downloadText("phu-de.vtt", formatVtt(kept))}
+                  disabled={kept.length === 0}
+                >
+                  ⬇ Xuất VTT
+                </button>
+              </p>
+              {importNote && <p className="muted">{importNote}</p>}
               {segmentsEn && (
                 <>
                   <p style={{ marginTop: 12 }}>

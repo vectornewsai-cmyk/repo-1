@@ -15,6 +15,7 @@
 import { useState } from "react";
 import { useStore } from "../../store";
 import "./chroma.css";
+import { t as i18nT, useLang } from "../../i18n";
 import {
   CHROMA_DEFAULTS,
   CHROMA_PRESETS,
@@ -23,13 +24,15 @@ import {
 } from "../../../../../packages/video-spec/src/chroma";
 
 export function ChromaPanel() {
+  useLang();
   const selection = useStore((s) => s.selection);
   const spec = useStore((s) => s.spec);
   const [warn, setWarn] = useState<string | null>(null);
 
-  if (!selection) return null;
-  const track = spec.tracks.find((t) => t.id === selection.trackId);
-  const clip = track?.clips.find((c) => c.id === selection.clipId);
+  const primary = selection[0] ?? null;
+  if (!primary) return null;
+  const track = spec.tracks.find((t) => t.id === primary.trackId);
+  const clip = track?.clips.find((c) => c.id === primary.clipId);
   if (!track || !clip || clip.kind !== "video") return null;
 
   const st = useStore.getState();
@@ -68,28 +71,28 @@ export function ChromaPanel() {
 
   return (
     <div className="chroma-panel">
-      <div className="panel-head" style={{ marginTop: 12 }}>🟩 Xoá phông xanh</div>
+      <div className="panel-head" style={{ marginTop: 12 }}>{i18nT("chroma.head")}</div>
 
       <div className="btn-row">
         <button
           className={chroma ? "toggle on" : "toggle"}
           onClick={toggle}
-          title="Bật/tắt xoá phông xanh cho clip này"
+          title={i18nT("chroma.toggleTitle")}
         >
-          {chroma ? "🟩 Đang xoá phông" : "⬜ Chưa xoá phông"}
+          {chroma ? i18nT("chroma.on") : i18nT("chroma.off")}
         </button>
       </div>
 
       {chroma && (
         <>
           <label className="field">
-            <span>Màu phông cần xoá</span>
+            <span>{i18nT("chroma.colorLabel")}</span>
             <div className="chroma-color-row">
               <input
                 type="color"
                 value={chroma.color}
                 onChange={(e) => setColor(e.target.value)}
-                title="Chọn màu phông"
+                title={i18nT("chroma.colorTitle")}
               />
               <span className="chroma-hex">{chroma.color.toUpperCase()}</span>
             </div>
@@ -114,7 +117,7 @@ export function ChromaPanel() {
 
           <label className="field">
             <span>
-              Độ nhạy màu: <b>{Math.round((chroma.similarity ?? 0.3) * 100)}%</b>
+              {i18nT("chroma.sensLabel")}: <b>{Math.round((chroma.similarity ?? 0.3) * 100)}%</b>
             </span>
             <input
               type="range"
@@ -122,13 +125,13 @@ export function ChromaPanel() {
               max={100}
               value={Math.round((chroma.similarity ?? 0.3) * 100)}
               onChange={(e) => setSimilarity(Number(e.target.value) / 100)}
-              title="Càng cao càng xoá rộng — nhưng dễ ăn vào vật thể"
+              title={i18nT("chroma.sensTitle")}
             />
           </label>
 
           <label className="field">
             <span>
-              Mềm biên: <b>{Math.round((chroma.blend ?? 0.1) * 100)}%</b>
+              {i18nT("chroma.blendLabel")}: <b>{Math.round((chroma.blend ?? 0.1) * 100)}%</b>
             </span>
             <input
               type="range"
@@ -136,7 +139,7 @@ export function ChromaPanel() {
               max={100}
               value={Math.round((chroma.blend ?? 0.1) * 100)}
               onChange={(e) => setBlend(Number(e.target.value) / 100)}
-              title="Càng cao biên vật thể càng mượt"
+              title={i18nT("chroma.blendTitle")}
             />
           </label>
         </>
@@ -145,8 +148,7 @@ export function ChromaPanel() {
       {warn && <p className="warn">{warn}</p>}
       {!warn && (
         <p className="tips">
-          💡 Xoá phông có hiệu lực khi <b>render</b> (FFmpeg) — preview trên web
-          chưa hiển thị. Phông nền cần đều màu, đủ sáng để xoá sạch.
+          {i18nT("chroma.tip")}
         </p>
       )}
     </div>

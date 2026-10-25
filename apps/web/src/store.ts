@@ -17,6 +17,12 @@ import type {
   VideoSpec,
 } from "@repo-1/video-spec";
 import { projectDuration, SPEC_VERSION } from "@repo-1/video-spec";
+import type { Marker } from "@repo-1/video-spec";
+import {
+  addMarkerToList,
+  removeMarkerFromList,
+  updateMarkerInList,
+} from "@repo-1/video-spec";
 import {
   snapToFrame,
   snapToFrameFloor,
@@ -26,13 +32,16 @@ import {
   CAPTION_TRACK_LABEL,
   segmentsToTextClips,
   type CaptionSegment,
+  wordsForSegments,
 } from "./lib/captions";
 import {
+  clampKaraoke,
   isLinkedCaption,
   isSourceClip,
   linkSegmentsToClips,
   refollowCaptionsInSpec,
   shiftCaptionsForMovedClips,
+  shiftKaraoke,
   splitLinkedCaptionsInSpec,
   unlinkCaptionInSpec,
 } from "./lib/captionFollow";
@@ -263,6 +272,14 @@ interface EditorState {
       historyLabel?: string;
       /** Phase 7 P6: clip nguồn để phụ đề bám theo (trim/move/split). */
       source?: { trackId: string; clipId: string };
+      /**
+       * Phase 9 R4: word timestamps từ cùng lần caption (thời gian media).
+       * Khi có, clip phụ đề được gắn karaoke (cả track thường lẫn track
+       * linked). Track dịch không có words → không karaoke.
+       */
+      words?: { start: number; end: number; word: string }[];
+      /** Phase 9 R4: ghi đè style caption (vd: màu highlight karaoke). */
+      style?: Partial<TextStyle>;
     },
   ) => string;
 
@@ -289,6 +306,14 @@ interface EditorState {
   patchClip: (trackId: string, clipId: string, patch: Partial<Clip>) => void;
   patchTextStyle: (trackId: string, clipId: string, style: Partial<TextStyle>) => void;
   splitAtPlayhead: () => boolean;
+  /**
+   * Phase 9: marker trên timeline (dữ liệu thuần, lưu trong spec.markers —
+   * tự động survive save/load project JSON). Mỗi thao tác là 1 bước undo.
+   * addMarkerAtPlayhead trả về marker vừa tạo, hoặc null nếu time không hợp lệ.
+   */
+  addMarkerAtPlayhead: (label?: string) => Marker | null;
+  updateMarker: (id: string, patch: { label?: string; color?: string }) => void;
+  deleteMarker: (id: string) => void;
   /** R1-085: tách 1 clip tại nhiều thời điểm trong 1 bước undo. */
   splitClipAtTimes: (trackId: string, clipId: string, times: number[]) => number;
   /** K2 (Phase 6): số clip trong clipboard nội bộ (reactive — dùng cho disabled nút Dán). */
@@ -627,11 +652,20 @@ export const useStore = create<EditorState>()((set, get) => {
     // Phase 7 P6: nếu caller cho biết clip nguồn, sinh câu phụ đề CÓ LINK
     // (captionOf) để trim/move/split clip nguồn tự kéo phụ đề theo.
     // Không có source (vd: import SRT tay) thì giữ hành vi cũ: chữ tự do.
-    let clips: TextClip[] = segmentsToTextClips(segments);
+    const style = { ...CAPTION_DEFAULT_STYLE, ...opts?.style };
+    let clips: TextClip[] = segmentsToTextClips(segments, style, opts?.words);
     if (opts?.source) {
       const srcFound = findClip(get().spec, opts.source.trackId, opts.source.clipId);
       if (srcFound && isSourceClip(srcFound.clip)) {
-        const linked = linkSegmentsToClips(segments, srcFound.clip, CAPTION_DEFAULT_STYLE);
+        const wordsBySeg = opts?.words
+          ? wordsForSegments(segments, opts.words)
+          : undefined;
+        const linked = linkSegmentsToClips(
+          segments,
+          srcFound.clip,
+          style,
+          wordsBySeg
+        );
         // Nếu mọi câu đều nằm ngoài clip nguồn (vd: caption file khác) thì
         // giữ hành vi cũ thay vì tạo track rỗng.
         if (linked.length > 0) clips = linked;
@@ -796,11 +830,24 @@ export const useStore = create<EditorState>()((set, get) => {
           }));
           const tc = findClip(trimmed, trackId, clipId)?.clip;
           if (!tc) return trimmed;
+          // Phase 9 R4: trim mép trái clip chữ có karaoke → dịch từ theo
+          // shift (từ rớt khỏi đầu thì bỏ). Áp trước các bước P6 bên dưới
+          // (unlink vẫn giữ karaoke đã dịch qua spread).
+          let out = trimmed;
+          if (tc.kind === "text" && tc.karaoke) {
+            const adj = shiftKaraoke(tc.karaoke, shift);
+            out = withTrack(out, trackId, (t) => ({
+              ...t,
+              clips: t.clips.map((c) =>
+                c.id === clipId ? { ...c, karaoke: adj } : c
+              ),
+            }));
+          }
           // Phase 7 P6 (caption follow): trim trực tiếp câu phụ đề → hủy
           // link; trim clip nguồn → phụ đề bám theo hình học mới.
-          if (isLinkedCaption(tc)) return unlinkCaptionInSpec(trimmed, clipId);
-          if (isSourceClip(tc)) return refollowCaptionsInSpec(trimmed, tc);
-          return trimmed;
+          if (isLinkedCaption(tc)) return unlinkCaptionInSpec(out, clipId);
+          if (isSourceClip(tc)) return refollowCaptionsInSpec(out, tc);
+          return out;
         },
       });
     } else {
@@ -841,6 +888,17 @@ export const useStore = create<EditorState>()((set, get) => {
             // câu của các clip bị dồn/đẩy chỉ dịch theo delta start.
             let out = r.spec;
             const tc = findClip(out, trackId, clipId)?.clip;
+            // Phase 9 R4: ripple trim mép phải clip chữ có karaoke → cắt từ
+            // vượt duration mới (như nhánh không ripple).
+            if (tc && tc.kind === "text" && tc.karaoke) {
+              const adj = clampKaraoke(tc.karaoke, tc.duration);
+              out = withTrack(out, trackId, (t) => ({
+                ...t,
+                clips: t.clips.map((c) =>
+                  c.id === clipId ? { ...c, karaoke: adj } : c
+                ),
+              }));
+            }
             if (tc && isSourceClip(tc)) out = refollowCaptionsInSpec(out, tc);
             else if (tc && isLinkedCaption(tc)) out = unlinkCaptionInSpec(out, clipId);
             return shiftCaptionsForMovedClips(spec, out, new Set([clipId]));
@@ -856,10 +914,22 @@ export const useStore = create<EditorState>()((set, get) => {
             }));
             const tc = findClip(trimmed, trackId, clipId)?.clip;
             if (!tc) return trimmed;
+            // Phase 9 R4: trim mép phải clip chữ có karaoke → cắt từ vượt
+            // duration mới (từ rớt hẳn thì bỏ field).
+            let out = trimmed;
+            if (tc.kind === "text" && tc.karaoke) {
+              const adj = clampKaraoke(tc.karaoke, newDur);
+              out = withTrack(out, trackId, (t) => ({
+                ...t,
+                clips: t.clips.map((c) =>
+                  c.id === clipId ? { ...c, karaoke: adj } : c
+                ),
+              }));
+            }
             // Phase 7 P6 (caption follow) — như mép trái.
-            if (isLinkedCaption(tc)) return unlinkCaptionInSpec(trimmed, clipId);
-            if (isSourceClip(tc)) return refollowCaptionsInSpec(trimmed, tc);
-            return trimmed;
+            if (isLinkedCaption(tc)) return unlinkCaptionInSpec(out, clipId);
+            if (isSourceClip(tc)) return refollowCaptionsInSpec(out, tc);
+            return out;
           },
         });
       }
@@ -986,6 +1056,46 @@ export const useStore = create<EditorState>()((set, get) => {
       [{ trackId: track.id, clipId: right.id }],
     );
     return true;
+  },
+
+  // Phase 9: marker trên timeline — lưu trong spec.markers (JSON thuần,
+  // save/load giữ nguyên). Mỗi thao tác là 1 bước undo qua execCommand.
+  addMarkerAtPlayhead: (label) => {
+    const st = get();
+    const time = st.playhead;
+    if (!Number.isFinite(time) || time < 0) return null;
+    const marker: Marker = {
+      id: uid("m"),
+      time,
+      label: label ?? `Marker ${(st.spec.markers ?? []).length + 1}`,
+    };
+    const res = addMarkerToList(st.spec.markers ?? [], marker);
+    if ("error" in res) return null;
+    execCommand({
+      label: "Thêm marker",
+      apply: (spec) => ({ ...spec, markers: res.markers }),
+    });
+    return res.marker;
+  },
+
+  updateMarker: (id, patch) => {
+    const st = get();
+    const next = updateMarkerInList(st.spec.markers ?? [], id, patch);
+    if (next === st.spec.markers) return;
+    execCommand({
+      label: "Sửa marker",
+      apply: (spec) => ({ ...spec, markers: next }),
+    });
+  },
+
+  deleteMarker: (id) => {
+    const st = get();
+    const next = removeMarkerFromList(st.spec.markers ?? [], id);
+    if (next === st.spec.markers) return;
+    execCommand({
+      label: "Xoá marker",
+      apply: (spec) => ({ ...spec, markers: next }),
+    });
   },
 
   /**

@@ -19,6 +19,7 @@
  */
 import { useState } from "react";
 import { useStore } from "../../store";
+import { t as i18nT, useLang } from "../../i18n";
 import "./speed.css";
 import {
   SPEED_MAX,
@@ -35,13 +36,15 @@ import { fmtTime } from "../../lib";
 const MIN_CLIP_DURATION = 0.2; // quy ước chung của editor
 
 export function SpeedPanel() {
+  useLang();
   const selection = useStore((s) => s.selection);
   const spec = useStore((s) => s.spec);
   const [warn, setWarn] = useState<string | null>(null);
 
-  if (!selection) return null;
-  const track = spec.tracks.find((t) => t.id === selection.trackId);
-  const clip = track?.clips.find((c) => c.id === selection.clipId);
+  const primary = selection[0] ?? null;
+  if (!primary) return null;
+  const track = spec.tracks.find((t) => t.id === primary.trackId);
+  const clip = track?.clips.find((c) => c.id === primary.clipId);
   if (!track || !clip || !isSpeedable(clip)) return null;
 
   const speed = clipSpeed(clip);
@@ -67,16 +70,12 @@ export function SpeedPanel() {
     const newDur = durationForSpeed(clip, s);
     if (newDur < MIN_CLIP_DURATION - 1e-9) {
       setWarn(
-        `Không thể đặt ${s}× — clip sẽ ngắn hơn ${MIN_CLIP_DURATION}s. ` +
-          `Cắt đoạn nguồn dài hơn trước.`,
+        i18nT("speed.warnTooShort", { s: String(s), min: String(MIN_CLIP_DURATION) }),
       );
       return;
     }
     if (wouldOverlap(newDur)) {
-      setWarn(
-        `Không đủ chỗ trên timeline — clip sẽ dài ${fmtTime(newDur)} và đè lên clip bên cạnh. ` +
-          `Hãy dịch clip khác ra trước.`,
-      );
+      setWarn(i18nT("speed.warnOverlap", { dur: fmtTime(newDur) }));
       return;
     }
     setWarn(null);
@@ -92,7 +91,7 @@ export function SpeedPanel() {
     setWarn(null);
     const newDur = durationForSpeed(clip, 1);
     if (wouldOverlap(newDur)) {
-      setWarn("Không đủ chỗ để trả về 1× — hãy dịch clip khác ra trước.");
+      setWarn(i18nT("speed.warnResetOverlap"));
       return;
     }
     st.patchClip(track.id, clip.id, { speed: 1, reverse: false } as Partial<typeof clip>);
@@ -100,12 +99,12 @@ export function SpeedPanel() {
 
   return (
     <div className="speed-panel">
-      <div className="panel-head" style={{ marginTop: 12 }}>⏩ Tốc độ</div>
+      <div className="panel-head" style={{ marginTop: 12 }}>{i18nT("speed.head")}</div>
 
       <label className="field">
         <span>
-          Tốc độ phát: <b>{speed}×</b>
-          {reversed && <b className="reverse-badge"> ◀ NGƯỢC</b>}
+          {i18nT("speed.speedLabel")}: <b>{speed}×</b>
+          {reversed && <b className="reverse-badge"> {i18nT("speed.reverseBadge")}</b>}
         </span>
         <input
           type="range"
@@ -126,7 +125,7 @@ export function SpeedPanel() {
               key={p}
               className={active ? "toggle on" : "toggle"}
               disabled={disabled}
-              title={disabled ? `Đoạn nguồn quá ngắn cho ${p}×` : `Đặt tốc độ ${p}×`}
+              title={disabled ? i18nT("speed.presetTooShort", { p: String(p) }) : i18nT("speed.presetSet", { p: String(p) })}
               onClick={() => applySpeed(p)}
             >
               {p}×
@@ -139,24 +138,24 @@ export function SpeedPanel() {
         <button
           className={reversed ? "toggle on" : "toggle"}
           onClick={toggleReverse}
-          title="Đảo ngược hướng phát của clip"
+          title={i18nT("speed.reverseTitle")}
         >
-          {reversed ? "◀ Đang đảo ngược" : "▶ Phát xuôi"}
+          {reversed ? i18nT("speed.reversing") : i18nT("speed.forward")}
         </button>
         {(speed !== 1 || reversed) && (
-          <button className="toggle" onClick={reset} title="Trả về tốc độ 1×, phát xuôi">
-            ↺ Đặt lại
+          <button className="toggle" onClick={reset} title={i18nT("speed.resetTitle")}>
+            {i18nT("speed.reset")}
           </button>
         )}
       </div>
 
       <div className="info-rows">
         <div>
-          <span>Đoạn nguồn</span>
+          <span>{i18nT("speed.srcLabel")}</span>
           <b>{fmtTime(srcLen)} <span className="muted">[{clip.in.toFixed(1)}s – {clip.out.toFixed(1)}s]</span></b>
         </div>
         <div>
-          <span>Thời lượng hiệu dụng</span>
+          <span>{i18nT("speed.effLabel")}</span>
           <b>{fmtTime(clip.duration)}</b>
         </div>
       </div>
@@ -164,7 +163,7 @@ export function SpeedPanel() {
       {warn && <p className="warn">{warn}</p>}
       {!warn && (
         <p className="tips">
-          💡 Tốc độ đổi tempo nhưng giữ nguyên cao độ giọng. Đảo ngược phát từ cuối đoạn nguồn về đầu.
+          {i18nT("speed.tip")}
         </p>
       )}
     </div>

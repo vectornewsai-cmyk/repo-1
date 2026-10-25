@@ -10,7 +10,26 @@ import { fmtTime } from "./lib";
 import { ProjectMenu } from "./components/project/ProjectMenu";
 import { t, useLang, setLang, getLang } from "./i18n";
 
-export function TopBar({ onExport, onCaption, onSilence, onTemplate }: { onExport: () => void; onCaption: () => void; onSilence: () => void; onTemplate: () => void }) {
+// D1 Phase 9 đợt 4: tách nhãn ngắn dạng "emoji + chữ" (vd "💬 Phụ đề",
+// "+ Text") thành icon + span chữ. Chuỗi vẫn lấy từ đúng key i18n cũ,
+// chỉ thêm span để CSS ẩn riêng phần chữ ở viewport hẹp (icon-only) mà
+// không phải sửa key hay đụng vào ProjectMenu (file của agent khác).
+function splitShortLabel(s: string): [string, string] {
+  const i = s.indexOf(" ");
+  return i > 0 ? [s.slice(0, i), s.slice(i + 1)] : [s, ""];
+}
+
+function ShortLabel({ text }: { text: string }) {
+  const [icon, label] = splitShortLabel(text);
+  if (!label) return <>{text}</>;
+  return (
+    <>
+      <span aria-hidden="true">{icon}</span> <span className="tbtn-label">{label}</span>
+    </>
+  );
+}
+
+export function TopBar({ onExport, onCaption, onSilence, onTemplate, onWelcome }: { onExport: () => void; onCaption: () => void; onSilence: () => void; onTemplate: () => void; onWelcome: () => void }) {
   useLang(); // re-render khi đổi ngôn ngữ
   const name = useStore((s) => s.spec.meta.name);
   const playing = useStore((s) => s.playing);
@@ -77,6 +96,30 @@ export function TopBar({ onExport, onCaption, onSilence, onTemplate }: { onExpor
         </div>
       </div>
 
+      {/* D1 Phase 9 đợt 4: nhóm ưu tiên lên hàng 1 (bên phải) — xuất bản,
+          bắt đầu, ngôn ngữ không bao giờ phải cuộn ngang mới bấm được. */}
+      <div className="topbar-priority">
+        <button className="primary" onClick={onExport} title={t("topbar.publish")} data-tour="export">
+          {t("topbar.publishShort")}
+        </button>
+        <button
+          type="button"
+          title="Mở lại màn chào / tour / template pack 1 chạm"
+          aria-label="Mở lại màn chào"
+          onClick={onWelcome}
+        >
+          👋 Bắt đầu
+        </button>
+        <button
+          className="tbtn"
+          title={t("common.language")}
+          aria-label={t("common.language")}
+          onClick={() => setLang(getLang() === "vi" ? "en" : "vi")}
+        >
+          <span aria-hidden="true">{getLang() === "vi" ? "🇻🇳" : "🇺🇸"}</span>
+        </button>
+      </div>
+
       <div className="topbar-actions">
         <button
           title={undoLabel ? t("topbar.undoWith", { label: undoLabel }) : t("topbar.undo")}
@@ -95,11 +138,11 @@ export function TopBar({ onExport, onCaption, onSilence, onTemplate }: { onExpor
           <span aria-hidden="true">↪</span>
         </button>
         <ProjectMenu />
-        <button title={t("topbar.addText")} onClick={() => st.addTextClip()}>
-          {t("topbar.addTextShort")}
+        <button title={t("topbar.addText")} onClick={() => st.addTextClip()} data-tour="add-text">
+          <ShortLabel text={t("topbar.addTextShort")} />
         </button>
         <button title={t("topbar.split")} onClick={doSplit}>
-          {t("topbar.splitShort")}
+          <ShortLabel text={t("topbar.splitShort")} />
         </button>
         {/* K2 (Phase 6): copy/paste/duplicate clip */}
         <button
@@ -107,59 +150,48 @@ export function TopBar({ onExport, onCaption, onSilence, onTemplate }: { onExpor
           onClick={() => st.copySelection()}
           disabled={selection.length === 0}
         >
-          {t("topbar.copyShort")}
+          <ShortLabel text={t("topbar.copyShort")} />
         </button>
         <button
           title={t("topbar.paste")}
           onClick={() => st.pasteClipboard()}
           disabled={clipboardSize === 0}
         >
-          {t("topbar.pasteShort")}
+          <ShortLabel text={t("topbar.pasteShort")} />
         </button>
         <button
           title={t("topbar.duplicate")}
           onClick={() => st.duplicateSelection()}
           disabled={selection.length === 0}
         >
-          {t("topbar.duplicateShort")}
+          <ShortLabel text={t("topbar.duplicateShort")} />
         </button>
         <button
           title={t("topbar.caption")}
           onClick={onCaption}
           disabled={!canCaption}
         >
-          {t("topbar.captionShort")}
+          <ShortLabel text={t("topbar.captionShort")} />
         </button>
         <button
           title={t("topbar.cutSilence")}
           onClick={onSilence}
           disabled={!canCaption}
         >
-          {t("topbar.cutSilenceShort")}
+          <ShortLabel text={t("topbar.cutSilenceShort")} />
         </button>
         <button
           title={t("topbar.template")}
           onClick={onTemplate}
         >
-          {t("topbar.templateShort")}
+          <ShortLabel text={t("topbar.templateShort")} />
         </button>
         <button
           title={t("topbar.delete")}
           onClick={() => st.deleteSelection()}
           disabled={selection.length === 0}
         >
-          {t("topbar.deleteShort")}
-        </button>
-        <button className="primary" onClick={onExport} title={t("topbar.publish")}>
-          {t("topbar.publishShort")}
-        </button>
-        <button
-          className="tbtn"
-          title={t("common.language")}
-          aria-label={t("common.language")}
-          onClick={() => setLang(getLang() === "vi" ? "en" : "vi")}
-        >
-          <span aria-hidden="true">{getLang() === "vi" ? "🇻🇳" : "🇺🇸"}</span>
+          <ShortLabel text={t("topbar.deleteShort")} />
         </button>
       </div>
 

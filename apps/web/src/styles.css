@@ -172,12 +172,17 @@ input[type="color"] {
   border-bottom: 1px solid var(--border-soft);
   position: relative;
   z-index: 30;
-  /* Q2 Phase 8: thanh công cụ dài hơn viewport laptop (2384px nội dung
-     trên màn 1440px) nhưng body overflow:hidden nên các nút bên phải
-     (ngôn ngữ, Xuất bản) từng không bấm tới được. Cho topbar cuộn ngang
-     nội bộ thay vì để nút rơi ra ngoài màn hình. */
-  overflow-x: auto;
-  scrollbar-width: thin;
+  /* D1 Phase 9 đợt 4: THAY workaround cuộn ngang của Q2 (overflow-x: auto
+     từng giấu nút ngôn ngữ/xuất bản ở x≈2500 trên màn 1440px, user phải tự
+     phát hiện và cuộn mới bấm được). TopBar nay wrap thành 2 hàng:
+     hàng 1 = brand + tên project + transport + nhóm ưu tiên (xuất bản,
+     bắt đầu, ngôn ngữ); hàng 2 = nhóm công cụ (flex-basis 100%, tự wrap
+     thêm khi cần thay vì tràn). overflow: visible để flash-msg absolute
+     dưới header không bị cắt (overflow-x khác visible sẽ ép overflow-y
+     thành auto theo spec và cắt nó). */
+  flex-wrap: wrap;
+  row-gap: 6px;
+  overflow: visible;
 }
 
 .topbar > * {
@@ -210,6 +215,8 @@ input[type="color"] {
 
 .project-name {
   max-width: 220px;
+  min-width: 0;
+  flex-shrink: 1;
   background: transparent;
   border-color: transparent;
   font-weight: 600;
@@ -263,10 +270,75 @@ input[type="color"] {
   opacity: 0.5;
 }
 
-.topbar-actions {
+/* D1: nhóm ưu tiên ở hàng 1, sát phải (margin-left: auto hút hết khoảng
+   trống còn lại sau transport). */
+.topbar-priority {
   display: flex;
   gap: 8px;
   align-items: center;
+  margin-left: auto;
+}
+
+/* D1: hàng công cụ chiếm trọn hàng 2 (flex-basis 100% ép xuống hàng mới),
+   tự wrap nội bộ khi vẫn không đủ chỗ — không bao giờ tràn ngang. */
+.topbar-actions {
+  display: flex;
+  gap: 4px;
+  row-gap: 6px;
+  align-items: center;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  /* D1-fix mobile: flex item mặc định min-width: auto = min-content của
+     nội dung — ProjectMenu nowrap rộng ~700px từng ép cả actions phình
+     tới 702px dù topbar chỉ 390px. min-width: 0 cho phép co lại, các nút
+     con tự wrap bên trong. */
+  min-width: 0;
+}
+
+/* D1: thu gọn nút hàng công cụ (kể cả nút ProjectMenu nằm trong nó) để
+   hàng 2 vừa viewport laptop: padding 12px -> 6px, font 12px. Đo thật:
+   hàng 2 ở 1440px vẫn thừa ~145px (chỉ 2 nút rớt xuống hàng 3) nên siết
+   thêm mức này thay vì ẩn nhãn — nhãn đầy đủ giữ lại được ở 1440px. */
+.topbar-actions button {
+  padding: 5px 6px;
+  font-size: 12px;
+}
+
+/* D1: thu gọn menu project (file ProjectMenu.tsx không thuộc D1 nên chỉ
+   chỉnh bằng CSS): gap, padding phải, chỉ báo autosave nhỏ lại nhưng vẫn
+   đọc được. flex-wrap là bắt buộc: menu vốn nowrap, 7 nút + chỉ báo rộng
+   ~700px ở mobile và từng là min-content ép cả hàng công cụ tràn topbar. */
+.topbar-actions .project-menu {
+  gap: 4px;
+  padding-right: 4px;
+  flex-wrap: wrap;
+}
+
+.topbar-actions .autosave-indicator {
+  font-size: 10px;
+  padding: 2px 4px;
+}
+
+/* D1: viewport hẹp desktop (1280px, không chạm mobile <=768px vốn do
+   mobile.css quản lý): nút công cụ chỉ còn icon, phần chữ trong span
+   .tbtn-label bị ẩn — tooltip title vẫn giữ mô tả đầy đủ nên không mất
+   chức năng, chỉ giảm độ dài hàng 2 xuống dưới 1280px. */
+@media (min-width: 769px) and (max-width: 1360px) {
+  .topbar-actions .tbtn-label {
+    display: none;
+  }
+  .topbar-actions {
+    gap: 4px;
+  }
+}
+
+/* D1: nút nhóm ưu tiên cũng cần đủ 44px chạm trên mobile (mobile.css chỉ
+   phủ .topbar-actions, không biết .topbar-priority mới). */
+@media (max-width: 768px) {
+  .topbar-priority button {
+    min-height: 44px;
+    padding: 6px 10px;
+  }
 }
 
 /* ============ Project menu (Mới / Mở / Lưu / Lưu thành) ============ */
@@ -474,6 +546,116 @@ input[type="color"] {
   background: linear-gradient(90deg, #34d399 0%, #fbbf24 70%, #f87171 100%);
   transform: scaleX(0);
   transform-origin: left center;
+}
+
+/* Phase 9: MixerMeter — thanh đo mix tổng (mono + peak-hold), đặt cạnh vu-meter */
+.mixer-meter {
+  position: absolute;
+  left: 140px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+.mixer-meter-label {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+}
+.mixer-meter-track {
+  position: relative;
+  width: 120px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+.mixer-meter-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #34d399 0%, #fbbf24 70%, #f87171 100%);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+.mixer-meter-peak {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: #fff;
+}
+.mixer-meter-db {
+  font-size: 10px;
+  color: var(--muted);
+  min-width: 62px;
+}
+.mixer-meter-idle {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* Phase 9: marker trên ruler + panel sửa marker */
+.tl-marker {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-left: 2px solid;
+  cursor: pointer;
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  padding-left: 1px;
+  z-index: 3;
+}
+.tl-marker.is-selected {
+  filter: brightness(1.4);
+}
+.tl-marker-flag {
+  font-size: 9px;
+  line-height: 1;
+  padding: 1px;
+  border-radius: 2px;
+  color: #000;
+}
+.tl-marker-label {
+  font-size: 10px;
+  line-height: 12px;
+  white-space: nowrap;
+  text-shadow: 0 0 3px #000;
+}
+.tl-marker-editor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 12px;
+}
+.tl-marker-editor-time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.tl-marker-editor input {
+  flex: 1;
+  max-width: 260px;
+}
+.tl-marker-colors {
+  display: flex;
+  gap: 4px;
+}
+.tl-marker-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+}
+.tl-marker-swatch.is-active {
+  border-color: #fff;
 }
 
 /* ============ Inspector ============ */
@@ -1746,3 +1928,51 @@ button.danger {
 .section-body {
   padding-top: 4px;
 }
+
+/* ---- R1 (Phase 9): onboarding / tour / template pack ---- */
+.tour-card {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  z-index: 120;
+  overflow: hidden;
+}
+.tour-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 14px;
+}
+.tour-body {
+  padding: 12px 14px;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tour-body .muted, .tour-body .warn { margin: 0; }
+.tour-card .btn-row { padding: 0 14px 14px; flex-wrap: wrap; }
+.tour-highlight {
+  outline: 3px solid #8b7cf6 !important;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.pack-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+}
+.pack-row p { margin: 4px 0 0; }
+.pack-row button { flex-shrink: 0; }

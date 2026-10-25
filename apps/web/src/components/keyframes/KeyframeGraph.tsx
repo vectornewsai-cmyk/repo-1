@@ -21,6 +21,7 @@ import {
   type Keyframe,
 } from "@repo-1/video-spec";
 import "./keyframes.css";
+import { t as i18nT, useLang } from "../../i18n";
 
 const W = 400;
 const H = 160;
@@ -50,6 +51,7 @@ export function KeyframeGraph({
   onMovePoint: (i: number, patch: { t: number; v: number }) => void;
   onAddAt: (t: number) => void;
 }) {
+  useLang();
   const meta = PROP_META[prop];
   const svgRef = useRef<SVGSVGElement>(null);
   const [dragIdx, setDragIdx] = useState(-1);
@@ -107,9 +109,9 @@ export function KeyframeGraph({
     <div className="kf-graph-wrap">
       <div className="kf-graph-head">
         <span>
-          📈 Đồ thị {meta.label.toLowerCase()} ({kfs.length} điểm)
+          📈 {i18nT("keyframegraph.head", { label: meta.label.toLowerCase(), n: String(kfs.length) })}
         </span>
-        <span className="kf-graph-hint">Kéo điểm để đổi thời gian + giá trị · Nhấp đúp để thêm điểm</span>
+        <span className="kf-graph-hint">{i18nT("keyframegraph.hint")}</span>
       </div>
       <svg
         ref={svgRef}
@@ -157,7 +159,7 @@ export function KeyframeGraph({
         ))}
       </svg>
       {kfs.length === 0 && (
-        <p className="kf-graph-empty">Chưa có keyframe — nhấp đúp vào đồ thị (hoặc nút +) để thêm điểm.</p>
+        <p className="kf-graph-empty">{i18nT("keyframegraph.empty")}</p>
       )}
     </div>
   );

@@ -121,6 +121,94 @@ export function outputOffsetForMedia(
 }
 
 /**
+ * Đoạn media thấy được của clip nguồn: [in, out] với tốc độ hằng,
+ * [in, in + sourcePosAt(curve, duration)] với speedKeyframes (render dùng
+ * in + ∫speed nên `out` không còn là biên — xem ghi chú đầu file).
+ */
+function visibleMediaRange(source: SourceClip): [number, number] {
+  if (hasUsableSpeedCurve(source)) {
+    return [
+      source.in,
+      source.in + sourcePosAt(source.speedKeyframes, source.duration),
+    ];
+  }
+  return [source.in, source.out];
+}
+
+/**
+ * Ánh xạ 1 mốc thời gian media sang offset output (tính từ source.start) —
+ * Phase 9 D6. Dùng CHUNG cho caption và karaoke nên 2 thứ không lệch nhau:
+ * - SpeedKeyframes (không reverse): đảo tích phân (outputOffsetForMedia).
+ * - Speed hằng xuôi: (media - in) / speed.
+ * - Speed hằng ngược: (out - media) / speed.
+ * Mốc ngoài đoạn nguồn thấy được → null (caller kẹp/bỏ).
+ */
+export function mapMediaTimeToOutputOffset(
+  source: SourceClip,
+  mediaTime: number
+): number | null {
+  const [lo, hi] = visibleMediaRange(source);
+  if (mediaTime < lo || mediaTime > hi) return null;
+  if (hasUsableSpeedCurve(source)) {
+    return outputOffsetForMedia(
+      source.speedKeyframes,
+      mediaTime - source.in,
+      source.duration
+    );
+  }
+  const speed = source.speed ?? 1;
+  if (!(speed > 0)) return null;
+  return source.reverse ?? false
+    ? (source.out - mediaTime) / speed
+    : (mediaTime - source.in) / speed;
+}
+
+/**
+ * Map words (thời gian media, gốc file) thành karaoke clip-local cho 1 câu
+ * linked — Phase 9 D6: CHÍNH XÁC dưới mọi tốc độ, thay cho tỉ lệ tuyến tính
+ * cũ của R4 (chỉ đúng khi tốc độ hằng trên câu). Mỗi biên từ đi qua đúng
+ * ánh xạ media → timeline của caption (mapMediaTimeToOutputOffset), rồi
+ * trừ offset bắt đầu của câu để ra clip-local. Biên từ ngoài câu bị kẹp
+ * vào [0, duration] (từ cắt dở vẫn giữ phần thấy được).
+ */
+export function karaokeForLinkedSegment(
+  source: SourceClip,
+  captionStart: number,
+  captionDuration: number,
+  words: { start: number; end: number; word: string }[]
+): { word: string; start: number; end: number }[] {
+  const base = captionStart - source.start;
+  const [lo, hi] = visibleMediaRange(source);
+  const out: { word: string; start: number; end: number }[] = [];
+  for (const w of words) {
+    // Kẹp biên từ vào đoạn nguồn thấy được trước khi map (từ cắt dở ở biên
+    // câu vẫn giữ phần thấy được, thay vì rớt cả từ như khi map null).
+    const s = Math.max(lo, Math.min(hi, w.start));
+    const e = Math.max(lo, Math.min(hi, w.end));
+    if (e <= s) continue;
+    const o1 = mapMediaTimeToOutputOffset(source, s);
+    const o2 = mapMediaTimeToOutputOffset(source, e);
+    if (o1 === null || o2 === null) continue;
+    // Clip ngược: media tăng nhưng output giảm nên o1 > o2 — lấy min/max
+    // để khoảng clip-local luôn xuôi theo thời gian phát.
+    const lo2 = Math.min(o1, o2);
+    const hi2 = Math.max(o1, o2);
+    const start = Math.max(0, Math.round((lo2 - base) * 100) / 100);
+    const end = Math.min(
+      captionDuration,
+      Math.round((hi2 - base) * 100) / 100
+    );
+    if (end > start && start < captionDuration) {
+      out.push({ word: w.word, start, end });
+    }
+  }
+  // Sắp theo thời gian phát (clip ngược: thứ tự từ đảo so với media).
+  // Preview và ASS \k đều đọc words theo thứ tự mảng nên phải xuôi.
+  out.sort((a, b) => a.start - b.start);
+  return out;
+}
+
+/**
  * Ánh xạ đoạn media [a, b) của clip nguồn sang vị trí timeline.
  * Trả về null nếu đoạn nằm ngoài đoạn nguồn thấy được (câu đã bị cắt hết).
  * Kết quả đã kẹp vào đoạn nguồn của clip; phần ngoài bị bỏ.
@@ -166,16 +254,136 @@ export function mapMediaRangeToTimeline(
  * Style dùng CAPTION_DEFAULT_STYLE của captions.ts (caller truyền vào để
  * tránh import vòng — captions.ts không import module này).
  */
+/**
+ * Tính lại karaoke clip-local khi caption bám theo clip nguồn đổi hình học —
+ * Phase 9 D6. Tốc độ hằng (không curve): KHÔI PHỤC thời gian media của từng
+ * biên từ rồi map lại qua hình học mới — chính xác cả khi trim cắt đầu câu
+ * (rescale tuyến tính cũ sai trường hợp này: câu media [0,10] trim trái
+ * còn [2,10] thì từ media 5 phải về clip-local 3, rescale cho 4). Trim/move
+ * không đổi speed nên tốc độ cũ = tốc độ mới; nếu duration cũ không khớp
+ * (me-ms)/speed (tốc độ đã đổi, hoặc duration bị kẹp min 0.2) thì rơi về
+ * rescale tuyến tính cũ. Có speed curve: giữ rescale tuyến tính (hình học
+ * cũ của curve không còn trong refollow nên không khôi phục chính xác
+ * được — giới hạn này ghi trong D6_LIMITS.md; lúc TẠO câu thì karaoke đã
+ * chính xác qua karaokeForLinkedSegment).
+ */
+function remapKaraokeForRefollow(
+  karaoke: { word: string; start: number; end: number }[],
+  oldDuration: number,
+  oldLink: { mediaStart: number; mediaEnd: number },
+  newLink: { mediaStart: number; mediaEnd: number },
+  source: SourceClip,
+  newDuration: number
+): { word: string; start: number; end: number }[] | undefined {
+  if (!hasUsableSpeedCurve(source)) {
+    const speed = source.speed ?? 1;
+    const reverse = source.reverse ?? false;
+    // Kiểm tra tốc độ không đổi: duration cũ phải khớp (me-ms)/speed.
+    // Dung sai 0.05s cho làm tròn r2; lệch hơn → tốc độ đã đổi, fallback.
+    if (
+      speed > 0 &&
+      Math.abs(oldDuration - (oldLink.mediaEnd - oldLink.mediaStart) / speed) <= 0.05
+    ) {
+      const shift = reverse
+        ? (newLink.mediaEnd - oldLink.mediaEnd) / speed
+        : (oldLink.mediaStart - newLink.mediaStart) / speed;
+      const out = karaoke
+        .map((w) => ({
+          word: w.word,
+          start: Math.max(0, Math.round((w.start + shift) * 100) / 100),
+          end: Math.min(
+            newDuration,
+            Math.round((w.end + shift) * 100) / 100
+          ),
+        }))
+        .filter((w) => w.end > w.start && w.start < newDuration);
+      return out.length > 0 ? out : undefined;
+    }
+  }
+  return rescaleKaraoke(karaoke, oldDuration, newDuration);
+}
+
+/**
+ * Scale + clamp karaoke clip-local theo duration mới — Phase 9 R4.
+ * Chính xác khi tốc độ hằng số trên câu (tỉ lệ timeline/media đều nhau);
+ * xấp xỉ khi câu nằm trên đoạn speed curve (từ không scale tuyến tính theo
+ * tích phân tốc độ). Không bao giờ để từ vượt duration mới.
+ * Phase 9 D6: chỉ còn là fallback cho refollow có speed curve (xem
+ * remapKaraokeForRefollow); lúc tạo câu đã dùng mapping tích phân chính xác.
+ */
+export function rescaleKaraoke(
+  karaoke: { word: string; start: number; end: number }[] | undefined,
+  oldDuration: number,
+  newDuration: number
+): { word: string; start: number; end: number }[] | undefined {
+  if (!karaoke || karaoke.length === 0 || oldDuration <= 0) return karaoke;
+  const ratio = newDuration / oldDuration;
+  const out = karaoke
+    .map((w) => ({
+      word: w.word,
+      start: Math.round(w.start * ratio * 100) / 100,
+      end: Math.min(
+        newDuration,
+        Math.round(w.end * ratio * 100) / 100
+      ),
+    }))
+    .filter((w) => w.end > w.start && w.start < newDuration);
+  return out.length > 0 ? out : undefined;
+}
+
+/**
+ * Dịch karaoke khi trim mép TRÁI clip chữ trực tiếp — Phase 9 R4.
+ * shift > 0 = cắt bớt đầu clip (start dời phải): từ dịch trái theo shift,
+ * từ nào kết thúc <= 0 thì rớt. shift < 0 = kéo dài clip về trái: từ dịch
+ * phải tương ứng. Dùng chung cho cả caption link (sau unlink) lẫn chữ
+ * thường có karaoke.
+ */
+export function shiftKaraoke(
+  karaoke: { word: string; start: number; end: number }[] | undefined,
+  shift: number
+): { word: string; start: number; end: number }[] | undefined {
+  if (!karaoke || karaoke.length === 0 || shift === 0) return karaoke;
+  const out = karaoke
+    .map((w) => ({
+      word: w.word,
+      start: Math.round((w.start - shift) * 100) / 100,
+      end: Math.round((w.end - shift) * 100) / 100,
+    }))
+    .filter((w) => w.end > 0)
+    .map((w) => ({ ...w, start: Math.max(0, w.start) }));
+  return out.length > 0 ? out : undefined;
+}
+
+/** Cắt karaoke theo duration mới khi trim mép PHẢI clip chữ trực tiếp. */
+export function clampKaraoke(
+  karaoke: { word: string; start: number; end: number }[] | undefined,
+  newDuration: number
+): { word: string; start: number; end: number }[] | undefined {
+  if (!karaoke || karaoke.length === 0) return karaoke;
+  const out = karaoke
+    .map((w) => ({ ...w, end: Math.min(w.end, newDuration) }))
+    .filter((w) => w.end > w.start && w.start < newDuration);
+  return out.length > 0 ? out : undefined;
+}
+
 export function linkSegmentsToClips(
   segments: { start: number; end: number; text: string }[],
   source: SourceClip,
-  style: TextClip["style"]
+  style: TextClip["style"],
+  /**
+   * Phase 9 R4: words theo từng segment (mảng song song với segments, thời
+   * gian media). Khi có, mỗi clip linked được gắn karaoke clip-local qua
+   * karaokeForLinkedSegment — map từng biên từ qua tích phân speed curve
+   * (D6), chính xác cả dưới speed ramp, không còn tỉ lệ tuyến tính cũ.
+   */
+  wordsBySegment?: { start: number; end: number; word: string }[][]
 ): TextClip[] {
   const out: TextClip[] = [];
-  for (const s of segments) {
+  for (let si = 0; si < segments.length; si++) {
+    const s = segments[si];
     const m = mapMediaRangeToTimeline(source, s.start, s.end);
     if (!m) continue;
-    out.push({
+    const clip: TextClip = {
       kind: "text",
       id: nextCapId(),
       text: s.text,
@@ -183,7 +391,18 @@ export function linkSegmentsToClips(
       duration: Math.max(0.2, m.duration),
       style,
       captionOf: { clipId: source.id, mediaStart: m.visStart, mediaEnd: m.visEnd },
-    });
+    };
+    const segWords = wordsBySegment?.[si];
+    if (segWords && segWords.length > 0) {
+      const karaoke = karaokeForLinkedSegment(
+        source,
+        m.start,
+        m.duration,
+        segWords
+      );
+      if (karaoke.length > 0) clip.karaoke = karaoke;
+    }
+    out.push(clip);
   }
   return out;
 }
@@ -205,11 +424,28 @@ export function refollowCaptions(
     }
     const m = mapMediaRangeToTimeline(source, c.captionOf.mediaStart, c.captionOf.mediaEnd);
     if (!m) continue; // bị cắt hết → xoá câu
+    const textClip = c as TextClip;
     out.push({
       ...c,
       start: m.start,
       duration: Math.max(0.2, m.duration),
       captionOf: { clipId: source.id, mediaStart: m.visStart, mediaEnd: m.visEnd },
+      // D6: karaoke remap qua media (chính xác khi tốc độ hằng, fallback
+      // rescale tuyến tính khi có curve — xem remapKaraokeForRefollow).
+      // Nếu remap xong rỗng thì bỏ field (chữ thường) thay vì giữ
+      // highlight sai thời gian.
+      ...(textClip.karaoke
+        ? {
+            karaoke: remapKaraokeForRefollow(
+              textClip.karaoke,
+              c.duration,
+              c.captionOf,
+              { mediaStart: m.visStart, mediaEnd: m.visEnd },
+              source,
+              Math.max(0.2, m.duration)
+            ),
+          }
+        : {}),
     });
   }
   return out;
@@ -257,12 +493,23 @@ export function splitLinkedCaptionsMulti(
     for (const p of pieces) {
       const m = mapMediaRangeToTimeline(p, c.captionOf.mediaStart, c.captionOf.mediaEnd);
       if (!m) continue;
+      const textClip = c as TextClip;
+      // R4: karaoke chỉ giữ nguyên khi mảnh giữ gần như đủ duration gốc (câu
+      // không bị cắt dở bởi điểm split). Mảnh bị cắt dở thì bỏ karaoke (giữ
+      // chữ thường) — không đoán thời gian từ cho đoạn bị cắt, tránh
+      // highlight sai. Dung sai 0.05s cho làm tròn.
+      const keepKaraoke =
+        textClip.karaoke &&
+        Math.abs(m.duration - c.duration) <= 0.05
+          ? textClip.karaoke
+          : undefined;
       out.push({
         ...c,
         id: first ? c.id : nextCapId(),
         start: m.start,
         duration: Math.max(0.2, m.duration),
         captionOf: { clipId: p.id, mediaStart: m.visStart, mediaEnd: m.visEnd },
+        ...(keepKaraoke ? { karaoke: keepKaraoke } : { karaoke: undefined }),
       });
       first = false;
     }

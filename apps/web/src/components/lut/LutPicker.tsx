@@ -23,6 +23,7 @@ import {
   userLutIdFromName,
   type UserLutMeta,
 } from "../../lib/userLut";
+import { t as i18nT, useLang } from "../../i18n";
 
 export interface LutPickerProps {
   /** LutId (catalog hoặc user-) đang chọn, hoặc undefined = không lọc */
@@ -230,6 +231,7 @@ function Swatch({ lutId }: { lutId: LutId }) {
 }
 
 export function LutPicker({ value, onChange }: LutPickerProps) {
+  useLang();
   // K3: LUT user tự nhập, lưu trong IndexedDB (xem lib/userLut).
   const [userLuts, setUserLuts] = useState<UserLutMeta[]>([]);
   const [importErr, setImportErr] = useState<string | null>(null);
@@ -256,7 +258,7 @@ export function LutPicker({ value, onChange }: LutPickerProps) {
     setImporting(true);
     try {
       if (!f.name.toLowerCase().endsWith(".cube")) {
-        throw new Error("Chỉ nhận file .cube (định dạng Adobe IRIDAS Cube, LUT 3D).");
+        throw new Error(i18nT("lut.errCube"));
       }
       const text = await f.text();
       const parsed = parseCube(text, f.size);
@@ -272,7 +274,7 @@ export function LutPicker({ value, onChange }: LutPickerProps) {
       setUserLuts((prev) => [meta, ...prev]);
       onChange(id as UserLutId);
     } catch (e) {
-      setImportErr(e instanceof Error ? e.message : "Không nhập được file này.");
+      setImportErr(e instanceof Error ? e.message : i18nT("lut.errGeneric"));
     } finally {
       setImporting(false);
     }
@@ -293,7 +295,7 @@ export function LutPicker({ value, onChange }: LutPickerProps) {
           disabled={importing}
           onClick={() => fileRef.current?.click()}
         >
-          {importing ? "Đang kiểm tra…" : "📥 Nhập LUT (.cube) của bạn…"}
+          {importing ? i18nT("lut.importing") : i18nT("lut.importBtn")}
         </button>
         <input
           ref={fileRef}
@@ -310,7 +312,7 @@ export function LutPicker({ value, onChange }: LutPickerProps) {
       {userLuts.length > 0 && (
         <>
           <div className="lut-section-head">
-            LUT của bạn ({userLuts.length})
+            {i18nT("lut.ownHead", { n: String(userLuts.length) })}
           </div>
           <div className="lut-grid">
             {userLuts.map((u) => (
@@ -322,7 +324,7 @@ export function LutPicker({ value, onChange }: LutPickerProps) {
                   type="button"
                   className="lut-card-main"
                   onClick={() => onChange(value === u.id ? undefined : (u.id as UserLutId))}
-                  title={`LUT tự nhập — lưới 3D ${u.size}×${u.size}×${u.size}`}
+                  title={i18nT("lut.userTitle", { size: String(u.size) })}
                 >
                   <div
                     className="lut-swatch"
@@ -334,13 +336,13 @@ export function LutPicker({ value, onChange }: LutPickerProps) {
                   />
                   <div className="lut-name">{u.label}</div>
                   <div className="lut-desc">
-                    LUT tự nhập · {u.size}³
+                    {i18nT("lut.userDesc", { size: String(u.size) })}
                   </div>
                 </button>
                 <button
                   type="button"
                   className="lut-card-del"
-                  title="Xóa LUT này"
+                  title={i18nT("lut.deleteTitle")}
                   onClick={() => void onDeleteUserLut(u.id)}
                 >
                   ✕
@@ -350,17 +352,17 @@ export function LutPicker({ value, onChange }: LutPickerProps) {
           </div>
         </>
       )}
-      <div className="lut-section-head">LUT có sẵn</div>
+      <div className="lut-section-head">{i18nT("lut.catalogHead")}</div>
       <div className="lut-grid">
         <button
           type="button"
           className={`lut-card${value === undefined ? " selected" : ""}`}
           onClick={() => onChange(undefined)}
-          title="Không áp bộ lọc màu"
+          title={i18nT("lut.noneTitle")}
         >
           <div className="lut-swatch lut-none" aria-hidden />
-          <div className="lut-name">Không lọc</div>
-          <div className="lut-desc">Giữ nguyên màu gốc</div>
+          <div className="lut-name">{i18nT("lut.noneName")}</div>
+          <div className="lut-desc">{i18nT("lut.noneDesc")}</div>
         </button>
         {LUT_IDS.map((id) => {
           const meta = LUT_META[id];
@@ -380,8 +382,7 @@ export function LutPicker({ value, onChange }: LutPickerProps) {
         })}
       </div>
       <p className="lut-note">
-        ⚠️ Màu preview chỉ là minh họa gần đúng. Màu chính xác của LUT chỉ hiện
-        khi render video.
+        {i18nT("lut.note")}
       </p>
     </div>
   );

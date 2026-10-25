@@ -5,6 +5,19 @@ import type { MediaItem } from "./media";
 import { fmtTime } from "./lib";
 import { t, useLang } from "./i18n";
 import { pushToast } from "./lib/toast";
+import { shouldAutoProxy } from "./lib/proxy";
+
+/** Trạng thái proxy tự động của 1 item (R3 Phase 9) — giữ ở MediaBin, không đụng store. */
+export type AutoStatus = "creating" | "done" | "failed" | "skipped";
+const AUTO_PROXY_KEY = "vcut-auto-proxy";
+function readAutoProxy(): boolean {
+  try {
+    const v = localStorage.getItem(AUTO_PROXY_KEY);
+    return v === null ? true : v === "1";
+  } catch {
+    return true;
+  }
+}
 
 /** Địa chỉ bridge server (cùng mẫu ExportPanel/BgRemovePanel). */
 const BRIDGE_URL =
@@ -17,7 +30,7 @@ const KIND_ICON: Record<MediaItem["kind"], string> = {
   image: "🖼️",
 };
 
-function MediaCard({ item }: { item: MediaItem }) {
+function MediaCard({ item, autoStatus }: { item: MediaItem; autoStatus?: AutoStatus }) {
   const st = useStore.getState();
   const [proxyBusy, setProxyBusy] = useState(false);
   // Q8: tạo proxy 720p qua bridge rồi gắn vào item — preview dùng proxy,
@@ -80,9 +93,19 @@ function MediaCard({ item }: { item: MediaItem }) {
           title={item.proxyUrl ? `Đang dùng proxy ${item.proxyHeight ?? 720}p cho preview` : "Tạo bản proxy 720p qua bridge để preview mượt hơn (export vẫn dùng file gốc)"}
           aria-label={`Tạo proxy cho ${item.name}`}
           onClick={() => void makeProxy()}
-          disabled={proxyBusy}
+          disabled={proxyBusy || autoStatus === "creating"}
         >
-          {proxyBusy ? "…" : item.proxyUrl ? `✓ PROXY ${item.proxyHeight ?? 720}p` : "Proxy 720p"}
+          {proxyBusy
+            ? "…"
+            : item.proxyUrl
+              ? `✓ PROXY ${item.proxyHeight ?? 720}p`
+              : autoStatus === "creating"
+                ? "Đang tạo…"
+                : autoStatus === "failed"
+                  ? "Proxy lỗi, thử lại"
+                  : autoStatus === "skipped"
+                    ? "Không cần proxy"
+                    : "Proxy 720p"}
         </button>
       )}
     </div>
@@ -94,21 +117,70 @@ export function MediaBin() {
   const media = useStore((s) => s.media);
   const fileRef = useRef<HTMLInputElement>(null);
   const st = useStore.getState();
+  // R3 (Phase 9): proxy tự động — mặc định BẬT, tắt được, lưu localStorage.
+  const [autoProxy, setAutoProxy] = useState(readAutoProxy);
+  const [autoStatus, setAutoStatus] = useState<Record<string, AutoStatus>>({});
 
-  const onFiles = (files: FileList | null) => {
+  const onFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    void st.importFiles([...files]);
+    const before = new Set(useStore.getState().media.map((m) => m.id));
+    await st.importFiles([...files]);
     if (fileRef.current) fileRef.current.value = "";
+    if (!autoProxy) return;
+    // Chỉ tạo cho item vừa import, tuần tự để khỏi đè CPU bridge.
+    const fresh = useStore.getState().media.filter((m) => !before.has(m.id));
+    let bridgeDownToasted = false;
+    for (const item of fresh) {
+      if (!shouldAutoProxy(item, true)) continue;
+      setAutoStatus((s) => ({ ...s, [item.id]: "creating" }));
+      try {
+        const form = new FormData();
+        form.append("file", item.file as File);
+        form.append("height", "720");
+        const res = await fetch(`${BRIDGE_URL}/api/proxy`, { method: "POST", body: form });
+        const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+        if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : `Bridge trả ${res.status}`);
+        if (data.skipped) {
+          setAutoStatus((s) => ({ ...s, [item.id]: "skipped" }));
+          continue;
+        }
+        if (typeof data.proxyUrl !== "string") throw new Error("Bridge không trả proxyUrl.");
+        useStore.getState().setMediaProxy(item.id, `${BRIDGE_URL}${data.proxyUrl}`, Number(data.proxyHeight) || 720);
+        setAutoStatus((s) => ({ ...s, [item.id]: "done" }));
+      } catch {
+        setAutoStatus((s) => ({ ...s, [item.id]: "failed" }));
+        if (!bridgeDownToasted) {
+          bridgeDownToasted = true;
+          pushToast(`Bridge không chạy (${BRIDGE_URL}) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.`, "error");
+        }
+      }
+    }
   };
 
   return (
-    <aside className="mediabin" aria-label={t("mediabin.title")}>
+    <aside className="mediabin" aria-label={t("mediabin.title")} data-tour="media">
       <div className="panel-head">
         <span>📁 {t("mediabin.title")}</span>
         <button className="mini-btn" onClick={() => fileRef.current?.click()} title={t("mediabin.import")}>
           {t("mediabin.import")}
         </button>
       </div>
+      <label style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "13px", padding: "6px 8px" }}>
+        <input
+          type="checkbox"
+          checked={autoProxy}
+          onChange={(e) => {
+            const v = e.target.checked;
+            setAutoProxy(v);
+            try {
+              localStorage.setItem(AUTO_PROXY_KEY, v ? "1" : "0");
+            } catch {
+              // private mode: giữ trong phiên, không crash
+            }
+          }}
+        />
+        Tự tạo proxy 720p khi import video (preview mượt hơn, export vẫn dùng gốc)
+      </label>
       <input
         ref={fileRef}
         type="file"
@@ -120,7 +192,7 @@ export function MediaBin() {
       />
       <div className="media-grid">
         {media.map((m) => (
-          <MediaCard key={m.id} item={m} />
+          <MediaCard key={m.id} item={m} autoStatus={autoStatus[m.id]} />
         ))}
         {media.length === 0 && (
           <div className="media-empty">

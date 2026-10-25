@@ -15,6 +15,7 @@
 import { useState } from "react";
 import { useStore } from "../../store";
 import "./effects.css";
+import { t as i18nT, useLang } from "../../i18n";
 import {
   EFFECT_META,
   EFFECT_TYPES,
@@ -26,6 +27,7 @@ import {
 type ClipWithEffects = { effects?: VideoEffect[] };
 
 export function EffectPanel() {
+  useLang();
   const selection = useStore((s) => s.selection);
   const spec = useStore((s) => s.spec);
   const [warn, setWarn] = useState<string | null>(null);
@@ -93,10 +95,10 @@ export function EffectPanel() {
                   <span className="fx-val">
                     {type === "brightness"
                       ? (active.intensity ?? 0.5) < 0.5
-                        ? `tối ${Math.round((0.5 - (active.intensity ?? 0.5)) * 200)}%`
+                        ? i18nT("effect.darker", { n: String(Math.round((0.5 - (active.intensity ?? 0.5)) * 200)) })
                         : (active.intensity ?? 0.5) > 0.5
-                          ? `sáng ${Math.round(((active.intensity ?? 0.5) - 0.5) * 200)}%`
-                          : "gốc"
+                          ? i18nT("effect.lighter", { n: String(Math.round(((active.intensity ?? 0.5) - 0.5) * 200)) })
+                          : i18nT("effect.orig")
                       : `${Math.round((active.intensity ?? 0.5) * 100)}%`}
                   </span>
                 </label>
@@ -106,7 +108,7 @@ export function EffectPanel() {
         })}
       </div>
       {effects.length > 0 && (
-        <p className="tips">💡 Hiệu ứng áp theo thứ tự từ trên xuống. Xem kết quả sau khi render.</p>
+        <p className="tips">{i18nT("effect.tips")}</p>
       )}
     </div>
   );

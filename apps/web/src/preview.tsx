@@ -2,9 +2,9 @@
  * Preview canvas: vẽ từng frame theo playhead bằng Canvas 2D,
  * đồng bộ phát lại video/audio thật, hỗ trợ kéo chữ trực tiếp.
  */
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { TextClip, VideoClip, VideoSpec } from "@repo-1/video-spec";
-import { isSpeedable, stickerUrl } from "@repo-1/video-spec";
+import { interpolateMaskAt, isSpeedable, stickerUrl } from "@repo-1/video-spec";
 import type { ImageClip, StickerClip } from "@repo-1/video-spec";
 import { useStore } from "./store";
 import type { MediaItem } from "./media";
@@ -17,6 +17,7 @@ import {
   applyChromaKey,
   applyMask,
   imageClipFit,
+  interpolateTrackPoints,
   letterboxFit,
   rampSourceTimeAt,
   rampSpeedAt,
@@ -26,6 +27,8 @@ import {
   videoElementPlacement,
   type ChromaParams,
 } from "./lib/previewEngine";
+import { applyWebglLut, getLutBadge } from "./lib/webglLut";
+import { MixerMeter } from "./components/MixerMeter";
 
 interface Viewport {
   cw: number;
@@ -121,6 +124,11 @@ function maskedUnitSource(
   mask: NonNullable<VideoClip["mask"]>,
   W: number,
   H: number,
+  // Phase 9 D4: thời gian cục bộ của clip (giây, 0 = clip.start) — mask có
+  // keyframes thì nội suy hình học tại localT, khớp thời gian của video
+  // mask animation trong render (unit bắt đầu PTS 0). Không keyframe thì
+  // interpolateMaskAt trả đúng giá trị tĩnh, không đổi hành vi cũ.
+  localT: number,
 ): HTMLCanvasElement | null {
   if (typeof document === "undefined") return null;
   if (!maskCanvas) maskCanvas = document.createElement("canvas");
@@ -138,7 +146,11 @@ function maskedUnitSource(
   mctx.drawImage(drawSrc, dx * s, dy * s, dw * s, dh * s);
   setCtxFilter(mctx, "");
   const img = mctx.getImageData(0, 0, w, h);
-  applyMask(img, mask);
+  // Phase 9 D4: nội suy mask theo thời gian (mask tĩnh → giữ nguyên).
+  const effMask = mask.keyframes?.length
+    ? { ...mask, ...interpolateMaskAt(mask, localT) }
+    : mask;
+  applyMask(img, effMask);
   mctx.putImageData(img, 0, 0);
   return maskCanvas;
 }
@@ -212,6 +224,47 @@ interface TextBox {
   h: number;
 }
 
+/**
+ * Đo layout dòng karaoke: từng từ + khoảng trắng sau (trừ từ cuối).
+ * Phase 9 R4 — preview xấp xỉ ở mức từ (từ đổi màu nguyên từ khi tới lượt),
+ * trong khi render ASS \k quét màu mịn hơn; vị trí từ và màu từ nào đã qua
+ * thì khớp.
+ */
+function karaokeLayout(
+  ctx: CanvasRenderingContext2D,
+  clip: TextClip,
+): { widths: number[]; totalW: number } {
+  const words = clip.karaoke!;
+  ctx.font = textFont(clip);
+  const widths = words.map((w, i) =>
+    ctx.measureText(w.word + (i < words.length - 1 ? " " : "")).width
+  );
+  return { widths, totalW: widths.reduce((a, b) => a + b, 0) };
+}
+
+/** Vẽ 1 dòng karaoke đã đo layout: từng từ đổi sang màu highlight khi tới lượt. */
+function drawKaraokeWords(
+  ctx: CanvasRenderingContext2D,
+  clip: TextClip,
+  localT: number,
+  cx: number,
+  cy: number,
+  layout: { widths: number[]; totalW: number },
+): void {
+  const s = clip.style;
+  const hi = s.highlightColor ?? "#ffff00";
+  const words = clip.karaoke!;
+  ctx.font = textFont(clip);
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  let x = cx - layout.totalW / 2;
+  for (let i = 0; i < words.length; i++) {
+    ctx.fillStyle = localT >= words[i].start ? hi : s.color;
+    ctx.fillText(words[i].word, x, cy);
+    x += layout.widths[i];
+  }
+}
+
 function drawTextClip(
   ctx: CanvasRenderingContext2D,
   spec: VideoSpec,
@@ -223,17 +276,34 @@ function drawTextClip(
   const s = clip.style;
   const { width: W, height: H } = spec.meta;
   const localT = t - clip.start;
+  // Khớp render: typewriter thắng karaoke (clip vừa có karaoke vừa bật
+  // typewriter thì render vẽ typewriter, preview cũng vậy).
+  const hasKaraoke =
+    clip.style.animation !== "typewriter" &&
+    Array.isArray(clip.karaoke) &&
+    clip.karaoke.length > 0;
   // Đo chữ để textClipVisual tính vị trí (mirror drawtext dùng text_w/text_h).
   ctx.font = textFont(clip);
   const textW = Math.max(1, ctx.measureText(clip.text || " ").width);
   const textH = clip.style.fontSize * 1.35;
   const vis = textClipVisual(clip, localT, W, H, { textW, textH });
+  // Phase 9 D3: text có track → tâm dòng chữ bám quỹ đạo (cùng nội suy
+  // sticker). Typewriter/karaoke vẽ bằng ASS ở render nên preview cũng giữ
+  // vị trí tĩnh cho khớp (validator cảnh báo track bị bỏ qua ở render).
+  if (clip.track && clip.style.animation !== "typewriter" && !hasKaraoke) {
+    const pos = interpolateTrackPoints(clip.track.points, localT);
+    vis.cx = pos.x * W;
+    vis.cy = pos.y * H;
+  }
   let text = clip.text;
   if (vis.revealChars != null) {
     text = [...text].slice(0, vis.revealChars).join("");
   }
   // Hộp nền + outline: box có padding như cũ, đặt tại tâm vis.
-  const boxW = textW + 24;
+  // Karaoke: box ôm theo chiều rộng dòng từ (thay vì clip.text — hai chuỗi
+  // này thường giống nhau nhưng đo từ karaoke mới khớp vị trí vẽ từng từ).
+  const kaLayout = hasKaraoke ? karaokeLayout(ctx, clip) : null;
+  const boxW = (kaLayout ? kaLayout.totalW : textW) + 24;
   const boxH = textH + 16;
 
   // P1 (Phase 7): clip SR — vẽ qua transform translate→rotate→scale quanh
@@ -251,11 +321,15 @@ function drawTextClip(
       ctx.roundRect(-boxW / 2, -boxH / 2, boxW, boxH, 10);
       ctx.fill();
     }
-    ctx.font = textFont(clip);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = s.color;
-    ctx.fillText(text, 0, 0);
+    if (kaLayout) {
+      drawKaraokeWords(ctx, clip, localT, 0, 0, kaLayout);
+    } else {
+      ctx.font = textFont(clip);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = s.color;
+      ctx.fillText(text, 0, 0);
+    }
     ctx.restore();
     if (selected) {
       ctx.save();
@@ -279,11 +353,15 @@ function drawTextClip(
     ctx.roundRect(vis.cx - boxW / 2, vis.cy - boxH / 2, boxW, boxH, 10);
     ctx.fill();
   }
-  ctx.font = textFont(clip);
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = s.color;
-  ctx.fillText(text, vis.cx, vis.cy);
+  if (kaLayout) {
+    drawKaraokeWords(ctx, clip, localT, vis.cx, vis.cy, kaLayout);
+  } else {
+    ctx.font = textFont(clip);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = s.color;
+    ctx.fillText(text, vis.cx, vis.cy);
+  }
   ctx.restore();
 
   if (selected) {
@@ -360,23 +438,50 @@ function drawVideoClip(
   const { dw, dh, dx, dy } = letterboxFit(mw, mh, W, H);
   // Render pad unit đúng WxH nên unitW=W, unitH=H.
   const vis = videoClipVisual(clip, localT, W, H, W, H);
+  // Phase 9 D3: video có track → tâm unit bám quỹ đạo (mirror render.js:
+  // overlay x = main_w*frac - overlay_w/2; unit full-frame nên shift =
+  // tâm track trừ tâm khung). Track thắng offset keyframes x/y;
+  // scale/rotation/opacity vẫn giữ. Unit đã merge transition thì render
+  // bỏ qua track, preview không biết trạng thái merge nên vẫn hiện bám
+  // track ở đoạn chuyển cảnh (lệch đã ghi trong D3_LIMITS.md).
+  let trackShift: { x: number; y: number } | null = null;
+  let trackCenter: { x: number; y: number } | null = null;
+  if (clip.track) {
+    const pos = interpolateTrackPoints(clip.track.points, localT);
+    trackCenter = { x: pos.x * W, y: pos.y * H };
+    trackShift = { x: trackCenter.x - W / 2, y: trackCenter.y - H / 2 };
+  }
   let drawSrc: CanvasImageSource = srcEl;
   if (vis.chroma) {
     const keyed = chromaKeyedSource(srcEl, mw, mh, vis.chroma);
     if (keyed) drawSrc = keyed;
+  }
+  // R5 (Phase 9): LUT WebGL thật — áp LUT lên frame nguồn (kích thước
+  // letterbox dw×dh, không vượt quá độ phân giải project) TRƯỚC mask/SR/
+  // opacity, đúng thứ tự render. Thành công thì drawSrc đổi sang canvas
+  // WebGL và cssFilter bỏ phần LUT (tránh áp 2 lần); thất bại/chưa load
+  // xong thì giữ đường CSS approx cũ, badge sẽ báo rõ chế độ.
+  let cssFilter = vis.cssFilter;
+  if (vis.lut) {
+    const wl = applyWebglLut(drawSrc, vis.lut, dw, dh);
+    if (wl) {
+      drawSrc = wl;
+      cssFilter = vis.cssFilterNoLut;
+    }
   }
   // Q1 (Phase 8): mask — unit offscreen đã nhân alpha mask, rồi composite
   // như đường vẽ thường (SR hay không đều qua unit, khớp render: mask
   // trước SR). Unit null (không có document/context) → rơi xuống đường
   // vẽ thường, mask bị bỏ qua ở frame đó.
   if (clip.mask) {
-    const unit = maskedUnitSource(drawSrc, dx, dy, dw, dh, vis.cssFilter, clip.mask, W, H);
+    const unit = maskedUnitSource(drawSrc, dx, dy, dw, dh, cssFilter, clip.mask, W, H, localT);
     if (unit) {
       ctx.save();
       ctx.globalAlpha = clamp(alpha * vis.opacity, 0, 1);
       if (clip.animations?.scale || clip.animations?.rotation) {
         const pl = videoElementPlacement(clip, localT, W, H, W, H);
-        ctx.translate(pl.centerX, pl.centerY);
+        // Phase 9 D3: có track thì tâm hình bao bám điểm track thay vì tâm placement.
+        ctx.translate(trackCenter ? trackCenter.x : pl.centerX, trackCenter ? trackCenter.y : pl.centerY);
         if (pl.rotationDeg) ctx.rotate((pl.rotationDeg * Math.PI) / 180);
         if (pl.scale !== 1) ctx.scale(pl.scale, pl.scale);
         ctx.drawImage(unit, -W / 2, -H / 2, W, H);
@@ -387,10 +492,11 @@ function drawVideoClip(
         warnSkippedEffects(vis.skippedEffects);
         return;
       }
-      ctx.drawImage(unit, 0, 0, W, H);
+      // Phase 9 D3: mask unit cũng dịch theo track (mask áp trước overlay ở render).
+      ctx.drawImage(unit, trackShift ? trackShift.x : 0, trackShift ? trackShift.y : 0, W, H);
       ctx.restore();
       if (vis.vignette != null) {
-        drawVignette(ctx, dx + vis.offsetX, dy + vis.offsetY, dw, dh, vis.vignette);
+        drawVignette(ctx, dx + (trackShift ? trackShift.x : vis.offsetX), dy + (trackShift ? trackShift.y : vis.offsetY), dw, dh, vis.vignette);
       }
       warnSkippedEffects(vis.skippedEffects);
       return;
@@ -398,7 +504,7 @@ function drawVideoClip(
   }
   ctx.save();
   ctx.globalAlpha = clamp(alpha * vis.opacity, 0, 1);
-  setCtxFilter(ctx, vis.cssFilter);
+  setCtxFilter(ctx, cssFilter);
   // Keyframes scale/rotation: mirror render (scale eval=frame + rotate quanh
   // tâm, overlay đặt hình bao theo x/y). Canvas: dịch tới tâm element →
   // xoay → scale → vẽ nội dung trong hệ toạ độ unit (gốc tại tâm unit).
@@ -407,7 +513,8 @@ function drawVideoClip(
   // đổi — phần ngoài cho thấy nội dung bên dưới, khớp render.
   if (clip.animations?.scale || clip.animations?.rotation) {
     const pl = videoElementPlacement(clip, localT, W, H, W, H);
-    ctx.translate(pl.centerX, pl.centerY);
+    // Phase 9 D3: có track thì tâm hình bao bám điểm track thay vì tâm placement.
+    ctx.translate(trackCenter ? trackCenter.x : pl.centerX, trackCenter ? trackCenter.y : pl.centerY);
     if (pl.rotationDeg) ctx.rotate((pl.rotationDeg * Math.PI) / 180);
     if (pl.scale !== 1) ctx.scale(pl.scale, pl.scale);
     ctx.drawImage(drawSrc, dx - W / 2, dy - H / 2, dw, dh);
@@ -418,10 +525,22 @@ function drawVideoClip(
     warnSkippedEffects(vis.skippedEffects);
     return;
   }
-  ctx.drawImage(drawSrc, dx + vis.offsetX, dy + vis.offsetY, dw, dh);
+  // Phase 9 D3: có track thì toàn bộ unit dịch theo shift; nền đen của unit
+  // (render pad unit đục) phải che nội dung bên dưới nên tô đen trước rồi
+  // mới vẽ nội dung letterbox đã dịch.
+  if (trackShift) {
+    ctx.save();
+    setCtxFilter(ctx, "");
+    ctx.fillStyle = "#000";
+    ctx.fillRect(trackShift.x, trackShift.y, W, H);
+    ctx.restore();
+    ctx.drawImage(drawSrc, dx + trackShift.x, dy + trackShift.y, dw, dh);
+  } else {
+    ctx.drawImage(drawSrc, dx + vis.offsetX, dy + vis.offsetY, dw, dh);
+  }
   ctx.restore();
   if (vis.vignette != null) {
-    drawVignette(ctx, dx + vis.offsetX, dy + vis.offsetY, dw, dh, vis.vignette);
+    drawVignette(ctx, dx + (trackShift ? trackShift.x : vis.offsetX), dy + (trackShift ? trackShift.y : vis.offsetY), dw, dh, vis.vignette);
   }
   warnSkippedEffects(vis.skippedEffects);
 }
@@ -433,6 +552,8 @@ function drawImageClip(
   pool: MediaPool,
   mediaByName: Map<string, MediaItem>,
   clip: ImageClip,
+  // Phase 9 D4: thời gian timeline (để tính localT cho mask keyframes).
+  t: number,
 ) {
   const { width: W, height: H } = spec.meta;
   const item = mediaByName.get(clip.src);
@@ -448,8 +569,9 @@ function drawImageClip(
   );
   // Q1 (Phase 8): mask cho image clip — render CÓ áp mask cho ảnh (P4) nên
   // preview cũng áp (không kèm LUT/effects/opacity như video, khớp render).
+  // Phase 9 D4: mask keyframes nội suy theo localT = t - clip.start.
   if (clip.mask) {
-    const unit = maskedUnitSource(img, dx, dy, dw, dh, "", clip.mask, W, H);
+    const unit = maskedUnitSource(img, dx, dy, dw, dh, "", clip.mask, W, H, t - clip.start);
     if (unit) {
       ctx.drawImage(unit, 0, 0, W, H);
       return;
@@ -515,7 +637,7 @@ function renderFrame(
     for (const clip of track.clips) {
       if (clip.kind !== "image") continue;
       if (t < clip.start || t >= clip.start + clip.duration) continue;
-      drawImageClip(ctx, spec, pool, mediaByName, clip);
+      drawImageClip(ctx, spec, pool, mediaByName, clip, t);
     }
   }
   for (const track of spec.tracks) {
@@ -743,6 +865,10 @@ export function PreviewCanvas() {
   const mediaByNameRef = useRef<{ arr: MediaItem[]; map: Map<string, MediaItem> } | null>(null);
   const proxyBadgeRef = useRef<HTMLDivElement | null>(null);
   const lastBadgeRef = useRef<string>("");
+  // R5 (Phase 9): badge chế độ LUT — cập nhật qua DOM trực tiếp như badge
+  // PROXY (không re-render React mỗi frame).
+  const lutBadgeRef = useRef<HTMLDivElement | null>(null);
+  const lastLutBadgeRef = useRef<string>("");
   const dragRef = useRef<{ trackId: string; clipId: string; dx: number; dy: number } | null>(null);
   const engineRef = useRef<AudioEngine | null>(null);
   const vuBarRef = useRef<HTMLDivElement>(null);
@@ -753,6 +879,11 @@ export function PreviewCanvas() {
   const lastRequestedTRef = useRef<number | null>(null);
   if (!seekerRef.current) seekerRef.current = new Seeker();
   if (!poolRef.current) poolRef.current = new MediaPool();
+  // Phase 9: callback ổn định cho MixerMeter (đọc analyser của master bus).
+  const getMixerAnalyser = useCallback(
+    () => engineRef.current?.getAnalyser() ?? null,
+    [],
+  );
   if (!engineRef.current) {
     // R1-063: Web Audio graph cho preview audio. VU meter cập nhật trực tiếp
     // style (không qua React state) để tránh re-render 12 lần/giây.
@@ -826,6 +957,36 @@ export function PreviewCanvas() {
           lastBadgeRef.current = badgeText;
           badge.textContent = badgeText;
           badge.style.display = badgeText ? "block" : "none";
+        }
+      }
+      // R5: badge LUT — chỉ hiện khi clip đang xem có filter.lut. Chế độ
+      // lấy từ lần áp WebGL gần nhất (webgl = LUT thật; loading = đang tải
+      // .cube, tạm dùng CSS; css/unavailable = đang dùng CSS approx).
+      {
+        let hasLut = false;
+        for (const track of spec.tracks) {
+          if (track.hidden || track.kind !== "video") continue;
+          for (const clip of track.clips) {
+            if (clip.kind !== "video") continue;
+            if (t < clip.start || t >= clip.start + clip.duration) continue;
+            if (clip.filter?.lut) { hasLut = true; break; }
+          }
+          if (hasLut) break;
+        }
+        const lutBadge = lutBadgeRef.current;
+        let lutText = "";
+        let lutBg = "";
+        if (hasLut) {
+          const { mode } = getLutBadge();
+          if (mode === "webgl") { lutText = "LUT WebGL"; lutBg = "rgba(16,120,60,0.85)"; }
+          else if (mode === "loading") { lutText = "LUT…"; lutBg = "rgba(120,90,0,0.85)"; }
+          else { lutText = "LUT CSS ≈"; lutBg = "rgba(140,90,0,0.85)"; }
+        }
+        if (lutBadge && lastLutBadgeRef.current !== lutText) {
+          lastLutBadgeRef.current = lutText;
+          lutBadge.textContent = lutText;
+          lutBadge.style.display = lutText ? "block" : "none";
+          if (lutBg) lutBadge.style.background = lutBg;
         }
       }
       // R1-063: mở AudioContext khi phát (nút play = user gesture).
@@ -987,6 +1148,9 @@ export function PreviewCanvas() {
       <div className="vu-meter" title="Mức âm thanh preview">
         <div ref={vuBarRef} className="vu-meter-fill" />
       </div>
+      {/* Phase 9: MixerMeter — đo từ cùng master analyser (mix tổng preview),
+          thêm peak-hold + dBFS. Xem MARKERS_LIMITS.md (mono, không tách L/R). */}
+      <MixerMeter getAnalyser={getMixerAnalyser} />
       {/* Q8: badge PROXY — báo rõ khi clip đang xem dùng bản proxy nhẹ.
           Export cuối vẫn dùng file gốc. Cập nhật qua ref trong vòng lặp. */}
       <div
@@ -1002,6 +1166,29 @@ export function PreviewCanvas() {
           borderRadius: 4,
           background: "rgba(255,170,0,0.9)",
           color: "#111",
+          fontSize: 12,
+          fontWeight: 700,
+          zIndex: 5,
+          pointerEvents: "none",
+        }}
+        aria-hidden="true"
+      />
+      {/* R5: badge chế độ LUT — góc trên-phải (tránh badge PROXY bên trái).
+          "LUT WebGL" = đang áp LUT 3D thật; "LUT CSS ≈" = đang dùng CSS xấp xỉ
+          (bridge chưa chạy / WebGL không khả dụng / load lỗi); "LUT…" = đang tải .cube. */}
+      <div
+        ref={lutBadgeRef}
+        className="preview-lut-badge"
+        title="Chế độ LUT của preview: WebGL = LUT 3D thật (khớp render); CSS ≈ = xấp xỉ bằng CSS filter"
+        style={{
+          display: "none",
+          position: "absolute",
+          right: 8,
+          top: 8,
+          padding: "2px 8px",
+          borderRadius: 4,
+          background: "rgba(140,90,0,0.85)",
+          color: "#fff",
           fontSize: 12,
           fontWeight: 700,
           zIndex: 5,

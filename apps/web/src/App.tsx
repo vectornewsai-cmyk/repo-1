@@ -11,7 +11,11 @@ import { RelinkPanel } from "./components/RelinkPanel";
 import { CaptionModal } from "./components/CaptionModal";
 import { SilenceModal } from "./components/SilenceModal";
 import { TemplatePicker } from "./components/TemplatePicker";
+import { WelcomeModal, isWelcomed } from "./components/onboarding/WelcomeModal";
+import { TourCard } from "./components/onboarding/TourCard";
+import { TemplatePackModal } from "./components/onboarding/TemplatePackModal";
 import { Toasts } from "./components/Toasts";
+import { PerfOverlay } from "./components/PerfOverlay";
 import { pushToast } from "./lib/toast";
 import { useIsMobile } from "./lib/useIsMobile";
 import { togglePreviewFullscreen } from "./preview";
@@ -26,6 +30,10 @@ export default function App() {
   const [captionOpen, setCaptionOpen] = useState(false);
   const [silenceOpen, setSilenceOpen] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
+  // R1 (Phase 9): onboarding — màn chào lần đầu, tour 5 bước, pack 1 chạm.
+  const [welcomeOpen, setWelcomeOpen] = useState(() => !isWelcomed());
+  const [tourOpen, setTourOpen] = useState(false);
+  const [packOpen, setPackOpen] = useState(false);
   // Q6 (Phase 8): mobile — MediaBin/Inspector thành bottom sheet, mặc định đóng
   // để preview + timeline chiếm màn hình; desktop giữ layout cũ nguyên vẹn.
   const isMobile = useIsMobile();
@@ -162,6 +170,10 @@ export default function App() {
       } else if (e.key === "f" || e.key === "F") {
         // K5: fullscreen preview.
         togglePreviewFullscreen();
+      } else if (e.key === "m" || e.key === "M") {
+        // Phase 9: thêm marker tại playhead (cùng nút 📍 trên Timeline).
+        const n = (st.spec.markers ?? []).length + 1;
+        st.addMarkerAtPlayhead(t("timeline.markerDefault", { n: String(n) }));
       }
     };
     window.addEventListener("keydown", onKey);
@@ -170,7 +182,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <TopBar onExport={() => setExportOpen(true)} onCaption={() => setCaptionOpen(true)} onSilence={() => setSilenceOpen(true)} onTemplate={() => setTemplateOpen(true)} />
+      <TopBar onExport={() => setExportOpen(true)} onCaption={() => setCaptionOpen(true)} onSilence={() => setSilenceOpen(true)} onTemplate={() => setTemplateOpen(true)} onWelcome={() => setWelcomeOpen(true)} />
       <div className="editor-main">
         {!isMobile && <MediaBin />}
         <div className="preview-col">
@@ -233,6 +245,21 @@ export default function App() {
           </div>
         </div>
       )}
+      {welcomeOpen && ready && (
+        <WelcomeModal
+          onClose={() => setWelcomeOpen(false)}
+          onOpenTour={() => {
+            setWelcomeOpen(false);
+            setTourOpen(true);
+          }}
+          onOpenPack={() => {
+            setWelcomeOpen(false);
+            setPackOpen(true);
+          }}
+        />
+      )}
+      {tourOpen && <TourCard onClose={() => setTourOpen(false)} />}
+      {packOpen && <TemplatePackModal onClose={() => setPackOpen(false)} />}
       {exportOpen && <ExportPanel onClose={() => setExportOpen(false)} />}
       {captionOpen && <CaptionModal onClose={() => setCaptionOpen(false)} />}
       {silenceOpen && <SilenceModal onClose={() => setSilenceOpen(false)} />}
@@ -246,6 +273,8 @@ export default function App() {
           onClose={() => useStore.getState().dismissRelink()}
         />
       )}
+      {/* R3 (Phase 9): FPS meter — nút nổi góc phải, không chạm preview.tsx */}
+      <PerfOverlay />
       {!ready && (
         <div className="splash">
           <div className="splash-card">

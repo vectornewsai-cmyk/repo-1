@@ -6,8 +6,12 @@
  * clip không xuất hiện. Hàm này mirror đúng luật của store (R1-054 khóa,
  * mediaKindForTrack, R1-055 snap về frame) để Timeline báo lý do bằng toast.
  *
- * Module thuần, không phụ thuộc React/store — test được bằng node.
+ * R6: lý do trả về đã qua i18n (import i18n/index — module này đọc
+ * localStorage trong try/catch nên vẫn chạy được dưới node khi react
+ * resolve được; lý do hiển thị theo ngôn ngữ hiện tại lúc gọi).
  */
+
+import { t as i18nT } from "../i18n";
 
 export interface DropTrack {
   kind: string;
@@ -22,13 +26,16 @@ export interface DropMedia {
 
 export type DropCheck = { ok: true } | { ok: false; reason: string };
 
-/** Nhãn hiển thị cho loại media/track (tiếng Việt, dùng trong thông báo). */
-const KIND_LABEL: Record<string, string> = {
-  video: "video",
-  image: "ảnh",
-  audio: "âm thanh",
-  text: "chữ",
-};
+/** Nhãn hiển thị cho loại media/track (qua i18n, dùng trong thông báo). */
+function kindLabel(kind: string): string {
+  switch (kind) {
+    case "video": return i18nT("drop.kindVideo");
+    case "image": return i18nT("drop.kindImage");
+    case "audio": return i18nT("drop.kindAudio");
+    case "text": return i18nT("drop.kindText");
+    default: return kind;
+  }
+}
 
 /** Loại media được phép trên từng loại track — mirror mediaKindForTrack. */
 function allowedKinds(trackKind: string): string[] {
@@ -56,15 +63,15 @@ export function validateDrop(
   fps: number,
 ): DropCheck {
   if (track.locked) {
-    return { ok: false, reason: "Track đã bị khóa — mở khóa trước khi thả clip." };
+    return { ok: false, reason: i18nT("drop.locked") };
   }
   const allowed = allowedKinds(track.kind);
   if (!allowed.includes(item.kind)) {
-    const mediaLabel = KIND_LABEL[item.kind] ?? item.kind;
-    const trackLabel = KIND_LABEL[track.kind] ?? track.kind;
+    const mediaLabel = kindLabel(item.kind);
+    const trackLabel = kindLabel(track.kind);
     return {
       ok: false,
-      reason: `Không thả được ${mediaLabel} vào track ${trackLabel}.`,
+      reason: i18nT("drop.wrongKind", { media: mediaLabel, track: trackLabel }),
     };
   }
   const start = snapDropTime(at, fps);
@@ -73,7 +80,7 @@ export function validateDrop(
     (c) => start < c.start + c.duration && start + dur > c.start,
   );
   if (overlap) {
-    return { ok: false, reason: "Vị trí này đã có clip — thả vào khoảng trống khác." };
+    return { ok: false, reason: i18nT("drop.overlap") };
   }
   return { ok: true };
 }

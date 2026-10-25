@@ -23,6 +23,7 @@ import { SceneModal } from "./components/SceneModal";
 import { BeatSyncModal } from "./components/BeatSyncModal";
 import { TrackPanel } from "./components/sticker/TrackPanel";
 import { MaskPanel } from "./components/mask";
+import { EnhancePanel } from "./components/enhance";
 import { FontPicker } from "./components/FontPicker";
 
 function NumField({
@@ -91,7 +92,7 @@ function ProjectInfo() {
   const st = useStore.getState();
   const clips = spec.tracks.reduce((n, t) => n + t.clips.length, 0);
   return (
-    <div className="inspector">
+    <div className="inspector" data-tour="inspector">
       <div className="panel-head">{t("inspector.projectTitle")}</div>
       <div className="info-rows">
         <div><span>{t("inspector.size")}</span><b>{spec.meta.width} × {spec.meta.height}</b></div>
@@ -146,7 +147,7 @@ function MultiSelectInfo() {
   };
 
   return (
-    <div className="inspector">
+    <div className="inspector" data-tour="inspector">
       <div className="panel-head">{t("inspector.selectedHead", { n: String(selection.length) })}</div>
       <div className="info-rows">
         {[...kindCount.entries()].map(([k, n]) => (
@@ -197,7 +198,7 @@ export function Inspector() {
     st.patchClip(track.id, clip.id, p);
 
   return (
-    <div className="inspector">
+    <div className="inspector" data-tour="inspector">
       <div className="panel-head">
 {clip.kind === "text" ? t("inspector.kindText") : clip.kind === "video" ? t("inspector.kindVideo") : clip.kind === "sticker" ? t("inspector.kindSticker") : clip.kind === "image" ? t("inspector.kindImage") : t("inspector.kindAudio")}
       </div>
@@ -371,6 +372,10 @@ export function Inspector() {
           <Section title={t("inspector.secMask")}>
             <MaskPanel />
           </Section>
+          {/* Phase 9 R2: enhance cho clip video */}
+          <Section title={t("inspector.secEnhance")}>
+            <EnhancePanel />
+          </Section>
           <Section title={t("inspector.secScene")}>
             <button onClick={() => setSceneOpen(true)}>
               {t("inspector.sceneBtn")}
@@ -456,6 +461,12 @@ export function Inspector() {
           {/* Phase 8 Q5: gắn quỹ đạo motion tracking */}
           <TrackPanel />
         </>
+      )}
+
+      {/* Phase 9 D3: gắn quỹ đạo motion tracking cho clip text/video
+          (cùng TrackPanel; panel tự có tiêu đề riêng nên không cần key i18n mới). */}
+      {(clip.kind === "text" || clip.kind === "video") && (
+        <TrackPanel />
       )}
 
       {/* Phase 7 P4: mask cho clip ảnh */}

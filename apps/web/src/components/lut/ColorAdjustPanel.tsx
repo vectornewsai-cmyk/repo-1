@@ -10,6 +10,7 @@
  * khi render qua server/render (eq + colorbalance của FFmpeg).
  */
 import "./lut.css";
+import { t as i18nT, useLang } from "../../i18n";
 import { COLOR_PARAMS, type ColorAdjust } from "../../../../../packages/video-spec/src/color";
 
 export interface ColorAdjustPanelProps {
@@ -25,6 +26,7 @@ function isDefault(value: ColorAdjust | undefined): boolean {
 }
 
 export function ColorAdjustPanel({ value, onChange }: ColorAdjustPanelProps) {
+  useLang();
   const setParam = (key: keyof ColorAdjust, v: number) => {
     const next: ColorAdjust = { ...(value ?? {}) };
     if (v === 0) {
@@ -65,14 +67,13 @@ export function ColorAdjustPanel({ value, onChange }: ColorAdjustPanelProps) {
           className="color-reset"
           disabled={isDefault(value)}
           onClick={() => onChange(undefined)}
-          title="Đặt lại tất cả về 0 (double-click từng slider cũng reset)"
+          title={i18nT("color.resetTitle")}
         >
-          ↺ Đặt lại
+          {i18nT("color.reset")}
         </button>
       </div>
       <p className="lut-note">
-        ⚠️ Màu preview chỉ là minh họa gần đúng. Màu chính xác chỉ hiện khi
-        render video.
+        {i18nT("color.note")}
       </p>
     </div>
   );

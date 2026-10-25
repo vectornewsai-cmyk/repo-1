@@ -17,6 +17,7 @@ import {
   formatCutTime,
   type SceneDetectResult,
 } from "../lib/scene";
+import { t as i18nT, useLang } from "../i18n";
 
 const BRIDGE_URL =
   (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_BRIDGE_URL ||
@@ -47,6 +48,7 @@ function fmtElapsed(ms: number): string {
 }
 
 export function SceneModal({ trackId, clipId, onClose }: Props) {
+  useLang();
   const [step, setStep] = useState<Step>("config");
   const [threshold, setThreshold] = useState(0.4);
   const [phase, setPhase] = useState("");
@@ -91,11 +93,11 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
-          aria-label="Tách cảnh"
+          aria-label={i18nT("scene.aria")}
         >
-          <div className="panel-head">Tách cảnh</div>
-          <p>Không tìm thấy clip video đã chọn.</p>
-          <button onClick={onClose}>Đóng</button>
+          <div className="panel-head">{i18nT("scene.aria")}</div>
+          <p>{i18nT("scene.notFound")}</p>
+          <button onClick={onClose}>{i18nT("common.close")}</button>
         </div>
       </div>
     );
@@ -103,12 +105,12 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
 
   const startDetect = async () => {
     if (!mediaItem?.file) {
-      setError("Không có file gốc của clip (media đã bị xóa hoặc relink).");
+      setError(i18nT("scene.noFile"));
       return;
     }
     setError(null);
     setStep("running");
-    setPhase("Đang gửi file…");
+    setPhase(i18nT("scene.sending"));
     const started = Date.now();
     timerRef.current = window.setInterval(() => setElapsed(Date.now() - started), 500);
     const ac = new AbortController();
@@ -127,9 +129,9 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
       });
       if (!res.ok && res.headers.get("content-type")?.includes("application/json")) {
         const j = await res.json().catch(() => ({}));
-        throw new Error(j.error || `Bridge trả mã ${res.status}.`);
+        throw new Error(j.error || i18nT("scene.bridgeErr", { status: String(res.status) }));
       }
-      if (!res.body) throw new Error("Bridge không trả về stream.");
+      if (!res.body) throw new Error(i18nT("scene.noStream"));
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = "";
@@ -163,7 +165,7 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
             done = true;
             break;
           } else if (ev.type === "error") {
-            throw new Error(ev.error || "Tách cảnh thất bại.");
+            throw new Error(ev.error || i18nT("scene.failed"));
           }
         }
       }
@@ -171,7 +173,7 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
       if ((e as Error).name === "AbortError") return;
       setError(
         e instanceof Error ? e.message :
-        `Không kết nối được bridge (${BRIDGE_URL}). Hãy chạy: cd server/bridge && npm start`
+        i18nT("common.bridgeConn", { url: BRIDGE_URL })
       );
       setStep("config");
     } finally {
@@ -183,12 +185,12 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
   const apply = () => {
     const kept = times.filter((t) => !dropped.has(t));
     if (kept.length === 0) {
-      setError("Chưa chọn điểm cắt nào để tách.");
+      setError(i18nT("scene.noCutsSelected"));
       return;
     }
     const n = useStore.getState().splitClipAtTimes(trackId, clipId, kept);
     if (n === 0) {
-      setError("Không tách được — các điểm cắt quá sát mép clip.");
+      setError(i18nT("scene.splitFail"));
       return;
     }
     onClose();
@@ -210,18 +212,17 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Tách cảnh tự động"
+        aria-label={i18nT("scene.ariaAuto")}
       >
-        <div className="panel-head">Tách cảnh tự động</div>
+        <div className="panel-head">{i18nT("scene.head")}</div>
 
         {step === "config" && (
           <>
             <p className="muted">
-              Quét chuyển cảnh trong clip bằng FFmpeg (chạy local, không gửi đi đâu).
-              Mỗi cảnh phát hiện được sẽ thành 1 clip riêng trên timeline.
+              {i18nT("scene.desc")}
             </p>
             <label className="field">
-              <span>Độ nhạy: {threshold.toFixed(2)} {threshold < 0.3 ? "(thấp — ít điểm cắt)" : threshold > 0.6 ? "(cao — có thể cắt nhầm)" : "(trung bình)"}</span>
+              <span>{i18nT("scene.sensLabel")}: {threshold.toFixed(2)} {threshold < 0.3 ? i18nT("scene.sensLow") : threshold > 0.6 ? i18nT("scene.sensHigh") : i18nT("scene.sensMid")}</span>
               <input
                 type="range" min={0.1} max={0.9} step={0.05}
                 value={threshold}
@@ -229,14 +230,14 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
               />
             </label>
             <p className="muted small">
-              Clip dài {clip.duration.toFixed(1)}s (nguồn {clip.in.toFixed(1)}s → {clip.out.toFixed(1)}s).
-              {clip.speed && clip.speed !== 1 ? ` Tốc độ ${clip.speed}x.` : ""}
-              {clip.reverse ? " Phát ngược." : ""}
+              {i18nT("scene.clipInfo", { dur: clip.duration.toFixed(1), from: clip.in.toFixed(1), to: clip.out.toFixed(1) })}
+              {clip.speed && clip.speed !== 1 ? i18nT("scene.speedNote", { s: String(clip.speed) }) : ""}
+              {clip.reverse ? i18nT("scene.reverseNote") : ""}
             </p>
             {error && <p className="error">{error}</p>}
             <div className="row">
-              <button className="primary" onClick={startDetect}>Quét chuyển cảnh</button>
-              <button onClick={onClose}>Hủy</button>
+              <button className="primary" onClick={startDetect}>{i18nT("scene.scan")}</button>
+              <button onClick={onClose}>{i18nT("common.cancel")}</button>
             </div>
           </>
         )}
@@ -245,19 +246,18 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
           <>
             <div className="spinner" />
             <p>{phase}</p>
-            <p className="muted">Đã chạy {fmtElapsed(elapsed)}</p>
-            <button onClick={() => { abortRef.current?.abort(); setStep("config"); }}>Hủy</button>
+            <p className="muted">{i18nT("scene.elapsed", { t: fmtElapsed(elapsed) })}</p>
+            <button onClick={() => { abortRef.current?.abort(); setStep("config"); }}>{i18nT("common.cancel")}</button>
           </>
         )}
 
         {step === "review" && result && (
           <>
             <p>
-              Phát hiện <b>{result.cuts.length}</b> điểm chuyển cảnh
-              (ngưỡng {result.threshold}) → <b>{times.length}</b> điểm tách hợp lệ.
+              {i18nT("scene.found", { cuts: String(result.cuts.length), th: String(result.threshold), valid: String(times.length) })}
             </p>
             {times.length === 0 ? (
-              <p className="muted">Không có điểm cắt nào nằm hẳn trong clip.</p>
+              <p className="muted">{i18nT("scene.noValidCuts")}</p>
             ) : (
               <ul className="scene-cut-list">
                 {times.map((t) => (
@@ -275,16 +275,15 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
               </ul>
             )}
             <p className="muted small">
-              Bỏ tick để giữ nguyên đoạn đó. Áp dụng sẽ tách clip thành {times.filter((t) => !dropped.has(t)).length + 1} đoạn
-              trong 1 bước hoàn tác.
+              {i18nT("scene.keepNote", { n: String(times.filter((t) => !dropped.has(t)).length + 1) })}
             </p>
             {error && <p className="error">{error}</p>}
             <div className="row">
               <button className="primary" onClick={apply} disabled={times.length === 0}>
-                Tách thành {times.filter((t) => !dropped.has(t)).length + 1} cảnh
+                {i18nT("scene.applyBtn", { n: String(times.filter((t) => !dropped.has(t)).length + 1) })}
               </button>
-              <button onClick={() => setStep("config")}>Quét lại</button>
-              <button onClick={onClose}>Đóng</button>
+              <button onClick={() => setStep("config")}>{i18nT("scene.rescan")}</button>
+              <button onClick={onClose}>{i18nT("common.close")}</button>
             </div>
           </>
         )}

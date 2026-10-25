@@ -480,6 +480,11 @@ export interface VideoClipVisual {
   rotation: number;
   /** CSS filter đã gộp LUT + effects theo đúng thứ tự render (lut trước, effects sau). */
   cssFilter: string;
+  /** Id LUT của clip (nếu có) — để preview WebGL biết cần áp LUT thật. */
+  lut: string | null;
+  /** CSS filter đã gộp KHÔNG có LUT (color + effects) — dùng khi WebGL đã áp
+   * LUT thật, tránh áp LUT 2 lần (R5 Phase 9). */
+  cssFilterNoLut: string;
   chroma: ChromaParams | null;
   vignette: number | null;
   skippedEffects: VideoEffectType[];
@@ -518,6 +523,9 @@ export function videoClipVisual(
   const lutCss = clip.filter?.lut ? (lutCssFilter(clip.filter.lut) ?? "") : "";
   const fx = effectsVisual(clip.effects);
   const cssFilter = [colorCss, lutCss, fx.css].filter(Boolean).join(" ");
+  // R5 (Phase 9): cssFilterNoLut = cùng chuỗi nhưng không có LUT — dùng khi
+  // WebGL đã áp LUT thật lên drawSrc, tránh áp LUT lần nữa qua ctx.filter.
+  const cssFilterNoLut = [colorCss, fx.css].filter(Boolean).join(" ");
   // P1 (Phase 7): opacity keyframes thắng tuyệt đối opacity tĩnh (khớp
   // render K1); validate chặn giá trị ngoài [0,1] nhưng vẫn clamp phòng thủ
   // (geq của render cũng clamp lặng lẽ).
@@ -535,6 +543,8 @@ export function videoClipVisual(
       ? memoInterpolateKeyframes(a.rotation.keyframes, localT)
       : 0,
     cssFilter,
+    lut: clip.filter?.lut ?? null,
+    cssFilterNoLut,
     chroma: clip.chromaKey ? normalizeChroma(clip.chromaKey) : null,
     vignette: fx.vignette,
     skippedEffects: fx.skipped,

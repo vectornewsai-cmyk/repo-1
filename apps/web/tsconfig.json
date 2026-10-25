@@ -36,6 +36,11 @@
     "src/lib/sharePage.test.ts",
     "src/lib/silenceFollow.test.ts",
     "src/lib/syncProtocol.test.ts",
-    "src/lib/beatSync.test.ts"
+    "src/lib/beatSync.test.ts",
+    "src/lib/proxyAuto.test.ts",
+    "src/lib/webglLut.test.ts",
+    "src/lib/subtitles.test.ts",
+    "src/lib/d6.test.ts",
+    "src/lib/maskKeyframes.test.ts"
   ]
 }

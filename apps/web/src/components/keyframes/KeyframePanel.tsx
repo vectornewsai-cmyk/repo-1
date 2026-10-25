@@ -27,6 +27,7 @@ import {
   type Keyframe,
 } from "@repo-1/video-spec";
 import "./keyframes.css";
+import { t as i18nT, useLang } from "../../i18n";
 import { KeyframeGraph } from "./KeyframeGraph";
 
 function NumField({
@@ -77,6 +78,7 @@ function nearestIdx(kfs: Keyframe[], t: number): number {
 }
 
 export function KeyframePanel() {
+  useLang();
   const selection = useStore((s) => s.selection);
   const spec = useStore((s) => s.spec);
   const playhead = useStore((s) => s.playhead);
@@ -96,8 +98,8 @@ export function KeyframePanel() {
   if (!primary) {
     return (
       <div className="kf-panel">
-        <div className="panel-head">🔑 Keyframe</div>
-        <p className="tips">Chọn một clip <b>video</b> hoặc <b>chữ</b> trên timeline để chỉnh keyframe animation.</p>
+        <div className="panel-head">{i18nT("keyframe.head")}</div>
+        <p className="tips">{i18nT("keyframe.tipSelect")}</p>
       </div>
     );
   }
@@ -106,16 +108,16 @@ export function KeyframePanel() {
   if (!track || !clip) {
     return (
       <div className="kf-panel">
-        <div className="panel-head">🔑 Keyframe</div>
-        <p className="tips">Clip không còn tồn tại.</p>
+        <div className="panel-head">{i18nT("keyframe.head")}</div>
+        <p className="tips">{i18nT("keyframe.tipGone")}</p>
       </div>
     );
   }
   if (clip.kind === "audio" || clip.kind === "sticker" || clip.kind === "image") {
     return (
       <div className="kf-panel">
-        <div className="panel-head">🔑 Keyframe</div>
-        <p className="tips">Keyframe chưa hỗ trợ cho {clip.kind === "audio" ? "clip âm thanh" : clip.kind === "sticker" ? "sticker" : "ảnh"} (chỉ video và chữ).</p>
+        <div className="panel-head">{i18nT("keyframe.head")}</div>
+        <p className="tips">{i18nT("keyframe.tipUnsupported", { kind: clip.kind === "audio" ? i18nT("keyframe.kindAudio") : clip.kind === "sticker" ? i18nT("keyframe.kindSticker") : i18nT("keyframe.kindImage") })}</p>
       </div>
     );
   }
@@ -220,8 +222,8 @@ export function KeyframePanel() {
   return (
     <div className="kf-panel">
       <div className="panel-head">
-        <span>🔑 Keyframe</span>
-        <span className="kf-count">{kfs.length} điểm</span>
+        <span>{i18nT("keyframe.head")}</span>
+        <span className="kf-count">{i18nT("keyframe.count", { n: String(kfs.length) })}</span>
       </div>
 
       <div className="kf-tabs">
@@ -245,7 +247,7 @@ export function KeyframePanel() {
       <div
         ref={laneRef}
         className="kf-lane"
-        title="Nhấp đúp để thêm keyframe tại vị trí này"
+        title={i18nT("keyframe.laneTitle")}
         onDoubleClick={(e) => addKeyframeAt(laneTime(e.clientX))}
       >
         <div className="kf-lane-playhead" style={{ left: `${(localT / clip.duration) * 100}%` }} />
@@ -262,7 +264,7 @@ export function KeyframePanel() {
           />
         ))}
         {kfs.length === 0 && (
-          <div className="kf-lane-empty">Nhấp đúp (hoặc nút +) để thêm keyframe</div>
+          <div className="kf-lane-empty">{i18nT("keyframe.laneEmpty")}</div>
         )}
       </div>
 
@@ -279,22 +281,22 @@ export function KeyframePanel() {
       />
 
       <div className="btn-row kf-actions">
-        <button className="primary" onClick={() => addKeyframeAt(localT)} title="Thêm keyframe tại vị trí playhead">
-          ➕ Thêm tại playhead
+        <button className="primary" onClick={() => addKeyframeAt(localT)} title={i18nT("keyframe.addTitle")}>
+          {i18nT("keyframe.addBtn")}
         </button>
-        <button onClick={deleteSelected} disabled={!selKf} title="Xoá keyframe đang chọn">
-          🗑 Xoá
+        <button onClick={deleteSelected} disabled={!selKf} title={i18nT("keyframe.delTitle")}>
+          {i18nT("keyframe.delBtn")}
         </button>
       </div>
 
       {selKf && (
         <div className="kf-editor">
           <div className="field-row">
-            <NumField label="Thời điểm (s)" value={selKf.t} min={0} max={clip.duration} onChange={(v) => updateSelected({ t: v })} />
-            <NumField label={`Giá trị${meta.unit ? ` (${meta.unit})` : ""}`} value={selKf.v} step={meta.step} min={meta.min} max={meta.max} onChange={(v) => updateSelected({ v })} />
+            <NumField label={i18nT("keyframe.timeLabel")} value={selKf.t} min={0} max={clip.duration} onChange={(v) => updateSelected({ t: v })} />
+            <NumField label={`${i18nT("keyframe.valueLabel")}${meta.unit ? ` (${meta.unit})` : ""}`} value={selKf.v} step={meta.step} min={meta.min} max={meta.max} onChange={(v) => updateSelected({ v })} />
           </div>
           <label className="field">
-            <span>Easing (áp dụng cho đoạn từ keyframe này tới keyframe kế tiếp)</span>
+            <span>{i18nT("keyframe.easingLabel")}</span>
             <select value={selKf.easing} onChange={(e) => updateSelected({ easing: e.target.value as Easing })}>
               {EASINGS.map((ez) => (
                 <option key={ez} value={ez}>{EASING_LABEL[ez]}</option>
@@ -302,7 +304,7 @@ export function KeyframePanel() {
             </select>
           </label>
           <label className="field">
-            <span>Kéo thanh để đổi giá trị</span>
+            <span>{i18nT("keyframe.dragLabel")}</span>
             <input
               type="range" min={meta.min} max={meta.max} step={meta.step}
               value={clamp(selKf.v, meta.min, meta.max)}
@@ -314,7 +316,7 @@ export function KeyframePanel() {
 
       <div className="kf-live">
         <div className="kf-live-row">
-          <span>Giá trị {meta.label.toLowerCase()} tại playhead ({localT.toFixed(2)}s)</span>
+          <span>{i18nT("keyframe.liveLabel", { label: meta.label.toLowerCase(), t: localT.toFixed(2) })}</span>
           <b>{liveValue ?? "—"}</b>
         </div>
         {ANIMATABLE_PROPS.filter((p) => p !== activeProp && (anims[p]?.keyframes.length ?? 0) > 0).map((p) => {
@@ -342,8 +344,7 @@ export function KeyframePanel() {
       )}
 
       <p className="tips">
-        💡 Render FFmpeg hiện hỗ trợ keyframe <b>X, Y, Độ mờ</b> cho chữ và <b>X, Y</b> cho video.
-        Tỉ lệ / Xoay được lưu trong spec nhưng chưa render — xem <code>server/render/src/KEYFRAMES_LIMITS.md</code>.
+        💡 {i18nT("keyframe.tipsA")} <b>{i18nT("keyframe.xyOpacity")}</b> {i18nT("keyframe.tipsB")} <b>{i18nT("keyframe.xy")}</b> {i18nT("keyframe.tipsC")} <code>server/render/src/KEYFRAMES_LIMITS.md</code>.
       </p>
     </div>
   );

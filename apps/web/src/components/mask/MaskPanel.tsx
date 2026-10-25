@@ -13,10 +13,13 @@ import { useStore } from "../../store";
 import { clamp } from "../../lib";
 import {
   MASK_DEFAULTS,
+  interpolateMaskAt,
   type ClipMask,
+  type MaskKeyframe,
   type MaskShape,
 } from "@repo-1/video-spec";
 import "./mask.css";
+import { t as i18nT, useLang } from "../../i18n";
 
 function PctField({
   label,
@@ -45,15 +48,17 @@ function PctField({
 }
 
 export function MaskPanel() {
+  useLang();
   const selection = useStore((s) => s.selection);
   const spec = useStore((s) => s.spec);
+  const playhead = useStore((s) => s.playhead);
   const st = useStore.getState();
 
   const primary = selection[0] ?? null;
   if (!primary) {
     return (
       <div className="mask-panel">
-        <p className="tips">Chọn một clip <b>video</b> hoặc <b>ảnh</b> trên timeline để thêm mask.</p>
+        <p className="tips">{i18nT("mask.tipSelect")}</p>
       </div>
     );
   }
@@ -62,7 +67,7 @@ export function MaskPanel() {
   if (!track || !clip) {
     return (
       <div className="mask-panel">
-        <p className="tips">Clip không còn tồn tại.</p>
+        <p className="tips">{i18nT("mask.tipGone")}</p>
       </div>
     );
   }
@@ -70,8 +75,8 @@ export function MaskPanel() {
     return (
       <div className="mask-panel">
         <p className="tips">
-          Mask chưa hỗ trợ cho {clip.kind === "text" ? "clip chữ" : clip.kind === "audio" ? "clip âm thanh" : "sticker"}
-          {" "}(chỉ video và ảnh) — xem <code>server/render/src/MASK_LIMITS.md</code>.
+          {i18nT("mask.tipUnsupported", { kind: clip.kind === "text" ? i18nT("mask.kindText") : clip.kind === "audio" ? i18nT("mask.kindAudio") : i18nT("mask.kindSticker") })}
+          {" "}— xem <code>server/render/src/MASK_LIMITS.md</code>.
         </p>
       </div>
     );
@@ -90,8 +95,7 @@ export function MaskPanel() {
     return (
       <div className="mask-panel">
         <p className="tips">
-          Mask giữ lại phần clip trong hình chữ nhật / ellipse, che phần ngoài
-          thành trong suốt (lộ nội dung bên dưới trên timeline).
+          {i18nT("mask.intro")}
         </p>
         <div className="btn-row">
           <button
@@ -107,7 +111,7 @@ export function MaskPanel() {
               })
             }
           >
-            🎭 Bật mask
+            {i18nT("mask.enable")}
           </button>
         </div>
       </div>
@@ -122,34 +126,34 @@ export function MaskPanel() {
   return (
     <div className="mask-panel">
       <label className="field">
-        <span>Hình dạng</span>
+        <span>{i18nT("mask.shape")}</span>
         <select
           value={mask.shape}
           onChange={(e) => update({ shape: e.target.value as MaskShape })}
         >
-          <option value="rect">▭ Chữ nhật</option>
-          <option value="ellipse">⬭ Ellipse</option>
+          <option value="rect">{i18nT("mask.shapeRect")}</option>
+          <option value="ellipse">{i18nT("mask.shapeEllipse")}</option>
         </select>
       </label>
       <div className="field-row">
-        <PctField label="Tâm ngang (x)" value={mask.x} onChange={(v) => update({ x: clamp(v, -0.5, 1.5) })} />
-        <PctField label="Tâm dọc (y)" value={mask.y} onChange={(v) => update({ y: clamp(v, -0.5, 1.5) })} />
+        <PctField label={i18nT("mask.cx")} value={mask.x} onChange={(v) => update({ x: clamp(v, -0.5, 1.5) })} />
+        <PctField label={i18nT("mask.cy")} value={mask.y} onChange={(v) => update({ y: clamp(v, -0.5, 1.5) })} />
       </div>
       <div className="field-row">
-        <PctField label="Rộng (w)" value={mask.w} onChange={(v) => update({ w: clamp(v, 0.05, 2) })} />
-        <PctField label="Cao (h)" value={mask.h} onChange={(v) => update({ h: clamp(v, 0.05, 2) })} />
+        <PctField label={i18nT("mask.w")} value={mask.w} onChange={(v) => update({ w: clamp(v, 0.05, 2) })} />
+        <PctField label={i18nT("mask.h")} value={mask.h} onChange={(v) => update({ h: clamp(v, 0.05, 2) })} />
       </div>
-      <PctField label="Mờ viền (feather)" value={mask.feather} onChange={(v) => update({ feather: clamp(v, 0, 1) })} />
+      <PctField label={i18nT("mask.feather")} value={mask.feather} onChange={(v) => update({ feather: clamp(v, 0, 1) })} />
       <label className="field mask-check">
         <input
           type="checkbox"
           checked={!!mask.invert}
           onChange={(e) => update({ invert: e.target.checked })}
         />
-        <span>Đảo mask (giữ ngoài, che trong)</span>
+        <span>{i18nT("mask.invert")}</span>
       </label>
 
-      <div className="mask-preview" title="Minh hoạ vị trí mask — không phải preview render thật">
+      <div className="mask-preview" title={i18nT("mask.previewTitle")}>
         <div
           className="mask-preview-shape"
           style={{
@@ -162,11 +166,87 @@ export function MaskPanel() {
             opacity: mask.invert ? 0.25 : 1,
           }}
         />
-        <span className="mask-preview-note">Minh hoạ (mask chỉ có tác dụng khi render)</span>
+        <span className="mask-preview-note">{i18nT("mask.previewNote")}</span>
+      </div>
+
+      {/* Phase 9 D4: keyframes hình học — x/y/w/h theo thời gian, nội suy
+          tuyến tính; feather/invert giữ tĩnh. Thời gian t tương đối từ lúc
+          clip bắt đầu (giây), khớp render + preview. */}
+      <div className="field">
+        <span>{i18nT("mask.kfTitle")}</span>
+        {(() => {
+          const kfs = mask.keyframes ?? [];
+          const setKfs = (next: MaskKeyframe[]) => {
+            const sorted = [...next].sort((a, b) => a.t - b.t);
+            if (sorted.length === 0) {
+              const { keyframes: _dropped, ...rest } = mask;
+              patchMask(rest);
+            } else {
+              patchMask({ ...mask, keyframes: sorted });
+            }
+          };
+          const addKf = () => {
+            const tR = Math.round(clamp(playhead - clip.start, 0, clip.duration) * 100) / 100;
+            const g = interpolateMaskAt(mask, tR);
+            setKfs([...kfs.filter((k) => k.t !== tR), { t: tR, ...g }]);
+          };
+          const num = (v: number, min: number, max: number) => clamp(Math.round(v), min, max) / 100;
+          return (
+            <>
+              {kfs.length === 0 && <p className="tips">{i18nT("mask.kfEmpty")}</p>}
+              {kfs.map((kf, i) => (
+                <div className="field-row" key={i}>
+                  <label className="field">
+                    <span>{i18nT("mask.kfTime")}</span>
+                    <input
+                      type="number" min={0} step={0.1} style={{ width: 64 }}
+                      value={kf.t}
+                      onChange={(e) => {
+                        const t = Math.max(0, Number(e.target.value) || 0);
+                        const next = kfs.map((k, j) => (j === i ? { ...k, t } : k));
+                        // Trùng t thì giữ lại bản mới sửa (normalize dedupe sau thắng).
+                        setKfs(next.filter((k, j) => k.t !== t || j === i));
+                      }}
+                    />
+                  </label>
+                  {([
+                    ["x", -50, 150],
+                    ["y", -50, 150],
+                    ["w", 5, 200],
+                    ["h", 5, 200],
+                  ] as const).map(([key, min, max]) => (
+                    <label className="field" key={key}>
+                      <span>{key} %</span>
+                      <input
+                        type="number" min={min} max={max} step={1} style={{ width: 56 }}
+                        value={Math.round(kf[key] * 100)}
+                        onChange={(e) => {
+                          const v = num(Number(e.target.value) || 0, min, max);
+                          setKfs(kfs.map((k, j) => (j === i ? { ...k, [key]: v } : k)));
+                        }}
+                      />
+                    </label>
+                  ))}
+                  <button onClick={() => setKfs(kfs.filter((_, j) => j !== i))}>
+                    {i18nT("mask.kfDel")}
+                  </button>
+                </div>
+              ))}
+              <div className="btn-row">
+                <button className="primary" onClick={addKf}>
+                  {i18nT("mask.kfAdd")}
+                </button>
+                {kfs.length > 0 && (
+                  <button onClick={() => setKfs([])}>{i18nT("mask.kfClear")}</button>
+                )}
+              </div>
+            </>
+          );
+        })()}
       </div>
 
       <div className="btn-row">
-        <button onClick={() => patchMask(undefined)}>Tắt mask</button>
+        <button onClick={() => patchMask(undefined)}>{i18nT("mask.disable")}</button>
       </div>
     </div>
   );

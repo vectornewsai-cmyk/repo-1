@@ -25,12 +25,17 @@ Tài liệu này liệt kê **chính xác** những gì preview canvas làm đư
 
 ## Chưa parity / chỉ xấp xỉ (nói thẳng)
 
-1. **LUT chỉ là xấp xỉ.** Preview ánh xạ 174 LUT sang CSS filter
-   (`grayscale()`, `sepia()`, `contrast()`…). Cảm giác màu gần đúng nhưng
-   **không pixel-perfect** so với file `.cube`. Muốn chính xác phải xem bản render.
-   (Q1 Phase 8: 110/174 mục đã được fit từ dữ liệu `.cube` thật bằng least
-   squares — RMSE held-out trung bình 24.73 → 15.98; chi tiết và các LUT
-   vẫn sai xa xem `Q1_LIMITS.md` §3.)
+1. **LUT: WebGL 3D thật khi đủ điều kiện, CSS xấp xỉ khi không.**
+   (R5 Phase 9, `lib/webglLut.ts`.) Khi clip có `filter.lut` và bridge local
+   đang chạy + WebGL khả dụng + `.cube` đã tải xong, preview áp đúng lưới 3D
+   bằng shader trilinear — đo thật trên Chromium headless: MAE 0.46/255,
+   RMSE 0.67, max 1 so với FFmpeg `lut3d` (LUT vcut-cinematic, gradient
+   256×256), tức ngang mức làm tròn 8-bit, tốt hơn ~35× so với CSS approx
+   (RMSE trung bình ~16 sau Phase 8 fit). Khi bridge chưa chạy, WebGL không
+   khả dụng, hoặc `.cube` đang tải/lỗi thì preview rơi về CSS filter cũ và
+   badge góc trên-phải báo rõ: "LUT WebGL" / "LUT…" (đang tải) /
+   "LUT CSS ≈" (đang dùng xấp xỉ). Color adjust và effects vẫn là CSS
+   (chưa qua WebGL); xem chi tiết + số fps trong `R5_LIMITS.md`.
 2. **Effect `sharpen` và `noise` không hiển thị trong preview** (không có
    CSS/canvas tương đương; noise thời gian vẽ từng frame sẽ sai). Console warn
    1 lần. Bản render vẫn có đầy đủ.
