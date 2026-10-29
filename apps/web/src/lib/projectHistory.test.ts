@@ -10,6 +10,7 @@
 import {
   HistoryStore,
   MemoryBackend,
+  migrateHistorySpec,
   summarizeDiff,
 } from "./projectHistory.ts";
 import type { VideoSpec } from "@repo-1/video-spec";
@@ -41,7 +42,7 @@ function eq(a: unknown, b: unknown, what = ""): void {
   if (sa !== sb) throw new Error(`${what} nhận ${sa}, muốn ${sb}`);
 }
 
-function spec(name: string, clips: Array<{ id: string; start: number; duration: number; src?: string }>): VideoSpec {
+function spec(name: string, clips: Array<{ id: string; start: number; duration: number; src?: string; motion?: unknown }>): VideoSpec {
   return {
     version: "0.2.0",
     meta: { name, width: 1280, height: 720, fps: 30 },
@@ -50,9 +51,19 @@ function spec(name: string, clips: Array<{ id: string; start: number; duration: 
       clips: clips.map((c) => ({
         id: c.id, kind: "video", src: c.src ?? "a.mp4", start: c.start,
         duration: c.duration, in: 0, out: c.duration,
+        ...(c.motion !== undefined ? { motion: c.motion } : {}),
       })),
     }],
   } as unknown as VideoSpec;
+}
+
+function blurOf(s: VideoSpec, clipId: string): unknown {
+  for (const t of s.tracks) {
+    for (const c of t.clips as Array<Record<string, unknown>>) {
+      if (c.id === clipId) return (c.motion as Record<string, unknown> | undefined)?.motionBlur;
+    }
+  }
+  throw new Error(`không thấy clip ${clipId}`);
 }
 
 const tests: Array<[string, () => void | Promise<void>]> = [
@@ -101,6 +112,62 @@ const tests: Array<[string, () => void | Promise<void>]> = [
     const back = await store.restoreVersion(v!.id);
     eq((back as unknown as { meta: { name: string } }).meta.name, "P");
     eq(await store.restoreVersion("không-tồn-tại"), null);
+  }],
+  // Phase 9 đợt 13 C4: restoreVersion phải migrate snapshot cũ (đợt 12 T4 chỉ
+  // nối cổng mở file/autosave, snapshot IndexedDB vẫn bypass).
+  ["restoreVersion: migrate weights 0 → weights đều, frames khớp", async () => {
+    const store = new HistoryStore(new MemoryBackend());
+    const old = spec("P", [{ id: "c1", start: 0, duration: 5,
+      motion: { motionBlur: { weights: [0, 0, 0] } } }]);
+    const v = await store.saveVersion("p", old);
+    const back = await store.restoreVersion(v!.id);
+    const blur = blurOf(back!, "c1") as Record<string, unknown>;
+    eq(blur.frames, 3);
+    eq(blur.weights, [1, 1, 1]);
+  }],
+  ["restoreVersion: migrate blur {} và frames thiếu trong cùng snapshot", async () => {
+    const store = new HistoryStore(new MemoryBackend());
+    const old = spec("P", [
+      { id: "c1", start: 0, duration: 5, motion: { motionBlur: {} } },
+      { id: "c2", start: 5, duration: 5, motion: { motionBlur: { weights: [1, 2] } } },
+    ]);
+    const v = await store.saveVersion("p", old);
+    const back = await store.restoreVersion(v!.id);
+    eq((blurOf(back!, "c1") as Record<string, unknown>).frames, 3);
+    const blur2 = blurOf(back!, "c2") as Record<string, unknown>;
+    eq(blur2.frames, 2);
+    eq(blur2.weights, [1, 2]);
+  }],
+  ["restoreVersion: KHÔNG ghi đè snapshot gốc, khôi phục lại vẫn migrate từ gốc", async () => {
+    const store = new HistoryStore(new MemoryBackend());
+    const old = spec("P", [{ id: "c1", start: 0, duration: 5,
+      motion: { motionBlur: { weights: [0, 0, 0] } } }]);
+    const v = await store.saveVersion("p", old);
+    const back1 = await store.restoreVersion(v!.id);
+    // Sửa spec trả về cũng không được chạm tới snapshot đã lưu.
+    (back1!.tracks[0].clips[0] as unknown as Record<string, unknown>).motion = { motionBlur: { frames: 8, weights: [1, 1, 1, 1, 1, 1, 1, 1] } };
+    const stored = await store.listVersions("p");
+    eq(stored.length, 1);
+    eq(blurOf(stored[0].spec, "c1"), { weights: [0, 0, 0] });
+    eq(stored[0].hash, v!.hash);
+    const back2 = await store.restoreVersion(v!.id);
+    const blurBack2 = blurOf(back2!, "c1") as Record<string, unknown>;
+    eq(blurBack2.frames, 3);
+    eq(blurBack2.weights, [1, 1, 1]);
+  }],
+  ["restoreVersion: motion mới hợp lệ không đổi", async () => {
+    const store = new HistoryStore(new MemoryBackend());
+    const s = spec("P", [{ id: "c1", start: 0, duration: 5,
+      motion: { motionBlur: { frames: 3, weights: [1, 2, 1] } } }]);
+    const v = await store.saveVersion("p", s);
+    const blur = blurOf((await store.restoreVersion(v!.id))!, "c1") as Record<string, unknown>;
+    eq(blur.frames, 3);
+    eq(blur.weights, [1, 2, 1]);
+  }],
+  ["migrateHistorySpec: không cần migrate → trả đúng tham chiếu gốc", () => {
+    const s = spec("P", [{ id: "c1", start: 0, duration: 5 }]);
+    const out = migrateHistorySpec(s);
+    if (out.spec !== s || out.migrated !== false) throw new Error("spec không motion phải giữ nguyên tham chiếu");
   }],
   ["prune: giữ đúng N version mới nhất", async () => {
     const store = new HistoryStore(new MemoryBackend());

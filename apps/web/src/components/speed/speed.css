@@ -42,3 +42,32 @@
   border: 1px solid rgba(251, 191, 36, 0.35);
   border-radius: 6px;
 }
+
+/* Phase 9 đợt 13 C5: 4 ô nhập bezier trong 1 điểm keyframe. */
+.speed-panel .curve-bezier {
+  margin: 6px 0 4px;
+}
+
+.speed-panel .curve-bezier > span {
+  font-size: 12px;
+}
+
+.speed-panel .bezier-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.speed-panel .bezier-field {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.speed-panel .bezier-field input {
+  width: 100%;
+  min-width: 0;
+}

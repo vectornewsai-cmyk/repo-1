@@ -9,6 +9,7 @@ import type {
   AudioClip,
   AudioEffects,
   Clip,
+  ClipMotion,
   ImageClip,
   KeyframedValue,
   StickerClip,
@@ -25,6 +26,8 @@ import type {
 } from "../../packages/video-spec/src/index.js";
 import {
   SPEC_VERSION,
+  migrateMotion,
+  validateMotion,
   TRANSITION_TYPES,
   TEXT_ANIMATIONS,
   LUT_IDS,
@@ -361,6 +364,28 @@ function validateVideoClip(v: unknown): VideoClip {
   // R1-076: audio effects cho tiếng kế thừa của video clip
   const vafx = validateAudioEffects(v["audioEffects"]);
   if (vafx !== undefined) clip.audioEffects = vafx;
+  // Phase 9 đợt 13 C4: motion — migrate project cũ rồi mới validate.
+  // Trước đợt này validateVideoClip không đọc v["motion"] nên MCP load /
+  // save / render đều LẶNG LẼ LÀM MẤT motion: spec qua MCP rồi ghi ra file
+  // tạm cho render worker cũng không còn motion để cổng render cứu.
+  // Nay: migrateMotion cứu weights 0 / thiếu frames / blur {} (cùng rule
+  // set với cổng render đợt 11 P6 + cổng web đợt 12 T4), rồi validateMotion
+  // bắt lỗi ngoài phạm vi migrate. Vì store.loadProject, store.saveProject
+  // và mọi tool MCP đều đi qua validateVideoSpec nên một chỗ này phủ hết
+  // các cổng MCP (load, save, get_project, render, export preset).
+  // HỆ QUẢ GHI RÕ: motion không cứu được nay throw ValidationError ở cổng
+  // load thay vì lặng lẽ rơi mất như trước — nhất quán với cổng render
+  // (validate.js cũng fail các shape đó); không project MCP nào đã lưu
+  // chứa motion (grep projects/*.json ngày 27/10 = 0) nên không vỡ dữ liệu cũ.
+  if (v["motion"] !== undefined) {
+    const migrated = migrateMotion(v["motion"]);
+    try {
+      validateMotion(migrated.motion, "video");
+    } catch (e) {
+      throw new ValidationError(`clip.motion không hợp lệ: ${(e as Error).message}`);
+    }
+    clip.motion = migrated.motion as ClipMotion;
+  }
   return clip;
 }
 

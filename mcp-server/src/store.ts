@@ -96,6 +96,11 @@ export async function loadProject(projectId: string): Promise<{ spec: VideoSpec;
   } catch {
     throw new ValidationError(`file project "${projectId}" bị hỏng (JSON không parse được)`);
   }
+  // Phase 9 đợt 13 C4: migrate motion cũ xảy ra trong validateVideoSpec
+  // (validateVideoClip migrate rồi mới validate) nên mọi cổng MCP dùng
+  // loadProject đều nhận spec đã migrate. load KHÔNG tự ghi đè file đĩa —
+  // migration chỉ bền vững khi một thao tác sau đó saveProject (vd add_clip
+  // load rồi save sẽ lưu luôn bản đã migrate, như cổng mở file của web).
   const spec = validateVideoSpec(parsed);
   let meta: ProjectMeta;
   try {

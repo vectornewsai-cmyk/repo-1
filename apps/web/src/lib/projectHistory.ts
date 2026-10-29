@@ -10,8 +10,13 @@
  *   chắn, đổi lại tốn dung lượng hơn. Giới hạn giữ mặc định 50 version/project.
  * - Đổi tên project sẽ bắt đầu chuỗi lịch sử mới (projectId gắn với tên lúc
  *   tạo/mở). Đây là giới hạn v1, ghi rõ để không ai tưởng rename giữ history.
+ * - Khôi phục version (Phase 9 đợt 13 C4): restoreVersion migrate motion cũ
+ *   (weights 0 / thiếu frames / blur {}) TRÊN BẢN SAO trước khi trả về
+ *   editor — snapshot gốc trong kho giữ nguyên, không bị ghi đè.
  */
 import type { VideoSpec } from "@repo-1/video-spec";
+import { migrateMotion } from "@repo-1/video-spec";
+import type { ClipMotion } from "@repo-1/video-spec";
 
 // NOTE: stableStringify/specHash được định nghĩa lại tại đây (cùng thuật toán
 // FNV-1a + key sắp xếp như projectRepo.ts) thay vì import, vì Node
@@ -232,6 +237,43 @@ export function makeVersionId(projectId: string, createdAt: number): string {
   return `${projectId}@${createdAt}-${rand}`;
 }
 
+/**
+ * Phase 9 đợt 13 C4 — migrate motion cũ cho spec lấy từ lịch sử version.
+ *
+ * Đợt 12 T4 đã nối migrateMotion vào parseProjectText (mở file + autosave)
+ * nhưng restoreVersion đọc thẳng snapshot IndexedDB nên bypass cổng đó:
+ * snapshot cũ mang motionBlur weights 0 / thiếu frames / blur {} vẫn trả
+ * về editor nguyên dạng cũ. Hàm này chạy cùng rule set với
+ * projectRepo.migrateProjectMotion (và cổng render đợt 11 P6): chỉ clip nào
+ * migrated=true mới được thay bằng object mới (spread nông), clip/track
+ * khác giữ nguyên tham chiếu, project mới hợp lệ trả đúng tham chiếu gốc.
+ *
+ * KHÔNG mutate input. restoreVersion gọi hàm này TRÊN BẢN SAO đã deep-copy
+ * nên snapshot gốc trong backend giữ nguyên (hash/spec không đổi) — khôi
+ * phục không phá lịch sử, và lần khôi phục sau vẫn migrate lại từ gốc.
+ */
+export function migrateHistorySpec(spec: VideoSpec): { spec: VideoSpec; migrated: boolean } {
+  let changed = false;
+  const tracks = spec.tracks.map((t) => {
+    let trackChanged = false;
+    const clips = t.clips.map((c) => {
+      const motion = (c as { motion?: unknown }).motion;
+      if (motion === undefined) return c;
+      const r = migrateMotion(motion);
+      if (!r.migrated) return c;
+      trackChanged = true;
+      return { ...c, motion: r.motion as ClipMotion };
+    });
+    if (trackChanged) {
+      changed = true;
+      return { ...t, clips };
+    }
+    return t;
+  });
+  if (!changed) return { spec, migrated: false };
+  return { spec: { ...spec, tracks }, migrated: true };
+}
+
 export class HistoryStore {
   private backend: VersionBackend;
   constructor(backend: VersionBackend) {
@@ -266,7 +308,13 @@ export class HistoryStore {
 
   async restoreVersion(id: string): Promise<VideoSpec | null> {
     const v = await this.backend.get(id);
-    return v ? (JSON.parse(stableStringify(v.spec)) as VideoSpec) : null;
+    if (!v) return null;
+    // Deep-copy như cũ, rồi migrate motion cũ TRÊN BẢN SAO (đợt 13 C4):
+    // snapshot gốc trong backend KHÔNG bị ghi đè (hash/spec giữ nguyên),
+    // spec trả về editor đã chuẩn hoá. Migration chỉ bền vững khi editor
+    // lưu lại (saveVersion mới) — đúng như cổng mở file của đợt 12 T4.
+    const copy = JSON.parse(stableStringify(v.spec)) as VideoSpec;
+    return migrateHistorySpec(copy).spec;
   }
 
   async deleteVersion(id: string): Promise<void> {
