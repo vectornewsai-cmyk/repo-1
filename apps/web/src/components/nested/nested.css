@@ -1,0 +1,171 @@
+/* nested.css — Style cho NestedClipPanel, AdjustmentLayerPanel, clip nested
+ * và hàng FX (adjustment row) trên Timeline (N4, Phase 9). */
+
+.nested-panel {
+  border: 1px solid #3a3f5a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  background: #1c1f33;
+  color: #e8eaf2;
+  font-size: 13px;
+}
+
+.nested-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.nested-panel-head button {
+  background: none;
+  border: none;
+  color: #e8eaf2;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.nested-panel-note {
+  color: #aab0c8;
+  margin: 4px 0;
+}
+
+.nested-panel-warn {
+  color: #ffb454;
+  margin: 4px 0;
+}
+
+.nested-panel-msg {
+  color: #7fd6a4;
+  margin: 6px 0 0;
+}
+
+.nested-panel-section {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #2c3050;
+}
+
+.nested-panel-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 4px 0;
+}
+
+.nested-panel-row input[type="number"] {
+  width: 80px;
+}
+
+.nested-item {
+  border: 1px solid #2c3050;
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin: 6px 0;
+}
+
+.nested-item-name {
+  font-weight: 600;
+}
+
+.nested-item-time {
+  color: #aab0c8;
+}
+
+.nested-inner {
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: #14172a;
+  border-radius: 6px;
+}
+
+.nested-inner-track {
+  margin: 2px 0;
+}
+
+.nested-inner-track-label {
+  color: #aab0c8;
+}
+
+.nested-inner-clip {
+  display: inline-block;
+  background: #2c3050;
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin: 1px 3px;
+}
+
+/* Clip nested trên timeline: tím riêng, khác hẳn video (xanh dương) / audio (xanh lá). */
+.clip-nested {
+  background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%);
+  border: 1px solid #c4b5fd;
+}
+
+.clip-badge {
+  margin-right: 4px;
+}
+
+/* Hàng FX riêng phía trên các track (chỉ chứa adjustment layer). */
+.tl-adj-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffb454;
+  font-weight: 600;
+}
+
+.tl-adj-lane {
+  position: relative;
+  border-bottom: 1px dashed #ffb454;
+  background: rgba(255, 180, 84, 0.06);
+}
+
+.tl-adj-clip {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
+  border: 1px solid #fcd34d;
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tl-adj-clip.selected {
+  outline: 2px solid #fff;
+}
+
+/* R7: nhãn layer legacy (bản ghi kind:"adjustment" cũ trong track) trong
+ * AdjustmentLayerPanel — viền cam nhạt để phân biệt với layer chuẩn spec. */
+.nested-legacy-badge {
+  border: 1px solid #ffb454;
+  color: #ffb454;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* R5: tay kéo 2 mép của layer trên hàng FX (kéo dời = thân clip). */
+.fx-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  cursor: ew-resize;
+  z-index: 2;
+}
+
+.fx-handle.left {
+  left: 0;
+}
+
+.fx-handle.right {
+  right: 0;
+}

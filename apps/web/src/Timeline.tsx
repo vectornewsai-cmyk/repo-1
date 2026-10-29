@@ -21,6 +21,10 @@ import { ClipWaveform } from "./components/waveform";
 import { validateDrop } from "./lib/drop";
 import { pushToast } from "./lib/toast";
 import { pinchDistance, pinchZoom } from "./lib/pinch";
+import { asAdjustmentLayer, isAdjustmentLayer, listAdjustmentLayers } from "./components/nested/nestUtils";
+import { NestedClipPanel } from "./components/nested/NestedClipPanel";
+import { AdjustmentLayerPanel } from "./components/nested/AdjustmentLayerPanel";
+import "./components/nested/nested.css";
 
 const LANE_H: Record<TrackKind, number> = { video: 58, audio: 46, text: 46, sticker: 46, image: 58 };
 
@@ -63,6 +67,11 @@ function snapTime(
 
 function clipLabel(clip: Clip): string {
   if (clip.kind === "text") return clip.text || i18nT("timeline.emptyLabel");
+  // Phase 9 N4: nested clip đã nằm trong Clip union (luồng N1) nên thu hẹp
+  // trực tiếp được; adjustment layer vẫn là bản ghi UI ngoài union.
+  if (clip.kind === "nested") return clip.name ?? clip.id;
+  const layer = asAdjustmentLayer(clip);
+  if (layer) return `FX: ${layer.filterType}`;
   return clip.src;
 }
 
@@ -344,7 +353,8 @@ function ClipView({
   onPointerDownEdge: (e: React.PointerEvent, clip: Clip, edge: "left" | "right") => void;
 }) {
   const kindClass =
-    clip.kind === "video" ? "clip-video" : clip.kind === "audio" ? "clip-audio" : "clip-text";
+    clip.kind === "video" ? "clip-video" : clip.kind === "audio" ? "clip-audio" : clip.kind === "nested" ? "clip-nested" : "clip-text";
+  const nested = clip.kind === "nested";
   return (
     <div
       className={`tl-clip ${kindClass}${selected ? " selected" : ""}`}
@@ -365,7 +375,7 @@ function ClipView({
         }}
       />
       <ClipThumb clip={clip} />
-      <div className="clip-label">{clipLabel(clip)}</div>
+      <div className="clip-label">{nested && <span className="clip-badge">📦</span>}{clipLabel(clip)}</div>
       {clip.kind === "audio" && (
         <ClipWaveform clip={clip} pxPerSec={pxPerSec} />
       )}
@@ -478,6 +488,20 @@ export function Timeline() {
   const selection = useStore((s) => s.selection);
   const rippleMode = useStore((s) => s.rippleMode);
   const dragRef = useRef<DragState | null>(null);
+  /**
+   * R5: kéo layer trên hàng FX (riêng khỏi dragRef vì layer dùng store
+   * action riêng — xem nestUtils header R5). Đích kéo tính tuyệt đối từ
+   * snapshot lúc bắt đầu kéo nên pointermove lặp không cộng dồn.
+   */
+  const fxDragRef = useRef<{
+    mode: "fxMove" | "fxTrim";
+    trackId: string;
+    clipId: string;
+    edge?: "left" | "right";
+    startClientX: number;
+    origStart: number;
+    origDuration: number;
+  } | null>(null);
   const lanesRef = useRef<HTMLDivElement | null>(null);
   // Q6 (Phase 8): pinch-zoom trên vùng trống của lanes. Clip đã stopPropagation
   // ở onPointerDown nên lanes chỉ nhận pointer từ vùng trống; pinch chỉ bắt
@@ -491,8 +515,13 @@ export function Timeline() {
   const [dropAt, setDropAt] = useState<{ trackId: string; at: number } | null>(null);
   /** Phase 9: marker đang chọn để sửa (null = không mở panel). */
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
+  /** Phase 9 N4: mở panel nested clip / adjustment layer (null = đóng). */
+  const [nestedOpen, setNestedOpen] = useState(false);
+  const [adjOpen, setAdjOpen] = useState(false);
   const markers = spec.markers ?? [];
   const selectedMarker = markers.find((m) => m.id === selectedMarkerId) ?? null;
+  /** Phase 9 N4: adjustment layer vẽ trên hàng FX riêng, không vẽ trong lane. */
+  const adjLayers = listAdjustmentLayers(spec);
 
   const duration = useStore.getState().duration();
   const width = Math.max(duration * pxPerSec, 600) + 240;
@@ -513,6 +542,22 @@ export function Timeline() {
           st.setZoom(
             pinchZoom(lanePinch.current.startDist, pinchDistance(a.x, a.y, b.x, b.y), lanePinch.current.startZoom),
           );
+        }
+        return;
+      }
+      // R5: kéo layer trên hàng FX — action riêng, đích tuyệt đối từ
+      // snapshot lúc bắt đầu kéo; bước kéo không hợp lệ (đè layer khác)
+      // thì store trả false và bỏ qua, không sửa nửa vời.
+      const fx = fxDragRef.current;
+      if (fx) {
+        const st = useStore.getState();
+        const dxSec = (e.clientX - fx.startClientX) / st.pxPerSec;
+        if (fx.mode === "fxMove") {
+          st.moveAdjustmentLayer(fx.trackId, fx.clipId, fx.origStart + dxSec);
+        } else if (fx.edge === "right") {
+          st.trimAdjustmentLayer(fx.trackId, fx.clipId, "right", fx.origStart + fx.origDuration + dxSec);
+        } else {
+          st.trimAdjustmentLayer(fx.trackId, fx.clipId, "left", fx.origStart + dxSec);
         }
         return;
       }
@@ -558,6 +603,7 @@ export function Timeline() {
       // (gọi thừa khi không có group cũng an toàn: không push nếu không đổi).
       useStore.getState().endHistoryGroup();
       dragRef.current = null;
+      fxDragRef.current = null;
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
@@ -616,6 +662,49 @@ export function Timeline() {
   };
 
   /**
+   * R5: kéo layer trên hàng FX. Shift/Ctrl chỉ đổi selection (giống clip
+   * thường); click thường chọn riêng layer rồi bắt đầu kéo. Track host
+   * khóa thì không kéo (store cũng chặn).
+   */
+  const beginFxBodyDrag = (
+    e: React.PointerEvent,
+    trackId: string,
+    clip: { id: string; start: number; duration: number },
+    hostLocked: boolean,
+  ) => {
+    if (hostLocked) return;
+    const st = useStore.getState();
+    const sel = { trackId, clipId: clip.id };
+    if (e.shiftKey) {
+      st.addToSelection(sel);
+      return;
+    }
+    if (e.ctrlKey || e.metaKey) {
+      st.toggleSelect(sel);
+      return;
+    }
+    if (!st.selection.some((s) => s.trackId === trackId && s.clipId === clip.id)) {
+      st.select(sel);
+    }
+    fxDragRef.current = { mode: "fxMove", trackId, clipId: clip.id, startClientX: e.clientX, origStart: clip.start, origDuration: clip.duration };
+    st.beginHistoryGroup(i18nT("timeline.fxMove"));
+  };
+
+  /** R5: kéo mép trái/phải của layer trên hàng FX để trim. */
+  const beginFxEdgeDrag = (
+    e: React.PointerEvent,
+    trackId: string,
+    clip: { id: string; start: number; duration: number },
+    edge: "left" | "right",
+    hostLocked: boolean,
+  ) => {
+    if (hostLocked) return;
+    useStore.getState().select({ trackId, clipId: clip.id });
+    fxDragRef.current = { mode: "fxTrim", trackId, clipId: clip.id, edge, startClientX: e.clientX, origStart: clip.start, origDuration: clip.duration };
+    useStore.getState().beginHistoryGroup(i18nT("timeline.fxTrim"));
+  };
+
+  /**
    * Box select (R1-052): kéo trên vùng trống của timeline để chọn nhiều clip.
    * Click thường (không kéo) vẫn bỏ chọn như cũ.
    */
@@ -668,7 +757,10 @@ export function Timeline() {
         const by0 = Math.min(b.y0, y1);
         const by1 = Math.max(b.y0, y1);
         const items: Selection[] = [];
-        el.querySelectorAll(".tl-clip").forEach((n) => {
+        // R5: box-select cũng bắt layer trên hàng FX (.tl-adj-clip có
+        // data-track-id/data-clip-id như .tl-clip). FX không dùng class
+        // .tl-clip để tránh style/hover của clip thường.
+        el.querySelectorAll(".tl-clip, .tl-adj-clip").forEach((n) => {
           const cr = (n as HTMLElement).getBoundingClientRect();
           const nx0 = cr.left - r.left;
           const nx1 = cr.right - r.left;
@@ -715,6 +807,23 @@ export function Timeline() {
             {i18nT("timeline.markerAdd")}
           </button>
         </div>
+        {/* Phase 9 N4: mở panel nested clip / adjustment layer. */}
+        <div className="tl-nested">
+          <button
+            className={nestedOpen ? "active" : ""}
+            onClick={() => setNestedOpen((v) => !v)}
+            title={i18nT("timeline.nestedButton")}
+          >
+            {i18nT("timeline.nestedShort")}
+          </button>
+          <button
+            className={adjOpen ? "active" : ""}
+            onClick={() => setAdjOpen((v) => !v)}
+            title={i18nT("timeline.adjustmentButton")}
+          >
+            {i18nT("timeline.adjustmentShort")}
+          </button>
+        </div>
         <div className="tl-ripple">
           <button
             className={rippleMode ? "active" : ""}
@@ -751,9 +860,16 @@ export function Timeline() {
         />
       )}
 
+      {nestedOpen && <NestedClipPanel onClose={() => setNestedOpen(false)} />}
+      {adjOpen && <AdjustmentLayerPanel onClose={() => setAdjOpen(false)} />}
+
       <div className="tl-body">
         <div className="tl-gutter">
           <div className="tl-gutter-head">{i18nT("timeline.gutterTrack")}</div>
+          {/* Phase 9 N4: ô gutter tương ứng hàng FX để các lane không lệch hàng. */}
+          {adjLayers.length > 0 && (
+            <div className="tl-track-head tl-adj-head" style={{ height: 34 }}>{i18nT("timeline.fxGutter")}</div>
+          )}
           {spec.tracks.map((t) => (
             <div key={t.id} className={`tl-track-head${t.locked ? " is-locked" : ""}${t.hidden ? " is-hidden" : ""}`} style={{ height: LANE_H[t.kind] }}>
               <span className="tl-track-icon">{TRACK_ICON[t.kind]}</span>
@@ -798,6 +914,50 @@ export function Timeline() {
                 }}
               />
             )}
+            {/* Phase 9 N4 + R5: hàng FX riêng phía trên các track — chỉ vẽ
+                adjustment layer; R5: chọn (click/Shift/Ctrl), kéo dời,
+                trim 2 mép, box-select (xem beginBoxSelect). */}
+            {adjLayers.length > 0 && (
+              <div className="tl-lane tl-adj-lane" style={{ height: 34 }}>
+                {adjLayers.map(({ trackId, clip }) => {
+                  const hostLocked = spec.tracks.find((t) => t.id === trackId)?.locked ?? false;
+                  return (
+                    <div
+                      key={clip.id}
+                      className={`tl-adj-clip${selection.some((s) => s.trackId === trackId && s.clipId === clip.id) ? " selected" : ""}`}
+                      data-track-id={trackId}
+                      data-clip-id={clip.id}
+                      style={{ left: clip.start * pxPerSec, width: Math.max(8, clip.duration * pxPerSec) }}
+                      onPointerDown={(e) => {
+                        e.stopPropagation();
+                        beginFxBodyDrag(e, trackId, clip, hostLocked);
+                      }}
+                      title={i18nT("timeline.fxTitle", {
+                        filter: clip.filterType,
+                        from: fmtTime(clip.start),
+                        to: fmtTime(clip.start + clip.duration),
+                      })}
+                    >
+                      <div
+                        className="fx-handle left"
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          beginFxEdgeDrag(e, trackId, clip, "left", hostLocked);
+                        }}
+                      />
+                      🎛 {clip.filterType} · {Math.round(clip.intensity * 100)}%
+                      <div
+                        className="fx-handle right"
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          beginFxEdgeDrag(e, trackId, clip, "right", hostLocked);
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             {spec.tracks.map((track) => (
               <div
                 key={track.id}
@@ -837,7 +997,7 @@ export function Timeline() {
                     aria-hidden="true"
                   />
                 )}
-                {track.clips.map((clip) => (
+                {track.clips.filter((c) => !isAdjustmentLayer(c)).map((clip) => (
                   <ClipView
                     key={clip.id}
                     clip={clip}

@@ -53,6 +53,24 @@ import {
   trimLeftTo,
   trimRightTo,
 } from "@repo-1/video-spec/speed";
+import {
+  outputDurationForSource,
+  rampTrimLeftIn,
+  rampTrimRightOut,
+  sourcePosAt,
+  speedAt,
+  sliceSpeedKeyframes,
+  splitSpeedKeyframes,
+  trimSpeedKeyframes,
+  type SpeedCurve,
+  type TrimmedSpeedKeyframes,
+} from "@repo-1/video-spec";
+import { pushToast } from "./lib/toast";
+import { t as i18nT } from "./i18n";
+import {
+  nestedSpeedRejectionFields,
+  nestedSpeedRejectionMessage,
+} from "./components/nested/nestedRejection";
 import type { MediaItem, MediaKind } from "./media";
 import { fileToMediaItem } from "./media";
 import { buildSampleProject } from "./sample";
@@ -65,6 +83,7 @@ import {
   type TrackFlag,
 } from "./lib/trackFlags";
 import { rippleDelete, rippleTrimRight } from "./lib/ripple";
+import { clampSplitOuterTransitions } from "./lib/splitTransitions";
 import {
   removeSilenceFromClip,
   type LocalSilence,
@@ -84,6 +103,36 @@ import {
   pasteClips,
   type ClipboardContent,
 } from "./lib/clipboard";
+import {
+  addAdjustmentLayer as addAdjustmentLayerPure,
+  addSpecAdjustmentLayer as addSpecAdjustmentLayerPure,
+  applyNestedCurveFixedTrim as applyNestedCurveFixedTrimPure,
+  applyNestedSpeedDuration as applyNestedSpeedDurationPure,
+  asNestedClip as asNestedClipPure,
+  checkTwoLevelOuterCurve as checkTwoLevelOuterCurvePure,
+  nestedCurveExpectedOut as nestedCurveExpectedOutPure,
+  convertLegacyLayerToSpec as convertLegacyLayerToSpecPure,
+  deleteAdjustmentLayer as deleteAdjustmentLayerPure,
+  deleteSpecAdjustmentLayer as deleteSpecAdjustmentLayerPure,
+  listNestedClips as listNestedClipsPure,
+  moveAdjustmentLayer as moveAdjustmentLayerPure,
+  nestClips as nestClipsPure,
+  setNestedClipBoundary as setNestedClipBoundaryPure,
+  splitNestedClip as splitNestedClipPure,
+  splitNestedDeepInnerClip as splitNestedDeepInnerClipPure,
+  trimAdjustmentLayer as trimAdjustmentLayerPure,
+  trimNestedClip as trimNestedClipPure,
+  unnestClip as unnestClipPure,
+  updateAdjustmentLayer as updateAdjustmentLayerPure,
+  updateNestedDeepInnerClip as updateNestedDeepInnerClipPure,
+  updateNestedInnerClip as updateNestedInnerClipPure,
+  updateSpecAdjustmentLayer as updateSpecAdjustmentLayerPure,
+  type NestedBoundaryPatch,
+  type NestedDeepPatch,
+  type NestedInnerPatch,
+  type SpecAdjustmentPatch,
+  type SpecAdjustmentScope,
+} from "./components/nested/nestUtils";
 
 export type { MoveItem, Selection } from "./lib/multiselect";
 
@@ -152,6 +201,79 @@ function findClip(spec: VideoSpec, trackId: string, clipId: string): { track: Tr
 }
 
 /**
+ * Phase 9 đợt 19 G3 — Toast đúng thời điểm tách/trim nested bị từ chối.
+ *
+ * KHÔNG ĐỔI LOGIC TÁCH/TRIM: các hàm dưới chỉ là side-effect thông báo,
+ * đặt tại điểm mà hàm thuần đã trả null / action đã trả false/0. Mọi
+ * quyết định tách/trim, undo, validate vẫn y nguyên như trước.
+ *
+ * CHỐNG BÁO GIẢ (bài học đợt 16 + yêu cầu đợt 19):
+ * - Chỉ báo khi detector chung (nestedRejection.ts, cùng điều kiện
+ *   splitNestedClip/trimNestedClip) thấy field vi phạm trên clip nested.
+ * - Thêm cổng pre-field: mirror đúng các check của hàm thuần TRƯỚC khi
+ *   nó chạm tới check field (speed hữu hạn > 0, trim hữu hạn out > in,
+ *   trim vắng mặt = phát toàn bộ subSpec). Nếu các check này đã fail
+ *   thì hàm thuần trả null TRƯỚC check field — field không phải nguyên
+ *   nhân đã chứng minh được nên im lặng, không đổ oan cho field.
+ * - Chỉ báo tại điểm thất bại đã xác định (pair null sau khi target đã
+ *   qua cổng khóa/margin, trimmed null sau khi đích trim đã đổi thật),
+ *   nên trim no-op (delta 0), track khóa, playhead sát mép, clip
+ *   thường mang curve đều KHÔNG báo.
+ * - Chống spam khi kéo trim: Timeline gọi trimClip liên tục theo
+ *   pointermove; cùng một (op, track, clip, tổ hợp field) chỉ báo lại
+ *   sau 5s (toast tự đóng sau 4.5s nên cửa sổ này vừa đủ che 1 lần kéo).
+ */
+function nestedSplitTrimGatePasses(clip: Clip): boolean {
+  const rec = clip as unknown as Record<string, unknown>;
+  const speed = (rec["speed"] ?? 1) as number;
+  if (!Number.isFinite(speed) || speed <= 0) return false;
+  const sub = rec["subSpec"] as
+    | { tracks?: { clips?: { start: number; duration: number }[] }[] }
+    | undefined;
+  let sourceDuration = 0;
+  if (sub && Array.isArray(sub.tracks)) {
+    for (const tr of sub.tracks) {
+      if (!tr || !Array.isArray(tr.clips)) continue;
+      for (const c of tr.clips) {
+        if (Number.isFinite(c.start) && Number.isFinite(c.duration)) {
+          sourceDuration = Math.max(sourceDuration, c.start + c.duration);
+        }
+      }
+    }
+  }
+  const trim = rec["trim"] as { in?: unknown; out?: unknown } | undefined;
+  const trimIn = trim === undefined ? 0 : (trim["in"] as number);
+  const trimOut = trim === undefined ? sourceDuration : (trim["out"] as number);
+  return (
+    Number.isFinite(trimIn) && Number.isFinite(trimOut) && trimOut > trimIn
+  );
+}
+
+let lastNestedRejectionToastKey = "";
+let lastNestedRejectionToastAt = 0;
+
+function notifyNestedSplitTrimRejection(
+  clip: Clip,
+  op: "split" | "trim",
+  trackId: string,
+  clipId: string,
+): void {
+  const fields = nestedSpeedRejectionFields(clip);
+  if (fields.length === 0) return;
+  if (!nestedSplitTrimGatePasses(clip)) return;
+  const key = `${op}:${trackId}:${clipId}:${fields.join("+")}`;
+  const now = Date.now();
+  if (key === lastNestedRejectionToastKey && now - lastNestedRejectionToastAt < 5000) {
+    return;
+  }
+  lastNestedRejectionToastKey = key;
+  lastNestedRejectionToastAt = now;
+  const rec = clip as unknown as Record<string, unknown>;
+  const name = typeof rec["name"] === "string" ? (rec["name"] as string) : clipId;
+  pushToast(nestedSpeedRejectionMessage(i18nT, name, fields), "error");
+}
+
+/**
  * Tách 1 clip thành 2 tại thời điểm t (timeline, giây).
  * Logic tách y hệt splitAtPlayhead (R1-014: video/audio dùng splitSourceAt
  * nên đúng với mọi speed/reverse).
@@ -164,12 +286,60 @@ function splitClipAt(clip: Clip, t: number): [Clip, Clip] | null {
   }
   const leftDur = t - clip.start;
   const rightDur = clip.start + clip.duration - t;
+  // Phase 9 đợt 16 H2: tách nested clip ngoài cùng — trước đợt này nhánh
+  // này rơi xuống cuối hàm và trả null (không tách được), vì splitClipAt
+  // không có nhánh "nested". Tách chỉ chia cửa sổ trim ngoài tại điểm cắt
+  // (cutSub = trim.in + leftDur × speed); clip lá bên trong giữ nguyên,
+  // cửa sổ lá sâu sau tách được suy ra bằng composeNestedLeafWindow
+  // (xem nestUtils + test nestedStore). Hai nửa giữ nguyên subSpec và
+  // name; biên trong không có transition (NestedClip của spec không có
+  // field transition) nên không cần kẹp transition như clip video.
+  if (clip.kind === "nested") {
+    const nested = asNestedClipPure(clip);
+    if (!nested) return null;
+    const pair = splitNestedClipPure(nested, t, () => uid("c"));
+    if (!pair) return null;
+    return pair as unknown as [Clip, Clip];
+  }
   if (clip.kind === "text" || clip.kind === "sticker" || clip.kind === "image") {
     const left: Clip = { ...clip, duration: leftDur };
     const right: Clip = { ...clip, id: uid("c"), start: t, duration: rightDur };
     return [left, right];
   }
   if (clip.kind === "video") {
+    // Phase 9 đợt 14 R5: clip có speed curve thì split theo ramp, không
+    // theo tốc độ hằng. Điểm cắt nguồn = in + ∫speed trên nửa trái
+    // (đúng với mọi curve, kể cả khi speed hằng vắng mặt); 2 nửa giữ
+    // duration output cũ (leftDur/rightDur) và curve đã chia bởi
+    // splitSpeedKeyframes (mọi keyframe nằm trong khoảng của nửa mình,
+    // đánh giá đúng hệt như curve gốc — linear/ease-in/ease-out nhờ
+    // bezier nâng bậc từ đợt 16 H3, bezier nhờ de Casteljau trừ đoạn
+    // con suy biến fallback về bezier gốc, xem speedcurve.ts).
+    // reverse + curve đã bị validator cấm nên giữ đường tốc độ hằng cũ.
+    const curve = (clip as { speedKeyframes?: SpeedCurve }).speedKeyframes;
+    if (curve && curve.keyframes.length > 0 && !clip.reverse) {
+      const cutSrc = clip.in + sourcePosAt(curve, leftDur);
+      const sp = splitSpeedKeyframes(curve.keyframes, leftDur, clip.duration);
+      const left: Clip = {
+        ...clip,
+        duration: leftDur,
+        in: clip.in,
+        out: cutSrc,
+        speedKeyframes: { keyframes: sp.left },
+        transitionOut: { type: "none", duration: 0 },
+      };
+      const right: Clip = {
+        ...clip,
+        id: uid("c"),
+        start: t,
+        duration: rightDur,
+        in: cutSrc,
+        out: clip.out,
+        speedKeyframes: { keyframes: sp.right },
+        transitionIn: { type: "none", duration: 0 },
+      };
+      return [left, right];
+    }
     const cut = splitSourceAt(clip, t);
     const lDur = (cut.leftOut - cut.leftIn) / (clip.speed ?? 1);
     const rDur = (cut.rightOut - cut.rightIn) / (clip.speed ?? 1);
@@ -192,6 +362,29 @@ function splitClipAt(clip: Clip, t: number): [Clip, Clip] | null {
     return [left, right];
   }
   if (clip.kind === "audio") {
+    // Phase 9 đợt 14 R5: như nhánh video (không có transition).
+    const curve = (clip as { speedKeyframes?: SpeedCurve }).speedKeyframes;
+    if (curve && curve.keyframes.length > 0 && !clip.reverse) {
+      const cutSrc = clip.in + sourcePosAt(curve, leftDur);
+      const sp = splitSpeedKeyframes(curve.keyframes, leftDur, clip.duration);
+      const left: Clip = {
+        ...clip,
+        duration: leftDur,
+        in: clip.in,
+        out: cutSrc,
+        speedKeyframes: { keyframes: sp.left },
+      };
+      const right: Clip = {
+        ...clip,
+        id: uid("c"),
+        start: t,
+        duration: rightDur,
+        in: cutSrc,
+        out: clip.out,
+        speedKeyframes: { keyframes: sp.right },
+      };
+      return [left, right];
+    }
     const cut = splitSourceAt(clip, t);
     const lDur = (cut.leftOut - cut.leftIn) / (clip.speed ?? 1);
     const rDur = (cut.rightOut - cut.rightIn) / (clip.speed ?? 1);
@@ -303,7 +496,7 @@ interface EditorState {
   moveSelectionBy: (items: MoveItem[], dxSec: number) => void;
   /** deltaSec: dịch chuyển mép (dương = kéo sang phải). */
   trimClip: (trackId: string, clipId: string, edge: "left" | "right", deltaSec: number) => void;
-  patchClip: (trackId: string, clipId: string, patch: Partial<Clip>) => void;
+  patchClip: (trackId: string, clipId: string, patch: Partial<Clip>) => number;
   patchTextStyle: (trackId: string, clipId: string, style: Partial<TextStyle>) => void;
   splitAtPlayhead: () => boolean;
   /**
@@ -324,6 +517,68 @@ interface EditorState {
   pasteClipboard: () => void;
   /** K2: nhân bản từng clip đang chọn ngay sau clip gốc (1 bước undo). */
   duplicateSelection: () => void;
+  /**
+   * Phase 9 N4 (UI only): gộp selection thành 1 nested clip (compound clip).
+   * Trả về false nếu không gộp được (xem nestUtils). 1 bước undo.
+   */
+  nestSelection: (name?: string) => boolean;
+  /** Phase 9 N4: rã 1 nested clip về các clip gốc. 1 bước undo. */
+  unnestClip: (trackId: string, clipId: string) => boolean;
+  /**
+   * Phase 9 N4: thêm adjustment layer (filter EFFECT_TYPES áp cho clip bên
+   * dưới trong khoảng). Trả về false nếu không thêm được. 1 bước undo.
+   */
+  addAdjustmentLayer: (filterType: string, intensity: number, start: number, duration: number) => boolean;
+  /** Phase 9 N4: xoá 1 adjustment layer (không ripple). 1 bước undo. */
+  deleteAdjustmentLayer: (trackId: string, clipId: string) => void;
+  /**
+   * R5: dời / trim adjustment layer trên hàng FX (đích tuyệt đối, xem
+   * nestUtils). Trả về false nếu không hợp lệ (đè layer khác, track khóa).
+   * Dùng action riêng thay vì moveSelectionBy/trimClip vì layer được phép
+   * đè clip thường. 1 bước undo (kéo gộp bằng mergeKey + history group).
+   */
+  moveAdjustmentLayer: (trackId: string, clipId: string, newStart: number) => boolean;
+  trimAdjustmentLayer: (trackId: string, clipId: string, edge: "left" | "right", target: number) => boolean;
+  /** R5: đặt lại start + duration của layer (panel sửa layer). 1 bước undo. */
+  updateAdjustmentLayer: (trackId: string, clipId: string, start: number, duration: number) => boolean;
+  /** R5: sửa 1 clip con trong compound clip (không cần rã). 1 bước undo.
+   * Đợt 15 T6: trả về cả curveDropped (số keyframe tốc độ bị cắt
+   * khỏi curve khi patch trim/split clip con) để panel hiển thị
+   * cảnh báo cho user — trước đó hàm pure đã trả số này nhưng
+   * store nuốt mất (chỉ trả boolean), panel không thấy được. */
+  updateNestedInnerClip: (hostTrackId: string, nestedId: string, innerTrackId: string, innerClipId: string, patch: NestedInnerPatch) => { ok: boolean; curveDropped: number };
+  /** Đợt 17 N3: sửa 1 clip lá ở cấp sâu (chainIds từ con trực tiếp của
+   * top xuống nested chứa trực tiếp lá; chain rỗng = lá trực tiếp
+   * trong top). 1 bước undo. Trả curveDropped như updateNestedInnerClip. */
+  updateNestedDeepInnerClip: (hostTrackId: string, topId: string, chainIds: string[], innerTrackId: string, innerClipId: string, patch: NestedDeepPatch) => { ok: boolean; curveDropped: number };
+  /** Đợt 17 N3: tách 1 clip lá ở cấp sâu tại splitTime (khung thời gian
+   * của tầng cha trực tiếp, margin 0.05s). 1 bước undo. */
+  splitNestedDeepInnerClip: (hostTrackId: string, topId: string, chainIds: string[], innerTrackId: string, innerClipId: string, splitTime: number) => boolean;
+  /** Đợt 19 G2: đặt speed curve lên nested clip theo chế độ
+   * trim-cố-định (spec đợt 18 §2): giữ trim, tính lại duration bằng
+   * đảo tích phân. 1 bước undo. Trả ok:false + reason khi: không phải
+   * nested, track khóa, cây con đã có lá mang curve (fail-fast hợp
+   * hai tầng), hoặc curve/trim không tính được duration. Chế độ mặc
+   * định của patchClip vẫn là duration-cố-định (giữ duration, tính
+   * lại trim.out); action này là đường vào tường minh cho chế độ còn
+   * lại, panel chưa có nút gọi nó (xem LIMITS G2). Đợt 21 T3: khi từ
+   * chối còn trả reasonKey (key i18n) kèm reason đã dịch theo locale
+   * hiện tại, thay cho chuỗi tiếng Việt hardcode trước đây. */
+  patchNestedCurveFixedTrim: (trackId: string, clipId: string, curve: SpeedCurve) => { ok: boolean; duration?: number; reason?: string; reasonKey?: string };
+  /**
+   * R7: thêm adjustment layer CHUẨN vào spec.adjustmentLayers (không tạo
+   * clip kind:"adjustment" mới). Scope một track hiện bị chặn ở tầng pure
+   * vì spec chưa có field scope (xem nestUtils). 1 bước undo.
+   */
+  addSpecAdjustmentLayer: (filterType: string, intensity: number, start: number, duration: number, scope: SpecAdjustmentScope) => boolean;
+  /** R7: sửa layer chuẩn (thời gian + filter đơn; layer phức tạp chỉ sửa thời gian). 1 bước undo. */
+  updateSpecAdjustmentLayer: (layerId: string, patch: SpecAdjustmentPatch) => boolean;
+  /** R7: xoá layer chuẩn (không ripple). 1 bước undo. */
+  deleteSpecAdjustmentLayer: (layerId: string) => void;
+  /** R7: chuyển 1 layer legacy (kind:"adjustment" trong track) sang chuẩn spec. 1 bước undo. */
+  convertLegacyLayerToSpec: (trackId: string, clipId: string) => boolean;
+  /** R7: đặt/xoá opacity + transition (chỉ fade) qua biên trên nested clip. 1 bước undo. */
+  setNestedClipBoundary: (hostTrackId: string, nestedId: string, patch: NestedBoundaryPatch) => boolean;
   /** K2: xoá clipboard (gọi khi đổi project — tránh dán clip của project cũ). */
   clearClipboard: () => void;
   deleteSelection: () => void;
@@ -801,14 +1056,220 @@ export const useStore = create<EditorState>()((set, get) => {
     if (isTrackLocked(found.track)) return; // R1-054
     const { track, clip } = found;
 
+    // Phase 9 đợt 16 H2: trim nested clip ngoài cùng — CHẶN RIÊNG trước
+    // đường generic, vì đường generic không hiểu trim/speed của nested:
+    // mép trái generic chỉ đổi {start, duration} mà không dời trim.in,
+    // mép phải generic chỉ đổi duration mà không dời trim.out — cả hai
+    // đều phá bất biến duration = (trim.out − trim.in) / speed. Nhánh
+    // này tính đích theo đúng quy ước generic (snap frame, chặn nguồn,
+    // chặn đè clip khác khi không ripple, ripple dồn clip sau) rồi gọi
+    // trimNestedClipPure để dời trim; clip lá bên trong không đụng tới.
+    // Trim trái không kiểm tra đè clip trước (giống đường generic).
+    // Caption/karaoke: nested clip không phải source/linked caption nên
+    // không có bước follow nào ở đây. Curve: nested CÓ thể mang
+    // speedKeyframes (từ đợt 18) nên đích trim cho nested có curve
+    // KHÔNG tính theo speed hằng mà theo ánh xạ τ của curve (đợt 21
+    // T2, đóng nợ R2 đợt 20 §3) — xem hai nhánh dưới.
+    const nestedForTrim = asNestedClipPure(clip);
+    if (nestedForTrim) {
+      if (edge === "left") {
+        const trimIn = nestedForTrim.trim?.in ?? 0;
+        // Đợt 21 T2 — đích τ cho nested có curve: mở rộng sang trái
+        // (shift < 0) được hàm thuần R2 thực hiện bằng đoạn hằng v0 =
+        // speedAt(curve, 0) (newIn = in + v0·shift), nên giới hạn mở
+        // rộng là trimIn / v0 — KHÔNG phải trimIn / speed hằng (speed
+        // hằng bị render bỏ qua khi có curve, spec §1.5). Cắt đầu
+        // (shift > 0) thì newIn theo ∫ nên không cần cap riêng ngoài
+        // floor duration của hàm thuần. Curve không tính được thì rơi
+        // về đường speed hằng cũ và hàm thuần sẽ trả null → toast từ
+        // chối như trước (không im lặng).
+        const nestedCurveLeft = (nestedForTrim as unknown as { speedKeyframes?: SpeedCurve }).speedKeyframes;
+        let v0Left: number | null = null;
+        if (nestedCurveLeft && Array.isArray(nestedCurveLeft.keyframes) && nestedCurveLeft.keyframes.length > 0) {
+          try {
+            const v = speedAt(nestedCurveLeft, 0);
+            if (Number.isFinite(v) && v > 0) v0Left = v;
+          } catch {
+            v0Left = null;
+          }
+        }
+        if (v0Left !== null) {
+          const maxShift = Math.min(clip.start, trimIn / v0Left);
+          const minStart = clip.start - maxShift;
+          const maxStart = clip.start + clip.duration - 0.2;
+          const newStart = snapToFrame(clamp(clip.start + deltaSec, minStart, maxStart), spec.meta.fps);
+          if (newStart === clip.start) return;
+          const trimmed = trimNestedClipPure(nestedForTrim, "left", newStart);
+          if (!trimmed) {
+            notifyNestedSplitTrimRejection(clip, "trim", trackId, clipId);
+            return;
+          }
+          execCommand({
+            label: "Cắt clip",
+            mergeKey: `trim:${trackId}:${clipId}`,
+            apply: (s) => withTrack(s, trackId, (t) => ({
+              ...t, clips: t.clips.map((c) => (c.id === clipId ? (trimmed as unknown as Clip) : c)),
+            })),
+          });
+          return;
+        }
+        const speed = nestedForTrim.speed ?? 1;
+        if (!Number.isFinite(speed) || speed <= 0) return;
+        const maxShift = Math.min(clip.start, trimIn / speed);
+        const minStart = clip.start - maxShift;
+        const maxStart = clip.start + clip.duration - 0.2;
+        const newStart = snapToFrame(clamp(clip.start + deltaSec, minStart, maxStart), spec.meta.fps);
+        if (newStart === clip.start) return;
+        const trimmed = trimNestedClipPure(nestedForTrim, "left", newStart);
+        if (!trimmed) {
+          // Đợt 19 G3: đích đã đổi thật mà hàm thuần vẫn null → báo đúng
+          // thời điểm trim (notify tự cổng field + pre-field, no-op và
+          // track khóa đã return trước đó nên không báo giả).
+          notifyNestedSplitTrimRejection(clip, "trim", trackId, clipId);
+          return;
+        }
+        execCommand({
+          label: "Cắt clip",
+          mergeKey: `trim:${trackId}:${clipId}`,
+          apply: (s) => withTrack(s, trackId, (t) => ({
+            ...t, clips: t.clips.map((c) => (c.id === clipId ? (trimmed as unknown as Clip) : c)),
+          })),
+        });
+        return;
+      }
+      // edge === "right"
+      const trimInR = nestedForTrim.trim?.in ?? 0;
+      const sourceDuration = nestedForTrim.subSpec.tracks.reduce(
+        (m, tr) => Math.max(m, ...tr.clips.map((c) => c.start + c.duration)),
+        0,
+      );
+      // Đợt 21 T2 — cap τ cho nested có curve: duration tối đa là thời
+      // gian output cần để tiêu thụ hết nguồn còn lại
+      // (sourceDuration − trimIn) qua curve, tức đảo tích phân
+      // outputDurationForSource — KHÔNG phải (sourceDuration − trimIn)
+      // / speed hằng (đường cũ chặn/kẹp sai khi curve ≠ speed hằng, nợ
+      // R2 đợt 20 §3). Hàm thuần R2 mở rộng mép phải bằng đoạn hằng
+      // vLast = speedAt(curve, D) nên cap τ này khớp đúng hàm thuần:
+      // speedAt kẹp ngoài keyframe cuối về vLast nên đảo tích phân trên
+      // curve gốc cho đúng duration mở rộng đó. Curve không tính được
+      // thì rơi về cap speed hằng cũ (hàm thuần sẽ trả null → toast).
+      const nestedCurveRight = (nestedForTrim as unknown as { speedKeyframes?: SpeedCurve }).speedKeyframes;
+      let tauCapRight: number | null = null;
+      if (nestedCurveRight && Array.isArray(nestedCurveRight.keyframes) && nestedCurveRight.keyframes.length > 0) {
+        try {
+          const cap = outputDurationForSource(nestedCurveRight, sourceDuration - trimInR);
+          if (Number.isFinite(cap) && cap > 0) tauCapRight = cap;
+        } catch {
+          tauCapRight = null;
+        }
+      }
+      let newDur = Math.max(0.2, clip.duration + deltaSec);
+      if (tauCapRight !== null) {
+        newDur = Math.min(newDur, tauCapRight);
+      } else {
+        const speedR = nestedForTrim.speed ?? 1;
+        if (!Number.isFinite(speedR) || speedR <= 0) return;
+        newDur = Math.min(newDur, (sourceDuration - trimInR) / speedR);
+      }
+      newDur = Math.max(0.2, snapToFrameFloor(newDur, spec.meta.fps));
+      if (newDur === clip.duration) return;
+      const trimmedR = trimNestedClipPure(nestedForTrim, "right", newDur);
+      if (!trimmedR) {
+        // Đợt 19 G3: như nhánh trái — báo đúng thời điểm trim phải.
+        notifyNestedSplitTrimRejection(clip, "trim", trackId, clipId);
+        return;
+      }
+      const patchedR = trimmedR as unknown as Clip;
+      const ripple = get().rippleMode;
+      if (!ripple) {
+        const end = clip.start + newDur;
+        const blocked = track.clips.some(
+          (c) => c.id !== clipId && c.start >= clip.start && c.start < end,
+        );
+        if (blocked) return;
+        execCommand({
+          label: "Cắt clip",
+          mergeKey: `trim:${trackId}:${clipId}`,
+          apply: (s) => withTrack(s, trackId, (t) => ({
+            ...t, clips: t.clips.map((c) => (c.id === clipId ? patchedR : c)),
+          })),
+        });
+        return;
+      }
+      execCommand({
+        label: "Cắt clip (ripple)",
+        mergeKey: `trim:${trackId}:${clipId}`,
+        apply: (s) => {
+          const foundNow = findClip(s, trackId, clipId);
+          if (!foundNow) return s;
+          const r = rippleTrimRight(s, trackId, clipId, patchedR);
+          if (!r) return s;
+          return r.spec;
+        },
+      });
+      return;
+    }
+
+    // Phase 9 đợt 13 C5: speedKeyframes đi theo trim (keyframe t là thời
+    // gian OUTPUT tính từ đầu clip). curveAdjFor tính trước từ clip hiện
+    // tại (mỗi lần trimClip gọi lại đều đọc spec mới nhất nên kéo trim
+    // liên tục vẫn đúng từng bước); applyTrimmedCurve áp vào spec trong
+    // apply (apply phải pure — commands.ts khôi phục bằng snapshot nên
+    // undo/redo không chạy lại apply, nhưng kéo trim gọi apply liên tục);
+    // notifyTrimmedCurve báo cho user khi có điểm bị cắt (không lặng lẽ
+    // mất). Toast đặt SAU execCommand, không trong apply, để mỗi lần gọi
+    // trimClip làm rớt điểm chỉ báo đúng một lần.
+    const curveAdjFor = (shift: number, newDuration: number): TrimmedSpeedKeyframes | null => {
+      const curve = (clip as { speedKeyframes?: SpeedCurve }).speedKeyframes;
+      if (!isSpeedable(clip) || !curve || curve.keyframes.length === 0) return null;
+      return trimSpeedKeyframes(curve.keyframes, shift, newDuration);
+    };
+    const applyTrimmedCurve = (s: VideoSpec, adj: TrimmedSpeedKeyframes | null): VideoSpec => {
+      if (!adj || !adj.changed) return s;
+      return withTrack(s, trackId, (t) => ({
+        ...t,
+        clips: t.clips.map((c) =>
+          c.id === clipId
+            ? {
+                ...c,
+                speedKeyframes:
+                  adj.keyframes.length > 0 ? { keyframes: adj.keyframes } : undefined,
+              }
+            : c,
+        ),
+      }));
+    };
+    const notifyTrimmedCurve = (adj: TrimmedSpeedKeyframes | null): void => {
+      if (adj && adj.dropped > 0) {
+        pushToast(i18nT("speed.trimCurveDropped", { n: String(adj.dropped) }), "info");
+      }
+    };
+
     if (edge === "left") {
       const noIn = clip.kind === "text" || clip.kind === "sticker" || clip.kind === "image";
+      // Phase 9 đợt 14 R5: curve của clip đang trim (dùng cho cả giới
+      // hạn mở rộng lẫn in theo ramp bên dưới; reverse + curve đã bị
+      // validator cấm nên giữ đường tốc độ hằng cũ cho reverse).
+      const trimCurve = (clip as { speedKeyframes?: SpeedCurve }).speedKeyframes;
+      const hasRamp =
+        !!trimCurve && trimCurve.keyframes.length > 0 && isSpeedable(clip) &&
+        !(clip as { reverse?: boolean }).reverse;
       // R1-014: giới hạn theo speed (và reverse) — dùng maxTrimLeft thay vì so đơn vị lẫn lộn
       let maxShift = clip.start; // mặc định cho text/sticker/image
       if (!noIn && isSpeedable(clip)) {
         const item = media.find((m) => m.name === (clip as { src: string }).src);
         const mediaDur = item && item.kind !== "image" ? item.duration : Infinity;
         maxShift = Math.min(clip.start, maxTrimLeft(clip, mediaDur));
+      }
+      // Phase 9 đợt 14 R5: clip có curve mà mở rộng sang trái thì đoạn
+      // mở thêm tiêu thụ nguồn với tốc độ keyframe đầu (clamp, giống
+      // speedAt ngoài khoảng) nên giới hạn mở rộng = in / speedAt(0),
+      // thay cho in / speed hằng của maxTrimLeft.
+      if (hasRamp && !noIn) {
+        const v0 = speedAt(trimCurve, 0);
+        if (v0 > 0) {
+          maxShift = Math.min(clip.start, (clip as { in: number }).in / v0);
+        }
       }
       const minStart = clip.start - maxShift;
       const maxStart = clip.start + clip.duration - 0.2;
@@ -817,10 +1278,18 @@ export const useStore = create<EditorState>()((set, get) => {
       const shift = newStart - clip.start;
       if (shift === 0) return;
       // R1-013: dùng trimLeftTo — đúng với mọi speed/reverse
-      const patch: Partial<Clip> =
+      let patch: Partial<Clip> =
         noIn || !isSpeedable(clip)
           ? { start: newStart, duration: clip.duration - shift }
           : trimLeftTo(clip, newStart);
+      // Phase 9 đợt 14 R5: in sau trim trái của clip có curve phải theo
+      // tích phân ramp (rampTrimLeftIn), không phải tốc độ hằng của
+      // trimLeftTo — nếu không in lệch khỏi nguồn thực tế mà curve tiêu thụ.
+      if (hasRamp && !noIn) {
+        patch = { ...patch, in: rampTrimLeftIn((clip as { in: number }).in, trimCurve as SpeedCurve, shift) };
+      }
+      // Phase 9 đợt 13 C5: trim trái dịch gốc output → dịch keyframe t.
+      const curveAdjLeft = curveAdjFor(shift, clip.duration - shift);
       execCommand({
         label: "Cắt clip",
         mergeKey: `trim:${trackId}:${clipId}`,
@@ -833,7 +1302,7 @@ export const useStore = create<EditorState>()((set, get) => {
           // Phase 9 R4: trim mép trái clip chữ có karaoke → dịch từ theo
           // shift (từ rớt khỏi đầu thì bỏ). Áp trước các bước P6 bên dưới
           // (unlink vẫn giữ karaoke đã dịch qua spread).
-          let out = trimmed;
+          let out = applyTrimmedCurve(trimmed, curveAdjLeft);
           if (tc.kind === "text" && tc.karaoke) {
             const adj = shiftKaraoke(tc.karaoke, shift);
             out = withTrack(out, trackId, (t) => ({
@@ -850,13 +1319,29 @@ export const useStore = create<EditorState>()((set, get) => {
           return out;
         },
       });
+      notifyTrimmedCurve(curveAdjLeft);
     } else {
+      // Phase 9 đợt 14 R5: curve của clip đang trim (reverse + curve đã
+      // bị validator cấm nên giữ đường tốc độ hằng cũ cho reverse).
+      const trimCurveR = (clip as { speedKeyframes?: SpeedCurve }).speedKeyframes;
+      const hasRampR =
+        !!trimCurveR && trimCurveR.keyframes.length > 0 && isSpeedable(clip) &&
+        !(clip as { reverse?: boolean }).reverse;
       let newDur = Math.max(0.2, clip.duration + deltaSec);
       if ((clip.kind === "video" || clip.kind === "audio") && isSpeedable(clip)) {
         const item = media.find((m) => m.name === clip.src);
         const mediaDur = item && item.kind !== "image" ? item.duration : Infinity;
         // R1-014: giới hạn duration theo speed/reverse — (mediaDur - in)/speed, không phải mediaDur - in
         newDur = Math.min(newDur, maxTrimRightDuration(clip, mediaDur));
+        // Phase 9 đợt 14 R5: clip có curve thì chặn thêm bằng tích phân
+        // ramp — duration output dài nhất mà in + ∫speed không vượt cuối
+        // file nguồn (tốc độ hằng có thể ước lượng sai cả hai chiều).
+        if (hasRampR && Number.isFinite(mediaDur) && mediaDur > (clip as { in: number }).in) {
+          newDur = Math.min(
+            newDur,
+            outputDurationForSource(trimCurveR as SpeedCurve, mediaDur - (clip as { in: number }).in),
+          );
+        }
       }
       // R1-055: floor-snap để không bao giờ vượt giới hạn độ dài file nguồn
       newDur = Math.max(0.2, snapToFrameFloor(newDur, spec.meta.fps));
@@ -870,10 +1355,20 @@ export const useStore = create<EditorState>()((set, get) => {
         if (blocked) return;
       }
       // R1-013: dùng trimRightTo — đúng với mọi speed/reverse
-      const patch: Partial<Clip> =
+      let patch: Partial<Clip> =
         clip.kind === "text" || clip.kind === "sticker" || clip.kind === "image" || !isSpeedable(clip)
           ? { duration: newDur }
           : trimRightTo(clip, newDur);
+      // Phase 9 đợt 14 R5: out sau trim phải của clip có curve theo tích
+      // phân ramp (rampTrimRightOut), không phải tốc độ hằng của
+      // trimRightTo. Áp cho cả nhánh ripple lẫn không ripple vì patch
+      // được tính chung trước khi rẽ nhánh.
+      if (hasRampR && isSpeedable(clip)) {
+        patch = { ...patch, out: rampTrimRightOut((clip as { in: number }).in, trimCurveR as SpeedCurve, newDur) };
+      }
+      // Phase 9 đợt 13 C5: trim phải giữ gốc output → chỉ cắt keyframe
+      // có t vượt duration mới (không dịch điểm còn lại).
+      const curveAdjRight = curveAdjFor(0, newDur);
       if (ripple) {
         // R1-054: ripple trim — áp patch rồi dồn/đẩy các clip sau theo delta duration
         execCommand({
@@ -888,6 +1383,7 @@ export const useStore = create<EditorState>()((set, get) => {
             // câu của các clip bị dồn/đẩy chỉ dịch theo delta start.
             let out = r.spec;
             const tc = findClip(out, trackId, clipId)?.clip;
+            out = applyTrimmedCurve(out, curveAdjRight);
             // Phase 9 R4: ripple trim mép phải clip chữ có karaoke → cắt từ
             // vượt duration mới (như nhánh không ripple).
             if (tc && tc.kind === "text" && tc.karaoke) {
@@ -904,6 +1400,7 @@ export const useStore = create<EditorState>()((set, get) => {
             return shiftCaptionsForMovedClips(spec, out, new Set([clipId]));
           },
         });
+        notifyTrimmedCurve(curveAdjRight);
       } else {
         execCommand({
           label: "Cắt clip",
@@ -916,7 +1413,7 @@ export const useStore = create<EditorState>()((set, get) => {
             if (!tc) return trimmed;
             // Phase 9 R4: trim mép phải clip chữ có karaoke → cắt từ vượt
             // duration mới (từ rớt hẳn thì bỏ field).
-            let out = trimmed;
+            let out = applyTrimmedCurve(trimmed, curveAdjRight);
             if (tc.kind === "text" && tc.karaoke) {
               const adj = clampKaraoke(tc.karaoke, newDur);
               out = withTrack(out, trackId, (t) => ({
@@ -932,6 +1429,7 @@ export const useStore = create<EditorState>()((set, get) => {
             return out;
           },
         });
+        notifyTrimmedCurve(curveAdjRight);
       }
     }
   },
@@ -940,16 +1438,133 @@ export const useStore = create<EditorState>()((set, get) => {
     // R1-054: track khóa không cho sửa thuộc tính clip (kể cả Inspector).
     const st = get();
     const track = st.spec.tracks.find((t) => t.id === trackId);
-    if (isTrackLocked(track)) return;
+    if (isTrackLocked(track)) return 0;
     const clip = track?.clips.find((c) => c.id === clipId);
-    if (!clip) return;
+    if (!clip) return 0;
     // Bỏ qua nếu không có field nào thực sự đổi (tránh entry rác khi slider đứng yên).
     const keys = Object.keys(patch) as (keyof Clip)[];
     const rec = clip as unknown as Record<string, unknown>;
     const prec = patch as unknown as Record<string, unknown>;
-    if (!keys.some((k) => rec[k] !== prec[k])) return;
+    if (!keys.some((k) => rec[k] !== prec[k])) return 0;
     const label =
       keys.length === 1 ? `Chỉnh ${patchLabel(keys[0])}` : "Chỉnh thuộc tính clip";
+    // Phase 9 đợt 16 H3: lát cắt curve tính TRƯỚC exec (theo mẫu trimClip
+    // đợt 13 C5: apply dùng đúng lát cắt này, không tính lại trong
+    // apply) để patchClip báo được số keyframe bị cắt — toast + giá trị
+    // trả về — theo mẫu NestedClipPanel đợt 15 T6: user thấy ngay là
+    // đổi duration đã cắt keyframe khỏi curve và dùng Undo để khôi phục.
+    // null = patch này không cắt curve (điều kiện T4 bên dưới).
+    const patchCurveSlice = (() => {
+      const patchRec = patch as unknown as Record<string, unknown>;
+      const oldCurve = (clip as { speedKeyframes?: SpeedCurve }).speedKeyframes;
+      const newDur = patchRec["duration"];
+      if (
+        !("speedKeyframes" in patch) &&
+        oldCurve &&
+        oldCurve.keyframes.length > 0 &&
+        !(clip as { reverse?: boolean }).reverse &&
+        patchRec["reverse"] !== true &&
+        typeof newDur === "number" &&
+        Number.isFinite(newDur) &&
+        newDur > 0 &&
+        newDur < clip.duration - 1e-9
+      ) {
+        return sliceSpeedKeyframes(oldCurve.keyframes, 0, newDur);
+      }
+      return null;
+    })();
+    // Phase 9 đợt 19 G2 — nested curve (spec đợt 18 §1.3/§2/§5), tính
+    // TRIỂN VỌNG trước exec (mẫu H3: toast chỉ bắn sau exec, một lần,
+    // không bắn lại khi undo/redo):
+    //  - Xung đột hai tầng (ĐỢT 21 T2 ĐÃ NỚI theo luật render R1 đợt 20):
+    //    patch đặt curve lên nested mà cây con đã có lá mang curve
+    //    nay CHỈ bị từ chối khi cặp đó vi phạm R1 (curve không hợp lệ,
+    //    reverse, attachment thời gian, lá phi-media, tốc độ hợp vượt
+    //    [0.25, 4]) — kiểm tra bằng checkTwoLevelOuterCurvePure; cặp
+    //    hợp lệ được cho qua vì render đã hợp thật. Lệnh bị từ chối vẫn
+    //    return 0 trước exec, không đổi spec, không entry undo, toast
+    //    nói rõ lý do cụ thể (key nested.curveTwoLevelInvalid).
+    //  - Patch tự đặt trim tường minh cùng curve: so trim.out với
+    //    in + ∫curve; lệch > 1e-4s thì render sẽ fail nên toast error
+    //    sau exec (store KHÔNG tự sửa trim do user đặt tường minh).
+    //  - Không đặt trim tường minh: apply sẽ tính lại trim.out theo
+    //    tích phân (chế độ duration-cố-định); cờ overSource để toast
+    //    khi out mới vượt độ dài nguồn con (đuôi có thể không có hình).
+    // Đợt 20 R4: 3 câu toast G2 nay qua i18n (key nested.curve*,
+    // đủ vi/en, theo mẫu nested.speedRejected của G3) — không còn
+    // hardcode tiếng Việt ở đường patchClip này (reason chi tiết của
+    // check hai tầng vẫn là chuỗi tiếng Việt, cùng tiền lệ reason của
+    // action trim-cố-định vốn chỉ có tiếng Việt).
+    type NestedG2Info =
+      | { conflict: true; reason: string }
+      | { mismatch: true; expectedOut: number; actualOut: number }
+      | { overSource: true; expectedOut: number; sourceDuration: number }
+      | null;
+    const nestedG2: NestedG2Info = (() => {
+      const patchRec2 = patch as unknown as Record<string, unknown>;
+      const nestedOld = asNestedClipPure(clip);
+      if (!nestedOld) return null;
+      // Chỉ xét khi patch chạm curve/duration/trim: đổi start/text
+      // không làm lệch tích phân nên không được toast thừa về trạng
+      // thái vượt nguồn vốn đã có từ trước.
+      if (!("speedKeyframes" in patch) && !("duration" in patch) && !("trim" in patch)) {
+        return null;
+      }
+      const hasCurvePatch = "speedKeyframes" in patch;
+      const patchCurve = patchRec2["speedKeyframes"] as SpeedCurve | undefined;
+      if (hasCurvePatch && patchCurve && Array.isArray(patchCurve.keyframes) && patchCurve.keyframes.length > 0) {
+        const check = checkTwoLevelOuterCurvePure(nestedOld, patchCurve);
+        if (!check.ok) {
+          return { conflict: true, reason: check.reason } as const;
+        }
+      }
+      const oldCurve = (clip as { speedKeyframes?: SpeedCurve }).speedKeyframes;
+      const finalCurve = hasCurvePatch
+        ? patchCurve
+        : patchCurveSlice
+          ? { keyframes: patchCurveSlice.keyframes }
+          : oldCurve;
+      if (!finalCurve || !Array.isArray(finalCurve.keyframes) || finalCurve.keyframes.length === 0) {
+        return null;
+      }
+      const finalDur =
+        typeof patchRec2["duration"] === "number" && Number.isFinite(patchRec2["duration"])
+          ? (patchRec2["duration"] as number)
+          : clip.duration;
+      const patchTrim = patchRec2["trim"] as { in?: number; out?: number } | undefined;
+      const finalTrimIn =
+        patchTrim && typeof patchTrim.in === "number" ? patchTrim.in : (nestedOld.trim?.in ?? 0);
+      let expectedOut: number | null = null;
+      try {
+        const consumed = sourcePosAt(finalCurve, finalDur);
+        if (Number.isFinite(consumed)) expectedOut = finalTrimIn + consumed;
+      } catch {
+        expectedOut = null;
+      }
+      if (expectedOut === null) return null;
+      if (patchTrim && typeof patchTrim.out === "number") {
+        const actualOut: number = patchTrim.out;
+        return Math.abs(actualOut - expectedOut) > 1e-4
+          ? { mismatch: true, expectedOut, actualOut } as const
+          : null;
+      }
+      const sourceDuration = nestedOld.subSpec.tracks.reduce(
+        (m, t) => Math.max(m, ...t.clips.map((c) => c.start + c.duration)),
+        0,
+      );
+      return expectedOut > sourceDuration + 1e-9
+        ? { overSource: true, expectedOut, sourceDuration } as const
+        : null;
+    })();
+    if (nestedG2 && "conflict" in nestedG2) {
+      const nestedName =
+        (clip as unknown as { name?: string }).name ?? clip.id;
+      pushToast(
+        i18nT("nested.curveTwoLevelInvalid", { name: nestedName, reason: nestedG2.reason }),
+        "error",
+      );
+      return 0;
+    }
     execCommand({
       label,
       // Gộp các lần kéo slider liên tiếp thành 1 entry.
@@ -959,23 +1574,195 @@ export const useStore = create<EditorState>()((set, get) => {
           ...t,
           clips: t.clips.map((c) => (c.id === clipId ? patchOne(c, patch) : c)),
         }));
-        const pc = findClip(patched, trackId, clipId)?.clip;
+        let pc = findClip(patched, trackId, clipId)?.clip;
         if (!pc) return patched;
+        let out = patched;
+        // Phase 9 đợt 15 T4 (đóng nợ đợt 13 C5 / đợt 14 R5): đổi duration
+        // trực tiếp qua patchClip (không qua trimClip) thì curve phải đi
+        // theo duration mới, thay vì giữ nguyên gây lệch như trước.
+        // Ngữ nghĩa (curve theo thời gian OUTPUT của clip, không theo start):
+        //  - Thu ngắn (newDur < oldDur): cắt curve về [0, newDur) bằng
+        //    sliceSpeedKeyframes — chèn đúng điểm biên v = speedAt(newDur)
+        //    nên nửa còn lại đánh giá đúng như curve gốc (không dùng
+        //    trimSpeedKeyframes ở đây vì nó chỉ rớt điểm vượt biên mà không
+        //    chèn điểm biên, làm sai nội suy trên đoạn cuối).
+        //  - Kéo dài (newDur > oldDur): giữ nguyên curve — ngoài keyframe
+        //    cuối tốc độ clamp về giá trị biên nên đánh giá vẫn đúng, và
+        //    mọi keyframe cũ đều nằm trong [0, newDur] nên validator pass.
+        //  - Patch tự đặt speedKeyframes: dùng curve của patch nguyên vẹn,
+        //    không cắt thêm (người gọi đang thay curve, không phải trim).
+        //  - Clip không có curve: không làm gì (tương thích ngược project
+        //    cũ); clip reverse + curve: giữ đường cũ (validator cấm kết
+        //    hợp này nên không nhận thêm hành vi mới ở đây).
+        //  - Chỉ đổi start mà không đổi duration: curve không đổi (curve
+        //    gắn với thời gian output, không gắn vị trí timeline).
+        //  Lát cắt đã tính sẵn trước exec (patchCurveSlice, đợt 16 H3) —
+        //  apply chỉ áp nó, không tính lại, để toast + giá trị trả về
+        //  khớp đúng với curve đã ghi (mẫu trimClip đợt 13 C5).
+        const patchRec = patch as unknown as Record<string, unknown>;
+        if (patchCurveSlice) {
+          out = withTrack(out, trackId, (t) => ({
+            ...t,
+            clips: t.clips.map((c) =>
+              c.id === clipId
+                ? { ...c, speedKeyframes: { keyframes: patchCurveSlice.keyframes } }
+                : c,
+            ),
+          }));
+          pc = findClip(out, trackId, clipId)?.clip ?? pc;
+        }
+        // Phase 9 đợt 16 H2: đổi duration trực tiếp của nested clip qua
+        // patchClip (không qua trimClip) thì trim.out phải đi theo, nếu
+        // không duration mới phá bất biến (trim.out − trim.in) / speed
+        // đúng như lỗi trimClip cũ đã sửa ở trên. Chỉ áp khi patch đổi
+        // duration mà KHÔNG tự đặt trim (patch tự đặt trim thì trim của
+        // patch thắng); đổi speed không kèm duration được nhánh N3 ngay
+        // dưới đây tính lại (đóng nợ LIMITS H2).
+        const nestedForPatch = asNestedClipPure(pc);
+        const patchDur = patchRec["duration"];
+        // Đợt 19 G2: nhánh này (trim.out theo speed hằng) KHÔNG áp cho
+        // nested đã mang curve — với curve thì render bỏ qua speed
+        // hằng (spec §1.5) nên trim.out phải đi theo tích phân curve,
+        // xem nhánh G2 ngay dưới (duration-cố-định).
+        if (
+          nestedForPatch &&
+          !("trim" in patch) &&
+          (pc as unknown as Record<string, unknown>)["speedKeyframes"] === undefined &&
+          typeof patchDur === "number" &&
+          Number.isFinite(patchDur) &&
+          patchDur > 0 &&
+          patchDur !== clip.duration
+        ) {
+          const pSpeed = nestedForPatch.speed ?? 1;
+          const pTrimIn = (pc as unknown as { trim?: { in: number; out: number } }).trim?.in ?? 0;
+          if (Number.isFinite(pSpeed) && pSpeed > 0) {
+            out = withTrack(out, trackId, (t) => ({
+              ...t,
+              clips: t.clips.map((c) =>
+                c.id === clipId
+                  ? { ...c, trim: { in: pTrimIn, out: pTrimIn + patchDur * pSpeed } }
+                  : c,
+              ),
+            }));
+            pc = findClip(out, trackId, clipId)?.clip ?? pc;
+          }
+        }
+        // Phase 9 đợt 17 N3 (đóng nợ đợt 16 H2): patch đổi speed của
+        // nested clip mà KHÔNG kèm duration thì duration phải tính lại
+        // theo speed mới: duration = (trim.out − trim.in) / speed (trim
+        // đã là giá trị mới sau patchOne — patch tự đặt trim thì trim
+        // mới thắng, giống nhánh duration ở trên). Patch kèm duration
+        // thì nhánh H2 ở trên đã xử lý (trim.out đi theo duration) nên
+        // nhánh này bỏ qua. Speed ngoài [0.25, 4] hoặc nested đang mang
+        // speedKeyframes thì giữ nguyên duration cũ, không tự kẹp/không
+        // đoán — với curve thì render dùng curve và bỏ qua speed hằng
+        // (spec đợt 18 §1.5; comment cũ ghi "render cấm" nay đã lỗi
+        // thời, xem nestUtils header N3/G2).
+        // Phase 9 đợt 19 G2 — nested có curve, chế độ duration-cố-định
+        // (spec đợt 18 §2): giữ duration, tính lại trim.out := in +
+        // ∫curve trên duration cuối (curve cuối = curve của patch, hoặc
+        // lát cắt khi thu ngắn, hoặc curve cũ). Không áp khi patch tự
+        // đặt trim (trim tường minh thắng — lệch tích phân khi đó được
+        // báo bằng toast mismatch đã tính triển vọng trước exec, không
+        // tự sửa). Nhánh này chạy sau H2/N3 nên trim speed-hằng (nếu có)
+        // bị ghi đè đúng bằng trim tích phân; tính lũy thừa (idempotent)
+        // nên undo/redo không làm lệch thêm.
+        const nestedForSpeed = asNestedClipPure(pc);
+        const patchSpeed = patchRec["speed"];
+        if (
+          nestedForSpeed &&
+          !("duration" in patch) &&
+          typeof patchSpeed === "number" &&
+          Number.isFinite(patchSpeed) &&
+          (pc as unknown as Record<string, unknown>)["speedKeyframes"] === undefined
+        ) {
+          const recomputed = applyNestedSpeedDurationPure(nestedForSpeed);
+          if (recomputed) {
+            out = withTrack(out, trackId, (t) => ({
+              ...t,
+              clips: t.clips.map((c) =>
+                c.id === clipId ? (recomputed as unknown as Clip) : c,
+              ),
+            }));
+            pc = findClip(out, trackId, clipId)?.clip ?? pc;
+          }
+        }
+        // Đợt 19 G2 (tiếp): áp trim.out theo tích phân cho nested có curve.
+        const nestedCurveForPatch = asNestedClipPure(pc);
+        const finalCurveForPatch = (pc as unknown as { speedKeyframes?: SpeedCurve }).speedKeyframes;
+        if (
+          nestedCurveForPatch &&
+          !("trim" in patch) &&
+          finalCurveForPatch &&
+          Array.isArray(finalCurveForPatch.keyframes) &&
+          finalCurveForPatch.keyframes.length > 0
+        ) {
+          const expectedOut = nestedCurveExpectedOutPure(nestedCurveForPatch);
+          if (expectedOut !== null) {
+            const trimInForPatch = (
+              pc as unknown as { trim?: { in: number; out: number } }
+            ).trim?.in ?? 0;
+            out = withTrack(out, trackId, (t) => ({
+              ...t,
+              clips: t.clips.map((c) =>
+                c.id === clipId
+                  ? { ...c, trim: { in: trimInForPatch, out: expectedOut } }
+                  : c,
+              ),
+            }));
+            pc = findClip(out, trackId, clipId)?.clip ?? pc;
+          }
+        }
         // Phase 7 P6 (caption follow): đổi speed/reverse của clip nguồn →
         // phụ đề co/giãn/đảo theo; sửa start/duration của chính câu phụ đề
         // qua Inspector → hủy link (user tự định vị câu).
         if (isSourceClip(pc) && ("speed" in patch || "reverse" in patch)) {
-          return refollowCaptionsInSpec(patched, pc);
+          return refollowCaptionsInSpec(out, pc);
         }
         if (
           isLinkedCaption(pc) &&
           ("start" in patch || "duration" in patch)
         ) {
-          return unlinkCaptionInSpec(patched, clipId);
+          return unlinkCaptionInSpec(out, clipId);
         }
-        return patched;
+        return out;
       },
     });
+    // Phase 9 đợt 16 H3: báo rơi keyframe bằng toast SAU exec (như
+    // trimClip: mỗi lần patch chỉ báo một lần, không báo lại khi undo/
+    // redo vì apply không chạy lại) và trả về số lượng cho caller.
+    if (patchCurveSlice && patchCurveSlice.dropped > 0) {
+      pushToast(i18nT("speed.patchCurveDropped", { n: String(patchCurveSlice.dropped) }), "info");
+    }
+    // Đợt 19 G2: báo lệch tích phân / vượt nguồn SAU exec (đã tính triển
+    // vọng ở nestedG2 — không báo lại khi undo/redo vì apply không toast).
+    // Lệch trim tường minh = render sẽ fail nên là error; vượt nguồn chỉ
+    // là cảnh báo đuôi (render vẫn qua §1.3) nên là info. Cả hai đều tới
+    // được UI qua toast, không nuốt như curveDropped trước đợt 16.
+    if (nestedG2 && "mismatch" in nestedG2) {
+      const nestedName = (clip as unknown as { name?: string }).name ?? clip.id;
+      const fmt = (x: number) => String(Math.round(x * 1000) / 1000);
+      pushToast(
+        i18nT("nested.curveIntegralMismatch", {
+          name: nestedName,
+          actualOut: fmt(nestedG2.actualOut),
+          expectedOut: fmt(nestedG2.expectedOut),
+        }),
+        "error",
+      );
+    } else if (nestedG2 && "overSource" in nestedG2) {
+      const nestedName = (clip as unknown as { name?: string }).name ?? clip.id;
+      const fmt = (x: number) => String(Math.round(x * 1000) / 1000);
+      pushToast(
+        i18nT("nested.curveOverSource", {
+          name: nestedName,
+          expectedOut: fmt(nestedG2.expectedOut),
+          sourceDuration: fmt(nestedG2.sourceDuration),
+        }),
+        "info",
+      );
+    }
+    return patchCurveSlice?.dropped ?? 0;
   },
 
   patchTextStyle: (trackId, clipId, style) => {
@@ -1028,7 +1815,13 @@ export const useStore = create<EditorState>()((set, get) => {
     if (isTrackLocked(target.track)) return false; // R1-054: không tách clip trên track khóa
     const { track, clip } = target;
     const pair = splitClipAt(clip, playhead);
-    if (!pair) return false;
+    if (!pair) {
+      // Đợt 19 G3: target đã qua cổng khóa + margin (xem phía trên) nên
+      // pair null ở đây là thất bại tách thật — báo đúng thời điểm tách.
+      // TopBar/App/Scene/Beat đều đi qua action này nên chỉ cần báo ở đây.
+      notifyNestedSplitTrimRejection(clip, "split", track.id, clip.id);
+      return false;
+    }
     const [left, right] = pair;
     execCommand(
       {
@@ -1038,19 +1831,30 @@ export const useStore = create<EditorState>()((set, get) => {
             ...tr,
             clips: [...tr.clips.filter((c) => c.id !== clip.id), left, right],
           }));
+          // Phase 9 đợt 15 T4: nửa mới ngắn hơn transition ngoài của nó thì
+          // kẹp cả hai đầu của cặp (clip tách + clip kề) về duration của
+          // nửa mới — nếu không cả cổng per-clip lẫn cổng ghép cặp của
+          // validator đều bắt lỗi (xem lib/splitTransitions.ts). Biên trong
+          // vốn đã là "none" nên không đụng tới. [left, right] truyền xuống
+          // caption follow vẫn là bản trước kẹp vì kẹp không đổi id/start/
+          // duration — chỉ đổi duration của field transition.
+          const clamped = withTrack(split, track.id, (tr) => ({
+            ...tr,
+            clips: clampSplitOuterTransitions(tr.clips, left.id, right.id),
+          }));
           // Phase 7 P6 (caption follow): tách clip nguồn → câu vắt qua
           // điểm cắt tách thành 2 theo từng nửa; tách trực tiếp câu phụ đề
           // → 2 nửa đều hủy link (user tự chia câu).
           if (isSourceClip(left) && isSourceClip(right)) {
-            return splitLinkedCaptionsInSpec(split, clip.id, [left, right]);
+            return splitLinkedCaptionsInSpec(clamped, clip.id, [left, right]);
           }
           if (isLinkedCaption(clip)) {
             return unlinkCaptionInSpec(
-              unlinkCaptionInSpec(split, left.id),
+              unlinkCaptionInSpec(clamped, left.id),
               right.id,
             );
           }
-          return split;
+          return clamped;
         },
       },
       [{ trackId: track.id, clipId: right.id }],
@@ -1138,24 +1942,48 @@ export const useStore = create<EditorState>()((set, get) => {
           ...tr,
           clips: [...tr.clips.filter((c) => c.id !== clipId), ...pieces],
         }));
+        // Phase 9 đợt 15 T4: như splitAtPlayhead — kẹp transition ngoài của
+        // mảnh đầu/mảnh cuối (mảnh giữa vốn không mang transition ngoài).
+        const clamped = withTrack(replaced, trackId, (tr) => ({
+          ...tr,
+          clips: clampSplitOuterTransitions(
+            tr.clips,
+            pieces[0].id,
+            pieces[pieces.length - 1].id,
+          ),
+        }));
         // Phase 7 P6 (caption follow): tách clip nguồn tại nhiều điểm →
         // câu vắt qua nhiều mảnh tách theo từng mảnh; tách câu phụ đề →
         // mọi mảnh hủy link.
         if (pieces.every((p) => isSourceClip(p))) {
           return splitLinkedCaptionsInSpec(
-            replaced,
+            clamped,
             clipId,
             pieces as (VideoClip | AudioClip)[],
           );
         }
         if (isLinkedCaption(orig)) {
-          let out = replaced;
+          let out = clamped;
           for (const p of pieces) out = unlinkCaptionInSpec(out, p.id);
           return out;
         }
-        return replaced;
+        return clamped;
       },
     });
+    if (applied === 0) {
+      // Đợt 19 G3: tách nhiều điểm (Scene/Beat modal) — chỉ báo khi có
+      // ít nhất 1 điểm nằm hẳn trong clip (qua margin của splitClipAt),
+      // tức điểm đó đã được thử tách thật mà thất bại; điểm ngoài clip
+      // vốn không tách được nên không báo giả. Notify tự cổng field.
+      const attempted = sorted.some(
+        (t) =>
+          t > found.clip.start + 0.05 &&
+          t < found.clip.start + found.clip.duration - 0.05,
+      );
+      if (attempted) {
+        notifyNestedSplitTrimRejection(found.clip, "split", trackId, clipId);
+      }
+    }
     return applied;
   },
 
@@ -1197,6 +2025,321 @@ export const useStore = create<EditorState>()((set, get) => {
       },
       result.duplicated,
     );
+  },
+
+  // ---- Nested clip + adjustment layer (Phase 9 N4, UI only) ----
+  nestSelection: (name) => {
+    const st = get();
+    const displayName =
+      name?.trim() || `Compound clip ${listNestedClipsPure(st.spec).length + 1}`;
+    const res = nestClipsPure(st.spec, st.selection, () => uid("c"), displayName);
+    if ("error" in res) return false;
+    execCommand(
+      {
+        label: `Gộp thành ${res.nested.name ?? "compound clip"}`,
+        apply: () => res.spec,
+      },
+      [{ trackId: res.nestedTrackId, clipId: res.nested.id }],
+    );
+    return true;
+  },
+
+  unnestClip: (trackId, clipId) => {
+    const res = unnestClipPure(get().spec, trackId, clipId, () => uid("c"));
+    if ("error" in res) return false;
+    execCommand(
+      {
+        label: "Rã compound clip",
+        apply: () => res.spec,
+      },
+      [],
+    );
+    return true;
+  },
+
+  addAdjustmentLayer: (filterType, intensity, start, duration) => {
+    const res = addAdjustmentLayerPure(get().spec, filterType, intensity, start, duration, () => uid("c"));
+    if ("error" in res) return false;
+    execCommand(
+      {
+        label: `Thêm adjustment layer (${filterType})`,
+        apply: () => res.spec,
+      },
+      [{ trackId: res.hostTrackId, clipId: res.layer.id }],
+    );
+    return true;
+  },
+
+  deleteAdjustmentLayer: (trackId, clipId) => {
+    const next = deleteAdjustmentLayerPure(get().spec, trackId, clipId);
+    if (!next) return;
+    const st = get();
+    execCommand(
+      {
+        label: "Xoá adjustment layer",
+        apply: () => next,
+      },
+      st.selection.filter((x) => x.clipId !== clipId),
+    );
+  },
+
+  // ---- R5: tương tác hàng FX + sửa clip con (qua nestUtils, xem header R5) ----
+  moveAdjustmentLayer: (trackId, clipId, newStart) => {
+    const res = moveAdjustmentLayerPure(get().spec, trackId, clipId, newStart);
+    if ("error" in res) return false;
+    execCommand(
+      {
+        label: "Di chuyển adjustment layer",
+        mergeKey: `fxmove:${trackId}:${clipId}`,
+        apply: () => res.spec,
+      },
+      get().selection,
+    );
+    return true;
+  },
+
+  trimAdjustmentLayer: (trackId, clipId, edge, target) => {
+    const res = trimAdjustmentLayerPure(get().spec, trackId, clipId, edge, target);
+    if ("error" in res) return false;
+    execCommand(
+      {
+        label: "Cắt adjustment layer",
+        mergeKey: `fxtrim:${trackId}:${clipId}`,
+        apply: () => res.spec,
+      },
+      get().selection,
+    );
+    return true;
+  },
+
+  updateAdjustmentLayer: (trackId, clipId, start, duration) => {
+    const res = updateAdjustmentLayerPure(get().spec, trackId, clipId, start, duration);
+    if ("error" in res) return false;
+    execCommand(
+      {
+        label: "Sửa adjustment layer",
+        apply: () => res.spec,
+      },
+      get().selection,
+    );
+    return true;
+  },
+
+  // ---- R7: layer chuẩn spec + boundary nested (qua nestUtils, xem header R7) ----
+  addSpecAdjustmentLayer: (filterType, intensity, start, duration, scope) => {
+    const res = addSpecAdjustmentLayerPure(
+      get().spec,
+      { filterType, intensity, start, duration, scope },
+      () => uid("c"),
+    );
+    if ("error" in res) return false;
+    execCommand(
+      {
+        label: `Thêm adjustment layer chuẩn (${filterType})`,
+        apply: () => res.spec,
+      },
+      get().selection,
+    );
+    return true;
+  },
+
+  updateSpecAdjustmentLayer: (layerId, patch) => {
+    const res = updateSpecAdjustmentLayerPure(get().spec, layerId, patch);
+    if ("error" in res) return false;
+    execCommand(
+      {
+        label: "Sửa adjustment layer chuẩn",
+        apply: () => res.spec,
+      },
+      get().selection,
+    );
+    return true;
+  },
+
+  deleteSpecAdjustmentLayer: (layerId) => {
+    const next = deleteSpecAdjustmentLayerPure(get().spec, layerId);
+    if (!next) return;
+    execCommand(
+      {
+        label: "Xoá adjustment layer chuẩn",
+        apply: () => next,
+      },
+      get().selection,
+    );
+  },
+
+  convertLegacyLayerToSpec: (trackId, clipId) => {
+    // Giữ ngữ nghĩa legacy (chỉ áp track host): convert sang spec phải mang
+    // scope = chỉ số track host, không phải "all" (parent tích hợp đợt 7).
+    const hostIdx = get().spec.tracks.findIndex((t) => t.id === trackId);
+    const scope = hostIdx >= 0 ? { trackIndices: [hostIdx] } : ("all" as const);
+    const res = convertLegacyLayerToSpecPure(get().spec, trackId, clipId, scope, () => uid("c"));
+    if ("error" in res) return false;
+    execCommand(
+      {
+        label: "Chuyển adjustment layer sang chuẩn spec",
+        apply: () => res.spec,
+      },
+      get().selection.filter((x) => x.clipId !== clipId),
+    );
+    return true;
+  },
+
+  setNestedClipBoundary: (hostTrackId, nestedId, patch) => {
+    const res = setNestedClipBoundaryPure(get().spec, hostTrackId, nestedId, patch);
+    if ("error" in res) return false;
+    execCommand(
+      {
+        label: "Đặt transition/opacity cho nested clip",
+        apply: () => res.spec,
+      },
+      get().selection,
+    );
+    return true;
+  },
+
+  updateNestedInnerClip: (hostTrackId, nestedId, innerTrackId, innerClipId, patch) => {
+    // Phase 9 đợt 18 — guard nguồn của cha cho tầng 1 (R5), áp đúng ngữ
+    // nghĩa guard của hàm deep đợt 17 N3 (updateNestedDeepInnerClip):
+    // sửa clip con không được phá bất biến duration của cha. Cha là
+    // nested clip ngoài cùng này (không phải tầng cha sâu hơn — R5 chỉ
+    // sửa clip con trực tiếp). Độ dài nguồn = clip kết thúc muộn nhất
+    // trên mọi track của subSpec cha (định nghĩa nestedSourceDuration
+    // của spec, tính lại tại đây để không đụng nestUtils.ts):
+    // - Cha ghi trim tường minh: chỉ cấm nguồn mới co dưới trim.out
+    //   (nguồn dài thêm thì trim vẫn nằm trong nguồn, cha vẫn hợp lệ).
+    // - Cha không ghi trim (= "phát toàn bộ", duration cha bằng đúng
+    //   độ dài nguồn / speed): nguồn đổi theo hướng nào cũng lệch
+    //   duration cha nên đều bị từ chối.
+    // Guard tính TRIỂN VỌNG từ patch (chưa qua làm tròn 2 chữ số của
+    // hàm thuần R5) rồi mới gọi hàm thuần: patch chỉ đổi text thì
+    // newEnd bằng end cũ nên luôn qua; lookup thất bại thì bỏ qua
+    // guard và để hàm thuần trả error như cũ. Bị chặn → trả ok:false
+    // TRƯỚC execCommand nên spec không đổi và không sinh entry undo.
+    const guardParent = (() => {
+      const hostTrack = get().spec.tracks.find((t) => t.id === hostTrackId);
+      const hostClip = hostTrack?.clips.find((c) => c.id === nestedId);
+      return hostClip ? asNestedClipPure(hostClip) : null;
+    })();
+    if (guardParent) {
+      const guardTrack = guardParent.subSpec.tracks.find((t) => t.id === innerTrackId);
+      const guardInner = guardTrack?.clips.find((c) => c.id === innerClipId);
+      if (guardTrack && guardInner) {
+        const guardEps = 1e-9;
+        const guardNewEnd =
+          (patch.start ?? guardInner.start) + (patch.duration ?? guardInner.duration);
+        let guardOldSource = 0;
+        let guardNewSource = 0;
+        for (const t of guardParent.subSpec.tracks) {
+          for (const c of t.clips) {
+            guardOldSource = Math.max(guardOldSource, c.start + c.duration);
+            guardNewSource = Math.max(
+              guardNewSource,
+              t.id === innerTrackId && c.id === innerClipId ? guardNewEnd : c.start + c.duration,
+            );
+          }
+        }
+        if (guardParent.trim !== undefined) {
+          if (guardParent.trim.out > guardNewSource + guardEps) {
+            return { ok: false, curveDropped: 0 };
+          }
+        } else if (Math.abs(guardNewSource - guardOldSource) > guardEps) {
+          return { ok: false, curveDropped: 0 };
+        }
+      }
+    }
+    const res = updateNestedInnerClipPure(get().spec, hostTrackId, nestedId, innerTrackId, innerClipId, patch);
+    if ("error" in res) return { ok: false, curveDropped: 0 };
+    execCommand(
+      {
+        label: "Sửa clip con trong compound clip",
+        apply: () => res.spec,
+      },
+      get().selection,
+    );
+    return { ok: true, curveDropped: res.curveDropped ?? 0 };
+  },
+
+  updateNestedDeepInnerClip: (hostTrackId, topId, chainIds, innerTrackId, innerClipId, patch) => {
+    const res = updateNestedDeepInnerClipPure(get().spec, hostTrackId, topId, chainIds, innerTrackId, innerClipId, patch);
+    if ("error" in res) return { ok: false, curveDropped: 0 };
+    execCommand(
+      {
+        label: "Sửa clip con sâu trong compound clip",
+        apply: () => res.spec,
+      },
+      get().selection,
+    );
+    return { ok: true, curveDropped: res.curveDropped ?? 0 };
+  },
+
+  // Đợt 19 G2: chế độ trim-cố-định cho curve của nested clip (xem
+  // interface). Fail-fast trước exec nên lệnh bị từ chối không đổi
+  // spec và không sinh entry undo (mẫu guard đợt 18). reason trả về
+  // để caller (panel tương lai) hiển thị được, không nuốt như
+  // curveDropped trước đợt 16.
+  // Đợt 21 T3: reason KHÔNG còn hardcode tiếng Việt — mỗi lần từ chối
+  // trả kèm reasonKey (key i18n nested.fixedTrim*, đủ vi/en) và reason
+  // là chuỗi đã dịch theo ngôn ngữ hiện tại (i18nT tại thời điểm gọi,
+  // giống toast store). Caller cũ chỉ đọc reason (string) vẫn chạy y
+  // nguyên; caller mới muốn tự dịch lại thì dùng reasonKey. Câu tiếng
+  // Việt giữ đúng từng ký tự bản hardcode cũ (test khóa).
+  patchNestedCurveFixedTrim: (trackId, clipId, curve) => {
+    const track = get().spec.tracks.find((t) => t.id === trackId);
+    if (isTrackLocked(track)) {
+      return { ok: false, reason: i18nT("nested.fixedTrimLocked"), reasonKey: "nested.fixedTrimLocked" };
+    }
+    const clip = track?.clips.find((c) => c.id === clipId);
+    const nested = clip ? asNestedClipPure(clip) : null;
+    if (!nested) {
+      return { ok: false, reason: i18nT("nested.fixedTrimNotNested"), reasonKey: "nested.fixedTrimNotNested" };
+    }
+    // Đợt 21 T2: nới như patchClip — chỉ từ chối khi cặp hai tầng vi
+    // phạm luật render R1 (checkTwoLevelOuterCurvePure); cặp hợp lệ
+    // được cho qua vì render đã hợp thật. reasonKey giữ nguyên key
+    // của T3 (caller cũ vẫn nhận diện được loại từ chối), reason gắn
+    // thêm lý do cụ thể của check để không nuốt thông tin.
+    const twoLevelCheck = checkTwoLevelOuterCurvePure(nested, curve);
+    if (!twoLevelCheck.ok) {
+      return {
+        ok: false,
+        reason: `${i18nT("nested.fixedTrimTwoLevel")} ${twoLevelCheck.reason}`,
+        reasonKey: "nested.fixedTrimTwoLevel",
+      };
+    }
+    const next = applyNestedCurveFixedTrimPure(nested, curve);
+    if (!next) {
+      return {
+        ok: false,
+        reason: i18nT("nested.fixedTrimUncomputable"),
+        reasonKey: "nested.fixedTrimUncomputable",
+      };
+    }
+    execCommand(
+      {
+        label: "Đặt speed curve cho nested clip (giữ trim)",
+        apply: (spec) =>
+          withTrack(spec, trackId, (t) => ({
+            ...t,
+            clips: t.clips.map((c) => (c.id === clipId ? (next as unknown as Clip) : c)),
+          })),
+      },
+      get().selection,
+    );
+    return { ok: true, duration: next.duration };
+  },
+
+  splitNestedDeepInnerClip: (hostTrackId, topId, chainIds, innerTrackId, innerClipId, splitTime) => {
+    const res = splitNestedDeepInnerClipPure(get().spec, hostTrackId, topId, chainIds, innerTrackId, innerClipId, splitTime, () => uid("c"));
+    if ("error" in res) return false;
+    execCommand(
+      {
+        label: "Tách clip con sâu trong compound clip",
+        apply: () => res.spec,
+      },
+      get().selection,
+    );
+    return true;
   },
 
   clearClipboard: () => {

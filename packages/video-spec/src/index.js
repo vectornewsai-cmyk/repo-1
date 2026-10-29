@@ -42,6 +42,10 @@ export * from "./audio.js";
 export * from "./markers.js";
 // R1-055: frame-accurate timebase (snap theo frame, timecode).
 export * from "./timebase.js";
+// Phase 9 N1: nested sequence / compound clip (mirror của index.ts).
+export * from "./nested.js";
+// Phase 9 đợt 8 S1: slow-mo mượt / nội suy frame / motion blur (mirror của index.ts).
+export * from "./motion.js";
 /** Kiểm tra nhanh spec có hợp lệ tối thiểu không (validate đầy đủ bằng zod ở render worker). */
 export function isVideoSpec(v) {
     if (typeof v !== "object" || v === null)

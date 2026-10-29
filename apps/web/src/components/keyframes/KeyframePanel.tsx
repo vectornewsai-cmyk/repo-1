@@ -113,11 +113,11 @@ export function KeyframePanel() {
       </div>
     );
   }
-  if (clip.kind === "audio" || clip.kind === "sticker" || clip.kind === "image") {
+  if (clip.kind === "audio" || clip.kind === "sticker" || clip.kind === "image" || clip.kind === "nested") {
     return (
       <div className="kf-panel">
         <div className="panel-head">{i18nT("keyframe.head")}</div>
-        <p className="tips">{i18nT("keyframe.tipUnsupported", { kind: clip.kind === "audio" ? i18nT("keyframe.kindAudio") : clip.kind === "sticker" ? i18nT("keyframe.kindSticker") : i18nT("keyframe.kindImage") })}</p>
+        <p className="tips">{i18nT("keyframe.tipUnsupported", { kind: clip.kind === "audio" ? i18nT("keyframe.kindAudio") : clip.kind === "sticker" ? i18nT("keyframe.kindSticker") : clip.kind === "image" ? i18nT("keyframe.kindImage") : i18nT("keyframe.kindNested") })}</p>
       </div>
     );
   }

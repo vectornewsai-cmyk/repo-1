@@ -44,6 +44,8 @@ const {
 // Phase 3b: chroma key, text animations.
 const { buildChromaFilter } = require("./chroma");
 const { buildTextAnimExpr, isTextFxAnimation } = require("./textfx");
+// Phase 9 đợt 10 V4: text animation rotate/skew/clip qua ASS (không phải drawtext).
+const { isParityAnimation, buildParityAss } = require("./textAnimParity");
 // Phase 3c: LUT filters, video effects, stickers.
 const { buildLutFilter, buildColorAdjustFilter } = require("./lut");
 const { buildEffectsChain } = require("./effects");
@@ -66,9 +68,18 @@ const {
   runStabilizeDetect, probeFilterSupport,
 } = require("./enhance");
 // Phase 7 P3: speed ramp (đường cong tốc độ) + audio mixer (gain expr, normalize).
-const { buildSpeedRampVideo, buildSpeedRampAudio } = require("./speedramp");
+const { buildSpeedRampVideo, buildSpeedRampAudio, buildMotionPostChain } = require("./speedramp");
+// Phase 9 đợt 8 S2: slow-mo mượt / nội suy frame / motion blur (chỉ nhánh thường).
+const { buildMotionChain } = require("./motion");
 const { buildGainFilter, buildNormalizeFilter } = require("./audiomix");
 const { probeGpuEncoder, buildVideoEncodeArgs, tryEncode } = require("./gpuencode");
+// Phase 9 N2: nested sequence — làm phẳng clip lồng nhau thành spec phẳng
+// (xem nested.js + NESTED_RENDER_LIMITS.md). Chỉ một điểm nối có cờ ở main().
+const { hasNestedClips, flattenSpecForRender } = require("./nested");
+// Phase 9 R1: adjustment layer — tách clip theo biên layer, nối chain vào
+// đoạn trong layer (xem adjustment.js + ADJUSTMENT_LIMITS.md).
+// Phase 9 đợt 7 U2: normalize legacy UI clip + scope tracks (xem U2_LIMITS.md).
+const { buildAdjustmentChain, splitClipByLayers, normalizeLegacyAdjustmentLayers } = require("./adjustment");
 
 // ---------------------------------------------------------------------------
 // Tiện ích
@@ -432,7 +443,11 @@ function buildFilterGraph(spec, ctx) {
 
   // R1-054: track video bị hidden → bỏ qua (không render hình);
   // track video bị muted → vẫn render hình nhưng bỏ audio kế thừa (xử lý ở phần AUDIO).
-  for (const track of spec.tracks.filter((t) => t.kind === "video" && !t.hidden)) {
+  // Đợt 7 U2: lặp theo chỉ số track gốc (không filter trước) vì scope
+  // tracks của adjustment layer là chỉ số trong spec.tracks đã flatten.
+  for (let trackIndex = 0; trackIndex < spec.tracks.length; trackIndex++) {
+    const track = spec.tracks[trackIndex];
+    if (track.kind !== "video" || track.hidden) continue;
     const clips = [...track.clips].sort((a, b) => a.start - b.start);
 
     // Clip dính transition (kề trước hoặc kề sau trong một cặp xfade) sẽ bị gộp
@@ -448,9 +463,70 @@ function buildFilterGraph(spec, ctx) {
       }
     }
 
+    // Phase 9 R1: adjustment layer — tách mỗi clip theo biên layer TRƯỚC
+    // khi chuẩn hoá (xem adjustment.js + ADJUSTMENT_LIMITS.md). Các đoạn
+    // lát kín đúng [start, start+duration) nên tổng thời lượng không đổi;
+    // audio kế thừa ở phần AUDIO vẫn đọc clip gốc nên tiếng không bị tách.
+    // Mỗi đoạn mang _adjLayers (layer giao với đoạn) để bước chuẩn hoá nối
+    // adjChain vào cuối chuỗi pixel của chính đoạn đó; đoạn ngoài layer có
+    // danh sách rỗng nên chuỗi pixel giữ nguyên 100%.
+    const adjLayers = Array.isArray(spec.adjustmentLayers) ? spec.adjustmentLayers : [];
+    const expandedClips = [];
+    for (const clip of clips) {
+      // Đợt 7 U2: truyền trackIndex để split chỉ xét layer trong scope;
+      // clip ngoài scope trả về 1 đoạn nguyên vẹn, không dính cổng fail fast.
+      const parts = splitClipByLayers(clip, adjLayers, trackIndex);
+      const overlapsAdj = parts.some((p) => p.layers.length > 0);
+      // Cổng 1 — transition: clip dính xfade mà giao layer thì fail fast.
+      // Xfade gộp 2 clip thành 1 unit; tách sẽ phá cặp transition, còn áp
+      // adj cho cả unit thì sai ở vùng crossfade (vùng đó chứa nội dung
+      // của cả 2 clip nhưng chưa chắc cả 2 đều giao layer).
+      if (overlapsAdj && mergeInvolved.has(clip.id)) {
+        throw new Error(`clip "${clip.id}": adjustment layer giao với clip dính transition ` +
+          `(xfade) — chưa hỗ trợ; tách clip hoặc dời layer khỏi vùng transition`);
+      }
+      if (parts.length > 1) {
+        // Cổng 2 — các thứ gắn theo thời gian cục bộ của clip: tách sẽ làm
+        // chúng chạy lại từ đầu đoạn / lệch trf detect, nên fail fast thay
+        // vì render sai lặng lẽ. Layer bao trọn clip (parts == 1) không bị
+        // cổng này vì không tách.
+        if (clip.speedKeyframes !== undefined) {
+          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có speedKeyframes ` +
+            `(keyframe tốc độ gắn theo thời gian clip — chưa hỗ trợ tách)`);
+        }
+        if (clip.animations !== undefined) {
+          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có animations keyframes ` +
+            `(keyframe gắn theo thời gian clip — chưa hỗ trợ tách)`);
+        }
+        if (clip.track !== undefined) {
+          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có motion track ` +
+            `(điểm track gắn theo thời gian clip — chưa hỗ trợ tách)`);
+        }
+        if (hasStabilize(clip.enhance)) {
+          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có enhance.stabilize ` +
+            `(vidstab detect theo trim gốc — chưa hỗ trợ tách)`);
+        }
+        if (clip.mask && hasMaskKeyframes(clip.mask)) {
+          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có mask keyframes ` +
+            `(mask animation gắn theo thời gian clip — chưa hỗ trợ tách)`);
+        }
+      }
+      const spd = clip.speed ?? 1;
+      for (const p of parts) {
+        expandedClips.push({
+          ...clip,
+          start: p.start,
+          duration: p.duration,
+          in: p.in,
+          out: p.in + p.duration * spd,
+          _adjLayers: p.layers,
+        });
+      }
+    }
+
     // Bước 1: chuẩn hoá từng clip — cắt đúng [in, in+duration*speed), speed/reverse,
     // scale/pad về đúng WxH, fps hằng số (xfade bắt buộc CFR), format yuv420p.
-    const segs = clips.map((clip) => {
+    const segs = expandedClips.map((clip) => {
       const idx = mediaIndex.get(absOf(clip.src));
       const v = lbl("cv");
       // Speed/reverse: chèn sau trim + setpts=PTS-STARTPTS (ngữ nghĩa: đoạn nguồn
@@ -486,6 +562,11 @@ function buildFilterGraph(spec, ctx) {
       // khi spec không khai plugin → chain giữ nguyên như cũ.
       const pluginFilters = ctx.pluginFiltersFor ? ctx.pluginFiltersFor(clip) : [];
       const pluginChain = pluginFilters.length ? `,${pluginFilters.join(",")}` : "";
+      // Phase 9 R1: adjustment chain của đoạn này (rỗng khi đoạn ngoài
+      // layer). Vị trí: SAU plugin — adjustment là lớp phủ trên clip nên
+      // áp sau toàn bộ pipeline pixel của chính clip.
+      const adjChain = buildAdjustmentChain(clip._adjLayers || [], ctx.assetsDir, ctx.userLutsDir);
+      const adjSuffix = adjChain ? `,${adjChain}` : "";
       // P0-05/R1-012: khi có chroma key, GIỮ alpha xuyên suốt chain.
       // - buildChromaFilter đã output yuva420p (có alpha từ chromakey)
       // - pad phải dùng màu trong suốt (black@0), không phải black đục
@@ -512,11 +593,29 @@ function buildFilterGraph(spec, ctx) {
         if (hasStabilize(clip.enhance)) {
           throw new Error(`clip "${clip.id}": speedKeyframes không dùng chung được với enhance.stabilize (vidstab detect theo trim gốc, không khớp các đoạn ramp)`);
         }
+        // Phase 9 đợt 8 S3 — ramp + motion (chỉ nhánh isRamp này; nhánh clip
+        // thường bên dưới thuộc S2, không đụng vào): reverse + motion chặn
+        // lại ở đây dù validator đã chặn reverse + speedKeyframes (defense
+        // in depth — buildSpeedRampVideo cũng kiểm tra). motionPostChain
+        // do buildSpeedRampVideo sắp xếp: có interpolation thì minterpolate
+        // THAY bước fps (bỏ fps từng đoạn + sau concat, đứng trước các
+        // filter postChain khác); chỉ có tmix thì tmix nằm cuối postChain.
+        // Mask áp ngay sau đây nên luôn sau motion. Mask keyframes +
+        // minterpolate KHÔNG chặn: minterpolate cùng fps giữ nguyên số
+        // frame/CFR nên mask animation (trim theo duration*fps) vẫn khớp
+        // từng frame — xem header speedramp.js.
+        if (clip.motion !== undefined && clip.motion !== null && clip.reverse === true) {
+          throw new Error(`clip "${clip.id}": speedKeyframes + motion không dùng chung được với reverse=true`);
+        }
+        const motionPostChain = clip.motion !== undefined && clip.motion !== null
+          ? buildMotionPostChain(clip.motion, fps, clip.duration)
+          : "";
         const { lines, label } = buildSpeedRampVideo(`[${idx}:v]`, clip, {
           W, H, fps, outFormat, padColor, lbl,
           enhPreChain: enhPre,
           preScaleChain: chromaChain,
-          postChain: `${colorChain}${lutChain}${effectsChain}${enhPost}${pluginChain}`,
+          postChain: `${colorChain}${lutChain}${effectsChain}${enhPost}${pluginChain}${adjSuffix}`,
+          motionPostChain,
         });
         fc.push(...lines);
         let unitLabel = label;
@@ -531,6 +630,14 @@ function buildFilterGraph(spec, ctx) {
           declaredEnd: clip.start + clip.duration,
         };
       }
+      // Phase 9 đợt 8 S2: motion (chỉ nhánh thường — nhánh ramp dùng
+      // buildMotionPostChain của S3). interpolation THAY fps=<fps> (xem
+      // motion.js); tmix đi ngay sau, trước format. Không motion = chain
+      // cũ nguyên vẹn (fpsFilter = fps=<fps>, blurChain = "").
+      // Phase 9 đợt 9 M1: preFilter (tpad clone-pad) đứng trước
+      // minterpolate, tailFilter (trim đúng slot) đứng sau tmix, trước
+      // format — cả hai chỉ có khi clip.motion bật interpolation.
+      const motionChain = buildMotionChain(clip.motion, fps, clip.duration);
       fc.push(
         `[${idx}:v]` +
         `trim=start=${num(clip.in)}:end=${num(clip.in + clip.duration * (clip.speed ?? 1))},` +
@@ -538,7 +645,7 @@ function buildFilterGraph(spec, ctx) {
         // Giữ tỉ lệ gốc, letterbox bằng nền đen (hoặc trong suốt nếu chroma) cho vừa khít khung hình output.
         `scale=${W}:${H}:force_original_aspect_ratio=decrease,` +
         `pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=${padColor},` +
-        `setsar=1,fps=${fps},format=${outFormat}${colorChain}${lutChain}${effectsChain}${enhPost}${pluginChain}` +
+        `setsar=1,${motionChain.preFilter ? `${motionChain.preFilter},` : ""}${motionChain.fpsFilter}${motionChain.blurChain}${motionChain.tailFilter},format=${outFormat}${colorChain}${lutChain}${effectsChain}${enhPost}${pluginChain}${adjSuffix}` +
         `[${v}]`
       );
       // Phase 7 P4: mask — áp SAU effects/plugin, trên pixel WxH đã chuẩn hoá,
@@ -728,6 +835,7 @@ function buildFilterGraph(spec, ctx) {
   for (const track of spec.tracks.filter((t) => t.kind === "text" && !t.hidden)) {
     for (const clip of track.clips) {
       if (clip.style.animation === "typewriter") continue; // xử lý riêng bằng ASS bên dưới
+      if (isParityAnimation(clip.style.animation)) continue; // V4: ASS parity bên dưới
       if (Array.isArray(clip.karaoke) && clip.karaoke.length > 0) continue; // R4: ASS karaoke bên dưới
       const st = clip.style;
       const S = clip.start, E = clip.start + clip.duration;
@@ -848,6 +956,50 @@ function buildFilterGraph(spec, ctx) {
     karaokeAssFile = buildKaraokeAss(kaClips, { width: W, height: H });
     const s = lbl("ksub");
     fc.push(`${vcur}subtitles='${escapeFilterPath(karaokeAssFile)}'[${s}]`);
+    vcur = `[${s}]`;
+  }
+
+  // ===== TEXT: parity (tiltIn/skewIn/slideReveal/curtainIn) qua ASS (Phase 9 đợt 10 V4) =====
+  // Nối sau karaoke: karaoke thắng parity khi 1 clip có cả hai (tránh vẽ 1 clip
+  // bằng 2 lớp ASS). Clip parity đã bị bỏ qua ở nhánh drawtext + PNG SR ở trên
+  // nên chỉ lớp ASS này vẽ chúng — keyframes x/y/opacity của clip parity
+  // bị bỏ qua (giống typewriter; validator cảnh báo cho SR).
+  const paClips = [];
+  for (const track of spec.tracks.filter((t) => t.kind === "text" && !t.hidden))
+    for (const clip of track.clips)
+      if (isParityAnimation(clip.style.animation) &&
+          !(Array.isArray(clip.karaoke) && clip.karaoke.length > 0)) paClips.push(clip);
+  let parityAssFile = null;
+  if (paClips.length > 0) {
+    // Đợt 11 P4: đo hộp chữ thật bằng PIL (measure_text.py, cùng font
+    // file/size/metrics với render_text_png.py) để \clip quét theo hộp
+    // chữ thay vì khung hình. Clip nào đo thất bại (thiếu python3/PIL/
+    // font) → không có entry trong boxById → textAnimParity fallback
+    // quét khung hình cũ + cảnh báo rõ, không fail render.
+    const boxById = new Map();
+    for (const clip of paClips) {
+      const fontFile = resolveFontFile(clip.style.fontFamily, clip.style);
+      if (!fontFile) {
+        console.error(`   ⚠️ parity "${clip.id}": không tìm được font "${clip.style.fontFamily}" để đo hộp chữ — fallback quét khung hình`);
+        continue;
+      }
+      const mr = spawnSync("python3", [
+        path.join(__dirname, "measure_text.py"),
+        "--font", fontFile,
+        "--size", String(clip.style.fontSize),
+        "--text", clip.text,
+      ], { stdio: ["ignore", "pipe", "pipe"] });
+      try {
+        const box = JSON.parse((mr.stdout || "").toString());
+        if (box && box.width > 0 && box.height > 0) boxById.set(clip.id, { w: box.width, h: box.height });
+        else console.error(`   ⚠️ parity "${clip.id}": đo hộp chữ trả về rỗng — fallback quét khung hình`);
+      } catch {
+        console.error(`   ⚠️ parity "${clip.id}": đo hộp chữ thất bại (${(mr.stderr || "").toString().trim().slice(0, 120)}) — fallback quét khung hình`);
+      }
+    }
+    parityAssFile = buildParityAss(paClips, { width: W, height: H }, boxById);
+    const s = lbl("psub");
+    fc.push(`${vcur}subtitles='${escapeFilterPath(parityAssFile)}'[${s}]`);
     vcur = `[${s}]`;
   }
 
@@ -1056,7 +1208,7 @@ function buildFilterGraph(spec, ctx) {
     vfinal = `[${hv}]`;
   }
 
-  return { filterComplex: fc.join(";"), vout: vfinal, aout, assFile, karaokeAssFile };
+  return { filterComplex: fc.join(";"), vout: vfinal, aout, assFile, karaokeAssFile, parityAssFile };
 }
 
 // ---------------------------------------------------------------------------
@@ -1087,6 +1239,42 @@ function main() {
       `cần { version: "${SPEC_VERSION}", meta: {...}, tracks: [...] }`
     );
     process.exit(1);
+  }
+
+  // Phase 9 đợt 7 U2: normalize legacy UI adjustment clip THÀNH project
+  // layer TRƯỚC flatten và TRƯỚC validate — legacy clip kind "adjustment"
+  // trong track.clips không có src nên validator phẳng sẽ từ chối nó, và
+  // flatten sẽ coi nó là clip phẳng thường. Normalize gỡ nó khỏi track,
+  // nối thành spec.adjustmentLayers với tracks=[track chứa nó]; legacy
+  // trong project con cũng được normalize đệ quy nên flatten của nested.js
+  // thu thập được nó như layer của project con (xem U2_LIMITS.md).
+  // Normalize lỗi (filterType lạ, trùng id) → fail fast, không render sai.
+  try {
+    const nz = normalizeLegacyAdjustmentLayers(spec);
+    if (nz.converted > 0)
+      log(`   legacy adjustment: ${nz.converted} clip kind "adjustment" đã ` +
+        `chuyển thành project layer (tracks = track chứa nó)`);
+  } catch (e) {
+    console.error(`❌ Legacy adjustment layer không normalize được: ${e.message}`);
+    process.exit(1);
+  }
+
+  // Phase 9 N2: nested sequence — làm phẳng TRƯỚC validate. Clip lồng nhau
+  // không có src nên validator phẳng sẽ từ chối nó; flatten thay nó bằng
+  // các clip phẳng tương đương trên track mới, còn spec phẳng cũ đi qua
+  // nhánh này với hasNestedClips === false nên không đổi gì cả.
+  if (hasNestedClips(spec)) {
+    try {
+      const flat = flattenSpecForRender(spec);
+      for (const w of flat.warnings) console.error(`⚠️  nested: ${w}`);
+      log(`   nested: ${flat.stats.nestedClips} clip lồng nhau → ` +
+        `${flat.stats.outputClips} clip phẳng, ${flat.stats.newTracks} track mới` +
+        (flat.stats.droppedClips > 0 ? `, ${flat.stats.droppedClips} clip ngoài cửa sổ đã bỏ` : ""));
+      spec = flat.spec;
+    } catch (e) {
+      console.error(`❌ Nested sequence không làm phẳng được: ${e.message}`);
+      process.exit(1);
+    }
   }
 
   // 2a. P7: nạp asset map nếu có (map asset id → file, do bridge/export
@@ -1238,6 +1426,7 @@ function main() {
   for (const track of spec.tracks.filter((t) => t.kind === "text" && !t.hidden)) {
     for (const clip of track.clips) {
       if (clip.style.animation === "typewriter") continue; // libass tự resolve qua fontconfig
+      if (isParityAnimation(clip.style.animation)) continue; // V4: ASS parity, libass tự resolve qua fontconfig
       const f = resolveFontFile(clip.style.fontFamily, clip.style);
       if (!f) {
         console.error(`❌ Không tìm được font "${clip.style.fontFamily}" cho text clip "${clip.id}"`);
@@ -1257,6 +1446,7 @@ function main() {
   for (const track of spec.tracks.filter((t) => t.kind === "text" && !t.hidden)) {
     for (const clip of track.clips) {
       if (clip.style.animation === "typewriter") continue;
+      if (isParityAnimation(clip.style.animation)) continue; // V4: parity đi ASS, không PNG SR
       if (Array.isArray(clip.karaoke) && clip.karaoke.length > 0) continue; // R4: karaoke đi ASS, không PNG SR
       if (!(clip.animations && (clip.animations.scale || clip.animations.rotation))) continue;
       const fontFile = fontFiles.get(clip.id);
@@ -1410,7 +1600,7 @@ function main() {
   }
 
   // 6. Dựng filter graph
-  const { filterComplex, vout, aout, assFile, karaokeAssFile } = buildFilterGraph(spec, {
+  const { filterComplex, vout, aout, assFile, karaokeAssFile, parityAssFile } = buildFilterGraph(spec, {
     W: meta.width, H: meta.height, fps: meta.fps, D,
     mediaIndex, absOf, transitions: v.transitions, fontFiles,
     assetsDir: path.join(__dirname, "..", "..", "..", "assets"),
@@ -1529,6 +1719,11 @@ function main() {
     try { fs.unlinkSync(karaokeAssFile); } catch { /* bỏ qua */ }
   } else if (karaokeAssFile) {
     console.error(`   (giữ file ASS karaoke tạm để debug: ${karaokeAssFile})`);
+  }
+  if (parityAssFile && r.status === 0) {
+    try { fs.unlinkSync(parityAssFile); } catch { /* bỏ qua */ }
+  } else if (parityAssFile) {
+    console.error(`   (giữ file ASS parity tạm để debug: ${parityAssFile})`);
   }
   // Dọn PNG text SR tạm (giữ lại khi lỗi để debug, giống ASS).
   if (r.status === 0) {

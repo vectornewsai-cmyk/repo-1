@@ -49,6 +49,17 @@ export * from "./audio.js";
 export * from "./markers.js";
 // R1-055: frame-accurate timebase (snap theo frame, timecode).
 export * from "./timebase.js";
+// Phase 9 N1: nested sequence / compound clip (spec thuần, xem nested.ts).
+export * from "./nested.js";
+// Phase 9 R2: adjustment layer cấp project (spec thuần, xem adjustment.ts).
+// Mirror JS của module này là output tsc (packages/video-spec/src/
+// adjustment.js) + bản CJS của render worker (server/render/src/
+// adjustment.js) — không copy logic sang file khác.
+export * from "./adjustment.js";
+// Phase 9 đợt 8 S1: slow-mo mượt / nội suy frame / motion blur (spec thuần,
+// xem motion.ts). Mirror JS là output tsc (packages/video-spec/src/
+// motion.js); render worker (luồng S2) mirror validate sang validate.js.
+export * from "./motion.js";
 // Lưu ý: "./transitions" export `Transition` (type mở rộng) — dùng thay cho
 // định nghĩa cũ. "./keyframes", "./chroma" và "./lut" gắn `animations?` /
 // `chromaKey?` / `filter?` vào VideoClip qua module augmentation.
@@ -65,6 +76,9 @@ import type { ClipEnhance } from "./enhance.js";
 import type { SourceAudioMode, AudioEffects, FadeCurve } from "./audio.js";
 import type { Marker } from "./markers.js";
 import type { SpeedCurve } from "./speedcurve.js";
+import type { NestedClip } from "./nested.js";
+import type { AdjustmentLayer } from "./adjustment.js";
+import type { ClipMotion } from "./motion.js";
 
 export interface VideoMeta {
   /** Tên dự án */
@@ -161,6 +175,15 @@ export interface VideoClip {
    * Chỉ dùng cho video clip (validator báo lỗi ở track khác).
    */
   enhance?: ClipEnhance;
+  /**
+   * Phase 9 đợt 8 S1 — Slow-mo mượt / nội suy frame / motion blur — xem
+   * ClipMotion (motion.ts). Chỉ dùng cho video clip (validateMotion
+   * throw khi gắn vào kind khác). CHƯA nối render/preview ở đợt S1:
+   * render.js/preview hiện BỎ QUA field này cho đến khi S2/S5 wiring
+   * xong — field chỉ mới ở tầng spec + validate + round-trip JSON.
+   * Vắng mặt = hành vi cũ (project cũ không có motion vẫn hợp lệ).
+   */
+  motion?: ClipMotion;
   /**
    * Cách xử lý audio trong file video nguồn — xem SourceAudioMode.
    * "inherit" (mặc định): giữ tiếng gốc; "mute": bỏ tiếng; "detach": chưa hỗ trợ.
@@ -287,7 +310,10 @@ export interface TextClip {
   karaoke?: KaraokeWord[];
 }
 
-export type Clip = VideoClip | AudioClip | TextClip | StickerClip | ImageClip;
+
+// Phase 9 N1: NestedClip là một Clip — project cũ không có kind "nested"
+// nên union mở rộng này không làm đổi hành vi load project cũ.
+export type Clip = VideoClip | AudioClip | TextClip | StickerClip | ImageClip | NestedClip;
 
 // Lưu ý: `Transition` được import từ "./transitions" ở đầu file
 // và re-export để các consumer (mcp-server, v.v.) dùng được.
@@ -355,6 +381,20 @@ export interface VideoSpec {
    * onExportFinish chạy quanh lần render. Xem docs/PLUGINS.md.
    */
   plugins?: PluginRef[];
+  /**
+   * Adjustment layer cấp project (Phase 9 R2, optional — xem adjustment.ts
+   * và server/render/src/ADJUSTMENT_LIMITS.md). Validate bằng
+   * validateAdjustmentLayers(); project cũ không có field này vẫn hợp lệ.
+   * Ngữ nghĩa đã chốt: layer áp cho MỌI clip video mà nó giao nhau về
+   * thời gian, bất kể track; thứ tự mảng = thứ tự áp (layer sau ở ngoài
+   * cùng). Layer KHÔNG làm đổi projectDuration (không phải media).
+   * CHƯA nối render/preview: render.js và preview hiện BỎ QUA field này
+   * cho đến khi wiring xong (render.js thuộc luồng R1) — field chỉ mới ở
+   * tầng spec + validate + round-trip JSON.
+   * Layer nằm trong subSpec của nested clip cũng type-hợp lệ nhưng ngữ
+   * nghĩa áp dụng qua flatten chưa được định nghĩa — chưa dùng.
+   */
+  adjustmentLayers?: AdjustmentLayer[];
 }
 
 /** Kiểm tra nhanh spec có hợp lệ tối thiểu không (validate đầy đủ bằng zod ở render worker). */
