@@ -7,7 +7,8 @@
  *   → (xfade merge) → OPACITY → KEYFRAMES (scale/rotation qua scale eval=frame +
  *   rotate, x/y qua overlay)
  * Composite: video → image → sticker → text.
- * Text: keyframes (animations) > textfx animation > fadeUp > none; typewriter riêng.
+ * Text: keyframes (animations) > textfx animation > fadeUp > none; typewriter
+ * và parity ASS (tiltIn/skewIn/slideReveal/curtainIn) riêng, thắng keyframes.
  *
  * Xem PREVIEW_LIMITS.md để biết những gì chỉ là xấp xỉ.
  */
@@ -21,6 +22,7 @@ import {
   speedAt,
   type ChromaKey,
   type ClipMask,
+  type ClipMotion,
   type ColorAdjust,
   type ImageClip,
   type LutId,
@@ -32,7 +34,6 @@ import {
   type VideoEffect,
   type VideoEffectType,
 } from "@repo-1/video-spec";
-
 /** Thứ tự áp dụng transform — PHẢI khớp render.js (xem test thứ tự). */
 export const PREVIEW_TRANSFORM_ORDER = [
   "speed",
@@ -364,7 +365,10 @@ export interface EffectsVisual {
   css: string;
   /** intensity 0..1 của vignette (vẽ riêng bằng radial gradient), null nếu không có. */
   vignette: number | null;
-  /** Effect không thể hiện được trong preview (ghi rõ cho user). */
+  /** Effect không thể hiện được trong preview (ghi rõ cho user).
+   * Từ V2 (Phase 9 đợt 10): 8 type canvas (sharpen/noise/glitch/rgb-shift/
+   * shake/pixelate/mirror/edgedetect) không còn vào đây — chúng được vẽ
+   * thật bằng effectCanvas, chỉ type lạ chưa biết mới bị báo. */
   skipped: VideoEffectType[];
 }
 
@@ -406,10 +410,10 @@ export function effectsVisual(effects?: VideoEffect[]): EffectsVisual {
       case "pixelate":
       case "mirror":
       case "edgedetect":
-        // sharpen: không có CSS tương đương; noise: nhiễu thời gian, vẽ từng frame sẽ sai
-        // Q4: glitch/rgb-shift/shake/pixelate/mirror/edgedetect cũng không có CSS filter
-        // tương đương (lệch kênh, crop động, neighbor, hflip, biên) → preview bỏ qua
-        if (!skipped.includes(e.type)) skipped.push(e.type);
+        // V2 (Phase 9 đợt 10): 8 type này KHÔNG còn vào `skipped` — chúng
+        // không có CSS filter tương đương nhưng được vẽ thật bằng pixel
+        // shader ở bước effects của preview.tsx qua lib/effectCanvas.ts
+        // (canvasEffectOps + ImageData). Không đóng góp gì vào chuỗi CSS.
         break;
       case "invert":
         // render: lutrgb nội suy val → 255-val; CSS invert() cùng ngữ nghĩa
@@ -434,6 +438,281 @@ export function effectsVisual(effects?: VideoEffect[]): EffectsVisual {
     }
   }
   return { css: parts.join(" "), vignette, skipped };
+}
+
+// ---------------------------------------------------------------------------
+// Motion: slow-mo nội suy frame / motion blur — S4 (Phase 9 đợt 8, gap E8).
+// Shape CHÍNH THỨC của S1 (packages/video-spec/src/motion.ts, KHÔNG dùng
+// shape tạm nào khác — xem MOTION_PREVIEW_LIMITS.md §0):
+//   VideoClip.motion?: ClipMotion = {
+//     interpolation?: "none" | "minterpolate";  // vắng = "none"
+//     targetFps?: number;                       // 1..120, bắt buộc khi minterpolate
+//     miMode?: "mci" | "blend";                // vắng = "mci"
+//     motionBlur?: MotionBlurParams;            // { frames?: 2..8, weights?: number[] }
+//   }
+// Preview KHÔNG chạy minterpolate thật trên canvas: nội suy chỉ hiện badge,
+// blur chỉ là ghosting xấp xỉ (không phải tmix của render). Đọc bằng
+// duck-typing + khoan dung có giới hạn (xem normalizeMotion) nên clip
+// chưa có motion, motion rỗng, hoặc shape tạm cũ (motionBlur boolean)
+// vẫn chạy bình thường, không crash — nhưng preview KHÔNG tự "sửa" spec
+// sai thành đúng (validate là việc của tầng spec/render).
+// ---------------------------------------------------------------------------
+
+/** Motion đã chuẩn hoá cho preview (mọi field lạ/rác đều về mặc định an toàn). */
+export interface MotionVisual {
+  /** "minterpolate" khi render sẽ nội suy, null = không nội suy. */
+  interpolation: string | null;
+  /** Fps đích render (nếu hợp lệ), null = không đặt. */
+  targetFps: number | null;
+  /** miMode render ("mci"/"blend"), null = mặc định/không đặt. */
+  miMode: string | null;
+  /** true = bật ghosting xấp xỉ ở preview (đường vẽ thường, xem LIMITS). */
+  motionBlur: boolean;
+  /** true khi có nội suy hoặc motion blur. */
+  hasMotion: boolean;
+  /**
+   * M2 (Phase 9 đợt 9): đặc tả ghost suy ra từ motionBlur.frames/weights
+   * thật (xem resolveMotionBlurGhost). null = không bật blur. Field
+   * optional để code cũ dựng MotionVisual literal (vd test badge) không
+   * vỡ type; normalizeMotion luôn đặt field này (null hoặc spec đầy đủ).
+   */
+  blurGhost?: MotionBlurGhostSpec | null;
+}
+
+/**
+ * Alpha tối đa của 1 bóng ghost (bóng có trọng số lớn nhất). 0.35: đủ
+ * thấy vệt mờ khi vật chuyển động nhanh, không át frame hiện tại khi vật
+ * đứng yên (frame trước ≈ frame hiện tại). Các bóng khác tỉ lệ theo
+ * weights (xem resolveMotionBlurGhost) — đây là "trail" xấp xỉ, KHÔNG
+ * phải trung bình có trọng số của tmix (frame hiện tại vẫn vẽ đủ alpha,
+ * không nhân với weights của nó).
+ *
+ * ĐỢT 12 (Phase 9 đợt 12, luồng T1): hằng số này và field ghostAlphas
+ * bên dưới chỉ còn là MÔ TẢ trail cũ, KHÔNG dùng để composite nữa —
+ * preview từ đợt 12 vẽ blend theo weights qua motionBlurBlendPlan
+ * (xem GHOSTBLEND_T1_LIMITS.md). Giữ nguyên giá trị để test mô tả cũ
+ * và code đọc spec cũ không vỡ.
+ */
+export const MOTION_BLUR_GHOST_ALPHA = 0.35;
+
+/**
+ * Công tắc tắt ghosting motion blur ở preview nếu gây giật (đặt false
+ * thì preview bỏ qua blur hoàn toàn, badge vẫn hiện để báo render khác).
+ */
+export const MOTION_BLUR_PREVIEW_ENABLED = true;
+
+/**
+ * Đặc tả ghost cho 1 clip có motionBlur — suy ra từ frames/weights thật
+ * của spec (mirror resolve mặc định của S1 trong motion.ts, nhưng khoan
+ * dung: rác → fallback, không throw — validate là việc của tầng spec/render).
+ *
+ * Thứ tự weights theo tmix: weights[0] = frame CŨ NHẤT trong cửa sổ,
+ * weights[frames-1] = frame HIỆN TẠI. Ghost chỉ gồm các frame TRƯỚC
+ * (frame hiện tại vẽ riêng, đủ alpha) nên ghostAlphas dài frames-1,
+ * xếp từ bóng cũ nhất → mới nhất, tương ứng weights[0..frames-2].
+ */
+export interface MotionBlurGhostSpec {
+  /** Số frame trong cửa sổ tmix (2..8 sau resolve). */
+  frames: number;
+  /** Trọng số đã chuẩn hoá (tổng = 1), dài frames. */
+  weights: number[];
+  /**
+   * Alpha vẽ mỗi bóng, xếp cũ nhất → mới nhất, dài frames-1.
+   * alpha[i] = MOTION_BLUR_GHOST_ALPHA * weights[i] / max(weights[0..frames-2])
+   * nên tỉ lệ giữa các bóng đúng bằng tỉ lệ weights, và bóng mạnh nhất
+   * luôn = 0.35 (không phụ thuộc frames). Tổng alpha các bóng KHÔNG
+   * chuẩn hoá về 1 — trail này cố ý sáng hơn tmix để nhìn thấy vệt.
+   *
+   * ĐỢT 12: field này chỉ còn mô tả trail cũ (xem MOTION_BLUR_GHOST_ALPHA).
+   * Đường vẽ preview từ đợt 12 KHÔNG đọc field này mà composite theo
+   * weights qua motionBlurBlendPlan — vì vẽ trail dưới frame hiện tại
+   * đục thì ghost bị che kín hoàn toàn (xem GHOSTBLEND_T1_LIMITS.md §1).
+   */
+  ghostAlphas: number[];
+}
+
+/**
+ * Một frame trong phép blend tmix của preview (đợt 12, luồng T1).
+ * weight: trọng số đã chuẩn hoá của frame đó TRÊN CÁC FRAME CÓ MẶT
+ * (tổng = 1); blendAlpha: alpha source-over khi vẽ frame đó lên lớp
+ * blend (xem motionBlurBlendPlan để biết vì sao alpha này cho đúng tmix).
+ */
+export interface MotionBlurBlendFrame {
+  /** Trọng số đã chuẩn hoá (tổng = 1 trên các frame có mặt). */
+  weight: number;
+  /** Alpha source-over khi vẽ frame này lên lớp blend (frame đầu = 1). */
+  blendAlpha: number;
+}
+
+/**
+ * Kế hoạch blend tmix cho preview từ weights thật + số bóng có snapshot.
+ * Không throw, không cần DOM — test/probe được bằng Node thuần.
+ *
+ * Ngữ nghĩa ĐÚNG (quyết định đợt 12): render tmix cho ra trung bình có
+ * trọng số Σ wᵢ·Fᵢ (w đã chuẩn hoá, tổng = 1, w[0] = frame cũ nhất,
+ * w cuối = frame hiện tại). Preview muốn khớp nguyên lý đó thì KHÔNG
+ * được vẽ ghost dưới frame đục (hệ số ghost = 0), mà phải composite
+ * TẤT CẢ frame (ghost + hiện tại) vào 1 lớp rồi vẽ lớp đó 1 lần.
+ *
+ * Cách composite bằng source-over duy nhất (không cần filter lạ):
+ * vẽ các frame theo thứ tự cũ nhất → hiện tại lên lớp trong suốt, với
+ * alpha chạy (running average):
+ *   blendAlpha[0] = 1,
+ *   blendAlpha[i] = wᵢ / (w₀ + … + wᵢ)   (i ≥ 1).
+ * Chứng minh bằng quy nạp: sau bước i, lớp = Σ_{j≤i} wⱼ·Fⱼ / Σ_{j≤i} wⱼ
+ * (bước i: a·Fᵢ + (1−a)·lớp cũ với a = wᵢ/Σ_{j≤i} wⱼ cho đúng tử số đó).
+ * Bước cuối Σ = 1 nên lớp = Σ wᵢ·Fᵢ đúng bằng tmix — với frame đục
+ * (video đã letterbox/pad). Với frame có vùng trong suốt (unit đã mask),
+ * công thức đúng chính xác tại vùng frame đầu đục; vùng frame đầu
+ * trong suốt thì kết quả là trung bình trên các frame phủ pixel đó
+ * (vẫn lộ ghost, vẫn đúng tỉ lệ weights giữa các frame phủ) — xem
+ * GHOSTBLEND_T1_LIMITS.md §4.
+ *
+ * Cửa sổ thiếu bóng (vài frame đầu, ring chưa đầy): chỉ lấy các bóng
+ * MỚI NHẤT có snapshot + frame hiện tại, rồi CHUẨN HOÁ LẠI weights của
+ * cửa sổ đó về tổng 1. Tỉ lệ giữa các frame có mặt giữ nguyên, độ sáng
+ * không tối đi vì thiếu bóng; frame hiện tại luôn có mặt với đúng tỉ lệ
+ * tương đối của nó trong cửa sổ rút gọn.
+ *
+ * - weights rỗng/dài < 2 → chỉ frame hiện tại [{ weight: 1, blendAlpha: 1 }]
+ *   (caller vẽ trực tiếp, không qua lớp blend — frame không ghost không đổi).
+ * - ghostCount ≤ 0 → chỉ frame hiện tại (như trên).
+ * - ghostCount > weights.length − 1 → kẹp về weights.length − 1.
+ * Thứ tự trả về: bóng cũ nhất → mới nhất → frame hiện tại (độ dài
+ * ghostCount + 1 sau kẹp).
+ */
+export function motionBlurBlendPlan(
+  weights: readonly number[],
+  ghostCount: number,
+): MotionBlurBlendFrame[] {
+  const currentOnly: MotionBlurBlendFrame[] = [{ weight: 1, blendAlpha: 1 }];
+  if (weights.length < 2 || ghostCount <= 0) return currentOnly;
+  const ghosts = Math.min(Math.floor(ghostCount), weights.length - 1);
+  const window = weights.slice(weights.length - 1 - ghosts);
+  const sum = window.reduce((a, b) => a + b, 0);
+  if (!(sum > 0) || !Number.isFinite(sum)) return currentOnly;
+  const normalized = window.map((w) => w / sum);
+  let prefix = 0;
+  return normalized.map((w, i) => {
+    prefix += w;
+    return { weight: w, blendAlpha: i === 0 ? 1 : w / prefix };
+  });
+}
+
+/**
+ * Resolve motionBlur (thô, duck-typed) thành đặc tả ghost. Không throw.
+ * - null/undefined/false/0/chuỗi/số không hợp lệ → null (không blur).
+ * - boolean true hoặc số hữu hạn > 0 (shape tạm cũ): 1 bóng alpha 0.35
+ *   (tương đương frames=2 weights đều) — giữ đúng hành vi ghost cũ cho
+ *   project lưu bằng shape tạm, không suy diễn frames/weights từ số đó.
+ * - object { frames?, weights? }:
+ *   - frames: nguyên 2..8 thì dùng; không hợp lệ → weights.length nếu
+ *     weights dùng được, còn lại mặc định 3 (đúng resolve của S1).
+ *   - weights: chỉ dùng khi là mảng dài 2..8, mọi phần tử hữu hạn > 0
+ *     (đúng điều kiện validate S1); nếu dài khác frames thì BỎ weights,
+ *     chia đều (preview không tự cắt/đệm weights cho khớp frames).
+ *   - weights không dùng được (rác, tổng <= 0, có phần tử <= 0/không
+ *     hữu hạn) → chia đều theo frames.
+ */
+export function resolveMotionBlurGhost(raw: unknown): MotionBlurGhostSpec | null {
+  if (raw === null || raw === undefined || raw === false) return null;
+  if (raw === true) return { frames: 2, weights: [0.5, 0.5], ghostAlphas: [MOTION_BLUR_GHOST_ALPHA] };
+  if (typeof raw === "number") {
+    if (!Number.isFinite(raw) || raw <= 0) return null;
+    return { frames: 2, weights: [0.5, 0.5], ghostAlphas: [MOTION_BLUR_GHOST_ALPHA] };
+  }
+  if (typeof raw !== "object") return null;
+  const rec = raw as { frames?: unknown; weights?: unknown };
+  const rawFrames = rec.frames;
+  const validFrames =
+    typeof rawFrames === "number" && Number.isInteger(rawFrames) && rawFrames >= 2 && rawFrames <= 8
+      ? rawFrames
+      : null;
+  const rawWeights = rec.weights;
+  const usableWeights =
+    Array.isArray(rawWeights) &&
+    rawWeights.length >= 2 &&
+    rawWeights.length <= 8 &&
+    rawWeights.every((w) => typeof w === "number" && Number.isFinite(w) && w > 0)
+      ? (rawWeights as number[])
+      : null;
+  const frames = validFrames ?? usableWeights?.length ?? 3;
+  let weights: number[];
+  if (usableWeights && usableWeights.length === frames) {
+    const sum = usableWeights.reduce((a, b) => a + b, 0);
+    weights = sum > 0 ? usableWeights.map((w) => w / sum) : usableWeights.map(() => 1 / frames);
+  } else {
+    weights = Array.from({ length: frames }, () => 1 / frames);
+  }
+  const ghostWeights = weights.slice(0, frames - 1);
+  const maxW = Math.max(...ghostWeights);
+  const ghostAlphas = ghostWeights.map((w) => MOTION_BLUR_GHOST_ALPHA * (maxW > 0 ? w / maxW : 0));
+  return { frames, weights, ghostAlphas };
+}
+
+/**
+ * Chuẩn hoá clip.motion (duck-typed, khoan dung có giới hạn): thiếu/rác →
+ * mặc định, không throw. Quy tắc theo đúng shape S1:
+ * - interpolation: CHỈ "minterpolate" mới tính là nội suy. "none"/vắng/
+ *   giá trị lạ (kể cả "dup" của shape tạm cũ — S1 đã loại "dup" khỏi spec
+ *   vì nó không nội suy frame nào) đều → null: preview không claim nội
+ *   suy khi render thực ra không nội suy.
+ * - targetFps: số hữu hạn > 0 thì giữ (preview chỉ hiển thị, không
+ *   validate khoảng 1..120 — việc đó của tầng spec/render).
+ * - miMode: "mci"/"blend" thì giữ, còn lại → null.
+ * - motionBlur: S1 là OBJECT { frames?, weights? } — có object là bật.
+ *   Khoan dung thêm shape tạm cũ: true hoặc số hữu hạn > 0 cũng tính là
+ *   bật (để project lưu bằng shape tạm S3 vẫn hiện badge/ghost); từ M2
+ *   ghost SUY RA từ frames/weights thật qua resolveMotionBlurGhost (số
+ *   bóng = frames-1, alpha mỗi bóng tỉ lệ với weights), còn shape tạm cũ
+ *   (không có frames/weights) vẫn về 1 bóng alpha 0.35 như trước — không
+ *   bịa frames/weights từ đó.
+ * - blurGhost: đặc tả ghost (null khi không blur), để preview.tsx vẽ mà
+ *   không cần tự resolve lại từ motion thô.
+ */
+export function normalizeMotion(clip: { motion?: unknown }): MotionVisual {
+  const none: MotionVisual = {
+    interpolation: null,
+    targetFps: null,
+    miMode: null,
+    motionBlur: false,
+    hasMotion: false,
+    blurGhost: null,
+  };
+  const m = (clip as { motion?: unknown } | null | undefined)?.motion;
+  if (!m || typeof m !== "object") return none;
+  const rec = m as unknown as Partial<ClipMotion> & Record<string, unknown>;
+  const interpolation = rec.interpolation === "minterpolate" ? "minterpolate" : null;
+  const rawFps = rec.targetFps;
+  const targetFps =
+    typeof rawFps === "number" && Number.isFinite(rawFps) && rawFps > 0
+      ? rawFps
+      : null;
+  const miMode = rec.miMode === "mci" || rec.miMode === "blend" ? rec.miMode : null;
+  const rawBlur = rec.motionBlur;
+  const blurGhost = resolveMotionBlurGhost(rawBlur);
+  const motionBlur = blurGhost !== null;
+  return {
+    interpolation,
+    targetFps,
+    miMode,
+    motionBlur,
+    hasMotion: interpolation !== null || motionBlur,
+    blurGhost,
+  };
+}
+
+/**
+ * Text badge motion cho clip đang xem: "NỘI SUY" khi render sẽ nội suy
+ * frame mới (preview KHÔNG nội suy — giữ fps project), "BLUR≈" khi có
+ * motion blur (preview chỉ ghosting xấp xỉ, không phải tmix). "" = không
+ * có motion, badge ẩn. Dùng cho badge DOM ở preview.tsx (cùng mẫu PROXY/LUT).
+ */
+export function motionBadgeText(m: MotionVisual): string {
+  const parts: string[] = [];
+  if (m.interpolation) parts.push("NỘI SUY");
+  if (m.motionBlur) parts.push("BLUR≈");
+  return parts.join(" • ");
 }
 
 // ---------------------------------------------------------------------------
@@ -482,12 +761,28 @@ export interface VideoClipVisual {
   cssFilter: string;
   /** Id LUT của clip (nếu có) — để preview WebGL biết cần áp LUT thật. */
   lut: string | null;
+  /**
+   * R4 (Phase 9): chuỗi LUT đầy đủ theo thứ tự áp, do `nestedPreview`
+   * đặt lên clip đã phẳng (filter.lutChain, preview-internal, không thuộc
+   * spec). null = không có chuỗi (clip thường, hành vi cũ: 1 LUT).
+   * Khi có chuỗi, `lut` = phần tử cuối chuỗi; đường vẽ áp lần lượt cả
+   * chuỗi (WebGL từng LUT, fallback CSS đã nối trong `cssFilter`).
+   */
+  lutChain: string[] | null;
   /** CSS filter đã gộp KHÔNG có LUT (color + effects) — dùng khi WebGL đã áp
    * LUT thật, tránh áp LUT 2 lần (R5 Phase 9). */
   cssFilterNoLut: string;
   chroma: ChromaParams | null;
   vignette: number | null;
   skippedEffects: VideoEffectType[];
+  /**
+   * S4 (Phase 9 đợt 8): motion đã chuẩn hoá của clip — đọc trực tiếp từ
+   * clip.motion (shape S1, xem motion.ts). buildPreviewSpec/flatten giữ
+   * nguyên field qua spread nên motion không bị rơi khi làm phẳng nested
+   * (xem test previewEngine.test.ts); clip không có motion thì
+   * motionBlur=false, interpolation=null, hành vi cũ không đổi.
+   */
+  motion: MotionVisual;
 }
 
 /** Clamp scale giống hệt render (keyframes.js SCALE_MIN/SCALE_MAX). */
@@ -520,7 +815,20 @@ export function videoClipVisual(
     ? memoInterpolateKeyframes(a.y.keyframes, localT) * (frameH - unitH)
     : 0;
   const colorCss = colorAdjustCssFilter(clip.filter?.color);
-  const lutCss = clip.filter?.lut ? (lutCssFilter(clip.filter.lut) ?? "") : "";
+  // R4: chuỗi LUT preview-internal (filter.lutChain, do nestedPreview đặt).
+  // Không có chuỗi → hành vi cũ (1 LUT từ filter.lut). Có chuỗi → CSS nối
+  // từng xấp xỉ theo đúng thứ tự áp; id không có xấp xỉ CSS (vd LUT user)
+  // cho mắt xích rỗng ở fallback CSS — WebGL mới vẽ đủ chuỗi (xem LIMITS).
+  const rawChain = (clip.filter as { lutChain?: unknown } | undefined)?.lutChain;
+  const lutChain: string[] = Array.isArray(rawChain)
+    ? rawChain.filter((x): x is string => typeof x === "string" && x.length > 0)
+    : [];
+  const lutCss =
+    lutChain.length > 0
+      ? lutChain.map((id) => lutCssFilter(id) ?? "").filter(Boolean).join(" ")
+      : clip.filter?.lut
+        ? (lutCssFilter(clip.filter.lut) ?? "")
+        : "";
   const fx = effectsVisual(clip.effects);
   const cssFilter = [colorCss, lutCss, fx.css].filter(Boolean).join(" ");
   // R5 (Phase 9): cssFilterNoLut = cùng chuỗi nhưng không có LUT — dùng khi
@@ -543,11 +851,13 @@ export function videoClipVisual(
       ? memoInterpolateKeyframes(a.rotation.keyframes, localT)
       : 0,
     cssFilter,
-    lut: clip.filter?.lut ?? null,
+    lut: lutChain.length > 0 ? lutChain[lutChain.length - 1] : (clip.filter?.lut ?? null),
+    lutChain: lutChain.length > 0 ? lutChain : null,
     cssFilterNoLut,
     chroma: clip.chromaKey ? normalizeChroma(clip.chromaKey) : null,
     vignette: fx.vignette,
     skippedEffects: fx.skipped,
+    motion: normalizeMotion(clip),
   };
 }
 
@@ -890,6 +1200,24 @@ export interface TextMeasure {
   textH: number;
 }
 
+/**
+ * Phase 9 đợt 10 V4 (gap C5): text animation rotate/skew/clip qua ASS
+ * (mirror server/render/src/textAnimParity.js). KHÔNG thuộc nhóm drawtext.
+ */
+export const PARITY_TEXT_ANIMATIONS = [
+  "tiltIn",
+  "skewIn",
+  "slideReveal",
+  "curtainIn",
+] as const;
+
+export function isParityTextAnimation(v: unknown): boolean {
+  return (
+    typeof v === "string" &&
+    (PARITY_TEXT_ANIMATIONS as readonly string[]).includes(v)
+  );
+}
+
 export interface TextClipVisual {
   /** Tâm chữ, px trong tọa độ project. */
   cx: number;
@@ -897,6 +1225,18 @@ export interface TextClipVisual {
   alpha: number;
   /** typewriter: số ký tự hiện ra; null = hiện toàn bộ text. */
   revealChars: number | null;
+  /**
+   * V4: góc nghiêng skewX, độ (chỉ parity skewIn; undefined = không nghiêng).
+   * Canvas áp bằng ctx.transform(1, 0, tan(skew), 1, 0, 0) quanh tâm chữ.
+   */
+  skewXDeg?: number;
+  /**
+   * V4: hình chữ nhật cắt cho clip-reveal parity (slideReveal/curtainIn);
+   * null/undefined = không cắt. Đợt 11 P4: cắt theo HỘP CHỮ (đo bằng
+   * canvas của preview), không quét khung hình nữa — mirror hành vi
+   * \clip hộp chữ của render (xem LIMITS đợt 11 về lệch đo canvas-vs-libass).
+   */
+  clipRect?: { x: number; y: number; w: number; h: number } | null;
   /**
    * P1 (Phase 7): true khi clip đi nhánh PNG SR của render (có keyframes
    * scale/rotation, không phải typewriter). Khi đó drawTextClip phải áp
@@ -995,6 +1335,16 @@ export function textSrPlacement(
  *  - blink:    alpha = lt%1<0.5 ? 1 : 0.15
  *  - shake:    x = xt+10*sin(lt*40)*max(0,1-lt/0.5)
  *  - fadeInOut: alpha = min(p(0.5), 1-q(0.5))
+ * V4 (parity ASS, mirror textAnimParity.js — vị trí theo TÂM, khác drawtext):
+ *  - tiltIn: rotation = -12*(1-p(0.7)), cy += 20*(1-p(0.7)), alpha = p(0.7)
+ *  - skewIn: fax nội suy tuyến tính -0.466→0.1405 (0.36s)→0 (0.6s),
+ *    skewXDeg = atan(fax), cx -= 30*(1-clamp(t/0.36)), alpha = p(0.6)
+ *  - slideReveal: clipRect quét mép trái→phải HỘP CHỮ (đo bằng canvas,
+ *    m.textW/textH) trong 1.0s — render quét hộp đo bằng PIL×0.84 nên
+ *    tọa độ tuyệt đối lệch nhau, nhưng hành vi (quét trọn hộp, đủ 1.0s)
+ *    thì khớp; xem LIMITS đợt 11.
+ *  - curtainIn: clipRect mở từ tâm HỘP CHỮ ra hai mép hộp + mờ vào
+ *    trong 0.8s (cùng lưu ý đo lường như slideReveal).
  * với p(d) = clamp(localT / d).
  */
 export function textClipVisual(
@@ -1012,9 +1362,11 @@ export function textClipVisual(
   // 0. P1 (Phase 7): scale/rotation keyframes — render đi nhánh PNG SR
   //    (bỏ qua textfx animation, chỉ còn opacity keyframes + x/y overlay).
   //    Typewriter ngoại lệ: render dùng ASS, SR bị bỏ qua (validator cảnh
-  //    báo) nên typewriter KHÔNG vào nhánh này.
+  //    báo) nên typewriter KHÔNG vào nhánh này. V4: clip parity cũng vẽ
+  //    bằng ASS nên cũng KHÔNG vào nhánh SR (đi nhánh parity 0b bên dưới).
   const a = clip.animations;
-  if (a && (a.scale || a.rotation) && st.animation !== "typewriter") {
+  if (a && (a.scale || a.rotation) && st.animation !== "typewriter" &&
+      !isParityTextAnimation(st.animation)) {
     const pl = textSrPlacement(clip, localT, frameW, frameH, m);
     const srAlpha = a.opacity
       ? memoInterpolateKeyframes(a.opacity.keyframes, localT)
@@ -1030,6 +1382,76 @@ export function textClipVisual(
       bboxW: pl.bboxW,
       bboxH: pl.bboxH,
     };
+  }
+
+  // 0b. V4 (Phase 9 đợt 10): parity ASS — mirror textAnimParity.js.
+  //     Render bỏ qua clip parity ở nhánh drawtext + PNG SR nên ASS thắng
+  //     cả keyframes x/y/opacity (giống typewriter ở render; preview đặt
+  //     nhánh này TRƯỚC keyframes để khớp render). Vị trí dùng ngữ nghĩa
+  //     TÂM (Alignment 5 của ASS, \pos = tâm) — khác drawtext (mép trái
+  //     (W-textW)*x) nhưng khớp typewriter trong cùng file này.
+  //     - tiltIn: xoay -12°→0, trồi +20px→0, mờ \fad(700,0) tuyến tính.
+  //     - skewIn: fax tan(-25°)=-0.466 → tan(8°)=0.1405 (0.36s) → 0 (0.6s);
+  //       trượt -30px→0 trong 0.36s; mờ \fad(600,0) tuyến tính.
+  //     - slideReveal: \clip quét mép trái→phải HỘP CHỮ trong 1.0s
+  //       (đợt 11 P4; preview dùng hộp đo bằng canvas của chính nó).
+  //     - curtainIn: \clip mở từ tâm hộp chữ ra hai mép + mờ vào, 0.8s.
+  //     Xấp xỉ còn lại (xem LIMITS đợt 11): \fad tuyến tính thay cho CSS
+  //     ease-out; hộp đo của preview (canvas) rộng hơn hộp của render
+  //     (PIL×0.84) nên tọa độ clip tuyệt đối lệch nhau, hành vi thì khớp.
+  if (isParityTextAnimation(st.animation)) {
+    const cx = frameW * (st.x ?? 0.5);
+    const cy = frameH * (st.y ?? 0.5);
+    const base = {
+      revealChars: null, sr: false, scale: 1, bboxW: null, bboxH: null,
+    } as const;
+    switch (st.animation) {
+      case "tiltIn": {
+        const k = p(0.7);
+        return { ...base, cx, cy: cy + 20 * (1 - k), alpha: k, rotationDeg: -12 * (1 - k) };
+      }
+      case "skewIn": {
+        const t = localT;
+        // ASS \t nội suy TUYẾN TÍNH theo \fax (không phải theo góc):
+        // đoạn 1: fax -0.466 → 0.1405 trong 0.36s; đoạn 2: 0.1405 → 0
+        // trong 0.24s. Đổi fax → độ bằng atan để canvas vẽ đúng.
+        const fax = t < 0.36
+          ? -0.466 + (0.1405 - -0.466) * (t / 0.36)
+          : 0.1405 * (1 - (t - 0.36) / 0.24);
+        const skewDeg = (Math.atan(fax) * 180) / Math.PI;
+        const xOff = -30 * (1 - clamp01(t / 0.36));
+        return { ...base, cx: cx + xOff, cy, alpha: p(0.6), rotationDeg: 0, skewXDeg: skewDeg };
+      }
+      case "slideReveal": {
+        const k = p(1.0);
+        // Đợt 11 P4: quét theo HỘP CHỮ của preview (đo bằng canvas
+        // measureText, m.textW/textH) thay vì khung hình — cùng hành vi
+        // với render (quét trọn hộp trong 1.0s), nhưng hộp tuyệt đối
+        // khác render vài chục px vì canvas đo chữ rộng hơn libass
+        // (xem LIMITS đợt 11: lệch đo canvas-vs-libass có từ trước).
+        const bx0 = Math.max(0, cx - m.textW / 2);
+        const bx1 = Math.min(frameW, cx + m.textW / 2);
+        const by0 = Math.max(0, cy - m.textH / 2);
+        const by1 = Math.min(frameH, cy + m.textH / 2);
+        return {
+          ...base, cx, cy, alpha: 1, rotationDeg: 0,
+          clipRect: { x: bx0, y: by0, w: (bx1 - bx0) * k, h: by1 - by0 },
+        };
+      }
+      case "curtainIn": {
+        const k = p(0.8);
+        const bx0 = Math.max(0, cx - m.textW / 2);
+        const bx1 = Math.min(frameW, cx + m.textW / 2);
+        const by0 = Math.max(0, cy - m.textH / 2);
+        const by1 = Math.min(frameH, cy + m.textH / 2);
+        return {
+          ...base, cx, cy, alpha: k, rotationDeg: 0,
+          clipRect: { x: (bx0 + bx1) / 2 - (bx1 - bx0) * k / 2, y: by0, w: (bx1 - bx0) * k, h: by1 - by0 },
+        };
+      }
+      default:
+        break;
+    }
   }
 
   // 1. Keyframes ưu tiên hơn mọi animation (giống render.js).
@@ -1229,3 +1651,4 @@ export function imageClipFit(
     ? coverFit(mw, mh, W, H)
     : letterboxFit(mw, mh, W, H);
 }
+

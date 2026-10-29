@@ -18,6 +18,8 @@ const { SPEED_MIN, SPEED_MAX } = require("./speed");
 const { validateAnimations, SCALE_MIN, SCALE_MAX } = require("./keyframes");
 const { validateChroma } = require("./chroma");
 const { isTextFxAnimation } = require("./textfx");
+// Phase 9 đợt 10 V4: text animation rotate/skew/clip qua ASS (không phải drawtext).
+const { isParityAnimation } = require("./textAnimParity");
 const { validateVideoFilter } = require("./lut");
 const { validateEffects: validateVideoEffects } = require("./effects");
 const { validateSticker } = require("./sticker");
@@ -29,6 +31,14 @@ const { validateOpacity } = require("./opacity");
 const { validateEnhance } = require("./enhance");
 // Phase 7 P4: mask cho clip video/image.
 const { validateMask } = require("./mask");
+// Phase 9 đợt 8 S2: motion — slow-mo mượt / nội suy frame / motion blur.
+// Phase 9 đợt 11 P6: normalizeLegacyMotion — cứu project cũ weights 0 /
+// thiếu frames trước khi validate (xem motion.js).
+const { validateMotion, normalizeLegacyMotion } = require("./motion");
+// Phase 9 R1: adjustment layer cấp project (mirror render worker của
+// packages/video-spec/src/adjustment.ts; validateAdjustmentLayer trả về
+// danh sách lỗi, không throw — khớp quy ước gom lỗi của file này).
+const { validateAdjustmentLayer } = require("./adjustment");
 // Phase 7 P3: speed ramp — chỉ dùng hàm toán (không dùng chain builder) để
 // tính nguồn tiêu thụ cho cảnh báo out lệch.
 const { sourceConsumed } = require("./speedramp");
@@ -149,6 +159,54 @@ function validateSpec(spec) {
     }
   }
 
+  // ---- adjustmentLayers (tùy chọn — Phase 9 R1, wiring render.js) ----
+  // Shape N3/R2: mảng layer { id, start, duration, filters } cấp project;
+  // ngữ nghĩa (xem ADJUSTMENT_LIMITS.md): layer áp cho MỌI clip video giao
+  // nhau về thời gian, bất kể track; thứ tự mảng = thứ tự áp. Không có
+  // field này = hành vi cũ 100%. Layer sai → lỗi (fail fast), không lặng
+  // lẽ bỏ qua; layer không giao clip video nào chỉ cảnh báo (layer có thể
+  // cố tình để dành cho đoạn timeline chưa có clip).
+  // Đợt 7 U2 — scope tracks (xem U2_LIMITS.md): layer có tracks thì chỉ
+  // xét clip trên track trong scope; chỉ số vượt quá số track → lỗi.
+  // Chỉ số track ở đây là chỉ số trong spec.tracks của spec đang validate
+  // (sau flatten, render.js đã dịch scope lineage về đúng chỉ số này).
+  if (spec.adjustmentLayers !== undefined) {
+    if (!Array.isArray(spec.adjustmentLayers)) {
+      err("adjustmentLayers", "phải là một mảng các layer { id, start, duration, filters }");
+    } else {
+      const seenAdjIds = new Set();
+      spec.adjustmentLayers.forEach((layer, li) => {
+        const lw = `adjustmentLayers[${li}]`;
+        for (const m of validateAdjustmentLayer(layer)) err(lw, m);
+        if (layer && typeof layer.id === "string" && layer.id.length > 0) {
+          if (seenAdjIds.has(layer.id)) err(lw, `trùng id layer: "${layer.id}"`);
+          seenAdjIds.add(layer.id);
+        }
+        if (layer && Array.isArray(layer.tracks) && Array.isArray(spec.tracks)) {
+          for (const ti of layer.tracks) {
+            if (typeof ti === "number" && Number.isInteger(ti) && ti >= 0 &&
+                ti >= spec.tracks.length) {
+              err(lw, `tracks chứa chỉ số ${ti} vượt quá số track của spec (${spec.tracks.length})`);
+            }
+          }
+        }
+      });
+      const layerHitsVideo = (l) => {
+        if (!l || typeof l.start !== "number" || typeof l.duration !== "number") return false;
+        const inScope = (ti) => !Array.isArray(l.tracks) || l.tracks.includes(ti);
+        return spec.tracks && Array.isArray(spec.tracks) &&
+          spec.tracks.some((t, ti) => t && t.kind === "video" && inScope(ti) &&
+            Array.isArray(t.clips) &&
+            t.clips.some((c) => c && typeof c.start === "number" && typeof c.duration === "number" &&
+              c.start < l.start + l.duration && l.start < c.start + c.duration));
+      };
+      if (spec.adjustmentLayers.length > 0 &&
+          !spec.adjustmentLayers.some(layerHitsVideo)) {
+        warn("adjustmentLayers", "không layer nào giao với clip video nào trong scope của nó — render sẽ không đổi gì");
+      }
+    }
+  }
+
   // ---- tracks ----
   if (!Array.isArray(spec.tracks)) {
     err("tracks", "phải là một mảng");
@@ -197,7 +255,8 @@ function validateSpec(spec) {
     const clips = track.clips;
     // Validate từng clip
     for (let ci = 0; ci < clips.length; ci++) {
-      validateClip(track, clips[ci], `${tw}.clips[${ci}]`, err, warn);
+      validateClip(track, clips[ci], `${tw}.clips[${ci}]`, err, warn,
+        spec.meta && spec.meta.fps);
     }
 
     // Clip trên cùng track video/image không được chồng lấn thời gian
@@ -245,6 +304,30 @@ function validateSpec(spec) {
             err(`${tw}.clips "${clip.id}"`, `transition (${T}s) dài hơn cả clip (${clip.duration}s)`);
           if (T > next.duration + EPS)
             err(`${tw}.clips "${next.id}"`, `transition (${T}s) dài hơn cả clip (${next.duration}s)`);
+          // Phase 9 đợt 9 M4 — fail-fast Ở MỨC CẶP transition (không chỉ
+          // per-clip): kiểm tra per-clip trong validateClip chỉ biết
+          // transitionIn/transitionOut của chính clip đó, nên khi chỉ clip
+          // A khai transitionOut thì clip B mang targetFps != project fps
+          // vẫn lọt validator — đo thật 26/10: render vỡ xfade với lỗi
+          // timebase 1/30 vs 1/60 (ffmpeg mã 234), không phải lỗi rõ ràng.
+          // Cả hai đầu xfade bắt buộc cùng fps nên cặp nào dính transition
+          // cũng phải có targetFps === project fps (hoặc bỏ trống).
+          // (Nhánh ramp đã tự ép targetFps === project fps ở
+          // buildMotionPostChain; kiểm tra này bắt thêm nhánh thường.)
+          {
+            const pfps = spec.meta && spec.meta.fps;
+            for (const [who, c] of [["clip", clip], ["clip kề", next]]) {
+              if (c.motion && c.motion.interpolation === "minterpolate" &&
+                  isFiniteNumber(c.motion.targetFps) && isFiniteNumber(pfps) &&
+                  c.motion.targetFps !== pfps) {
+                const other = who === "clip" ? next.id : clip.id;
+                err(`${tw}.clips "${c.id}"`,
+                  `motion.targetFps (${c.motion.targetFps}) khác project fps (${pfps}) ` +
+                  `nhưng clip "${c.id}" dính transition với clip "${other}" ` +
+                  `— xfade yêu cầu 2 input cùng fps (xem MOTION_LIMITS.md, đợt 9 M4)`);
+              }
+            }
+          }
           // Ghi nhận cặp transition — chỉ dùng khi spec hợp lệ (ok === true),
           // nên dù có lỗi ở trên thì entry này cũng không bao giờ được render.
           transitions.push({ trackId: track.id, from: clip.id, to: next.id, duration: T, type: Ttype });
@@ -383,9 +466,14 @@ function validateSpeedKeyframes(v, duration) {
       shapeOk = false;
     }
     if (kf.easing === "bezier") {
+      // Phase 9 đợt 13 C5: chuẩn cubic-bezier của CSS chỉ ràng buộc x1, x2
+      // trong [0, 1]; y1, y2 TỰ DO (y ngoài [0, 1] tạo overshoot). Trước đây
+      // chặn cả 4 số trong [0, 1] nên project có bezier overshoot hợp lệ
+      // vẫn bị validator đánh trượt dù speedramp.js đánh giá đúng.
       const b = kf.bezier;
-      if (!Array.isArray(b) || b.length !== 4 || !b.every((x) => isFiniteNumber(x) && x >= 0 && x <= 1)) {
-        errors.push(`${w}.bezier phải là [x1, y1, x2, y2], mỗi số trong [0, 1] (nhận được: ${JSON.stringify(b)})`);
+      if (!Array.isArray(b) || b.length !== 4 || !b.every((x) => isFiniteNumber(x))
+        || b[0] < 0 || b[0] > 1 || b[2] < 0 || b[2] > 1) {
+        errors.push(`${w}.bezier phải là [x1, y1, x2, y2]: x1, x2 trong [0, 1], y1, y2 tự do (chuẩn cubic-bezier) (nhận được: ${JSON.stringify(b)})`);
         shapeOk = false;
       }
     }
@@ -407,7 +495,7 @@ function validateSpeedKeyframes(v, duration) {
 }
 
 /** Validate một clip theo kind của track. */
-function validateClip(track, clip, where, err, warn) {
+function validateClip(track, clip, where, err, warn, projectFps) {
   if (typeof clip !== "object" || clip === null) {
     err(where, "phải là object"); return;
   }
@@ -424,6 +512,10 @@ function validateClip(track, clip, where, err, warn) {
   // Phase 7 P2: enhance chỉ dùng cho video clip.
   if (track.kind !== "video" && clip.enhance !== undefined)
     err(where, "enhance chỉ dùng cho video clip");
+  // Phase 9 đợt 8 S2: motion chỉ dùng cho video clip (image/text/audio
+  // không qua nhánh clip thường của render.js nên motion sẽ rơi mất).
+  if (track.kind !== "video" && clip.motion !== undefined)
+    err(where, "motion chỉ dùng cho video clip");
 
   if (track.kind === "video" || track.kind === "audio") {
     if (typeof clip.src !== "string" || clip.src.length === 0)
@@ -529,6 +621,23 @@ function validateClip(track, clip, where, err, warn) {
       for (const m of validateMask(clip.mask))
         err(where, m);
     }
+    // Phase 9 đợt 8 S2: motion (interpolation / motion blur). LƯU Ý:
+    // ramp+motion không bị cấm ở đây — nhánh ramp do S3 phụ trách
+    // (buildMotionPostChain); validator chỉ kiểm tra giá trị field.
+    // Riêng targetFps != project fps + transition thì cấm (xfade vỡ).
+    // Phase 9 đợt 11 P6: project cũ weights 0 / thiếu frames được cứu
+    // TRƯỚC khi validate (normalizeLegacyMotion trong motion.js) — đây
+    // là cổng load của render: project cũ qua migrate rồi validate thì
+    // pass, còn validateMotion strict vẫn bắt input thô khi gọi trực
+    // tiếp (xem motion.js self-test + test_motion_p6_legacy.js). Dữ
+    // liệu mới hợp lệ được trả nguyên vẹn nên hành vi không đổi.
+    if (clip.motion !== undefined) {
+      const hasTrans = (clip.transitionIn && clip.transitionIn.type !== "none") ||
+                       (clip.transitionOut && clip.transitionOut.type !== "none");
+      const legacy = normalizeLegacyMotion(clip.motion);
+      for (const m of validateMotion(legacy.motion, { projectFps, hasTransition: hasTrans }))
+        err(where, m);
+    }
     // Phase 7 P2: clip enhancement (deinterlace/stabilize/denoise)
     if (clip.enhance !== undefined) {
       for (const m of validateEnhance(clip.enhance))
@@ -590,8 +699,9 @@ function validateClip(track, clip, where, err, warn) {
     }
     if (track.kind === "text" &&
         (clip.style?.animation === "typewriter" ||
+         isParityAnimation(clip.style?.animation) ||
          (Array.isArray(clip.karaoke) && clip.karaoke.length > 0))) {
-      warn(where, `clip text có track nhưng vẽ bằng ASS (typewriter/karaoke) — ` +
+      warn(where, `clip text có track nhưng vẽ bằng ASS (typewriter/karaoke/parity) — ` +
         `track bị bỏ qua, chữ giữ vị trí tĩnh (xem D3_LIMITS.md)`);
     }
   } else if (clip.track !== undefined && track.kind !== "sticker") {
@@ -656,18 +766,26 @@ function validateClip(track, clip, where, err, warn) {
       if (st[key] !== undefined && (!isFiniteNumber(st[key]) || st[key] < 0 || st[key] > 1))
         err(where, `style.${key} là vị trí tương đối, phải trong khoảng 0..1, nhận được: ${st[key]}`);
     }
-    if (!isTextFxAnimation(st.animation) && st.animation !== "typewriter")
+    if (!isTextFxAnimation(st.animation) && st.animation !== "typewriter" &&
+        !isParityAnimation(st.animation))
       err(where, `style.animation không hỗ trợ: ${JSON.stringify(st.animation)}`);
     // Keyframe animations cho text: x/y/opacity render qua drawtext; scale/
     // rotation nay render qua PNG path (K1, Phase 6) — TRỪ typewriter (ASS
     // không hỗ trợ scale/rotate theo thời gian nên vẫn bị bỏ qua + cảnh báo).
+    // V4: clip parity cũng vẽ bằng ASS nên SR bị bỏ qua (ASS của parity
+    // tự mang góc xoay/nghiêng riêng, không cộng keyframes SR); keyframes
+    // x/y/opacity của clip parity cũng bị bỏ qua (ASS thắng, như typewriter).
     if (clip.animations !== undefined) {
       for (const m of validateAnimations(clip.animations, clip.duration))
         err(where, m);
       if ((clip.animations.scale || clip.animations.rotation) &&
-          clip.style.animation === "typewriter")
-        warn(where, "keyframes scale/rotation của text clip typewriter bị bỏ qua " +
+          (clip.style.animation === "typewriter" || isParityAnimation(clip.style.animation)))
+        warn(where, `keyframes scale/rotation của text clip ${clip.style.animation} bị bỏ qua ` +
           "khi render (ASS không hỗ trợ scale/rotate theo thời gian)");
+      if (isParityAnimation(clip.style.animation) &&
+          Array.isArray(clip.karaoke) && clip.karaoke.length > 0)
+        warn(where, "text clip parity có karaoke — karaoke thắng, animation parity bị bỏ qua " +
+          "khi render (tránh vẽ 1 clip bằng 2 lớp ASS)");
       if ((clip.animations.scale || clip.animations.rotation) &&
           Array.isArray(clip.karaoke) && clip.karaoke.length > 0)
         warn(where, "keyframes scale/rotation của text clip karaoke bị bỏ qua " +
