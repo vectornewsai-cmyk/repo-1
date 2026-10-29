@@ -24,6 +24,7 @@ import { BeatSyncModal } from "./components/BeatSyncModal";
 import { TrackPanel } from "./components/sticker/TrackPanel";
 import { MaskPanel } from "./components/mask";
 import { EnhancePanel } from "./components/enhance";
+import { MotionPanel } from "./components/motion";
 import { FontPicker } from "./components/FontPicker";
 
 function NumField({
@@ -376,6 +377,10 @@ export function Inspector() {
           <Section title={t("inspector.secEnhance")}>
             <EnhancePanel />
           </Section>
+          {/* Phase 9 đợt 8 S5: slow-mo / nội suy frame / motion blur cho clip video */}
+          <Section title={t("inspector.secMotion")}>
+            <MotionPanel />
+          </Section>
           <Section title={t("inspector.secScene")}>
             <button onClick={() => setSceneOpen(true)}>
               {t("inspector.sceneBtn")}
@@ -497,7 +502,7 @@ export function Inspector() {
           <NumField label={t("inspector.start")} value={clip.start} onChange={(v) => patch({ start: Math.max(0, v) })} />
           <NumField label={t("inspector.length")} value={clip.duration} onChange={(v) => patch({ duration: Math.max(0.2, v) })} />
         </div>
-        {clip.kind !== "text" && clip.kind !== "sticker" && clip.kind !== "image" && (
+        {clip.kind !== "text" && clip.kind !== "sticker" && clip.kind !== "image" && clip.kind !== "nested" && (
           <div className="field-row">
             <NumField label={t("inspector.inPoint")} value={(clip as { in: number }).in} onChange={(v) => patch({ in: Math.max(0, v), out: Math.max(0, v) + clip.duration } as Partial<typeof clip>)} />
             <NumField label={t("inspector.outPoint")} value={(clip as { out: number }).out} onChange={(v) => { const cin = (clip as { in: number }).in; patch({ out: Math.max(cin + 0.2, v), duration: Math.max(0.2, v - cin) } as Partial<typeof clip>); }} />
