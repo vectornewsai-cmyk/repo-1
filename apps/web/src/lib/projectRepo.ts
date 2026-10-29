@@ -15,9 +15,13 @@
  *   file có spec.version cũ hơn (vd 0.1.0) được tự động nâng cấp lên
  *   SPEC_VERSION hiện tại khi mở, không mất dữ liệu. Version không hỗ trợ
  *   (quá cũ hoặc mới hơn app) → từ chối với lỗi rõ ràng.
+ * - Migration motion (Phase 9 đợt 12 T4, xem migrateProjectMotion dưới):
+ *   clip mang motionBlur cũ (weights 0 / thiếu frames / blur {}) được chuẩn
+ *   hoá khi mở (cùng rule set với cổng render đợt 11 P6); project mới hợp
+ *   lệ không đổi gì. Xem apps/web/src/lib/MOTION_WEBLOAD_LIMITS.md.
  */
-import { SPEC_VERSION, isVideoSpec, migrate, MigrationError, readSchemaVersion } from "@repo-1/video-spec";
-import type { TrackKind, VideoSpec } from "@repo-1/video-spec";
+import { SPEC_VERSION, isVideoSpec, migrate, migrateMotion, MigrationError, readSchemaVersion } from "@repo-1/video-spec";
+import type { ClipMotion, TrackKind, VideoSpec } from "@repo-1/video-spec";
 
 export const PROJECT_FILE_EXT = ".vcut.json";
 export const AUTOSAVE_KEY = "vcut-studio:autosave:v1";
@@ -173,6 +177,53 @@ export function validateSpecDeep(spec: unknown): string[] {
 }
 
 /**
+ * Phase 9 đợt 12 T4 — migrate motion cũ ở cổng load web.
+ *
+ * Đợt 11 P6 đã làm migrateMotion (packages/video-spec/src/motion.ts) nhưng
+ * chỉ nối vào cổng load của render (server/render/src/validate.js); project
+ * cũ mở trên web vẫn mang motion lỗi thời (weights 0 / thiếu frames /
+ * blur {}) cho đến đợt này. Hàm này chạy migrateMotion cho mọi clip có
+ * motion, TRƯỚC khi trả spec cho editor — cùng rule set với render nên
+ * web và render nhìn thấy cùng một motion đã chuẩn hoá.
+ *
+ * Tính chất (kế thừa từ migrateMotion, xem docstring của nó):
+ * - Project mới hợp lệ → trả về ĐÚNG tham chiếu spec gốc (không copy,
+ *   không đổi một field nào), warnings rỗng.
+ * - Chỉ clip nào migrated=true mới được thay bằng object mới (spread nông);
+ *   clip/track khác giữ nguyên tham chiếu.
+ * - Trường hợp migrateMotion không cứu (frames ngoài [2, 8], weights không
+ *   hữu hạn/dài ngoài [2, 8], key lạ) → giữ nguyên, KHÔNG chặn load web
+ *   (validateSpecDeep của web không kiểm tra motion); cổng render vẫn bắt
+ *   khi export — xem MOTION_WEBLOAD_LIMITS.md.
+ * - Không mutate spec đầu vào.
+ */
+export function migrateProjectMotion(spec: VideoSpec): { spec: VideoSpec; warnings: string[] } {
+  const warnings: string[] = [];
+  let changed = false;
+  const tracks = spec.tracks.map((t, ti) => {
+    let trackChanged = false;
+    const clips = t.clips.map((c, ci) => {
+      const motion = (c as { motion?: unknown }).motion;
+      if (motion === undefined) return c;
+      const r = migrateMotion(motion);
+      if (!r.migrated) return c;
+      trackChanged = true;
+      warnings.push(
+        `tracks[${ti}].clips[${ci}] (clip "${c.id}"): motion cũ đã chuẩn hoá — ${r.notes.join("; ")}`,
+      );
+      return { ...c, motion: r.motion as ClipMotion };
+    });
+    if (trackChanged) {
+      changed = true;
+      return { ...t, clips };
+    }
+    return t;
+  });
+  if (!changed) return { spec, warnings };
+  return { spec: { ...spec, tracks }, warnings };
+}
+
+/**
  * Parse nội dung text của file project → LoadResult.
  * Chấp nhận envelope `.vcut.json`; spec trần (không envelope) vẫn đọc được
  * kèm cảnh báo (tương thích ngược với file export JSON cũ).
@@ -228,8 +279,21 @@ export function parseProjectText(text: string): LoadResult {
   const errors = validateSpecDeep(spec);
   if (errors.length > 0) return fail(errors, warnings);
   const vspec = spec as VideoSpec;
-  warnings.push(...findBlobWarnings(vspec));
-  return { ok: true, spec: vspec, name, errors: [], warnings };
+  // Phase 9 đợt 12 T4: migrate motion cũ (đợt 11 P6) ở cổng load web, SAU
+  // validateSpecDeep (validate web không kiểm tra motion nên thứ tự này
+  // không làm file hỏng nào lọt qua, chỉ chuẩn hoá spec hợp lệ sắp trả về).
+  // loadProject (mở file) và loadAutosave (khôi phục autosave) đều đi qua
+  // parseProjectText nên cả hai cổng đều được migrate.
+  const mig = migrateProjectMotion(vspec);
+  if (mig.warnings.length > 0) {
+    warnings.push(...mig.warnings);
+    warnings.push(
+      "Motion cũ đã được chuẩn hoá khi mở — lưu lại file để hoàn tất nâng cấp.",
+    );
+  }
+  const finalSpec = mig.spec;
+  warnings.push(...findBlobWarnings(finalSpec));
+  return { ok: true, spec: finalSpec, name, errors: [], warnings };
 }
 
 /** Đọc File từ <input> → LoadResult (validate đầy đủ, lỗi chi tiết). */
