@@ -23,7 +23,8 @@ export type TextAnimation =
   | "slideInRight" | "slideUp" | "bounce" | "typewriter"
   | "slideInDown" | "popIn"
   | "fadeOut" | "fadeOutUp" | "slideOutRight" | "slideOutDown"
-  | "wave" | "blink" | "shake" | "fadeInOut";
+  | "wave" | "blink" | "shake" | "fadeInOut"
+  | "tiltIn" | "skewIn" | "slideReveal" | "curtainIn";
 
 const TEXT_ANIMATIONS: readonly TextAnimation[] = [
   "none", "fadeUp", "fadeIn", "slideInLeft",
@@ -31,6 +32,8 @@ const TEXT_ANIMATIONS: readonly TextAnimation[] = [
   "slideInDown", "popIn",
   "fadeOut", "fadeOutUp", "slideOutRight", "slideOutDown",
   "wave", "blink", "shake", "fadeInOut",
+  // Phase 9 đợt 10 V4 (render ASS) — đợt 11 P4 đưa vào picker + i18n.
+  "tiltIn", "skewIn", "slideReveal", "curtainIn",
 ];
 
 // R6: nhãn + mô tả chuyển qua i18n (textanim.opt.<anim>.label/.desc)
@@ -64,6 +67,10 @@ const PREVIEW_CLASS: Record<TextAnimation, string> = {
   blink: "tx-prev-blink",
   shake: "tx-prev-shake",
   fadeInOut: "tx-prev-fadeInOut",
+  tiltIn: "tx-prev-tiltIn",
+  skewIn: "tx-prev-skewIn",
+  slideReveal: "tx-prev-slideReveal",
+  curtainIn: "tx-prev-curtainIn",
 };
 
 export function TextAnimPicker({ value, onChange }: TextAnimPickerProps) {

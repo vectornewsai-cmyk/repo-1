@@ -176,3 +176,29 @@
   25%, 70% { opacity: 1; }
   95%, 100% { opacity: 0; }
 }
+
+/* ---- Phase 9 đợt 11 P4: preview cho 4 animation parity ASS ---- */
+.tx-prev-tiltIn { animation: tx-tiltIn 1.6s ease-out infinite; }
+@keyframes tx-tiltIn {
+  0% { opacity: 0; transform: rotate(-12deg) translateY(20px); }
+  45%, 100% { opacity: 1; transform: rotate(0deg) translateY(0); }
+}
+
+.tx-prev-skewIn { animation: tx-skewIn 1.6s ease-out infinite; }
+@keyframes tx-skewIn {
+  0% { opacity: 0; transform: skewX(-25deg) translateX(-30px); }
+  35% { opacity: 1; transform: skewX(8deg) translateX(0); }
+  45%, 100% { opacity: 1; transform: skewX(0deg) translateX(0); }
+}
+
+.tx-prev-slideReveal { animation: tx-slideReveal 1.6s ease-out infinite; }
+@keyframes tx-slideReveal {
+  0% { clip-path: inset(0 100% 0 0); }
+  60%, 100% { clip-path: inset(0 0 0 0); }
+}
+
+.tx-prev-curtainIn { animation: tx-curtainIn 1.6s ease-out infinite; }
+@keyframes tx-curtainIn {
+  0% { opacity: 0; clip-path: inset(0 50% 0 50%); }
+  50%, 100% { opacity: 1; clip-path: inset(0 0 0 0); }
+}
