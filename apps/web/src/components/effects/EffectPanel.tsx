@@ -17,6 +17,10 @@ import { useStore } from "../../store";
 import "./effects.css";
 import { t as i18nT, useLang } from "../../i18n";
 import {
+  effectPreviewStatus,
+  previewBadgeLabel,
+} from "../transitions/previewStatus";
+import {
   EFFECT_META,
   EFFECT_TYPES,
   validateVideoEffects,
@@ -82,6 +86,12 @@ export function EffectPanel() {
               >
                 <span className="fx-check">{active ? "☑" : "☐"}</span>
                 <span className="fx-name">{meta.label}</span>
+                <span
+                  className="fx-badge"
+                  data-preview={effectPreviewStatus(type)}
+                >
+                  {previewBadgeLabel(effectPreviewStatus(type))}
+                </span>
               </button>
               {active && (
                 <label className="fx-slider">

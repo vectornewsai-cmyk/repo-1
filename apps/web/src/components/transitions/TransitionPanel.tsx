@@ -9,6 +9,10 @@
  */
 import "./transitions.css";
 import { t as i18nT, useLang } from "../../i18n";
+import {
+  previewBadgeLabel,
+  transitionPreviewStatus,
+} from "./previewStatus";
 
 export interface TransitionOption {
   type: string;
@@ -85,6 +89,21 @@ export const TRANSITION_OPTIONS: TransitionOption[] = [
   { type: "clock" },
   { type: "circle-soft" },
   { type: "bars-fade" },
+  // V3 (Phase 9 đợt 10): 14 transition custom expr — đã kiểm chứng bằng MP4 thật
+  { type: "diamondclose" },
+  { type: "squareopen" },
+  { type: "squareclose" },
+  { type: "checker-alt" },
+  { type: "blinds-diag" },
+  { type: "split-h" },
+  { type: "split-v" },
+  { type: "barn-h" },
+  { type: "barn-v" },
+  { type: "rings" },
+  { type: "corners" },
+  { type: "star" },
+  { type: "clock-ccw" },
+  { type: "spiral" },
 ];
 
 export interface TransitionPanelProps {
@@ -143,6 +162,12 @@ export function TransitionPanel({ value, duration, onChange }: TransitionPanelPr
           >
             <Preview type={opt.type} />
             <span className="tr-name">{i18nT(`transition.opt.${opt.type}.label`)}</span>
+            <span
+              className="tr-badge"
+              data-preview={transitionPreviewStatus(opt.type)}
+            >
+              {previewBadgeLabel(transitionPreviewStatus(opt.type))}
+            </span>
             <span className="tr-desc">{i18nT(`transition.opt.${opt.type}.desc`)}</span>
           </button>
         ))}

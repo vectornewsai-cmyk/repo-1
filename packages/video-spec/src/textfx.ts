@@ -3,14 +3,18 @@
  *
  * Mở rộng `TextStyle.animation` trong index.ts (hiện tại: "none" | "fadeUp" | "typewriter").
  * Mỗi animation ở đây tương ứng 1 entry trong `server/render/src/textfx.js`
- * và đã được kiểm chứng bằng MP4 thật (xem TEXTFX_LIMITS.md).
+ * (drawtext) hoặc `server/render/src/textAnimParity.js` (ASS, đợt 10 V4)
+ * và đã được kiểm chứng bằng MP4 thật (xem TEXTFX_LIMITS.md và
+ * TEXT_ANIM_PARITY_LIMITS.md).
  *
- * NGUYÊN TẮC: chỉ đưa vào spec những gì render được THẬT bằng drawtext.
- * drawtext hỗ trợ biểu thức theo `t` cho x, y, alpha — nhưng KHÔNG cho fontsize
- * (xem TEXTFX_LIMITS.md về giới hạn này).
+ * NGUYÊN TẮC: chỉ đưa vào spec những gì render được THẬT bằng drawtext
+ * hoặc ASS. drawtext hỗ trợ biểu thức theo `t` cho x, y, alpha — nhưng
+ * KHÔNG cho fontsize, xoay, nghiêng hay clip (xem TEXTFX_LIMITS.md);
+ * nhóm rotate/skew/clip đi đường ASS (textAnimParity.js).
  *
  * ⚠️ MIRROR: validate.js của render worker có bản mirror bằng JS thuần —
- * thêm animation mới ở đây thì PHẢI cập nhật cả validate.js và textfx.js.
+ * thêm animation mới ở đây thì PHẢI cập nhật cả validate.js, textfx.js
+ * (nếu đi drawtext) hoặc textAnimParity.js (nếu đi ASS).
  */
 
 /** Tất cả text animations hợp lệ. */
@@ -36,6 +40,12 @@ export const TEXT_ANIMATIONS = [
   "blink",
   "shake",
   "fadeInOut",
+  // Phase 9 đợt 10 V4: rotate/skew/clip qua ASS (textAnimParity.js) —
+  // KHÔNG thêm vào DRAWTEXT_ANIMATIONS bên dưới.
+  "tiltIn",
+  "skewIn",
+  "slideReveal",
+  "curtainIn",
 ] as const;
 
 export type TextAnimation = (typeof TEXT_ANIMATIONS)[number];
@@ -64,6 +74,11 @@ export const TEXT_ANIMATION_META: Record<
   blink: { label: "Nhấp nháy", description: "Chữ nhấp nháy hiện/ẩn liên tục" },
   shake: { label: "Rung", description: "Chữ rung ngang trong 0.5s đầu (nhấn mạnh)" },
   fadeInOut: { label: "Mờ vào + mờ ra", description: "Mờ dần vào 0.5s đầu, mờ dần ra 0.5s cuối" },
+  // Phase 9 đợt 10 V4 (ASS — xem TEXT_ANIM_PARITY_LIMITS.md)
+  tiltIn: { label: "Nghiêng vào", description: "Xoay -12° + trồi lên + mờ vào trong 0.7s (ASS)" },
+  skewIn: { label: "Nghiêng xiên vào", description: "SkewX -25° → +8° → 0° + trượt từ trái trong 0.6s (ASS)" },
+  slideReveal: { label: "Lộ dần từ trái", description: "Mặt nạ cắt quét theo hộp chữ từ trái sang phải trong 1.0s (ASS)" },
+  curtainIn: { label: "Màn kéo mở", description: "Mặt nạ cắt mở từ tâm hộp chữ ra hai bên + mờ vào trong 0.8s (ASS)" },
 };
 
 /** Kiểm tra một giá trị có phải TextAnimation hợp lệ không. */

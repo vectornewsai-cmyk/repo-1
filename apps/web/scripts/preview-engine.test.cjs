@@ -7,6 +7,9 @@ const assert = require("assert");
 
 const OUT = "/tmp/vcut-test-preview-engine/out";
 const pe = require(`${OUT}/apps/web/src/lib/previewEngine.js`);
+// Đợt 10 (parent tích hợp): transitionClipVisual dời từ previewEngine sang
+// transitionPreview.ts nên block V1 require module đã biên dịch riêng.
+const tp = require(`${OUT}/apps/web/src/lib/transitionPreview.js`);
 const spec = require(`${OUT}/packages/video-spec/src/index.js`);
 
 let pass = 0;
@@ -96,10 +99,12 @@ eq(
   const v = pe.effectsVisual([{ type: "vignette", intensity: 0.7 }]);
   eq(v.vignette, 0.7, "vignette giữ intensity");
   eq(v.css, "", "vignette không vào css");
+  // Đợt 10 (parent tích hợp): sharpen/noise từng bị skip, nay V2 vẽ thật
+  // bằng canvas (effectCanvas.ts) nên không còn trong skipped.
   const sh = pe.effectsVisual([{ type: "sharpen", intensity: 1 }]);
-  ok(sh.skipped.includes("sharpen"), "sharpen bị skip (không có CSS tương đương)");
+  ok(!sh.skipped.includes("sharpen"), "sharpen vẽ bằng canvas, không còn skip");
   const n = pe.effectsVisual([{ type: "noise", intensity: 1 }]);
-  ok(n.skipped.includes("noise"), "noise bị skip");
+  ok(!n.skipped.includes("noise"), "noise vẽ bằng canvas (seed), không còn skip");
   const combo = pe.effectsVisual([
     { type: "grayscale", intensity: 0.5 },
     { type: "blur", intensity: 0 },
@@ -525,6 +530,41 @@ eq(
     "ramp target: reverse + ramp → fallback hằng (render chặn combo này)");
   eq(pe.rampSourceTimeAt({ start: 10, in: 100, speedKeyframes: lin }, 9), 100,
     "ramp target: trước clip → in");
+}
+
+// ---- V1 (Phase 9 đợt 10): transitionClipVisual — cửa sổ transition của 1 clip ----
+{
+  const clip = { duration: 10, transitionIn: { type: "wipeleft", duration: 2 }, transitionOut: { type: "slideleft", duration: 2 } };
+  // Ngoài cửa sổ → null, alpha 1.
+  let v = tp.transitionClipVisual(clip, 5, 100, 100);
+  eq(v.window, null, "transClip: giữa clip → không cửa sổ");
+  eq(v.alpha, 1, "transClip: giữa clip → alpha 1");
+  // Cửa sổ vào: p = localT/duration, lớp B = nửa phải ở p=0.5.
+  v = tp.transitionClipVisual(clip, 1, 100, 100);
+  eq(v.window, "in", "transClip: đầu clip → cửa sổ vào");
+  approx(v.p, 0.5, 1e-9, "transClip: p vào = localT/duration");
+  eq(v.layer.region.kind, "rect", "transClip: wipeleft lớp B là rect");
+  eq(v.layer.region.x, 50, "transClip: wipeleft p=0.5 → B từ x=50");
+  eq(v.layer.region.w, 50, "transClip: wipeleft p=0.5 → B rộng 50");
+  // Cửa sổ ra: p = elapsed/duration; lớp A slideleft dx = -pW.
+  v = tp.transitionClipVisual(clip, 9, 100, 100);
+  eq(v.window, "out", "transClip: cuối clip → cửa sổ ra");
+  approx(v.p, 0.5, 1e-9, "transClip: p ra = elapsed/duration");
+  approx(v.layer.dx, -50, 1e-9, "transClip: slideleft ra p=0.5 → A dx=-50");
+  // Fade cũ giữ nguyên: vào alpha = localT/dur, ra alpha = (dur-localT)/dur.
+  const fclip = { duration: 10, transitionIn: { type: "fade", duration: 2 }, transitionOut: { type: "fade", duration: 2 } };
+  approx(tp.transitionClipVisual(fclip, 1, 100, 100).alpha, 0.5, 1e-9, "transClip: fade vào alpha = localT/dur");
+  approx(tp.transitionClipVisual(fclip, 9, 100, 100).alpha, 0.5, 1e-9, "transClip: fade ra alpha = (dur-localT)/dur");
+  // Type "none" / duration 0 → không cửa sổ.
+  eq(tp.transitionClipVisual({ duration: 10, transitionIn: { type: "none", duration: 2 } }, 1, 100, 100).window, null, "transClip: type none → không cửa sổ");
+  eq(tp.transitionClipVisual({ duration: 10, transitionIn: { type: "fade", duration: 0 } }, 0, 100, 100).window, null, "transClip: duration 0 → không cửa sổ");
+  // Type lạ → fallback fade, không throw, geometric false.
+  const weird = tp.transitionClipVisual({ duration: 10, transitionIn: { type: "kiểu-lạ", duration: 2 } }, 1, 100, 100);
+  eq(weird.geometric, false, "transClip: type lạ → không hình học");
+  approx(weird.alpha, 0.5, 1e-9, "transClip: type lạ → fallback fade alpha = p");
+  // Cả 2 cửa sổ cùng active (clip ngắn): alpha nhân nhau (0.75 * 0.75).
+  const short = { duration: 3, transitionIn: { type: "fade", duration: 2 }, transitionOut: { type: "fade", duration: 2 } };
+  approx(tp.transitionClipVisual(short, 1.5, 100, 100).alpha, 0.5625, 1e-9, "transClip: 2 cửa sổ → alpha = 0.75*0.75");
 }
 
 console.log(`\n✅ preview-engine: ${pass} assertions pass`);

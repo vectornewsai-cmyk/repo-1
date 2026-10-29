@@ -15,6 +15,16 @@ Cập nhật khi có thay đổi. Ngày: 2026-10-19.
 | `slideUp` | drawtext `y` từ `h` về đích + alpha | ✅ demo_textfx.js, xem frame |
 | `bounce` | drawtext `y` rơi + nảy (công thức `140*(1-p)²` + `sin`) | ✅ demo_textfx.js, xem frame |
 | `typewriter` | file ASS + filter `subtitles` (libass) | ✅ (có từ Phase 1) |
+| `slideInDown` | drawtext `y` từ `-text_h` về đích + alpha, 0.7s | ✅ Batch G, MP4 thật |
+| `popIn` | drawtext alpha nhanh 0.25s + y nảy nhẹ (GIẢ LẬP, không scale) | ✅ Batch G, MP4 thật |
+| `fadeOut` | drawtext `alpha` 1→0 trong 0.8s cuối (cần clipEnd) | ✅ Batch G, MP4 thật |
+| `fadeOutUp` | drawtext `y` -= 30px + alpha 1→0 trong 0.8s cuối | ✅ Batch G, MP4 thật |
+| `slideOutRight` | drawtext `x` → w + alpha 1→0 trong 0.7s cuối | ✅ Batch G, MP4 thật |
+| `slideOutDown` | drawtext `y` → h + alpha 1→0 trong 0.7s cuối | ✅ Batch G, MP4 thật |
+| `wave` | drawtext `y` = yt ± 12px sin, chu kỳ 1.2s (cả dòng) | ✅ Batch G, MP4 thật |
+| `blink` | drawtext `alpha` 1/0.15 nhấp nháy mỗi 1s | ✅ Batch G, MP4 thật |
+| `shake` | drawtext `x` rung ±10px tắt dần trong 0.5s đầu | ✅ Batch G, MP4 thật |
+| `fadeInOut` | drawtext `alpha` vào 0.5s + ra 0.5s cuối | ✅ Batch G, MP4 thật |
 
 ## KHÔNG làm được (ghi rõ để không ai giả vờ)
 
@@ -32,6 +42,11 @@ trên vùng chữ đã crop — phức tạp, chưa thử.
 **Nguyên nhân:** drawtext không có tham số xoay theo `t`. Filter `rotate`
 của FFmpeg xoay CẢ FRAME chứ không xoay riêng lớp chữ (trừ khi tách chữ ra
 stream riêng rồi overlay — chưa implement).
+
+**Cập nhật 2026-10-26 (đợt 10 V4):** xoay entrance đơn giản ĐÃ làm được —
+nhưng KHÔNG qua drawtext mà qua ASS: `tiltIn` (xoay −12°→0°) dùng
+`\fr` + `\t` của libass (xem TEXT_ANIM_PARITY_LIMITS.md). Xoay 360° liên
+tục, xoay + scale kết hợp và lật 3D vẫn chưa làm (xem LIMITS đó §3).
 
 ### 3. Hiệu ứng từng ký tự (ngoài typewriter)
 **Nguyên nhân:** drawtext vẽ cả chuỗi một lần, không cho điều khiển từng ký tự.

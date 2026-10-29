@@ -102,6 +102,83 @@ smptebars, 320×240, 30fps) và kiểm tra mid-frame không bị đen toàn fram
 Tổng catalog hiện tại: **58 transitions** (không tính `none`).
 `assets/transitions/catalog.json` là bản machine-readable đầy đủ.
 
+## ✅ V3 (Phase 9 đợt 10): 14 transition custom expr mới — render thật, kiểm chứng pixel
+
+Cùng cơ chế P5 (`xfade=transition=custom` + expr trên X, Y, W, H, A, B, P).
+Mỗi expr đã render thật bằng FFmpeg 8.1.2 (2 màu phẳng đỏ/xanh, 320×240,
+xfade 2s) và kiểm chứng bằng pixel trong `server/render/test_v10_transitions.py`
+(**14/14 pass**): frame giữa (P=0.5) khác cả 2 frame gốc (dA và dB đều > 5,
+thực tế 32–137), và probe điểm đúng pattern hình học của từng hiệu ứng.
+Test đọc expr trực tiếp từ `transitions.js` (không hardcode bản sao) và chạy
+thêm `buildXfadeFilter` qua node cho cả 14 type (quoting expr đúng).
+Tổng catalog sau đợt: **81 transitions** (không tính `none`) = 58 xfade
+built-in + 23 custom expr (9 P5 + 14 V3).
+
+| type | Hiệu ứng | Pixel-check ở P=0.5 (dA / dB) |
+|---|---|---|
+| `diamondclose` | Hình thoi khép (ngược `diamond`) | 84.0 / 85.1 — tâm đỏ (A), góc xanh (B) |
+| `squareopen` | Vuông mở từ giữa | 57.0 / 112.1 — tâm xanh, góc đỏ |
+| `squareclose` | Vuông khép (ngược `squareopen`) | 112.0 / 57.1 — tâm đỏ, góc xanh |
+| `checker-alt` | Bàn cờ xen kẽ (ô chẵn trước, ô lẻ sau) | 84.5 / 84.8 — ô (20,15) xanh, (60,15)/(20,45) đỏ |
+| `blinds-diag` | Mành chéo | 86.2 / 84.4 — dọc hàng y=120 xen kẽ xanh/đỏ/xanh |
+| `split-h` | Tách ngang (trên từ trái, dưới từ phải) | 84.2 / 84.8 — 4 góc đúng chiều |
+| `split-v` | Tách dọc (trái từ trên, phải từ dưới) | 84.2 / 84.9 — 4 góc đúng chiều |
+| `barn-h` | Cửa chuồng ngang (từ 2 mép trái-phải) | 84.0 / 85.1 — 2 mép xanh, tâm đỏ |
+| `barn-v` | Cửa chuồng dọc (từ 2 mép trên-dưới) | 83.8 / 85.2 — 2 mép xanh, tâm đỏ |
+| `rings` | Vòng tròn đồng tâm | 87.5 / 82.2 — tâm xanh, r=40 đỏ, r=60 xanh |
+| `corners` | Bốn góc nở đồng thời | 69.2 / 99.9 — góc xanh, tâm và mép giữa đỏ |
+| `star` | Sao 5 cánh (xấp xỉ, xem §xấp xỉ) | 136.6 / 32.5 — hướng cánh xanh, hướng thung lũng đỏ |
+| `clock-ccw` | Đồng hồ ngược chiều (ngược `clock`) | 84.2 / 84.9 — nửa dưới xanh, nửa trên đỏ |
+| `spiral` | Xoắn ốc (cánh xoắn theo bán kính) | 84.2 / 84.9 — tia phải: trong đỏ, ngoài xanh |
+
+Mirror đã cập nhật khớp catalog: `apps/web/src/components/transitions/TransitionPanel.tsx`
+(list), `apps/web/src/i18n/vi.json` + `en.json` (nhãn/mô tả 14 type),
+`packages/video-spec/src/transitions.ts` (types + meta),
+`assets/transitions/catalog.json` (total 67 → 81).
+LƯU Ý: `packages/video-spec/src/transitions.js` là bản emit cũ đã lệch từ
+trước đợt này (nó còn thiếu cả 9 entry P5) nên đợt này cố tình KHÔNG sửa
+tay file đó — nguồn thật là `transitions.ts`, file `.js` cần regenerate
+bằng tsc thay vì sửa tay.
+
+### ⚠️ Chỉ xấp xỉ (không giấu)
+
+- **`star` là sao xấp xỉ, không phải sao hình học chuẩn.** Bán kính ngưỡng
+  được điều biến bằng `1 + 0.4*cos(5θ)` rồi chia cho 0.6 để ở P=1 vẫn phủ
+  kín toàn khung (hệ số nhỏ nhất = 1.0 × Rmax) — nhờ vậy transition kết
+  thúc sạch, nhưng cánh sao ở giữa transition dài hơn sao đều thật
+  (điểm cánh vượt ra ngoài khung, thung lũng ở 0.5×Rmax). Probe đã chứng
+  minh đúng cấu trúc 5 cánh (hướng cánh xanh, hướng thung lũng đỏ), nhưng
+  đừng quảng cáo là "sao chuẩn".
+- **`diamondclose` / `squareclose` / `clock-ccw` là bản ngược chiều của
+  transition đã có**, không phải hiệu ứng cơ chế mới — vẫn tính là
+  transition riêng vì render và pattern khác thật, nhưng không thổi phồng
+  thành "cơ chế mới".
+- **Preview CSS trong TransitionPanel cho 14 type mới là minh họa chung**
+  (không có animation riêng từng hiệu ứng) — render thật mới là chuẩn,
+  giống các custom P5 trước đây.
+
+### ❌ Đã thử nhưng expr KHÔNG biểu diễn được nên bỏ (không giấu)
+
+1. **Hình trái tim (heart) — thử rồi, bỏ.** Expr ẩn `(x²+y²−1)³−x²y³ ≤ 0`
+   co theo P render được ở giữa transition (tâm xanh, bluefrac 0.23),
+   nhưng ở cuối transition (P≈0.95) vùng B **biến mất** (bluefrac 0.00)
+   thay vì phủ kín — hành vi sai, không sửa được bằng chuẩn hoá đơn giản
+   trong khuôn khổ expr chọn pixel. Vì vậy không đưa vào catalog.
+2. **Mọi hiệu ứng cần remap tọa độ — không thể, theo cấu trúc.**
+   Expr custom của xfade chỉ được CHỌN hoặc TRỘN giá trị A/B tại cùng một
+   pixel (X, Y) — không có biến nào để lấy mẫu A/B tại tọa độ khác.
+   Do đó xoay, zoom/morph, xoắn (swirl), dịch chuyển pixel (glitch
+   displace) và mọi hiệu ứng warp đều **không thể biểu diễn bằng
+   custom-expr**, bất kể viết expr khéo đến đâu. Đây cũng là lý do 21
+   transition GLSL vẫn ngoài tầm với nếu không có gltransition.
+3. **Bản sao trùng lặp đã loại ngay từ thiết kế, không đưa vào test:**
+   `blinds-v` (expr trùng hệt `bars-v` — cùng `mod(X,…)`), và một bản
+   custom của `circleclose` (hành vi trùng built-in `circleclose` đã có).
+   Thêm vào chỉ làm catalog phình mà không thêm hiệu ứng thật nào.
+   Ngược lại, các bản ngược chiều (`diamondclose`, `squareclose`,
+   `clock-ccw`, `barn-h`/`barn-v` so với `horzopen`/`vertopen`) ĐƯỢC giữ
+   vì pattern render khác thật (đã probe điểm chứng minh).
+
 ## Kiểm chứng đã làm
 
 - `node demo_transitions.js --out-dir ./demo_out` → 3/3 video render thành công,

@@ -452,6 +452,9 @@ const TRANSITIONS = [
   // frame giữa transition khác cả 2 frame gốc, và blinds/bars có pattern xen kẽ đúng.
   // LƯU Ý QUOTING: expr chứa dấu phẩy nên PHẢI bọc trong '...' khi build filter
   // (xem buildXfadeFilter) — nếu không, dấu phẩy bị parser hiểu là tách filter.
+  // ROUND14 R1: mọi expr dưới đây viết theo p-preview (tăng 0→1); buildXfadeFilter
+  // dịch P→(1-P) vì FFmpeg 8.1.2 đánh giá P custom giảm 1→0 (đo thật, xem LIMITS
+  // đợt 14 R1). Đừng "sửa" literal theo P-FFmpeg — sẽ đảo ngược 2 lần.
   {
     type: "blinds-h",
     xfade: "custom",
@@ -511,7 +514,19 @@ const TRANSITIONS = [
   {
     type: "circle-soft",
     xfade: "custom",
-    expr: "A*(1-clip((sqrt(pow(X-W/2,2)+pow(Y-H/2,2))-P*sqrt(pow(W/2,2)+pow(H/2,2)))/(0.15*sqrt(pow(W/2,2)+pow(H/2,2))),0,1))+B*clip((sqrt(pow(X-W/2,2)+pow(Y-H/2,2))-P*sqrt(pow(W/2,2)+pow(H/2,2)))/(0.15*sqrt(pow(W/2,2)+pow(H/2,2))),0,1)",
+    // ROUND14 R1 — LITERAL ĐÃ SỬA (đổi hệ số A/B so với bản gốc):
+    // Bản gốc A*(1-clip(...))+B*clip(...) mô tả B ở NGOÀI vòng tròn
+    // (B xâm nhập từ ngoài vào, tâm không bao giờ thành B — probe pixel
+    // thật: frame cuối tâm vẫn đỏ 254,0,0, góc đã xanh từ frame 33),
+    // ngược với mô tả "vòng tròn mở" và preview (B nở từ tâm ra, r=p*R).
+    // Bản mới A*clip(...)+B*(1-clip(...)) mô tả đúng B trong đĩa bán
+    // kính p*R với viền mềm 0.15R ở ngoài mép đĩa. Cùng với phép dịch
+    // P→(1-P) của buildXfadeFilter, render sau sửa: tâm xanh sớm, góc
+    // xanh muộn, frame cuối toàn B (xem LIMITS đợt 14 R1). Viền mềm vẫn
+    // là xấp xỉ so với preview biên cứng — MAD so với preview biên cứng
+    // sẽ cao hơn các type khác, đó là bản chất tính năng, không phải bug
+    // hướng (đo soft-aware riêng trong LIMITS).
+    expr: "A*clip((sqrt(pow(X-W/2,2)+pow(Y-H/2,2))-P*sqrt(pow(W/2,2)+pow(H/2,2)))/(0.15*sqrt(pow(W/2,2)+pow(H/2,2))),0,1)+B*(1-clip((sqrt(pow(X-W/2,2)+pow(Y-H/2,2))-P*sqrt(pow(W/2,2)+pow(H/2,2)))/(0.15*sqrt(pow(W/2,2)+pow(H/2,2))),0,1))",
     label: "Vòng tròn mềm",
     description: "Vòng tròn mở với viền mờ mềm (không cắt cứng)",
     category: "fx",
@@ -522,6 +537,125 @@ const TRANSITIONS = [
     expr: "if(lt(mod(X,W/8),P*W/8),B,A*(1-P)+B*P)",
     label: "Thanh dọc + mờ",
     description: "Thanh dọc mở dần trên nền crossfade",
+    category: "fx",
+  },
+  // ============ V3 (Phase 9 đợt 10): 14 transition custom expr mới ============
+  // Cùng cơ chế P5 (xfade=custom + expr trên X, Y, W, H, A, B, P).
+  // Mỗi expr đã render thật bằng ffmpeg + kiểm chứng pixel
+  // (server/render/test_v10_transitions.py, 14/14 pass): frame giữa khác cả
+  // 2 frame gốc và probe điểm đúng pattern hình học của từng hiệu ứng.
+  // Lưu ý: expr chỉ CHỌN/TRỘN pixel A/B tại cùng tọa độ — không remap tọa độ,
+  // nên không làm được xoay/zoom/morph (xem TRANSITIONS_LIMITS.md §V3).
+  {
+    type: "diamondclose",
+    xfade: "custom",
+    expr: "if(lte(abs(X-W/2)+abs(Y-H/2),(1-P)*(W+H)/2),A,B)",
+    label: "Hình thoi khép",
+    description: "Cảnh cũ co dần thành hình thoi ở giữa, lộ cảnh mới",
+    category: "fx",
+  },
+  {
+    type: "squareopen",
+    xfade: "custom",
+    expr: "if(lte(max(abs(X-W/2),abs(Y-H/2)),P*max(W,H)/2),B,A)",
+    label: "Vuông mở",
+    description: "Cảnh mới nở ra từ hình vuông ở giữa",
+    category: "fx",
+  },
+  {
+    type: "squareclose",
+    xfade: "custom",
+    expr: "if(lte(max(abs(X-W/2),abs(Y-H/2)),(1-P)*max(W,H)/2),A,B)",
+    label: "Vuông khép",
+    description: "Cảnh cũ co dần thành hình vuông ở giữa, lộ cảnh mới",
+    category: "fx",
+  },
+  {
+    type: "checker-alt",
+    xfade: "custom",
+    expr: "if(eq(mod(floor(X/(W/8))+floor(Y/(H/8)),2),0),if(gt(P,0.25),B,A),if(gt(P,0.75),B,A))",
+    label: "Bàn cờ xen kẽ",
+    description: "Ô bàn cờ chẵn hiện trước, ô lẻ hiện sau — giữa transition là bàn cờ rõ",
+    category: "fx",
+  },
+  {
+    type: "blinds-diag",
+    xfade: "custom",
+    expr: "if(lt(mod(X+Y,H/8),P*H/8),B,A)",
+    label: "Mành chéo",
+    description: "Cảnh mới hiện qua các dải mành chéo mở dần",
+    category: "wipe",
+  },
+  {
+    type: "split-h",
+    xfade: "custom",
+    expr: "if(lt(Y,H/2),if(lt(X,P*W),B,A),if(gt(X,W-P*W),B,A))",
+    label: "Tách ngang",
+    description: "Nửa trên quét từ trái, nửa dưới quét từ phải, gặp nhau ở giữa",
+    category: "wipe",
+  },
+  {
+    type: "split-v",
+    xfade: "custom",
+    expr: "if(lt(X,W/2),if(lt(Y,P*H),B,A),if(gt(Y,H-P*H),B,A))",
+    label: "Tách dọc",
+    description: "Nửa trái quét từ trên, nửa phải quét từ dưới, gặp nhau ở giữa",
+    category: "wipe",
+  },
+  {
+    type: "barn-h",
+    xfade: "custom",
+    expr: "if(lt(min(X,W-X),P*W/2),B,A)",
+    label: "Cửa chuồng ngang",
+    description: "Cảnh mới khép vào từ hai mép trái-phải như cửa chuồng",
+    category: "wipe",
+  },
+  {
+    type: "barn-v",
+    xfade: "custom",
+    expr: "if(lt(min(Y,H-Y),P*H/2),B,A)",
+    label: "Cửa chuồng dọc",
+    description: "Cảnh mới khép vào từ hai mép trên-dưới như cửa chuồng",
+    category: "wipe",
+  },
+  {
+    type: "rings",
+    xfade: "custom",
+    expr: "if(lt(mod(sqrt(pow(X-W/2,2)+pow(Y-H/2,2)),sqrt(pow(W/2,2)+pow(H/2,2))/4),P*sqrt(pow(W/2,2)+pow(H/2,2))/4),B,A)",
+    label: "Vòng đồng tâm",
+    description: "Cảnh mới hiện qua các vòng tròn đồng tâm mở dần",
+    category: "fx",
+  },
+  {
+    type: "corners",
+    xfade: "custom",
+    expr: "if(lte(min(min(pow(X,2)+pow(Y,2),pow(W-X,2)+pow(Y,2)),min(pow(X,2)+pow(H-Y,2),pow(W-X,2)+pow(H-Y,2))),pow(P*sqrt(pow(W/2,2)+pow(H/2,2)),2)),B,A)",
+    label: "Bốn góc",
+    description: "Cảnh mới nở ra đồng thời từ bốn góc màn hình",
+    category: "fx",
+  },
+  {
+    type: "star",
+    xfade: "custom",
+    expr: "if(lte(sqrt(pow(X-W/2,2)+pow(Y-H/2,2)),P*sqrt(pow(W/2,2)+pow(H/2,2))*(1+0.4*cos(5*atan2(Y-H/2,X-W/2)))/0.6),B,A)",
+    label: "Ngôi sao",
+    description: "Cảnh mới nở ra theo hình sao 5 cánh (xấp xỉ — xem TRANSITIONS_LIMITS.md)",
+    category: "fx",
+  },
+  {
+    type: "clock-ccw",
+    xfade: "custom",
+    expr: "if(gt(atan2(Y-H/2,X-W/2),PI-2*PI*P),B,A)",
+    label: "Quét đồng hồ ngược",
+    description: "Cảnh mới quét tròn ngược chiều kim đồng hồ",
+    category: "fx",
+  },
+  {
+    type: "spiral",
+    xfade: "custom",
+    expr: "if(lt(mod(atan2(Y-H/2,X-W/2)+PI+sqrt(pow(X-W/2,2)+pow(Y-H/2,2))*0.03,2*PI),2*PI*P),B,A)",
+    label: "Xoắn ốc",
+    description: "Cảnh mới quét tròn với cánh xoắn theo bán kính",
     category: "fx",
   },
 ];
@@ -582,7 +716,25 @@ function buildXfadeFilter(type, duration, offset) {
     // parser filtergraph sẽ hiểu dấu phẩy là tách filter và render lỗi.
     if (t.expr.includes("'"))
       throw new Error(`expr của transition "${type}" chứa dấu ' — không quote được`);
-    f += `:expr='${t.expr}'`;
+    // ROUND14 R1 — ĐẢO HƯỚNG P CỦA CUSTOM EXPR (đo thật, FFmpeg 8.1.2):
+    // FFmpeg đánh giá expr custom với P GIẢM 1→0 qua các frame transition,
+    // trong khi built-in và preview (transitionPreview.ts) tăng 0→1 — bằng
+    // chứng: probe lavfi đỏ/xanh, duration=0.4/offset=1/fps=30: wipeleft
+    // (built-in) B% tăng 0→99.5%, còn 22/23 type custom B% giảm 100→0%
+    // (xem docs/PHASE9_ROUND14_R1_PDIRECTION_LIMITS.md). Giả thuyết "A/B
+    // bị hoán đổi" đã bị loại bằng expr thăm dò không phụ thuộc P
+    // (if(lt(X,W/2),B,A) cho nửa trái = xanh đúng, không đỏ).
+    // Catalog expr viết theo p-preview (tăng 0→1, đúng như preview map),
+    // nên ở đây dịch mọi token P độc lập thành (1-P) trước khi đưa cho
+    // FFmpeg. Regex \bP\b KHÔNG chạm tới PI/pow/clip/... (P đứng một mình
+    // mới khớp; PI có I theo sau nên không khớp). CẢNH BÁO PHIÊN BẢN:
+    // phép dịch này gắn với hành vi P giảm của FFmpeg 8.1.2; nếu FFmpeg
+    // đổi chiều P ở bản sau, phải bỏ phép dịch và đo lại toàn bộ 23 type.
+    // Ngoại lệ duy nhất là circle-soft: literal của nó đã được sửa ở
+    // catalog (đổi hệ số A/B, xem ghi chú tại entry đó) nên vẫn dịch
+    // thống nhất như mọi type khác — KHÔNG có ngoại lệ trong hàm này.
+    const ffExpr = t.expr.replace(/\bP\b/g, "(1-P)");
+    f += `:expr='${ffExpr}'`;
   }
   return f;
 }

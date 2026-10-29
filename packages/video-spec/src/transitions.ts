@@ -82,6 +82,21 @@ export const TRANSITION_TYPES = [
   "clock",
   "circle-soft",
   "bars-fade",
+  // V3 (Phase 9 đợt 10): 14 transition custom expr — đã kiểm chứng bằng MP4 thật
+  "diamondclose",
+  "squareopen",
+  "squareclose",
+  "checker-alt",
+  "blinds-diag",
+  "split-h",
+  "split-v",
+  "barn-h",
+  "barn-v",
+  "rings",
+  "corners",
+  "star",
+  "clock-ccw",
+  "spiral",
 ] as const;
 
 export type TransitionType = (typeof TRANSITION_TYPES)[number];
@@ -162,6 +177,21 @@ export const TRANSITION_META: Record<
   clock: { label: "Quét đồng hồ", description: "Cảnh mới quét tròn như kim đồng hồ", category: "fx" },
   "circle-soft": { label: "Vòng tròn mềm", description: "Vòng tròn mở với viền mờ mềm (không cắt cứng)", category: "fx" },
   "bars-fade": { label: "Thanh dọc + mờ", description: "Thanh dọc mở dần trên nền crossfade", category: "fx" },
+  // V3 (Phase 9 đợt 10): custom expr
+  diamondclose: { label: "Hình thoi khép", description: "Cảnh cũ co dần thành hình thoi ở giữa, lộ cảnh mới", category: "fx" },
+  squareopen: { label: "Vuông mở", description: "Cảnh mới nở ra từ hình vuông ở giữa", category: "fx" },
+  squareclose: { label: "Vuông khép", description: "Cảnh cũ co dần thành hình vuông ở giữa, lộ cảnh mới", category: "fx" },
+  "checker-alt": { label: "Bàn cờ xen kẽ", description: "Ô bàn cờ chẵn hiện trước, ô lẻ hiện sau — giữa transition là bàn cờ rõ", category: "fx" },
+  "blinds-diag": { label: "Mành chéo", description: "Cảnh mới hiện qua các dải mành chéo mở dần", category: "wipe" },
+  "split-h": { label: "Tách ngang", description: "Nửa trên quét từ trái, nửa dưới quét từ phải, gặp nhau ở giữa", category: "wipe" },
+  "split-v": { label: "Tách dọc", description: "Nửa trái quét từ trên, nửa phải quét từ dưới, gặp nhau ở giữa", category: "wipe" },
+  "barn-h": { label: "Cửa chuồng ngang", description: "Cảnh mới khép vào từ hai mép trái-phải như cửa chuồng", category: "wipe" },
+  "barn-v": { label: "Cửa chuồng dọc", description: "Cảnh mới khép vào từ hai mép trên-dưới như cửa chuồng", category: "wipe" },
+  rings: { label: "Vòng đồng tâm", description: "Cảnh mới hiện qua các vòng tròn đồng tâm mở dần", category: "fx" },
+  corners: { label: "Bốn góc", description: "Cảnh mới nở ra đồng thời từ bốn góc màn hình", category: "fx" },
+  star: { label: "Ngôi sao", description: "Cảnh mới nở ra theo hình sao 5 cánh (xấp xỉ)", category: "fx" },
+  "clock-ccw": { label: "Quét đồng hồ ngược", description: "Cảnh mới quét tròn ngược chiều kim đồng hồ", category: "fx" },
+  spiral: { label: "Xoắn ốc", description: "Cảnh mới quét tròn với cánh xoắn theo bán kính", category: "fx" },
 };
 
 /** Kiểm tra một giá trị có phải TransitionType hợp lệ không. */

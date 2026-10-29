@@ -3,8 +3,8 @@
   "generated": "2026-10-19",
   "engine": "ffmpeg-xfade",
   "ffmpeg_version_tested": "8.1.2",
-  "total": 67,
-  "note": "Tất cả transitions render thật qua filter xfade của FFmpeg. 9 transition P5 (Phase 7) dùng xfade transition=custom + expr (không cần shader). 21 GLSL transitions trong assets/transitions/*.glsl KHÔNG dùng được (FFmpeg thiếu gltransition) — xem TRANSITIONS_LIMITS.md.",
+  "total": 81,
+  "note": "Tất cả transitions render thật qua filter xfade của FFmpeg. 23 transition custom dùng xfade transition=custom + expr (9 P5 Phase 7 + 14 V3 Phase 9 đợt 10, không cần shader). 21 GLSL transitions trong assets/transitions/*.glsl KHÔNG dùng được (FFmpeg thiếu gltransition) — xem TRANSITIONS_LIMITS.md.",
   "categories": {
     "none": "Không hiệu ứng",
     "fade": "Mờ dần / hòa trộn",
@@ -557,6 +557,132 @@
       "description": "Thanh dọc mở dần trên nền crossfade",
       "category": "fx",
       "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lt(mod(X,W/8),P*W/8),B,A*(1-P)+B*P)'"
+    },
+    {
+      "type": "diamondclose",
+      "xfade": "custom",
+      "expr": "if(lte(abs(X-W/2)+abs(Y-H/2),(1-P)*(W+H)/2),A,B)",
+      "label": "Hình thoi khép",
+      "description": "Cảnh cũ co dần thành hình thoi ở giữa, lộ cảnh mới",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lte(abs(X-W/2)+abs(Y-H/2),(1-P)*(W+H)/2),A,B)'"
+    },
+    {
+      "type": "squareopen",
+      "xfade": "custom",
+      "expr": "if(lte(max(abs(X-W/2),abs(Y-H/2)),P*max(W,H)/2),B,A)",
+      "label": "Vuông mở",
+      "description": "Cảnh mới nở ra từ hình vuông ở giữa",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lte(max(abs(X-W/2),abs(Y-H/2)),P*max(W,H)/2),B,A)'"
+    },
+    {
+      "type": "squareclose",
+      "xfade": "custom",
+      "expr": "if(lte(max(abs(X-W/2),abs(Y-H/2)),(1-P)*max(W,H)/2),A,B)",
+      "label": "Vuông khép",
+      "description": "Cảnh cũ co dần thành hình vuông ở giữa, lộ cảnh mới",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lte(max(abs(X-W/2),abs(Y-H/2)),(1-P)*max(W,H)/2),A,B)'"
+    },
+    {
+      "type": "checker-alt",
+      "xfade": "custom",
+      "expr": "if(eq(mod(floor(X/(W/8))+floor(Y/(H/8)),2),0),if(gt(P,0.25),B,A),if(gt(P,0.75),B,A))",
+      "label": "Bàn cờ xen kẽ",
+      "description": "Ô bàn cờ chẵn hiện trước, ô lẻ hiện sau — giữa transition là bàn cờ rõ",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(eq(mod(floor(X/(W/8))+floor(Y/(H/8)),2),0),if(gt(P,0.25),B,A),if(gt(P,0.75),B,A))'"
+    },
+    {
+      "type": "blinds-diag",
+      "xfade": "custom",
+      "expr": "if(lt(mod(X+Y,H/8),P*H/8),B,A)",
+      "label": "Mành chéo",
+      "description": "Cảnh mới hiện qua các dải mành chéo mở dần",
+      "category": "wipe",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lt(mod(X+Y,H/8),P*H/8),B,A)'"
+    },
+    {
+      "type": "split-h",
+      "xfade": "custom",
+      "expr": "if(lt(Y,H/2),if(lt(X,P*W),B,A),if(gt(X,W-P*W),B,A))",
+      "label": "Tách ngang",
+      "description": "Nửa trên quét từ trái, nửa dưới quét từ phải, gặp nhau ở giữa",
+      "category": "wipe",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lt(Y,H/2),if(lt(X,P*W),B,A),if(gt(X,W-P*W),B,A))'"
+    },
+    {
+      "type": "split-v",
+      "xfade": "custom",
+      "expr": "if(lt(X,W/2),if(lt(Y,P*H),B,A),if(gt(Y,H-P*H),B,A))",
+      "label": "Tách dọc",
+      "description": "Nửa trái quét từ trên, nửa phải quét từ dưới, gặp nhau ở giữa",
+      "category": "wipe",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lt(X,W/2),if(lt(Y,P*H),B,A),if(gt(Y,H-P*H),B,A))'"
+    },
+    {
+      "type": "barn-h",
+      "xfade": "custom",
+      "expr": "if(lt(min(X,W-X),P*W/2),B,A)",
+      "label": "Cửa chuồng ngang",
+      "description": "Cảnh mới khép vào từ hai mép trái-phải như cửa chuồng",
+      "category": "wipe",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lt(min(X,W-X),P*W/2),B,A)'"
+    },
+    {
+      "type": "barn-v",
+      "xfade": "custom",
+      "expr": "if(lt(min(Y,H-Y),P*H/2),B,A)",
+      "label": "Cửa chuồng dọc",
+      "description": "Cảnh mới khép vào từ hai mép trên-dưới như cửa chuồng",
+      "category": "wipe",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lt(min(Y,H-Y),P*H/2),B,A)'"
+    },
+    {
+      "type": "rings",
+      "xfade": "custom",
+      "expr": "if(lt(mod(sqrt(pow(X-W/2,2)+pow(Y-H/2,2)),sqrt(pow(W/2,2)+pow(H/2,2))/4),P*sqrt(pow(W/2,2)+pow(H/2,2))/4),B,A)",
+      "label": "Vòng đồng tâm",
+      "description": "Cảnh mới hiện qua các vòng tròn đồng tâm mở dần",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lt(mod(sqrt(pow(X-W/2,2)+pow(Y-H/2,2)),sqrt(pow(W/2,2)+pow(H/2,2))/4),P*sqrt(pow(W/2,2)+pow(H/2,2))/4),B,A)'"
+    },
+    {
+      "type": "corners",
+      "xfade": "custom",
+      "expr": "if(lte(min(min(pow(X,2)+pow(Y,2),pow(W-X,2)+pow(Y,2)),min(pow(X,2)+pow(H-Y,2),pow(W-X,2)+pow(H-Y,2))),pow(P*sqrt(pow(W/2,2)+pow(H/2,2)),2)),B,A)",
+      "label": "Bốn góc",
+      "description": "Cảnh mới nở ra đồng thời từ bốn góc màn hình",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lte(min(min(pow(X,2)+pow(Y,2),pow(W-X,2)+pow(Y,2)),min(pow(X,2)+pow(H-Y,2),pow(W-X,2)+pow(H-Y,2))),pow(P*sqrt(pow(W/2,2)+pow(H/2,2)),2)),B,A)'"
+    },
+    {
+      "type": "star",
+      "xfade": "custom",
+      "expr": "if(lte(sqrt(pow(X-W/2,2)+pow(Y-H/2,2)),P*sqrt(pow(W/2,2)+pow(H/2,2))*(1+0.4*cos(5*atan2(Y-H/2,X-W/2)))/0.6),B,A)",
+      "label": "Ngôi sao",
+      "description": "Cảnh mới nở ra theo hình sao 5 cánh (xấp xỉ — xem TRANSITIONS_LIMITS.md)",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lte(sqrt(pow(X-W/2,2)+pow(Y-H/2,2)),P*sqrt(pow(W/2,2)+pow(H/2,2))*(1+0.4*cos(5*atan2(Y-H/2,X-W/2)))/0.6),B,A)'"
+    },
+    {
+      "type": "clock-ccw",
+      "xfade": "custom",
+      "expr": "if(gt(atan2(Y-H/2,X-W/2),PI-2*PI*P),B,A)",
+      "label": "Quét đồng hồ ngược",
+      "description": "Cảnh mới quét tròn ngược chiều kim đồng hồ",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(gt(atan2(Y-H/2,X-W/2),PI-2*PI*P),B,A)'"
+    },
+    {
+      "type": "spiral",
+      "xfade": "custom",
+      "expr": "if(lt(mod(atan2(Y-H/2,X-W/2)+PI+sqrt(pow(X-W/2,2)+pow(Y-H/2,2))*0.03,2*PI),2*PI*P),B,A)",
+      "label": "Xoắn ốc",
+      "description": "Cảnh mới quét tròn với cánh xoắn theo bán kính",
+      "category": "fx",
+      "filter_example": "xfade=transition=custom:duration=1:offset=2:expr='if(lt(mod(atan2(Y-H/2,X-W/2)+PI+sqrt(pow(X-W/2,2)+pow(Y-H/2,2))*0.03,2*PI),2*PI*P),B,A)'"
     }
   ],
   "custom_needed": []

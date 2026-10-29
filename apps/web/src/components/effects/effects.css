@@ -79,3 +79,17 @@
   color: #8a8aa0;
   margin: 8px 0 0;
 }
+
+/* ---- V5: badge trạng thái preview (nhãn dữ liệu, xem ../transitions/previewStatus.ts) ---- */
+.fx-badge {
+  font-size: 10px;
+  line-height: 1.4;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid #3a3a4a;
+  color: #9a9ab0;
+  white-space: nowrap;
+}
+.fx-badge[data-preview="matched"] { color: #7ddba3; border-color: #2a5a40; }
+.fx-badge[data-preview="approx"] { color: #e8c26a; border-color: #5a4a22; }
+.fx-badge[data-preview="none"] { color: #9a9ab0; border-color: #3a3a4a; }

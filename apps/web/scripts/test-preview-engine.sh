@@ -26,6 +26,7 @@ cat > "$OUT/tsconfig.json" <<EOF
   },
   "include": [
     "$REPO_DIR/apps/web/src/lib/previewEngine.ts",
+    "$REPO_DIR/apps/web/src/lib/transitionPreview.ts",
     "$REPO_DIR/packages/video-spec/src/index.ts"
   ]
 }
@@ -39,7 +40,8 @@ sed -i 's#require("@repo-1/video-spec")#require("../../../../packages/video-spec
   "$OUT/out/apps/web/src/lib/previewEngine.js"
 
 echo "== kiểm tra thứ tự transform trong render.js (static) =="
-# Thứ tự chain trong render.js PHẢI là: speed → chroma → LUT → effects → opacity → keyframes
+# Thứ tự chain trong render.js PHẢI là: speed → chroma → (color) → LUT → effects → opacity → keyframes
+# (R1-075 thêm colorChain giữa chromaChain và lutChain — check 6 marker chính vẫn đúng thứ tự)
 RJ="$REPO_DIR/server/render/src/render.js"
 # marker: lần xuất hiện trong buildFilterGraph (bỏ qua dòng require/import đầu file)
 check_order() {
