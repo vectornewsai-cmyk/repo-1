@@ -6,6 +6,7 @@
  */
 import { useState } from "react";
 import { useStore } from "./store";
+import { subscribeToasts } from "./lib/toast";
 import { fmtTime } from "./lib";
 import { ProjectMenu } from "./components/project/ProjectMenu";
 import { t, useLang, setLang, getLang } from "./i18n";
@@ -50,8 +51,26 @@ export function TopBar({ onExport, onCaption, onSilence, onTemplate, onWelcome }
   );
 
   const doSplit = () => {
+    // Đợt 19 G3: splitAtPlayhead đã tự toast lý do thật khi nested bị
+    // từ chối (xem store.ts) — khi đó KHÔNG flash câu chung nữa, vì
+    // "Không có clip nào tại playhead" là sai sự thật (clip có đó, chỉ
+    // không tách được) và thành báo trùng. Cách nhận biết không đổi
+    // hợp đồng trả về của action: đếm toast trước/sau lời gọi qua API
+    // công khai subscribeToasts (callback chạy ngay với snapshot hiện
+    // tại); action tách hiện không bắn toast nào khác nên toast mới
+    // xuất hiện trong lời gọi này chính là lý do thất bại đã báo.
+    let before = 0;
+    const unsubBefore = subscribeToasts((list) => {
+      before = list.length;
+    });
+    unsubBefore();
     const ok = st.splitAtPlayhead();
-    if (!ok) {
+    let after = 0;
+    const unsubAfter = subscribeToasts((list) => {
+      after = list.length;
+    });
+    unsubAfter();
+    if (!ok && after === before) {
       setFlash(t("topbar.noClipAtPlayhead"));
       setTimeout(() => setFlash(null), 1800);
     }
