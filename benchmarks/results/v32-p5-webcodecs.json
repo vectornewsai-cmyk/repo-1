@@ -1,0 +1,90 @@
+{
+  "errors": [],
+  "support": {
+    "prefer-hardware": false,
+    "prefer-software": true
+  },
+  "fixtures": {
+    "sparse": {
+      "bytes": 45369,
+      "fetchMs": 5.2,
+      "demuxMs": 1.5,
+      "sampleCount": 900,
+      "keyCount": 3,
+      "gopFrames": 300,
+      "decoded": 300,
+      "cacheSize": 300,
+      "decodeWallSec": 0.52,
+      "decodeFps": 577.1,
+      "present": {
+        "drawn": 300,
+        "missing": 0
+      },
+      "presentWallSec": 1.078,
+      "presentReverseFps": 278.2,
+      "decodeAhead": {
+        "gop2": [
+          300,
+          599
+        ],
+        "decodedAhead": 300,
+        "cache2Size": 300,
+        "presentWallSec": 0.982,
+        "decodeWallSec": 1.293,
+        "decodeFinishedBeforePresentEnd": false
+      }
+    },
+    "dense": {
+      "bytes": 49702,
+      "fetchMs": 11.6,
+      "demuxMs": 0.4,
+      "sampleCount": 900,
+      "keyCount": 30,
+      "gopFrames": 30,
+      "decoded": 30,
+      "cacheSize": 30,
+      "decodeWallSec": 0.049,
+      "decodeFps": 607.3,
+      "present": {
+        "drawn": 30,
+        "missing": 0
+      },
+      "presentWallSec": 0.098,
+      "presentReverseFps": 306.1,
+      "decodeAhead": {
+        "gop2": [
+          30,
+          59
+        ],
+        "decodedAhead": 30,
+        "cache2Size": 30,
+        "presentWallSec": 0.097,
+        "decodeWallSec": 0.12,
+        "decodeFinishedBeforePresentEnd": false
+      }
+    },
+    "noise": {
+      "bytes": 38863333,
+      "sampleCount": 300,
+      "keyCount": 5,
+      "decoded": 300,
+      "decodeWallSec": 9.414,
+      "decodeFps": 31.9,
+      "present": {
+        "drawn": 300,
+        "missing": 0
+      },
+      "presentWallSec": 1.368,
+      "presentReverseFps": 219.3
+    }
+  },
+  "singleFlush": {
+    "outputsAfterFlush": 1,
+    "queueToFlushMs": 2.5,
+    "queuedMs": 0.2,
+    "flushExtraWaitMs": 200.3,
+    "error": null
+  },
+  "decodeAhead": null,
+  "hasVideoDecoder": true
+}

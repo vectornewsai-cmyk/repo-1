@@ -1,0 +1,21 @@
+{
+  "run": "v32-p2-retry-longrun",
+  "date": "2026-11-01T07:19:35.230Z",
+  "durationTargetMs": 300000,
+  "wallMs": 300068,
+  "attempts": 232,
+  "sets": 1,
+  "orphanSeekedListenersOnElement": 0,
+  "maxListenersSeenDuringRun": 0,
+  "drawsWhileNeverSeeked": 0,
+  "retriesAfterTimeout": 232,
+  "gapMs": {
+    "mean": 1293.4,
+    "min": 1280,
+    "max": 1336
+  },
+  "cpuUserMs": 111,
+  "cpuSystemMs": 13,
+  "seekingAtEnd": true,
+  "note": "Mock Node: không có rAF/decode thật; nhịp = debounce 80ms + timeout 1200ms + overhead promise. So với O3 (120s): cùng mock, cùng cây đã có vá gỡ listener."
+}

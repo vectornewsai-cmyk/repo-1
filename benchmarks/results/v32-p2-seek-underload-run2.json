@@ -1,0 +1,7740 @@
+{
+  "run": "v32-p2-seek-underload",
+  "date": "2026-11-01T07:11:40.105Z",
+  "load": "4x yes, xuyên suốt scrub + phát xuôi + phát ngược",
+  "afterSample": {
+    "canvas": {
+      "w": 872,
+      "h": 476
+    },
+    "timecode": "00:00:00:00"
+  },
+  "scrubUnderLoad": {
+    "dragAttempts": [
+      {
+        "attempt": 1,
+        "timecode": "00:00:00:00",
+        "sec": 0,
+        "setsDelta": 0,
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 0,
+          "lastRequested": 0
+        }
+      },
+      {
+        "attempt": 2,
+        "timecode": "00:00:02:27",
+        "sec": 2.9,
+        "setsDelta": 6,
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0,
+          "lastRequested": 2.9
+        }
+      }
+    ],
+    "scrubOk": true,
+    "convergedAtMs": 3083,
+    "polls": 14,
+    "final": {
+      "wallMs": 3573,
+      "converged": true,
+      "active": {
+        "id": 1,
+        "srcKind": "blob",
+        "seeking": false,
+        "ct": 2.9,
+        "rs": 4,
+        "paused": true
+      },
+      "hash": 3008678,
+      "mean": [
+        38,
+        59,
+        103
+      ],
+      "timecode": "00:00:02:27",
+      "idle": {
+        "sleeping": true,
+        "lastDrawn": 2.9,
+        "lastRequested": 2.9
+      }
+    },
+    "series": [
+      {
+        "wallMs": 95,
+        "converged": false,
+        "active": {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": true,
+          "ct": 1.733333,
+          "rs": 1,
+          "paused": true
+        },
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "timecode": "00:00:02:27",
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0,
+          "lastRequested": 2.9
+        }
+      },
+      {
+        "wallMs": 393,
+        "converged": false,
+        "active": {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": true,
+          "ct": 1.733333,
+          "rs": 1,
+          "paused": true
+        },
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "timecode": "00:00:02:27",
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0,
+          "lastRequested": 2.9
+        }
+      },
+      {
+        "wallMs": 684,
+        "converged": false,
+        "active": {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": true,
+          "ct": 1.733333,
+          "rs": 1,
+          "paused": true
+        },
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "timecode": "00:00:02:27",
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0,
+          "lastRequested": 2.9
+        }
+      },
+      {
+        "wallMs": 903,
+        "converged": false,
+        "active": {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": true,
+          "ct": 2.9,
+          "rs": 1,
+          "paused": true
+        },
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "timecode": "00:00:02:27",
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0,
+          "lastRequested": 2.9
+        }
+      },
+      {
+        "wallMs": 1180,
+        "converged": false,
+        "active": {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": true,
+          "ct": 2.9,
+          "rs": 1,
+          "paused": true
+        },
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "timecode": "00:00:02:27",
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0,
+          "lastRequested": 2.9
+        }
+      },
+      {
+        "wallMs": 1487,
+        "converged": false,
+        "active": {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": true,
+          "ct": 2.9,
+          "rs": 1,
+          "paused": true
+        },
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "timecode": "00:00:02:27",
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0,
+          "lastRequested": 2.9
+        }
+      },
+      {
+        "wallMs": 1793,
+        "converged": false,
+        "active": {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": true,
+          "ct": 2.9,
+          "rs": 1,
+          "paused": true
+        },
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "timecode": "00:00:02:27",
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0,
+          "lastRequested": 2.9
+        }
+      },
+      {
+        "wallMs": 2093,
+        "converged": false,
+        "active": {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": true,
+          "ct": 2.9,
+          "rs": 1,
+          "paused": true
+        },
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "timecode": "00:00:02:27",
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0,
+          "lastRequested": 2.9
+        }
+      },
+      {
+        "wallMs": 2378,
+        "converged": false,
+        "active": {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": true,
+          "ct": 2.9,
+          "rs": 1,
+          "paused": true
+        },
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "timecode": "00:00:02:27",
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0,
+          "lastRequested": 2.9
+        }
+      },
+      {
+        "wallMs": 2593,
+        "converged": false,
+        "active": {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": true,
+          "ct": 2.9,
+          "rs": 1,
+          "paused": true
+        },
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "timecode": "00:00:02:27",
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0,
+          "lastRequested": 2.9
+        }
+      },
+      {
+        "wallMs": 2872,
+        "converged": false,
+        "active": {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": true,
+          "ct": 2.9,
+          "rs": 1,
+          "paused": true
+        },
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "timecode": "00:00:02:27",
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0,
+          "lastRequested": 2.9
+        }
+      },
+      {
+        "wallMs": 3083,
+        "converged": true,
+        "active": {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": false,
+          "ct": 2.9,
+          "rs": 4,
+          "paused": true
+        },
+        "hash": 3008678,
+        "mean": [
+          38,
+          59,
+          103
+        ],
+        "timecode": "00:00:02:27",
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 2.9,
+          "lastRequested": 2.9
+        }
+      },
+      {
+        "wallMs": 3296,
+        "converged": true,
+        "active": {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": false,
+          "ct": 2.9,
+          "rs": 4,
+          "paused": true
+        },
+        "hash": 3008678,
+        "mean": [
+          38,
+          59,
+          103
+        ],
+        "timecode": "00:00:02:27",
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 2.9,
+          "lastRequested": 2.9
+        }
+      },
+      {
+        "wallMs": 3573,
+        "converged": true,
+        "active": {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": false,
+          "ct": 2.9,
+          "rs": 4,
+          "paused": true
+        },
+        "hash": 3008678,
+        "mean": [
+          38,
+          59,
+          103
+        ],
+        "timecode": "00:00:02:27",
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 2.9,
+          "lastRequested": 2.9
+        }
+      }
+    ]
+  },
+  "forwardUnderLoad": {
+    "homeBeforePlay": {
+      "t": 25017,
+      "hash": 2787235,
+      "mean": [
+        61,
+        38,
+        97
+      ],
+      "els": [
+        {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": false,
+          "ct": 0,
+          "rs": 4,
+          "paused": true
+        },
+        {
+          "id": 2,
+          "srcKind": "blob",
+          "seeking": false,
+          "ct": 0,
+          "rs": 0,
+          "paused": true
+        },
+        {
+          "id": 3,
+          "srcKind": "blob",
+          "seeking": false,
+          "ct": 0,
+          "rs": 0,
+          "paused": true
+        },
+        {
+          "id": 4,
+          "srcKind": "blob",
+          "seeking": false,
+          "ct": 0,
+          "rs": 0,
+          "paused": true
+        },
+        {
+          "id": 5,
+          "srcKind": "blob",
+          "seeking": false,
+          "ct": 0,
+          "rs": 0,
+          "paused": true
+        }
+      ],
+      "idle": {
+        "sleeping": true,
+        "lastDrawn": 0,
+        "lastRequested": 0
+      },
+      "timecode": "00:00:00:00"
+    },
+    "analysis": {
+      "samples": 60,
+      "setsInPhase": 15,
+      "setValues": [
+        0,
+        0.6,
+        3.5,
+        3.9,
+        0.36666666666666625,
+        0.7333333333333334,
+        1.1333333333333337,
+        1.5333333333333332,
+        1.9000000000000004,
+        2.333333333333333,
+        2.7333333333333334,
+        3.1333333333333337,
+        3.533333333333333,
+        3.966666666666667,
+        0
+      ],
+      "tcFirst": "00:00:00:00",
+      "tcLast": "00:00:08:00",
+      "tcFirstSec": 0,
+      "tcLastSec": 8,
+      "maxStepAbsSameEl": 3.6,
+      "maxStepSignedSameEl": -3.6,
+      "seekingSamples": 53,
+      "blackAfterContent": 0
+    },
+    "samples": [
+      {
+        "t": 25177,
+        "hash": 2787265,
+        "mean": [
+          61,
+          38,
+          97
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 0,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0,
+          "lastRequested": 0
+        },
+        "timecode": "00:00:00:00"
+      },
+      {
+        "t": 25384,
+        "hash": 2785057,
+        "mean": [
+          66,
+          36,
+          97
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.2846,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0.1,
+          "lastRequested": 0.1
+        },
+        "timecode": "00:00:00:03"
+      },
+      {
+        "t": 25597,
+        "hash": 2825043,
+        "mean": [
+          82,
+          33,
+          96
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.4972,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0.26666666666666666,
+          "lastRequested": 0.26666666666666666
+        },
+        "timecode": "00:00:00:08"
+      },
+      {
+        "t": 25879,
+        "hash": 2747444,
+        "mean": [
+          84,
+          32,
+          92
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.779,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0.4666666666666667,
+          "lastRequested": 0.4666666666666667
+        },
+        "timecode": "00:00:00:14"
+      },
+      {
+        "t": 26283,
+        "hash": 2757505,
+        "mean": [
+          85,
+          33,
+          91
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 0.6,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0.6,
+          "lastRequested": 0.6
+        },
+        "timecode": "00:00:00:18"
+      },
+      {
+        "t": 26416,
+        "hash": 2785978,
+        "mean": [
+          86,
+          34,
+          92
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 0.6,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0.7,
+          "lastRequested": 0.7
+        },
+        "timecode": "00:00:00:21"
+      },
+      {
+        "t": 26704,
+        "hash": 2820269,
+        "mean": [
+          88,
+          35,
+          92
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.795,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0.9,
+          "lastRequested": 0.9
+        },
+        "timecode": "00:00:00:27"
+      },
+      {
+        "t": 26905,
+        "hash": 2826185,
+        "mean": [
+          90,
+          37,
+          91
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.9964,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 1.1,
+          "lastRequested": 1.1
+        },
+        "timecode": "00:00:01:03"
+      },
+      {
+        "t": 27101,
+        "hash": 2819757,
+        "mean": [
+          90,
+          37,
+          90
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 1.1918,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 1.3,
+          "lastRequested": 1.3
+        },
+        "timecode": "00:00:01:09"
+      },
+      {
+        "t": 27298,
+        "hash": 2916655,
+        "mean": [
+          89,
+          40,
+          93
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 1.3891,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 1.5,
+          "lastRequested": 1.5
+        },
+        "timecode": "00:00:01:15"
+      },
+      {
+        "t": 27579,
+        "hash": 2948678,
+        "mean": [
+          89,
+          41,
+          95
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 1.6699,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 1.6666666666666667,
+          "lastRequested": 1.6666666666666667
+        },
+        "timecode": "00:00:01:20"
+      },
+      {
+        "t": 27701,
+        "hash": 2970216,
+        "mean": [
+          71,
+          41,
+          102
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 1.7922,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 1.8666666666666667,
+          "lastRequested": 1.8666666666666667
+        },
+        "timecode": "00:00:01:26"
+      },
+      {
+        "t": 27881,
+        "hash": 2962110,
+        "mean": [
+          69,
+          42,
+          102
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 1.9717,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 2,
+          "lastRequested": 2
+        },
+        "timecode": "00:00:02:00"
+      },
+      {
+        "t": 28011,
+        "hash": 2978351,
+        "mean": [
+          63,
+          44,
+          103
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 2.1015,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 2.1666666666666665,
+          "lastRequested": 2.1666666666666665
+        },
+        "timecode": "00:00:02:05"
+      },
+      {
+        "t": 28194,
+        "hash": 2984040,
+        "mean": [
+          57,
+          47,
+          103
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 2.2846,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 2.3,
+          "lastRequested": 2.3
+        },
+        "timecode": "00:00:02:09"
+      },
+      {
+        "t": 28317,
+        "hash": 2992345,
+        "mean": [
+          50,
+          50,
+          104
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 2.4081,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 2.466666666666667,
+          "lastRequested": 2.466666666666667
+        },
+        "timecode": "00:00:02:14"
+      },
+      {
+        "t": 28509,
+        "hash": 2988954,
+        "mean": [
+          44,
+          52,
+          104
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 2.6,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 2.6,
+          "lastRequested": 2.6
+        },
+        "timecode": "00:00:02:18"
+      },
+      {
+        "t": 28698,
+        "hash": 2978199,
+        "mean": [
+          41,
+          54,
+          104
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 2.7893,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 2.8,
+          "lastRequested": 2.8
+        },
+        "timecode": "00:00:02:24"
+      },
+      {
+        "t": 28901,
+        "hash": 3008678,
+        "mean": [
+          38,
+          59,
+          103
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 2.9917,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 2.966666666666667,
+          "lastRequested": 2.966666666666667
+        },
+        "timecode": "00:00:02:29"
+      },
+      {
+        "t": 29226,
+        "hash": 3013800,
+        "mean": [
+          39,
+          60,
+          102
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.3172,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 3.1,
+          "lastRequested": 3.1
+        },
+        "timecode": "00:00:03:03"
+      },
+      {
+        "t": 29586,
+        "hash": 2974719,
+        "mean": [
+          44,
+          54,
+          102
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.6765,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 3.3,
+          "lastRequested": 3.3
+        },
+        "timecode": "00:00:03:09"
+      },
+      {
+        "t": 29794,
+        "hash": 2978203,
+        "mean": [
+          53,
+          50,
+          102
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.8845,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 3.4,
+          "lastRequested": 3.4
+        },
+        "timecode": "00:00:03:12"
+      },
+      {
+        "t": 30287,
+        "hash": 2199085,
+        "mean": [
+          35,
+          41,
+          74
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.5,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 3.6,
+          "lastRequested": 3.6
+        },
+        "timecode": "00:00:03:18"
+      },
+      {
+        "t": 30613,
+        "hash": 1441691,
+        "mean": [
+          24,
+          29,
+          47
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.5,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 3.8,
+          "lastRequested": 3.8
+        },
+        "timecode": "00:00:03:24"
+      },
+      {
+        "t": 31095,
+        "hash": 720338,
+        "mean": [
+          15,
+          17,
+          21
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 4.2,
+          "lastRequested": 4.2
+        },
+        "timecode": "00:00:04:06"
+      },
+      {
+        "t": 31306,
+        "hash": 720338,
+        "mean": [
+          15,
+          17,
+          21
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.36666666666666625,
+            "rs": 0,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 4.366666666666666,
+          "lastRequested": 4.366666666666666
+        },
+        "timecode": "00:00:04:11"
+      },
+      {
+        "t": 31507,
+        "hash": 720338,
+        "mean": [
+          15,
+          17,
+          21
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 0.366666,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 4.633333333333334,
+          "lastRequested": 4.633333333333334
+        },
+        "timecode": "00:00:04:19"
+      },
+      {
+        "t": 31694,
+        "hash": 720338,
+        "mean": [
+          15,
+          17,
+          21
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 0.733333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 4.766666666666667,
+          "lastRequested": 4.766666666666667
+        },
+        "timecode": "00:00:04:23"
+      },
+      {
+        "t": 31892,
+        "hash": 720338,
+        "mean": [
+          15,
+          17,
+          21
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 0.733333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 4.933333333333334,
+          "lastRequested": 4.933333333333334
+        },
+        "timecode": "00:00:04:28"
+      },
+      {
+        "t": 32080,
+        "hash": 720338,
+        "mean": [
+          15,
+          17,
+          21
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.133333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 5.133333333333334,
+          "lastRequested": 5.133333333333334
+        },
+        "timecode": "00:00:05:04"
+      },
+      {
+        "t": 32210,
+        "hash": 720338,
+        "mean": [
+          15,
+          17,
+          21
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.133333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 5.266666666666667,
+          "lastRequested": 5.266666666666667
+        },
+        "timecode": "00:00:05:08"
+      },
+      {
+        "t": 32395,
+        "hash": 720338,
+        "mean": [
+          15,
+          17,
+          21
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.133333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 5.433333333333334,
+          "lastRequested": 5.433333333333334
+        },
+        "timecode": "00:00:05:13"
+      },
+      {
+        "t": 32584,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.533333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 5.533333333333333,
+          "lastRequested": 5.533333333333333
+        },
+        "timecode": "00:00:05:16"
+      },
+      {
+        "t": 32778,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.533333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 5.733333333333333,
+          "lastRequested": 5.733333333333333
+        },
+        "timecode": "00:00:05:22"
+      },
+      {
+        "t": 32995,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.9,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 6.033333333333333,
+          "lastRequested": 6.033333333333333
+        },
+        "timecode": "00:00:06:01"
+      },
+      {
+        "t": 33186,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.9,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 6.133333333333334,
+          "lastRequested": 6.133333333333334
+        },
+        "timecode": "00:00:06:04"
+      },
+      {
+        "t": 33318,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 2.333333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 6.4,
+          "lastRequested": 6.4
+        },
+        "timecode": "00:00:06:12"
+      },
+      {
+        "t": 33590,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 2.333333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 6.533333333333333,
+          "lastRequested": 6.533333333333333
+        },
+        "timecode": "00:00:06:16"
+      },
+      {
+        "t": 33793,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 2.733333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 6.733333333333333,
+          "lastRequested": 6.733333333333333
+        },
+        "timecode": "00:00:06:22"
+      },
+      {
+        "t": 34005,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 2.733333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 6.966666666666667,
+          "lastRequested": 6.966666666666667
+        },
+        "timecode": "00:00:06:29"
+      },
+      {
+        "t": 34198,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.133333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 7.133333333333334,
+          "lastRequested": 7.133333333333334
+        },
+        "timecode": "00:00:07:04"
+      },
+      {
+        "t": 34313,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.9,
+            "rs": 1,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.133333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 7.266666666666667,
+          "lastRequested": 7.266666666666667
+        },
+        "timecode": "00:00:07:08"
+      },
+      {
+        "t": 34498,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": false
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.133333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 7.466666666666667,
+          "lastRequested": 7.466666666666667
+        },
+        "timecode": "00:00:07:14"
+      },
+      {
+        "t": 34695,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.533333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 7.666666666666667,
+          "lastRequested": 7.666666666666667
+        },
+        "timecode": "00:00:07:20"
+      },
+      {
+        "t": 34883,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.533333,
+            "rs": 1,
+            "paused": false
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 7.833333333333333,
+          "lastRequested": 7.833333333333333
+        },
+        "timecode": "00:00:07:25"
+      },
+      {
+        "t": 35090,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.966666,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": null,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      },
+      {
+        "t": 35200,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.966666,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 8,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      },
+      {
+        "t": 35312,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.966666,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 8,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      },
+      {
+        "t": 35510,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.966666,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 8,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      },
+      {
+        "t": 35701,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.966666,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 8,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      },
+      {
+        "t": 35888,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.966666,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 8,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      },
+      {
+        "t": 36007,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.966666,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 8,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      },
+      {
+        "t": 36317,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.966666,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 8,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      },
+      {
+        "t": 36488,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.966666,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 8,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      },
+      {
+        "t": 36601,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.966666,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 8,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      },
+      {
+        "t": 36715,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.966666,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 8,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      },
+      {
+        "t": 36901,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.366666,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 8,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      },
+      {
+        "t": 37112,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.366666,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 8,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      },
+      {
+        "t": 37218,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.366666,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 8,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      },
+      {
+        "t": 37413,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.913,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.366666,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 8,
+          "lastRequested": 8
+        },
+        "timecode": "00:00:08:00"
+      }
+    ]
+  },
+  "reverseUnderLoad": {
+    "homeBeforeReverse": {
+      "t": 40205,
+      "hash": 2787235,
+      "mean": [
+        61,
+        38,
+        97
+      ],
+      "els": [
+        {
+          "id": 1,
+          "srcKind": "blob",
+          "seeking": false,
+          "ct": 0,
+          "rs": 4,
+          "paused": true
+        },
+        {
+          "id": 2,
+          "srcKind": "blob",
+          "seeking": false,
+          "ct": 0,
+          "rs": 0,
+          "paused": true
+        },
+        {
+          "id": 3,
+          "srcKind": "blob",
+          "seeking": false,
+          "ct": 0,
+          "rs": 0,
+          "paused": true
+        },
+        {
+          "id": 4,
+          "srcKind": "blob",
+          "seeking": false,
+          "ct": 0,
+          "rs": 0,
+          "paused": true
+        },
+        {
+          "id": 5,
+          "srcKind": "blob",
+          "seeking": false,
+          "ct": 0,
+          "rs": 0,
+          "paused": true
+        },
+        {
+          "id": 6,
+          "srcKind": "blob",
+          "seeking": false,
+          "ct": 0.366666,
+          "rs": 4,
+          "paused": true
+        }
+      ],
+      "idle": {
+        "sleeping": true,
+        "lastDrawn": 0,
+        "lastRequested": 0
+      },
+      "timecode": "00:00:00:00"
+    },
+    "button": {
+      "text": "◀",
+      "aria": "Phát ngược"
+    },
+    "analysis": {
+      "samples": 50,
+      "setsInPhase": 10,
+      "setValues": [
+        3.9333333333333336,
+        2.1333333333333337,
+        1.4333333333333336,
+        0.7333333333333334,
+        0.33333333333333304,
+        3.966666666666667,
+        1.8666666666666667,
+        0.8666666666666667,
+        0.36666666666666664,
+        0
+      ],
+      "tcFirst": "00:00:07:28",
+      "tcLast": "00:00:00:00",
+      "tcFirstSec": 7.933333333333334,
+      "tcLastSec": 0,
+      "maxStepAbsSameEl": 3.913,
+      "maxStepSignedSameEl": 3.913,
+      "seekingSamples": 41,
+      "blackAfterContent": 0
+    },
+    "samples": [
+      {
+        "t": 40397,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.933333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 7.933333333333334,
+          "lastRequested": 7.933333333333334
+        },
+        "timecode": "00:00:07:28"
+      },
+      {
+        "t": 40591,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.933333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 7.8,
+          "lastRequested": 7.8
+        },
+        "timecode": "00:00:07:24"
+      },
+      {
+        "t": 40711,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.933333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 7.6,
+          "lastRequested": 7.6
+        },
+        "timecode": "00:00:07:18"
+      },
+      {
+        "t": 40992,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.933333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 7.433333333333334,
+          "lastRequested": 7.433333333333334
+        },
+        "timecode": "00:00:07:13"
+      },
+      {
+        "t": 41111,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.933333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 7.233333333333333,
+          "lastRequested": 7.233333333333333
+        },
+        "timecode": "00:00:07:07"
+      },
+      {
+        "t": 41381,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.933333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 7.1,
+          "lastRequested": 7.1
+        },
+        "timecode": "00:00:07:03"
+      },
+      {
+        "t": 41582,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.933333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 6.833333333333333,
+          "lastRequested": 6.833333333333333
+        },
+        "timecode": "00:00:06:25"
+      },
+      {
+        "t": 41783,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.933333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 6.733333333333333,
+          "lastRequested": 6.733333333333333
+        },
+        "timecode": "00:00:06:22"
+      },
+      {
+        "t": 42002,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.933333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 6.533333333333333,
+          "lastRequested": 6.533333333333333
+        },
+        "timecode": "00:00:06:16"
+      },
+      {
+        "t": 42194,
+        "hash": 517174,
+        "mean": [
+          10,
+          12,
+          16
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.933333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 6.433333333333334,
+          "lastRequested": 6.433333333333334
+        },
+        "timecode": "00:00:06:13"
+      },
+      {
+        "t": 42403,
+        "hash": 2845767,
+        "mean": [
+          44,
+          47,
+          100
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 3.933333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 6.233333333333333,
+          "lastRequested": 6.233333333333333
+        },
+        "timecode": "00:00:06:07"
+      },
+      {
+        "t": 42596,
+        "hash": 2845767,
+        "mean": [
+          44,
+          47,
+          100
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 2.133333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 6.133333333333334,
+          "lastRequested": 6.133333333333334
+        },
+        "timecode": "00:00:06:04"
+      },
+      {
+        "t": 42803,
+        "hash": 2845767,
+        "mean": [
+          44,
+          47,
+          100
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 2.133333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 6.033333333333333,
+          "lastRequested": 6.033333333333333
+        },
+        "timecode": "00:00:06:01"
+      },
+      {
+        "t": 43096,
+        "hash": 2845767,
+        "mean": [
+          44,
+          47,
+          100
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 2.133333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 5.833333333333333,
+          "lastRequested": 5.833333333333333
+        },
+        "timecode": "00:00:05:25"
+      },
+      {
+        "t": 43300,
+        "hash": 2845767,
+        "mean": [
+          44,
+          47,
+          100
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 2.133333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 5.633333333333334,
+          "lastRequested": 5.633333333333334
+        },
+        "timecode": "00:00:05:19"
+      },
+      {
+        "t": 43506,
+        "hash": 3080939,
+        "mean": [
+          38,
+          102,
+          78
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.433333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 5.433333333333334,
+          "lastRequested": 5.433333333333334
+        },
+        "timecode": "00:00:05:13"
+      },
+      {
+        "t": 43697,
+        "hash": 3080939,
+        "mean": [
+          38,
+          102,
+          78
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.433333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 5.233333333333333,
+          "lastRequested": 5.233333333333333
+        },
+        "timecode": "00:00:05:07"
+      },
+      {
+        "t": 43889,
+        "hash": 3080939,
+        "mean": [
+          38,
+          102,
+          78
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.433333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 5.033333333333333,
+          "lastRequested": 5.033333333333333
+        },
+        "timecode": "00:00:05:01"
+      },
+      {
+        "t": 44010,
+        "hash": 3080939,
+        "mean": [
+          38,
+          102,
+          78
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 1.433333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 4.933333333333334,
+          "lastRequested": 4.933333333333334
+        },
+        "timecode": "00:00:04:28"
+      },
+      {
+        "t": 44182,
+        "hash": 3230407,
+        "mean": [
+          40,
+          96,
+          89
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 0.733333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 4.733333333333333,
+          "lastRequested": 4.733333333333333
+        },
+        "timecode": "00:00:04:22"
+      },
+      {
+        "t": 44382,
+        "hash": 3230407,
+        "mean": [
+          40,
+          96,
+          89
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 0.733333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 4.633333333333334,
+          "lastRequested": 4.633333333333334
+        },
+        "timecode": "00:00:04:19"
+      },
+      {
+        "t": 44586,
+        "hash": 3077268,
+        "mean": [
+          37,
+          66,
+          102
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.733333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 4.433333333333334,
+          "lastRequested": 4.433333333333334
+        },
+        "timecode": "00:00:04:13"
+      },
+      {
+        "t": 44788,
+        "hash": 3077268,
+        "mean": [
+          37,
+          66,
+          102
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 0.333333,
+            "rs": 1,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 4.166666666666667,
+          "lastRequested": 4.166666666666667
+        },
+        "timecode": "00:00:04:05"
+      },
+      {
+        "t": 44985,
+        "hash": 2936785,
+        "mean": [
+          43,
+          52,
+          102
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 4.033333333333333,
+          "lastRequested": 4.033333333333333
+        },
+        "timecode": "00:00:04:01"
+      },
+      {
+        "t": 45211,
+        "hash": 1192249,
+        "mean": [
+          25,
+          22,
+          38
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.913,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 3.8666666666666667,
+          "lastRequested": 3.8666666666666667
+        },
+        "timecode": "00:00:03:26"
+      },
+      {
+        "t": 45412,
+        "hash": 1553430,
+        "mean": [
+          34,
+          26,
+          51
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.913,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 3.7666666666666666,
+          "lastRequested": 3.7666666666666666
+        },
+        "timecode": "00:00:03:23"
+      },
+      {
+        "t": 45701,
+        "hash": 2292832,
+        "mean": [
+          50,
+          35,
+          78
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.913,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 3.566666666666667,
+          "lastRequested": 3.566666666666667
+        },
+        "timecode": "00:00:03:17"
+      },
+      {
+        "t": 45885,
+        "hash": 2664237,
+        "mean": [
+          60,
+          39,
+          91
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.913,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 3.466666666666667,
+          "lastRequested": 3.466666666666667
+        },
+        "timecode": "00:00:03:14"
+      },
+      {
+        "t": 46009,
+        "hash": 2945046,
+        "mean": [
+          66,
+          43,
+          101
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.913,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 3.2,
+          "lastRequested": 3.2
+        },
+        "timecode": "00:00:03:06"
+      },
+      {
+        "t": 46196,
+        "hash": 2945046,
+        "mean": [
+          66,
+          43,
+          101
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.913,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 3.066666666666667,
+          "lastRequested": 3.066666666666667
+        },
+        "timecode": "00:00:03:02"
+      },
+      {
+        "t": 46388,
+        "hash": 2945046,
+        "mean": [
+          66,
+          43,
+          101
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.913,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 2.9,
+          "lastRequested": 2.9
+        },
+        "timecode": "00:00:02:27"
+      },
+      {
+        "t": 46500,
+        "hash": 2945046,
+        "mean": [
+          66,
+          43,
+          101
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.913,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 2.7666666666666666,
+          "lastRequested": 2.7666666666666666
+        },
+        "timecode": "00:00:02:23"
+      },
+      {
+        "t": 46689,
+        "hash": 2945046,
+        "mean": [
+          66,
+          43,
+          101
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.913,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 2.566666666666667,
+          "lastRequested": 2.566666666666667
+        },
+        "timecode": "00:00:02:17"
+      },
+      {
+        "t": 46813,
+        "hash": 2945046,
+        "mean": [
+          66,
+          43,
+          101
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.913,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 2.4,
+          "lastRequested": 2.4
+        },
+        "timecode": "00:00:02:12"
+      },
+      {
+        "t": 47007,
+        "hash": 2945046,
+        "mean": [
+          66,
+          43,
+          101
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.913,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 2.2666666666666666,
+          "lastRequested": 2.2666666666666666
+        },
+        "timecode": "00:00:02:08"
+      },
+      {
+        "t": 47198,
+        "hash": 2945046,
+        "mean": [
+          66,
+          43,
+          101
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 3.913,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 2.066666666666667,
+          "lastRequested": 2.066666666666667
+        },
+        "timecode": "00:00:02:02"
+      },
+      {
+        "t": 47399,
+        "hash": 2945046,
+        "mean": [
+          66,
+          43,
+          101
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.866666,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 1.8666666666666667,
+          "lastRequested": 1.8666666666666667
+        },
+        "timecode": "00:00:01:26"
+      },
+      {
+        "t": 47595,
+        "hash": 2945046,
+        "mean": [
+          66,
+          43,
+          101
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.866666,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 1.7,
+          "lastRequested": 1.7
+        },
+        "timecode": "00:00:01:21"
+      },
+      {
+        "t": 47812,
+        "hash": 2945046,
+        "mean": [
+          66,
+          43,
+          101
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.866666,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 1.4666666666666666,
+          "lastRequested": 1.4666666666666666
+        },
+        "timecode": "00:00:01:14"
+      },
+      {
+        "t": 47990,
+        "hash": 2945046,
+        "mean": [
+          66,
+          43,
+          101
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.866666,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 1.3,
+          "lastRequested": 1.3
+        },
+        "timecode": "00:00:01:09"
+      },
+      {
+        "t": 48107,
+        "hash": 2945046,
+        "mean": [
+          66,
+          43,
+          101
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 1.866666,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 1.1666666666666667,
+          "lastRequested": 1.1666666666666667
+        },
+        "timecode": "00:00:01:05"
+      },
+      {
+        "t": 48297,
+        "hash": 2914832,
+        "mean": [
+          65,
+          42,
+          100
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 1.866666,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0.9666666666666667,
+          "lastRequested": 0.9666666666666667
+        },
+        "timecode": "00:00:00:29"
+      },
+      {
+        "t": 48489,
+        "hash": 2885136,
+        "mean": [
+          72,
+          37,
+          100
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 0.866666,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0.8,
+          "lastRequested": 0.8
+        },
+        "timecode": "00:00:00:24"
+      },
+      {
+        "t": 48612,
+        "hash": 2831809,
+        "mean": [
+          70,
+          36,
+          98
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 0.866666,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0.6,
+          "lastRequested": 0.6
+        },
+        "timecode": "00:00:00:18"
+      },
+      {
+        "t": 48912,
+        "hash": 2673273,
+        "mean": [
+          87,
+          32,
+          87
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.866666,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0.4666666666666667,
+          "lastRequested": 0.4666666666666667
+        },
+        "timecode": "00:00:00:14"
+      },
+      {
+        "t": 49122,
+        "hash": 2673273,
+        "mean": [
+          87,
+          32,
+          87
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 0.366666,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0.23333333333333334,
+          "lastRequested": 0.23333333333333334
+        },
+        "timecode": "00:00:00:07"
+      },
+      {
+        "t": 49304,
+        "hash": 2825306,
+        "mean": [
+          78,
+          33,
+          97
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.366666,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": 0.06666666666666667,
+          "lastRequested": 0.06666666666666667
+        },
+        "timecode": "00:00:00:02"
+      },
+      {
+        "t": 49494,
+        "hash": 2825306,
+        "mean": [
+          78,
+          33,
+          97
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": true,
+            "ct": 0,
+            "rs": 1,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": false,
+          "lastDrawn": null,
+          "lastRequested": 0
+        },
+        "timecode": "00:00:00:00"
+      },
+      {
+        "t": 49617,
+        "hash": 2787235,
+        "mean": [
+          61,
+          38,
+          97
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 0,
+          "lastRequested": 0
+        },
+        "timecode": "00:00:00:00"
+      },
+      {
+        "t": 49793,
+        "hash": 2787235,
+        "mean": [
+          61,
+          38,
+          97
+        ],
+        "els": [
+          {
+            "id": 1,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 4,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 4,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 5,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 6,
+            "srcKind": "blob",
+            "seeking": false,
+            "ct": 0.333333,
+            "rs": 4,
+            "paused": true
+          }
+        ],
+        "idle": {
+          "sleeping": true,
+          "lastDrawn": 0,
+          "lastRequested": 0
+        },
+        "timecode": "00:00:00:00"
+      }
+    ]
+  },
+  "allSets": [
+    {
+      "t": 10928,
+      "id": 3,
+      "value": 0
+    },
+    {
+      "t": 10998,
+      "id": 4,
+      "value": 0
+    },
+    {
+      "t": 10998,
+      "id": 2,
+      "value": 0
+    },
+    {
+      "t": 11125,
+      "id": 5,
+      "value": 0
+    },
+    {
+      "t": 16798,
+      "id": 1,
+      "value": 0.3
+    },
+    {
+      "t": 16977,
+      "id": 1,
+      "value": 0.5666666666666667
+    },
+    {
+      "t": 17109,
+      "id": 1,
+      "value": 0.8666666666666667
+    },
+    {
+      "t": 17501,
+      "id": 1,
+      "value": 1.1666666666666667
+    },
+    {
+      "t": 18202,
+      "id": 1,
+      "value": 1.4333333333333333
+    },
+    {
+      "t": 19299,
+      "id": 1,
+      "value": 1.7333333333333334
+    },
+    {
+      "t": 20707,
+      "id": 1,
+      "value": 2.9
+    },
+    {
+      "t": 23578,
+      "id": 1,
+      "value": 0
+    },
+    {
+      "t": 25099,
+      "id": 1,
+      "value": 0
+    },
+    {
+      "t": 26100,
+      "id": 1,
+      "value": 0.6
+    },
+    {
+      "t": 29803,
+      "id": 1,
+      "value": 3.5
+    },
+    {
+      "t": 30684,
+      "id": 1,
+      "value": 3.9
+    },
+    {
+      "t": 31214,
+      "id": 6,
+      "value": 0.36666666666666625
+    },
+    {
+      "t": 31584,
+      "id": 6,
+      "value": 0.7333333333333334
+    },
+    {
+      "t": 31991,
+      "id": 6,
+      "value": 1.1333333333333337
+    },
+    {
+      "t": 32484,
+      "id": 6,
+      "value": 1.5333333333333332
+    },
+    {
+      "t": 32812,
+      "id": 6,
+      "value": 1.9000000000000004
+    },
+    {
+      "t": 33216,
+      "id": 6,
+      "value": 2.333333333333333
+    },
+    {
+      "t": 33687,
+      "id": 6,
+      "value": 2.7333333333333334
+    },
+    {
+      "t": 34106,
+      "id": 6,
+      "value": 3.1333333333333337
+    },
+    {
+      "t": 34501,
+      "id": 6,
+      "value": 3.533333333333333
+    },
+    {
+      "t": 34911,
+      "id": 6,
+      "value": 3.966666666666667
+    },
+    {
+      "t": 37588,
+      "id": 1,
+      "value": 0
+    },
+    {
+      "t": 38780,
+      "id": 1,
+      "value": 0
+    },
+    {
+      "t": 40304,
+      "id": 6,
+      "value": 3.9333333333333336
+    },
+    {
+      "t": 42478,
+      "id": 6,
+      "value": 2.1333333333333337
+    },
+    {
+      "t": 43412,
+      "id": 6,
+      "value": 1.4333333333333336
+    },
+    {
+      "t": 44097,
+      "id": 6,
+      "value": 0.7333333333333334
+    },
+    {
+      "t": 44590,
+      "id": 6,
+      "value": 0.33333333333333304
+    },
+    {
+      "t": 44990,
+      "id": 1,
+      "value": 3.966666666666667
+    },
+    {
+      "t": 47386,
+      "id": 1,
+      "value": 1.8666666666666667
+    },
+    {
+      "t": 48316,
+      "id": 1,
+      "value": 0.8666666666666667
+    },
+    {
+      "t": 48916,
+      "id": 1,
+      "value": 0.36666666666666664
+    },
+    {
+      "t": 49412,
+      "id": 1,
+      "value": 0
+    }
+  ]
+}

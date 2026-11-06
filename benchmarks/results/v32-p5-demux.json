@@ -1,0 +1,372 @@
+{
+  "files": {
+    "sparse": {
+      "file": "sparse-gop-flat.mp4",
+      "bytes": 45369,
+      "codec": "avc1.64001F",
+      "timescale": 15360,
+      "width": 1280,
+      "height": 720,
+      "sampleCount": 900,
+      "keyCount": 3,
+      "firstKeys": [
+        0,
+        300,
+        600
+      ],
+      "durationSec": 30,
+      "firstSampleLenPrefix": 625,
+      "firstSampleSize": 842,
+      "chunk0": {
+        "type": "key",
+        "timestampUs": 0,
+        "durationUs": 33333
+      },
+      "chunk150": {
+        "type": "delta",
+        "timestampUs": 5000000
+      },
+      "nv12BytesPerFrame": 1382400
+    },
+    "dense": {
+      "file": "dense-gop-flat.mp4",
+      "bytes": 49702,
+      "codec": "avc1.64001F",
+      "timescale": 15360,
+      "width": 1280,
+      "height": 720,
+      "sampleCount": 900,
+      "keyCount": 30,
+      "firstKeys": [
+        0,
+        30,
+        60,
+        90,
+        120
+      ],
+      "durationSec": 30,
+      "firstSampleLenPrefix": 623,
+      "firstSampleSize": 840,
+      "chunk0": {
+        "type": "key",
+        "timestampUs": 0,
+        "durationUs": 33333
+      },
+      "chunk150": {
+        "type": "key",
+        "timestampUs": 5000000
+      },
+      "nv12BytesPerFrame": 1382400
+    }
+  },
+  "planner": {
+    "sparse": {
+      "decodeFrom": 300,
+      "presentFrom": 361,
+      "presentTo": 450
+    },
+    "dense": {
+      "decodeFrom": 360,
+      "presentFrom": 361,
+      "presentTo": 450
+    }
+  },
+  "hook": {
+    "ringKept": 5,
+    "lastSamples": [
+      {
+        "gapMs": 114,
+        "dtMs": 100,
+        "lostMs": 14,
+        "justWoke": false
+      },
+      {
+        "gapMs": 16,
+        "dtMs": 16,
+        "lostMs": 0,
+        "justWoke": false
+      },
+      {
+        "gapMs": 154,
+        "dtMs": 100,
+        "lostMs": 54,
+        "justWoke": true
+      },
+      {
+        "gapMs": 16,
+        "dtMs": 16,
+        "lostMs": 0,
+        "justWoke": false
+      },
+      {
+        "gapMs": 16,
+        "dtMs": 16,
+        "lostMs": 0,
+        "justWoke": false
+      }
+    ],
+    "phase": {
+      "count": 4,
+      "gapP50ms": 16,
+      "gapP95ms": 114,
+      "gapP99ms": 114,
+      "over100ms": 1,
+      "lostMs": 14,
+      "predictedRate": 0.9556962025316456
+    }
+  },
+  "assertions": [
+    {
+      "name": "sparse: 900 sample",
+      "pass": true,
+      "detail": 900
+    },
+    {
+      "name": "sparse: codec avc1.64001F",
+      "pass": true,
+      "detail": "avc1.64001F"
+    },
+    {
+      "name": "sparse: 1280x720",
+      "pass": true,
+      "detail": [
+        1280,
+        720
+      ]
+    },
+    {
+      "name": "sparse: duration 30s",
+      "pass": true,
+      "detail": 30
+    },
+    {
+      "name": "sparse: keyframe đầu = 0",
+      "pass": true,
+      "detail": 0
+    },
+    {
+      "name": "sparse: khoảng keyframe = GOP 300",
+      "pass": true,
+      "detail": [
+        300,
+        300
+      ]
+    },
+    {
+      "name": "sparse: offset trong file",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "sparse: length-prefix hợp lệ",
+      "pass": true,
+      "detail": 625
+    },
+    {
+      "name": "sparse: chunk0 key @0us",
+      "pass": true,
+      "detail": {
+        "type": "key",
+        "timestamp": 0,
+        "duration": 33333,
+        "data": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0
+        }
+      }
+    },
+    {
+      "name": "sparse: chunk150 @5s",
+      "pass": true,
+      "detail": {
+        "type": "delta",
+        "timestamp": 5000000,
+        "duration": 33333,
+        "data": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0
+        }
+      }
+    },
+    {
+      "name": "sparse: gopStartFor(150)",
+      "pass": true,
+      "detail": 0
+    },
+    {
+      "name": "sparse: window(450,90)",
+      "pass": true,
+      "detail": {
+        "decodeFrom": 300,
+        "presentFrom": 361,
+        "presentTo": 450
+      }
+    },
+    {
+      "name": "dense: 900 sample",
+      "pass": true,
+      "detail": 900
+    },
+    {
+      "name": "dense: codec avc1.64001F",
+      "pass": true,
+      "detail": "avc1.64001F"
+    },
+    {
+      "name": "dense: 1280x720",
+      "pass": true,
+      "detail": [
+        1280,
+        720
+      ]
+    },
+    {
+      "name": "dense: duration 30s",
+      "pass": true,
+      "detail": 30
+    },
+    {
+      "name": "dense: keyframe đầu = 0",
+      "pass": true,
+      "detail": 0
+    },
+    {
+      "name": "dense: khoảng keyframe = GOP 30",
+      "pass": true,
+      "detail": [
+        30,
+        30,
+        30,
+        30,
+        30
+      ]
+    },
+    {
+      "name": "dense: offset trong file",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "dense: length-prefix hợp lệ",
+      "pass": true,
+      "detail": 623
+    },
+    {
+      "name": "dense: chunk0 key @0us",
+      "pass": true,
+      "detail": {
+        "type": "key",
+        "timestamp": 0,
+        "duration": 33333,
+        "data": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0
+        }
+      }
+    },
+    {
+      "name": "dense: chunk150 @5s",
+      "pass": true,
+      "detail": {
+        "type": "key",
+        "timestamp": 5000000,
+        "duration": 33333,
+        "data": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0
+        }
+      }
+    },
+    {
+      "name": "dense: gopStartFor(150)",
+      "pass": true,
+      "detail": 150
+    },
+    {
+      "name": "dense: window(450,90)",
+      "pass": true,
+      "detail": {
+        "decodeFrom": 360,
+        "presentFrom": 361,
+        "presentTo": 450
+      }
+    },
+    {
+      "name": "hook: ring 5 (đẩy mẫu cũ nhất)",
+      "pass": true,
+      "detail": [
+        1130,
+        1146,
+        1300,
+        1316,
+        1332
+      ]
+    },
+    {
+      "name": "hook: clamp 114->100 lost 14",
+      "pass": true,
+      "detail": {
+        "t": 1130,
+        "gapMs": 114,
+        "dtMs": 100,
+        "lostMs": 14,
+        "playing": true,
+        "reverse": false,
+        "justWoke": false,
+        "playhead": 10.1
+      }
+    },
+    {
+      "name": "hook: phase loại justWoke",
+      "pass": true,
+      "detail": {
+        "count": 4,
+        "gapP50ms": 16,
+        "gapP95ms": 114,
+        "gapP99ms": 114,
+        "over100ms": 1,
+        "lostMs": 14,
+        "predictedRate": 0.9556962025316456
+      }
+    },
+    {
+      "name": "hook: phase lost=14 (không tính tick justWoke)",
+      "pass": true,
+      "detail": {
+        "count": 4,
+        "gapP50ms": 16,
+        "gapP95ms": 114,
+        "gapP99ms": 114,
+        "over100ms": 1,
+        "lostMs": 14,
+        "predictedRate": 0.9556962025316456
+      }
+    },
+    {
+      "name": "hook: phase over100=1",
+      "pass": true,
+      "detail": {
+        "count": 4,
+        "gapP50ms": 16,
+        "gapP95ms": 114,
+        "gapP99ms": 114,
+        "over100ms": 1,
+        "lostMs": 14,
+        "predictedRate": 0.9556962025316456
+      }
+    },
+    {
+      "name": "hook: predictedRate khớp 1-14/316",
+      "pass": true,
+      "detail": 0.9556962025316456
+    }
+  ]
+}

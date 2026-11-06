@@ -1,0 +1,55 @@
+{
+  "runAt": "2026-11-01T07:18:28.583Z",
+  "label": "v32-p3",
+  "targets": [
+    {
+      "id": "o5-pipe",
+      "checks": {
+        "rejectGoc": true,
+        "dung1File": true,
+        "pidKhop": true,
+        "psCoChrome": true,
+        "pipeSongSauTimeout": true,
+        "outDirBen": true,
+        "all": true
+      },
+      "rejectMsg": "CDP timeout Target.getTargets",
+      "snapshotFile": "cdp-hang-20261101_071832744-Target.getTargets-22009.json",
+      "pid": 22009
+    },
+    {
+      "id": "o3-ws",
+      "checks": {
+        "rejectGoc": true,
+        "dung1File": true,
+        "pidKhop": true,
+        "psCoChrome": true,
+        "outDirBen": true,
+        "extraTransportWs": true,
+        "all": true
+      },
+      "rejectMsg": "cdp timeout Target.getTargets",
+      "snapshotFile": "cdp-hang-20261101_071834771-Target.getTargets-22168.json",
+      "pid": 22168,
+      "note": "send() lần 2 vẫn timeout 1ms do bản trích rút hằng — aliveAfter chỉ tham khảo, không tính pass/fail"
+    },
+    {
+      "id": "module-default",
+      "checks": {
+        "ghiDuoc": true
+      },
+      "file": "/home/hatch/workspace/vcut-cdp-hang-snapshots/_unspecified/cdp-hang-20261101_071835475-Target.getTargets-nopid.json"
+    }
+  ],
+  "allPass": true,
+  "log": [
+    "[2026-11-01T07:18:30.648Z] Xvfb socket :97: true",
+    "[2026-11-01T07:18:32.689Z] pipe O5 warm-up OK, nTargets=5",
+    "[2026-11-01T07:18:32.844Z] CDP-HANG snapshot đã ghi: /home/hatch/workspace/vcut-cdp-hang-snapshots/probe-round32-o5-webcodecs-pipe/cdp-hang-20261101_071832744-Target.getTargets-22009.json",
+    "[2026-11-01T07:18:33.379Z] target O5-pipe: reject=\"CDP timeout Target.getTargets\" files=1 pidKhop=true aliveAfter=true all=true",
+    "[2026-11-01T07:18:34.857Z] CDP-HANG snapshot đã ghi: /home/hatch/workspace/vcut-cdp-hang-snapshots/seek-o3-browser-probe/cdp-hang-20261101_071834771-Target.getTargets-22168.json",
+    "[2026-11-01T07:18:35.454Z] CDP-HANG snapshot đã ghi: /home/hatch/workspace/vcut-cdp-hang-snapshots/seek-o3-browser-probe/cdp-hang-20261101_071835364-Target.getTargets-22168.json",
+    "[2026-11-01T07:18:35.467Z] target O3-ws: reject=\"cdp timeout Target.getTargets\" files=1 pidKhop=true transport=websocket aliveAfter2nd(1ms, tham khao)=false all=true",
+    "[2026-11-01T07:18:35.580Z] target module-default: file=/home/hatch/workspace/vcut-cdp-hang-snapshots/_unspecified/cdp-hang-20261101_071835475-Target.getTargets-nopid.json fresh=1 ok=true"
+  ]
+}

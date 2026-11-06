@@ -1,0 +1,93 @@
+{
+  "N2_round31": {
+    "file": "/home/hatch/workspace/tmp-round31-n2/sparse-idle/dist-snap/assets/index-C0HfodWe.js",
+    "bytes": 979512,
+    "markers": {
+      "reversePlayback": 14,
+      "toggleReversePlayback": 3,
+      "holdStats": 1,
+      "previewIdle": 3,
+      "seeked": 9,
+      "addEventListener_seeked": 1,
+      "removeEventListener_seeked": 0,
+      "seeking": 9,
+      "reverseBadgeStrings": 1,
+      "playReverseLabel": 3,
+      "requestVideoFrameCallback": 0,
+      "timeout1200": 1,
+      "debounce80": 220
+    },
+    "seekedContexts": [
+      "\"pause\":case\"play\":case\"pointercancel\":case\"pointerdown\":case\"pointerup\":case\"ratechange\":case\"reset\":case\"resize\":case\"seeked\":case\"submit\":case\"touchcancel\":case\"touchend\":case\"touchstart\":case\"volumechange\":case\"change\":case\"selectioncha",
+      "se play playing pointerCancel pointerDown pointerMove pointerOut pointerOver pointerUp progress rateChange reset resize seeked seeking stalled submit suspend timeUpdate touchCancel touchEnd touchStart volumeChange scroll toggle touchMove wa",
+      "nchange emptied encrypted ended error loadeddata loadedmetadata loadstart pause play playing progress ratechange resize seeked seeking stalled suspend timeupdate volumechange waiting\".split(\" \"),pb=new Set(\"cancel close invalid load scroll ",
+      "ta=()=>c(),n.onerror=()=>u(new Error(\"thumb fail\"))});const r=Math.min(.5,(n.duration||1)*.1);await new Promise(c=>{n.onseeked=()=>c(),n.currentTime=r,setTimeout(c,800)});const s=document.createElement(\"canvas\"),a=160,i=Math.max(1,Math.roun",
+      "r.duration,i=Number.isFinite(a)&&a>0?Math.min(Math.max(0,n),Math.max(0,a-.05)):0,o=new Promise(m=>{if(!r)return m();r.onseeked=()=>m()});try{r.currentTime=i,await c0(o,OC,\"seek\")}catch{}if(!r.videoWidth||!r.videoHeight)return null;const c=d",
+      "s??30,a=r.timeoutMs??LN,i=Jn(n,s);return new Promise(o=>{let c=!1,u=null;const h=(y,m)=>{c||(c=!0,u&&clearTimeout(u),o({seeked:y,timedOut:m}))};try{e.pause()}catch{}if(!BN(e,i,s)){h(!0,!1);return}u=setTimeout(()=>h(!1,!0),a);const g=()=>h(!",
+      "pause()}catch{}if(!BN(e,i,s)){h(!0,!1);return}u=setTimeout(()=>h(!1,!0),a);const g=()=>h(!0,!1);try{e.addEventListener(\"seeked\",g,{once:!0})}catch{h(!1,!1);return}try{e.currentTime=i}catch{h(!1,!1);return}})}async function KN(e,n={}){for(co",
+      " KN(e,n={}){for(const o of e)try{o.el.pause()}catch{}const r=await Promise.all(e.map(o=>zN(o.el,o.target,n).catch(()=>({seeked:!1,timedOut:!1}))));let s=0,a=0,i=0;for(const o of r)o.seeked?s+=1:o.timedOut?a+=1:i+=1;return{done:s,timedOut:a,",
+      "wait Promise.all(e.map(o=>zN(o.el,o.target,n).catch(()=>({seeked:!1,timedOut:!1}))));let s=0,a=0,i=0;for(const o of r)o.seeked?s+=1:o.timedOut?a+=1:i+=1;return{done:s,timedOut:a,failed:i}}class ms{constructor(n=ON){tt(this,\"timer\",null);tt("
+    ]
+  },
+  "O5_round32": {
+    "file": "/home/hatch/workspace/tmp-round32-o5/sparse-1/dist-snap/assets/index-D3yYXWHm.js",
+    "bytes": 984096,
+    "markers": {
+      "reversePlayback": 14,
+      "toggleReversePlayback": 3,
+      "holdStats": 1,
+      "previewIdle": 3,
+      "seeked": 9,
+      "addEventListener_seeked": 1,
+      "removeEventListener_seeked": 0,
+      "seeking": 11,
+      "reverseBadgeStrings": 1,
+      "playReverseLabel": 3,
+      "requestVideoFrameCallback": 0,
+      "timeout1200": 1,
+      "debounce80": 222
+    },
+    "seekedContexts": [
+      "\"pause\":case\"play\":case\"pointercancel\":case\"pointerdown\":case\"pointerup\":case\"ratechange\":case\"reset\":case\"resize\":case\"seeked\":case\"submit\":case\"touchcancel\":case\"touchend\":case\"touchstart\":case\"volumechange\":case\"change\":case\"selectioncha",
+      "se play playing pointerCancel pointerDown pointerMove pointerOut pointerOver pointerUp progress rateChange reset resize seeked seeking stalled submit suspend timeUpdate touchCancel touchEnd touchStart volumeChange scroll toggle touchMove wa",
+      "nchange emptied encrypted ended error loadeddata loadedmetadata loadstart pause play playing progress ratechange resize seeked seeking stalled suspend timeupdate volumechange waiting\".split(\" \"),vb=new Set(\"cancel close invalid load scroll ",
+      "ta=()=>c(),t.onerror=()=>u(new Error(\"thumb fail\"))});const r=Math.min(.5,(t.duration||1)*.1);await new Promise(c=>{t.onseeked=()=>c(),t.currentTime=r,setTimeout(c,800)});const s=document.createElement(\"canvas\"),a=160,i=Math.max(1,Math.roun",
+      "r.duration,i=Number.isFinite(a)&&a>0?Math.min(Math.max(0,t),Math.max(0,a-.05)):0,o=new Promise(m=>{if(!r)return m();r.onseeked=()=>m()});try{r.currentTime=i,await u0(o,UC,\"seek\")}catch{}if(!r.videoWidth||!r.videoHeight)return null;const c=d",
+      "s??30,a=r.timeoutMs??KN,i=Jn(t,s);return new Promise(o=>{let c=!1,u=null;const h=(y,m)=>{c||(c=!0,u&&clearTimeout(u),o({seeked:y,timedOut:m}))};try{e.pause()}catch{}const g=()=>{if(!c){if(!e.seeking&&!VN(e,i,s)){h(!0,!1);return}u=setTimeout",
+      "ch{}const g=()=>{if(!c){if(!e.seeking&&!VN(e,i,s)){h(!0,!1);return}u=setTimeout(()=>h(!1,!0),a);try{e.addEventListener(\"seeked\",()=>{c||(u&&clearTimeout(u),g())},{once:!0})}catch{h(!1,!1);return}if(!e.seeking)try{e.currentTime=i}catch{h(!1,",
+      " WN(e,t={}){for(const o of e)try{o.el.pause()}catch{}const r=await Promise.all(e.map(o=>HN(o.el,o.target,t).catch(()=>({seeked:!1,timedOut:!1}))));let s=0,a=0,i=0;for(const o of r)o.seeked?s+=1:o.timedOut?a+=1:i+=1;return{done:s,timedOut:a,",
+      "wait Promise.all(e.map(o=>HN(o.el,o.target,t).catch(()=>({seeked:!1,timedOut:!1}))));let s=0,a=0,i=0;for(const o of r)o.seeked?s+=1:o.timedOut?a+=1:i+=1;return{done:s,timedOut:a,failed:i}}class ms{constructor(t=UN){tt(this,\"timer\",null);tt("
+    ]
+  },
+  "P5_current": {
+    "file": "/home/hatch/workspace/repo-1/apps/web/dist/assets/index-Cqp7uur1.js",
+    "bytes": 987615,
+    "markers": {
+      "reversePlayback": 14,
+      "toggleReversePlayback": 3,
+      "holdStats": 1,
+      "previewIdle": 3,
+      "seeked": 10,
+      "addEventListener_seeked": 1,
+      "removeEventListener_seeked": 0,
+      "seeking": 11,
+      "reverseBadgeStrings": 1,
+      "playReverseLabel": 3,
+      "requestVideoFrameCallback": 0,
+      "timeout1200": 1,
+      "debounce80": 221
+    },
+    "seekedContexts": [
+      "\"pause\":case\"play\":case\"pointercancel\":case\"pointerdown\":case\"pointerup\":case\"ratechange\":case\"reset\":case\"resize\":case\"seeked\":case\"submit\":case\"touchcancel\":case\"touchend\":case\"touchstart\":case\"volumechange\":case\"change\":case\"selectioncha",
+      "se play playing pointerCancel pointerDown pointerMove pointerOut pointerOver pointerUp progress rateChange reset resize seeked seeking stalled submit suspend timeUpdate touchCancel touchEnd touchStart volumeChange scroll toggle touchMove wa",
+      "nchange emptied encrypted ended error loadeddata loadedmetadata loadstart pause play playing progress ratechange resize seeked seeking stalled suspend timeupdate volumechange waiting\".split(\" \"),kb=new Set(\"cancel close invalid load scroll ",
+      "ta=()=>c(),t.onerror=()=>u(new Error(\"thumb fail\"))});const r=Math.min(.5,(t.duration||1)*.1);await new Promise(c=>{t.onseeked=()=>c(),t.currentTime=r,setTimeout(c,800)});const s=document.createElement(\"canvas\"),a=160,i=Math.max(1,Math.roun",
+      "r.duration,i=Number.isFinite(a)&&a>0?Math.min(Math.max(0,t),Math.max(0,a-.05)):0,o=new Promise(m=>{if(!r)return m();r.onseeked=()=>m()});try{r.currentTime=i,await d0(o,HC,\"seek\")}catch{}if(!r.videoWidth||!r.videoHeight)return null;const c=d",
+      "u=null,h=null;const g=(m,f)=>{var k;if(!c){if(c=!0,u&&clearTimeout(u),h){try{(k=e.removeEventListener)==null||k.call(e,\"seeked\",h)}catch{}h=null}o({seeked:m,timedOut:f})}};try{e.pause()}catch{}const y=()=>{if(c)return;if(!e.seeking&&!WN(e,i",
+      ">{var k;if(!c){if(c=!0,u&&clearTimeout(u),h){try{(k=e.removeEventListener)==null||k.call(e,\"seeked\",h)}catch{}h=null}o({seeked:m,timedOut:f})}};try{e.pause()}catch{}const y=()=>{if(c)return;if(!e.seeking&&!WN(e,i,s)){g(!0,!1);return}u=setTi",
+      "(e,i,s)){g(!0,!1);return}u=setTimeout(()=>g(!1,!0),a);const m=()=>{c||(u&&clearTimeout(u),y())};try{e.addEventListener(\"seeked\",m,{once:!0}),h=m}catch{g(!1,!1);return}if(!e.seeking)try{e.currentTime=i}catch{g(!1,!1);return}};y()})}async fun",
+      " GN(e,t={}){for(const o of e)try{o.el.pause()}catch{}const r=await Promise.all(e.map(o=>XN(o.el,o.target,t).catch(()=>({seeked:!1,timedOut:!1}))));let s=0,a=0,i=0;for(const o of r)o.seeked?s+=1:o.timedOut?a+=1:i+=1;return{done:s,timedOut:a,",
+      "wait Promise.all(e.map(o=>XN(o.el,o.target,t).catch(()=>({seeked:!1,timedOut:!1}))));let s=0,a=0,i=0;for(const o of r)o.seeked?s+=1:o.timedOut?a+=1:i+=1;return{done:s,timedOut:a,failed:i}}class ms{constructor(t=HN){tt(this,\"timer\",null);tt("
+    ]
+  }
+}

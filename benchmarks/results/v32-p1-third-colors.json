@@ -1,0 +1,272 @@
+{
+  "colors": [
+    "cyan",
+    "magenta",
+    "yellow"
+  ],
+  "rows": [
+    {
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "cur": {
+        "mad": 1.6667,
+        "verdict": "KHỚP"
+      },
+      "n6": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "cur": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      },
+      "n6": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "cur": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      },
+      "n6": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "inType": "fadegrays",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "cur": {
+        "mad": 1.6667,
+        "verdict": "KHỚP"
+      },
+      "n6": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 1.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "inType": "fadegrays",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "cur": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      },
+      "n6": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "inType": "fadegrays",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "cur": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      },
+      "n6": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "inType": "fadewhite",
+      "outType": "fadegrays",
+      "localT": 0.6,
+      "cur": {
+        "mad": 1.6667,
+        "verdict": "KHỚP"
+      },
+      "n6": {
+        "mad": 1.6667,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 1.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "inType": "fadewhite",
+      "outType": "fadegrays",
+      "localT": 0.75,
+      "cur": {
+        "mad": 2.6667,
+        "verdict": "XẤP XỈ"
+      },
+      "n6": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "inType": "fadewhite",
+      "outType": "fadegrays",
+      "localT": 0.9,
+      "cur": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      },
+      "n6": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "inType": "fadeblack",
+      "outType": "fadeblack",
+      "localT": 0.6,
+      "cur": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      },
+      "n6": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "inType": "fadeblack",
+      "outType": "fadeblack",
+      "localT": 0.75,
+      "cur": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      },
+      "n6": {
+        "mad": 0,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 0,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "inType": "fadeblack",
+      "outType": "fadeblack",
+      "localT": 0.9,
+      "cur": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      },
+      "n6": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "cur": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      },
+      "n6": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 0.3333,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "cur": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      },
+      "n6": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "cur": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      },
+      "n6": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      },
+      "product": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      }
+    }
+  ],
+  "summary": {
+    "totCur": 19.6667,
+    "totN6": 14,
+    "totProd": 13.6667,
+    "nIncProd": 1,
+    "nTierDropProd": 0,
+    "nIncN6": 1
+  }
+}

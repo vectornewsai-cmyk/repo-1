@@ -1,0 +1,424 @@
+{
+  "fps": 30,
+  "formula": "n=round((3+localT)*fps); t=n/fps; p1True=t-3; p2True=t-3.5",
+  "rows": [
+    {
+      "kind": "flat",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "n": 108,
+      "t": 3.6,
+      "exact": true,
+      "p1True": 0.6,
+      "p2True": 0.1,
+      "nominal": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "n": 113,
+      "t": 3.7667,
+      "exact": false,
+      "p1True": 0.7667,
+      "p2True": 0.2667,
+      "nominal": {
+        "mad": 2,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "n": 117,
+      "t": 3.9,
+      "exact": true,
+      "p1True": 0.9,
+      "p2True": 0.4,
+      "nominal": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadegrays",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "n": 108,
+      "t": 3.6,
+      "exact": true,
+      "p1True": 0.6,
+      "p2True": 0.1,
+      "nominal": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadegrays",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "n": 113,
+      "t": 3.7667,
+      "exact": false,
+      "p1True": 0.7667,
+      "p2True": 0.2667,
+      "nominal": {
+        "mad": 2,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadegrays",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "n": 117,
+      "t": 3.9,
+      "exact": true,
+      "p1True": 0.9,
+      "p2True": 0.4,
+      "nominal": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadewhite",
+      "outType": "fadegrays",
+      "localT": 0.6,
+      "n": 108,
+      "t": 3.6,
+      "exact": true,
+      "p1True": 0.6,
+      "p2True": 0.1,
+      "nominal": {
+        "mad": 2.3333,
+        "verdict": "XẤP XỈ"
+      },
+      "trueP": {
+        "mad": 2.3333,
+        "verdict": "XẤP XỈ"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadewhite",
+      "outType": "fadegrays",
+      "localT": 0.75,
+      "n": 113,
+      "t": 3.7667,
+      "exact": false,
+      "p1True": 0.7667,
+      "p2True": 0.2667,
+      "nominal": {
+        "mad": 3.3333,
+        "verdict": "XẤP XỈ"
+      },
+      "trueP": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadewhite",
+      "outType": "fadegrays",
+      "localT": 0.9,
+      "n": 117,
+      "t": 3.9,
+      "exact": true,
+      "p1True": 0.9,
+      "p2True": 0.4,
+      "nominal": {
+        "mad": 0.3333,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 0.3333,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadeblack",
+      "outType": "fadeblack",
+      "localT": 0.6,
+      "n": 108,
+      "t": 3.6,
+      "exact": true,
+      "p1True": 0.6,
+      "p2True": 0.1,
+      "nominal": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadeblack",
+      "outType": "fadeblack",
+      "localT": 0.75,
+      "n": 113,
+      "t": 3.7667,
+      "exact": false,
+      "p1True": 0.7667,
+      "p2True": 0.2667,
+      "nominal": {
+        "mad": 2,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadeblack",
+      "outType": "fadeblack",
+      "localT": 0.9,
+      "n": 117,
+      "t": 3.9,
+      "exact": true,
+      "p1True": 0.9,
+      "p2True": 0.4,
+      "nominal": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "n": 108,
+      "t": 3.6,
+      "exact": true,
+      "p1True": 0.6,
+      "p2True": 0.1,
+      "nominal": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "n": 113,
+      "t": 3.7667,
+      "exact": false,
+      "p1True": 0.7667,
+      "p2True": 0.2667,
+      "nominal": {
+        "mad": 2,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "n": 117,
+      "t": 3.9,
+      "exact": true,
+      "p1True": 0.9,
+      "p2True": 0.4,
+      "nominal": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 0.6667,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "footage",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "n": 108,
+      "t": 3.6,
+      "exact": true,
+      "p1True": 0.6,
+      "p2True": 0.1,
+      "nominal": {
+        "mad": 1.507,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 1.507,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "footage",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "n": 113,
+      "t": 3.7667,
+      "exact": false,
+      "p1True": 0.7667,
+      "p2True": 0.2667,
+      "nominal": {
+        "mad": 2.0579,
+        "verdict": "XẤP XỈ"
+      },
+      "trueP": {
+        "mad": 0.4614,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "footage",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "n": 117,
+      "t": 3.9,
+      "exact": true,
+      "p1True": 0.9,
+      "p2True": 0.4,
+      "nominal": {
+        "mad": 0.1965,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 0.1965,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "footage",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "n": 108,
+      "t": 3.6,
+      "exact": true,
+      "p1True": 0.6,
+      "p2True": 0.1,
+      "nominal": {
+        "mad": 1.0462,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 1.0462,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "footage",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "n": 113,
+      "t": 3.7667,
+      "exact": false,
+      "p1True": 0.7667,
+      "p2True": 0.2667,
+      "nominal": {
+        "mad": 2.0579,
+        "verdict": "XẤP XỈ"
+      },
+      "trueP": {
+        "mad": 0.4614,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "footage",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "n": 117,
+      "t": 3.9,
+      "exact": true,
+      "p1True": 0.9,
+      "p2True": 0.4,
+      "nominal": {
+        "mad": 0.1965,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 0.1965,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat120-spot",
+      "inType": "fadewhite",
+      "outType": "fadegrays",
+      "localT": 0.75,
+      "n": 450,
+      "t": 3.75,
+      "exact": true,
+      "p1True": 0.75,
+      "p2True": 0.25,
+      "nominal": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      },
+      "trueP": {
+        "mad": 1.3333,
+        "verdict": "KHỚP"
+      }
+    }
+  ]
+}
