@@ -1,0 +1,3302 @@
+{
+  "noiseFile": "/home/hatch/workspace/tmp-round34-q2/sparse-gop-noise.mp4",
+  "noiseBytes": 419967521,
+  "appOrigin": "http://127.0.0.1:5393",
+  "proxyToggle": "unchecked",
+  "serveMode": "vite-dev-scratch",
+  "intervalMs": 250,
+  "nSamples": 80,
+  "preReverse": {
+    "timeText": "00:30.0 / 00:30.0",
+    "stats": {
+      "draw": 0,
+      "hold": 0,
+      "skip": 1,
+      "maxHoldAgeSec": 0,
+      "stale": false
+    },
+    "wc": null,
+    "centerMean": 12.666666666668506,
+    "reverseBadge": false,
+    "videos": [
+      {
+        "ct": 0,
+        "seeking": false,
+        "readyState": 4,
+        "networkState": 1,
+        "duration": 30,
+        "vw": 1280,
+        "vh": 720,
+        "paused": true,
+        "buffered": [
+          [
+            0,
+            30
+          ]
+        ],
+        "error": null
+      }
+    ],
+    "seekLogLen": 2
+  },
+  "afterStop": {
+    "timeText": "00:06.0 / 00:30.0",
+    "stats": {
+      "draw": 2,
+      "hold": 188,
+      "skip": 280,
+      "maxHoldAgeSec": 4.6,
+      "stale": true
+    },
+    "wc": {
+      "hits": 0,
+      "misses": 469
+    },
+    "centerMean": 97.65256666666684,
+    "reverseBadge": true,
+    "videos": [
+      {
+        "ct": 6.2667,
+        "seeking": true,
+        "readyState": 1,
+        "networkState": 1,
+        "duration": 30,
+        "vw": 1280,
+        "vh": 720,
+        "paused": true,
+        "buffered": [
+          [
+            0,
+            30
+          ]
+        ],
+        "error": null
+      }
+    ],
+    "seekLogLen": 27
+  },
+  "reverseSamples": [
+    {
+      "wallMs": 299,
+      "timeText": "00:29.9 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 2,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 1
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 620,
+      "timeText": "00:29.6 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 5
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 1579,
+      "timeText": "00:29.2 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 10,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 9
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 1918,
+      "timeText": "00:28.9 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 13,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 12
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 2190,
+      "timeText": "00:28.6 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 18,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 17
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 2450,
+      "timeText": "00:28.3 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 24,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 23
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 2713,
+      "timeText": "00:28.1 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 28,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 27
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 3001,
+      "timeText": "00:27.8 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 34,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 33
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 3397,
+      "timeText": "00:27.6 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 39,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 38
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 3783,
+      "timeText": "00:27.2 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 44,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 43
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 4210,
+      "timeText": "00:27.0 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 46,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 45
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 4518,
+      "timeText": "00:26.7 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 50,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 49
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 5084,
+      "timeText": "00:26.4 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 55,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 54
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 5391,
+      "timeText": "00:26.0 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 62,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 61
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 5701,
+      "timeText": "00:25.7 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 67,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 66
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 6481,
+      "timeText": "00:25.3 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 73,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 72
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 6894,
+      "timeText": "00:25.1 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 75,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 74
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 3
+    },
+    {
+      "wallMs": 7220,
+      "timeText": "00:24.7 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 82,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 81
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 29.9,
+          "seeking": false,
+          "readyState": 4,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 5
+    },
+    {
+      "wallMs": 7496,
+      "timeText": "00:24.5 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 86,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 85
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 24.6667,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 6
+    },
+    {
+      "wallMs": 7783,
+      "timeText": "00:24.2 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 90,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 89
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 24.6667,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 6
+    },
+    {
+      "wallMs": 8312,
+      "timeText": "00:23.9 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 94,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 93
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 24.6667,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 6
+    },
+    {
+      "wallMs": 8596,
+      "timeText": "00:23.6 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 98,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 97
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 24.6667,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 6
+    },
+    {
+      "wallMs": 8892,
+      "timeText": "00:23.2 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 102,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 101
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 24.6667,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 6
+    },
+    {
+      "wallMs": 9205,
+      "timeText": "00:22.9 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 109,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 108
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 24.6667,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 6
+    },
+    {
+      "wallMs": 9485,
+      "timeText": "00:22.6 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 115,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 114
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 24.6667,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 6
+    },
+    {
+      "wallMs": 9796,
+      "timeText": "00:22.3 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 122,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 121
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 24.6667,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 6
+    },
+    {
+      "wallMs": 10092,
+      "timeText": "00:22.0 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 127,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 126
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 24.6667,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 6
+    },
+    {
+      "wallMs": 10380,
+      "timeText": "00:21.8 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 134,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 133
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 21.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 9
+    },
+    {
+      "wallMs": 10684,
+      "timeText": "00:21.5 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 140,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 139
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 21.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 9
+    },
+    {
+      "wallMs": 11035,
+      "timeText": "00:21.2 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 147,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 146
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 21.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 9
+    },
+    {
+      "wallMs": 11289,
+      "timeText": "00:20.9 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 154,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 153
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 21.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 9
+    },
+    {
+      "wallMs": 11610,
+      "timeText": "00:20.6 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 162,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 161
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 21.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 9
+    },
+    {
+      "wallMs": 11891,
+      "timeText": "00:20.2 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 172,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 171
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 21.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 9
+    },
+    {
+      "wallMs": 12187,
+      "timeText": "00:20.0 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 180,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 179
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 21.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 9
+    },
+    {
+      "wallMs": 12504,
+      "timeText": "00:19.7 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 185,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 184
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 21.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 9
+    },
+    {
+      "wallMs": 12802,
+      "timeText": "00:19.4 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 189,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 188
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 21.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 9
+    },
+    {
+      "wallMs": 13096,
+      "timeText": "00:19.1 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 193,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 192
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 21.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 9
+    },
+    {
+      "wallMs": 13386,
+      "timeText": "00:18.8 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 197,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 196
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 21.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 9
+    },
+    {
+      "wallMs": 13702,
+      "timeText": "00:18.5 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 202,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 201
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 21.9,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 9
+    },
+    {
+      "wallMs": 14005,
+      "timeText": "00:18.2 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 208,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 207
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 18.3,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 12
+    },
+    {
+      "wallMs": 14384,
+      "timeText": "00:17.9 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 213,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 212
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 18.3,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 12
+    },
+    {
+      "wallMs": 14638,
+      "timeText": "00:17.6 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 218,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 217
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 18.3,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 12
+    },
+    {
+      "wallMs": 14903,
+      "timeText": "00:17.3 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 224,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 223
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 18.3,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 12
+    },
+    {
+      "wallMs": 15203,
+      "timeText": "00:17.1 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 229,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 228
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 18.3,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 12
+    },
+    {
+      "wallMs": 15588,
+      "timeText": "00:16.8 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 235,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 234
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 18.3,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 12
+    },
+    {
+      "wallMs": 15928,
+      "timeText": "00:16.3 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 245,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 244
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 18.3,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 12
+    },
+    {
+      "wallMs": 16285,
+      "timeText": "00:16.0 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 253,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 252
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 16.1333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 15
+    },
+    {
+      "wallMs": 16608,
+      "timeText": "00:15.7 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 260,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 259
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 16.1333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 15
+    },
+    {
+      "wallMs": 16894,
+      "timeText": "00:15.4 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 264,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 263
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 16.1333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 15
+    },
+    {
+      "wallMs": 17190,
+      "timeText": "00:15.1 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 270,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 269
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 16.1333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 15
+    },
+    {
+      "wallMs": 17490,
+      "timeText": "00:14.8 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 278,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 277
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 16.1333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 15
+    },
+    {
+      "wallMs": 17808,
+      "timeText": "00:14.5 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 2,
+        "skip": 280,
+        "maxHoldAgeSec": 0.033333333333333215,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 282
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 14.5333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 18
+    },
+    {
+      "wallMs": 18127,
+      "timeText": "00:14.1 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 9,
+        "skip": 280,
+        "maxHoldAgeSec": 0.40000000000000036,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 289
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 14.5333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 18
+    },
+    {
+      "wallMs": 18401,
+      "timeText": "00:13.9 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 13,
+        "skip": 280,
+        "maxHoldAgeSec": 0.5999999999999996,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 293
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 14.5333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 18
+    },
+    {
+      "wallMs": 18703,
+      "timeText": "00:13.6 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 20,
+        "skip": 280,
+        "maxHoldAgeSec": 0.9333333333333336,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 300
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 14.5333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 18
+    },
+    {
+      "wallMs": 19010,
+      "timeText": "00:13.3 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 27,
+        "skip": 280,
+        "maxHoldAgeSec": 1.2666666666666657,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 307
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 14.5333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 18
+    },
+    {
+      "wallMs": 19311,
+      "timeText": "00:13.0 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 31,
+        "skip": 280,
+        "maxHoldAgeSec": 1.5333333333333332,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 311
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 14.5333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 18
+    },
+    {
+      "wallMs": 19594,
+      "timeText": "00:12.7 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 36,
+        "skip": 280,
+        "maxHoldAgeSec": 1.8000000000000007,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 316
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 14.5333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 18
+    },
+    {
+      "wallMs": 19900,
+      "timeText": "00:12.4 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 45,
+        "skip": 280,
+        "maxHoldAgeSec": 2.133333333333333,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 325
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 14.5333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 18
+    },
+    {
+      "wallMs": 20229,
+      "timeText": "00:12.1 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 50,
+        "skip": 280,
+        "maxHoldAgeSec": 2.4000000000000004,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 330
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 14.5333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 18
+    },
+    {
+      "wallMs": 20514,
+      "timeText": "00:11.8 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 56,
+        "skip": 280,
+        "maxHoldAgeSec": 2.6999999999999993,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 336
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 14.5333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 18
+    },
+    {
+      "wallMs": 20827,
+      "timeText": "00:11.5 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 62,
+        "skip": 280,
+        "maxHoldAgeSec": 3,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 342
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 14.5333,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 18
+    },
+    {
+      "wallMs": 21122,
+      "timeText": "00:11.2 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 65,
+        "skip": 280,
+        "maxHoldAgeSec": 3.3000000000000007,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 345
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 14.5333,
+          "seeking": false,
+          "readyState": 4,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 20
+    },
+    {
+      "wallMs": 21491,
+      "timeText": "00:10.9 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 72,
+        "skip": 280,
+        "maxHoldAgeSec": 3.633333333333333,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 352
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 11.1667,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 21
+    },
+    {
+      "wallMs": 21800,
+      "timeText": "00:10.6 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 78,
+        "skip": 280,
+        "maxHoldAgeSec": 3.966666666666667,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 358
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 11.1667,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 21
+    },
+    {
+      "wallMs": 22094,
+      "timeText": "00:10.3 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 85,
+        "skip": 280,
+        "maxHoldAgeSec": 4.266666666666666,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 365
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 11.1667,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 21
+    },
+    {
+      "wallMs": 22398,
+      "timeText": "00:09.9 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 93,
+        "skip": 280,
+        "maxHoldAgeSec": 4.6,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 373
+      },
+      "centerMean": 133.37040000000027,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 11.1667,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 21
+    },
+    {
+      "wallMs": 22691,
+      "timeText": "00:09.6 / 00:30.0",
+      "stats": {
+        "draw": 2,
+        "hold": 98,
+        "skip": 280,
+        "maxHoldAgeSec": 4.6,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 379
+      },
+      "centerMean": 97.65256666666684,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 9.8,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 24
+    },
+    {
+      "wallMs": 23001,
+      "timeText": "00:09.3 / 00:30.0",
+      "stats": {
+        "draw": 2,
+        "hold": 104,
+        "skip": 280,
+        "maxHoldAgeSec": 4.6,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 385
+      },
+      "centerMean": 97.65256666666684,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 9.8,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 24
+    },
+    {
+      "wallMs": 23288,
+      "timeText": "00:09.1 / 00:30.0",
+      "stats": {
+        "draw": 2,
+        "hold": 109,
+        "skip": 280,
+        "maxHoldAgeSec": 4.6,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 390
+      },
+      "centerMean": 97.65256666666684,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 9.8,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 24
+    },
+    {
+      "wallMs": 23609,
+      "timeText": "00:08.8 / 00:30.0",
+      "stats": {
+        "draw": 2,
+        "hold": 116,
+        "skip": 280,
+        "maxHoldAgeSec": 4.6,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 397
+      },
+      "centerMean": 97.65256666666684,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 9.8,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 24
+    },
+    {
+      "wallMs": 23892,
+      "timeText": "00:08.4 / 00:30.0",
+      "stats": {
+        "draw": 2,
+        "hold": 121,
+        "skip": 280,
+        "maxHoldAgeSec": 4.6,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 402
+      },
+      "centerMean": 97.65256666666684,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 9.8,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 24
+    },
+    {
+      "wallMs": 24194,
+      "timeText": "00:08.2 / 00:30.0",
+      "stats": {
+        "draw": 2,
+        "hold": 129,
+        "skip": 280,
+        "maxHoldAgeSec": 4.6,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 410
+      },
+      "centerMean": 97.65256666666684,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 9.8,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 24
+    },
+    {
+      "wallMs": 24489,
+      "timeText": "00:07.9 / 00:30.0",
+      "stats": {
+        "draw": 2,
+        "hold": 136,
+        "skip": 280,
+        "maxHoldAgeSec": 4.6,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 417
+      },
+      "centerMean": 97.65256666666684,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 9.8,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 24
+    },
+    {
+      "wallMs": 24795,
+      "timeText": "00:07.6 / 00:30.0",
+      "stats": {
+        "draw": 2,
+        "hold": 143,
+        "skip": 280,
+        "maxHoldAgeSec": 4.6,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 424
+      },
+      "centerMean": 97.65256666666684,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 9.8,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 24
+    },
+    {
+      "wallMs": 25091,
+      "timeText": "00:07.3 / 00:30.0",
+      "stats": {
+        "draw": 2,
+        "hold": 149,
+        "skip": 280,
+        "maxHoldAgeSec": 4.6,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 430
+      },
+      "centerMean": 97.65256666666684,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 9.8,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 24
+    },
+    {
+      "wallMs": 25380,
+      "timeText": "00:07.0 / 00:30.0",
+      "stats": {
+        "draw": 2,
+        "hold": 157,
+        "skip": 280,
+        "maxHoldAgeSec": 4.6,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 438
+      },
+      "centerMean": 97.65256666666684,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 9.8,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 24
+    },
+    {
+      "wallMs": 25691,
+      "timeText": "00:06.7 / 00:30.0",
+      "stats": {
+        "draw": 2,
+        "hold": 167,
+        "skip": 280,
+        "maxHoldAgeSec": 4.6,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 448
+      },
+      "centerMean": 97.65256666666684,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 9.8,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 24
+    },
+    {
+      "wallMs": 26033,
+      "timeText": "00:06.3 / 00:30.0",
+      "stats": {
+        "draw": 2,
+        "hold": 178,
+        "skip": 280,
+        "maxHoldAgeSec": 4.6,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 459
+      },
+      "centerMean": 97.65256666666684,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 9.8,
+          "seeking": false,
+          "readyState": 4,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 26
+    },
+    {
+      "wallMs": 26295,
+      "timeText": "00:06.0 / 00:30.0",
+      "stats": {
+        "draw": 2,
+        "hold": 187,
+        "skip": 280,
+        "maxHoldAgeSec": 4.6,
+        "stale": true
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 468
+      },
+      "centerMean": 97.65256666666684,
+      "reverseBadge": true,
+      "videos": [
+        {
+          "ct": 6.2667,
+          "seeking": true,
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 30,
+          "vw": 1280,
+          "vh": 720,
+          "paused": true,
+          "buffered": [
+            [
+              0,
+              30
+            ]
+          ],
+          "error": null
+        }
+      ],
+      "seekLogLen": 27
+    }
+  ],
+  "seekLog": [
+    {
+      "t": 6218.7,
+      "type": "loadedmetadata",
+      "ct": 0,
+      "seeking": false
+    },
+    {
+      "t": 13332.8,
+      "type": "canplay",
+      "ct": 0,
+      "seeking": false
+    },
+    {
+      "t": 16005.3,
+      "type": "seeking",
+      "ct": 29.9,
+      "seeking": true
+    },
+    {
+      "t": 22847.7,
+      "type": "seeked",
+      "ct": 29.9,
+      "seeking": false
+    },
+    {
+      "t": 22847.7,
+      "type": "canplay",
+      "ct": 29.9,
+      "seeking": false
+    },
+    {
+      "t": 22945.1,
+      "type": "seeking",
+      "ct": 24.6667,
+      "seeking": true
+    },
+    {
+      "t": 25834.2,
+      "type": "seeked",
+      "ct": 24.6667,
+      "seeking": false
+    },
+    {
+      "t": 25834.2,
+      "type": "canplay",
+      "ct": 24.6667,
+      "seeking": false
+    },
+    {
+      "t": 25932.6,
+      "type": "seeking",
+      "ct": 21.9,
+      "seeking": true
+    },
+    {
+      "t": 29413.9,
+      "type": "seeked",
+      "ct": 21.9,
+      "seeking": false
+    },
+    {
+      "t": 29414,
+      "type": "canplay",
+      "ct": 21.9,
+      "seeking": false
+    },
+    {
+      "t": 29597.8,
+      "type": "seeking",
+      "ct": 18.3,
+      "seeking": true
+    },
+    {
+      "t": 31770.9,
+      "type": "seeked",
+      "ct": 18.3,
+      "seeking": false
+    },
+    {
+      "t": 31770.9,
+      "type": "canplay",
+      "ct": 18.3,
+      "seeking": false
+    },
+    {
+      "t": 31816.9,
+      "type": "seeking",
+      "ct": 16.1333,
+      "seeking": true
+    },
+    {
+      "t": 33313.5,
+      "type": "seeked",
+      "ct": 16.1333,
+      "seeking": false
+    },
+    {
+      "t": 33313.5,
+      "type": "canplay",
+      "ct": 16.1333,
+      "seeking": false
+    },
+    {
+      "t": 33434.3,
+      "type": "seeking",
+      "ct": 14.5333,
+      "seeking": true
+    },
+    {
+      "t": 36750.3,
+      "type": "seeked",
+      "ct": 14.5333,
+      "seeking": false
+    },
+    {
+      "t": 36750.4,
+      "type": "canplay",
+      "ct": 14.5333,
+      "seeking": false
+    },
+    {
+      "t": 36908.8,
+      "type": "seeking",
+      "ct": 11.1667,
+      "seeking": true
+    },
+    {
+      "t": 38116.8,
+      "type": "seeked",
+      "ct": 11.1667,
+      "seeking": false
+    },
+    {
+      "t": 38116.8,
+      "type": "canplay",
+      "ct": 11.1667,
+      "seeking": false
+    },
+    {
+      "t": 38235.2,
+      "type": "seeking",
+      "ct": 9.8,
+      "seeking": true
+    },
+    {
+      "t": 41708.4,
+      "type": "seeked",
+      "ct": 9.8,
+      "seeking": false
+    },
+    {
+      "t": 41708.5,
+      "type": "canplay",
+      "ct": 9.8,
+      "seeking": false
+    },
+    {
+      "t": 41801.1,
+      "type": "seeking",
+      "ct": 6.2667,
+      "seeking": true
+    }
+  ],
+  "firstContentIndex": 51,
+  "firstContentWallMs": 17808,
+  "firstDrawIndex": 51,
+  "firstDrawWallMs": 17808,
+  "lastStats": {
+    "draw": 2,
+    "hold": 187,
+    "skip": 280,
+    "maxHoldAgeSec": 4.6,
+    "stale": true
+  },
+  "lastWc": {
+    "hits": 0,
+    "misses": 468
+  },
+  "reverseBadgeSeen": true,
+  "timeTexts": [
+    "00:29.9 / 00:30.0",
+    "00:29.6 / 00:30.0",
+    "00:29.2 / 00:30.0",
+    "00:28.9 / 00:30.0",
+    "00:28.6 / 00:30.0",
+    "00:28.3 / 00:30.0",
+    "00:28.1 / 00:30.0",
+    "00:27.8 / 00:30.0",
+    "00:27.6 / 00:30.0",
+    "00:27.2 / 00:30.0",
+    "00:27.0 / 00:30.0",
+    "00:26.7 / 00:30.0",
+    "00:26.4 / 00:30.0",
+    "00:26.0 / 00:30.0",
+    "00:25.7 / 00:30.0",
+    "00:25.3 / 00:30.0",
+    "00:25.1 / 00:30.0",
+    "00:24.7 / 00:30.0",
+    "00:24.5 / 00:30.0",
+    "00:24.2 / 00:30.0",
+    "00:23.9 / 00:30.0",
+    "00:23.6 / 00:30.0",
+    "00:23.2 / 00:30.0",
+    "00:22.9 / 00:30.0",
+    "00:22.6 / 00:30.0",
+    "00:22.3 / 00:30.0",
+    "00:22.0 / 00:30.0",
+    "00:21.8 / 00:30.0",
+    "00:21.5 / 00:30.0",
+    "00:21.2 / 00:30.0",
+    "00:20.9 / 00:30.0",
+    "00:20.6 / 00:30.0",
+    "00:20.2 / 00:30.0",
+    "00:20.0 / 00:30.0",
+    "00:19.7 / 00:30.0",
+    "00:19.4 / 00:30.0",
+    "00:19.1 / 00:30.0",
+    "00:18.8 / 00:30.0",
+    "00:18.5 / 00:30.0",
+    "00:18.2 / 00:30.0",
+    "00:17.9 / 00:30.0",
+    "00:17.6 / 00:30.0",
+    "00:17.3 / 00:30.0",
+    "00:17.1 / 00:30.0",
+    "00:16.8 / 00:30.0",
+    "00:16.3 / 00:30.0",
+    "00:16.0 / 00:30.0",
+    "00:15.7 / 00:30.0",
+    "00:15.4 / 00:30.0",
+    "00:15.1 / 00:30.0",
+    "00:14.8 / 00:30.0",
+    "00:14.5 / 00:30.0",
+    "00:14.1 / 00:30.0",
+    "00:13.9 / 00:30.0",
+    "00:13.6 / 00:30.0",
+    "00:13.3 / 00:30.0",
+    "00:13.0 / 00:30.0",
+    "00:12.7 / 00:30.0",
+    "00:12.4 / 00:30.0",
+    "00:12.1 / 00:30.0",
+    "00:11.8 / 00:30.0",
+    "00:11.5 / 00:30.0",
+    "00:11.2 / 00:30.0",
+    "00:10.9 / 00:30.0",
+    "00:10.6 / 00:30.0",
+    "00:10.3 / 00:30.0",
+    "00:09.9 / 00:30.0",
+    "00:09.6 / 00:30.0",
+    "00:09.3 / 00:30.0",
+    "00:09.1 / 00:30.0",
+    "00:08.8 / 00:30.0",
+    "00:08.4 / 00:30.0",
+    "00:08.2 / 00:30.0",
+    "00:07.9 / 00:30.0",
+    "00:07.6 / 00:30.0",
+    "00:07.3 / 00:30.0",
+    "00:07.0 / 00:30.0",
+    "00:06.7 / 00:30.0",
+    "00:06.3 / 00:30.0",
+    "00:06.0 / 00:30.0"
+  ]
+}

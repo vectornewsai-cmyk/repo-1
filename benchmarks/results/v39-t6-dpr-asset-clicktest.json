@@ -1,0 +1,48 @@
+{
+  "serveMode": "vite-dev-scratch",
+  "runs": [
+    {
+      "dsf": 2,
+      "assetId": "a_ee0caf7625dd51b4",
+      "probe": {
+        "dpr": 2,
+        "cssW": 712,
+        "cssH": 234,
+        "backingW": 1424,
+        "backingH": 468,
+        "centerMean": 12.666666666668506,
+        "timeText": "00:00.0 / 00:03.0",
+        "mediaNames": [
+          "asset:a_ee0caf7625dd51b4"
+        ]
+      }
+    },
+    {
+      "dsf": 3,
+      "assetId": null,
+      "probe": {
+        "dpr": 3,
+        "cssW": 712,
+        "cssH": 234,
+        "backingW": 1424,
+        "backingH": 468,
+        "centerMean": 12.666666666668506,
+        "timeText": "00:00.0 / 00:03.0",
+        "mediaNames": [
+          "asset:a_ee0caf7625dd51b4"
+        ]
+      }
+    }
+  ],
+  "checks": {
+    "dsf2_dpr": true,
+    "dsf2_backingCap": true,
+    "dsf2_content": false,
+    "dsf2_assetMedia": true,
+    "dsf3_dpr": true,
+    "dsf3_backingCap": true,
+    "dsf3_content": false,
+    "dsf3_assetMedia": true
+  },
+  "allPass": false
+}

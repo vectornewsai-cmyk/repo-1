@@ -1,0 +1,779 @@
+{
+  "assetId": "a_ee0caf7625dd51b4",
+  "samples": [
+    {
+      "phase": "paused",
+      "i": 0,
+      "timeText": "00:00.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 7,
+        "sleeping": true,
+        "lastDrawn": 0,
+        "lastRequested": 0,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 0,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "paused",
+      "i": 1,
+      "timeText": "00:00.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 7,
+        "sleeping": true,
+        "lastDrawn": 0,
+        "lastRequested": 0,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 0,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "paused",
+      "i": 2,
+      "timeText": "00:00.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 7,
+        "sleeping": true,
+        "lastDrawn": 0,
+        "lastRequested": 0,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 0,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "paused",
+      "i": 3,
+      "timeText": "00:00.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 7,
+        "sleeping": true,
+        "lastDrawn": 0,
+        "lastRequested": 0,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 0,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "paused",
+      "i": 4,
+      "timeText": "00:00.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 7,
+        "sleeping": true,
+        "lastDrawn": 0,
+        "lastRequested": 0,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 0,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "paused",
+      "i": 5,
+      "timeText": "00:00.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 7,
+        "sleeping": true,
+        "lastDrawn": 0,
+        "lastRequested": 0,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 0,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "paused",
+      "i": 6,
+      "timeText": "00:00.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 7,
+        "sleeping": true,
+        "lastDrawn": 0,
+        "lastRequested": 0,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 0,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "paused",
+      "i": 7,
+      "timeText": "00:00.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 7,
+        "sleeping": true,
+        "lastDrawn": 0,
+        "lastRequested": 0,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 0,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "paused",
+      "i": 8,
+      "timeText": "00:00.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 7,
+        "sleeping": true,
+        "lastDrawn": 0,
+        "lastRequested": 0,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 0,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "paused",
+      "i": 9,
+      "timeText": "00:00.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 7,
+        "sleeping": true,
+        "lastDrawn": 0,
+        "lastRequested": 0,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 0,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "paused",
+      "i": 10,
+      "timeText": "00:00.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 7,
+        "sleeping": true,
+        "lastDrawn": 0,
+        "lastRequested": 0,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 0,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "paused",
+      "i": 11,
+      "timeText": "00:00.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 7,
+        "sleeping": true,
+        "lastDrawn": 0,
+        "lastRequested": 0,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 0,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "playing",
+      "i": 0,
+      "timeText": "00:00.5 / 00:03.0",
+      "mean": 128.6658999999988,
+      "hold": {
+        "draw": 8,
+        "hold": 0,
+        "skip": 2,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 16,
+        "sleeping": false,
+        "lastDrawn": 0.5,
+        "lastRequested": 0.5,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 0.571,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": false,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "playing",
+      "i": 1,
+      "timeText": "00:01.2 / 00:03.0",
+      "mean": 127.98009999999988,
+      "hold": {
+        "draw": 17,
+        "hold": 1,
+        "skip": 2,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 26,
+        "sleeping": false,
+        "lastDrawn": 1.2333333333333334,
+        "lastRequested": 1.2333333333333334,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 1.233,
+          "seeking": true,
+          "rs": 1,
+          "dur": 3,
+          "vw": 640,
+          "paused": false,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "playing",
+      "i": 2,
+      "timeText": "00:02.2 / 00:03.0",
+      "mean": 128.11519999999996,
+      "hold": {
+        "draw": 21,
+        "hold": 8,
+        "skip": 2,
+        "maxHoldAgeSec": 0.6333333333333333,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 37,
+        "sleeping": false,
+        "lastDrawn": 2.1666666666666665,
+        "lastRequested": 2.1666666666666665,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 1.95,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": false,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "playing",
+      "i": 3,
+      "timeText": "00:03.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 37,
+        "hold": 8,
+        "skip": 2,
+        "maxHoldAgeSec": 0.6333333333333333,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 57,
+        "sleeping": true,
+        "lastDrawn": 3,
+        "lastRequested": 3,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 2.731,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "playing",
+      "i": 4,
+      "timeText": "00:03.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 37,
+        "hold": 8,
+        "skip": 2,
+        "maxHoldAgeSec": 0.6333333333333333,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 57,
+        "sleeping": true,
+        "lastDrawn": 3,
+        "lastRequested": 3,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 2.731,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    },
+    {
+      "phase": "playing",
+      "i": 5,
+      "timeText": "00:03.0 / 00:03.0",
+      "mean": 12.666666666668506,
+      "hold": {
+        "draw": 37,
+        "hold": 8,
+        "skip": 2,
+        "maxHoldAgeSec": 0.6333333333333333,
+        "stale": false
+      },
+      "idle": {
+        "ticks": 57,
+        "sleeping": true,
+        "lastDrawn": 3,
+        "lastRequested": 3,
+        "pendingSeek": false,
+        "redrawFlag": false
+      },
+      "videos": [
+        {
+          "ct": 2.731,
+          "seeking": false,
+          "rs": 4,
+          "dur": 3,
+          "vw": 640,
+          "paused": true,
+          "buf": [
+            [
+              0,
+              3
+            ]
+          ],
+          "err": null,
+          "srcKind": "blob"
+        }
+      ],
+      "mediaNames": [
+        "asset:a_ee0caf7625dd51b4"
+      ],
+      "clips": 1
+    }
+  ]
+}

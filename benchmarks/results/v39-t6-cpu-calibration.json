@@ -1,0 +1,231 @@
+{
+  "date": "2026-11-03T02:11:03.899Z",
+  "allPass": false,
+  "criteriaPreregistered": {
+    "h2Above50": true,
+    "h1Below20": true,
+    "minGapAbove30": true,
+    "note": "Ngưỡng T4 giữ nguyên; chỉ đề xuất ngưỡng mới/cổng tự động khi allPass."
+  },
+  "thresholdDecision": "GIỮ NGƯỠNG CŨ — dữ liệu lặp KHÔNG đạt đủ tiêu chí ghi trước, chưa đủ để làm cổng tự động (xem check FAIL + LIMITS).",
+  "checks": {
+    "n.busyHighAllRounds": {
+      "pass": false,
+      "detail": "77.4,39.4,39.5"
+    },
+    "n.idleLowAllRounds": {
+      "pass": true,
+      "detail": "0.0,0.0,0.0"
+    },
+    "n.gapAllRounds": {
+      "pass": true,
+      "detail": "77.4,39.4,39.5"
+    },
+    "h1.1.timeoutAndSnapshot": {
+      "pass": true,
+      "detail": "err=cdp timeout Runtime.evaluate snaps=1"
+    },
+    "h1.1.rendererStillFree": {
+      "pass": true,
+      "detail": "{\"result\":{\"type\":\"number\",\"value\":2,\"description\":\"2\"}}"
+    },
+    "h1.2.timeoutAndSnapshot": {
+      "pass": true,
+      "detail": "err=cdp timeout Runtime.evaluate snaps=1"
+    },
+    "h1.2.rendererStillFree": {
+      "pass": true,
+      "detail": "{\"result\":{\"type\":\"number\",\"value\":2,\"description\":\"2\"}}"
+    },
+    "h1.3.timeoutAndSnapshot": {
+      "pass": true,
+      "detail": "err=cdp timeout Runtime.evaluate snaps=1"
+    },
+    "h1.3.rendererStillFree": {
+      "pass": true,
+      "detail": "{\"result\":{\"type\":\"number\",\"value\":2,\"description\":\"2\"}}"
+    },
+    "h2.1.timeoutAndSnapshot": {
+      "pass": true,
+      "detail": "err=cdp timeout Runtime.evaluate snaps=1"
+    },
+    "h2.2.timeoutAndSnapshot": {
+      "pass": true,
+      "detail": "err=cdp timeout Runtime.evaluate snaps=1"
+    },
+    "h2.3.timeoutAndSnapshot": {
+      "pass": true,
+      "detail": "err=cdp timeout Runtime.evaluate snaps=1"
+    },
+    "c.h2Above50AllRounds": {
+      "pass": true,
+      "detail": "94.9,99.9,98.9"
+    },
+    "c.h1Below20AllRounds": {
+      "pass": true,
+      "detail": "2.7,0.3,0.0"
+    },
+    "c.minGapAbove30": {
+      "pass": true,
+      "detail": "minH2=94.9 maxH1=2.7 gap=92.3"
+    },
+    "c.psRecordedOnly": {
+      "pass": true,
+      "detail": "ps H1: 2.7,2.7,2.7 H2: 2.7,2.7,2.7 (đo thông tin, không phân biệt)"
+    },
+    "z.cleanupDirBackToBaseline": {
+      "pass": true,
+      "detail": "trước=0 sau=0"
+    }
+  },
+  "nodeLevel": {
+    "rounds": [
+      {
+        "round": 1,
+        "busyCpuPctOneCore": 77.38392411382925,
+        "busyDeltaTicks": 155,
+        "idleCpuPctOneCore": 0,
+        "idleDeltaTicks": 0
+      },
+      {
+        "round": 2,
+        "busyCpuPctOneCore": 39.42115768463074,
+        "busyDeltaTicks": 79,
+        "idleCpuPctOneCore": 0,
+        "idleDeltaTicks": 0
+      },
+      {
+        "round": 3,
+        "busyCpuPctOneCore": 39.48025987006497,
+        "busyDeltaTicks": 79,
+        "idleCpuPctOneCore": 0,
+        "idleDeltaTicks": 0
+      }
+    ],
+    "busyStats": {
+      "n": 3,
+      "min": 39.42115768463074,
+      "max": 77.38392411382925,
+      "mean": 52.09511388950832,
+      "values": [
+        77.4,
+        39.4,
+        39.5
+      ]
+    },
+    "idleStats": {
+      "n": 3,
+      "min": 0,
+      "max": 0,
+      "mean": 0,
+      "values": [
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "cdpLevel": {
+    "h1Rounds": [
+      {
+        "round": 1,
+        "cpuPctOneCore": 2.6586905948820205,
+        "deltaTicks": 8,
+        "topPid": {
+          "pid": 16308,
+          "deltaTicks": 4,
+          "cpuPctOneCore": 1.3293452974410103
+        },
+        "error": "cdp timeout Runtime.evaluate",
+        "newSnapshots": 1,
+        "psMaxCpuLifetime": 2.7
+      },
+      {
+        "round": 2,
+        "cpuPctOneCore": 0.33178500331785005,
+        "deltaTicks": 1,
+        "topPid": {
+          "pid": 16383,
+          "deltaTicks": 1,
+          "cpuPctOneCore": 0.33178500331785005
+        },
+        "error": "cdp timeout Runtime.evaluate",
+        "newSnapshots": 1,
+        "psMaxCpuLifetime": 2.7
+      },
+      {
+        "round": 3,
+        "cpuPctOneCore": 0,
+        "deltaTicks": 0,
+        "topPid": null,
+        "error": "cdp timeout Runtime.evaluate",
+        "newSnapshots": 1,
+        "psMaxCpuLifetime": 2.7
+      }
+    ],
+    "h2Rounds": [
+      {
+        "round": 1,
+        "cpuPctOneCore": 94.9367088607595,
+        "deltaTicks": 285,
+        "topPid": {
+          "pid": 16615,
+          "deltaTicks": 280,
+          "cpuPctOneCore": 93.2711525649567
+        },
+        "error": "cdp timeout Runtime.evaluate",
+        "newSnapshots": 1,
+        "psMaxCpuLifetime": 2.7
+      },
+      {
+        "round": 2,
+        "cpuPctOneCore": 99.9333777481679,
+        "deltaTicks": 300,
+        "topPid": {
+          "pid": 16780,
+          "deltaTicks": 296,
+          "cpuPctOneCore": 98.60093271152566
+        },
+        "error": "cdp timeout Runtime.evaluate",
+        "newSnapshots": 1,
+        "psMaxCpuLifetime": 2.7
+      },
+      {
+        "round": 3,
+        "cpuPctOneCore": 98.93404397068622,
+        "deltaTicks": 297,
+        "topPid": {
+          "pid": 16951,
+          "deltaTicks": 291,
+          "cpuPctOneCore": 96.93537641572286
+        },
+        "error": "cdp timeout Runtime.evaluate",
+        "newSnapshots": 1,
+        "psMaxCpuLifetime": 2.7
+      }
+    ],
+    "h1Stats": {
+      "n": 3,
+      "min": 0,
+      "max": 2.6586905948820205,
+      "mean": 0.9968251993999568,
+      "values": [
+        2.7,
+        0.3,
+        0
+      ]
+    },
+    "h2Stats": {
+      "n": 3,
+      "min": 94.9367088607595,
+      "max": 99.9333777481679,
+      "mean": 97.93471019320454,
+      "values": [
+        94.9,
+        99.9,
+        98.9
+      ]
+    },
+    "minGap": 92.27801826587748
+  }
+}
