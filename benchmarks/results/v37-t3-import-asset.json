@@ -1,0 +1,30 @@
+{
+  "allPass": true,
+  "results": {
+    "phaA.manifestIngested": {
+      "pass": true,
+      "detail": "assetId=a_c414cd0e204de974"
+    },
+    "phaA.noFalseRelinkAfterReload": {
+      "pass": true,
+      "detail": ""
+    },
+    "phaA.mediaBinHasPng": {
+      "pass": true,
+      "detail": "📁 THƯ VIỆN\n＋ Nhập file\nTự tạo proxy 720p khi import video (preview mượt hơn, export vẫn dùng gốc)\n00:04.0\nmau-1.webm\n＋ ThêmProxy 720p\n00:04.0\nmau-2.webm\n＋ ThêmProxy 720p\nt3-test.png\n＋ Thêm\n↺ Dự án mẫ"
+    },
+    "phaC.noFalseRelinkOnAssetOpen": {
+      "pass": true,
+      "detail": ""
+    },
+    "phaC.mediaBinHasAssetItem": {
+      "pass": true,
+      "detail": "📁 THƯ VIỆN\n＋ Nhập file\nTự tạo proxy 720p khi import video (preview mượt hơn, export vẫn dùng gốc)\n00:04.0\nmau-1.webm\n＋ ThêmProxy 720p\n00:04.0\nmau-2.webm\n＋ ThêmProxy 720p\nasset:a_c414cd0e204de974\n＋ Thêm\n↺ Dự án mẫu"
+    },
+    "phaB.relinkShownForTrulyMissing": {
+      "pass": true,
+      "detail": "🔗 Media thiếu (1)\n✕\nProject này dùng 1 file media chưa có trong phiên làm việc. Chọn lại từng file để tiếp tục dựng — clip thiếu sẽ hiện placeholder cho tới khi được relink.\n🎬\nfile-that-does-not-exist-xyz.mp4\nVideo · dùng trong 1 clip (Video 2)\n🔗 Chọn lại\nBỏ qua — dựng tiếp với placeholder"
+    }
+  },
+  "at": "2026-11-02T07:21:04.252Z"
+}

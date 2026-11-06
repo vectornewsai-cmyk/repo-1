@@ -1,0 +1,156 @@
+{
+  "noiseFile": "/home/hatch/workspace/tmp-round34-q2/sparse-gop-noise.mp4",
+  "noiseBytes": 419967521,
+  "noiseMiB": 400.5,
+  "flag": {
+    "NOISE_BYTES": 419967521,
+    "flag": true,
+    "engine": "webcodecs",
+    "hasDecoder": true
+  },
+  "baseline": {
+    "heapMiB": 0.8
+  },
+  "blobGate": {
+    "kind": "blob-gate",
+    "ok": false,
+    "ms": 1,
+    "failed": true,
+    "largeFileFallback": true,
+    "knownFileSizeBytes": 419967521,
+    "retainedFileBytes": 0,
+    "frameAtNull": true,
+    "heapSamples": 0,
+    "heapMax": null,
+    "heapAfter": 850407,
+    "heapAfterGc": 596352,
+    "fetch": {
+      "head": 0,
+      "get": 0,
+      "aborted": false,
+      "headLength": null,
+      "getLength": null,
+      "arrayBufferStarted": false,
+      "arrayBufferResolved": false
+    },
+    "heapMaxMiB": null,
+    "heapAfterMiB": 0.8,
+    "heapAfterGcMiB": 0.6
+  },
+  "blobNaked": {
+    "kind": "blob-naked",
+    "ok": false,
+    "ms": 88,
+    "failed": true,
+    "largeFileFallback": true,
+    "knownFileSizeBytes": 419967521,
+    "retainedFileBytes": 0,
+    "frameAtNull": true,
+    "heapSamples": 0,
+    "heapMax": null,
+    "heapAfter": 715481,
+    "heapAfterGc": 691016,
+    "fetch": {
+      "head": 1,
+      "get": 1,
+      "aborted": false,
+      "headLength": null,
+      "getLength": "419967521",
+      "arrayBufferStarted": false,
+      "arrayBufferResolved": false
+    },
+    "heapMaxMiB": null,
+    "heapAfterMiB": 0.7,
+    "heapAfterGcMiB": 0.7
+  },
+  "blobNakedDrop": {
+    "seconds": 0,
+    "series": [
+      0.7
+    ],
+    "reached": true
+  },
+  "httpNohead": {
+    "kind": "http-nohead",
+    "ok": false,
+    "ms": 17630,
+    "failed": true,
+    "largeFileFallback": true,
+    "knownFileSizeBytes": 419967521,
+    "retainedFileBytes": 0,
+    "frameAtNull": true,
+    "heapSamples": 131,
+    "heapMax": 706580,
+    "heapAfter": 420663330,
+    "heapAfterGc": 420661766,
+    "fetch": {
+      "head": 1,
+      "get": 1,
+      "aborted": false,
+      "headLength": null,
+      "getLength": null,
+      "arrayBufferStarted": true,
+      "arrayBufferResolved": true
+    },
+    "heapMaxMiB": 0.7,
+    "heapAfterMiB": 401.2,
+    "heapAfterGcMiB": 401.2
+  },
+  "dropToBaseline": {
+    "seconds": 0.6,
+    "series": [
+      401.2,
+      0.7
+    ],
+    "reached": true
+  },
+  "lateSlow": {
+    "ok": false,
+    "failed": true,
+    "largeFileFallback": true,
+    "knownFileSizeBytes": 419967521,
+    "retainedFileBytes": 0,
+    "frameAtNull": true,
+    "heapMax": 718659,
+    "heapSamples": 3,
+    "fetch": {
+      "head": 1,
+      "get": 1,
+      "aborted": true,
+      "headLength": null,
+      "getLength": null,
+      "arrayBufferStarted": false,
+      "arrayBufferResolved": false,
+      "getStarted": true
+    },
+    "heapMaxMiB": 0.7,
+    "bytesAtAbort": 0,
+    "bytesAfterWait2s": 0,
+    "serverClosed": true
+  },
+  "blobLate": {
+    "ok": false,
+    "applied": true,
+    "abortResult": true,
+    "headGateBeforeGet": false,
+    "failed": true,
+    "largeFileFallback": true,
+    "knownFileSizeBytes": 419967521,
+    "retainedFileBytes": 0,
+    "frameAtNull": true,
+    "heapMax": 760158,
+    "heapAfter": 765893,
+    "fetch": {
+      "head": 1,
+      "get": 1,
+      "aborted": true,
+      "headLength": null,
+      "getLength": null,
+      "arrayBufferStarted": false,
+      "arrayBufferResolved": false,
+      "getStarted": false
+    },
+    "heapMaxMiB": 0.7,
+    "heapAfterMiB": 0.7
+  }
+}

@@ -1,0 +1,2903 @@
+{
+  "session": {
+    "startedAt": "2026-11-02T07:31:20.450Z",
+    "repo": "/home/hatch/workspace/repo-1",
+    "scratch": "/home/hatch/workspace/tmp-round37-t6/wc",
+    "display": ":99",
+    "port": 4296,
+    "quietLoad1Threshold": 2,
+    "nproc": 4,
+    "memTotalMB": 7934,
+    "chrome": {
+      "product": "Chrome/156.0.8078.4",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+    },
+    "devDriExists": false,
+    "finishedAt": "2026-11-02T07:32:20.111Z"
+  },
+  "fixtures": {
+    "src4k": {
+      "servedAs": "src4k.mp4",
+      "srcRealpath": "/home/hatch/workspace/tmp-round37-t6/noise-4k-6s.mp4",
+      "bytes": 461414359,
+      "width": 3840,
+      "height": 2160,
+      "codec": "avc1.640033",
+      "sampleCount": 180,
+      "keyIndices": [
+        0,
+        89,
+        178
+      ],
+      "cttsNonzeroSamples": 180,
+      "presentDecreasesInDecodeOrder": 0,
+      "presentOrderMonotonic": true,
+      "presentOrderIsPermutation": true,
+      "presentOrderDiffersFromNaiveIndexDesc": true
+    },
+    "proxy720": {
+      "servedAs": "proxy720.mp4",
+      "srcRealpath": "/home/hatch/workspace/tmp-round37-t6/noise-4k-6s__proxy_720p.mp4",
+      "bytes": 10230557,
+      "width": 1280,
+      "height": 720,
+      "codec": "avc1.64001F",
+      "sampleCount": 180,
+      "keyIndices": [
+        0
+      ],
+      "cttsNonzeroSamples": 180,
+      "presentDecreasesInDecodeOrder": 0,
+      "presentOrderMonotonic": true,
+      "presentOrderIsPermutation": true,
+      "presentOrderDiffersFromNaiveIndexDesc": true
+    }
+  },
+  "build": {
+    "mp4DemuxTsSha256": "5fe0a3fe133cdfbc501ef5ddf9f767265e3b1fc6c35eb2e7d6b5608cae1131a7",
+    "reverseWebcodecsTsSha256": "df4625034f4b29c08395bd7ed451e9c29ede5bf7e412ce0d218c26c84c03f48d",
+    "reversePreviewGateTsSha256": "918f11ae4840e661b17289dbe1358ce2f022c1c307b8ada31bc9f7e45cc5425e",
+    "reverseDecodeAheadTsSha256": "48524ba0d94d194d32d91f76992c634600baf761845316f477f3170138848d37",
+    "mp4DemuxJsSha256": "60805c6468deeeec25b2eb3d8d3d7408422e7afe725dec61d40922d67f309a4c",
+    "reverseWebcodecsJsSha256": "73de517e5df542e3fd12e9ae0b919a34e6c1f2f244fd44a79a5f193443d1382e",
+    "importSpecifierRewritten": true
+  },
+  "support": {
+    "proxy720": {
+      "seq": 3,
+      "op": "supportCodec",
+      "prefer-software": {
+        "supported": true
+      },
+      "prefer-hardware": {
+        "supported": false
+      },
+      "default": {
+        "supported": true
+      }
+    },
+    "done": {
+      "seq": 9,
+      "op": "done",
+      "ok": true
+    }
+  },
+  "runs": [
+    {
+      "kind": "webcodecs-decode-present-order",
+      "cell": "proxy720-from-4k",
+      "attempt": 1,
+      "gop": {
+        "from": 0,
+        "to": 179,
+        "len": 180,
+        "decreases": 0,
+        "reason": "longest GOP (fallback)"
+      },
+      "loadBefore": {
+        "loadavg": [
+          3.11,
+          3.09,
+          2.83
+        ],
+        "at": "2026-11-02T07:31:31.644Z",
+        "chromeTotal": 14,
+        "chromeOwnTree": 12,
+        "chromeOther": 2,
+        "heavyOther": [
+          "11642:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && T6_PORT=4296 node apps/web/scripts/probe-round37-t6"
+        ],
+        "memAvailableMB": 2206,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 3.11 >= 2",
+        "2 Chrome ngoài cây probe",
+        "1 tiến trình nặng khác"
+      ],
+      "seq": 4,
+      "op": "wcdecodeOrder",
+      "decoded": 180,
+      "requested": 180,
+      "decodeWallSec": 2.824,
+      "decodeFps": 63.8,
+      "presentDrawn": 180,
+      "presentMissing": 0,
+      "presentWallSec": 2.109,
+      "presentFps": 85.4,
+      "drawOrder": [
+        {
+          "decodeIndex": 179,
+          "frameTimestampUs": 6033333
+        },
+        {
+          "decodeIndex": 178,
+          "frameTimestampUs": 6000000
+        },
+        {
+          "decodeIndex": 177,
+          "frameTimestampUs": 5966667
+        },
+        {
+          "decodeIndex": 176,
+          "frameTimestampUs": 5933333
+        },
+        {
+          "decodeIndex": 175,
+          "frameTimestampUs": 5900000
+        },
+        {
+          "decodeIndex": 174,
+          "frameTimestampUs": 5866667
+        },
+        {
+          "decodeIndex": 173,
+          "frameTimestampUs": 5833333
+        },
+        {
+          "decodeIndex": 172,
+          "frameTimestampUs": 5800000
+        },
+        {
+          "decodeIndex": 171,
+          "frameTimestampUs": 5766667
+        },
+        {
+          "decodeIndex": 170,
+          "frameTimestampUs": 5733333
+        },
+        {
+          "decodeIndex": 169,
+          "frameTimestampUs": 5700000
+        },
+        {
+          "decodeIndex": 168,
+          "frameTimestampUs": 5666667
+        },
+        {
+          "decodeIndex": 167,
+          "frameTimestampUs": 5633333
+        },
+        {
+          "decodeIndex": 166,
+          "frameTimestampUs": 5600000
+        },
+        {
+          "decodeIndex": 165,
+          "frameTimestampUs": 5566667
+        },
+        {
+          "decodeIndex": 164,
+          "frameTimestampUs": 5533333
+        },
+        {
+          "decodeIndex": 163,
+          "frameTimestampUs": 5500000
+        },
+        {
+          "decodeIndex": 162,
+          "frameTimestampUs": 5466667
+        },
+        {
+          "decodeIndex": 161,
+          "frameTimestampUs": 5433333
+        },
+        {
+          "decodeIndex": 160,
+          "frameTimestampUs": 5400000
+        },
+        {
+          "decodeIndex": 159,
+          "frameTimestampUs": 5366667
+        },
+        {
+          "decodeIndex": 158,
+          "frameTimestampUs": 5333333
+        },
+        {
+          "decodeIndex": 157,
+          "frameTimestampUs": 5300000
+        },
+        {
+          "decodeIndex": 156,
+          "frameTimestampUs": 5266667
+        },
+        {
+          "decodeIndex": 155,
+          "frameTimestampUs": 5233333
+        },
+        {
+          "decodeIndex": 154,
+          "frameTimestampUs": 5200000
+        },
+        {
+          "decodeIndex": 153,
+          "frameTimestampUs": 5166667
+        },
+        {
+          "decodeIndex": 152,
+          "frameTimestampUs": 5133333
+        },
+        {
+          "decodeIndex": 151,
+          "frameTimestampUs": 5100000
+        },
+        {
+          "decodeIndex": 150,
+          "frameTimestampUs": 5066667
+        },
+        {
+          "decodeIndex": 149,
+          "frameTimestampUs": 5033333
+        },
+        {
+          "decodeIndex": 148,
+          "frameTimestampUs": 5000000
+        },
+        {
+          "decodeIndex": 147,
+          "frameTimestampUs": 4966667
+        },
+        {
+          "decodeIndex": 146,
+          "frameTimestampUs": 4933333
+        },
+        {
+          "decodeIndex": 145,
+          "frameTimestampUs": 4900000
+        },
+        {
+          "decodeIndex": 144,
+          "frameTimestampUs": 4866667
+        },
+        {
+          "decodeIndex": 143,
+          "frameTimestampUs": 4833333
+        },
+        {
+          "decodeIndex": 142,
+          "frameTimestampUs": 4800000
+        },
+        {
+          "decodeIndex": 141,
+          "frameTimestampUs": 4766667
+        },
+        {
+          "decodeIndex": 140,
+          "frameTimestampUs": 4733333
+        },
+        {
+          "decodeIndex": 139,
+          "frameTimestampUs": 4700000
+        },
+        {
+          "decodeIndex": 138,
+          "frameTimestampUs": 4666667
+        },
+        {
+          "decodeIndex": 137,
+          "frameTimestampUs": 4633333
+        },
+        {
+          "decodeIndex": 136,
+          "frameTimestampUs": 4600000
+        },
+        {
+          "decodeIndex": 135,
+          "frameTimestampUs": 4566667
+        },
+        {
+          "decodeIndex": 134,
+          "frameTimestampUs": 4533333
+        },
+        {
+          "decodeIndex": 133,
+          "frameTimestampUs": 4500000
+        },
+        {
+          "decodeIndex": 132,
+          "frameTimestampUs": 4466667
+        },
+        {
+          "decodeIndex": 131,
+          "frameTimestampUs": 4433333
+        },
+        {
+          "decodeIndex": 130,
+          "frameTimestampUs": 4400000
+        },
+        {
+          "decodeIndex": 129,
+          "frameTimestampUs": 4366667
+        },
+        {
+          "decodeIndex": 128,
+          "frameTimestampUs": 4333333
+        },
+        {
+          "decodeIndex": 127,
+          "frameTimestampUs": 4300000
+        },
+        {
+          "decodeIndex": 126,
+          "frameTimestampUs": 4266667
+        },
+        {
+          "decodeIndex": 125,
+          "frameTimestampUs": 4233333
+        },
+        {
+          "decodeIndex": 124,
+          "frameTimestampUs": 4200000
+        },
+        {
+          "decodeIndex": 123,
+          "frameTimestampUs": 4166667
+        },
+        {
+          "decodeIndex": 122,
+          "frameTimestampUs": 4133333
+        },
+        {
+          "decodeIndex": 121,
+          "frameTimestampUs": 4100000
+        },
+        {
+          "decodeIndex": 120,
+          "frameTimestampUs": 4066667
+        },
+        {
+          "decodeIndex": 119,
+          "frameTimestampUs": 4033333
+        },
+        {
+          "decodeIndex": 118,
+          "frameTimestampUs": 4000000
+        },
+        {
+          "decodeIndex": 117,
+          "frameTimestampUs": 3966667
+        },
+        {
+          "decodeIndex": 116,
+          "frameTimestampUs": 3933333
+        },
+        {
+          "decodeIndex": 115,
+          "frameTimestampUs": 3900000
+        },
+        {
+          "decodeIndex": 114,
+          "frameTimestampUs": 3866667
+        },
+        {
+          "decodeIndex": 113,
+          "frameTimestampUs": 3833333
+        },
+        {
+          "decodeIndex": 112,
+          "frameTimestampUs": 3800000
+        },
+        {
+          "decodeIndex": 111,
+          "frameTimestampUs": 3766667
+        },
+        {
+          "decodeIndex": 110,
+          "frameTimestampUs": 3733333
+        },
+        {
+          "decodeIndex": 109,
+          "frameTimestampUs": 3700000
+        },
+        {
+          "decodeIndex": 108,
+          "frameTimestampUs": 3666667
+        },
+        {
+          "decodeIndex": 107,
+          "frameTimestampUs": 3633333
+        },
+        {
+          "decodeIndex": 106,
+          "frameTimestampUs": 3600000
+        },
+        {
+          "decodeIndex": 105,
+          "frameTimestampUs": 3566667
+        },
+        {
+          "decodeIndex": 104,
+          "frameTimestampUs": 3533333
+        },
+        {
+          "decodeIndex": 103,
+          "frameTimestampUs": 3500000
+        },
+        {
+          "decodeIndex": 102,
+          "frameTimestampUs": 3466667
+        },
+        {
+          "decodeIndex": 101,
+          "frameTimestampUs": 3433333
+        },
+        {
+          "decodeIndex": 100,
+          "frameTimestampUs": 3400000
+        },
+        {
+          "decodeIndex": 99,
+          "frameTimestampUs": 3366667
+        },
+        {
+          "decodeIndex": 98,
+          "frameTimestampUs": 3333333
+        },
+        {
+          "decodeIndex": 97,
+          "frameTimestampUs": 3300000
+        },
+        {
+          "decodeIndex": 96,
+          "frameTimestampUs": 3266667
+        },
+        {
+          "decodeIndex": 95,
+          "frameTimestampUs": 3233333
+        },
+        {
+          "decodeIndex": 94,
+          "frameTimestampUs": 3200000
+        },
+        {
+          "decodeIndex": 93,
+          "frameTimestampUs": 3166667
+        },
+        {
+          "decodeIndex": 92,
+          "frameTimestampUs": 3133333
+        },
+        {
+          "decodeIndex": 91,
+          "frameTimestampUs": 3100000
+        },
+        {
+          "decodeIndex": 90,
+          "frameTimestampUs": 3066667
+        },
+        {
+          "decodeIndex": 89,
+          "frameTimestampUs": 3033333
+        },
+        {
+          "decodeIndex": 88,
+          "frameTimestampUs": 3000000
+        },
+        {
+          "decodeIndex": 87,
+          "frameTimestampUs": 2966667
+        },
+        {
+          "decodeIndex": 86,
+          "frameTimestampUs": 2933333
+        },
+        {
+          "decodeIndex": 85,
+          "frameTimestampUs": 2900000
+        },
+        {
+          "decodeIndex": 84,
+          "frameTimestampUs": 2866667
+        },
+        {
+          "decodeIndex": 83,
+          "frameTimestampUs": 2833333
+        },
+        {
+          "decodeIndex": 82,
+          "frameTimestampUs": 2800000
+        },
+        {
+          "decodeIndex": 81,
+          "frameTimestampUs": 2766667
+        },
+        {
+          "decodeIndex": 80,
+          "frameTimestampUs": 2733333
+        },
+        {
+          "decodeIndex": 79,
+          "frameTimestampUs": 2700000
+        },
+        {
+          "decodeIndex": 78,
+          "frameTimestampUs": 2666667
+        },
+        {
+          "decodeIndex": 77,
+          "frameTimestampUs": 2633333
+        },
+        {
+          "decodeIndex": 76,
+          "frameTimestampUs": 2600000
+        },
+        {
+          "decodeIndex": 75,
+          "frameTimestampUs": 2566667
+        },
+        {
+          "decodeIndex": 74,
+          "frameTimestampUs": 2533333
+        },
+        {
+          "decodeIndex": 73,
+          "frameTimestampUs": 2500000
+        },
+        {
+          "decodeIndex": 72,
+          "frameTimestampUs": 2466667
+        },
+        {
+          "decodeIndex": 71,
+          "frameTimestampUs": 2433333
+        },
+        {
+          "decodeIndex": 70,
+          "frameTimestampUs": 2400000
+        },
+        {
+          "decodeIndex": 69,
+          "frameTimestampUs": 2366667
+        },
+        {
+          "decodeIndex": 68,
+          "frameTimestampUs": 2333333
+        },
+        {
+          "decodeIndex": 67,
+          "frameTimestampUs": 2300000
+        },
+        {
+          "decodeIndex": 66,
+          "frameTimestampUs": 2266667
+        },
+        {
+          "decodeIndex": 65,
+          "frameTimestampUs": 2233333
+        },
+        {
+          "decodeIndex": 64,
+          "frameTimestampUs": 2200000
+        },
+        {
+          "decodeIndex": 63,
+          "frameTimestampUs": 2166667
+        },
+        {
+          "decodeIndex": 62,
+          "frameTimestampUs": 2133333
+        },
+        {
+          "decodeIndex": 61,
+          "frameTimestampUs": 2100000
+        },
+        {
+          "decodeIndex": 60,
+          "frameTimestampUs": 2066667
+        },
+        {
+          "decodeIndex": 59,
+          "frameTimestampUs": 2033333
+        },
+        {
+          "decodeIndex": 58,
+          "frameTimestampUs": 2000000
+        },
+        {
+          "decodeIndex": 57,
+          "frameTimestampUs": 1966667
+        },
+        {
+          "decodeIndex": 56,
+          "frameTimestampUs": 1933333
+        },
+        {
+          "decodeIndex": 55,
+          "frameTimestampUs": 1900000
+        },
+        {
+          "decodeIndex": 54,
+          "frameTimestampUs": 1866667
+        },
+        {
+          "decodeIndex": 53,
+          "frameTimestampUs": 1833333
+        },
+        {
+          "decodeIndex": 52,
+          "frameTimestampUs": 1800000
+        },
+        {
+          "decodeIndex": 51,
+          "frameTimestampUs": 1766667
+        },
+        {
+          "decodeIndex": 50,
+          "frameTimestampUs": 1733333
+        },
+        {
+          "decodeIndex": 49,
+          "frameTimestampUs": 1700000
+        },
+        {
+          "decodeIndex": 48,
+          "frameTimestampUs": 1666667
+        },
+        {
+          "decodeIndex": 47,
+          "frameTimestampUs": 1633333
+        },
+        {
+          "decodeIndex": 46,
+          "frameTimestampUs": 1600000
+        },
+        {
+          "decodeIndex": 45,
+          "frameTimestampUs": 1566667
+        },
+        {
+          "decodeIndex": 44,
+          "frameTimestampUs": 1533333
+        },
+        {
+          "decodeIndex": 43,
+          "frameTimestampUs": 1500000
+        },
+        {
+          "decodeIndex": 42,
+          "frameTimestampUs": 1466667
+        },
+        {
+          "decodeIndex": 41,
+          "frameTimestampUs": 1433333
+        },
+        {
+          "decodeIndex": 40,
+          "frameTimestampUs": 1400000
+        },
+        {
+          "decodeIndex": 39,
+          "frameTimestampUs": 1366667
+        },
+        {
+          "decodeIndex": 38,
+          "frameTimestampUs": 1333333
+        },
+        {
+          "decodeIndex": 37,
+          "frameTimestampUs": 1300000
+        },
+        {
+          "decodeIndex": 36,
+          "frameTimestampUs": 1266667
+        },
+        {
+          "decodeIndex": 35,
+          "frameTimestampUs": 1233333
+        },
+        {
+          "decodeIndex": 34,
+          "frameTimestampUs": 1200000
+        },
+        {
+          "decodeIndex": 33,
+          "frameTimestampUs": 1166667
+        },
+        {
+          "decodeIndex": 32,
+          "frameTimestampUs": 1133333
+        },
+        {
+          "decodeIndex": 31,
+          "frameTimestampUs": 1100000
+        },
+        {
+          "decodeIndex": 30,
+          "frameTimestampUs": 1066667
+        },
+        {
+          "decodeIndex": 29,
+          "frameTimestampUs": 1033333
+        },
+        {
+          "decodeIndex": 28,
+          "frameTimestampUs": 1000000
+        },
+        {
+          "decodeIndex": 27,
+          "frameTimestampUs": 966667
+        },
+        {
+          "decodeIndex": 26,
+          "frameTimestampUs": 933333
+        },
+        {
+          "decodeIndex": 25,
+          "frameTimestampUs": 900000
+        },
+        {
+          "decodeIndex": 24,
+          "frameTimestampUs": 866667
+        },
+        {
+          "decodeIndex": 23,
+          "frameTimestampUs": 833333
+        },
+        {
+          "decodeIndex": 22,
+          "frameTimestampUs": 800000
+        },
+        {
+          "decodeIndex": 21,
+          "frameTimestampUs": 766667
+        },
+        {
+          "decodeIndex": 20,
+          "frameTimestampUs": 733333
+        },
+        {
+          "decodeIndex": 19,
+          "frameTimestampUs": 700000
+        },
+        {
+          "decodeIndex": 18,
+          "frameTimestampUs": 666667
+        },
+        {
+          "decodeIndex": 17,
+          "frameTimestampUs": 633333
+        },
+        {
+          "decodeIndex": 16,
+          "frameTimestampUs": 600000
+        },
+        {
+          "decodeIndex": 15,
+          "frameTimestampUs": 566667
+        },
+        {
+          "decodeIndex": 14,
+          "frameTimestampUs": 533333
+        },
+        {
+          "decodeIndex": 13,
+          "frameTimestampUs": 500000
+        },
+        {
+          "decodeIndex": 12,
+          "frameTimestampUs": 466667
+        },
+        {
+          "decodeIndex": 11,
+          "frameTimestampUs": 433333
+        },
+        {
+          "decodeIndex": 10,
+          "frameTimestampUs": 400000
+        },
+        {
+          "decodeIndex": 9,
+          "frameTimestampUs": 366667
+        },
+        {
+          "decodeIndex": 8,
+          "frameTimestampUs": 333333
+        },
+        {
+          "decodeIndex": 7,
+          "frameTimestampUs": 300000
+        },
+        {
+          "decodeIndex": 6,
+          "frameTimestampUs": 266667
+        },
+        {
+          "decodeIndex": 5,
+          "frameTimestampUs": 233333
+        },
+        {
+          "decodeIndex": 4,
+          "frameTimestampUs": 200000
+        },
+        {
+          "decodeIndex": 3,
+          "frameTimestampUs": 166667
+        },
+        {
+          "decodeIndex": 2,
+          "frameTimestampUs": 133333
+        },
+        {
+          "decodeIndex": 1,
+          "frameTimestampUs": 100000
+        },
+        {
+          "decodeIndex": 0,
+          "frameTimestampUs": 66667
+        }
+      ],
+      "drawTimestampsStrictlyDecreasing": true,
+      "drawTimestampMatchesSamplePts": 180,
+      "drawTimestampMismatches": 0,
+      "mismatchSamples": [],
+      "drawOrderDiffersFromNaiveIndexDesc": false
+    },
+    {
+      "kind": "webcodecs-decode-present-order",
+      "cell": "proxy720-from-4k",
+      "attempt": 2,
+      "gop": {
+        "from": 0,
+        "to": 179,
+        "len": 180,
+        "decreases": 0,
+        "reason": "longest GOP (fallback)"
+      },
+      "loadBefore": {
+        "loadavg": [
+          3.11,
+          3.09,
+          2.83
+        ],
+        "at": "2026-11-02T07:31:36.619Z",
+        "chromeTotal": 15,
+        "chromeOwnTree": 13,
+        "chromeOther": 2,
+        "heavyOther": [
+          "11642:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && T6_PORT=4296 node apps/web/scripts/probe-round37-t6"
+        ],
+        "memAvailableMB": 1771,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 3.11 >= 2",
+        "2 Chrome ngoài cây probe",
+        "1 tiến trình nặng khác"
+      ],
+      "seq": 5,
+      "op": "wcdecodeOrder",
+      "decoded": 180,
+      "requested": 180,
+      "decodeWallSec": 2.499,
+      "decodeFps": 72,
+      "presentDrawn": 180,
+      "presentMissing": 0,
+      "presentWallSec": 1.495,
+      "presentFps": 120.4,
+      "drawOrder": [
+        {
+          "decodeIndex": 179,
+          "frameTimestampUs": 6033333
+        },
+        {
+          "decodeIndex": 178,
+          "frameTimestampUs": 6000000
+        },
+        {
+          "decodeIndex": 177,
+          "frameTimestampUs": 5966667
+        },
+        {
+          "decodeIndex": 176,
+          "frameTimestampUs": 5933333
+        },
+        {
+          "decodeIndex": 175,
+          "frameTimestampUs": 5900000
+        },
+        {
+          "decodeIndex": 174,
+          "frameTimestampUs": 5866667
+        },
+        {
+          "decodeIndex": 173,
+          "frameTimestampUs": 5833333
+        },
+        {
+          "decodeIndex": 172,
+          "frameTimestampUs": 5800000
+        },
+        {
+          "decodeIndex": 171,
+          "frameTimestampUs": 5766667
+        },
+        {
+          "decodeIndex": 170,
+          "frameTimestampUs": 5733333
+        },
+        {
+          "decodeIndex": 169,
+          "frameTimestampUs": 5700000
+        },
+        {
+          "decodeIndex": 168,
+          "frameTimestampUs": 5666667
+        },
+        {
+          "decodeIndex": 167,
+          "frameTimestampUs": 5633333
+        },
+        {
+          "decodeIndex": 166,
+          "frameTimestampUs": 5600000
+        },
+        {
+          "decodeIndex": 165,
+          "frameTimestampUs": 5566667
+        },
+        {
+          "decodeIndex": 164,
+          "frameTimestampUs": 5533333
+        },
+        {
+          "decodeIndex": 163,
+          "frameTimestampUs": 5500000
+        },
+        {
+          "decodeIndex": 162,
+          "frameTimestampUs": 5466667
+        },
+        {
+          "decodeIndex": 161,
+          "frameTimestampUs": 5433333
+        },
+        {
+          "decodeIndex": 160,
+          "frameTimestampUs": 5400000
+        },
+        {
+          "decodeIndex": 159,
+          "frameTimestampUs": 5366667
+        },
+        {
+          "decodeIndex": 158,
+          "frameTimestampUs": 5333333
+        },
+        {
+          "decodeIndex": 157,
+          "frameTimestampUs": 5300000
+        },
+        {
+          "decodeIndex": 156,
+          "frameTimestampUs": 5266667
+        },
+        {
+          "decodeIndex": 155,
+          "frameTimestampUs": 5233333
+        },
+        {
+          "decodeIndex": 154,
+          "frameTimestampUs": 5200000
+        },
+        {
+          "decodeIndex": 153,
+          "frameTimestampUs": 5166667
+        },
+        {
+          "decodeIndex": 152,
+          "frameTimestampUs": 5133333
+        },
+        {
+          "decodeIndex": 151,
+          "frameTimestampUs": 5100000
+        },
+        {
+          "decodeIndex": 150,
+          "frameTimestampUs": 5066667
+        },
+        {
+          "decodeIndex": 149,
+          "frameTimestampUs": 5033333
+        },
+        {
+          "decodeIndex": 148,
+          "frameTimestampUs": 5000000
+        },
+        {
+          "decodeIndex": 147,
+          "frameTimestampUs": 4966667
+        },
+        {
+          "decodeIndex": 146,
+          "frameTimestampUs": 4933333
+        },
+        {
+          "decodeIndex": 145,
+          "frameTimestampUs": 4900000
+        },
+        {
+          "decodeIndex": 144,
+          "frameTimestampUs": 4866667
+        },
+        {
+          "decodeIndex": 143,
+          "frameTimestampUs": 4833333
+        },
+        {
+          "decodeIndex": 142,
+          "frameTimestampUs": 4800000
+        },
+        {
+          "decodeIndex": 141,
+          "frameTimestampUs": 4766667
+        },
+        {
+          "decodeIndex": 140,
+          "frameTimestampUs": 4733333
+        },
+        {
+          "decodeIndex": 139,
+          "frameTimestampUs": 4700000
+        },
+        {
+          "decodeIndex": 138,
+          "frameTimestampUs": 4666667
+        },
+        {
+          "decodeIndex": 137,
+          "frameTimestampUs": 4633333
+        },
+        {
+          "decodeIndex": 136,
+          "frameTimestampUs": 4600000
+        },
+        {
+          "decodeIndex": 135,
+          "frameTimestampUs": 4566667
+        },
+        {
+          "decodeIndex": 134,
+          "frameTimestampUs": 4533333
+        },
+        {
+          "decodeIndex": 133,
+          "frameTimestampUs": 4500000
+        },
+        {
+          "decodeIndex": 132,
+          "frameTimestampUs": 4466667
+        },
+        {
+          "decodeIndex": 131,
+          "frameTimestampUs": 4433333
+        },
+        {
+          "decodeIndex": 130,
+          "frameTimestampUs": 4400000
+        },
+        {
+          "decodeIndex": 129,
+          "frameTimestampUs": 4366667
+        },
+        {
+          "decodeIndex": 128,
+          "frameTimestampUs": 4333333
+        },
+        {
+          "decodeIndex": 127,
+          "frameTimestampUs": 4300000
+        },
+        {
+          "decodeIndex": 126,
+          "frameTimestampUs": 4266667
+        },
+        {
+          "decodeIndex": 125,
+          "frameTimestampUs": 4233333
+        },
+        {
+          "decodeIndex": 124,
+          "frameTimestampUs": 4200000
+        },
+        {
+          "decodeIndex": 123,
+          "frameTimestampUs": 4166667
+        },
+        {
+          "decodeIndex": 122,
+          "frameTimestampUs": 4133333
+        },
+        {
+          "decodeIndex": 121,
+          "frameTimestampUs": 4100000
+        },
+        {
+          "decodeIndex": 120,
+          "frameTimestampUs": 4066667
+        },
+        {
+          "decodeIndex": 119,
+          "frameTimestampUs": 4033333
+        },
+        {
+          "decodeIndex": 118,
+          "frameTimestampUs": 4000000
+        },
+        {
+          "decodeIndex": 117,
+          "frameTimestampUs": 3966667
+        },
+        {
+          "decodeIndex": 116,
+          "frameTimestampUs": 3933333
+        },
+        {
+          "decodeIndex": 115,
+          "frameTimestampUs": 3900000
+        },
+        {
+          "decodeIndex": 114,
+          "frameTimestampUs": 3866667
+        },
+        {
+          "decodeIndex": 113,
+          "frameTimestampUs": 3833333
+        },
+        {
+          "decodeIndex": 112,
+          "frameTimestampUs": 3800000
+        },
+        {
+          "decodeIndex": 111,
+          "frameTimestampUs": 3766667
+        },
+        {
+          "decodeIndex": 110,
+          "frameTimestampUs": 3733333
+        },
+        {
+          "decodeIndex": 109,
+          "frameTimestampUs": 3700000
+        },
+        {
+          "decodeIndex": 108,
+          "frameTimestampUs": 3666667
+        },
+        {
+          "decodeIndex": 107,
+          "frameTimestampUs": 3633333
+        },
+        {
+          "decodeIndex": 106,
+          "frameTimestampUs": 3600000
+        },
+        {
+          "decodeIndex": 105,
+          "frameTimestampUs": 3566667
+        },
+        {
+          "decodeIndex": 104,
+          "frameTimestampUs": 3533333
+        },
+        {
+          "decodeIndex": 103,
+          "frameTimestampUs": 3500000
+        },
+        {
+          "decodeIndex": 102,
+          "frameTimestampUs": 3466667
+        },
+        {
+          "decodeIndex": 101,
+          "frameTimestampUs": 3433333
+        },
+        {
+          "decodeIndex": 100,
+          "frameTimestampUs": 3400000
+        },
+        {
+          "decodeIndex": 99,
+          "frameTimestampUs": 3366667
+        },
+        {
+          "decodeIndex": 98,
+          "frameTimestampUs": 3333333
+        },
+        {
+          "decodeIndex": 97,
+          "frameTimestampUs": 3300000
+        },
+        {
+          "decodeIndex": 96,
+          "frameTimestampUs": 3266667
+        },
+        {
+          "decodeIndex": 95,
+          "frameTimestampUs": 3233333
+        },
+        {
+          "decodeIndex": 94,
+          "frameTimestampUs": 3200000
+        },
+        {
+          "decodeIndex": 93,
+          "frameTimestampUs": 3166667
+        },
+        {
+          "decodeIndex": 92,
+          "frameTimestampUs": 3133333
+        },
+        {
+          "decodeIndex": 91,
+          "frameTimestampUs": 3100000
+        },
+        {
+          "decodeIndex": 90,
+          "frameTimestampUs": 3066667
+        },
+        {
+          "decodeIndex": 89,
+          "frameTimestampUs": 3033333
+        },
+        {
+          "decodeIndex": 88,
+          "frameTimestampUs": 3000000
+        },
+        {
+          "decodeIndex": 87,
+          "frameTimestampUs": 2966667
+        },
+        {
+          "decodeIndex": 86,
+          "frameTimestampUs": 2933333
+        },
+        {
+          "decodeIndex": 85,
+          "frameTimestampUs": 2900000
+        },
+        {
+          "decodeIndex": 84,
+          "frameTimestampUs": 2866667
+        },
+        {
+          "decodeIndex": 83,
+          "frameTimestampUs": 2833333
+        },
+        {
+          "decodeIndex": 82,
+          "frameTimestampUs": 2800000
+        },
+        {
+          "decodeIndex": 81,
+          "frameTimestampUs": 2766667
+        },
+        {
+          "decodeIndex": 80,
+          "frameTimestampUs": 2733333
+        },
+        {
+          "decodeIndex": 79,
+          "frameTimestampUs": 2700000
+        },
+        {
+          "decodeIndex": 78,
+          "frameTimestampUs": 2666667
+        },
+        {
+          "decodeIndex": 77,
+          "frameTimestampUs": 2633333
+        },
+        {
+          "decodeIndex": 76,
+          "frameTimestampUs": 2600000
+        },
+        {
+          "decodeIndex": 75,
+          "frameTimestampUs": 2566667
+        },
+        {
+          "decodeIndex": 74,
+          "frameTimestampUs": 2533333
+        },
+        {
+          "decodeIndex": 73,
+          "frameTimestampUs": 2500000
+        },
+        {
+          "decodeIndex": 72,
+          "frameTimestampUs": 2466667
+        },
+        {
+          "decodeIndex": 71,
+          "frameTimestampUs": 2433333
+        },
+        {
+          "decodeIndex": 70,
+          "frameTimestampUs": 2400000
+        },
+        {
+          "decodeIndex": 69,
+          "frameTimestampUs": 2366667
+        },
+        {
+          "decodeIndex": 68,
+          "frameTimestampUs": 2333333
+        },
+        {
+          "decodeIndex": 67,
+          "frameTimestampUs": 2300000
+        },
+        {
+          "decodeIndex": 66,
+          "frameTimestampUs": 2266667
+        },
+        {
+          "decodeIndex": 65,
+          "frameTimestampUs": 2233333
+        },
+        {
+          "decodeIndex": 64,
+          "frameTimestampUs": 2200000
+        },
+        {
+          "decodeIndex": 63,
+          "frameTimestampUs": 2166667
+        },
+        {
+          "decodeIndex": 62,
+          "frameTimestampUs": 2133333
+        },
+        {
+          "decodeIndex": 61,
+          "frameTimestampUs": 2100000
+        },
+        {
+          "decodeIndex": 60,
+          "frameTimestampUs": 2066667
+        },
+        {
+          "decodeIndex": 59,
+          "frameTimestampUs": 2033333
+        },
+        {
+          "decodeIndex": 58,
+          "frameTimestampUs": 2000000
+        },
+        {
+          "decodeIndex": 57,
+          "frameTimestampUs": 1966667
+        },
+        {
+          "decodeIndex": 56,
+          "frameTimestampUs": 1933333
+        },
+        {
+          "decodeIndex": 55,
+          "frameTimestampUs": 1900000
+        },
+        {
+          "decodeIndex": 54,
+          "frameTimestampUs": 1866667
+        },
+        {
+          "decodeIndex": 53,
+          "frameTimestampUs": 1833333
+        },
+        {
+          "decodeIndex": 52,
+          "frameTimestampUs": 1800000
+        },
+        {
+          "decodeIndex": 51,
+          "frameTimestampUs": 1766667
+        },
+        {
+          "decodeIndex": 50,
+          "frameTimestampUs": 1733333
+        },
+        {
+          "decodeIndex": 49,
+          "frameTimestampUs": 1700000
+        },
+        {
+          "decodeIndex": 48,
+          "frameTimestampUs": 1666667
+        },
+        {
+          "decodeIndex": 47,
+          "frameTimestampUs": 1633333
+        },
+        {
+          "decodeIndex": 46,
+          "frameTimestampUs": 1600000
+        },
+        {
+          "decodeIndex": 45,
+          "frameTimestampUs": 1566667
+        },
+        {
+          "decodeIndex": 44,
+          "frameTimestampUs": 1533333
+        },
+        {
+          "decodeIndex": 43,
+          "frameTimestampUs": 1500000
+        },
+        {
+          "decodeIndex": 42,
+          "frameTimestampUs": 1466667
+        },
+        {
+          "decodeIndex": 41,
+          "frameTimestampUs": 1433333
+        },
+        {
+          "decodeIndex": 40,
+          "frameTimestampUs": 1400000
+        },
+        {
+          "decodeIndex": 39,
+          "frameTimestampUs": 1366667
+        },
+        {
+          "decodeIndex": 38,
+          "frameTimestampUs": 1333333
+        },
+        {
+          "decodeIndex": 37,
+          "frameTimestampUs": 1300000
+        },
+        {
+          "decodeIndex": 36,
+          "frameTimestampUs": 1266667
+        },
+        {
+          "decodeIndex": 35,
+          "frameTimestampUs": 1233333
+        },
+        {
+          "decodeIndex": 34,
+          "frameTimestampUs": 1200000
+        },
+        {
+          "decodeIndex": 33,
+          "frameTimestampUs": 1166667
+        },
+        {
+          "decodeIndex": 32,
+          "frameTimestampUs": 1133333
+        },
+        {
+          "decodeIndex": 31,
+          "frameTimestampUs": 1100000
+        },
+        {
+          "decodeIndex": 30,
+          "frameTimestampUs": 1066667
+        },
+        {
+          "decodeIndex": 29,
+          "frameTimestampUs": 1033333
+        },
+        {
+          "decodeIndex": 28,
+          "frameTimestampUs": 1000000
+        },
+        {
+          "decodeIndex": 27,
+          "frameTimestampUs": 966667
+        },
+        {
+          "decodeIndex": 26,
+          "frameTimestampUs": 933333
+        },
+        {
+          "decodeIndex": 25,
+          "frameTimestampUs": 900000
+        },
+        {
+          "decodeIndex": 24,
+          "frameTimestampUs": 866667
+        },
+        {
+          "decodeIndex": 23,
+          "frameTimestampUs": 833333
+        },
+        {
+          "decodeIndex": 22,
+          "frameTimestampUs": 800000
+        },
+        {
+          "decodeIndex": 21,
+          "frameTimestampUs": 766667
+        },
+        {
+          "decodeIndex": 20,
+          "frameTimestampUs": 733333
+        },
+        {
+          "decodeIndex": 19,
+          "frameTimestampUs": 700000
+        },
+        {
+          "decodeIndex": 18,
+          "frameTimestampUs": 666667
+        },
+        {
+          "decodeIndex": 17,
+          "frameTimestampUs": 633333
+        },
+        {
+          "decodeIndex": 16,
+          "frameTimestampUs": 600000
+        },
+        {
+          "decodeIndex": 15,
+          "frameTimestampUs": 566667
+        },
+        {
+          "decodeIndex": 14,
+          "frameTimestampUs": 533333
+        },
+        {
+          "decodeIndex": 13,
+          "frameTimestampUs": 500000
+        },
+        {
+          "decodeIndex": 12,
+          "frameTimestampUs": 466667
+        },
+        {
+          "decodeIndex": 11,
+          "frameTimestampUs": 433333
+        },
+        {
+          "decodeIndex": 10,
+          "frameTimestampUs": 400000
+        },
+        {
+          "decodeIndex": 9,
+          "frameTimestampUs": 366667
+        },
+        {
+          "decodeIndex": 8,
+          "frameTimestampUs": 333333
+        },
+        {
+          "decodeIndex": 7,
+          "frameTimestampUs": 300000
+        },
+        {
+          "decodeIndex": 6,
+          "frameTimestampUs": 266667
+        },
+        {
+          "decodeIndex": 5,
+          "frameTimestampUs": 233333
+        },
+        {
+          "decodeIndex": 4,
+          "frameTimestampUs": 200000
+        },
+        {
+          "decodeIndex": 3,
+          "frameTimestampUs": 166667
+        },
+        {
+          "decodeIndex": 2,
+          "frameTimestampUs": 133333
+        },
+        {
+          "decodeIndex": 1,
+          "frameTimestampUs": 100000
+        },
+        {
+          "decodeIndex": 0,
+          "frameTimestampUs": 66667
+        }
+      ],
+      "drawTimestampsStrictlyDecreasing": true,
+      "drawTimestampMatchesSamplePts": 180,
+      "drawTimestampMismatches": 0,
+      "mismatchSamples": [],
+      "drawOrderDiffersFromNaiveIndexDesc": false
+    },
+    {
+      "kind": "blob-reverse",
+      "cell": "proxy720-via-blob-url",
+      "attempt": 1,
+      "gop": {
+        "from": 0,
+        "to": 179,
+        "len": 180,
+        "decreases": 0,
+        "reason": "longest GOP (fallback)"
+      },
+      "loadBefore": {
+        "loadavg": [
+          3.11,
+          3.09,
+          2.83
+        ],
+        "at": "2026-11-02T07:31:40.712Z",
+        "chromeTotal": 15,
+        "chromeOwnTree": 13,
+        "chromeOther": 2,
+        "heavyOther": [
+          "11642:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && T6_PORT=4296 node apps/web/scripts/probe-round37-t6"
+        ],
+        "memAvailableMB": 1649,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 3.11 >= 2",
+        "2 Chrome ngoài cây probe",
+        "1 tiến trình nặng khác"
+      ],
+      "seq": 6,
+      "op": "blobReverse",
+      "blobUrlScheme": "blob",
+      "blobBytes": 10230557,
+      "bytes": 10230557,
+      "decoded": 180,
+      "requested": 180,
+      "decodeWallSec": 1.9,
+      "decodeFps": 94.7,
+      "presentDrawn": 180,
+      "presentMissing": 0,
+      "presentWallSec": 1.401,
+      "presentFps": 128.5,
+      "drawOrder": [
+        {
+          "decodeIndex": 179,
+          "frameTimestampUs": 6033333
+        },
+        {
+          "decodeIndex": 178,
+          "frameTimestampUs": 6000000
+        },
+        {
+          "decodeIndex": 177,
+          "frameTimestampUs": 5966667
+        },
+        {
+          "decodeIndex": 176,
+          "frameTimestampUs": 5933333
+        },
+        {
+          "decodeIndex": 175,
+          "frameTimestampUs": 5900000
+        },
+        {
+          "decodeIndex": 174,
+          "frameTimestampUs": 5866667
+        },
+        {
+          "decodeIndex": 173,
+          "frameTimestampUs": 5833333
+        },
+        {
+          "decodeIndex": 172,
+          "frameTimestampUs": 5800000
+        },
+        {
+          "decodeIndex": 171,
+          "frameTimestampUs": 5766667
+        },
+        {
+          "decodeIndex": 170,
+          "frameTimestampUs": 5733333
+        },
+        {
+          "decodeIndex": 169,
+          "frameTimestampUs": 5700000
+        },
+        {
+          "decodeIndex": 168,
+          "frameTimestampUs": 5666667
+        },
+        {
+          "decodeIndex": 167,
+          "frameTimestampUs": 5633333
+        },
+        {
+          "decodeIndex": 166,
+          "frameTimestampUs": 5600000
+        },
+        {
+          "decodeIndex": 165,
+          "frameTimestampUs": 5566667
+        },
+        {
+          "decodeIndex": 164,
+          "frameTimestampUs": 5533333
+        },
+        {
+          "decodeIndex": 163,
+          "frameTimestampUs": 5500000
+        },
+        {
+          "decodeIndex": 162,
+          "frameTimestampUs": 5466667
+        },
+        {
+          "decodeIndex": 161,
+          "frameTimestampUs": 5433333
+        },
+        {
+          "decodeIndex": 160,
+          "frameTimestampUs": 5400000
+        },
+        {
+          "decodeIndex": 159,
+          "frameTimestampUs": 5366667
+        },
+        {
+          "decodeIndex": 158,
+          "frameTimestampUs": 5333333
+        },
+        {
+          "decodeIndex": 157,
+          "frameTimestampUs": 5300000
+        },
+        {
+          "decodeIndex": 156,
+          "frameTimestampUs": 5266667
+        },
+        {
+          "decodeIndex": 155,
+          "frameTimestampUs": 5233333
+        },
+        {
+          "decodeIndex": 154,
+          "frameTimestampUs": 5200000
+        },
+        {
+          "decodeIndex": 153,
+          "frameTimestampUs": 5166667
+        },
+        {
+          "decodeIndex": 152,
+          "frameTimestampUs": 5133333
+        },
+        {
+          "decodeIndex": 151,
+          "frameTimestampUs": 5100000
+        },
+        {
+          "decodeIndex": 150,
+          "frameTimestampUs": 5066667
+        },
+        {
+          "decodeIndex": 149,
+          "frameTimestampUs": 5033333
+        },
+        {
+          "decodeIndex": 148,
+          "frameTimestampUs": 5000000
+        },
+        {
+          "decodeIndex": 147,
+          "frameTimestampUs": 4966667
+        },
+        {
+          "decodeIndex": 146,
+          "frameTimestampUs": 4933333
+        },
+        {
+          "decodeIndex": 145,
+          "frameTimestampUs": 4900000
+        },
+        {
+          "decodeIndex": 144,
+          "frameTimestampUs": 4866667
+        },
+        {
+          "decodeIndex": 143,
+          "frameTimestampUs": 4833333
+        },
+        {
+          "decodeIndex": 142,
+          "frameTimestampUs": 4800000
+        },
+        {
+          "decodeIndex": 141,
+          "frameTimestampUs": 4766667
+        },
+        {
+          "decodeIndex": 140,
+          "frameTimestampUs": 4733333
+        },
+        {
+          "decodeIndex": 139,
+          "frameTimestampUs": 4700000
+        },
+        {
+          "decodeIndex": 138,
+          "frameTimestampUs": 4666667
+        },
+        {
+          "decodeIndex": 137,
+          "frameTimestampUs": 4633333
+        },
+        {
+          "decodeIndex": 136,
+          "frameTimestampUs": 4600000
+        },
+        {
+          "decodeIndex": 135,
+          "frameTimestampUs": 4566667
+        },
+        {
+          "decodeIndex": 134,
+          "frameTimestampUs": 4533333
+        },
+        {
+          "decodeIndex": 133,
+          "frameTimestampUs": 4500000
+        },
+        {
+          "decodeIndex": 132,
+          "frameTimestampUs": 4466667
+        },
+        {
+          "decodeIndex": 131,
+          "frameTimestampUs": 4433333
+        },
+        {
+          "decodeIndex": 130,
+          "frameTimestampUs": 4400000
+        },
+        {
+          "decodeIndex": 129,
+          "frameTimestampUs": 4366667
+        },
+        {
+          "decodeIndex": 128,
+          "frameTimestampUs": 4333333
+        },
+        {
+          "decodeIndex": 127,
+          "frameTimestampUs": 4300000
+        },
+        {
+          "decodeIndex": 126,
+          "frameTimestampUs": 4266667
+        },
+        {
+          "decodeIndex": 125,
+          "frameTimestampUs": 4233333
+        },
+        {
+          "decodeIndex": 124,
+          "frameTimestampUs": 4200000
+        },
+        {
+          "decodeIndex": 123,
+          "frameTimestampUs": 4166667
+        },
+        {
+          "decodeIndex": 122,
+          "frameTimestampUs": 4133333
+        },
+        {
+          "decodeIndex": 121,
+          "frameTimestampUs": 4100000
+        },
+        {
+          "decodeIndex": 120,
+          "frameTimestampUs": 4066667
+        },
+        {
+          "decodeIndex": 119,
+          "frameTimestampUs": 4033333
+        },
+        {
+          "decodeIndex": 118,
+          "frameTimestampUs": 4000000
+        },
+        {
+          "decodeIndex": 117,
+          "frameTimestampUs": 3966667
+        },
+        {
+          "decodeIndex": 116,
+          "frameTimestampUs": 3933333
+        },
+        {
+          "decodeIndex": 115,
+          "frameTimestampUs": 3900000
+        },
+        {
+          "decodeIndex": 114,
+          "frameTimestampUs": 3866667
+        },
+        {
+          "decodeIndex": 113,
+          "frameTimestampUs": 3833333
+        },
+        {
+          "decodeIndex": 112,
+          "frameTimestampUs": 3800000
+        },
+        {
+          "decodeIndex": 111,
+          "frameTimestampUs": 3766667
+        },
+        {
+          "decodeIndex": 110,
+          "frameTimestampUs": 3733333
+        },
+        {
+          "decodeIndex": 109,
+          "frameTimestampUs": 3700000
+        },
+        {
+          "decodeIndex": 108,
+          "frameTimestampUs": 3666667
+        },
+        {
+          "decodeIndex": 107,
+          "frameTimestampUs": 3633333
+        },
+        {
+          "decodeIndex": 106,
+          "frameTimestampUs": 3600000
+        },
+        {
+          "decodeIndex": 105,
+          "frameTimestampUs": 3566667
+        },
+        {
+          "decodeIndex": 104,
+          "frameTimestampUs": 3533333
+        },
+        {
+          "decodeIndex": 103,
+          "frameTimestampUs": 3500000
+        },
+        {
+          "decodeIndex": 102,
+          "frameTimestampUs": 3466667
+        },
+        {
+          "decodeIndex": 101,
+          "frameTimestampUs": 3433333
+        },
+        {
+          "decodeIndex": 100,
+          "frameTimestampUs": 3400000
+        },
+        {
+          "decodeIndex": 99,
+          "frameTimestampUs": 3366667
+        },
+        {
+          "decodeIndex": 98,
+          "frameTimestampUs": 3333333
+        },
+        {
+          "decodeIndex": 97,
+          "frameTimestampUs": 3300000
+        },
+        {
+          "decodeIndex": 96,
+          "frameTimestampUs": 3266667
+        },
+        {
+          "decodeIndex": 95,
+          "frameTimestampUs": 3233333
+        },
+        {
+          "decodeIndex": 94,
+          "frameTimestampUs": 3200000
+        },
+        {
+          "decodeIndex": 93,
+          "frameTimestampUs": 3166667
+        },
+        {
+          "decodeIndex": 92,
+          "frameTimestampUs": 3133333
+        },
+        {
+          "decodeIndex": 91,
+          "frameTimestampUs": 3100000
+        },
+        {
+          "decodeIndex": 90,
+          "frameTimestampUs": 3066667
+        },
+        {
+          "decodeIndex": 89,
+          "frameTimestampUs": 3033333
+        },
+        {
+          "decodeIndex": 88,
+          "frameTimestampUs": 3000000
+        },
+        {
+          "decodeIndex": 87,
+          "frameTimestampUs": 2966667
+        },
+        {
+          "decodeIndex": 86,
+          "frameTimestampUs": 2933333
+        },
+        {
+          "decodeIndex": 85,
+          "frameTimestampUs": 2900000
+        },
+        {
+          "decodeIndex": 84,
+          "frameTimestampUs": 2866667
+        },
+        {
+          "decodeIndex": 83,
+          "frameTimestampUs": 2833333
+        },
+        {
+          "decodeIndex": 82,
+          "frameTimestampUs": 2800000
+        },
+        {
+          "decodeIndex": 81,
+          "frameTimestampUs": 2766667
+        },
+        {
+          "decodeIndex": 80,
+          "frameTimestampUs": 2733333
+        },
+        {
+          "decodeIndex": 79,
+          "frameTimestampUs": 2700000
+        },
+        {
+          "decodeIndex": 78,
+          "frameTimestampUs": 2666667
+        },
+        {
+          "decodeIndex": 77,
+          "frameTimestampUs": 2633333
+        },
+        {
+          "decodeIndex": 76,
+          "frameTimestampUs": 2600000
+        },
+        {
+          "decodeIndex": 75,
+          "frameTimestampUs": 2566667
+        },
+        {
+          "decodeIndex": 74,
+          "frameTimestampUs": 2533333
+        },
+        {
+          "decodeIndex": 73,
+          "frameTimestampUs": 2500000
+        },
+        {
+          "decodeIndex": 72,
+          "frameTimestampUs": 2466667
+        },
+        {
+          "decodeIndex": 71,
+          "frameTimestampUs": 2433333
+        },
+        {
+          "decodeIndex": 70,
+          "frameTimestampUs": 2400000
+        },
+        {
+          "decodeIndex": 69,
+          "frameTimestampUs": 2366667
+        },
+        {
+          "decodeIndex": 68,
+          "frameTimestampUs": 2333333
+        },
+        {
+          "decodeIndex": 67,
+          "frameTimestampUs": 2300000
+        },
+        {
+          "decodeIndex": 66,
+          "frameTimestampUs": 2266667
+        },
+        {
+          "decodeIndex": 65,
+          "frameTimestampUs": 2233333
+        },
+        {
+          "decodeIndex": 64,
+          "frameTimestampUs": 2200000
+        },
+        {
+          "decodeIndex": 63,
+          "frameTimestampUs": 2166667
+        },
+        {
+          "decodeIndex": 62,
+          "frameTimestampUs": 2133333
+        },
+        {
+          "decodeIndex": 61,
+          "frameTimestampUs": 2100000
+        },
+        {
+          "decodeIndex": 60,
+          "frameTimestampUs": 2066667
+        },
+        {
+          "decodeIndex": 59,
+          "frameTimestampUs": 2033333
+        },
+        {
+          "decodeIndex": 58,
+          "frameTimestampUs": 2000000
+        },
+        {
+          "decodeIndex": 57,
+          "frameTimestampUs": 1966667
+        },
+        {
+          "decodeIndex": 56,
+          "frameTimestampUs": 1933333
+        },
+        {
+          "decodeIndex": 55,
+          "frameTimestampUs": 1900000
+        },
+        {
+          "decodeIndex": 54,
+          "frameTimestampUs": 1866667
+        },
+        {
+          "decodeIndex": 53,
+          "frameTimestampUs": 1833333
+        },
+        {
+          "decodeIndex": 52,
+          "frameTimestampUs": 1800000
+        },
+        {
+          "decodeIndex": 51,
+          "frameTimestampUs": 1766667
+        },
+        {
+          "decodeIndex": 50,
+          "frameTimestampUs": 1733333
+        },
+        {
+          "decodeIndex": 49,
+          "frameTimestampUs": 1700000
+        },
+        {
+          "decodeIndex": 48,
+          "frameTimestampUs": 1666667
+        },
+        {
+          "decodeIndex": 47,
+          "frameTimestampUs": 1633333
+        },
+        {
+          "decodeIndex": 46,
+          "frameTimestampUs": 1600000
+        },
+        {
+          "decodeIndex": 45,
+          "frameTimestampUs": 1566667
+        },
+        {
+          "decodeIndex": 44,
+          "frameTimestampUs": 1533333
+        },
+        {
+          "decodeIndex": 43,
+          "frameTimestampUs": 1500000
+        },
+        {
+          "decodeIndex": 42,
+          "frameTimestampUs": 1466667
+        },
+        {
+          "decodeIndex": 41,
+          "frameTimestampUs": 1433333
+        },
+        {
+          "decodeIndex": 40,
+          "frameTimestampUs": 1400000
+        },
+        {
+          "decodeIndex": 39,
+          "frameTimestampUs": 1366667
+        },
+        {
+          "decodeIndex": 38,
+          "frameTimestampUs": 1333333
+        },
+        {
+          "decodeIndex": 37,
+          "frameTimestampUs": 1300000
+        },
+        {
+          "decodeIndex": 36,
+          "frameTimestampUs": 1266667
+        },
+        {
+          "decodeIndex": 35,
+          "frameTimestampUs": 1233333
+        },
+        {
+          "decodeIndex": 34,
+          "frameTimestampUs": 1200000
+        },
+        {
+          "decodeIndex": 33,
+          "frameTimestampUs": 1166667
+        },
+        {
+          "decodeIndex": 32,
+          "frameTimestampUs": 1133333
+        },
+        {
+          "decodeIndex": 31,
+          "frameTimestampUs": 1100000
+        },
+        {
+          "decodeIndex": 30,
+          "frameTimestampUs": 1066667
+        },
+        {
+          "decodeIndex": 29,
+          "frameTimestampUs": 1033333
+        },
+        {
+          "decodeIndex": 28,
+          "frameTimestampUs": 1000000
+        },
+        {
+          "decodeIndex": 27,
+          "frameTimestampUs": 966667
+        },
+        {
+          "decodeIndex": 26,
+          "frameTimestampUs": 933333
+        },
+        {
+          "decodeIndex": 25,
+          "frameTimestampUs": 900000
+        },
+        {
+          "decodeIndex": 24,
+          "frameTimestampUs": 866667
+        },
+        {
+          "decodeIndex": 23,
+          "frameTimestampUs": 833333
+        },
+        {
+          "decodeIndex": 22,
+          "frameTimestampUs": 800000
+        },
+        {
+          "decodeIndex": 21,
+          "frameTimestampUs": 766667
+        },
+        {
+          "decodeIndex": 20,
+          "frameTimestampUs": 733333
+        },
+        {
+          "decodeIndex": 19,
+          "frameTimestampUs": 700000
+        },
+        {
+          "decodeIndex": 18,
+          "frameTimestampUs": 666667
+        },
+        {
+          "decodeIndex": 17,
+          "frameTimestampUs": 633333
+        },
+        {
+          "decodeIndex": 16,
+          "frameTimestampUs": 600000
+        },
+        {
+          "decodeIndex": 15,
+          "frameTimestampUs": 566667
+        },
+        {
+          "decodeIndex": 14,
+          "frameTimestampUs": 533333
+        },
+        {
+          "decodeIndex": 13,
+          "frameTimestampUs": 500000
+        },
+        {
+          "decodeIndex": 12,
+          "frameTimestampUs": 466667
+        },
+        {
+          "decodeIndex": 11,
+          "frameTimestampUs": 433333
+        },
+        {
+          "decodeIndex": 10,
+          "frameTimestampUs": 400000
+        },
+        {
+          "decodeIndex": 9,
+          "frameTimestampUs": 366667
+        },
+        {
+          "decodeIndex": 8,
+          "frameTimestampUs": 333333
+        },
+        {
+          "decodeIndex": 7,
+          "frameTimestampUs": 300000
+        },
+        {
+          "decodeIndex": 6,
+          "frameTimestampUs": 266667
+        },
+        {
+          "decodeIndex": 5,
+          "frameTimestampUs": 233333
+        },
+        {
+          "decodeIndex": 4,
+          "frameTimestampUs": 200000
+        },
+        {
+          "decodeIndex": 3,
+          "frameTimestampUs": 166667
+        },
+        {
+          "decodeIndex": 2,
+          "frameTimestampUs": 133333
+        },
+        {
+          "decodeIndex": 1,
+          "frameTimestampUs": 100000
+        },
+        {
+          "decodeIndex": 0,
+          "frameTimestampUs": 66667
+        }
+      ],
+      "drawTimestampsStrictlyDecreasing": true,
+      "drawTimestampMatchesSamplePts": 180,
+      "drawTimestampMismatches": 0,
+      "mismatchSamples": [],
+      "drawOrderDiffersFromNaiveIndexDesc": false
+    },
+    {
+      "kind": "controller-blob",
+      "cell": "proxy720-via-controller-blob-url",
+      "attempt": 1,
+      "gop": {
+        "from": 0,
+        "to": 179,
+        "len": 180,
+        "decreases": 0,
+        "reason": "longest GOP (fallback)"
+      },
+      "loadBefore": {
+        "loadavg": [
+          3.18,
+          3.11,
+          2.84
+        ],
+        "at": "2026-11-02T07:31:44.516Z",
+        "chromeTotal": 15,
+        "chromeOwnTree": 13,
+        "chromeOther": 2,
+        "heavyOther": [
+          "11642:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && T6_PORT=4296 node apps/web/scripts/probe-round37-t6"
+        ],
+        "memAvailableMB": 1554,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 3.18 >= 2",
+        "2 Chrome ngoài cây probe",
+        "1 tiến trình nặng khác"
+      ],
+      "seq": 7,
+      "op": "controllerBlob",
+      "blobUrlScheme": "blob",
+      "blobBytes": 10230557,
+      "probeTimes": [
+        {
+          "decodeIndex": 0,
+          "timeSec": 0,
+          "expectedPtsUs": 66667
+        },
+        {
+          "decodeIndex": 22,
+          "timeSec": 0.7333333333333333,
+          "expectedPtsUs": 800000
+        },
+        {
+          "decodeIndex": 45,
+          "timeSec": 1.5,
+          "expectedPtsUs": 1566667
+        },
+        {
+          "decodeIndex": 67,
+          "timeSec": 2.2333333333333334,
+          "expectedPtsUs": 2300000
+        },
+        {
+          "decodeIndex": 90,
+          "timeSec": 3,
+          "expectedPtsUs": 3066667
+        },
+        {
+          "decodeIndex": 112,
+          "timeSec": 3.7333333333333334,
+          "expectedPtsUs": 3800000
+        },
+        {
+          "decodeIndex": 135,
+          "timeSec": 4.5,
+          "expectedPtsUs": 4566667
+        },
+        {
+          "decodeIndex": 157,
+          "timeSec": 5.233333333333333,
+          "expectedPtsUs": 5300000
+        }
+      ],
+      "polls": 2,
+      "wallSecToFirstHit": 0.203,
+      "hit": {
+        "decodeIndex": 0,
+        "timeSec": 0,
+        "expectedPtsUs": 66667,
+        "frameTimestampUs": 66667,
+        "width": 1280,
+        "height": 720,
+        "frameTimestampMatchesPts": true
+      },
+      "controllerReturnedFrame": true
+    },
+    {
+      "kind": "webcodecs-decode-present-order",
+      "cell": "src4k-orig",
+      "attempt": 1,
+      "gop": {
+        "from": 89,
+        "to": 177,
+        "len": 89,
+        "decreases": 0,
+        "reason": "non-first GOP >=30 frames, no in-GOP reorder (fallback)"
+      },
+      "loadBefore": {
+        "loadavg": [
+          3.18,
+          3.11,
+          2.84
+        ],
+        "at": "2026-11-02T07:31:45.552Z",
+        "chromeTotal": 15,
+        "chromeOwnTree": 13,
+        "chromeOther": 2,
+        "heavyOther": [
+          "11642:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && T6_PORT=4296 node apps/web/scripts/probe-round37-t6"
+        ],
+        "memAvailableMB": 1769,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 3.18 >= 2",
+        "2 Chrome ngoài cây probe",
+        "1 tiến trình nặng khác"
+      ],
+      "seq": 8,
+      "op": "wcdecodeOrder",
+      "decoded": 89,
+      "requested": 89,
+      "decodeWallSec": 29.504,
+      "decodeFps": 3,
+      "presentDrawn": 89,
+      "presentMissing": 0,
+      "presentWallSec": 4.475,
+      "presentFps": 19.9,
+      "drawOrder": [
+        {
+          "decodeIndex": 177,
+          "frameTimestampUs": 5966667
+        },
+        {
+          "decodeIndex": 176,
+          "frameTimestampUs": 5933333
+        },
+        {
+          "decodeIndex": 175,
+          "frameTimestampUs": 5900000
+        },
+        {
+          "decodeIndex": 174,
+          "frameTimestampUs": 5866667
+        },
+        {
+          "decodeIndex": 173,
+          "frameTimestampUs": 5833333
+        },
+        {
+          "decodeIndex": 172,
+          "frameTimestampUs": 5800000
+        },
+        {
+          "decodeIndex": 171,
+          "frameTimestampUs": 5766667
+        },
+        {
+          "decodeIndex": 170,
+          "frameTimestampUs": 5733333
+        },
+        {
+          "decodeIndex": 169,
+          "frameTimestampUs": 5700000
+        },
+        {
+          "decodeIndex": 168,
+          "frameTimestampUs": 5666667
+        },
+        {
+          "decodeIndex": 167,
+          "frameTimestampUs": 5633333
+        },
+        {
+          "decodeIndex": 166,
+          "frameTimestampUs": 5600000
+        },
+        {
+          "decodeIndex": 165,
+          "frameTimestampUs": 5566667
+        },
+        {
+          "decodeIndex": 164,
+          "frameTimestampUs": 5533333
+        },
+        {
+          "decodeIndex": 163,
+          "frameTimestampUs": 5500000
+        },
+        {
+          "decodeIndex": 162,
+          "frameTimestampUs": 5466667
+        },
+        {
+          "decodeIndex": 161,
+          "frameTimestampUs": 5433333
+        },
+        {
+          "decodeIndex": 160,
+          "frameTimestampUs": 5400000
+        },
+        {
+          "decodeIndex": 159,
+          "frameTimestampUs": 5366667
+        },
+        {
+          "decodeIndex": 158,
+          "frameTimestampUs": 5333333
+        },
+        {
+          "decodeIndex": 157,
+          "frameTimestampUs": 5300000
+        },
+        {
+          "decodeIndex": 156,
+          "frameTimestampUs": 5266667
+        },
+        {
+          "decodeIndex": 155,
+          "frameTimestampUs": 5233333
+        },
+        {
+          "decodeIndex": 154,
+          "frameTimestampUs": 5200000
+        },
+        {
+          "decodeIndex": 153,
+          "frameTimestampUs": 5166667
+        },
+        {
+          "decodeIndex": 152,
+          "frameTimestampUs": 5133333
+        },
+        {
+          "decodeIndex": 151,
+          "frameTimestampUs": 5100000
+        },
+        {
+          "decodeIndex": 150,
+          "frameTimestampUs": 5066667
+        },
+        {
+          "decodeIndex": 149,
+          "frameTimestampUs": 5033333
+        },
+        {
+          "decodeIndex": 148,
+          "frameTimestampUs": 5000000
+        },
+        {
+          "decodeIndex": 147,
+          "frameTimestampUs": 4966667
+        },
+        {
+          "decodeIndex": 146,
+          "frameTimestampUs": 4933333
+        },
+        {
+          "decodeIndex": 145,
+          "frameTimestampUs": 4900000
+        },
+        {
+          "decodeIndex": 144,
+          "frameTimestampUs": 4866667
+        },
+        {
+          "decodeIndex": 143,
+          "frameTimestampUs": 4833333
+        },
+        {
+          "decodeIndex": 142,
+          "frameTimestampUs": 4800000
+        },
+        {
+          "decodeIndex": 141,
+          "frameTimestampUs": 4766667
+        },
+        {
+          "decodeIndex": 140,
+          "frameTimestampUs": 4733333
+        },
+        {
+          "decodeIndex": 139,
+          "frameTimestampUs": 4700000
+        },
+        {
+          "decodeIndex": 138,
+          "frameTimestampUs": 4666667
+        },
+        {
+          "decodeIndex": 137,
+          "frameTimestampUs": 4633333
+        },
+        {
+          "decodeIndex": 136,
+          "frameTimestampUs": 4600000
+        },
+        {
+          "decodeIndex": 135,
+          "frameTimestampUs": 4566667
+        },
+        {
+          "decodeIndex": 134,
+          "frameTimestampUs": 4533333
+        },
+        {
+          "decodeIndex": 133,
+          "frameTimestampUs": 4500000
+        },
+        {
+          "decodeIndex": 132,
+          "frameTimestampUs": 4466667
+        },
+        {
+          "decodeIndex": 131,
+          "frameTimestampUs": 4433333
+        },
+        {
+          "decodeIndex": 130,
+          "frameTimestampUs": 4400000
+        },
+        {
+          "decodeIndex": 129,
+          "frameTimestampUs": 4366667
+        },
+        {
+          "decodeIndex": 128,
+          "frameTimestampUs": 4333333
+        },
+        {
+          "decodeIndex": 127,
+          "frameTimestampUs": 4300000
+        },
+        {
+          "decodeIndex": 126,
+          "frameTimestampUs": 4266667
+        },
+        {
+          "decodeIndex": 125,
+          "frameTimestampUs": 4233333
+        },
+        {
+          "decodeIndex": 124,
+          "frameTimestampUs": 4200000
+        },
+        {
+          "decodeIndex": 123,
+          "frameTimestampUs": 4166667
+        },
+        {
+          "decodeIndex": 122,
+          "frameTimestampUs": 4133333
+        },
+        {
+          "decodeIndex": 121,
+          "frameTimestampUs": 4100000
+        },
+        {
+          "decodeIndex": 120,
+          "frameTimestampUs": 4066667
+        },
+        {
+          "decodeIndex": 119,
+          "frameTimestampUs": 4033333
+        },
+        {
+          "decodeIndex": 118,
+          "frameTimestampUs": 4000000
+        },
+        {
+          "decodeIndex": 117,
+          "frameTimestampUs": 3966667
+        },
+        {
+          "decodeIndex": 116,
+          "frameTimestampUs": 3933333
+        },
+        {
+          "decodeIndex": 115,
+          "frameTimestampUs": 3900000
+        },
+        {
+          "decodeIndex": 114,
+          "frameTimestampUs": 3866667
+        },
+        {
+          "decodeIndex": 113,
+          "frameTimestampUs": 3833333
+        },
+        {
+          "decodeIndex": 112,
+          "frameTimestampUs": 3800000
+        },
+        {
+          "decodeIndex": 111,
+          "frameTimestampUs": 3766667
+        },
+        {
+          "decodeIndex": 110,
+          "frameTimestampUs": 3733333
+        },
+        {
+          "decodeIndex": 109,
+          "frameTimestampUs": 3700000
+        },
+        {
+          "decodeIndex": 108,
+          "frameTimestampUs": 3666667
+        },
+        {
+          "decodeIndex": 107,
+          "frameTimestampUs": 3633333
+        },
+        {
+          "decodeIndex": 106,
+          "frameTimestampUs": 3600000
+        },
+        {
+          "decodeIndex": 105,
+          "frameTimestampUs": 3566667
+        },
+        {
+          "decodeIndex": 104,
+          "frameTimestampUs": 3533333
+        },
+        {
+          "decodeIndex": 103,
+          "frameTimestampUs": 3500000
+        },
+        {
+          "decodeIndex": 102,
+          "frameTimestampUs": 3466667
+        },
+        {
+          "decodeIndex": 101,
+          "frameTimestampUs": 3433333
+        },
+        {
+          "decodeIndex": 100,
+          "frameTimestampUs": 3400000
+        },
+        {
+          "decodeIndex": 99,
+          "frameTimestampUs": 3366667
+        },
+        {
+          "decodeIndex": 98,
+          "frameTimestampUs": 3333333
+        },
+        {
+          "decodeIndex": 97,
+          "frameTimestampUs": 3300000
+        },
+        {
+          "decodeIndex": 96,
+          "frameTimestampUs": 3266667
+        },
+        {
+          "decodeIndex": 95,
+          "frameTimestampUs": 3233333
+        },
+        {
+          "decodeIndex": 94,
+          "frameTimestampUs": 3200000
+        },
+        {
+          "decodeIndex": 93,
+          "frameTimestampUs": 3166667
+        },
+        {
+          "decodeIndex": 92,
+          "frameTimestampUs": 3133333
+        },
+        {
+          "decodeIndex": 91,
+          "frameTimestampUs": 3100000
+        },
+        {
+          "decodeIndex": 90,
+          "frameTimestampUs": 3066667
+        },
+        {
+          "decodeIndex": 89,
+          "frameTimestampUs": 3033333
+        }
+      ],
+      "drawTimestampsStrictlyDecreasing": true,
+      "drawTimestampMatchesSamplePts": 89,
+      "drawTimestampMismatches": 0,
+      "mismatchSamples": [],
+      "drawOrderDiffersFromNaiveIndexDesc": false
+    }
+  ],
+  "errors": []
+}

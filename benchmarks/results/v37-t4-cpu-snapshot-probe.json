@@ -1,0 +1,148 @@
+{
+  "date": "2026-11-02T07:11:51.738Z",
+  "allPass": true,
+  "checks": {
+    "u1.clkTck100": {
+      "pass": true,
+      "detail": "getconf CLK_TCK=100"
+    },
+    "u2.readOwnProcStat": {
+      "pass": true,
+      "detail": "pid=3071 ticks=12"
+    },
+    "u3.ownTreeContainsSelf": {
+      "pass": true,
+      "detail": "pids=1"
+    },
+    "u4.deadPidReturnsNull": {
+      "pass": true,
+      "detail": "pid không tồn tại → null, không throw"
+    },
+    "u5.busyLoopCpuHigh": {
+      "pass": true,
+      "detail": "busy=95.9% (1 core) topPid=3081 deltaTicks=192"
+    },
+    "u6.idleCpuLow": {
+      "pass": true,
+      "detail": "idle=0.0% deltaTicks=0"
+    },
+    "u7.nodeLevelDiscriminates": {
+      "pass": true,
+      "detail": "chênh=95.9 điểm %"
+    },
+    "u8.tamperInvalid": {
+      "pass": true,
+      "detail": "dist đổi giữa chừng: manifest trước 377cb631029d414b12bd2758f00c8872e49d95414923831900684bdd53e4b3fe ≠ sau 672986714447a4f2013b4b6c18c3dd64c88b91ed8af49ee557b405a5cae9b9ea"
+    },
+    "w1.benchHangProbeFlag": {
+      "pass": true,
+      "detail": "cờ + result.hangProbe"
+    },
+    "w2.benchHangProbeUsesOwnSend": {
+      "pass": true,
+      "detail": "dùng Cdp.send() của bench + đếm đúng 1 snapshot mới"
+    },
+    "w3.mobileFreezeWiring": {
+      "pass": true,
+      "detail": "import + manifest trước/sau + loại kết quả khi INVALID"
+    },
+    "w4.checkProxyPreviewFreezeWiring": {
+      "pass": true,
+      "detail": "preview-dist + vite preview + INVALID → exit 3"
+    },
+    "w5.checkProxyRefusesMismatchedDist": {
+      "pass": true,
+      "detail": "dist lệch apps/web/dist → từ chối chạy exit 2, không claim sai"
+    },
+    "h.chromeJsonUp": {
+      "pass": true,
+      "detail": "4 targets"
+    },
+    "h1.timeoutRejects": {
+      "pass": true,
+      "detail": "cdp timeout Runtime.evaluate"
+    },
+    "h1.exactlyOneSnapshot": {
+      "pass": true,
+      "detail": "cdp-hang-20261102_071143641-Runtime.evaluate-3108.json"
+    },
+    "h1.snapshotFields": {
+      "pass": true,
+      "detail": "{\"name\":null,\"sha256_16\":null,\"status\":\"not-captured\",\"note\":\"Harness did not provide a bundle (no snapshotDist): the bundle under test was NOT recorded in this file. Correlate capturedAt with the harness log / nearest dist build to identify it. This does NOT mean no bundle was running.\"}"
+    },
+    "h1.cpuSampleOk": {
+      "pass": true,
+      "detail": "cpu=2.7% pids=12"
+    },
+    "h1.rendererStillFree": {
+      "pass": true,
+      "detail": "{\"result\":{\"type\":\"number\",\"value\":2,\"description\":\"2\"}}"
+    },
+    "h2.timeoutRejects": {
+      "pass": true,
+      "detail": "cdp timeout Runtime.evaluate"
+    },
+    "h2.exactlyOneSnapshot": {
+      "pass": true,
+      "detail": "cdp-hang-20261102_071148662-Runtime.evaluate-3108.json"
+    },
+    "h2.cpuSampleOk": {
+      "pass": true,
+      "detail": "cpu=99.9% topPid=3198 topCpu=99.9%"
+    },
+    "h3.procTickDeltaDiscriminates": {
+      "pass": true,
+      "detail": "H1=2.7% H2=99.9% chênh=97.2 (ngưỡng: H2>50 và chênh>30)"
+    },
+    "h4.psLifetimeRecordedOnly": {
+      "pass": true,
+      "detail": "ps H1 max=11 H2 max=6.5 (đo thông tin, không phân biệt)"
+    },
+    "h2.browserAliveAfter": {
+      "pass": true,
+      "detail": "Target.getTargets mức browser vẫn trả lời dù renderer spin"
+    },
+    "h2.rendererBlocked": {
+      "pass": true,
+      "detail": "err=cdp timeout Runtime.evaluate newSnapshots=1"
+    },
+    "h.cleanupDirBackToBaseline": {
+      "pass": true,
+      "detail": "trước=0 sau=0"
+    }
+  },
+  "nodeLevel": {
+    "busyCpuPctOneCore": 95.85621567648526,
+    "idleCpuPctOneCore": 0,
+    "busyDeltaTicks": 192,
+    "idleDeltaTicks": 0
+  },
+  "hangResults": {
+    "h1": {
+      "cpuPctOneCore": 2.664002664002664,
+      "deltaTicks": 8,
+      "topPid": {
+        "pid": 3108,
+        "deltaTicks": 3,
+        "cpuPctOneCore": 0.999000999000999
+      },
+      "psMaxCpuLifetime": 11,
+      "wallMsApprox": 5010
+    },
+    "h2": {
+      "cpuPctOneCore": 99.86684420772303,
+      "deltaTicks": 300,
+      "topPid": {
+        "pid": 3198,
+        "deltaTicks": 300,
+        "cpuPctOneCore": 99.86684420772303
+      },
+      "psMaxCpuLifetime": 6.5,
+      "wallMsApprox": 5028
+    },
+    "h2BlockedProbe": {
+      "error": "cdp timeout Runtime.evaluate",
+      "newSnapshots": 1
+    }
+  }
+}

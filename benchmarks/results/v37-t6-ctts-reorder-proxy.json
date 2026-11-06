@@ -1,0 +1,1086 @@
+{
+  "session": {
+    "startedAt": "2026-11-02T07:30:55.223Z",
+    "repo": "/home/hatch/workspace/repo-1",
+    "scratch": "/home/hatch/workspace/tmp-round37-t6/wc",
+    "display": ":99",
+    "port": 4296,
+    "quietLoad1Threshold": 2,
+    "nproc": 4,
+    "memTotalMB": 7934,
+    "chrome": {
+      "product": "Chrome/156.0.8078.4",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+    },
+    "devDriExists": false,
+    "finishedAt": "2026-11-02T07:31:13.457Z"
+  },
+  "fixtures": {
+    "src4k": {
+      "servedAs": "src4k.mp4",
+      "srcRealpath": "/home/hatch/workspace/tmp-round34-q3/wc/noise-30s.mp4",
+      "bytes": 210771214,
+      "width": 1280,
+      "height": 720,
+      "codec": "avc1.64001F",
+      "sampleCount": 900,
+      "keyIndices": [
+        0,
+        300,
+        600
+      ],
+      "cttsNonzeroSamples": 0,
+      "presentDecreasesInDecodeOrder": 0,
+      "presentOrderMonotonic": true,
+      "presentOrderIsPermutation": true,
+      "presentOrderDiffersFromNaiveIndexDesc": true
+    },
+    "proxy720": {
+      "servedAs": "proxy720.mp4",
+      "srcRealpath": "/home/hatch/workspace/tmp-round37-t6/noise-30s__proxy_480p.mp4",
+      "bytes": 37122084,
+      "width": 854,
+      "height": 480,
+      "codec": "avc1.64001F",
+      "sampleCount": 900,
+      "keyIndices": [
+        0,
+        45,
+        107,
+        183,
+        432,
+        497,
+        572,
+        621,
+        682
+      ],
+      "cttsNonzeroSamples": 770,
+      "presentDecreasesInDecodeOrder": 265,
+      "presentOrderMonotonic": true,
+      "presentOrderIsPermutation": true,
+      "presentOrderDiffersFromNaiveIndexDesc": true
+    }
+  },
+  "build": {
+    "mp4DemuxTsSha256": "5fe0a3fe133cdfbc501ef5ddf9f767265e3b1fc6c35eb2e7d6b5608cae1131a7",
+    "reverseWebcodecsTsSha256": "df4625034f4b29c08395bd7ed451e9c29ede5bf7e412ce0d218c26c84c03f48d",
+    "reversePreviewGateTsSha256": "918f11ae4840e661b17289dbe1358ce2f022c1c307b8ada31bc9f7e45cc5425e",
+    "reverseDecodeAheadTsSha256": "48524ba0d94d194d32d91f76992c634600baf761845316f477f3170138848d37",
+    "mp4DemuxJsSha256": "60805c6468deeeec25b2eb3d8d3d7408422e7afe725dec61d40922d67f309a4c",
+    "reverseWebcodecsJsSha256": "73de517e5df542e3fd12e9ae0b919a34e6c1f2f244fd44a79a5f193443d1382e",
+    "importSpecifierRewritten": true
+  },
+  "support": {
+    "proxy720": {
+      "seq": 3,
+      "op": "supportCodec",
+      "prefer-software": {
+        "supported": true
+      },
+      "prefer-hardware": {
+        "supported": false
+      },
+      "default": {
+        "supported": true
+      }
+    },
+    "done": {
+      "seq": 8,
+      "op": "done",
+      "ok": true
+    }
+  },
+  "runs": [
+    {
+      "kind": "webcodecs-decode-present-order",
+      "cell": "proxy720-from-4k",
+      "attempt": 1,
+      "gop": {
+        "from": 45,
+        "to": 106,
+        "len": 62,
+        "decreases": 30,
+        "reason": "non-first GOP >=30 frames with in-GOP present reorder"
+      },
+      "loadBefore": {
+        "loadavg": [
+          1.79,
+          2.89,
+          2.76
+        ],
+        "at": "2026-11-02T07:31:04.341Z",
+        "chromeTotal": 15,
+        "chromeOwnTree": 13,
+        "chromeOther": 2,
+        "heavyOther": [
+          "11350:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && node --check apps/web/scripts/probe-round37-t6-prox"
+        ],
+        "memAvailableMB": 2442,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "2 Chrome ngoài cây probe",
+        "1 tiến trình nặng khác"
+      ],
+      "seq": 4,
+      "op": "wcdecodeOrder",
+      "decoded": 62,
+      "requested": 62,
+      "decodeWallSec": 0.566,
+      "decodeFps": 109.5,
+      "presentDrawn": 62,
+      "presentMissing": 0,
+      "presentWallSec": 0.336,
+      "presentFps": 184.4,
+      "drawOrder": [
+        {
+          "decodeIndex": 106,
+          "frameTimestampUs": 3600000
+        },
+        {
+          "decodeIndex": 102,
+          "frameTimestampUs": 3566667
+        },
+        {
+          "decodeIndex": 105,
+          "frameTimestampUs": 3533333
+        },
+        {
+          "decodeIndex": 103,
+          "frameTimestampUs": 3500000
+        },
+        {
+          "decodeIndex": 104,
+          "frameTimestampUs": 3466667
+        },
+        {
+          "decodeIndex": 98,
+          "frameTimestampUs": 3433333
+        },
+        {
+          "decodeIndex": 101,
+          "frameTimestampUs": 3400000
+        },
+        {
+          "decodeIndex": 99,
+          "frameTimestampUs": 3366667
+        },
+        {
+          "decodeIndex": 100,
+          "frameTimestampUs": 3333333
+        },
+        {
+          "decodeIndex": 94,
+          "frameTimestampUs": 3300000
+        },
+        {
+          "decodeIndex": 97,
+          "frameTimestampUs": 3266667
+        },
+        {
+          "decodeIndex": 95,
+          "frameTimestampUs": 3233333
+        },
+        {
+          "decodeIndex": 96,
+          "frameTimestampUs": 3200000
+        },
+        {
+          "decodeIndex": 90,
+          "frameTimestampUs": 3166667
+        },
+        {
+          "decodeIndex": 93,
+          "frameTimestampUs": 3133333
+        },
+        {
+          "decodeIndex": 91,
+          "frameTimestampUs": 3100000
+        },
+        {
+          "decodeIndex": 92,
+          "frameTimestampUs": 3066667
+        },
+        {
+          "decodeIndex": 86,
+          "frameTimestampUs": 3033333
+        },
+        {
+          "decodeIndex": 89,
+          "frameTimestampUs": 3000000
+        },
+        {
+          "decodeIndex": 87,
+          "frameTimestampUs": 2966667
+        },
+        {
+          "decodeIndex": 88,
+          "frameTimestampUs": 2933333
+        },
+        {
+          "decodeIndex": 82,
+          "frameTimestampUs": 2900000
+        },
+        {
+          "decodeIndex": 85,
+          "frameTimestampUs": 2866667
+        },
+        {
+          "decodeIndex": 83,
+          "frameTimestampUs": 2833333
+        },
+        {
+          "decodeIndex": 84,
+          "frameTimestampUs": 2800000
+        },
+        {
+          "decodeIndex": 78,
+          "frameTimestampUs": 2766667
+        },
+        {
+          "decodeIndex": 81,
+          "frameTimestampUs": 2733333
+        },
+        {
+          "decodeIndex": 79,
+          "frameTimestampUs": 2700000
+        },
+        {
+          "decodeIndex": 80,
+          "frameTimestampUs": 2666667
+        },
+        {
+          "decodeIndex": 74,
+          "frameTimestampUs": 2633333
+        },
+        {
+          "decodeIndex": 77,
+          "frameTimestampUs": 2600000
+        },
+        {
+          "decodeIndex": 75,
+          "frameTimestampUs": 2566667
+        },
+        {
+          "decodeIndex": 76,
+          "frameTimestampUs": 2533333
+        },
+        {
+          "decodeIndex": 70,
+          "frameTimestampUs": 2500000
+        },
+        {
+          "decodeIndex": 73,
+          "frameTimestampUs": 2466667
+        },
+        {
+          "decodeIndex": 71,
+          "frameTimestampUs": 2433333
+        },
+        {
+          "decodeIndex": 72,
+          "frameTimestampUs": 2400000
+        },
+        {
+          "decodeIndex": 66,
+          "frameTimestampUs": 2366667
+        },
+        {
+          "decodeIndex": 69,
+          "frameTimestampUs": 2333333
+        },
+        {
+          "decodeIndex": 67,
+          "frameTimestampUs": 2300000
+        },
+        {
+          "decodeIndex": 68,
+          "frameTimestampUs": 2266667
+        },
+        {
+          "decodeIndex": 62,
+          "frameTimestampUs": 2233333
+        },
+        {
+          "decodeIndex": 65,
+          "frameTimestampUs": 2200000
+        },
+        {
+          "decodeIndex": 63,
+          "frameTimestampUs": 2166667
+        },
+        {
+          "decodeIndex": 64,
+          "frameTimestampUs": 2133333
+        },
+        {
+          "decodeIndex": 58,
+          "frameTimestampUs": 2100000
+        },
+        {
+          "decodeIndex": 61,
+          "frameTimestampUs": 2066667
+        },
+        {
+          "decodeIndex": 59,
+          "frameTimestampUs": 2033333
+        },
+        {
+          "decodeIndex": 60,
+          "frameTimestampUs": 2000000
+        },
+        {
+          "decodeIndex": 54,
+          "frameTimestampUs": 1966667
+        },
+        {
+          "decodeIndex": 57,
+          "frameTimestampUs": 1933333
+        },
+        {
+          "decodeIndex": 55,
+          "frameTimestampUs": 1900000
+        },
+        {
+          "decodeIndex": 56,
+          "frameTimestampUs": 1866667
+        },
+        {
+          "decodeIndex": 50,
+          "frameTimestampUs": 1833333
+        },
+        {
+          "decodeIndex": 53,
+          "frameTimestampUs": 1800000
+        },
+        {
+          "decodeIndex": 51,
+          "frameTimestampUs": 1766667
+        },
+        {
+          "decodeIndex": 52,
+          "frameTimestampUs": 1733333
+        },
+        {
+          "decodeIndex": 46,
+          "frameTimestampUs": 1700000
+        },
+        {
+          "decodeIndex": 49,
+          "frameTimestampUs": 1666667
+        },
+        {
+          "decodeIndex": 47,
+          "frameTimestampUs": 1633333
+        },
+        {
+          "decodeIndex": 48,
+          "frameTimestampUs": 1600000
+        },
+        {
+          "decodeIndex": 45,
+          "frameTimestampUs": 1566667
+        }
+      ],
+      "drawTimestampsStrictlyDecreasing": true,
+      "drawTimestampMatchesSamplePts": 62,
+      "drawTimestampMismatches": 0,
+      "mismatchSamples": [],
+      "drawOrderDiffersFromNaiveIndexDesc": true
+    },
+    {
+      "kind": "webcodecs-decode-present-order",
+      "cell": "proxy720-from-4k",
+      "attempt": 2,
+      "gop": {
+        "from": 45,
+        "to": 106,
+        "len": 62,
+        "decreases": 30,
+        "reason": "non-first GOP >=30 frames with in-GOP present reorder"
+      },
+      "loadBefore": {
+        "loadavg": [
+          1.79,
+          2.89,
+          2.76
+        ],
+        "at": "2026-11-02T07:31:05.374Z",
+        "chromeTotal": 15,
+        "chromeOwnTree": 13,
+        "chromeOther": 2,
+        "heavyOther": [
+          "11350:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && node --check apps/web/scripts/probe-round37-t6-prox"
+        ],
+        "memAvailableMB": 2321,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "2 Chrome ngoài cây probe",
+        "1 tiến trình nặng khác"
+      ],
+      "seq": 5,
+      "op": "wcdecodeOrder",
+      "decoded": 62,
+      "requested": 62,
+      "decodeWallSec": 0.546,
+      "decodeFps": 113.6,
+      "presentDrawn": 62,
+      "presentMissing": 0,
+      "presentWallSec": 0.317,
+      "presentFps": 195.5,
+      "drawOrder": [
+        {
+          "decodeIndex": 106,
+          "frameTimestampUs": 3600000
+        },
+        {
+          "decodeIndex": 102,
+          "frameTimestampUs": 3566667
+        },
+        {
+          "decodeIndex": 105,
+          "frameTimestampUs": 3533333
+        },
+        {
+          "decodeIndex": 103,
+          "frameTimestampUs": 3500000
+        },
+        {
+          "decodeIndex": 104,
+          "frameTimestampUs": 3466667
+        },
+        {
+          "decodeIndex": 98,
+          "frameTimestampUs": 3433333
+        },
+        {
+          "decodeIndex": 101,
+          "frameTimestampUs": 3400000
+        },
+        {
+          "decodeIndex": 99,
+          "frameTimestampUs": 3366667
+        },
+        {
+          "decodeIndex": 100,
+          "frameTimestampUs": 3333333
+        },
+        {
+          "decodeIndex": 94,
+          "frameTimestampUs": 3300000
+        },
+        {
+          "decodeIndex": 97,
+          "frameTimestampUs": 3266667
+        },
+        {
+          "decodeIndex": 95,
+          "frameTimestampUs": 3233333
+        },
+        {
+          "decodeIndex": 96,
+          "frameTimestampUs": 3200000
+        },
+        {
+          "decodeIndex": 90,
+          "frameTimestampUs": 3166667
+        },
+        {
+          "decodeIndex": 93,
+          "frameTimestampUs": 3133333
+        },
+        {
+          "decodeIndex": 91,
+          "frameTimestampUs": 3100000
+        },
+        {
+          "decodeIndex": 92,
+          "frameTimestampUs": 3066667
+        },
+        {
+          "decodeIndex": 86,
+          "frameTimestampUs": 3033333
+        },
+        {
+          "decodeIndex": 89,
+          "frameTimestampUs": 3000000
+        },
+        {
+          "decodeIndex": 87,
+          "frameTimestampUs": 2966667
+        },
+        {
+          "decodeIndex": 88,
+          "frameTimestampUs": 2933333
+        },
+        {
+          "decodeIndex": 82,
+          "frameTimestampUs": 2900000
+        },
+        {
+          "decodeIndex": 85,
+          "frameTimestampUs": 2866667
+        },
+        {
+          "decodeIndex": 83,
+          "frameTimestampUs": 2833333
+        },
+        {
+          "decodeIndex": 84,
+          "frameTimestampUs": 2800000
+        },
+        {
+          "decodeIndex": 78,
+          "frameTimestampUs": 2766667
+        },
+        {
+          "decodeIndex": 81,
+          "frameTimestampUs": 2733333
+        },
+        {
+          "decodeIndex": 79,
+          "frameTimestampUs": 2700000
+        },
+        {
+          "decodeIndex": 80,
+          "frameTimestampUs": 2666667
+        },
+        {
+          "decodeIndex": 74,
+          "frameTimestampUs": 2633333
+        },
+        {
+          "decodeIndex": 77,
+          "frameTimestampUs": 2600000
+        },
+        {
+          "decodeIndex": 75,
+          "frameTimestampUs": 2566667
+        },
+        {
+          "decodeIndex": 76,
+          "frameTimestampUs": 2533333
+        },
+        {
+          "decodeIndex": 70,
+          "frameTimestampUs": 2500000
+        },
+        {
+          "decodeIndex": 73,
+          "frameTimestampUs": 2466667
+        },
+        {
+          "decodeIndex": 71,
+          "frameTimestampUs": 2433333
+        },
+        {
+          "decodeIndex": 72,
+          "frameTimestampUs": 2400000
+        },
+        {
+          "decodeIndex": 66,
+          "frameTimestampUs": 2366667
+        },
+        {
+          "decodeIndex": 69,
+          "frameTimestampUs": 2333333
+        },
+        {
+          "decodeIndex": 67,
+          "frameTimestampUs": 2300000
+        },
+        {
+          "decodeIndex": 68,
+          "frameTimestampUs": 2266667
+        },
+        {
+          "decodeIndex": 62,
+          "frameTimestampUs": 2233333
+        },
+        {
+          "decodeIndex": 65,
+          "frameTimestampUs": 2200000
+        },
+        {
+          "decodeIndex": 63,
+          "frameTimestampUs": 2166667
+        },
+        {
+          "decodeIndex": 64,
+          "frameTimestampUs": 2133333
+        },
+        {
+          "decodeIndex": 58,
+          "frameTimestampUs": 2100000
+        },
+        {
+          "decodeIndex": 61,
+          "frameTimestampUs": 2066667
+        },
+        {
+          "decodeIndex": 59,
+          "frameTimestampUs": 2033333
+        },
+        {
+          "decodeIndex": 60,
+          "frameTimestampUs": 2000000
+        },
+        {
+          "decodeIndex": 54,
+          "frameTimestampUs": 1966667
+        },
+        {
+          "decodeIndex": 57,
+          "frameTimestampUs": 1933333
+        },
+        {
+          "decodeIndex": 55,
+          "frameTimestampUs": 1900000
+        },
+        {
+          "decodeIndex": 56,
+          "frameTimestampUs": 1866667
+        },
+        {
+          "decodeIndex": 50,
+          "frameTimestampUs": 1833333
+        },
+        {
+          "decodeIndex": 53,
+          "frameTimestampUs": 1800000
+        },
+        {
+          "decodeIndex": 51,
+          "frameTimestampUs": 1766667
+        },
+        {
+          "decodeIndex": 52,
+          "frameTimestampUs": 1733333
+        },
+        {
+          "decodeIndex": 46,
+          "frameTimestampUs": 1700000
+        },
+        {
+          "decodeIndex": 49,
+          "frameTimestampUs": 1666667
+        },
+        {
+          "decodeIndex": 47,
+          "frameTimestampUs": 1633333
+        },
+        {
+          "decodeIndex": 48,
+          "frameTimestampUs": 1600000
+        },
+        {
+          "decodeIndex": 45,
+          "frameTimestampUs": 1566667
+        }
+      ],
+      "drawTimestampsStrictlyDecreasing": true,
+      "drawTimestampMatchesSamplePts": 62,
+      "drawTimestampMismatches": 0,
+      "mismatchSamples": [],
+      "drawOrderDiffersFromNaiveIndexDesc": true
+    },
+    {
+      "kind": "blob-reverse",
+      "cell": "proxy720-via-blob-url",
+      "attempt": 1,
+      "gop": {
+        "from": 45,
+        "to": 106,
+        "len": 62,
+        "decreases": 30,
+        "reason": "non-first GOP >=30 frames with in-GOP present reorder"
+      },
+      "loadBefore": {
+        "loadavg": [
+          2.04,
+          2.92,
+          2.77
+        ],
+        "at": "2026-11-02T07:31:06.416Z",
+        "chromeTotal": 15,
+        "chromeOwnTree": 13,
+        "chromeOther": 2,
+        "heavyOther": [
+          "11350:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && node --check apps/web/scripts/probe-round37-t6-prox"
+        ],
+        "memAvailableMB": 2270,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 2.04 >= 2",
+        "2 Chrome ngoài cây probe",
+        "1 tiến trình nặng khác"
+      ],
+      "seq": 6,
+      "op": "blobReverse",
+      "blobUrlScheme": "blob",
+      "blobBytes": 37122084,
+      "bytes": 37122084,
+      "decoded": 62,
+      "requested": 62,
+      "decodeWallSec": 0.561,
+      "decodeFps": 110.6,
+      "presentDrawn": 62,
+      "presentMissing": 0,
+      "presentWallSec": 0.497,
+      "presentFps": 124.8,
+      "drawOrder": [
+        {
+          "decodeIndex": 106,
+          "frameTimestampUs": 3600000
+        },
+        {
+          "decodeIndex": 102,
+          "frameTimestampUs": 3566667
+        },
+        {
+          "decodeIndex": 105,
+          "frameTimestampUs": 3533333
+        },
+        {
+          "decodeIndex": 103,
+          "frameTimestampUs": 3500000
+        },
+        {
+          "decodeIndex": 104,
+          "frameTimestampUs": 3466667
+        },
+        {
+          "decodeIndex": 98,
+          "frameTimestampUs": 3433333
+        },
+        {
+          "decodeIndex": 101,
+          "frameTimestampUs": 3400000
+        },
+        {
+          "decodeIndex": 99,
+          "frameTimestampUs": 3366667
+        },
+        {
+          "decodeIndex": 100,
+          "frameTimestampUs": 3333333
+        },
+        {
+          "decodeIndex": 94,
+          "frameTimestampUs": 3300000
+        },
+        {
+          "decodeIndex": 97,
+          "frameTimestampUs": 3266667
+        },
+        {
+          "decodeIndex": 95,
+          "frameTimestampUs": 3233333
+        },
+        {
+          "decodeIndex": 96,
+          "frameTimestampUs": 3200000
+        },
+        {
+          "decodeIndex": 90,
+          "frameTimestampUs": 3166667
+        },
+        {
+          "decodeIndex": 93,
+          "frameTimestampUs": 3133333
+        },
+        {
+          "decodeIndex": 91,
+          "frameTimestampUs": 3100000
+        },
+        {
+          "decodeIndex": 92,
+          "frameTimestampUs": 3066667
+        },
+        {
+          "decodeIndex": 86,
+          "frameTimestampUs": 3033333
+        },
+        {
+          "decodeIndex": 89,
+          "frameTimestampUs": 3000000
+        },
+        {
+          "decodeIndex": 87,
+          "frameTimestampUs": 2966667
+        },
+        {
+          "decodeIndex": 88,
+          "frameTimestampUs": 2933333
+        },
+        {
+          "decodeIndex": 82,
+          "frameTimestampUs": 2900000
+        },
+        {
+          "decodeIndex": 85,
+          "frameTimestampUs": 2866667
+        },
+        {
+          "decodeIndex": 83,
+          "frameTimestampUs": 2833333
+        },
+        {
+          "decodeIndex": 84,
+          "frameTimestampUs": 2800000
+        },
+        {
+          "decodeIndex": 78,
+          "frameTimestampUs": 2766667
+        },
+        {
+          "decodeIndex": 81,
+          "frameTimestampUs": 2733333
+        },
+        {
+          "decodeIndex": 79,
+          "frameTimestampUs": 2700000
+        },
+        {
+          "decodeIndex": 80,
+          "frameTimestampUs": 2666667
+        },
+        {
+          "decodeIndex": 74,
+          "frameTimestampUs": 2633333
+        },
+        {
+          "decodeIndex": 77,
+          "frameTimestampUs": 2600000
+        },
+        {
+          "decodeIndex": 75,
+          "frameTimestampUs": 2566667
+        },
+        {
+          "decodeIndex": 76,
+          "frameTimestampUs": 2533333
+        },
+        {
+          "decodeIndex": 70,
+          "frameTimestampUs": 2500000
+        },
+        {
+          "decodeIndex": 73,
+          "frameTimestampUs": 2466667
+        },
+        {
+          "decodeIndex": 71,
+          "frameTimestampUs": 2433333
+        },
+        {
+          "decodeIndex": 72,
+          "frameTimestampUs": 2400000
+        },
+        {
+          "decodeIndex": 66,
+          "frameTimestampUs": 2366667
+        },
+        {
+          "decodeIndex": 69,
+          "frameTimestampUs": 2333333
+        },
+        {
+          "decodeIndex": 67,
+          "frameTimestampUs": 2300000
+        },
+        {
+          "decodeIndex": 68,
+          "frameTimestampUs": 2266667
+        },
+        {
+          "decodeIndex": 62,
+          "frameTimestampUs": 2233333
+        },
+        {
+          "decodeIndex": 65,
+          "frameTimestampUs": 2200000
+        },
+        {
+          "decodeIndex": 63,
+          "frameTimestampUs": 2166667
+        },
+        {
+          "decodeIndex": 64,
+          "frameTimestampUs": 2133333
+        },
+        {
+          "decodeIndex": 58,
+          "frameTimestampUs": 2100000
+        },
+        {
+          "decodeIndex": 61,
+          "frameTimestampUs": 2066667
+        },
+        {
+          "decodeIndex": 59,
+          "frameTimestampUs": 2033333
+        },
+        {
+          "decodeIndex": 60,
+          "frameTimestampUs": 2000000
+        },
+        {
+          "decodeIndex": 54,
+          "frameTimestampUs": 1966667
+        },
+        {
+          "decodeIndex": 57,
+          "frameTimestampUs": 1933333
+        },
+        {
+          "decodeIndex": 55,
+          "frameTimestampUs": 1900000
+        },
+        {
+          "decodeIndex": 56,
+          "frameTimestampUs": 1866667
+        },
+        {
+          "decodeIndex": 50,
+          "frameTimestampUs": 1833333
+        },
+        {
+          "decodeIndex": 53,
+          "frameTimestampUs": 1800000
+        },
+        {
+          "decodeIndex": 51,
+          "frameTimestampUs": 1766667
+        },
+        {
+          "decodeIndex": 52,
+          "frameTimestampUs": 1733333
+        },
+        {
+          "decodeIndex": 46,
+          "frameTimestampUs": 1700000
+        },
+        {
+          "decodeIndex": 49,
+          "frameTimestampUs": 1666667
+        },
+        {
+          "decodeIndex": 47,
+          "frameTimestampUs": 1633333
+        },
+        {
+          "decodeIndex": 48,
+          "frameTimestampUs": 1600000
+        },
+        {
+          "decodeIndex": 45,
+          "frameTimestampUs": 1566667
+        }
+      ],
+      "drawTimestampsStrictlyDecreasing": true,
+      "drawTimestampMatchesSamplePts": 62,
+      "drawTimestampMismatches": 0,
+      "mismatchSamples": [],
+      "drawOrderDiffersFromNaiveIndexDesc": true
+    },
+    {
+      "kind": "controller-blob",
+      "cell": "proxy720-via-controller-blob-url",
+      "attempt": 1,
+      "gop": {
+        "from": 45,
+        "to": 106,
+        "len": 62,
+        "decreases": 30,
+        "reason": "non-first GOP >=30 frames with in-GOP present reorder"
+      },
+      "loadBefore": {
+        "loadavg": [
+          2.04,
+          2.92,
+          2.77
+        ],
+        "at": "2026-11-02T07:31:10.414Z",
+        "chromeTotal": 15,
+        "chromeOwnTree": 13,
+        "chromeOther": 2,
+        "heavyOther": [
+          "11350:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && node --check apps/web/scripts/probe-round37-t6-prox"
+        ],
+        "memAvailableMB": 2300,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 2.04 >= 2",
+        "2 Chrome ngoài cây probe",
+        "1 tiến trình nặng khác"
+      ],
+      "seq": 7,
+      "op": "controllerBlob",
+      "blobUrlScheme": "blob",
+      "blobBytes": 37122084,
+      "probeTimes": [
+        {
+          "decodeIndex": 45,
+          "timeSec": 1.5,
+          "expectedPtsUs": 1566667
+        },
+        {
+          "decodeIndex": 53,
+          "timeSec": 1.7333333333333334,
+          "expectedPtsUs": 1800000
+        },
+        {
+          "decodeIndex": 61,
+          "timeSec": 2,
+          "expectedPtsUs": 2066667
+        },
+        {
+          "decodeIndex": 69,
+          "timeSec": 2.2666666666666666,
+          "expectedPtsUs": 2333333
+        },
+        {
+          "decodeIndex": 77,
+          "timeSec": 2.533333333333333,
+          "expectedPtsUs": 2600000
+        },
+        {
+          "decodeIndex": 83,
+          "timeSec": 2.7666666666666666,
+          "expectedPtsUs": 2833333
+        },
+        {
+          "decodeIndex": 91,
+          "timeSec": 3.033333333333333,
+          "expectedPtsUs": 3100000
+        },
+        {
+          "decodeIndex": 99,
+          "timeSec": 3.3,
+          "expectedPtsUs": 3366667
+        }
+      ],
+      "polls": 4,
+      "wallSecToFirstHit": 0.624,
+      "hit": {
+        "decodeIndex": 45,
+        "timeSec": 1.5,
+        "expectedPtsUs": 1566667,
+        "frameTimestampUs": 1566667,
+        "width": 854,
+        "height": 480,
+        "frameTimestampMatchesPts": true
+      },
+      "controllerReturnedFrame": true
+    }
+  ],
+  "errors": []
+}

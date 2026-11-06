@@ -1,0 +1,295 @@
+{
+  "session": {
+    "startedAt": "2026-11-02T07:26:14.881Z",
+    "repo": "/home/hatch/workspace/repo-1",
+    "scratch": "/home/hatch/workspace/tmp-round37-t2/wc",
+    "display": ":99",
+    "port": 4297,
+    "quietLoad1Threshold": 2,
+    "nproc": 4,
+    "memTotalMB": 7934,
+    "endedAt": "2026-11-02T07:26:40.447Z"
+  },
+  "fixtures": {
+    "noiseProxy480": {
+      "servedAs": "noise-proxy480.mp4",
+      "srcRealpath": "/home/hatch/workspace/tmp-round36-s3/wc/noise-30s__proxy_480p.mp4",
+      "bytes": 37122084
+    }
+  },
+  "build": {
+    "mp4DemuxTsSha256": "5fe0a3fe133cdfbc501ef5ddf9f767265e3b1fc6c35eb2e7d6b5608cae1131a7",
+    "reverseWebcodecsTsSha256": "df4625034f4b29c08395bd7ed451e9c29ede5bf7e412ce0d218c26c84c03f48d",
+    "reverseDecodeAheadTsSha256": "48524ba0d94d194d32d91f76992c634600baf761845316f477f3170138848d37",
+    "reversePreviewGateTsSha256": "918f11ae4840e661b17289dbe1358ce2f022c1c307b8ada31bc9f7e45cc5425e",
+    "mp4DemuxJsSha256": "60805c6468deeeec25b2eb3d8d3d7408422e7afe725dec61d40922d67f309a4c",
+    "reverseWebcodecsJsSha256": "73de517e5df542e3fd12e9ae0b919a34e6c1f2f244fd44a79a5f193443d1382e",
+    "reverseDecodeAheadJsSha256": "700a3b07c46f7b02cbf862e08709bb284295b5283c4fadc3024b66ce7f82214f",
+    "reversePreviewGateJsSha256": "4d337957130528d8fb71057bdd0fd889e724cf2bfbeab05dcffebf0e125b2e7a",
+    "importSpecifierRewritten": true
+  },
+  "support": {},
+  "runs": [
+    {
+      "loadBefore": {
+        "loadavg": [
+          3.57,
+          3.1,
+          2.64
+        ],
+        "at": "2026-11-02T07:26:17.416Z",
+        "chromeTotal": 14,
+        "chromeOwnTree": 12,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1566,
+        "error": null
+      },
+      "loadBeforeLabel": {
+        "loadLabel": "under-load",
+        "labelReasons": [
+          "load1 3.57 >= 2",
+          "2 Chrome ngoài cây probe"
+        ]
+      },
+      "loadAfter": {
+        "loadavg": [
+          3.33,
+          3.06,
+          2.63
+        ],
+        "at": "2026-11-02T07:26:31.181Z",
+        "chromeTotal": 15,
+        "chromeOwnTree": 13,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1193,
+        "error": null
+      },
+      "loadAfterLabel": {
+        "loadLabel": "under-load",
+        "labelReasons": [
+          "load1 3.33 >= 2",
+          "2 Chrome ngoài cây probe"
+        ]
+      },
+      "track": {
+        "width": 854,
+        "height": 480,
+        "codec": "avc1.64001F",
+        "samples": 900
+      },
+      "fileBytes": 37122084,
+      "chosenWindowInfo": {
+        "windowFrames": 854,
+        "aheadWindows": 2,
+        "heldWindows": 3,
+        "heldFrames": 2562,
+        "memoryBytes": 1792364952,
+        "windowSeconds": 28.466666666666665,
+        "decodeSeconds": 13.138461538461538,
+        "slackSeconds": 30.656410256410254,
+        "steadyMargin": 1.1666666666666665,
+        "cappedBy": "max",
+        "meetsTarget": true
+      },
+      "frameBytesEstimate": 699596,
+      "reps": [
+        {
+          "rep": 1,
+          "keys": [
+            0,
+            45,
+            107,
+            183,
+            432,
+            497,
+            572,
+            621,
+            682
+          ],
+          "gopStarts": [
+            497,
+            572,
+            621
+          ],
+          "presentFrom": 497,
+          "presentTo": 681,
+          "presentFrames": 185,
+          "drawn": 185,
+          "missed": 0,
+          "missedIndices": [],
+          "lateIndices": [
+            674,
+            612,
+            607
+          ],
+          "lateOver20ms": 3,
+          "maxDelayMs": 27.47,
+          "wallSeconds": 6.138,
+          "presentedFps": 30.14,
+          "gopFps": [
+            {
+              "gop": 2,
+              "from": 621,
+              "to": 681,
+              "decoded": 61,
+              "seconds": 0.5073999999999068,
+              "fps": 120.22073314941112
+            },
+            {
+              "gop": 1,
+              "from": 572,
+              "to": 620,
+              "decoded": 49,
+              "seconds": 0.5067999999998137,
+              "fps": 96.68508287296372
+            },
+            {
+              "gop": 0,
+              "from": 497,
+              "to": 571,
+              "decoded": 75,
+              "seconds": 0.6713999999999068,
+              "fps": 111.70688114389397
+            }
+          ],
+          "meanDecodeFps": 109.75,
+          "minGopDecodeFps": 96.69,
+          "boundaryReady": {
+            "atPresentIndex": 617,
+            "gop1FullyDecoded": true,
+            "prefetchDoneAtBoundary": true,
+            "boundarySlackMs": 1526.7000000001863,
+            "evictedAtBoundary": 61
+          },
+          "cacheSizeAtEnd": 0
+        },
+        {
+          "rep": 2,
+          "keys": [
+            0,
+            45,
+            107,
+            183,
+            432,
+            497,
+            572,
+            621,
+            682
+          ],
+          "gopStarts": [
+            497,
+            572,
+            621
+          ],
+          "presentFrom": 497,
+          "presentTo": 681,
+          "presentFrames": 185,
+          "drawn": 185,
+          "missed": 0,
+          "missedIndices": [],
+          "lateIndices": [
+            674,
+            676,
+            619,
+            614,
+            612
+          ],
+          "lateOver20ms": 5,
+          "maxDelayMs": 24.17,
+          "wallSeconds": 6.136,
+          "presentedFps": 30.15,
+          "gopFps": [
+            {
+              "gop": 2,
+              "from": 621,
+              "to": 681,
+              "decoded": 61,
+              "seconds": 0.35939999999990685,
+              "fps": 169.72732331668283
+            },
+            {
+              "gop": 1,
+              "from": 572,
+              "to": 620,
+              "decoded": 49,
+              "seconds": 0.3924000000003725,
+              "fps": 124.87257900090083
+            },
+            {
+              "gop": 0,
+              "from": 497,
+              "to": 571,
+              "decoded": 75,
+              "seconds": 0.5465,
+              "fps": 137.2369624885636
+            }
+          ],
+          "meanDecodeFps": 142.49,
+          "minGopDecodeFps": 124.87,
+          "boundaryReady": {
+            "atPresentIndex": 617,
+            "gop1FullyDecoded": true,
+            "prefetchDoneAtBoundary": true,
+            "boundarySlackMs": 1640.5999999996275,
+            "evictedAtBoundary": 61
+          },
+          "cacheSizeAtEnd": 0
+        }
+      ],
+      "hw": {
+        "preferHardwareSupported": false,
+        "hardwareAttemptedFrames": 0,
+        "hardwareDecodedFrames": 0,
+        "hardwareDecodeFps": null
+      },
+      "controllerCheck": {
+        "gateOk": {
+          "verdict": "allowed-experiment",
+          "reasons": [
+            "easy-decode-footage"
+          ],
+          "warnings": [
+            "Phát ngược bằng decode-ahead chỉ là thử nghiệm opt-in: chỉ bật cho footage dễ decode hoặc máy đã chứng minh có hardware decode; không đảm bảo 30 fps ngược cho mọi footage.",
+            "Số đo decode dùng để mở cổng này đo dưới tải (under-load), không phải số quiet — nhịp ngược thực tế có thể thấp hơn khi máy bận.",
+            "Máy này chưa chứng minh có hardware decode — phát ngược footage nặng bằng decode phần mềm có thể rớt dưới 30 fps."
+          ]
+        },
+        "active": true,
+        "warnings": [
+          "Phát ngược bằng decode-ahead chỉ là thử nghiệm opt-in: chỉ bật cho footage dễ decode hoặc máy đã chứng minh có hardware decode; không đảm bảo 30 fps ngược cho mọi footage.",
+          "Số đo decode dùng để mở cổng này đo dưới tải (under-load), không phải số quiet — nhịp ngược thực tế có thể thấp hơn khi máy bận.",
+          "Máy này chưa chứng minh có hardware decode — phát ngược footage nặng bằng decode phần mềm có thể rớt dưới 30 fps."
+        ],
+        "windowOk": true,
+        "sizeAfterWindow": 82,
+        "aheadRange": {
+          "from": 497,
+          "to": 579
+        },
+        "sizeAfterPrefetch": 157,
+        "prefetchHit": {
+          "midIndex": 538,
+          "hit": true,
+          "cacheSizeAtHit": 157,
+          "prefetchComplete": true
+        },
+        "mirrorAfterEnable": [
+          "Phát ngược bằng decode-ahead chỉ là thử nghiệm opt-in: chỉ bật cho footage dễ decode hoặc máy đã chứng minh có hardware decode; không đảm bảo 30 fps ngược cho mọi footage.",
+          "Số đo decode dùng để mở cổng này đo dưới tải (under-load), không phải số quiet — nhịp ngược thực tế có thể thấp hơn khi máy bận.",
+          "Máy này chưa chứng minh có hardware decode — phát ngược footage nặng bằng decode phần mềm có thể rớt dưới 30 fps."
+        ],
+        "control": {
+          "gateVerdict": "blocked",
+          "active": false,
+          "warnings": [],
+          "windowOk": true,
+          "cacheSize": 82,
+          "aheadRange": null
+        }
+      }
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,43 @@
+{
+  "url": "http://127.0.0.1:5195",
+  "durationSec": 10,
+  "chromium": "/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome",
+  "timestamp": "2026-11-02T07:12:11.895Z",
+  "hangProbe": {
+    "mode": "controlled-hang-H1-promise-never-settles",
+    "timeoutMs": 5000,
+    "wallMs": 5066,
+    "error": "CDP timeout: Runtime.evaluate",
+    "snapshotFilesBefore": 1,
+    "snapshotFilesNew": [
+      "cdp-hang-20261102_071228646-Runtime.evaluate-3351.json"
+    ],
+    "snapshotFile": "/home/hatch/workspace/vcut-cdp-hang-snapshots/bench-preview-fps/cdp-hang-20261102_071228646-Runtime.evaluate-3351.json",
+    "snapshotBundle": {
+      "name": "index-DAS3nyo_.js",
+      "sha256_16": "e02b786973edd1c3",
+      "status": "captured",
+      "dist": "/home/hatch/workspace/repo-1/apps/web/dist"
+    },
+    "snapshotProcPid": 3351,
+    "chromePid": 3351,
+    "distDir": "apps/web/dist",
+    "ok": true
+  },
+  "frozenDist": {
+    "validity": "VALID",
+    "valid": true,
+    "problems": [],
+    "distDir": "/home/hatch/workspace/repo-1/apps/web/dist",
+    "bundle": {
+      "name": "index-DAS3nyo_.js",
+      "sha256_16": "e02b786973edd1c3",
+      "source": "index-entry"
+    },
+    "manifestBefore": "1124df9835c3a3db9b0be87a08236621b60712e7683fc415c9d696265beccd83",
+    "manifestAfter": "1124df9835c3a3db9b0be87a08236621b60712e7683fc415c9d696265beccd83",
+    "fileCountBefore": 254,
+    "fileCountAfter": 254,
+    "servesDistAssumption": "Bundle/manifest này chỉ là bundle đang đo khi PAGE_URL serve đúng distDir này (vite preview). Khi đo vite dev, đây chỉ là dist trên đĩa lúc bắt đầu đo."
+  }
+}
