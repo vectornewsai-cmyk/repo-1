@@ -14,7 +14,14 @@ import {
   getHistoryStore,
   type ProjectVersion,
 } from "../../lib/projectHistory";
-import { isDirty, markSaved } from "../../lib/projectRepo";
+import { collectSpeedCurveWarnings, isDirty, markSaved } from "../../lib/projectRepo";
+// Phase 9 đợt 28 L4: khôi phục bypass parseProjectText nên J5 không
+// chạy ở đó — quét lại spec đã khôi phục và đồng bộ báo cáo tải.
+import {
+  buildHistoryLoadReport,
+  clearLastLoadReport,
+  setLastLoadReport,
+} from "../../lib/loadReport";
 import { pushToast } from "../../lib/toast";
 
 function fmtTime(ms: number): string {
@@ -70,6 +77,16 @@ export function HistoryPanel({ onClose }: { onClose: () => void }) {
       st.replaceProject(spec);
       st.setProjectName(spec.meta.name);
       markSaved(spec);
+      // Đợt 28 L4: đồng bộ báo cáo tải với spec vừa khôi phục — có vi
+      // phạm thì set báo cáo mới (nguồn "history", strip/panel ở App tự
+      // hiện qua subscribe), không còn vi phạm thì xoá báo cáo cũ để
+      // strip không chỉ vào project đã bị thay thế.
+      const restoredWarnings = collectSpeedCurveWarnings(spec);
+      if (restoredWarnings.length > 0) {
+        setLastLoadReport(buildHistoryLoadReport(restoredWarnings, spec.meta.name));
+      } else {
+        clearLastLoadReport();
+      }
       pushToast(`Đã khôi phục phiên bản ${fmtTime(v.createdAt)}${v.label ? ` (${v.label})` : ""}`, "success");
       await refresh();
     } catch (e) {

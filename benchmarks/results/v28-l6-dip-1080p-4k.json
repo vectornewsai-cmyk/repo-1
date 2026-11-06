@@ -1,0 +1,1736 @@
+{
+  "mode": "res",
+  "workdir": "/home/hatch/workspace/tmp-round28-l6/work-res",
+  "rows": [
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadeblack",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 20,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 28.6667,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 28.6667,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadeblack",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 23,
+      "wiring": {
+        "mad": 0.6639,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.6641,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadeblack",
+      "window": "out",
+      "p": 0.1,
+      "alpha": 0.449108,
+      "modelMs": 19,
+      "wiring": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadeblack",
+      "window": "in",
+      "p": 0.1,
+      "alpha": 0,
+      "modelMs": 18,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 38,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 38,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadeblack",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 23,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 57.3333,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 57.3333,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadeblack",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 21,
+      "wiring": {
+        "mad": 0.9993,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.9992,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadeblack",
+      "window": "out",
+      "p": 0.1,
+      "alpha": 0.449108,
+      "modelMs": 24,
+      "wiring": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadeblack",
+      "window": "in",
+      "p": 0.1,
+      "alpha": 0,
+      "modelMs": 18,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 19.6667,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 19.6667,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadeblack",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 18,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 41.0147,
+        "le8": 0.0123,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 41.0074,
+        "le8": 0.0121,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadeblack",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 99,
+      "wiring": {
+        "mad": 1.3593,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1.3531,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 1.0913,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 1.0914,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadeblack",
+      "window": "out",
+      "p": 0.1,
+      "alpha": 0.449108,
+      "modelMs": 38,
+      "wiring": {
+        "mad": 0.4488,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.4475,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.2009,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.2036,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadeblack",
+      "window": "in",
+      "p": 0.1,
+      "alpha": 0,
+      "modelMs": 20,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 46.4564,
+        "le8": 0.003,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 46.4579,
+        "le8": 0.0026,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 58,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 59,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 59,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 42,
+      "wiring": {
+        "mad": 1.9986,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1.999,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.1,
+      "alpha": 0.449108,
+      "modelMs": 47,
+      "wiring": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.1,
+      "alpha": 0,
+      "modelMs": 41,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 77.6667,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 77.6667,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 59,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 30,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 30,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 41,
+      "wiring": {
+        "mad": 1.9997,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1.9995,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.1,
+      "alpha": 0.449108,
+      "modelMs": 65,
+      "wiring": {
+        "mad": 1.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.1,
+      "alpha": 0,
+      "modelMs": 41,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 96.3333,
+        "le8": 0,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 96.3333,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 64,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 46.1356,
+        "le8": 0.0082,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 46.1457,
+        "le8": 0.0083,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 108,
+      "wiring": {
+        "mad": 1.0134,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1.0025,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.2541,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.2745,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.1,
+      "alpha": 0.449108,
+      "modelMs": 58,
+      "wiring": {
+        "mad": 0.8206,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.8193,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 1.2829,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 1.2827,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.1,
+      "alpha": 0,
+      "modelMs": 41,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 69.3584,
+        "le8": 0.0018,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 69.362,
+        "le8": 0.0016,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 45,
+      "wiring": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 38.6667,
+        "le8": 0,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 38.6667,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 42,
+      "wiring": {
+        "mad": 0.9986,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.999,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.1,
+      "alpha": 0.449108,
+      "modelMs": 44,
+      "wiring": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.1,
+      "alpha": 0,
+      "modelMs": 33,
+      "wiring": {
+        "mad": 2,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 2,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 51,
+        "le8": 0,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 51,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 71,
+      "wiring": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 63,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 63,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 34,
+      "wiring": {
+        "mad": 1.333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1.3328,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 63.6667,
+        "le8": 0,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 63.6667,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.1,
+      "alpha": 0.449108,
+      "modelMs": 43,
+      "wiring": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 12.6667,
+        "le8": 0,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 12.6667,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.1,
+      "alpha": 0,
+      "modelMs": 33,
+      "wiring": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 114.3333,
+        "le8": 0,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 114.3333,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 50,
+      "wiring": {
+        "mad": 0.9749,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.9757,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 50.7433,
+        "le8": 0.0328,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 50.708,
+        "le8": 0.0329,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 94,
+      "wiring": {
+        "mad": 1.3965,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1.3908,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 51.8527,
+        "le8": 0.0148,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 51.8406,
+        "le8": 0.0149,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.1,
+      "alpha": 0.449108,
+      "modelMs": 37,
+      "wiring": {
+        "mad": 0.6742,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.6785,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 8.4475,
+        "le8": 0.485,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 8.4324,
+        "le8": 0.4857,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "1080p",
+      "W": 1080,
+      "H": 1920,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.1,
+      "alpha": 0,
+      "modelMs": 59,
+      "wiring": {
+        "mad": 0.8227,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.8323,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 77.1474,
+        "le8": 0.023,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 77.1253,
+        "le8": 0.023,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadeblack",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 120,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 28.6667,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 28.6667,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadeblack",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 84,
+      "wiring": {
+        "mad": 0.6653,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.6651,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadeblack",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 86,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 57.3333,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 57.3333,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadeblack",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 82,
+      "wiring": {
+        "mad": 0.9997,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.9997,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadeblack",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 75,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 41.0145,
+        "le8": 0.0123,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 41.0077,
+        "le8": 0.0121,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadeblack",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 374,
+      "wiring": {
+        "mad": 1.3577,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1.3493,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 1.0915,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 1.0917,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 165,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 59,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 59,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 126,
+      "wiring": {
+        "mad": 1.9993,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1.999,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 141,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 30,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 30,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 126,
+      "wiring": {
+        "mad": 1.9998,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 2,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 130,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 46.1358,
+        "le8": 0.0082,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 46.1454,
+        "le8": 0.0082,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 371,
+      "wiring": {
+        "mad": 1.0091,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.9866,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.254,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.2611,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 170,
+      "wiring": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 38.6667,
+        "le8": 0,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 38.6667,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "flat",
+      "pair": "rb",
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 134,
+      "wiring": {
+        "mad": 0.9993,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.999,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGapResampled": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 155,
+      "wiring": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 63,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 63,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "flat",
+      "pair": "gm",
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 138,
+      "wiring": {
+        "mad": 1.3332,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 63.6667,
+        "le8": 0,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 63.6667,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "modelMs": 157,
+      "wiring": {
+        "mad": 0.9111,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 0.9111,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 51.1414,
+        "le8": 0.0322,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 51.1126,
+        "le8": 0.0323,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "size": "4K",
+      "W": 2160,
+      "H": 3840,
+      "kind": "footage",
+      "pair": "KL",
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "modelMs": 316,
+      "wiring": {
+        "mad": 1.3941,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiringResampled": {
+        "mad": 1.3841,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 52.1846,
+        "le8": 0.0145,
+        "verdict": "LỆCH"
+      },
+      "pairGapResampled": {
+        "mad": 52.1759,
+        "le8": 0.0145,
+        "verdict": "LỆCH"
+      }
+    }
+  ],
+  "worst": [],
+  "corrected": []
+}

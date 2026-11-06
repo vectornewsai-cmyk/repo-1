@@ -15,6 +15,7 @@ import { projectDuration } from "../../../packages/video-spec/src/index.js";
 import { ValidationError, validateVideoSpec } from "../validate.js";
 import { loadProject, RENDER_WORKER_JS, RENDERS_DIR, resolveMediaDir, resolveOutPath } from "../store.js";
 import { fail, handleError, ok, projectIdSchema } from "./common.js";
+import { formatRenderFailure, redactProbeStderr } from "./renderErrors.js";
 
 const PRESETS = {
   "720p": { width: 1280, height: 720, fps: 30, crf: 23, x264Preset: "veryfast", audioBitrate: "128k" },
@@ -39,7 +40,7 @@ function probeVideo(mp4Path: string): Record<string, unknown> {
     ],
     { encoding: "utf8", timeout: 30000 }
   );
-  if (r.status !== 0) throw new Error(`ffprobe thất bại: ${(r.stderr as string).slice(0, 500)}`);
+  if (r.status !== 0) throw new Error(`ffprobe thất bại: ${redactProbeStderr(r.stderr as string) || "không rõ lỗi"}`);
   const info = JSON.parse(r.stdout as string) as {
     format?: { duration?: string; size?: string };
     streams?: Array<Record<string, unknown>>;
@@ -119,8 +120,15 @@ export function registerExportTools(server: McpServer): void {
             { encoding: "utf8", timeout: 30 * 60 * 1000, maxBuffer: 16 * 1024 * 1024 }
           );
           if (r.status !== 0) {
-            const errTail = String(r.stderr ?? r.stdout ?? r.error ?? "unknown error").slice(-2000);
-            throw new ValidationError(`export thất bại (exit ${r.status}): ${errTail}`);
+            // L3 (đợt 28): KHÔNG trả stderr thô (từng lộ đường dẫn tuyệt
+            // đối qua slice(-2000)). Dùng lỗi có cấu trúc đã redact từ
+            // bridge; handleError in nguyên văn qua fail().
+            const captured = String(r.stderr ?? r.stdout ?? r.error ?? "");
+            throw new ValidationError(
+              captured.trim()
+                ? formatRenderFailure(captured, r.status, r.signal)
+                : `Render thất bại [WORKER_EXIT]: Render worker thoát với mã ${r.status} (không thu được stderr).`
+            );
           }
         } finally {
           await fs.rm(tmpDir, { recursive: true, force: true });

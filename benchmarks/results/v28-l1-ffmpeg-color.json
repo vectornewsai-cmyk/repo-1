@@ -1,0 +1,56 @@
+{
+  "browserNative_vs_ffmpegRGB_frame47": {
+    "mad": 6.319711934156379,
+    "le8": 0.7727777777777778,
+    "maxDiff": 186,
+    "verdict": "L\u1ec6CH"
+  },
+  "browserNative_vs_yuv_bt601_frame47": {
+    "mad": 6.303724279835391,
+    "le8": 0.7694753086419753,
+    "maxDiff": 187,
+    "verdict": "L\u1ec6CH"
+  },
+  "browserNative_vs_yuv_bt709_frame47": {
+    "mad": 6.279022633744856,
+    "le8": 0.7745679012345679,
+    "maxDiff": 187,
+    "verdict": "L\u1ec6CH"
+  },
+  "browserNative_vs_ffmpegRGB_frame48": {
+    "mad": 0.652633744855967,
+    "le8": 1.0,
+    "maxDiff": 3,
+    "verdict": "KH\u1edaP"
+  },
+  "browserNative_vs_yuv_bt601_frame48": {
+    "mad": 0.4093621399176955,
+    "le8": 0.9931481481481481,
+    "maxDiff": 17,
+    "verdict": "KH\u1edaP"
+  },
+  "browserNative_vs_yuv_bt709_frame48": {
+    "mad": 0.387880658436214,
+    "le8": 1.0,
+    "maxDiff": 2,
+    "verdict": "KH\u1edaP"
+  },
+  "browserNative_vs_ffmpegRGB_frame49": {
+    "mad": 6.251954732510288,
+    "le8": 0.7754012345679012,
+    "maxDiff": 214,
+    "verdict": "L\u1ec6CH"
+  },
+  "browserNative_vs_yuv_bt601_frame49": {
+    "mad": 6.222181069958848,
+    "le8": 0.7729320987654321,
+    "maxDiff": 214,
+    "verdict": "L\u1ec6CH"
+  },
+  "browserNative_vs_yuv_bt709_frame49": {
+    "mad": 6.206471193415638,
+    "le8": 0.7770679012345679,
+    "maxDiff": 214,
+    "verdict": "L\u1ec6CH"
+  }
+}

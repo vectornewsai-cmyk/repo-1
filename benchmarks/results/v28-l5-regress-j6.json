@@ -1,0 +1,143 @@
+{
+  "runAt": "2026-10-31T01:26:19.420Z",
+  "label": "l5-regress",
+  "display": ":94",
+  "port": 4194,
+  "bundle": "index-Dc8sHsbE.js",
+  "bundleSha256_16": "17b4378f080407bb",
+  "cases": [
+    {
+      "id": "J0-seed-load",
+      "status": "PASS",
+      "detail": "panel liệt kê đủ 9 item: TOP-SPLIT-OUT, TOP-SPLIT-EDGE, TOP-SPLIT-OK, TOP-SPLIT-PH, TOP-SPLIT2, TOP-SPLIT3, TOP-DEEP, TOP-DEEP-BLOCK, TOP-LEAFCHK"
+    },
+    {
+      "id": "J1-split-out-of-range",
+      "status": "PASS",
+      "detail": "gõ cdp-char \"9.9\" + click cdp-input -> msg + toast OutOfRange đúng, lá còn 1, spec không đổi sau 7000ms"
+    },
+    {
+      "id": "J2-split-edge-start",
+      "status": "PASS",
+      "detail": "gõ \"10\" -> msg + toast TooCloseToEdge đúng, spec không đổi"
+    },
+    {
+      "id": "J3-split-edge-end",
+      "status": "PASS",
+      "detail": "gõ \"12.4636\" (lá 3.98/4) -> msg + toast TooCloseToEdge đúng, lá còn nguyên"
+    },
+    {
+      "id": "J4-blocked-no-undo",
+      "status": "PASS",
+      "detail": "Ctrl+Z sau 3 lần chặn là no-op: spec không đổi, panel vẫn đủ 9 item (không entry undo nào được sinh)"
+    },
+    {
+      "id": "J5-split-typed-success-undo",
+      "status": "PASS",
+      "detail": "gõ \"11.4641\" -> msg \"Đã tách lá tại 00:02.0\", 2 nửa 2s/2s in-out 100/102/104, trim top {0,8} không đổi, Ctrl+Z về 1 lá (đúng 1 bước undo)"
+    },
+    {
+      "id": "J6-split-two-level-success-undo",
+      "status": "PASS",
+      "detail": "gõ \"1.2600\" (τ₁₃(τ₁₂(2)) ≈ 1.25997) -> msg 00:02.0, 2 nửa 2s/2s, trim top {0,8} + mid {0,6} không đổi, Ctrl+Z hoàn tác"
+    },
+    {
+      "id": "J7-split-three-level-success-undo",
+      "status": "PASS",
+      "detail": "gõ \"1.1040\" (τ₁₃(τ₁₂(τ₁₂(2))) ≈ 1.10405) -> msg 00:02.0, 2 nửa 2s/2s, Ctrl+Z hoàn tác (panel truyền đúng chainIds 2 tầng)"
+    },
+    {
+      "id": "J8-split-playhead-success-undo",
+      "status": "PASS",
+      "detail": "scrub (60 px/s) -> vạch 11.466666666666667 (text 11.5), \"Lấy từ playhead\" điền input=11.466666666666667, tách -> 2 nửa ~2s/2s (dung sai scrub ±0.1), Ctrl+Z hoàn tác"
+    },
+    {
+      "id": "J9-intermediate-move-success-undo",
+      "status": "PASS",
+      "detail": "DeepIntermediateEditor hiện (không còn ghi chú H6), dời DEEP-TARGET 0->1: autosave deep [1,2], lá dl [0,2] không đổi, Ctrl+Z về [0,2]"
+    },
+    {
+      "id": "J10-intermediate-blocked-check",
+      "status": "PASS",
+      "detail": "dời DEEP-BLOCKED 0->1 bị chặn: msg chứa \"vượt khoảng\" (combinedRange qua check object, không tách chuỗi), 0 toast, spec không đổi, Ctrl+Z no-op"
+    },
+    {
+      "id": "J11-leaf-check-block",
+      "status": "PASS",
+      "detail": "bấm \"Đặt curve 1× cho lá\" ở lá sâu -> msg ancestorReverse (MID-CHK) đúng, nút còn nguyên, autosave không curve (xem LIMITS: DOM không phân biệt được đường check object với đường reason-string cũ — đường check được khóa ở tầng store bởi test I3)"
+    },
+    {
+      "id": "J12-no-crash-main",
+      "status": "PASS",
+      "detail": "0 Runtime.exceptionThrown trong phiên main"
+    },
+    {
+      "id": "J0b-seed-load-risky",
+      "status": "PASS",
+      "detail": "panel liệt kê đủ 2 item risky: TOP-CURV, TOP-INNERFAIL"
+    },
+    {
+      "id": "J13-split-curve-invalid",
+      "status": "PASS",
+      "detail": "gõ \"11\" với top v=5 -> msg + toast CurveInvalid đúng, không lộ \"speedKeyframes\", spec không đổi"
+    },
+    {
+      "id": "J14-split-inner-failed",
+      "status": "PASS",
+      "detail": "gõ \"11.4641\" với lá reverse+curve -> msg + toast InnerFailed đúng, spec không đổi"
+    },
+    {
+      "id": "J15-risky-exceptions-load-only",
+      "status": "PASS",
+      "detail": "0 exception trong phiên risky, tất cả (nếu có) đều trước lần click đầu tiên (lúc load, mẫu I6 D7) — không exception nào do thao tác tách gây ra"
+    }
+  ],
+  "log": [
+    "[2026-10-31T01:23:10.974Z] harness clicktest-split-intermediate-pipe: bắt đầu (label=l5-regress)",
+    "[2026-10-31T01:23:10.975Z] display=:94 port=4194 binaries=/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome | /opt/meta-chromium/chrome",
+    "[2026-10-31T01:23:11.232Z] Xvfb lên: DISPLAY=:94",
+    "[2026-10-31T01:23:11.441Z] dist snapshot OK: bundle index-Dc8sHsbE.js sha256[:16]=17b4378f080407bb -> /home/hatch/workspace/tmp-round28-l5-regress-j6/dist-snapshot",
+    "[2026-10-31T01:23:11.451Z] static server lên tại http://127.0.0.1:4194 (root /home/hatch/workspace/tmp-round28-l5-regress-j6/dist-snapshot)",
+    "[2026-10-31T01:23:12.611Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-31T01:23:16.392Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T01:23:18.004Z]   J0 item panel: [\"TOP-SPLIT-OUT\",\"TOP-SPLIT-EDGE\",\"TOP-SPLIT-OK\",\"TOP-SPLIT-PH\",\"TOP-SPLIT2\",\"TOP-SPLIT3\",\"TOP-DEEP\",\"TOP-DEEP-BLOCK\",\"TOP-LEAFCHK\"]",
+    "[2026-10-31T01:23:18.004Z] CASE J0-seed-load: PASS — panel liệt kê đủ 9 item: TOP-SPLIT-OUT, TOP-SPLIT-EDGE, TOP-SPLIT-OK, TOP-SPLIT-PH, TOP-SPLIT2, TOP-SPLIT3, TOP-DEEP, TOP-DEEP-BLOCK, TOP-LEAFCHK",
+    "[2026-10-31T01:23:20.353Z]   J1 msg=\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\" toasts=[\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\"] typed={\"method\":\"cdp-char\",\"value\":\"9.9\"}",
+    "[2026-10-31T01:23:27.356Z] CASE J1-split-out-of-range: PASS — gõ cdp-char \"9.9\" + click cdp-input -> msg + toast OutOfRange đúng, lá còn 1, spec không đổi sau 7000ms",
+    "[2026-10-31T01:23:29.507Z]   J2 msg=\"Điểm tách quá sát mép clip lá (margin 0.05s) — không tách.\" toasts=[\"Điểm tách quá sát mép clip lá (margin 0.05s) — không tách.\"]",
+    "[2026-10-31T01:23:36.509Z] CASE J2-split-edge-start: PASS — gõ \"10\" -> msg + toast TooCloseToEdge đúng, spec không đổi",
+    "[2026-10-31T01:23:38.284Z]   J3 msg=\"Điểm tách quá sát mép clip lá (margin 0.05s) — không tách.\" toasts=[\"Điểm tách quá sát mép clip lá (margin 0.05s) — không tách.\"]",
+    "[2026-10-31T01:23:45.288Z] CASE J3-split-edge-end: PASS — gõ \"12.4636\" (lá 3.98/4) -> msg + toast TooCloseToEdge đúng, lá còn nguyên",
+    "[2026-10-31T01:23:53.097Z] CASE J4-blocked-no-undo: PASS — Ctrl+Z sau 3 lần chặn là no-op: spec không đổi, panel vẫn đủ 9 item (không entry undo nào được sinh)",
+    "[2026-10-31T01:23:55.478Z]   J5 msg=\"Đã tách lá tại 00:02.0 (thời gian lá) — 1 bước undo.\" toasts=[]",
+    "[2026-10-31T01:24:10.294Z] CASE J5-split-typed-success-undo: PASS — gõ \"11.4641\" -> msg \"Đã tách lá tại 00:02.0\", 2 nửa 2s/2s in-out 100/102/104, trim top {0,8} không đổi, Ctrl+Z về 1 lá (đúng 1 bước undo)",
+    "[2026-10-31T01:24:13.265Z]   J6 msg=\"Đã tách lá tại 00:02.0 (thời gian lá) — 1 bước undo.\"",
+    "[2026-10-31T01:24:28.086Z] CASE J6-split-two-level-success-undo: PASS — gõ \"1.2600\" (τ₁₃(τ₁₂(2)) ≈ 1.25997) -> msg 00:02.0, 2 nửa 2s/2s, trim top {0,8} + mid {0,6} không đổi, Ctrl+Z hoàn tác",
+    "[2026-10-31T01:24:31.690Z]   J7 msg=\"Đã tách lá tại 00:02.0 (thời gian lá) — 1 bước undo.\"",
+    "[2026-10-31T01:24:46.516Z] CASE J7-split-three-level-success-undo: PASS — gõ \"1.1040\" (τ₁₃(τ₁₂(τ₁₂(2))) ≈ 1.10405) -> msg 00:02.0, 2 nửa 2s/2s, Ctrl+Z hoàn tác (panel truyền đúng chainIds 2 tầng)",
+    "[2026-10-31T01:24:49.574Z]   hiệu chuẩn ruler (chỉ để log, không dùng làm thang): click x+40 -> playhead 0.7, click x+240 -> playhead 4",
+    "[2026-10-31T01:24:52.124Z]   scrub -> 11.4641: readout text=11.5, vạch={\"center\":840,\"rulerX\":152,\"tTrue\":11.466666666666667}",
+    "[2026-10-31T01:24:54.000Z]   J8 sau \"Lấy từ playhead\": input=11.466666666666667 vạch=11.466666666666667 text=11.5 click=cdp-input",
+    "[2026-10-31T01:24:54.627Z]   J8 msg=\"Đã tách lá tại 00:02.0 (thời gian lá) — 1 bước undo.\"",
+    "[2026-10-31T01:25:09.445Z] CASE J8-split-playhead-success-undo: PASS — scrub (60 px/s) -> vạch 11.466666666666667 (text 11.5), \"Lấy từ playhead\" điền input=11.466666666666667, tách -> 2 nửa ~2s/2s (dung sai scrub ±0.1), Ctrl+Z hoàn tác",
+    "[2026-10-31T01:25:11.316Z]   J9 row DEEP-TARGET: {\"found\":true,\"rowText\":\"📦 DEEP-TARGET (00:00.0–00:02.0)Bắt đầu (s) Độ dài (s) Lưu clip con\",\"inputs\":[{\"aria\":\"Bắt đầu (s)\",\"value\":\"0\",\"type\":\"number\"},{\"aria\":\"Độ dài (s)\",\"value\":\"2\",\"type\":\"number\"}],\"buttons\":[\"Lưu clip con\"]}",
+    "[2026-10-31T01:25:12.825Z]   J9 msg=\"Đã lưu clip con (1 bước undo).\" toasts=[]",
+    "[2026-10-31T01:25:27.662Z] CASE J9-intermediate-move-success-undo: PASS — DeepIntermediateEditor hiện (không còn ghi chú H6), dời DEEP-TARGET 0->1: autosave deep [1,2], lá dl [0,2] không đổi, Ctrl+Z về [0,2]",
+    "[2026-10-31T01:25:31.035Z]   J10 msg=\"Tốc độ hợp của curve ngoài với curve của clip \\\"dl\\\" vượt khoảng [0.25, 4] (tích hai tốc độ tại điểm mẫu).\" toasts=[]",
+    "[2026-10-31T01:25:45.845Z] CASE J10-intermediate-blocked-check: PASS — dời DEEP-BLOCKED 0->1 bị chặn: msg chứa \"vượt khoảng\" (combinedRange qua check object, không tách chuỗi), 0 toast, spec không đổi, Ctrl+Z no-op",
+    "[2026-10-31T01:25:47.716Z]   J11 msg=\"Không đặt được speed curve lên clip lá trong nested clip “TOP-LEAFCHK”: Nested clip tổ tiên \\\"MID-CHK\\\" đang reverse — render cấm reverse ở tầng mang curve.\" toasts=[\"Không đặt được speed curve lên clip lá trong nested clip “TOP-LEAFCHK”: Nested clip tổ tiên \\\"MID-CHK\\\" đang reverse — render cấm reverse ở tầng mang curve.\"]",
+    "[2026-10-31T01:25:54.720Z] CASE J11-leaf-check-block: PASS — bấm \"Đặt curve 1× cho lá\" ở lá sâu -> msg ancestorReverse (MID-CHK) đúng, nút còn nguyên, autosave không curve (xem LIMITS: DOM không phân biệt được đường check object với đường reason-string cũ — đường check được khóa ở tầng store bởi test I3)",
+    "[2026-10-31T01:25:54.720Z] CASE J12-no-crash-main: PASS — 0 Runtime.exceptionThrown trong phiên main",
+    "[2026-10-31T01:25:55.930Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-31T01:25:59.168Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T01:26:00.631Z]   J0b item panel: [\"TOP-CURV\",\"TOP-INNERFAIL\"]",
+    "[2026-10-31T01:26:00.631Z] CASE J0b-seed-load-risky: PASS — panel liệt kê đủ 2 item risky: TOP-CURV, TOP-INNERFAIL",
+    "[2026-10-31T01:26:02.845Z]   J13 msg=\"Speed curve của tầng tổ tiên không hợp lệ nên không đảo được mốc ngoài (luật render R1: v trong [0.25, 4], t trong [0, duration]).\" toasts=[\"Khôi phục autosave, có lưu ý: tracks[0].clips[0] (clip \\\"TOP-CURV\\\"): tracks[0].clips[0].speedKeyframes.keyframes[0].v phải trong [0.25, 4] (nhận được: 5).; tracks[0].clips[0] (clip \\\"TOP-CURV\\\"): tracks[0].clips[0].speedKeyframes.keyframes[1].v phải trong [0.25, 4] (nhận được: 5).\",\"Preview: nested \\\"TOP-CURV\\\" có speed curve không hợp lệ (nested clip \\\"TOP-CURV\\\": speedKeyframes.keyframes[0].v phải trong 0.25..4 (nhận được: 5)) — đã tạm về 1× để preview không dừng. Export vẫn fail-fast theo luật render, cần sửa curve thật.\",\"Preview: nested \\\"TOP-INNERFAIL\\\" có speed curve không hợp lệ (clip lá \\\"INNER-LEAF\\\" (video) dưới clip lồng nhau có speedKeyframes mà mang reverse — hợp thành thời gian phi tuyến chưa được hỗ trợ (render đợt 18 §5), không phẳng lệch) — đã tạm về 1× để preview không dừng. Export vẫn fail-fast theo luật render, cần sửa curve thật.\",\"Nested clip “TOP-CURV” mang speedKeyframes nên lệnh tách/trim nó bị từ chối: ramp tốc độ hợp lệ vẫn được tách/trim — render chỉ cấm tốc độ vượt ngoài [0.25, 4]. Gỡ speed curve khỏi nested clip rồi thử lại.\",\"Speed curve của tầng tổ tiên không hợp lệ nên không đảo được mốc ngoài (luật render R1: v trong [0.25, 4], t trong [0, duration]).\"]",
+    "[2026-10-31T01:26:09.856Z] CASE J13-split-curve-invalid: PASS — gõ \"11\" với top v=5 -> msg + toast CurveInvalid đúng, không lộ \"speedKeyframes\", spec không đổi",
+    "[2026-10-31T01:26:12.413Z]   J14 msg=\"Không tách được clip lá tại điểm đã đổi (kind không hỗ trợ, clip đích là nested, hoặc lá reverse đang có curve).\" toasts=[\"Không tách được clip lá tại điểm đã đổi (kind không hỗ trợ, clip đích là nested, hoặc lá reverse đang có curve).\"]",
+    "[2026-10-31T01:26:19.416Z] CASE J14-split-inner-failed: PASS — gõ \"11.4641\" với lá reverse+curve -> msg + toast InnerFailed đúng, spec không đổi",
+    "[2026-10-31T01:26:19.416Z]   J15 exceptions: tổng=0, lúc load=0, từ lúc click trở đi=0",
+    "[2026-10-31T01:26:19.416Z] CASE J15-risky-exceptions-load-only: PASS — 0 exception trong phiên risky, tất cả (nếu có) đều trước lần click đầu tiên (lúc load, mẫu I6 D7) — không exception nào do thao tác tách gây ra",
+    "[2026-10-31T01:26:19.419Z] DONE clicktest-split-intermediate: 17/17 case pass, 0 fail, 0 seed-rejected, exit=0"
+  ]
+}

@@ -13,6 +13,8 @@ export const REPO_ROOT = path.resolve(HERE, "..", "..", "..", "..");
 
 export const RENDER_WORKER_JS = path.join(REPO_ROOT, "server", "render", "src", "render.js");
 export const RENDER_VALIDATE_JS = path.join(REPO_ROOT, "server", "render", "src", "validate.js");
+// L3 (đợt 28): module lỗi có cấu trúc + redact của bridge (load qua createRequire).
+export const BRIDGE_ERROR_DETAIL_JS = path.join(REPO_ROOT, "server", "bridge", "src", "errorDetail.js");
 export const CAPTION_PY = path.join(REPO_ROOT, "server", "caption", "caption.py");
 export const TTS_PY = path.join(REPO_ROOT, "server", "tts", "tts.py");
 export const PYTHON_BIN = process.env.VCUT_PYTHON || "python3";

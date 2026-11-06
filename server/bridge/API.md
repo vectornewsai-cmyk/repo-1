@@ -64,6 +64,29 @@ curl -X POST http://127.0.0.1:8787/api/render/a1b2c3d4e5f6/retry
 Job `done` đi kèm `qaReport` (kết quả kiểm tra codec/duration/resolution —
 R1-043); QA fail → job `error`, file lỗi không được phục vụ.
 
+### Lỗi render có cấu trúc (Phase 9 đợt 28, luồng L3)
+
+Job lỗi luôn kèm `errorCode` (enum an toàn, ví dụ
+`SPEED_CURVE_VIOLATION`, `MISSING_ASSET`, `FFMPEG_ERROR`,
+`SPEC_VALIDATION`, `OUTPUT_QA`, `WORKER_START`, `WORKER_EXIT`,
+`UNKNOWN`) và giữ nguyên `error` cũ. Chi tiết đã redact chỉ trả khi
+caller xin tường minh — mặc định KHÔNG kèm, để ExportPanel cũ không
+hồi quy:
+
+```bash
+curl "http://127.0.0.1:8787/api/render/a1b2c3d4e5f6?detail=1"
+# → {..., "error": "Render worker thoát với mã 1.",
+#     "errorCode": "SPEED_CURVE_VIOLATION",
+#     "errorDetail": {"code": "SPEED_CURVE_VIOLATION",
+#       "summary": "Vi phạm speed-curve: 1. [tracks[0].clips[0]] speedKeyframes.keyframes[0].v phải trong 0.25..4 (nhận được: 5)",
+#       "details": [...tối đa 5 dòng...], "detailsOmitted": 0,
+#       "redactedTail": "..."}}
+```
+
+Danh sách job (`GET /api/render`) không bao giờ kèm `errorDetail`.
+Chi tiết bảng redact đầy đủ: xem
+`docs/PHASE9_ROUND28_L3_BRIDGE_ERRORS_LIMITS.md`.
+
 ## Caption — phụ đề tự động
 
 Stream NDJSON: mỗi dòng là 1 JSON object `{"type":"phase"|"done"|"error",...}`.

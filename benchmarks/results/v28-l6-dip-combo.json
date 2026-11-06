@@ -1,0 +1,448 @@
+{
+  "mode": "combo",
+  "workdir": "/home/hatch/workspace/tmp-round28-l6/work-combo2",
+  "rows": [
+    {
+      "combo": "mask-rect",
+      "check": "sanity",
+      "window": "out",
+      "sanity": {
+        "mad": 0.4719,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "combo": "mask-rect",
+      "check": "sanity",
+      "window": "in",
+      "sanity": {
+        "mad": 0.5585,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "combo": "mask-rect",
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "wiring": {
+        "mad": 0.0816,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 117.6557,
+        "le8": 0.0133,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "mask-rect",
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "wiring": {
+        "mad": 0.6544,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 106.8765,
+        "le8": 0.3111,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "mask-rect",
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "wiring": {
+        "mad": 0.3494,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 21.865,
+        "le8": 0.6119,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "mask-rect",
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "wiring": {
+        "mad": 0.6602,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 23.9816,
+        "le8": 0.5982,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "mask-ellipse",
+      "check": "sanity",
+      "window": "out",
+      "sanity": {
+        "mad": 0.378,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "combo": "mask-ellipse",
+      "check": "sanity",
+      "window": "in",
+      "sanity": {
+        "mad": 0.4468,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "combo": "mask-ellipse",
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "wiring": {
+        "mad": 0.0711,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 127.6895,
+        "le8": 0.0104,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "mask-ellipse",
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "wiring": {
+        "mad": 0.5134,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 119.5629,
+        "le8": 0.2466,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "mask-ellipse",
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "wiring": {
+        "mad": 0.2713,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 17.775,
+        "le8": 0.6931,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "mask-ellipse",
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "wiring": {
+        "mad": 0.5194,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 19.4316,
+        "le8": 0.6817,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "sr",
+      "check": "sanity",
+      "window": "out",
+      "sanity": {
+        "mad": 1.2556,
+        "le8": 0.9996,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "combo": "sr",
+      "check": "sanity",
+      "window": "in",
+      "sanity": {
+        "mad": 1.9046,
+        "le8": 0.9975,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "combo": "sr",
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "wiring": {
+        "mad": 0.1649,
+        "le8": 0.9994,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 44.3601,
+        "le8": 0.0126,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "sr",
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "wiring": {
+        "mad": 1.9892,
+        "le8": 0.9993,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 2.1512,
+        "le8": 0.9908,
+        "verdict": "XẤP XỈ"
+      }
+    },
+    {
+      "combo": "sr",
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "wiring": {
+        "mad": 0.9899,
+        "le8": 0.9998,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 55.5164,
+        "le8": 0.0303,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "sr",
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "wiring": {
+        "mad": 2.2622,
+        "le8": 0.9989,
+        "verdict": "XẤP XỈ"
+      },
+      "pairGap": {
+        "mad": 60.8307,
+        "le8": 0.0123,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "track",
+      "check": "sanity",
+      "window": "out",
+      "sanity": {
+        "mad": 2.0176,
+        "le8": 1,
+        "verdict": "XẤP XỈ"
+      }
+    },
+    {
+      "combo": "track",
+      "check": "sanity",
+      "window": "in",
+      "sanity": {
+        "mad": 2.1554,
+        "le8": 0.9996,
+        "verdict": "XẤP XỈ"
+      }
+    },
+    {
+      "combo": "track",
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 61.8131,
+        "le8": 0.0078,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "track",
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "wiring": {
+        "mad": 1.8344,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 23.5447,
+        "le8": 0.8611,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "track",
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "wiring": {
+        "mad": 1.6052,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 46.0691,
+        "le8": 0.1589,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "track",
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "wiring": {
+        "mad": 2.5497,
+        "le8": 1,
+        "verdict": "XẤP XỈ"
+      },
+      "pairGap": {
+        "mad": 49.2621,
+        "le8": 0.1469,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "blur",
+      "check": "sanity",
+      "window": "out",
+      "sanity": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "combo": "blur",
+      "check": "sanity",
+      "window": "in",
+      "sanity": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "combo": "blur",
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 46.1514,
+        "le8": 0.0082,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "blur",
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "wiring": {
+        "mad": 1.6876,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 0.2527,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "combo": "blur",
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.5,
+      "alpha": 0,
+      "wiring": {
+        "mad": 0.8459,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 41.5337,
+        "le8": 0.0891,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "combo": "blur",
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.5,
+      "alpha": 0.346575,
+      "wiring": {
+        "mad": 1.6885,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 41.9312,
+        "le8": 0.061,
+        "verdict": "LỆCH"
+      }
+    }
+  ],
+  "worst": [],
+  "corrected": []
+}

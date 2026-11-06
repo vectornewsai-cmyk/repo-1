@@ -35,6 +35,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { verifyOutput } = require("./outputQA"); // R1-043: QA output sau render
+const { buildErrorDetail } = require("./errorDetail"); // L3 (đợt 28): lỗi có cấu trúc, đã redact
 
 const TERMINAL = new Set(["done", "error", "cancelled", "interrupted"]);
 
@@ -59,6 +60,8 @@ function serializeJobState(job) {
     totalDuration: job.totalDuration,
     attempts: job.attempts,
     error: job.error,
+    errorCode: job.errorCode || null, // L3 (đợt 28): mã lỗi có cấu trúc
+    errorDetail: job.errorDetail || null, // L3: đã redact, chỉ API opt-in mới trả
     outputName: job.outputName,
     outputSize: job.outputSize,
     createdAt: job.createdAt,
@@ -343,6 +346,8 @@ class RenderJobService {
       queuePosition: null,
       attempts: attempts || 0, // P7: recover giữ nguyên số lần thử đã lưu
       error: null,
+      errorCode: null, // L3 (đợt 28)
+      errorDetail: null, // L3 (đợt 28)
       outputName: null,
       outputSize: null,
       createdAt: createdAt || Date.now(), // P7: recover giữ nguyên thời điểm tạo
@@ -456,6 +461,8 @@ class RenderJobService {
     job.etaSeconds = null; // R1-065
     job._samples = [];     // R1-065
     job.error = null;
+    job.errorCode = null; // L3 (đợt 28): retry xóa cả lỗi có cấu trúc cũ
+    job.errorDetail = null; // L3 (đợt 28)
     job.startedAt = null;
     job.finishedAt = null;
     job.note = null;
@@ -519,6 +526,8 @@ class RenderJobService {
         queuePosition: null,
         attempts: saved.attempts || 0,
         error: saved.error || null,
+        errorCode: saved.errorCode || null, // L3 (đợt 28)
+        errorDetail: saved.errorDetail || null, // L3 (đợt 28)
         outputName: saved.outputName || null,
         outputSize: saved.outputSize || null,
         createdAt: saved.createdAt || Date.now(),
@@ -835,6 +844,13 @@ class RenderJobService {
     // R1-040: log chi tiết ở server, API chỉ nhận tóm tắt (không leak đường dẫn nội bộ)
     console.error(`[bridge] job ${id} lỗi:`, message);
     job.error = String(message).split(" Chi tiết:")[0].split(" (file lỗi")[0];
+    // L3 (đợt 28): job.error GIỮ NGUYÊN chuỗi cũ (ExportPanel không hồi
+    // quy); thêm errorCode/errorDetail đã redact từ stderr tail trong
+    // message kiểu cũ (hoặc từ chính message khi không có tail). API chỉ
+    // trả errorDetail khi caller xin ?detail=1 (xem publicJob.js).
+    const detail = buildErrorDetail({ message: String(message) });
+    job.errorCode = detail.code;
+    job.errorDetail = detail;
     job.finishedAt = Date.now();
     saveJobState(job); // P7
     this._pump();

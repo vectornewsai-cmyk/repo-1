@@ -26,7 +26,8 @@
  *                                files field "media" (nhiều file, filename = clip.src)
  *                                → 201 { jobId, status, queuePosition } | 429 (hàng đợi đầy) | 400
  *  GET    /api/render            → { jobs: [...] } (mới nhất trước, ?limit=)
- *  GET    /api/render/:id        → { id, status, progress, etaSeconds, queuePosition, attempts, error?, outputName?, qaReport? }
+ *  GET    /api/render/:id        → { id, status, progress, etaSeconds, queuePosition, attempts, error?, errorCode?, outputName?, qaReport? }
+ *                                   + ?detail=1 → thêm errorDetail đã redact { code, summary, details, redactedTail } (L3 đợt 28)
  *  GET    /api/render/:id/download → file MP4 (khi status=done)
  *  DELETE /api/render/:id        → hủy job (kill cả process group) + xóa thư mục tạm
  *  POST   /api/render/:id/retry  → chạy lại job bị lỗi
@@ -49,6 +50,8 @@ const cors = require("cors");
 const multer = require("multer");
 
 const { RenderJobService, newJobId, specDuration } = require("./jobQueue");
+const { publicJob } = require("./publicJob"); // L3 (đợt 28): serialize job, errorDetail opt-in
+const { buildTaskError } = require("./errorDetail"); // L3 (đợt 29): lỗi có cấu trúc cho các route tác vụ
 // R1-072: auto-caption (faster-whisper, chạy local qua caption.py)
 // R1-080: dịch phụ đề sang tiếng Anh (translate.py, faster-whisper translate task)
 const {
@@ -303,6 +306,37 @@ function validateJobIdParam(req, res, next) {
   next();
 }
 
+/**
+ * Đợt 29 L3 — payload lỗi canonical cho các route tác vụ đồng bộ/stream
+ * (caption, translate, silence, reframe, beats, scene, bgremove, tts).
+ * Trước đây các route này trả `error` = message chứa tail stderr thô
+ * (lộ đường dẫn tuyệt đối). Nay `error` đã redact + ngắn, kèm
+ * `errorCode` enum và `errorDetail` canonical từ buildTaskError.
+ * KHÁC render job: route đồng bộ trả luôn detail (one-shot, không poll),
+ * vì toàn bộ đã redact. Error của worker module đã redact tail ở nguồn
+ * (caption/reframe/...js) nên đây là lớp phòng thủ thứ hai: kể cả module
+ * nào còn sót tail thô, payload ra API vẫn sạch.
+ * NGOẠI LỆ (đợt 30 M3): /api/proxy dùng taskErrorPayload nhưng CHỈ kèm
+ * errorDetail khi caller xin tường minh ?detail=1 (giống luật render
+ * job) — proxy là route upload, giữ mặc định gọn như render job thay
+ * vì trả luôn detail như các route đồng bộ khác.
+ * Log server vẫn giữ e.message thô (kênh local, không phải API).
+ */
+function taskErrorPayload(e, fallback) {
+  try {
+    const raw = e && e.message ? String(e.message) : "";
+    const built = buildTaskError({
+      message: raw || fallback,
+      stderr: e && e.stderrTail ? String(e.stderrTail) : "",
+      exitCode: e && Number.isInteger(e.code) ? e.code : undefined,
+      signal: e && e.signal ? String(e.signal) : null,
+    });
+    return { error: built.error, errorCode: built.errorCode, errorDetail: built.errorDetail };
+  } catch {
+    return { error: fallback, errorCode: "UNKNOWN", errorDetail: null };
+  }
+}
+
 /** R1-040: lấy version ffmpeg (chuỗi ngắn), null nếu không chạy được. */
 async function ffmpegVersion() {
   try {
@@ -392,27 +426,9 @@ function parsePreset(raw) {
   return out;
 }
 
-/** Serialize job record cho API (loại bỏ proc, _stderrTail, _killTimer). */
-function publicJob(j) {
-  if (!j) return null;
-  return {
-    id: j.id,
-    status: j.status,
-    progress: Math.round(j.progress * 100) / 100,
-    etaSeconds: j.etaSeconds == null ? null : Math.round(j.etaSeconds * 10) / 10, // R1-065
-    queuePosition: j.queuePosition,
-    attempts: j.attempts,
-    error: j.error,
-    outputName: j.outputName,
-    outputSize: j.outputSize || null,
-    createdAt: j.createdAt,
-    startedAt: j.startedAt,
-    finishedAt: j.finishedAt,
-    recovered: !!j.recovered,
-    note: j.note,
-    qaReport: j.qaReport || null, // R1-043: chi tiết kiểm tra output
-  };
-}
+// Serialize job record cho API: xem src/publicJob.js (L3 đợt 28 tách ra để
+// test được hành vi opt-in của errorDetail mà không khởi động server).
+// publicJob(j) mặc định KHÔNG kèm errorDetail; publicJob(j, true) kèm.
 
 // ---------------------------------------------------------------------------
 // RenderJobService — spawnJob thật
@@ -496,6 +512,21 @@ app.use(cors({
     if (!origin || LOCAL_ORIGIN_RE.test(origin)) return callback(null, true);
     return callback(null, false);
   },
+  // ROUND43-Y4: expose header Range cho web UI (origin khác port nên là
+  // cross-origin): nếu không, trình duyệt lọc Accept-Ranges/Content-Range
+  // khỏi JS (không nằm trong CORS-safelisted headers) và đường GOP Range
+  // của preview luôn fallback ở bước probe ("probe-no-content-range")
+  // dù bridge trả 206 đúng — phát hiện bằng headed qua bridge thật đợt
+  // 43 Y4 (harness tối giản X4 cùng origin nên không lộ lỗi này).
+  // Chỉ expose metadata range của file caller vốn đã fetch được, origin
+  // vẫn giới hạn loopback như trên — không mở thêm dữ liệu nào.
+  // ROUND44-Z3: expose thêm X-TTS-* — bridge vốn đã gửi các header này
+  // ở /api/tts nhưng trình duyệt lọc chúng khỏi fetch cross-origin
+  // (vite :5173 → bridge :8787) nên client đọc được null và toast TTS
+  // mất hậu tố giây (nợ đợt 43 Y3 §6). Chỉ expose metadata của file
+  // caller vừa yêu cầu tổng hợp (giây/ký tự/giọng), origin vẫn chỉ
+  // loopback như trên — không mở thêm dữ liệu nào.
+  exposedHeaders: ["Accept-Ranges", "Content-Range", "X-TTS-Duration", "X-TTS-Chars", "X-TTS-Voice", "X-TTS-Chunks", "X-TTS-Cloned"],
 }));
 
 // R1-040: security headers cơ bản (không phá API hiện tại)
@@ -852,7 +883,7 @@ app.post(
         words: result.words || [],
       });
     } catch (e) {
-      send({ type: "error", error: e.message || "Caption thất bại." });
+      send({ type: "error", ...taskErrorPayload(e, "Caption thất bại.") });
     } finally {
       cleanupJobDir(dir);
       try { res.end(); } catch { /* bỏ qua */ }
@@ -923,7 +954,7 @@ app.post(
     } catch (e) {
       cleanupJobDir(dir);
       // Chưa gửi header nào → trả JSON lỗi bình thường.
-      return res.status(500).json({ error: e.message || "Reframe thất bại." });
+      return res.status(500).json(taskErrorPayload(e, "Reframe thất bại."));
     }
   }
 );
@@ -985,7 +1016,7 @@ app.post(
       return res.json(data);
     } catch (e) {
       cleanupJobDir(dir);
-      return res.status(500).json({ error: e.message || "Phân tích reframe thất bại." });
+      return res.status(500).json(taskErrorPayload(e, "Phân tích reframe thất bại."));
     }
   }
 );
@@ -1059,7 +1090,7 @@ app.post(
       return res.json(data);
     } catch (e) {
       cleanupJobDir(dir);
-      return res.status(500).json({ error: e.message || "Phân tích beat thất bại." });
+      return res.status(500).json(taskErrorPayload(e, "Phân tích beat thất bại."));
     }
   }
 );
@@ -1139,7 +1170,7 @@ app.post(
     } catch (e) {
       cleanupJobDir(dir);
       // Chưa gửi header nào → trả JSON lỗi bình thường.
-      return res.status(500).json({ error: e.message || "Xóa nền thất bại." });
+      return res.status(500).json(taskErrorPayload(e, "Xóa nền thất bại."));
     }
   }
 );
@@ -1210,7 +1241,7 @@ app.post(
         keep: result.keep,
       });
     } catch (e) {
-      res.status(500).json({ error: e.message || "Phân tích khoảng lặng thất bại." });
+      res.status(500).json(taskErrorPayload(e, "Phân tích khoảng lặng thất bại."));
     } finally {
       cleanupJobDir(dir);
     }
@@ -1300,7 +1331,7 @@ app.post(
         count: result.cuts.length,
       });
     } catch (e) {
-      send({ type: "error", error: e.message || "Tách cảnh thất bại." });
+      send({ type: "error", ...taskErrorPayload(e, "Tách cảnh thất bại.") });
     } finally {
       cleanupJobDir(dir);
       try { res.end(); } catch { /* bỏ qua */ }
@@ -1386,7 +1417,7 @@ app.post(
         segments: result.segments,
       });
     } catch (e) {
-      send({ type: "error", error: e.message || "Dịch phụ đề thất bại." });
+      send({ type: "error", ...taskErrorPayload(e, "Dịch phụ đề thất bại.") });
     } finally {
       cleanupJobDir(dir);
       try { res.end(); } catch { /* bỏ qua */ }
@@ -1405,10 +1436,14 @@ app.get("/api/render", (req, res) => {
 });
 
 // --- GET /api/render/:id -----------------------------------------------------
+// L3 (đợt 28): errorDetail (đã redact) CHỈ trả khi caller xin tường minh
+// ?detail=1 hoặc ?error_detail=1. Mặc định giữ đúng payload cũ —
+// ExportPanel không đổi gì vẫn nhận error cũ, không hồi quy.
 app.get("/api/render/:id", validateJobIdParam, (req, res) => {
   const job = service.get(req.params.id);
   if (!job) return res.status(404).json({ error: "Không tìm thấy job." });
-  res.json(publicJob(job));
+  const includeDetail = req.query.detail === "1" || req.query.error_detail === "1";
+  res.json(publicJob(job, includeDetail));
 });
 
 // --- GET /api/render/:id/download --------------------------------------------
@@ -1487,7 +1522,7 @@ app.post("/api/tts", rateLimit(RATE_MAX_RENDER), async (req, res) => {
     result = await runTts({ text, voice, outDir: dir });
   } catch (e) {
     cleanupJobDir(dir);
-    return res.status(500).json({ error: e.message || "TTS thất bại." });
+    return res.status(500).json(taskErrorPayload(e, "TTS thất bại."));
   }
   const wavPath = result.outPath;
   if (!fs.existsSync(wavPath)) {
@@ -1540,7 +1575,7 @@ app.post(
       result = await runTts({ text, voice: undefined, refAudioPath: refPath, outDir: dir });
     } catch (e) {
       cleanupJobDir(dir);
-      return res.status(500).json({ error: e.message || "TTS clone thất bại." });
+      return res.status(500).json(taskErrorPayload(e, "TTS clone thất bại."));
     }
     const wavPath = result.outPath;
     if (!fs.existsSync(wavPath)) {
@@ -1612,11 +1647,18 @@ app.post("/api/proxy",
       if (r.skipped) {
         return res.json({ skipped: true, reason: r.reason, sourceHeight: r.sourceHeight, file: safe });
       }
+      // Đợt 38 U2: trả kích thước của chính file proxy để client truyền
+      // qua cổng S4 khi phát ngược bằng proxyUrl (trước đây client
+      // không có size proxy nên cổng S4 không áp dụng). Stat lỗi thì
+      // bỏ trường — client coi như chưa biết size, đường cũ vẫn chạy.
+      let proxySizeBytes;
+      try { proxySizeBytes = fs.statSync(r.proxy).size; } catch {}
       return res.json({
         skipped: false,
         file: safe,
         proxy: path.basename(r.proxy),
         proxyUrl: `/api/proxy/file/${encodeURIComponent(path.basename(r.proxy))}`,
+        ...(typeof proxySizeBytes === "number" ? { proxySizeBytes } : {}),
         sourceWidth: r.sourceWidth,
         sourceHeight: r.sourceHeight,
         proxyWidth: r.proxyWidth,
@@ -1624,8 +1666,19 @@ app.post("/api/proxy",
         fps: r.fps,
       });
     } catch (e) {
+      // Đợt 30 M3: không còn trả e.message thô (từng lộ đường dẫn tuyệt
+      // đối từ probeMedia, vd "Không probe được <abs>/file.mp4"). Bọc
+      // bằng taskErrorPayload canonical: error đã redact + errorCode
+      // luôn kèm; errorDetail chỉ khi ?detail=1 (luật opt-in như render
+      // job, khác các route đồng bộ khác trả luôn detail).
       console.error("[bridge] /api/proxy lỗi:", e.message);
-      return res.status(500).json({ error: e.message || "Tạo proxy thất bại." });
+      const payload = taskErrorPayload(e, "Tạo proxy thất bại.");
+      const includeDetail = req.query.detail === "1" || req.query.error_detail === "1";
+      return res.status(500).json(
+        includeDetail
+          ? payload
+          : { error: payload.error, errorCode: payload.errorCode }
+      );
     }
   });
 app.get("/api/proxy/file/:name", (req, res) => {

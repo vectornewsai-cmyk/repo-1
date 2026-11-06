@@ -1,0 +1,100 @@
+{
+  "runAt": "2026-10-31T01:22:14.710Z",
+  "label": "run1",
+  "emptyMode": "guard",
+  "display": ":95",
+  "port": 4195,
+  "bundle": "index-mIzUrd00.js",
+  "bundleSha256_16": "ae6342b5876a41c0",
+  "distSrc": "/home/hatch/workspace/repo-1/apps/web/dist",
+  "cases": [
+    {
+      "id": "L0-seed-load",
+      "status": "PASS",
+      "detail": "panel liệt kê đủ 11 item: TOP-SPLIT-OUT, TOP-SPLIT-EDGE, TOP-SPLIT-OK, TOP-SPLIT-PH, TOP-SPLIT2, TOP-SPLIT3, TOP-NEG2, TOP-NEG3, TOP-DEEP, TOP-DEEP-BLOCK, TOP-LEAFCHK"
+    },
+    {
+      "id": "L1-neg-two-level",
+      "status": "PASS",
+      "detail": "mốc âm \"-1\" vào bằng cdp-char-direct (thử: cdp-char-direct->\"-1\") + click cdp-input -> msg + toast OutOfRange đúng, lá còn 1, spec không đổi, Ctrl+Z no-op"
+    },
+    {
+      "id": "L2-neg-three-level",
+      "status": "PASS",
+      "detail": "mốc âm \"-1\" vào bằng cdp-char-direct (thử: cdp-char-direct->\"-1\") + click cdp-input -> msg + toast OutOfRange đúng, lá còn 1, spec không đổi, Ctrl+Z no-op"
+    },
+    {
+      "id": "L3-before-window-two-level",
+      "status": "PASS",
+      "detail": "gõ cdp-char \"9.9\" (dương, trước cửa sổ bắt đầu ở 10) + click cdp-input -> msg + toast OutOfRange đúng, lá còn 1, spec không đổi, Ctrl+Z no-op"
+    },
+    {
+      "id": "L4-before-window-three-level",
+      "status": "PASS",
+      "detail": "gõ cdp-char \"9.9\" (dương, trước cửa sổ bắt đầu ở 10) + click cdp-input -> msg + toast OutOfRange đúng, lá còn 1, spec không đổi, Ctrl+Z no-op"
+    },
+    {
+      "id": "L5-nan-unreachable",
+      "status": "PASS",
+      "detail": "8 đường nhập đều không tạo được NaN: nan-type(type-chars \"NaN\"): value=\"\" msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\" | nan-paste(paste-insertText \"NaN\"): value=\"\" msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\" | infinity-type(type-chars \"Infinity\"): value=\"\" msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\" | overflow-paste(paste-insertText \"1e999\"): value=\"\" msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\" | zero-div-type(type-chars \"0/0\"): value=\"00\" msg=\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\" | e-type(type-chars \"e\"): value=\"\" msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\" | drag-noop(drag-across-input \"drag \\\"\\\" -> \\\"\\\"\"): value=\"\" msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\" | spinner-click(spinner-up-zone-click \"click (1107,521) cạnh phải 1/4 trên của ô\"): value=\"\" msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\"; spec không đổi, Ctrl+Z no-op"
+    },
+    {
+      "id": "L8-no-crash-vi",
+      "status": "PASS",
+      "detail": "0 Runtime.exceptionThrown trong phiên vi"
+    },
+    {
+      "id": "L6-en-empty-guard",
+      "status": "PASS",
+      "detail": "locale en: gõ cdp-char \"11.4641\" rồi xoá trắng (cdp-backspace) + click cdp-input -> msg đúng từng chữ \"No outer time entered (the field is empty) — not split.\", 0 toast chứa câu guard, không key thô, không rò vi, spec không đổi, Ctrl+Z no-op"
+    },
+    {
+      "id": "L7-en-neg-two-level",
+      "status": "PASS",
+      "detail": "locale en: mốc âm \"-1\" vào bằng cdp-char-direct (thử: cdp-char-direct->\"-1\") + click cdp-input -> msg + toast en OutOfRange đúng, không key thô, không rò vi, spec không đổi, Ctrl+Z no-op"
+    },
+    {
+      "id": "L9-no-crash-en",
+      "status": "PASS",
+      "detail": "0 Runtime.exceptionThrown trong phiên en"
+    }
+  ],
+  "log": [
+    "[2026-10-31T01:19:33.898Z] harness clicktest-l5-round28-pipe: bắt đầu (label=run1 emptyMode=guard out=v28-l5-clicktest.json)",
+    "[2026-10-31T01:19:33.911Z] display=:95 port=4195 binaries=/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome | /opt/meta-chromium/chrome",
+    "[2026-10-31T01:19:34.171Z] Xvfb lên: DISPLAY=:95",
+    "[2026-10-31T01:19:34.414Z] dist snapshot OK: bundle index-mIzUrd00.js sha256[:16]=ae6342b5876a41c0 -> /home/hatch/workspace/tmp-round28-l5/dist-snapshot",
+    "[2026-10-31T01:19:34.424Z] static server lên tại http://127.0.0.1:4195 (root /home/hatch/workspace/tmp-round28-l5/dist-snapshot)",
+    "[2026-10-31T01:19:36.927Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-31T01:19:40.713Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T01:19:42.056Z]   L0 item panel: [\"TOP-SPLIT-OUT\",\"TOP-SPLIT-EDGE\",\"TOP-SPLIT-OK\",\"TOP-SPLIT-PH\",\"TOP-SPLIT2\",\"TOP-SPLIT3\",\"TOP-NEG2\",\"TOP-NEG3\",\"TOP-DEEP\",\"TOP-DEEP-BLOCK\",\"TOP-LEAFCHK\"]",
+    "[2026-10-31T01:19:42.056Z] CASE L0-seed-load: PASS — panel liệt kê đủ 11 item: TOP-SPLIT-OUT, TOP-SPLIT-EDGE, TOP-SPLIT-OK, TOP-SPLIT-PH, TOP-SPLIT2, TOP-SPLIT3, TOP-NEG2, TOP-NEG3, TOP-DEEP, TOP-DEEP-BLOCK, TOP-LEAFCHK",
+    "[2026-10-31T01:19:45.753Z]   L1 neg={\"method\":\"cdp-char-direct\",\"attempts\":[{\"method\":\"cdp-char-direct\",\"typed\":\"-1\",\"value\":\"-1\"}],\"value\":\"-1\"} msg=\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\" toasts=[\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\"]",
+    "[2026-10-31T01:20:00.564Z] CASE L1-neg-two-level: PASS — mốc âm \"-1\" vào bằng cdp-char-direct (thử: cdp-char-direct->\"-1\") + click cdp-input -> msg + toast OutOfRange đúng, lá còn 1, spec không đổi, Ctrl+Z no-op",
+    "[2026-10-31T01:20:04.845Z]   L2 neg={\"method\":\"cdp-char-direct\",\"attempts\":[{\"method\":\"cdp-char-direct\",\"typed\":\"-1\",\"value\":\"-1\"}],\"value\":\"-1\"} msg=\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\" toasts=[\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\"]",
+    "[2026-10-31T01:20:19.687Z] CASE L2-neg-three-level: PASS — mốc âm \"-1\" vào bằng cdp-char-direct (thử: cdp-char-direct->\"-1\") + click cdp-input -> msg + toast OutOfRange đúng, lá còn 1, spec không đổi, Ctrl+Z no-op",
+    "[2026-10-31T01:20:22.556Z]   L3 msg=\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\" toasts=[\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\"] typed={\"method\":\"cdp-char\",\"value\":\"9.9\"}",
+    "[2026-10-31T01:20:37.372Z] CASE L3-before-window-two-level: PASS — gõ cdp-char \"9.9\" (dương, trước cửa sổ bắt đầu ở 10) + click cdp-input -> msg + toast OutOfRange đúng, lá còn 1, spec không đổi, Ctrl+Z no-op",
+    "[2026-10-31T01:20:40.792Z]   L4 msg=\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\" toasts=[\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\"] typed={\"method\":\"cdp-char\",\"value\":\"9.9\"}",
+    "[2026-10-31T01:20:55.602Z] CASE L4-before-window-three-level: PASS — gõ cdp-char \"9.9\" (dương, trước cửa sổ bắt đầu ở 10) + click cdp-input -> msg + toast OutOfRange đúng, lá còn 1, spec không đổi, Ctrl+Z no-op",
+    "[2026-10-31T01:20:58.732Z]   L5 nan-type: {\"id\":\"nan-type\",\"input\":\"type-chars\",\"text\":\"NaN\",\"valueAfter\":\"\",\"click\":\"cdp-input\",\"msg\":\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\"}",
+    "[2026-10-31T01:21:01.024Z]   L5 nan-paste: {\"id\":\"nan-paste\",\"input\":\"paste-insertText\",\"text\":\"NaN\",\"valueAfter\":\"\",\"click\":\"cdp-input\",\"msg\":\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\"}",
+    "[2026-10-31T01:21:03.691Z]   L5 infinity-type: {\"id\":\"infinity-type\",\"input\":\"type-chars\",\"text\":\"Infinity\",\"valueAfter\":\"\",\"click\":\"cdp-input\",\"msg\":\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\"}",
+    "[2026-10-31T01:21:06.020Z]   L5 overflow-paste: {\"id\":\"overflow-paste\",\"input\":\"paste-insertText\",\"text\":\"1e999\",\"valueAfter\":\"\",\"click\":\"cdp-input\",\"msg\":\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\"}",
+    "[2026-10-31T01:21:08.442Z]   L5 zero-div-type: {\"id\":\"zero-div-type\",\"input\":\"type-chars\",\"text\":\"0/0\",\"valueAfter\":\"00\",\"click\":\"cdp-input\",\"msg\":\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\"}",
+    "[2026-10-31T01:21:10.782Z]   L5 e-type: {\"id\":\"e-type\",\"input\":\"type-chars\",\"text\":\"e\",\"valueAfter\":\"\",\"click\":\"cdp-input\",\"msg\":\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\"}",
+    "[2026-10-31T01:21:14.048Z]   L5 drag-noop: {\"id\":\"drag-noop\",\"input\":\"drag-across-input\",\"text\":\"drag \\\"\\\" -> \\\"\\\"\",\"valueAfter\":\"\",\"click\":\"cdp-input\",\"msg\":\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\"}",
+    "[2026-10-31T01:21:16.360Z]   L5 spinner-click: {\"id\":\"spinner-click\",\"input\":\"spinner-up-zone-click\",\"text\":\"click (1107,521) cạnh phải 1/4 trên của ô\",\"valueAfter\":\"\",\"click\":\"cdp-input\",\"msg\":\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\"}",
+    "[2026-10-31T01:21:31.205Z] CASE L5-nan-unreachable: PASS — 8 đường nhập đều không tạo được NaN: nan-type(type-chars \"NaN\"): value=\"\" msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\" | nan-paste(paste-insertText \"NaN\"): value=\"\" msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\" | infinity-type(type-chars \"Infinity\"): value=\"\" msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\" | overflow-paste(paste-insertText \"1e999\"): value=\"\" msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\" | zero-div-type(type-chars \"0/0\"): value=\"00\" msg=\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\" | e-type(type-chars \"e\"): value=\"\" msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\" | drag-noop(drag-across-input \"drag \\\"\\\" -> \\\"\\\"\"): value=\"\" msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\" | spinner-click(spinner-up-zone-click \"click (1107,521) cạnh phải 1/4 trên của ô\"): value=\"\" msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\"; spec không đổi, Ctrl+Z no-op",
+    "[2026-10-31T01:21:31.205Z] CASE L8-no-crash-vi: PASS — 0 Runtime.exceptionThrown trong phiên vi",
+    "[2026-10-31T01:21:33.148Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-31T01:21:36.571Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T01:21:38.045Z]   L6 item panel (en): [\"TOP-SPLIT-OUT\",\"TOP-SPLIT-EDGE\",\"TOP-SPLIT-OK\",\"TOP-SPLIT-PH\",\"TOP-SPLIT2\",\"TOP-SPLIT3\",\"TOP-NEG2\",\"TOP-NEG3\",\"TOP-DEEP\",\"TOP-DEEP-BLOCK\",\"TOP-LEAFCHK\"]",
+    "[2026-10-31T01:21:41.310Z]   L6 typed={\"method\":\"cdp-char\",\"value\":\"11.4641\"} cleared={\"method\":\"cdp-backspace\",\"value\":\"\"} msg=\"No outer time entered (the field is empty) — not split.\" toasts=[]",
+    "[2026-10-31T01:21:56.139Z] CASE L6-en-empty-guard: PASS — locale en: gõ cdp-char \"11.4641\" rồi xoá trắng (cdp-backspace) + click cdp-input -> msg đúng từng chữ \"No outer time entered (the field is empty) — not split.\", 0 toast chứa câu guard, không key thô, không rò vi, spec không đổi, Ctrl+Z no-op",
+    "[2026-10-31T01:21:59.826Z]   L7 neg={\"method\":\"cdp-char-direct\",\"attempts\":[{\"method\":\"cdp-char-direct\",\"typed\":\"-1\",\"value\":\"-1\"}],\"value\":\"-1\"} msg=\"The outer time is outside the leaf clip's visible window — not split.\" toasts=[\"The outer time is outside the leaf clip's visible window — not split.\"]",
+    "[2026-10-31T01:22:14.672Z] CASE L7-en-neg-two-level: PASS — locale en: mốc âm \"-1\" vào bằng cdp-char-direct (thử: cdp-char-direct->\"-1\") + click cdp-input -> msg + toast en OutOfRange đúng, không key thô, không rò vi, spec không đổi, Ctrl+Z no-op",
+    "[2026-10-31T01:22:14.675Z] CASE L9-no-crash-en: PASS — 0 Runtime.exceptionThrown trong phiên en",
+    "[2026-10-31T01:22:14.705Z] DONE clicktest-l5-round28: 10/10 case pass, 0 fail, exit=0"
+  ]
+}
