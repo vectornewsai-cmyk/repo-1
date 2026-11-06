@@ -1,0 +1,52 @@
+{
+  "runAt": "2026-10-29T19:32:53.907Z",
+  "display": ":96",
+  "port": 4196,
+  "cases": [
+    {
+      "id": "V0-welcome-close",
+      "status": "PASS",
+      "detail": "click cdp-input nút ✕ thật -> dialog đóng, vcut-welcomed=1 (không bypass localStorage)"
+    },
+    {
+      "id": "V1-vertical-project-load",
+      "status": "PASS",
+      "detail": "autosave dọc khôi phục đúng: 1 clip video id c_r23vertical, tên project \"Dự án dọc R23\", duration 00:08.0"
+    },
+    {
+      "id": "V2-preview-alive",
+      "status": "PASS",
+      "detail": "preview canvas hiện, 0 exception tới thời điểm này (clip thiếu media vẽ chữ cảnh báo là hành vi đúng, không phải crash)"
+    },
+    {
+      "id": "V2b-relink-dismiss",
+      "status": "PASS",
+      "detail": "click cdp-input nút ✕ dialog Media thiếu -> modal đóng, timeline lộ ra để scrub"
+    },
+    {
+      "id": "V3-ruler-scrub-vertical",
+      "status": "PASS",
+      "detail": "kéo ruler chuột thật 2 chiều trên project dọc 8s: 0s → 8s (kéo phải, có thể clamp cuối) → 2.8s (kéo trái giảm)"
+    },
+    {
+      "id": "V4-no-crash",
+      "status": "PASS",
+      "detail": "0 Runtime.exceptionThrown trong phiên click-test dọc"
+    }
+  ],
+  "log": [
+    "[2026-10-29T19:32:27.136Z] harness clicktest-vertical-footage-pipe: bắt đầu",
+    "[2026-10-29T19:32:27.146Z] display=:96 port=4196 binaries=/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome | /opt/meta-chromium/chrome",
+    "[2026-10-29T19:32:27.153Z] Xvfb: lock /tmp/.X96-lock mồ côi (không thấy tiến trình Xvfb :96), xoá",
+    "[2026-10-29T19:32:33.204Z] Xvfb lên: DISPLAY=:96",
+    "[2026-10-29T19:32:34.447Z] vite preview lên tại http://127.0.0.1:4196",
+    "[2026-10-29T19:32:36.953Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome): 3 target ban đầu",
+    "[2026-10-29T19:32:48.973Z] CASE V0-welcome-close: PASS — click cdp-input nút ✕ thật -> dialog đóng, vcut-welcomed=1 (không bypass localStorage)",
+    "[2026-10-29T19:32:50.288Z] CASE V1-vertical-project-load: PASS — autosave dọc khôi phục đúng: 1 clip video id c_r23vertical, tên project \"Dự án dọc R23\", duration 00:08.0",
+    "[2026-10-29T19:32:50.291Z] CASE V2-preview-alive: PASS — preview canvas hiện, 0 exception tới thời điểm này (clip thiếu media vẽ chữ cảnh báo là hành vi đúng, không phải crash)",
+    "[2026-10-29T19:32:50.850Z] CASE V2b-relink-dismiss: PASS — click cdp-input nút ✕ dialog Media thiếu -> modal đóng, timeline lộ ra để scrub",
+    "[2026-10-29T19:32:53.904Z] CASE V3-ruler-scrub-vertical: PASS — kéo ruler chuột thật 2 chiều trên project dọc 8s: 0s → 8s (kéo phải, có thể clamp cuối) → 2.8s (kéo trái giảm)",
+    "[2026-10-29T19:32:53.904Z] CASE V4-no-crash: PASS — 0 Runtime.exceptionThrown trong phiên click-test dọc",
+    "[2026-10-29T19:32:53.904Z] DONE clicktest-vertical-footage: 6/6 case pass, exit=0"
+  ]
+}

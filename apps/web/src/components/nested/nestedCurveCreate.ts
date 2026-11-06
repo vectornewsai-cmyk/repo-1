@@ -44,9 +44,11 @@
  *    tra bằng đúng hàm guard store dùng (`checkTwoLevelOuterCurve`
  *    với preset — không tự bịa điều kiện riêng). Cặp hợp lệ (ví dụ
  *    preset hằng 1× × lá hằng 1× → tốc độ hợp 1) được cho qua vì
- *    render đã hợp thật. Lý do cụ thể lấy từ
- *    `nestedCurveCreateTwoLevelReason` để panel toast đúng lý do
- *    (key `nested.curveTwoLevelInvalid` của T2) thay vì câu chung cũ.
+ *    render đã hợp thật. Lý do cụ thể lấy từ check nguyên của
+ *    `nestedCurveCreateTwoLevelCheck` để panel toast đúng lý do
+ *    (key `nested.curveTwoLevelInvalid` của T2) thay vì câu chung cũ;
+ *    đợt 24 H2: đường này không còn qua chuỗi reason nữa nên mapper
+ *    khớp chuỗi đã xóa được.
  *  - previewFail: không tính được trim.out kỳ vọng (duration/trim
  *    không hợp lệ) → không tạo, tránh ghi trạng thái không kiểm được.
  * KHÔNG chặn oan (hai nghĩa, đều khóa bằng test):
@@ -68,7 +70,12 @@ import type { NestedClip, SpeedCurve } from "@repo-1/video-spec";
 import {
   checkTwoLevelOuterCurve,
   nestedCurveExpectedOut,
+  type TwoLevelCheck,
 } from "./nestUtils";
+import {
+  translateTwoLevelCheck,
+  type NestedTranslate,
+} from "./nestedRejection";
 
 /** Preset khởi đầu cho nested chưa có curve: tốc độ hằng 1×. */
 export function createNestedCurvePreset(): SpeedCurve {
@@ -106,19 +113,47 @@ export function nestedCurveCreateBlock(
   if (expectedOut === null) return "previewFail";
   // Luật T2: chỉ chặn khi cặp hai tầng với preset vi phạm R1 (hàm
   // này trả ok khi cây con không có curve nào — tức một tầng).
-  if (nestedCurveCreateTwoLevelReason(clip) !== null) return "twoLevel";
+  if (nestedCurveCreateTwoLevelCheck(clip) !== null) return "twoLevel";
   return null;
 }
 
 /**
- * Lý do hai tầng bị từ chối theo luật T2 (chuỗi tiếng Việt của hàm
- * check, cùng tiền lệ reason action giữ-trim); null khi cặp hợp lệ
- * hoặc cây con không có curve nào. Panel dùng để toast key
- * `nested.curveTwoLevelInvalid` đúng lý do cụ thể.
+ * Đợt 24 H2 — kết quả cổng hai tầng NGUYÊN cho cặp clip × preset hằng
+ * 1× (cùng check mà guard store dùng). Trả null khi cặp hợp lệ hoặc
+ * cây con không có curve nào. Đây là đường chính: block kiểm tra và
+ * message toast đều đi qua hàm này, rồi dịch bằng translateTwoLevelCheck
+ * theo reasonCode — không còn đường nào cầm chuỗi reason thô.
  */
-export function nestedCurveCreateTwoLevelReason(
+export function nestedCurveCreateTwoLevelCheck(
+  clip: NestedClip,
+): TwoLevelCheck | null {
+  const check = checkTwoLevelOuterCurve(clip, createNestedCurvePreset());
+  return check.ok ? null : check;
+}
+
+/**
+ * Đợt 23 G2 — câu toast ĐÃ DỊCH cho nhánh twoLevel của đường tạo curve.
+ * Trả null khi clip không bị chặn ở nhánh này (panel chỉ toast khi
+ * block === "twoLevel"; helper tự kiểm tra lại block nên không toast
+ * sai nhánh). Đợt 24 H2: helper dịch từ CHECK NGUYÊN qua
+ * translateTwoLevelCheck (theo reasonCode), không còn qua chuỗi reason
+ * hay mapper khớp chuỗi. Hàm này là ĐIỂM TOAST DUY NHẤT cho nhánh
+ * twoLevel của đường tạo. Fallback câu chung (key nested.curveTwoLevel)
+ * chỉ phòng trường hợp block là twoLevel nhưng check rỗng bất thường.
+ */
+export function nestedCurveCreateTwoLevelMessage(
+  translate: NestedTranslate,
   clip: NestedClip,
 ): string | null {
-  const check = checkTwoLevelOuterCurve(clip, createNestedCurvePreset());
-  return check.ok ? null : check.reason;
+  if (nestedCurveCreateBlock(clip) !== "twoLevel") return null;
+  const check = nestedCurveCreateTwoLevelCheck(clip);
+  if (check === null) {
+    return translate("nested.curveTwoLevel", {
+      name: clip.name ?? clip.id,
+    });
+  }
+  return translate("nested.curveTwoLevelInvalid", {
+    name: clip.name ?? clip.id,
+    reason: translateTwoLevelCheck(translate, check),
+  });
 }

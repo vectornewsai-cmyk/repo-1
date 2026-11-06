@@ -1,0 +1,776 @@
+{
+ "generatedBy": "measure-v23-hidden-bfcache-pipe.mjs",
+ "bundle": "/assets/index-DstN4GgT.js",
+ "runs": [
+  {
+   "run": "run1",
+   "ok": true,
+   "longHideMs": 60000,
+   "playHideMs": 10000,
+   "loadavgStart": "2.57 3.22 2.10 11/547 8250",
+   "bundle": "/assets/index-01V1xg5w.js",
+   "welcomeModal": {
+    "before": true,
+    "afterClick": false
+   },
+   "sleepBaseline": {
+    "time": "00:00.0 / 00:08.0",
+    "px": 12851050,
+    "vis": "visible",
+    "hidden": false,
+    "canvasW": 1351,
+    "canvasH": 512,
+    "ticks": 11,
+    "sleeping": true,
+    "lastDrawn": 0,
+    "lastRequested": 0,
+    "pendingSeek": false,
+    "draws": 0,
+    "sleepWaitTimedOut": false
+   },
+   "caseD_shortHide": {
+    "pre": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 12,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 0
+    },
+    "sleepWaitTimedOut": false,
+    "hidden": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "hidden",
+     "hidden": true,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 12,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 0
+    },
+    "post1s": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 22,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 2
+    },
+    "post4s": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 22,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 2
+    },
+    "visChanges": [
+     "hidden",
+     "visible"
+    ]
+   },
+   "caseA_longHide": {
+    "pre": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 23,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 2
+    },
+    "sleepWaitTimedOut": false,
+    "hiddenSamples": [
+     {
+      "atMs": 5000,
+      "time": "00:00.0 / 00:08.0",
+      "px": 12851050,
+      "vis": "hidden",
+      "hidden": true,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 23,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "lastRequested": 0,
+      "pendingSeek": false,
+      "draws": 2
+     },
+     {
+      "atMs": 30000,
+      "time": "00:00.0 / 00:08.0",
+      "px": 12851050,
+      "vis": "hidden",
+      "hidden": true,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 23,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "lastRequested": 0,
+      "pendingSeek": false,
+      "draws": 2
+     },
+     {
+      "atMs": 60000,
+      "time": "00:00.0 / 00:08.0",
+      "px": 12851050,
+      "vis": "hidden",
+      "hidden": true,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 23,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "lastRequested": 0,
+      "pendingSeek": false,
+      "draws": 2
+     }
+    ],
+    "post1s": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 29,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 4
+    },
+    "post4s": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 29,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 4
+    },
+    "post10s": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 29,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 4
+    },
+    "visChanges": [
+     "hidden",
+     "visible",
+     "hidden",
+     "visible"
+    ]
+   },
+   "caseB_hiddenWhilePlaying": {
+    "prePlay": {
+     "time": "00:02.3 / 00:08.0",
+     "px": 13716689,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 70,
+     "sleeping": false,
+     "lastDrawn": 2.2666666666666666,
+     "lastRequested": 2.2666666666666666,
+     "pendingSeek": false,
+     "draws": 45
+    },
+    "hiddenSamples": [
+     {
+      "atMs": 5000,
+      "time": "00:02.5 / 00:08.0",
+      "px": 13819421,
+      "vis": "hidden",
+      "hidden": true,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 73,
+      "sleeping": false,
+      "lastDrawn": 2.5,
+      "lastRequested": 2.5,
+      "pendingSeek": false,
+      "draws": 47
+     },
+     {
+      "atMs": 10000,
+      "time": "00:02.5 / 00:08.0",
+      "px": 13819421,
+      "vis": "hidden",
+      "hidden": true,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 73,
+      "sleeping": false,
+      "lastDrawn": 2.5,
+      "lastRequested": 2.5,
+      "pendingSeek": false,
+      "draws": 47
+     }
+    ],
+    "post1s": {
+     "time": "00:03.1 / 00:08.0",
+     "px": 3354861,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 79,
+     "sleeping": false,
+     "lastDrawn": 3.1,
+     "lastRequested": 3.1,
+     "pendingSeek": false,
+     "draws": 54
+    },
+    "post3s": {
+     "time": "00:04.3 / 00:08.0",
+     "px": 13572228,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 91,
+     "sleeping": false,
+     "lastDrawn": 4.3,
+     "lastRequested": 4.3,
+     "pendingSeek": false,
+     "draws": 66
+    },
+    "pausedAfter": {
+     "time": "00:04.4 / 00:08.0",
+     "px": 13593426,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 93,
+     "sleeping": true,
+     "lastDrawn": 4.366666666666666,
+     "lastRequested": 4.366666666666666,
+     "pendingSeek": false,
+     "draws": 66
+    },
+    "pausedSleepWaitTimedOut": false,
+    "driftCheck": {
+     "lastDrawnDeltaVsPreHide": 2.0333,
+     "expectedApprox": 3,
+     "note": "post3 đo ~3s sau hiện; nếu playhead nhảy vọt bằng thời gian ẩn thì delta ~13s"
+    }
+   },
+   "caseC_bfcache": {
+    "measured": true,
+    "verdict": "BFCACHE_THAT: pageshow persisted=true, marker còn sống",
+    "attempts": [
+     {
+      "to": "about:blank",
+      "pre": {
+       "present": true,
+       "marker": "v23-bfcache-probe",
+       "pageshows": [],
+       "visChanges": [
+        "hidden",
+        "visible",
+        "hidden",
+        "visible",
+        "hidden",
+        "visible"
+       ]
+      },
+      "bcAfter": {
+       "present": true,
+       "marker": "v23-bfcache-probe",
+       "pageshows": [
+        {
+         "persisted": true,
+         "at": 1793302083374
+        }
+       ],
+       "visChanges": [
+        "hidden",
+        "visible",
+        "hidden",
+        "visible",
+        "hidden",
+        "visible",
+        "hidden",
+        "visible"
+       ]
+      },
+      "bundleAfter": "/assets/index-01V1xg5w.js",
+      "hrefAfter": "http://127.0.0.1:4187/",
+      "depart": {
+       "time": "00:04.4 / 00:08.0",
+       "px": 13593426,
+       "vis": "visible",
+       "hidden": false,
+       "canvasW": 1351,
+       "canvasH": 512,
+       "ticks": 93,
+       "sleeping": true,
+       "lastDrawn": 4.366666666666666,
+       "lastRequested": 4.366666666666666,
+       "pendingSeek": false,
+       "draws": 66
+      },
+      "postRestore1s": {
+       "time": "00:04.4 / 00:08.0",
+       "px": 13569401,
+       "vis": "visible",
+       "hidden": false,
+       "canvasW": 1351,
+       "canvasH": 512,
+       "ticks": 111,
+       "sleeping": true,
+       "lastDrawn": 4.366666666666666,
+       "lastRequested": 4.366666666666666,
+       "pendingSeek": false,
+       "draws": 67
+      },
+      "postRestore4s": {
+       "time": "00:04.4 / 00:08.0",
+       "px": 13569401,
+       "vis": "visible",
+       "hidden": false,
+       "canvasW": 1351,
+       "canvasH": 512,
+       "ticks": 111,
+       "sleeping": true,
+       "lastDrawn": 4.366666666666666,
+       "lastRequested": 4.366666666666666,
+       "pendingSeek": false,
+       "draws": 67
+      }
+     }
+    ]
+   },
+   "loadavgEnd": "6.41 4.16 2.58 10/651 9133"
+  },
+  {
+   "run": "run2",
+   "ok": true,
+   "longHideMs": 60000,
+   "playHideMs": 10000,
+   "loadavgStart": "4.28 4.23 3.06 11/785 10493",
+   "bundle": "/assets/index-DstN4GgT.js",
+   "welcomeModal": {
+    "before": true,
+    "afterClick": false
+   },
+   "sleepBaseline": {
+    "time": "00:00.0 / 00:08.0",
+    "px": 12847916,
+    "vis": "visible",
+    "hidden": false,
+    "canvasW": 1351,
+    "canvasH": 512,
+    "ticks": 8,
+    "sleeping": true,
+    "lastDrawn": 0,
+    "lastRequested": 0,
+    "pendingSeek": false,
+    "draws": 0,
+    "sleepWaitTimedOut": false
+   },
+   "caseD_shortHide": {
+    "pre": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12847916,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 9,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 0
+    },
+    "sleepWaitTimedOut": false,
+    "hidden": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12847916,
+     "vis": "hidden",
+     "hidden": true,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 9,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 0
+    },
+    "post1s": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12847916,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 17,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 1
+    },
+    "post4s": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12847916,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 17,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 1
+    },
+    "visChanges": [
+     "hidden",
+     "visible"
+    ]
+   },
+   "caseA_longHide": {
+    "pre": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12847916,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 18,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 1
+    },
+    "sleepWaitTimedOut": false,
+    "hiddenSamples": [
+     {
+      "atMs": 5000,
+      "time": "00:00.0 / 00:08.0",
+      "px": 12847916,
+      "vis": "hidden",
+      "hidden": true,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 18,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "lastRequested": 0,
+      "pendingSeek": false,
+      "draws": 1
+     },
+     {
+      "atMs": 30000,
+      "time": "00:00.0 / 00:08.0",
+      "px": 12847916,
+      "vis": "hidden",
+      "hidden": true,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 18,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "lastRequested": 0,
+      "pendingSeek": false,
+      "draws": 1
+     },
+     {
+      "atMs": 60000,
+      "time": "00:00.0 / 00:08.0",
+      "px": 12847916,
+      "vis": "hidden",
+      "hidden": true,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 18,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "lastRequested": 0,
+      "pendingSeek": false,
+      "draws": 1
+     }
+    ],
+    "post1s": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12847916,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 26,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 3
+    },
+    "post4s": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12847916,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 26,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 3
+    },
+    "post10s": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12847916,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 26,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 3
+    },
+    "visChanges": [
+     "hidden",
+     "visible",
+     "hidden",
+     "visible"
+    ]
+   },
+   "caseB_hiddenWhilePlaying": {
+    "prePlay": {
+     "time": "00:02.4 / 00:08.0",
+     "px": 13739005,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 147,
+     "sleeping": false,
+     "lastDrawn": 2.433333333333333,
+     "lastRequested": 2.433333333333333,
+     "pendingSeek": false,
+     "draws": 124
+    },
+    "hiddenSamples": [
+     {
+      "atMs": 5000,
+      "time": "00:02.5 / 00:08.0",
+      "px": 13745110,
+      "vis": "hidden",
+      "hidden": true,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 149,
+      "sleeping": false,
+      "lastDrawn": 2.466666666666667,
+      "lastRequested": 2.466666666666667,
+      "pendingSeek": false,
+      "draws": 125
+     },
+     {
+      "atMs": 10000,
+      "time": "00:02.5 / 00:08.0",
+      "px": 13745110,
+      "vis": "hidden",
+      "hidden": true,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 149,
+      "sleeping": false,
+      "lastDrawn": 2.466666666666667,
+      "lastRequested": 2.466666666666667,
+      "pendingSeek": false,
+      "draws": 125
+     }
+    ],
+    "post1s": {
+     "time": "00:03.6 / 00:08.0",
+     "px": 3354861,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 169,
+     "sleeping": false,
+     "lastDrawn": 3.566666666666667,
+     "lastRequested": 3.566666666666667,
+     "pendingSeek": false,
+     "draws": 146
+    },
+    "post3s": {
+     "time": "00:05.8 / 00:08.0",
+     "px": 14330420,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 219,
+     "sleeping": false,
+     "lastDrawn": 5.766666666666667,
+     "lastRequested": 5.766666666666667,
+     "pendingSeek": false,
+     "draws": 196
+    },
+    "pausedAfter": {
+     "time": "00:05.8 / 00:08.0",
+     "px": 14330420,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 221,
+     "sleeping": true,
+     "lastDrawn": 5.833333333333333,
+     "lastRequested": 5.833333333333333,
+     "pendingSeek": false,
+     "draws": 196
+    },
+    "pausedSleepWaitTimedOut": false,
+    "driftCheck": {
+     "lastDrawnDeltaVsPreHide": 3.3333,
+     "expectedApprox": 3,
+     "note": "post3 đo ~3s sau hiện; nếu playhead nhảy vọt bằng thời gian ẩn thì delta ~13s"
+    }
+   },
+   "caseC_bfcache": {
+    "measured": true,
+    "verdict": "BFCACHE_THAT: pageshow persisted=true, marker còn sống",
+    "attempts": [
+     {
+      "to": "about:blank",
+      "pre": {
+       "present": true,
+       "marker": "v23-bfcache-probe",
+       "pageshows": [],
+       "visChanges": [
+        "hidden",
+        "visible",
+        "hidden",
+        "visible",
+        "hidden",
+        "visible"
+       ]
+      },
+      "bcAfter": {
+       "present": true,
+       "marker": "v23-bfcache-probe",
+       "pageshows": [
+        {
+         "persisted": true,
+         "at": 1793302482243
+        }
+       ],
+       "visChanges": [
+        "hidden",
+        "visible",
+        "hidden",
+        "visible",
+        "hidden",
+        "visible",
+        "hidden",
+        "visible"
+       ]
+      },
+      "bundleAfter": "/assets/index-DstN4GgT.js",
+      "hrefAfter": "http://127.0.0.1:4189/",
+      "depart": {
+       "time": "00:05.8 / 00:08.0",
+       "px": 14330420,
+       "vis": "visible",
+       "hidden": false,
+       "canvasW": 1351,
+       "canvasH": 512,
+       "ticks": 221,
+       "sleeping": true,
+       "lastDrawn": 5.833333333333333,
+       "lastRequested": 5.833333333333333,
+       "pendingSeek": false,
+       "draws": 196
+      },
+      "postRestore1s": {
+       "time": "00:05.8 / 00:08.0",
+       "px": 13545569,
+       "vis": "visible",
+       "hidden": false,
+       "canvasW": 1351,
+       "canvasH": 512,
+       "ticks": 238,
+       "sleeping": true,
+       "lastDrawn": 5.833333333333333,
+       "lastRequested": 5.833333333333333,
+       "pendingSeek": false,
+       "draws": 197
+      },
+      "postRestore4s": {
+       "time": "00:05.8 / 00:08.0",
+       "px": 13545569,
+       "vis": "visible",
+       "hidden": false,
+       "canvasW": 1351,
+       "canvasH": 512,
+       "ticks": 238,
+       "sleeping": true,
+       "lastDrawn": 5.833333333333333,
+       "lastRequested": 5.833333333333333,
+       "pendingSeek": false,
+       "draws": 197
+      }
+     }
+    ]
+   },
+   "loadavgEnd": "2.08 3.57 2.97 8/644 11046"
+  }
+ ]
+}
