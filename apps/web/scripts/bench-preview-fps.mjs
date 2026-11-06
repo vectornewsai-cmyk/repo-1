@@ -25,6 +25,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { captureCdpHangSnapshot } from "./cdp-snapshot.mjs";
+import { snapshotBundleFromDist } from "./cdp-bundle.mjs";
+import { distManifest, verifyDistManifest, freezeDistCopy } from "./cdp-dist-freeze.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 
@@ -36,12 +39,95 @@ const PAGE_URL = arg("--url", "http://127.0.0.1:5173");
 const DURATION = Number(arg("--duration", "10"));
 const OUT = path.resolve(ROOT, arg("--out", "benchmarks/results/preview-fps.json"));
 const SERVE = process.argv.includes("--serve");
+// Đợt 37 T4 — --cdp-hang-probe (BENCH_CDP_HANG_PROBE=1): kích hoạt LIVE
+// đường timeout snapshot của CHÍNH bench (nợ §3.6 đợt 36: trước đây
+// bench chỉ ghi snapshot khi CDP timeout trong lúc đo thật, chưa từng
+// xảy ra). Khi bật, sau khi editor sẵn sàng, bench gửi một evaluate
+// promise không settle với timeout 5000ms, đợi timeout handler của
+// chính Cdp.send() trong file này ghi snapshot bền, kiểm tra đúng 1
+// file mới + bundle + pid, ghi result.hangProbe rồi DỪNG (không đo
+// fps — lượt này không phải lượt đo fps, đừng trích fps từ nó).
+// Đợt 38 U4 — --cdp-hang-probe-h2 (BENCH_CDP_HANG_PROBE_H2=1): cùng
+// đường probe nhưng treo dạng H2 (while(true), renderer spin) thay vì
+// H1 (promise không settle). H2 gửi qua chính Cdp.send() của bench,
+// timeout 5000ms như H1; sau H2 renderer kẹt nên bench vẫn DỪNG ngay
+// như H1 (không đo tiếp được — finally kill Chrome như thường lệ).
+const CDP_HANG_PROBE_H2 = process.argv.includes("--cdp-hang-probe-h2") || process.env.BENCH_CDP_HANG_PROBE_H2 === "1";
+const CDP_HANG_PROBE = process.argv.includes("--cdp-hang-probe") || process.env.BENCH_CDP_HANG_PROBE === "1" || CDP_HANG_PROBE_H2;
 const CHROME =
   arg("--chrome", "") ||
   process.env.CHROME_BIN ||
   path.join(os.homedir(), ".cache/ms-playwright/chromium-1248/chrome-linux64/chrome");
+// Đợt 32 O2 — kỷ luật snapshot treo CDP (xem cdp-snapshot.mjs): module
+// snapshot không phụ thuộc transport (pipe hay WebSocket), chỉ cần tiến
+// trình Chrome do chính script này spawn; thư mục bền ngoài repo, ngoài
+// /tmp: ~/workspace/vcut-cdp-hang-snapshots/bench-preview-fps/.
+// Đợt 36 S6 — nối cdp-bundle.mjs cho bench (nợ §3.6 đợt 35; đợt 35 R5 cố
+// tình chưa nối vì bench là script đo của luồng khác): khi chạy với
+// --dist-dir <dir> (hoặc BENCH_DIST_DIR), bench ghi bundle thật đang đo
+// vào snapshot treo (thay vì null → "not-captured") và đóng băng toàn
+// bộ dist bằng manifest sha256 trước/sau (cdp-dist-freeze.mjs, theo mẫu
+// pipe N2 / probe Q6-R2): manifest sau lệch manifest trước → kết quả
+// ghi frozenDist.validity = "INVALID", fps bị loại, exit 3 (như R2).
+// CAVEAT TRUNG THỰC: bundle/manifest này chỉ đúng nghĩa "bundle đang
+// đo" khi PAGE_URL thật sự serve đúng distDir đó (vite preview của
+// dist đó). Khi đo trên vite dev (mặc định, không đặt --dist-dir) thì
+// bundle vẫn null → "not-captured" như cũ; nếu operator vẫn đặt
+// --dist-dir trong khi đo dev thì bundle ghi ra chỉ là "dist trên đĩa
+// lúc bắt đầu đo", KHÔNG phải bundle dev server đang serve — field
+// frozenDist.servesDistAssumption trong JSON ghi rõ điều này, đừng
+// trích dẫn bundle đó như bundle đã đo khi chạy dev.
+// --frozen-copy-dir (BENCH_FROZEN_COPY_DIR): copy đóng băng kiểu pipe
+// của distDir lúc khởi động (thư mục đích phải chưa tồn tại hoặc rỗng);
+// manifest bản sao được kiểm tra bằng manifest nguồn ngay lúc copy.
+const CDP_HANG_OUT_DIR = path.join(os.homedir(), "workspace", "vcut-cdp-hang-snapshots", "bench-preview-fps");
+const BENCH_DIST_DIR = arg("--dist-dir", "") || process.env.BENCH_DIST_DIR || "";
+const BENCH_FROZEN_COPY_DIR = arg("--frozen-copy-dir", "") || process.env.BENCH_FROZEN_COPY_DIR || "";
+const HANG_BUNDLE = BENCH_DIST_DIR ? snapshotBundleFromDist(BENCH_DIST_DIR) : null;
+let FROZEN_START = null;
+let FROZEN_COPY = null;
+if (BENCH_DIST_DIR) {
+  if (!fs.existsSync(path.join(BENCH_DIST_DIR, "index.html"))) {
+    console.error(`[bench] --dist-dir thiếu index.html, từ chối chạy (exit 2): ${BENCH_DIST_DIR}`);
+    process.exit(2);
+  }
+  FROZEN_START = distManifest(BENCH_DIST_DIR);
+  console.log(`[bench] dist đóng băng: ${BENCH_DIST_DIR} bundle=${HANG_BUNDLE ? `${HANG_BUNDLE.bundle} sha=${HANG_BUNDLE.sha}` : "không xác định được (snapshot vẫn not-captured)"} files=${FROZEN_START.fileCount} manifest=${FROZEN_START.manifestSha256}`);
+  if (BENCH_FROZEN_COPY_DIR) {
+    FROZEN_COPY = freezeDistCopy(BENCH_DIST_DIR, BENCH_FROZEN_COPY_DIR);
+    console.log(`[bench] bản sao đóng băng kiểu pipe: ${FROZEN_COPY.destDir} manifest=${FROZEN_COPY.manifest.manifestSha256}`);
+  }
+}
+// Tính frozenDist cho JSON kết quả (gọi trước mỗi lần ghi OUT): khi không
+// đặt --dist-dir thì validity "UNVERIFIED" như R2 (không claim cùng dist).
+function finishFrozenDist(result) {
+  if (!FROZEN_START) {
+    result.frozenDist = { validity: "UNVERIFIED", note: "Không đặt --dist-dir/BENCH_DIST_DIR nên dist không được đóng băng; bundle snapshot (nếu có) vẫn là not-captured." };
+    return false;
+  }
+  const checked = verifyDistManifest(BENCH_DIST_DIR, FROZEN_START);
+  result.frozenDist = {
+    validity: checked.valid ? "VALID" : "INVALID",
+    valid: checked.valid,
+    problems: checked.problems,
+    distDir: path.resolve(BENCH_DIST_DIR),
+    bundle: HANG_BUNDLE ? { name: HANG_BUNDLE.bundle, sha256_16: HANG_BUNDLE.sha, source: HANG_BUNDLE.source } : null,
+    manifestBefore: FROZEN_START.manifestSha256,
+    manifestAfter: checked.manifest.manifestSha256,
+    fileCountBefore: FROZEN_START.fileCount,
+    fileCountAfter: checked.manifest.fileCount,
+    servesDistAssumption: "Bundle/manifest này chỉ là bundle đang đo khi PAGE_URL serve đúng distDir này (vite preview). Khi đo vite dev, đây chỉ là dist trên đĩa lúc bắt đầu đo.",
+    ...(FROZEN_COPY ? { frozenCopyDir: FROZEN_COPY.destDir, frozenCopyManifest: FROZEN_COPY.manifest.manifestSha256 } : {}),
+  };
+  return !checked.valid;
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Đợt 37 T4: liệt kê snapshot treo của chính bench (thư mục bền ngoài repo).
+function listBenchSnapFiles() {
+  try { return fs.readdirSync(CDP_HANG_OUT_DIR).filter((f) => f.endsWith(".json")).sort(); } catch { return []; }
+}
 
 async function waitUrlOk(url, timeoutMs) {
   const end = Date.now() + timeoutMs;
@@ -61,6 +147,9 @@ class Cdp {
     this.ws = new WebSocket(wsUrl);
     this.nextId = 1;
     this.pending = new Map();
+    // Đợt 32 O2: tiến trình Chrome do main() spawn, gán sau khi spawn
+    // (cdp.proc = chrome) để timeout handler chụp được snapshot proc/ps.
+    this.proc = null;
     this.ws.addEventListener("message", (ev) => {
       let msg;
       try { msg = JSON.parse(ev.data); } catch { return; }
@@ -81,7 +170,18 @@ class Cdp {
   send(method, params = {}, timeoutMs = 30000) {
     const id = this.nextId++;
     return new Promise((resolve, reject) => {
-      const t = setTimeout(() => { this.pending.delete(id); reject(new Error(`CDP timeout: ${method}`)); }, timeoutMs);
+      const t = setTimeout(() => {
+        this.pending.delete(id);
+        try {
+          const hangSnap = captureCdpHangSnapshot({
+            proc: this.proc, pendingCount: this.pending.size, method, timeoutMs,
+            outDir: CDP_HANG_OUT_DIR, bundle: HANG_BUNDLE, extra: { transport: "websocket", ...(HANG_BUNDLE ? { distDir: HANG_BUNDLE.dist } : {}) },
+          });
+          if (hangSnap.file) console.log(`[bench] CDP-HANG snapshot đã ghi: ${hangSnap.file}`);
+          else console.log(`[bench] CDP-HANG snapshot GHI LỖI: ${hangSnap.error} (vẫn reject lỗi timeout gốc)`);
+        } catch (e) { console.log(`[bench] CDP-HANG snapshot lỗi ngoài dự kiến: ${e.message} (vẫn reject lỗi timeout gốc)`); }
+        reject(new Error(`CDP timeout: ${method}`));
+      }, timeoutMs);
       this.pending.set(id, {
         resolve: (v) => { clearTimeout(t); resolve(v); },
         reject: (e) => { clearTimeout(t); reject(e); },
@@ -140,6 +240,7 @@ async function main() {
     const page = targets.find((t) => t.type === "page");
     if (!page) throw new Error("Không lấy được target page từ Chromium.");
     const cdp = new Cdp(page.webSocketDebuggerUrl);
+    cdp.proc = chrome;
     await cdp.ready();
     await cdp.send("Page.enable");
     await cdp.send("Runtime.enable");
@@ -151,6 +252,52 @@ async function main() {
       ready = await cdp.evaluate(`!!document.querySelector('.tbtn.play') && !document.querySelector('.splash')`);
     }
     if (!ready) throw new Error("Hết 90s vẫn chưa thấy editor sẵn sàng (splash còn hoặc thiếu nút Phát).");
+    // Đợt 37 T4 — kích hoạt live đường timeout snapshot của chính bench.
+    if (CDP_HANG_PROBE) {
+      const snapBefore = listBenchSnapFiles();
+      const probeStart = Date.now();
+      let probeError = null;
+      // U4: H2 = while(true) (awaitPromise false, như probe T4 đợt 37);
+      // H1 = promise không settle (awaitPromise true). Cả hai đều treo
+      // thật qua chính Cdp.send() của bench, timeout 5000ms.
+      const probeExpr = CDP_HANG_PROBE_H2 ? "while(true){}" : "new Promise(()=>{})";
+      const probeAwait = !CDP_HANG_PROBE_H2;
+      try {
+        await cdp.send("Runtime.evaluate", { expression: probeExpr, awaitPromise: probeAwait, returnByValue: true }, 5000);
+        probeError = "RESOLVED-BẤT-NGỜ";
+      } catch (e) { probeError = e instanceof Error ? e.message : String(e); }
+      const probeWallMs = Date.now() - probeStart;
+      const newFiles = listBenchSnapFiles().filter((f) => !snapBefore.includes(f));
+      let snap = null;
+      if (newFiles.length === 1) {
+        try { snap = JSON.parse(fs.readFileSync(path.join(CDP_HANG_OUT_DIR, newFiles[0]), "utf8")); } catch { /* giữ null */ }
+      }
+      const bundleOk = HANG_BUNDLE
+        ? snap?.bundle?.status === "captured" && snap?.bundle?.sha256_16 === HANG_BUNDLE.sha
+        : snap?.bundle?.status === "not-captured";
+      const probeOk = probeError === "CDP timeout: Runtime.evaluate"
+        && newFiles.length === 1
+        && snap?.method === "Runtime.evaluate" && snap?.timeoutMs === 5000
+        && snap?.proc?.pid === chrome.pid && bundleOk;
+      result.hangProbe = {
+        mode: CDP_HANG_PROBE_H2 ? "controlled-hang-H2-busy-loop" : "controlled-hang-H1-promise-never-settles",
+        timeoutMs: 5000, wallMs: probeWallMs, error: probeError, expression: probeExpr,
+        snapshotFilesBefore: snapBefore.length, snapshotFilesNew: newFiles,
+        snapshotFile: newFiles.length === 1 ? path.join(CDP_HANG_OUT_DIR, newFiles[0]) : null,
+        snapshotBundle: snap?.bundle ?? null, snapshotProcPid: snap?.proc?.pid ?? null,
+        chromePid: chrome.pid, distDir: BENCH_DIST_DIR || null, ok: probeOk,
+      };
+      // Snapshot treo là bằng chứng bền, KHÔNG xóa sau probe (kỷ luật
+      // đợt 30/32: file còn thì log mất cũng không mất bằng chứng).
+      cdp.close();
+      const frozenInvalid = finishFrozenDist(result);
+      fs.mkdirSync(path.dirname(OUT), { recursive: true });
+      fs.writeFileSync(OUT, JSON.stringify(result, null, 2) + "\n");
+      console.log(`[bench] hang-probe ok=${probeOk} wall=${probeWallMs}ms newSnapshots=${newFiles.length} -> ${OUT}`);
+      if (frozenInvalid) console.log(`[bench] FROZEN INVALID: ${result.frozenDist.problems.join("; ")} — exit 3`);
+      process.exitCode = probeOk ? (frozenInvalid ? 3 : 0) : 1;
+      return;
+    }
     const timeBefore = await cdp.evaluate(`(document.querySelector('.time-display')||{}).textContent || ''`);
     await cdp.evaluate(`document.querySelector('.tbtn.play').click()`);
     await sleep(1500);
@@ -191,17 +338,25 @@ async function main() {
     result.dropsOver50ms = intervals.filter((d) => d > 50).length;
     result.maxIntervalMs = Number(Math.max(...intervals).toFixed(1));
     result.hardwareConcurrency = hw;
+    // S6: đóng băng dist — INVALID thì fps bị loại, exit 3 (như R2).
+    const frozenInvalid = finishFrozenDist(result);
+    if (frozenInvalid) console.log(`[bench] FROZEN INVALID: ${result.frozenDist.problems.join("; ")} — fps bị loại, exit 3`);
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
     fs.writeFileSync(OUT, JSON.stringify(result, null, 2) + "\n");
     console.log(`[bench] frames=${result.frames} fpsAvg=${result.fpsAvg} fpsMin1s=${result.fpsMin1s} fpsMax1s=${result.fpsMax1s} drops>50ms=${result.dropsOver50ms} maxInterval=${result.maxIntervalMs}ms`);
     console.log(`[bench] overlay FPS button: ${overlayBtn ? "có" : "KHÔNG thấy"}; playing=${result.playing}; time ${result.timeDisplay.before} -> ${result.timeDisplay.after}`);
     console.log(`[bench] kết quả ghi ra ${OUT}`);
+    if (frozenInvalid) process.exitCode = 3;
   } catch (e) {
     result.error = e instanceof Error ? e.message : String(e);
+    // S6: cả đường lỗi cũng đối chiếu manifest — dist đổi giữa chừng
+    // thì INVALID (exit 3) lấn lỗi đo thường (exit 1), như R2.
+    const frozenInvalidOnError = finishFrozenDist(result);
+    if (frozenInvalidOnError) console.log(`[bench] FROZEN INVALID: ${result.frozenDist.problems.join("; ")} — exit 3`);
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
     fs.writeFileSync(OUT, JSON.stringify(result, null, 2) + "\n");
     console.error(`[bench] LỖI: ${result.error}`);
-    process.exitCode = 1;
+    process.exitCode = frozenInvalidOnError ? 3 : 1;
   } finally {
     try { chrome?.kill("SIGTERM"); } catch { /* noop */ }
     try { vite?.kill("SIGTERM"); } catch { /* noop */ }

@@ -1,0 +1,1634 @@
+{
+  "grid": "120fps exact-p, 99 cells, product code",
+  "cur": [
+    {
+      "id": "flat-orig|fadewhite/fadewhite@0.6",
+      "mad": 2,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadewhite/fadewhite@0.75",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadewhite/fadewhite@0.9",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadegrays/fadewhite@0.6",
+      "mad": 2,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadegrays/fadewhite@0.75",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadegrays/fadewhite@0.9",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadewhite/fadegrays@0.6",
+      "mad": 2.3333,
+      "verdict": "XẤP XỈ"
+    },
+    {
+      "id": "flat-orig|fadewhite/fadegrays@0.75",
+      "mad": 3,
+      "verdict": "XẤP XỈ"
+    },
+    {
+      "id": "flat-orig|fadewhite/fadegrays@0.9",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadeblack/fadeblack@0.6",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadeblack/fadeblack@0.75",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadeblack/fadeblack@0.9",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadeblack/fadewhite@0.6",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadeblack/fadewhite@0.75",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadeblack/fadewhite@0.9",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadewhite/fadewhite@0.6",
+      "mad": 1.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadewhite/fadewhite@0.75",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadewhite/fadewhite@0.9",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadegrays/fadewhite@0.6",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadegrays/fadewhite@0.75",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadegrays/fadewhite@0.9",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadewhite/fadegrays@0.6",
+      "mad": 2,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadewhite/fadegrays@0.75",
+      "mad": 2.3333,
+      "verdict": "XẤP XỈ"
+    },
+    {
+      "id": "flat-new|fadewhite/fadegrays@0.9",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadeblack/fadeblack@0.6",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadeblack/fadeblack@0.75",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadeblack/fadeblack@0.9",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadeblack/fadewhite@0.6",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadeblack/fadewhite@0.75",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadeblack/fadewhite@0.9",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.05",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.1",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.15",
+      "mad": 1.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.2",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.25",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.3",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.35",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.4",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.45",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.5",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.55",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.6",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.65",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.7",
+      "mad": 2,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.75",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.8",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.85",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.9",
+      "mad": 2,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.95",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@1",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.05",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.1",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.15",
+      "mad": 2.3333,
+      "verdict": "XẤP XỈ"
+    },
+    {
+      "id": "single-new|fadewhite@0.2",
+      "mad": 1.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.25",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.3",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.35",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.4",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.45",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.5",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.55",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.6",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.65",
+      "mad": 1.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.7",
+      "mad": 2,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.75",
+      "mad": 2,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.8",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.85",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.9",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.95",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@1",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.05",
+      "mad": 1.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.1",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.15",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.2",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.25",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.3",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.35",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.4",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.45",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.5",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.55",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.6",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.65",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.7",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.75",
+      "mad": 1.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.8",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.85",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.9",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.95",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@1",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.05",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.1",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.15",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.2",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.25",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.3",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.35",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.4",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.45",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.5",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.55",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.6",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.65",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.7",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.75",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.8",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.85",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.9",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.95",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@1",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.05",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.1",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.15",
+      "mad": 3.6667,
+      "verdict": "XẤP XỈ"
+    },
+    {
+      "id": "single-orig|fadewhite@0.2",
+      "mad": 2.6667,
+      "verdict": "XẤP XỈ"
+    },
+    {
+      "id": "single-orig|fadewhite@0.25",
+      "mad": 2,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.3",
+      "mad": 1.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.35",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.4",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.45",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.5",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.55",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.6",
+      "mad": 1.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.65",
+      "mad": 2.6667,
+      "verdict": "XẤP XỈ"
+    },
+    {
+      "id": "single-orig|fadewhite@0.7",
+      "mad": 3.3333,
+      "verdict": "XẤP XỈ"
+    },
+    {
+      "id": "single-orig|fadewhite@0.75",
+      "mad": 3.3333,
+      "verdict": "XẤP XỈ"
+    },
+    {
+      "id": "single-orig|fadewhite@0.8",
+      "mad": 1.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.85",
+      "mad": 1.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.9",
+      "mad": 1.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.95",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@1",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.05",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.1",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.15",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.2",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.25",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.3",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.35",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.4",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.45",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.5",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.55",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.6",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.65",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.7",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.75",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.8",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.85",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.9",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.95",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@1",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "footage|fadewhite/fadewhite@0.6",
+      "mad": 1.5414,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "footage|fadewhite/fadewhite@0.75",
+      "mad": 1.5399,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "footage|fadewhite/fadewhite@0.9",
+      "mad": 0.2482,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "footage|fadeblack/fadewhite@0.6",
+      "mad": 1.1566,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "footage|fadeblack/fadewhite@0.75",
+      "mad": 1.5399,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "footage|fadeblack/fadewhite@0.9",
+      "mad": 0.2482,
+      "verdict": "KHỚP"
+    }
+  ],
+  "product": [
+    {
+      "id": "flat-orig|fadewhite/fadewhite@0.6",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadewhite/fadewhite@0.75",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadewhite/fadewhite@0.9",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadegrays/fadewhite@0.6",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadegrays/fadewhite@0.75",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadegrays/fadewhite@0.9",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadewhite/fadegrays@0.6",
+      "mad": 2.3333,
+      "verdict": "XẤP XỈ"
+    },
+    {
+      "id": "flat-orig|fadewhite/fadegrays@0.75",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadewhite/fadegrays@0.9",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadeblack/fadeblack@0.6",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadeblack/fadeblack@0.75",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadeblack/fadeblack@0.9",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadeblack/fadewhite@0.6",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadeblack/fadewhite@0.75",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-orig|fadeblack/fadewhite@0.9",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadewhite/fadewhite@0.6",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadewhite/fadewhite@0.75",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadewhite/fadewhite@0.9",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadegrays/fadewhite@0.6",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadegrays/fadewhite@0.75",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadegrays/fadewhite@0.9",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadewhite/fadegrays@0.6",
+      "mad": 2,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadewhite/fadegrays@0.75",
+      "mad": 1.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadewhite/fadegrays@0.9",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadeblack/fadeblack@0.6",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadeblack/fadeblack@0.75",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadeblack/fadeblack@0.9",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadeblack/fadewhite@0.6",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadeblack/fadewhite@0.75",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "flat-new|fadeblack/fadewhite@0.9",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.05",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.1",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.15",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.2",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.25",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.3",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.35",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.4",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.45",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.5",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.55",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.6",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.65",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.7",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.75",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.8",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.85",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.9",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@0.95",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadeblack@1",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.05",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.1",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.15",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.2",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.25",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.3",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.35",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.4",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.45",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.5",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.55",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.6",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.65",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.7",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.75",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.8",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.85",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.9",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@0.95",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadewhite@1",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.05",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.1",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.15",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.2",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.25",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.3",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.35",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.4",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.45",
+      "mad": 1.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.5",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.55",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.6",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.65",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.7",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.75",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.8",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.85",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.9",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@0.95",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-new|fadegrays@1",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.05",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.1",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.15",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.2",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.25",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.3",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.35",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.4",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.45",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.5",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.55",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.6",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.65",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.7",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.75",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.8",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.85",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.9",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@0.95",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadeblack@1",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.05",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.1",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.15",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.2",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.25",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.3",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.35",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.4",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.45",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.5",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.55",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.6",
+      "mad": 1.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.65",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.7",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.75",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.8",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.85",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.9",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@0.95",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadewhite@1",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.05",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.1",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.15",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.2",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.25",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.3",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.35",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.4",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.45",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.5",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.55",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.6",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.65",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.7",
+      "mad": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.75",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.8",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.85",
+      "mad": 0.6667,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.9",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@0.95",
+      "mad": 0.3333,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "single-orig|fadegrays@1",
+      "mad": 0,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "footage|fadewhite/fadewhite@0.6",
+      "mad": 1.507,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "footage|fadewhite/fadewhite@0.75",
+      "mad": 0.7635,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "footage|fadewhite/fadewhite@0.9",
+      "mad": 0.1965,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "footage|fadeblack/fadewhite@0.6",
+      "mad": 1.0462,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "footage|fadeblack/fadewhite@0.75",
+      "mad": 0.7635,
+      "verdict": "KHỚP"
+    },
+    {
+      "id": "footage|fadeblack/fadewhite@0.9",
+      "mad": 0.1965,
+      "verdict": "KHỚP"
+    }
+  ],
+  "summary": {
+    "nInc": 0,
+    "nTierDrop": 0,
+    "totCur": 100.2741,
+    "totNew": 60.4732,
+    "inc": []
+  }
+}

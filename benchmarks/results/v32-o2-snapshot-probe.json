@@ -1,0 +1,92 @@
+{
+  "at": "2026-11-01T01:17:47.095Z",
+  "display": ":93",
+  "wsPort": 19493,
+  "results": [
+    {
+      "target": "pipe-durable-nested-ramp",
+      "file": "clicktest-nested-ramp-pipe.mjs",
+      "checks": {
+        "outDirIsDurable": true,
+        "outDirNotTmp": true,
+        "classHasSnapshotCall": true,
+        "pipeOk": true,
+        "rejectIsOriginalTimeoutError": true,
+        "snapshotFileCount": 1,
+        "snapshotMethod": "Target.getTargets",
+        "snapshotTimeoutMs": 1,
+        "snapshotPidMatchesChrome": true,
+        "snapshotChromeAlive": true,
+        "snapshotPsHasChrome": true,
+        "pipeAliveAfterTimeout": true
+      },
+      "outDirSlug": "clicktest-nested-ramp-pipe",
+      "outDir": "/home/hatch/workspace/vcut-cdp-hang-snapshots/clicktest-nested-ramp-pipe",
+      "chromePid": 15496,
+      "timeoutErr": "CDP timeout Target.getTargets sau 1ms",
+      "pass": true
+    },
+    {
+      "target": "ws-bench-preview-fps.mjs",
+      "file": "bench-preview-fps.mjs",
+      "checks": {
+        "outDirIsDurable": true,
+        "classHasSnapshotCall": true,
+        "classHasProcField": true,
+        "fileAssignsProc": true,
+        "wsOk": true,
+        "rejectIsOriginalTimeoutError": true,
+        "snapshotFileCount": 1,
+        "snapshotMethod": "Target.getTargets",
+        "snapshotTimeoutMs": 1,
+        "snapshotPidMatchesChrome": true,
+        "snapshotChromeAlive": true,
+        "snapshotPsHasChrome": true,
+        "snapshotTransportWs": true,
+        "snapshotBundleNull": true,
+        "wsAliveAfterTimeout": true
+      },
+      "outDirSlug": "bench-preview-fps",
+      "outDir": "/home/hatch/workspace/vcut-cdp-hang-snapshots/bench-preview-fps",
+      "chromePid": 15700,
+      "timeoutErr": "CDP timeout: Target.getTargets",
+      "pass": true
+    },
+    {
+      "target": "ws-check-proxy-auto.mjs",
+      "file": "check-proxy-auto.mjs",
+      "checks": {
+        "outDirIsDurable": true,
+        "classHasSnapshotCall": true,
+        "classHasProcField": true,
+        "fileAssignsProc": true,
+        "wsOk": true,
+        "rejectIsOriginalTimeoutError": true,
+        "snapshotFileCount": 1,
+        "snapshotMethod": "Target.getTargets",
+        "snapshotTimeoutMs": 1,
+        "snapshotPidMatchesChrome": true,
+        "snapshotChromeAlive": true,
+        "snapshotPsHasChrome": true,
+        "snapshotTransportWs": true,
+        "snapshotBundleNull": true,
+        "wsAliveAfterTimeout": true
+      },
+      "outDirSlug": "check-proxy-auto",
+      "outDir": "/home/hatch/workspace/vcut-cdp-hang-snapshots/check-proxy-auto",
+      "chromePid": 15894,
+      "timeoutErr": "CDP timeout: Target.getTargets",
+      "pass": true
+    },
+    {
+      "target": "module-default-outdir",
+      "checks": {
+        "fileWritten": true,
+        "fileUnderDurableRoot": true,
+        "noError": true
+      },
+      "file": "/home/hatch/workspace/vcut-cdp-hang-snapshots/_unspecified/cdp-hang-20261101_011746996-O2Probe-nopid.json",
+      "pass": true
+    }
+  ]
+}

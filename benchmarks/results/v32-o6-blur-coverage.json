@@ -1,0 +1,478 @@
+{
+  "generatedAt": "2026-11-01T01:25:28.517Z",
+  "note": "KHÔNG có MAD app-vs-tham-chiếu mới: luồng subagent không có live-browser. Số 'bias' là sai số HARNESS (kỳ vọng đều vs kỳ vọng có trọng số), không phải MAD blur của app.",
+  "dipAnchorsOk": true,
+  "knotsA": [
+    [
+      0,
+      1
+    ],
+    [
+      0.05,
+      0.8012
+    ],
+    [
+      0.1,
+      0.4497
+    ],
+    [
+      0.15,
+      0.1329
+    ],
+    [
+      0.2,
+      0
+    ],
+    [
+      0.25,
+      0
+    ],
+    [
+      0.3,
+      0
+    ],
+    [
+      0.35,
+      0
+    ],
+    [
+      0.4,
+      0
+    ],
+    [
+      0.45,
+      0
+    ],
+    [
+      0.5,
+      0
+    ],
+    [
+      0.55,
+      0
+    ],
+    [
+      0.6,
+      0
+    ],
+    [
+      0.65,
+      0
+    ],
+    [
+      0.7,
+      0
+    ],
+    [
+      0.75,
+      0
+    ],
+    [
+      0.8,
+      0
+    ],
+    [
+      0.85,
+      0
+    ],
+    [
+      0.9,
+      0
+    ],
+    [
+      0.95,
+      0
+    ],
+    [
+      1,
+      0
+    ]
+  ],
+  "knotsB": [
+    [
+      0,
+      0
+    ],
+    [
+      0.05,
+      0
+    ],
+    [
+      0.1,
+      0
+    ],
+    [
+      0.12,
+      0
+    ],
+    [
+      0.15,
+      0.0128
+    ],
+    [
+      0.2,
+      0.0288
+    ],
+    [
+      0.25,
+      0.0562
+    ],
+    [
+      0.3,
+      0.0955
+    ],
+    [
+      0.35,
+      0.1427
+    ],
+    [
+      0.4,
+      0.2004
+    ],
+    [
+      0.45,
+      0.2659
+    ],
+    [
+      0.5,
+      0.3435
+    ],
+    [
+      0.55,
+      0.4191
+    ],
+    [
+      0.6,
+      0.5059
+    ],
+    [
+      0.65,
+      0.5884
+    ],
+    [
+      0.7,
+      0.6697
+    ],
+    [
+      0.75,
+      0.7419
+    ],
+    [
+      0.8,
+      0.8007
+    ],
+    [
+      0.85,
+      0.8479
+    ],
+    [
+      0.9,
+      0.8989
+    ],
+    [
+      0.95,
+      0.9476
+    ],
+    [
+      1,
+      1
+    ]
+  ],
+  "planChecks": [
+    {
+      "weights": [
+        1,
+        1,
+        1
+      ],
+      "normalized": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "blendAlphas": [
+        1,
+        0.5,
+        0.3333333333333333
+      ],
+      "maxErrVsDirectWeightedAvg": 1.4210854715202004e-14
+    },
+    {
+      "weights": [
+        2,
+        1,
+        1
+      ],
+      "normalized": [
+        0.5,
+        0.25,
+        0.25
+      ],
+      "blendAlphas": [
+        1,
+        0.3333333333333333,
+        0.25
+      ],
+      "maxErrVsDirectWeightedAvg": 0
+    },
+    {
+      "weights": [
+        1,
+        1,
+        2
+      ],
+      "normalized": [
+        0.25,
+        0.25,
+        0.5
+      ],
+      "blendAlphas": [
+        1,
+        0.5,
+        0.5
+      ],
+      "maxErrVsDirectWeightedAvg": 0
+    },
+    {
+      "weights": [
+        1,
+        1
+      ],
+      "normalized": [
+        0.5,
+        0.5
+      ],
+      "blendAlphas": [
+        1,
+        0.5
+      ],
+      "maxErrVsDirectWeightedAvg": 0
+    },
+    {
+      "weights": [
+        3,
+        1,
+        1,
+        1
+      ],
+      "normalized": [
+        0.5,
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666
+      ],
+      "blendAlphas": [
+        1,
+        0.25,
+        0.2,
+        0.16666666666666669
+      ],
+      "maxErrVsDirectWeightedAvg": 7.105427357601002e-15
+    },
+    {
+      "weights": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "normalized": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "blendAlphas": [
+        1,
+        0.5,
+        0.3333333333333333,
+        0.25
+      ],
+      "maxErrVsDirectWeightedAvg": 0
+    }
+  ],
+  "grid": [
+    {
+      "window": "in",
+      "type": "fadewhite",
+      "p": 0.25,
+      "alpha": 0.0562,
+      "note": "YẾU: alpha<0,2 → sai số blur bị nén >5× trong MAD, chỉ dùng làm ô phụ"
+    },
+    {
+      "window": "in",
+      "type": "fadewhite",
+      "p": 0.5,
+      "alpha": 0.3435,
+      "note": "phân biệt được"
+    },
+    {
+      "window": "in",
+      "type": "fadewhite",
+      "p": 0.75,
+      "alpha": 0.7419,
+      "note": "phân biệt được"
+    },
+    {
+      "window": "in",
+      "type": "fadeblack",
+      "p": 0.25,
+      "alpha": 0.0562,
+      "note": "YẾU: alpha<0,2 → sai số blur bị nén >5× trong MAD, chỉ dùng làm ô phụ"
+    },
+    {
+      "window": "in",
+      "type": "fadeblack",
+      "p": 0.5,
+      "alpha": 0.3435,
+      "note": "phân biệt được"
+    },
+    {
+      "window": "in",
+      "type": "fadeblack",
+      "p": 0.75,
+      "alpha": 0.7419,
+      "note": "phân biệt được"
+    },
+    {
+      "window": "in",
+      "type": "fadegrays",
+      "p": 0.25,
+      "alpha": 0.0562,
+      "note": "YẾU: alpha<0,2 → sai số blur bị nén >5× trong MAD, chỉ dùng làm ô phụ"
+    },
+    {
+      "window": "in",
+      "type": "fadegrays",
+      "p": 0.5,
+      "alpha": 0.3435,
+      "note": "phân biệt được"
+    },
+    {
+      "window": "in",
+      "type": "fadegrays",
+      "p": 0.75,
+      "alpha": 0.7419,
+      "note": "phân biệt được"
+    },
+    {
+      "window": "out",
+      "type": "fadewhite",
+      "p": 0.1,
+      "alpha": 0.4497,
+      "note": "phân biệt được"
+    },
+    {
+      "window": "out",
+      "type": "fadewhite",
+      "p": 0.15,
+      "alpha": 0.13290000000000002,
+      "note": "YẾU: alpha<0,2 → sai số blur bị nén >5× trong MAD, chỉ dùng làm ô phụ"
+    },
+    {
+      "window": "out",
+      "type": "fadewhite",
+      "p": 0.25,
+      "alpha": 0,
+      "note": "SUY BIẾN: alpha=0 → kỳ vọng = màu dip thuần, không phân biệt được blur đúng/sai"
+    },
+    {
+      "window": "out",
+      "type": "fadewhite",
+      "p": 0.5,
+      "alpha": 0,
+      "note": "SUY BIẾN: alpha=0 → kỳ vọng = màu dip thuần, không phân biệt được blur đúng/sai"
+    }
+  ],
+  "ffmpegBias": [
+    {
+      "footage": "K19 (motion mạnh)",
+      "motionNote": "M6: motionMean 18,16",
+      "p": 0.5,
+      "alpha": 0.3435,
+      "nSamples": 1008,
+      "motionMean": 10.040509259259254,
+      "bias": {
+        "[1,1,1] (M6 gốc)": {
+          "madBetweenExpectations": 3.261353562285116e-15,
+          "le8": 1
+        },
+        "[2,1,1] (cũ nặng)": {
+          "madBetweenExpectations": 1.1496383101851864,
+          "le8": 1
+        },
+        "[1,1,2] (mới nặng)": {
+          "madBetweenExpectations": 0.5748191550925942,
+          "le8": 1
+        }
+      }
+    },
+    {
+      "footage": "K19 (motion mạnh)",
+      "motionNote": "M6: motionMean 18,16",
+      "p": 0.75,
+      "alpha": 0.7419,
+      "nSamples": 1008,
+      "motionMean": 1.3235780423280419,
+      "bias": {
+        "[1,1,1] (M6 gốc)": {
+          "madBetweenExpectations": 5.85069911389765e-15,
+          "le8": 1
+        },
+        "[2,1,1] (cũ nặng)": {
+          "madBetweenExpectations": 0.3273208498677234,
+          "le8": 1
+        },
+        "[1,1,2] (mới nặng)": {
+          "madBetweenExpectations": 0.1636604249338625,
+          "le8": 1
+        }
+      }
+    },
+    {
+      "footage": "K11 (motion vừa)",
+      "motionNote": "M6: motionMean 8,47",
+      "p": 0.5,
+      "alpha": 0.3435,
+      "nSamples": 1008,
+      "motionMean": 4.488425925925925,
+      "bias": {
+        "[1,1,1] (M6 gốc)": {
+          "madBetweenExpectations": 1.2970224541652622e-15,
+          "le8": 1
+        },
+        "[2,1,1] (cũ nặng)": {
+          "madBetweenExpectations": 0.513924768518518,
+          "le8": 0.9990079365079365
+        },
+        "[1,1,2] (mới nặng)": {
+          "madBetweenExpectations": 0.25696238425925927,
+          "le8": 1
+        }
+      }
+    },
+    {
+      "footage": "K11 (motion vừa)",
+      "motionNote": "M6: motionMean 8,47",
+      "p": 0.75,
+      "alpha": 0.7419,
+      "nSamples": 1008,
+      "motionMean": 2.999669312169315,
+      "bias": {
+        "[1,1,1] (M6 gốc)": {
+          "madBetweenExpectations": 2.791417890486108e-15,
+          "le8": 1
+        },
+        "[2,1,1] (cũ nặng)": {
+          "madBetweenExpectations": 0.7418182208994663,
+          "le8": 0.9880952380952381
+        },
+        "[1,1,2] (mới nặng)": {
+          "madBetweenExpectations": 0.37090911044973335,
+          "le8": 1
+        }
+      }
+    }
+  ],
+  "ffmpegError": null
+}

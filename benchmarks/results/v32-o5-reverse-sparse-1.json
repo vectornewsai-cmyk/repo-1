@@ -1,0 +1,519 @@
+{
+  "runAt": "2026-11-01T01:11:25.549Z",
+  "bundle": "index-D3yYXWHm.js",
+  "video": "sparse-gop-flat.mp4",
+  "load": {
+    "atStart": "1.38 0.51 0.18",
+    "beforeFwd": "2.79 0.82 0.28",
+    "beforeRev": "2.65 0.82 0.29",
+    "atEnd": "3.30 1.06 0.37"
+  },
+  "raf": {
+    "forward": {
+      "n": 631,
+      "wallSec": 6.356,
+      "gapMean": 0.013,
+      "gapP50": 0.0068,
+      "gapP95": 0.0168,
+      "gapP99": 0.0428,
+      "gapMax": 1.9604,
+      "countOver100ms": 2,
+      "lostSec": 2.31,
+      "predictedAdvanceSec": 5.882,
+      "predictedRate": 0.925,
+      "exclFirst": {
+        "countOver100ms": 1,
+        "lostSec": 0.45,
+        "predictedAdvanceSec": 5.782,
+        "predictedRate": 0.91
+      }
+    },
+    "reverse": {
+      "n": 1351,
+      "wallSec": 14.373,
+      "gapMean": 0.0117,
+      "gapP50": 0.0049,
+      "gapP95": 0.0412,
+      "gapP99": 0.0553,
+      "gapMax": 1.4338,
+      "countOver100ms": 1,
+      "lostSec": 1.334,
+      "predictedAdvanceSec": 14.451,
+      "predictedRate": 1.005,
+      "exclFirst": {
+        "countOver100ms": 0,
+        "lostSec": 0,
+        "predictedAdvanceSec": 14.351,
+        "predictedRate": 0.998
+      }
+    },
+    "probeMarks": [
+      {
+        "name": "ready",
+        "t": 1177.2999999998137
+      },
+      {
+        "name": "fwd-start",
+        "t": 5517.5999999996275
+      },
+      {
+        "name": "fwd-end",
+        "t": 11873.799999999814
+      },
+      {
+        "name": "rev-start",
+        "t": 13387.399999999441
+      },
+      {
+        "name": "rev-end",
+        "t": 27760
+      }
+    ],
+    "probeTicksTotal": 1999
+  },
+  "forward": {
+    "samples": 12,
+    "sampleWallMs": [
+      1793495463883,
+      1793495464407,
+      1793495464910,
+      1793495465415,
+      1793495465926,
+      1793495466452,
+      1793495467014,
+      1793495467528,
+      1793495468033,
+      1793495468536,
+      1793495469039,
+      1793495469542
+    ],
+    "timeStart": 0,
+    "timeEnd": 5.7,
+    "statsEnd": {
+      "draw": 313,
+      "hold": 0,
+      "skip": 2,
+      "maxHoldAgeSec": 0,
+      "stale": false
+    },
+    "statsBeforePlay": {
+      "draw": 0,
+      "hold": 0,
+      "skip": 1,
+      "maxHoldAgeSec": 0,
+      "stale": false
+    },
+    "wallSec": 6.255,
+    "playheadDelta": 5.7,
+    "playheadRate": 0.9112709832134293,
+    "interpRate": 0.9930915371329879,
+    "holdDelta": 0,
+    "drawDelta": 313,
+    "samplesDetail": [
+      {
+        "t": 0,
+        "mean": 12.666666666668506,
+        "draw": 0,
+        "hold": 0,
+        "skip": 2
+      },
+      {
+        "t": 0.6,
+        "mean": 5,
+        "draw": 18,
+        "hold": 0,
+        "skip": 2
+      },
+      {
+        "t": 1.1,
+        "mean": 13,
+        "draw": 46,
+        "hold": 0,
+        "skip": 2
+      },
+      {
+        "t": 1.6,
+        "mean": 13,
+        "draw": 76,
+        "hold": 0,
+        "skip": 2
+      },
+      {
+        "t": 2.1,
+        "mean": 21,
+        "draw": 107,
+        "hold": 0,
+        "skip": 2
+      },
+      {
+        "t": 2.6,
+        "mean": 21,
+        "draw": 137,
+        "hold": 0,
+        "skip": 2
+      },
+      {
+        "t": 3.1,
+        "mean": 29,
+        "draw": 165,
+        "hold": 0,
+        "skip": 2
+      },
+      {
+        "t": 3.7,
+        "mean": 29,
+        "draw": 195,
+        "hold": 0,
+        "skip": 2
+      },
+      {
+        "t": 4.2,
+        "mean": 37,
+        "draw": 226,
+        "hold": 0,
+        "skip": 2
+      },
+      {
+        "t": 4.7,
+        "mean": 37,
+        "draw": 253,
+        "hold": 0,
+        "skip": 2
+      },
+      {
+        "t": 5.2,
+        "mean": 45,
+        "draw": 283,
+        "hold": 0,
+        "skip": 2
+      },
+      {
+        "t": 5.7,
+        "mean": 45,
+        "draw": 313,
+        "hold": 0,
+        "skip": 2
+      }
+    ]
+  },
+  "reverse": {
+    "samples": 28,
+    "timeStart": 29.6,
+    "timeEnd": 15.7,
+    "timeSeries": [
+      29.6,
+      29,
+      28.5,
+      28,
+      27.5,
+      27,
+      26.5,
+      26,
+      25.5,
+      25,
+      24.5,
+      24,
+      23.5,
+      22.9,
+      22.4,
+      21.9,
+      21.4,
+      20.8,
+      20.3,
+      19.8,
+      19.3,
+      18.8,
+      18.3,
+      17.8,
+      17.3,
+      16.7,
+      16.2,
+      15.7
+    ],
+    "centerMeans": [
+      241,
+      241,
+      241,
+      233,
+      233,
+      225,
+      217,
+      217,
+      208,
+      208,
+      200,
+      200,
+      192,
+      192,
+      184,
+      176,
+      176,
+      168,
+      168,
+      168,
+      159,
+      159,
+      151,
+      151,
+      143,
+      143,
+      135,
+      135
+    ],
+    "graySeconds": [
+      29,
+      29,
+      29,
+      28,
+      28,
+      27,
+      26,
+      26,
+      25,
+      25,
+      24,
+      24,
+      23,
+      23,
+      22,
+      21,
+      21,
+      20,
+      20,
+      20,
+      19,
+      19,
+      18,
+      18,
+      17,
+      17,
+      16,
+      16
+    ],
+    "samplesDetail": [
+      {
+        "t": 29.6,
+        "mean": 241,
+        "draw": 315,
+        "hold": 21,
+        "skip": 2
+      },
+      {
+        "t": 29,
+        "mean": 241,
+        "draw": 317,
+        "hold": 44,
+        "skip": 2
+      },
+      {
+        "t": 28.5,
+        "mean": 241,
+        "draw": 318,
+        "hold": 65,
+        "skip": 2
+      },
+      {
+        "t": 28,
+        "mean": 233,
+        "draw": 320,
+        "hold": 86,
+        "skip": 2
+      },
+      {
+        "t": 27.5,
+        "mean": 233,
+        "draw": 321,
+        "hold": 110,
+        "skip": 2
+      },
+      {
+        "t": 27,
+        "mean": 225,
+        "draw": 323,
+        "hold": 130,
+        "skip": 2
+      },
+      {
+        "t": 26.5,
+        "mean": 217,
+        "draw": 325,
+        "hold": 152,
+        "skip": 2
+      },
+      {
+        "t": 26,
+        "mean": 217,
+        "draw": 328,
+        "hold": 172,
+        "skip": 2
+      },
+      {
+        "t": 25.5,
+        "mean": 208,
+        "draw": 330,
+        "hold": 195,
+        "skip": 2
+      },
+      {
+        "t": 25,
+        "mean": 208,
+        "draw": 333,
+        "hold": 217,
+        "skip": 2
+      },
+      {
+        "t": 24.5,
+        "mean": 200,
+        "draw": 336,
+        "hold": 239,
+        "skip": 2
+      },
+      {
+        "t": 24,
+        "mean": 200,
+        "draw": 339,
+        "hold": 260,
+        "skip": 2
+      },
+      {
+        "t": 23.5,
+        "mean": 192,
+        "draw": 343,
+        "hold": 280,
+        "skip": 2
+      },
+      {
+        "t": 22.9,
+        "mean": 192,
+        "draw": 346,
+        "hold": 304,
+        "skip": 2
+      },
+      {
+        "t": 22.4,
+        "mean": 184,
+        "draw": 351,
+        "hold": 327,
+        "skip": 2
+      },
+      {
+        "t": 21.9,
+        "mean": 176,
+        "draw": 356,
+        "hold": 347,
+        "skip": 2
+      },
+      {
+        "t": 21.4,
+        "mean": 176,
+        "draw": 360,
+        "hold": 365,
+        "skip": 2
+      },
+      {
+        "t": 20.8,
+        "mean": 168,
+        "draw": 365,
+        "hold": 383,
+        "skip": 2
+      },
+      {
+        "t": 20.3,
+        "mean": 168,
+        "draw": 374,
+        "hold": 400,
+        "skip": 2
+      },
+      {
+        "t": 19.8,
+        "mean": 168,
+        "draw": 380,
+        "hold": 416,
+        "skip": 2
+      },
+      {
+        "t": 19.3,
+        "mean": 159,
+        "draw": 381,
+        "hold": 438,
+        "skip": 2
+      },
+      {
+        "t": 18.8,
+        "mean": 159,
+        "draw": 383,
+        "hold": 460,
+        "skip": 2
+      },
+      {
+        "t": 18.3,
+        "mean": 151,
+        "draw": 385,
+        "hold": 483,
+        "skip": 2
+      },
+      {
+        "t": 17.8,
+        "mean": 151,
+        "draw": 386,
+        "hold": 507,
+        "skip": 2
+      },
+      {
+        "t": 17.3,
+        "mean": 143,
+        "draw": 388,
+        "hold": 530,
+        "skip": 2
+      },
+      {
+        "t": 16.7,
+        "mean": 143,
+        "draw": 390,
+        "hold": 550,
+        "skip": 2
+      },
+      {
+        "t": 16.2,
+        "mean": 135,
+        "draw": 392,
+        "hold": 573,
+        "skip": 2
+      },
+      {
+        "t": 15.7,
+        "mean": 135,
+        "draw": 394,
+        "hold": 591,
+        "skip": 2
+      }
+    ],
+    "statsStart": {
+      "draw": 313,
+      "hold": 0,
+      "skip": 2,
+      "maxHoldAgeSec": 0,
+      "stale": false
+    },
+    "statsEnd": {
+      "draw": 394,
+      "hold": 591,
+      "skip": 2,
+      "maxHoldAgeSec": 0.3999999999999986,
+      "stale": false
+    },
+    "holdDelta": 591,
+    "drawDelta": 81,
+    "wallSec": 13.821,
+    "fps": 5.860646841762535,
+    "blackSamplesAfterWarmup": 0,
+    "reverseBadgeSeen": true,
+    "holdBadgeSeen": true
+  },
+  "checks": {
+    "reversePlaybackCorrect": true,
+    "holdFiredInApp": true,
+    "noBlackInReverse": true
+  },
+  "verdict": "PASS"
+}

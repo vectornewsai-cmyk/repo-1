@@ -1,0 +1,67 @@
+{
+  "errors": [
+    "single timeout 20s, decoder.state=configured"
+  ],
+  "support": {
+    "avc1.64001F/prefer-hardware": false,
+    "avc1.64001F/prefer-software": true,
+    "avc1.64001f/prefer-hardware": false,
+    "avc1.64001f/prefer-software": true,
+    "avc1.4D401F/prefer-hardware": false,
+    "avc1.4D401F/prefer-software": true,
+    "avc1.42001F/prefer-hardware": false,
+    "avc1.42001F/prefer-software": true
+  },
+  "single": {
+    "queueToOutputMs": 20005.2,
+    "flushWallMs": 20010.6
+  },
+  "sparse": {
+    "label": "sparse-1gop",
+    "framesRequested": 300,
+    "framesDecoded": 300,
+    "decodeWallSec": 1.081,
+    "decodeFps": 277.4,
+    "latP50ms": 479.8,
+    "latP95ms": 995.1,
+    "latMaxMs": 1078.6,
+    "presentReverseSec": 3.589,
+    "presentReverseFps": 83.6,
+    "cacheBytesOneGop": 414720000,
+    "error": null
+  },
+  "dense": {
+    "label": "dense-3gop",
+    "framesRequested": 90,
+    "framesDecoded": 90,
+    "decodeWallSec": 0.382,
+    "decodeFps": 235.8,
+    "latP50ms": 200.5,
+    "latP95ms": 324,
+    "latMaxMs": 333.3,
+    "presentReverseSec": 1.201,
+    "presentReverseFps": 74.9,
+    "cacheBytesOneGop": 124416000,
+    "error": null
+  },
+  "mem": {
+    "jsHeapUsedMB": 0.7,
+    "jsHeapTotalMB": 1.3
+  },
+  "hasVideoDecoder": true,
+  "files": {
+    "sparse": {
+      "bytes": 41014,
+      "nalCount": 907,
+      "frameCount": 900
+    },
+    "dense": {
+      "bytes": 46238,
+      "nalCount": 961,
+      "frameCount": 900
+    }
+  },
+  "memAfter": {
+    "jsHeapUsedMB": 1.7
+  }
+}
