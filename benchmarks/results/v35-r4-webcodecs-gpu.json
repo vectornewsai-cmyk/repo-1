@@ -1,0 +1,1192 @@
+{
+  "session": {
+    "startedAt": "2026-11-01T19:19:20.987Z",
+    "repo": "/home/hatch/workspace/repo-1",
+    "scratch": "/home/hatch/workspace/tmp-round35-r4/wc",
+    "display": ":98",
+    "port": 4198,
+    "maxAttemptsPerCell": 5,
+    "quietLoad1Threshold": 2,
+    "nproc": 4,
+    "memTotalMB": 7934,
+    "chrome": {
+      "product": "Chrome/156.0.8078.4",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "jsVersion": "15.6.75"
+    },
+    "finishedAt": "2026-11-01T19:21:11.847Z"
+  },
+  "fixtures": {
+    "flat": {
+      "srcRealpath": "/home/hatch/workspace/tmp-round27-k4/sparse-gop-flat.mp4",
+      "bytes": 45369,
+      "sha256": "a4ea20eb67bb6b214eb38c8aee8f2a30f28d698d714265ab8049716e820bd00e",
+      "seq": 2,
+      "op": "load",
+      "fixture": "flat",
+      "sampleCount": 900,
+      "keyIndices": [
+        0,
+        300,
+        600
+      ],
+      "width": 1280,
+      "height": 720,
+      "codec": "avc1.64001F",
+      "codecSupport": {
+        "seq": 3,
+        "op": "supportCodec",
+        "codec": "avc1.64001F",
+        "configs": {
+          "prefer-software": {
+            "supported": true
+          },
+          "prefer-hardware": {
+            "supported": false
+          },
+          "default": {
+            "supported": true
+          }
+        }
+      },
+      "swAttempts": {
+        "attempts": 5,
+        "quietCount": 0,
+        "quietAchieved": false
+      },
+      "hwAttempts": {
+        "attempts": 5,
+        "quietCount": 0,
+        "quietAchieved": false
+      }
+    },
+    "noise": {
+      "srcRealpath": "/home/hatch/workspace/tmp-round34-q3/wc/noise-30s.mp4",
+      "bytes": 210771214,
+      "sha256": "d397fd77173ec2d0bd8e2ab628d64e49964e6500685a45994d3e92397dd5b9ef",
+      "seq": 16,
+      "op": "load",
+      "fixture": "noise",
+      "sampleCount": 900,
+      "keyIndices": [
+        0,
+        300,
+        600
+      ],
+      "width": 1280,
+      "height": 720,
+      "codec": "avc1.64001F",
+      "codecSupport": {
+        "seq": 17,
+        "op": "supportCodec",
+        "codec": "avc1.64001F",
+        "configs": {
+          "prefer-software": {
+            "supported": true
+          },
+          "prefer-hardware": {
+            "supported": false
+          },
+          "default": {
+            "supported": true
+          }
+        }
+      },
+      "swAttempts": {
+        "attempts": 5,
+        "quietCount": 0,
+        "quietAchieved": false
+      },
+      "hwAttempts": {
+        "attempts": 5,
+        "quietCount": 0,
+        "quietAchieved": false
+      }
+    }
+  },
+  "build": {
+    "mp4DemuxTsSha256": "5fe0a3fe133cdfbc501ef5ddf9f767265e3b1fc6c35eb2e7d6b5608cae1131a7",
+    "reverseWebcodecsTsSha256": "3b462eb47fb9ef98dee77b53bb19f81b234b94b7baa30d2868fbd50176b39b5d",
+    "mp4DemuxJsSha256": "60805c6468deeeec25b2eb3d8d3d7408422e7afe725dec61d40922d67f309a4c",
+    "reverseWebcodecsJsSha256": "5e6c56f7dee8283a27ba55d316573cabc8359dae97046ecdc8aabb57c433fc4c",
+    "importSpecifierRewritten": true
+  },
+  "gpu": {
+    "error": "chrome://gpu không trả innerText >200 ký tự",
+    "innerTextLength": 0,
+    "innerText": null,
+    "innerTextTruncated": false,
+    "keyLines": {
+      "videoAcceleration": [],
+      "glRenderer": [],
+      "featureStatus": []
+    },
+    "devDri": {
+      "exists": false,
+      "entries": []
+    },
+    "gpuProcessCmdlines": [
+      "6257 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=gpu-process --gpu-recent-crash-count=0 --no-sandbox --disable-dev-shm-usage --ozone-platform=x11 --crashpad-handler-pid=6230 --enable-crash-reporter=, --user-data-dir=/home/hatch/workspace/tmp-round35-r4/wc/chrome-profile --change-stack-guard-on-fork=enable --gpu-preferences=YAAAAAAAAAAgAQAEAAAAAAAAAAAAAGAASAAAAAAAAAABAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAwAAAAAAAAAAEAAAAAAAAACAAAAAAAAAAMAAA"
+    ]
+  },
+  "support": {
+    "seq": 1,
+    "op": "support",
+    "hasVideoDecoder": true,
+    "hasVideoFrame": true,
+    "webgl": {
+      "renderer": "no-webgl-context",
+      "vendor": null
+    },
+    "codecAvc1_64001F": {
+      "prefer-software": {
+        "supported": true
+      },
+      "prefer-hardware": {
+        "supported": false
+      },
+      "default": {
+        "supported": true
+      }
+    }
+  },
+  "runs": [
+    {
+      "kind": "warmup",
+      "fixture": "flat",
+      "preferHardware": false,
+      "seq": 4,
+      "op": "decode",
+      "from": 600,
+      "to": 899,
+      "decoded": 300,
+      "expected": 300,
+      "wallSec": 0.39,
+      "fps": 769.6,
+      "cacheSize": 300,
+      "loadLabel": "warmup-not-counted"
+    },
+    {
+      "kind": "measure",
+      "fixture": "flat",
+      "preferHardware": false,
+      "attempt": 1,
+      "preLoad": {
+        "loadavg": [
+          1.9,
+          1.88,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:55.726Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1550,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          1.9,
+          1.88,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:56.238Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1458,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 5,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 300,
+      "expected": 300,
+      "wallSec": 0.219,
+      "fps": 1371.7,
+      "cacheSize": 300
+    },
+    {
+      "kind": "measure",
+      "fixture": "flat",
+      "preferHardware": false,
+      "attempt": 2,
+      "preLoad": {
+        "loadavg": [
+          1.9,
+          1.88,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:56.250Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1457,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          1.9,
+          1.88,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:56.762Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1410,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 6,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 300,
+      "expected": 300,
+      "wallSec": 0.307,
+      "fps": 976.2,
+      "cacheSize": 300
+    },
+    {
+      "kind": "measure",
+      "fixture": "flat",
+      "preferHardware": false,
+      "attempt": 3,
+      "preLoad": {
+        "loadavg": [
+          1.9,
+          1.88,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:56.770Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1410,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          1.9,
+          1.88,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:57.279Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1433,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 7,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 300,
+      "expected": 300,
+      "wallSec": 0.285,
+      "fps": 1051.5,
+      "cacheSize": 300
+    },
+    {
+      "kind": "measure",
+      "fixture": "flat",
+      "preferHardware": false,
+      "attempt": 4,
+      "preLoad": {
+        "loadavg": [
+          1.9,
+          1.88,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:57.286Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1433,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          1.9,
+          1.88,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:57.796Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1392,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 8,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 300,
+      "expected": 300,
+      "wallSec": 0.273,
+      "fps": 1097.3,
+      "cacheSize": 300
+    },
+    {
+      "kind": "measure",
+      "fixture": "flat",
+      "preferHardware": false,
+      "attempt": 5,
+      "preLoad": {
+        "loadavg": [
+          1.9,
+          1.88,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:57.804Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1392,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          1.9,
+          1.88,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:58.314Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1414,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 9,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 300,
+      "expected": 300,
+      "wallSec": 0.281,
+      "fps": 1069.1,
+      "cacheSize": 300
+    },
+    {
+      "kind": "measure",
+      "fixture": "flat",
+      "preferHardware": true,
+      "attempt": 1,
+      "preLoad": {
+        "loadavg": [
+          1.9,
+          1.88,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:58.322Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1414,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          1.9,
+          1.88,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:58.831Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [
+          "6563:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6565:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6567:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6568:node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run"
+        ],
+        "memAvailableMB": 1368,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 10,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 0,
+      "expected": 300,
+      "wallSec": 0.011,
+      "fps": 0,
+      "cacheSize": 0
+    },
+    {
+      "kind": "measure",
+      "fixture": "flat",
+      "preferHardware": true,
+      "attempt": 2,
+      "preLoad": {
+        "loadavg": [
+          1.9,
+          1.88,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:58.841Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [
+          "6563:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6565:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6567:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6568:node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run"
+        ],
+        "memAvailableMB": 1366,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          1.91,
+          1.89,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:59.354Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [
+          "6563:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6565:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6567:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6568:node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run"
+        ],
+        "memAvailableMB": 1350,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "2 Chrome ngoài cây probe",
+        "4 tiến trình nặng khác"
+      ],
+      "seq": 11,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 0,
+      "expected": 300,
+      "wallSec": 0.005,
+      "fps": 0,
+      "cacheSize": 0
+    },
+    {
+      "kind": "measure",
+      "fixture": "flat",
+      "preferHardware": true,
+      "attempt": 3,
+      "preLoad": {
+        "loadavg": [
+          1.91,
+          1.89,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:59.362Z",
+        "chromeTotal": 17,
+        "chromeOwnTree": 15,
+        "chromeOther": 2,
+        "heavyOther": [
+          "6563:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6565:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6567:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6568:node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run"
+        ],
+        "memAvailableMB": 1350,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          1.91,
+          1.89,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:59.879Z",
+        "chromeTotal": 25,
+        "chromeOwnTree": 15,
+        "chromeOther": 10,
+        "heavyOther": [
+          "6563:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6565:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6567:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6568:node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run"
+        ],
+        "memAvailableMB": 1280,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "2 Chrome ngoài cây probe",
+        "4 tiến trình nặng khác"
+      ],
+      "seq": 12,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 0,
+      "expected": 300,
+      "wallSec": 0.002,
+      "fps": 0,
+      "cacheSize": 0
+    },
+    {
+      "kind": "measure",
+      "fixture": "flat",
+      "preferHardware": true,
+      "attempt": 4,
+      "preLoad": {
+        "loadavg": [
+          1.91,
+          1.89,
+          1.03
+        ],
+        "at": "2026-11-01T19:19:59.890Z",
+        "chromeTotal": 26,
+        "chromeOwnTree": 15,
+        "chromeOther": 11,
+        "heavyOther": [
+          "6563:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6565:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6567:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6568:node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run"
+        ],
+        "memAvailableMB": 1279,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          1.91,
+          1.89,
+          1.03
+        ],
+        "at": "2026-11-01T19:20:00.416Z",
+        "chromeTotal": 29,
+        "chromeOwnTree": 15,
+        "chromeOther": 14,
+        "heavyOther": [
+          "6563:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6565:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6567:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6568:node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run"
+        ],
+        "memAvailableMB": 1231,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "11 Chrome ngoài cây probe",
+        "4 tiến trình nặng khác"
+      ],
+      "seq": 13,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 0,
+      "expected": 300,
+      "wallSec": 0.003,
+      "fps": 0,
+      "cacheSize": 0
+    },
+    {
+      "kind": "measure",
+      "fixture": "flat",
+      "preferHardware": true,
+      "attempt": 5,
+      "preLoad": {
+        "loadavg": [
+          1.91,
+          1.89,
+          1.03
+        ],
+        "at": "2026-11-01T19:20:00.490Z",
+        "chromeTotal": 29,
+        "chromeOwnTree": 15,
+        "chromeOther": 14,
+        "heavyOther": [
+          "6563:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6565:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6567:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6568:node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run"
+        ],
+        "memAvailableMB": 1196,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          1.91,
+          1.89,
+          1.03
+        ],
+        "at": "2026-11-01T19:20:01.004Z",
+        "chromeTotal": 31,
+        "chromeOwnTree": 15,
+        "chromeOther": 16,
+        "heavyOther": [
+          "6563:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6565:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6567:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6568:node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run"
+        ],
+        "memAvailableMB": 1188,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "14 Chrome ngoài cây probe",
+        "4 tiến trình nặng khác"
+      ],
+      "seq": 14,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 0,
+      "expected": 300,
+      "wallSec": 0.006,
+      "fps": 0,
+      "cacheSize": 0
+    },
+    {
+      "kind": "warmup",
+      "fixture": "noise",
+      "preferHardware": false,
+      "seq": 18,
+      "op": "decode",
+      "from": 600,
+      "to": 899,
+      "decoded": 300,
+      "expected": 300,
+      "wallSec": 13.303,
+      "fps": 22.6,
+      "cacheSize": 300,
+      "loadLabel": "warmup-not-counted"
+    },
+    {
+      "kind": "measure",
+      "fixture": "noise",
+      "preferHardware": false,
+      "attempt": 1,
+      "preLoad": {
+        "loadavg": [
+          2.48,
+          2.02,
+          1.1
+        ],
+        "at": "2026-11-01T19:20:19.126Z",
+        "chromeTotal": 29,
+        "chromeOwnTree": 11,
+        "chromeOther": 18,
+        "heavyOther": [
+          "6563:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6565:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6567:/bin/bash --norc --noprofile -c umask 0007; cp -r ~/workspace/tmp-round35-r2/frozen-dist ~/workspace/tmp-round35-r2/inva",
+          "6568:node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run"
+        ],
+        "memAvailableMB": 768,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          2.57,
+          2.06,
+          1.12
+        ],
+        "at": "2026-11-01T19:20:33.902Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1728,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 2.48 >= 2",
+        "18 Chrome ngoài cây probe",
+        "4 tiến trình nặng khác"
+      ],
+      "seq": 19,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 300,
+      "expected": 300,
+      "wallSec": 14.256,
+      "fps": 21,
+      "cacheSize": 300
+    },
+    {
+      "kind": "measure",
+      "fixture": "noise",
+      "preferHardware": false,
+      "attempt": 2,
+      "preLoad": {
+        "loadavg": [
+          2.57,
+          2.06,
+          1.12
+        ],
+        "at": "2026-11-01T19:20:33.910Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1728,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          2.48,
+          2.05,
+          1.13
+        ],
+        "at": "2026-11-01T19:20:42.498Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1460,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 2.57 >= 2",
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 20,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 300,
+      "expected": 300,
+      "wallSec": 8.239,
+      "fps": 36.4,
+      "cacheSize": 300
+    },
+    {
+      "kind": "measure",
+      "fixture": "noise",
+      "preferHardware": false,
+      "attempt": 3,
+      "preLoad": {
+        "loadavg": [
+          2.48,
+          2.05,
+          1.13
+        ],
+        "at": "2026-11-01T19:20:42.506Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1460,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          2.4,
+          2.05,
+          1.14
+        ],
+        "at": "2026-11-01T19:20:51.101Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1407,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 2.48 >= 2",
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 21,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 300,
+      "expected": 300,
+      "wallSec": 8.326,
+      "fps": 36,
+      "cacheSize": 300
+    },
+    {
+      "kind": "measure",
+      "fixture": "noise",
+      "preferHardware": false,
+      "attempt": 4,
+      "preLoad": {
+        "loadavg": [
+          2.4,
+          2.05,
+          1.14
+        ],
+        "at": "2026-11-01T19:20:51.110Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1407,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          2.34,
+          2.05,
+          1.15
+        ],
+        "at": "2026-11-01T19:20:59.684Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1309,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 2.40 >= 2",
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 22,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 300,
+      "expected": 300,
+      "wallSec": 8.103,
+      "fps": 37,
+      "cacheSize": 300
+    },
+    {
+      "kind": "measure",
+      "fixture": "noise",
+      "preferHardware": false,
+      "attempt": 5,
+      "preLoad": {
+        "loadavg": [
+          2.34,
+          2.05,
+          1.15
+        ],
+        "at": "2026-11-01T19:20:59.692Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1309,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          2.39,
+          2.07,
+          1.16
+        ],
+        "at": "2026-11-01T19:21:08.241Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1260,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 2.34 >= 2",
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 23,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 300,
+      "expected": 300,
+      "wallSec": 8.425,
+      "fps": 35.6,
+      "cacheSize": 300
+    },
+    {
+      "kind": "measure",
+      "fixture": "noise",
+      "preferHardware": true,
+      "attempt": 1,
+      "preLoad": {
+        "loadavg": [
+          2.39,
+          2.07,
+          1.16
+        ],
+        "at": "2026-11-01T19:21:08.249Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1260,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          2.39,
+          2.07,
+          1.16
+        ],
+        "at": "2026-11-01T19:21:08.759Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1190,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 2.39 >= 2",
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 24,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 0,
+      "expected": 300,
+      "wallSec": 0.065,
+      "fps": 0,
+      "cacheSize": 0
+    },
+    {
+      "kind": "measure",
+      "fixture": "noise",
+      "preferHardware": true,
+      "attempt": 2,
+      "preLoad": {
+        "loadavg": [
+          2.39,
+          2.07,
+          1.16
+        ],
+        "at": "2026-11-01T19:21:08.768Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1190,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          2.2,
+          2.03,
+          1.15
+        ],
+        "at": "2026-11-01T19:21:09.282Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1056,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 2.39 >= 2",
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 25,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 0,
+      "expected": 300,
+      "wallSec": 0.086,
+      "fps": 0,
+      "cacheSize": 0
+    },
+    {
+      "kind": "measure",
+      "fixture": "noise",
+      "preferHardware": true,
+      "attempt": 3,
+      "preLoad": {
+        "loadavg": [
+          2.2,
+          2.03,
+          1.15
+        ],
+        "at": "2026-11-01T19:21:09.290Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1056,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          2.2,
+          2.03,
+          1.15
+        ],
+        "at": "2026-11-01T19:21:09.798Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 937,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 2.20 >= 2",
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 26,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 0,
+      "expected": 300,
+      "wallSec": 0.105,
+      "fps": 0,
+      "cacheSize": 0
+    },
+    {
+      "kind": "measure",
+      "fixture": "noise",
+      "preferHardware": true,
+      "attempt": 4,
+      "preLoad": {
+        "loadavg": [
+          2.2,
+          2.03,
+          1.15
+        ],
+        "at": "2026-11-01T19:21:09.806Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 936,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          2.2,
+          2.03,
+          1.15
+        ],
+        "at": "2026-11-01T19:21:10.315Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 824,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 2.20 >= 2",
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 27,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 0,
+      "expected": 300,
+      "wallSec": 0.185,
+      "fps": 0,
+      "cacheSize": 0
+    },
+    {
+      "kind": "measure",
+      "fixture": "noise",
+      "preferHardware": true,
+      "attempt": 5,
+      "preLoad": {
+        "loadavg": [
+          2.2,
+          2.03,
+          1.15
+        ],
+        "at": "2026-11-01T19:21:10.322Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 824,
+        "error": null
+      },
+      "postLoad": {
+        "loadavg": [
+          2.2,
+          2.03,
+          1.15
+        ],
+        "at": "2026-11-01T19:21:10.832Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 749,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 2.20 >= 2",
+        "2 Chrome ngoài cây probe"
+      ],
+      "seq": 28,
+      "op": "decode",
+      "from": 300,
+      "to": 599,
+      "decoded": 0,
+      "expected": 300,
+      "wallSec": 0.093,
+      "fps": 0,
+      "cacheSize": 0
+    }
+  ],
+  "errors": [],
+  "quietSummary": {}
+}

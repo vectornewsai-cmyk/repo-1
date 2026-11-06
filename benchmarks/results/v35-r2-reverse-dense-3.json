@@ -1,0 +1,124 @@
+{
+  "protocol": "q6-measure-protocol v2 (Round 33 §3.2 / P5 §7.5; v1→v2: gap-count tuyệt đối đổi thành lost-rate, xem header)",
+  "runAt": "2026-11-01T19:16:24.983Z",
+  "bundle": "index-DgObvvhC.js",
+  "video": "dense-gop-flat.mp4",
+  "n2Verdict": "PASS",
+  "load": {
+    "atStart": "2.76 1.38 0.64",
+    "beforeFwd": "3.82 1.62 0.72",
+    "beforeRev": "4.40 1.81 0.79",
+    "atEnd": "3.56 1.76 0.79"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 2.65,
+          "load5": 1.33,
+          "load15": 0.62,
+          "raw": "2.65 1.33 0.62"
+        },
+        "top": [
+          "4752 50.0 ps ps -eo pid,pcpu,comm,args --sort=-pcpu",
+          "4552 39.2 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --no-sandbox --remote-debugging-pipe --no-first-run --no-default-browser-c",
+          "4739 39.1 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "4670 32.3 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --gpu-client-id=7 --crashpad-handler-pid=4572 --enable-cra",
+          "4658 19.0 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --top-chrome-webui --gpu-client-id=5 --crashpad-handler-pi",
+          "4599 9.3 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=gpu-process --gpu-recent-crash-count=0 --no-sandbox --disable-dev-sh",
+          "4603 5.4 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US",
+          "4541 4.9 MainThread node /home/hatch/workspace/repo-1/apps/web/scripts/clicktest-round31-n2-reverse-fps-pipe.mjs"
+        ],
+        "chromePre": 14
+      },
+      "post": {
+        "loadavg": {
+          "load1": 3.56,
+          "load5": 1.76,
+          "load15": 0.79,
+          "raw": "3.56 1.76 0.79"
+        },
+        "top": [
+          "5076 51.3 MainThread node /home/hatch/workspace/repo-1/node_modules/.bin/tsc --noEmit",
+          "4871 36.8 chrome [chrome] <defunct>",
+          "5061 6.3 npm exec tsc -- npm exec tsc --noEmit",
+          "4795 5.3 chrome [chrome] <defunct>",
+          "67 4.6 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2187",
+          "4859 1.6 chrome [chrome] <defunct>",
+          "5034 1.2 chrome [chrome] <defunct>",
+          "4796 0.6 chrome [chrome] <defunct>"
+        ],
+        "chromePost": 2
+      },
+      "chromePre": 14,
+      "chromePost": 2
+    }
+  },
+  "forward": {
+    "interpRate": 1.002345915973555,
+    "playheadRate": 0.881592947256422,
+    "drawDelta": 231,
+    "holdDelta": 0
+  },
+  "reverse": {
+    "fps": 6.088485996482208,
+    "drawDelta": 90,
+    "holdDelta": 260,
+    "wallSec": 14.782,
+    "blackSamplesAfterWarmup": 0
+  },
+  "checks": {
+    "reversePlaybackCorrect": true,
+    "holdFiredInApp": true,
+    "noBlackInReverse": true
+  },
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "load1 trước-xuôi 3.82 ≥ 2",
+    "load1 trước-ngược 4.4 ≥ 2",
+    "load1 cuối lượt 3.56 ≥ 2",
+    "predictedRate xuôi (trừ tick biên) 0.887 < 0.98 (mất do gap >100ms, trừ tick biên: 0.676s / 1 gap)",
+    "có 14 tiến trình Chrome trước lượt (luồng browser khác)"
+  ],
+  "signals": {
+    "load1": {
+      "beforeFwd": 3.82,
+      "beforeRev": 4.4,
+      "atEnd": 3.56
+    },
+    "forwardInterpRate": 1.002345915973555,
+    "rafForward": {
+      "gapP50": 0.0081,
+      "gapP95": 0.0532,
+      "gapMax": 1.6602,
+      "countOver100ms": 2,
+      "exclFirstOver100ms": 1,
+      "exclFirstLostSec": 0.676,
+      "exclFirstPredictedRate": 0.887,
+      "predictedRate": 0.902
+    },
+    "rafReverse": {
+      "gapP50": 0.01,
+      "gapP95": 0.0746,
+      "predictedRate": 1.003
+    }
+  },
+  "comparability": "CHỈ so sánh hồi quy với các lượt CÙNG loadLabel (và cùng bundle, hoặc A/B cùng phiên). Số under-load KHÔNG được dùng làm baseline quiet; số quiet chỉ có giá trị khi đủ 3 lượt/GOP trong cùng cửa sổ quiet.",
+  "n2Log": "/home/hatch/workspace/tmp-round35-r2/dense-3/q6-n2.log",
+  "n2Exit": 0,
+  "frozenDist": {
+    "valid": true,
+    "validity": "VALID",
+    "problems": [],
+    "dir": "/home/hatch/workspace/tmp-round35-r2/frozen-dist",
+    "bundle": "index-DgObvvhC.js",
+    "manifestBefore": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "manifestAfter": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "snapManifest": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "fileCount": 254,
+    "bundleSha256": "1f4ebcc7ae1ceff7ebcbfa9043ea6e829e89a689587bad9b8ba3b2fa382c3ca7"
+  },
+  "validity": "VALID — dist đóng băng không đổi trước/sau, bundle và snapshot khớp; lượt này đủ điều kiện 'cùng bundle' cho baseline (còn cần đủ 3 lượt quiet/GOP).",
+  "usableAsBaseline": false
+}

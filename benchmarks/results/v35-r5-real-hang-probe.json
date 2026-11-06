@@ -1,0 +1,168 @@
+{
+  "date": "2026-11-01T19:18:09.911Z",
+  "allPass": true,
+  "chromePid": 5643,
+  "cdpPort": 19435,
+  "servePort": 19436,
+  "dist": {
+    "dir": "/home/hatch/workspace/repo-1/apps/web/dist",
+    "bundle": "index-DgObvvhC.js",
+    "sha256_16": "1f4ebcc7ae1ceff7",
+    "mtime": "2026-11-01T13:28:48.403Z",
+    "bundlePath": "/home/hatch/workspace/repo-1/apps/web/dist/assets/index-DgObvvhC.js",
+    "note": "Dist đã có trên đĩa lúc chạy probe (probe không tự build để tránh đua với luồng khác); sha/mtime ghi để đối chiếu, không claim là build của R5."
+  },
+  "hang": {
+    "method": "Runtime.evaluate",
+    "timeoutMs": 5000,
+    "wallMs": 5013,
+    "rejectError": "cdp timeout Runtime.evaluate",
+    "snapshotFile": "cdp-hang-20261101_191809880-Runtime.evaluate-5643.json",
+    "snapshot": {
+      "capturedAt": "2026-11-01T19:18:09.880Z",
+      "method": "Runtime.evaluate",
+      "timeoutMs": 5000,
+      "proc": {
+        "pid": 5643,
+        "exitCode": null,
+        "signalCode": null,
+        "killed": false
+      },
+      "pendingCount": 0,
+      "ps": "   5643    5635 Sl         00:06 17.8  2.8 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --headless=new --no-sandbox --disable-dev-shm-usage --remote-debugging-port=19435 --user-data-dir=/tmp/r5-chrome-uCkHEU about:blank\n   5645       1 Sl         00:06  0.0  0.0 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome_crashpad_handler --monitor-self --monitor-self-annotation=ptype=crashpad-handler --user-stream-region=4,65568 --database=/home/hatch/.config/google-chrome-for-testing/Crash Reports --annotation=lsb-release=Ubuntu 24.04.5 LTS --annotation=plat=Linux --annotation=prod=Chrome_Linux --annotation=ver=156.0.8078.4 --initial-client-fd=7 --shared-client-connection\n   5647       1 S          00:06  0.0  0.0 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome_crashpad_handler --no-periodic-tasks --monitor-self-annotation=ptype=crashpad-handler --database=/home/hatch/.config/google-chrome-for-testing/Crash Reports --annotation=lsb-release=Ubuntu 24.04.5 LTS --annotation=plat=Linux --annotation=prod=Chrome_Linux --annotation=ver=156.0.8078.4 --initial-client-fd=4 --shared-client-connection\n   5650    5643 S          00:06  0.4  0.9 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=zygote --no-zygote-sandbox --no-sandbox --headless=new --crashpad-handler-pid=5645 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/r5-chrome-uCkHEU --change-stack-guard-on-fork=enable --no-first-run --ozone-platform=headless --ozone-override-screen-size=800,600 --use-angle=swiftshader-webgl\n   5651    5643 S          00:06  0.6  0.9 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=zygote --no-sandbox --headless=new --crashpad-handler-pid=5645 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/r5-chrome-uCkHEU --change-stack-guard-on-fork=enable --no-first-run --ozone-platform=headless --ozone-override-screen-size=800,600 --use-angle=swiftshader-webgl\n   5672    5650 Sl         00:06  3.5  1.0 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=gpu-process --gpu-recent-crash-count=0 --no-sandbox --disable-dev-shm-usage --headless=new --ozone-platform=headless --use-angle=swiftshader-webgl --crashpad-handler-pid=5645 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/r5-chrome-uCkHEU --change-stack-guard-on-fork=enable --gpu-preferences=YAAAAAAAAAAgAAAEAAAAAAAAAAAAAGAASAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAMAAAAAQAAAAAAAAAAAAAACAAAAAAAAAAIAAAAAAAAAA== --shared-files --field-trial-handle=3,i,8350631573879395125,4050401084754733947,262144 --disable-features=PaintHolding --variations-seed-version --pseudonymization-salt-handle=7,i,8780278797947364863,5875776736537070373,4 --trace-process-track-uuid=3190708988185955192\n   5673    5643 Sl         00:06  2.1  1.4 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --no-sandbox --disable-dev-shm-usage --use-angle=swiftshader-webgl --crashpad-handler-pid=5645 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/r5-chrome-uCkHEU --change-stack-guard-on-fork=enable --shared-files=v8_context_snapshot_data:100 --field-trial-handle=3,i,8350631573879395125,4050401084754733947,262144 --disable-features=PaintHolding --variations-seed-version --pseudonymization-salt-handle=7,i,8780278797947364863,5875776736537070373,4 --trace-process-track-uuid=3190708989122997041\n   5699    5651 Sl         00:06  0.0  0.6 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=storage.mojom.StorageService --lang=en-US --service-sandbox-type=utility --no-sandbox --disable-dev-shm-usage --use-angle=swiftshader-webgl --crashpad-handler-pid=5645 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/r5-chrome-uCkHEU --change-s",
+      "bundle": {
+        "name": "index-DgObvvhC.js",
+        "sha256_16": "1f4ebcc7ae1ceff7",
+        "status": "captured",
+        "dist": "/home/hatch/workspace/repo-1/apps/web/dist"
+      },
+      "extra": {
+        "transport": "websocket",
+        "port": 19436,
+        "distDir": "/home/hatch/workspace/repo-1/apps/web/dist"
+      }
+    }
+  },
+  "derror": {
+    "unknownMethodError": "{\"code\":-32601,\"message\":\"'Bogus.noSuchMethod' wasn't found\"}",
+    "invalidParamsError": "{\"code\":-32602,\"message\":\"Invalid parameters\",\"data\":\"Failed to deserialize params.expression - BINDINGS: string value expected at position 19\"}"
+  },
+  "checks": {
+    "bundle.distOnDisk": {
+      "pass": true,
+      "detail": "index-DgObvvhC.js sha=1f4ebcc7ae1ceff7 source=index-entry"
+    },
+    "chrome.jsonUp": {
+      "pass": true,
+      "detail": "6 targets"
+    },
+    "t1.normalPath": {
+      "pass": true,
+      "detail": "targets=5 pending=0"
+    },
+    "t2.derrorRejectsVerbatim": {
+      "pass": true,
+      "detail": "{\"code\":-32601,\"message\":\"'Bogus.noSuchMethod' wasn't found\"}"
+    },
+    "t2b.invalidParamsRejects": {
+      "pass": true,
+      "detail": "{\"code\":-32602,\"message\":\"Invalid parameters\",\"data\":\"Failed to deserialize params.expression - BINDINGS: string value expected at position 19\"}"
+    },
+    "t3.bundleActuallyLoaded": {
+      "pass": true,
+      "detail": "resource entries chứa index-DgObvvhC.js"
+    },
+    "t3.realHangRejectsTimeout": {
+      "pass": true,
+      "detail": "cdp timeout Runtime.evaluate"
+    },
+    "t3.timeoutWallApprox": {
+      "pass": true,
+      "detail": "5013ms (timeout đặt 5000ms)"
+    },
+    "t3.exactlyOneNewSnapshot": {
+      "pass": true,
+      "detail": "cdp-hang-20261101_191809880-Runtime.evaluate-5643.json"
+    },
+    "t3.snapshotFields": {
+      "pass": true,
+      "detail": "method=Runtime.evaluate timeoutMs=5000 pid=5643 chromePid=5643"
+    },
+    "t3.snapshotBundleCaptured": {
+      "pass": true,
+      "detail": "{\"name\":\"index-DgObvvhC.js\",\"sha256_16\":\"1f4ebcc7ae1ceff7\",\"status\":\"captured\",\"dist\":\"/home/hatch/workspace/repo-1/apps/web/dist\"}"
+    },
+    "t3.snapshotPendingCount": {
+      "pass": true,
+      "detail": "pendingCount=0"
+    },
+    "t3.browserAliveAfterHang": {
+      "pass": true,
+      "detail": "pending=0"
+    },
+    "t4.fixtureEntryBundle": {
+      "pass": true,
+      "detail": "{\"bundle\":\"fixture-abc.js\",\"sha\":\"b58b7949bdf69801\",\"dist\":\"/tmp/r5-fixture-dist-J20koR\",\"source\":\"index-entry\"}"
+    },
+    "t4.missingDirNull": {
+      "pass": true,
+      "detail": "null"
+    },
+    "t4.noIndexNull": {
+      "pass": true,
+      "detail": "null"
+    },
+    "t4.directSnapshotCaptured": {
+      "pass": true,
+      "detail": "{\"name\":\"index-DgObvvhC.js\",\"sha256_16\":\"1f4ebcc7ae1ceff7\",\"status\":\"captured\",\"dist\":\"/home/hatch/workspace/repo-1/apps/web/dist\"}"
+    },
+    "t4.snapshotDirBackToBaseline": {
+      "pass": true,
+      "detail": "trước=0 sau=0"
+    },
+    "t5.mobileDerror": {
+      "pass": true,
+      "detail": "d.error reject verbatim"
+    },
+    "t5.mobileNoBareResolve": {
+      "pass": true,
+      "detail": "không còn resolve trần"
+    },
+    "t5.mobileFetchAbort": {
+      "pass": true,
+      "detail": "fetch abort"
+    },
+    "t5.mobileWsOpenTimeout": {
+      "pass": true,
+      "detail": "open timeout"
+    },
+    "t5.mobileBundle": {
+      "pass": true,
+      "detail": "bundle wiring"
+    },
+    "t5.o3Bundle": {
+      "pass": true,
+      "detail": "o3 SNAP bundle"
+    },
+    "t5.p2Bundle": {
+      "pass": true,
+      "detail": "p2 SNAP bundle"
+    },
+    "t5.o3p2FetchAbort": {
+      "pass": true,
+      "detail": "o3+p2 fetch abort"
+    },
+    "t5.checkProxyBundle": {
+      "pass": true,
+      "detail": "check-proxy dist tùy chọn"
+    },
+    "t5.snapshotDistPassthrough": {
+      "pass": true,
+      "detail": "bundle.dist passthrough"
+    },
+    "t5.allWsDerror": {
+      "pass": true,
+      "detail": "5/5 harness WS reject d.error"
+    }
+  }
+}

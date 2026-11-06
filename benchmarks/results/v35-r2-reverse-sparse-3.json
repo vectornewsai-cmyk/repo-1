@@ -1,0 +1,120 @@
+{
+  "protocol": "q6-measure-protocol v2 (Round 33 §3.2 / P5 §7.5; v1→v2: gap-count tuyệt đối đổi thành lost-rate, xem header)",
+  "runAt": "2026-11-01T19:15:37.125Z",
+  "bundle": "index-DgObvvhC.js",
+  "video": "sparse-gop-flat.mp4",
+  "n2Verdict": "PASS",
+  "load": {
+    "atStart": "1.16 0.97 0.48",
+    "beforeFwd": "1.31 1.01 0.49",
+    "beforeRev": "1.18 0.99 0.49",
+    "atEnd": "1.87 1.14 0.55"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 0.92,
+          "load5": 0.92,
+          "load15": 0.46,
+          "raw": "0.92 0.92 0.46"
+        },
+        "top": [
+          "4166 100 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "67 3.9 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2187",
+          "750 0.4 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2187",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "4078 0.0 bash /bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && bash apps/web/scripts/seek-ab-quiet-run.sh retry 1 ~/workspace/tmp-round35-r1",
+          "4079 0.0 bash bash apps/web/scripts/seek-ab-quiet-run.sh retry 1 /home/hatch/workspace/tmp-round35-r1/dist-retry f2fb01664045fcac30275d0d2459e38188f28b4413988d3",
+          "4080 0.0 grep grep -v c???ng ch???"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 1.87,
+          "load5": 1.14,
+          "load15": 0.55,
+          "raw": "1.87 1.14 0.55"
+        },
+        "top": [
+          "4473 39.7 MainThread node /home/hatch/workspace/repo-1/node_modules/.bin/tsc --noEmit",
+          "4459 8.6 npm exec tsc -- npm exec tsc --noEmit",
+          "67 4.3 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2187",
+          "750 0.5 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2187",
+          "4166 0.3 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "4078 0.0 bash /bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && bash apps/web/scripts/seek-ab-quiet-run.sh retry 1 ~/workspace/tmp-round35-r1"
+        ],
+        "chromePost": 0
+      },
+      "chromePre": 0,
+      "chromePost": 0
+    }
+  },
+  "forward": {
+    "interpRate": 1.006124234470691,
+    "playheadRate": 0.9067357512953367,
+    "drawDelta": 344,
+    "holdDelta": 1
+  },
+  "reverse": {
+    "fps": 6.122696411251213,
+    "drawDelta": 101,
+    "holdDelta": 542,
+    "wallSec": 16.496,
+    "blackSamplesAfterWarmup": 0
+  },
+  "checks": {
+    "reversePlaybackCorrect": true,
+    "holdFiredInApp": true,
+    "noBlackInReverse": true
+  },
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "predictedRate xuôi (trừ tick biên) 0.978 < 0.98 (mất do gap >100ms, trừ tick biên: 0.102s / 1 gap)"
+  ],
+  "signals": {
+    "load1": {
+      "beforeFwd": 1.31,
+      "beforeRev": 1.18,
+      "atEnd": 1.87
+    },
+    "forwardInterpRate": 1.006124234470691,
+    "rafForward": {
+      "gapP50": 0.008,
+      "gapP95": 0.0145,
+      "gapMax": 1.8427,
+      "countOver100ms": 2,
+      "exclFirstOver100ms": 1,
+      "exclFirstLostSec": 0.102,
+      "exclFirstPredictedRate": 0.978,
+      "predictedRate": 0.995
+    },
+    "rafReverse": {
+      "gapP50": 0.0075,
+      "gapP95": 0.048,
+      "predictedRate": 0.854
+    }
+  },
+  "comparability": "CHỈ so sánh hồi quy với các lượt CÙNG loadLabel (và cùng bundle, hoặc A/B cùng phiên). Số under-load KHÔNG được dùng làm baseline quiet; số quiet chỉ có giá trị khi đủ 3 lượt/GOP trong cùng cửa sổ quiet.",
+  "n2Log": "/home/hatch/workspace/tmp-round35-r2/sparse-3/q6-n2.log",
+  "n2Exit": 0,
+  "frozenDist": {
+    "valid": true,
+    "validity": "VALID",
+    "problems": [],
+    "dir": "/home/hatch/workspace/tmp-round35-r2/frozen-dist",
+    "bundle": "index-DgObvvhC.js",
+    "manifestBefore": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "manifestAfter": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "snapManifest": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "fileCount": 254,
+    "bundleSha256": "1f4ebcc7ae1ceff7ebcbfa9043ea6e829e89a689587bad9b8ba3b2fa382c3ca7"
+  },
+  "validity": "VALID — dist đóng băng không đổi trước/sau, bundle và snapshot khớp; lượt này đủ điều kiện 'cùng bundle' cho baseline (còn cần đủ 3 lượt quiet/GOP).",
+  "usableAsBaseline": false
+}

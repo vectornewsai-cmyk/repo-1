@@ -1,0 +1,126 @@
+{
+  "protocol": "q6-measure-protocol v2 (Round 33 §3.2 / P5 §7.5; v1→v2: gap-count tuyệt đối đổi thành lost-rate, xem header)",
+  "runAt": "2026-11-01T19:20:31.437Z",
+  "bundle": "index-DgObvvhC.js",
+  "video": "dense-gop-flat.mp4",
+  "n2Verdict": "PASS",
+  "load": {
+    "atStart": "1.91 1.89 1.03",
+    "beforeFwd": "2.16 1.94 1.06",
+    "beforeRev": "2.61 2.04 1.10",
+    "atEnd": "2.57 2.06 1.12"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 1.9,
+          "load5": 1.88,
+          "load15": 1.03,
+          "raw": "1.90 1.88 1.03"
+        },
+        "top": [
+          "6568 46.4 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "6406 8.9 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --gpu-client-id=12 --crashpad-handler-pid=6230 --enable-cra",
+          "67 5.5 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2187",
+          "6228 3.8 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --no-sandbox --remote-debugging-pipe --no-first-run --no-default-browser-ch",
+          "6512 2.3 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --gpu-client-id=16 --crashpad-handler-pid=6230 --enable-cra",
+          "6317 1.8 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --top-chrome-webui --gpu-client-id=5 --crashpad-handler-pid",
+          "6484 1.7 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --gpu-client-id=14 --crashpad-handler-pid=6230 --enable-cra",
+          "6200 1.5 MainThread node apps/web/scripts/probe-round35-r4-webcodecs-gpu-pipe.mjs"
+        ],
+        "chromePre": 17
+      },
+      "post": {
+        "loadavg": {
+          "load1": 2.57,
+          "load5": 2.06,
+          "load15": 1.12,
+          "raw": "2.57 2.06 1.12"
+        },
+        "top": [
+          "6406 38.1 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --gpu-client-id=12 --crashpad-handler-pid=6230 --enable-cr",
+          "67 5.5 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2187",
+          "6228 2.2 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --no-sandbox --remote-debugging-pipe --no-first-run --no-default-browser-ch",
+          "6200 1.8 MainThread node apps/web/scripts/probe-round35-r4-webcodecs-gpu-pipe.mjs",
+          "6258 1.4 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US",
+          "750 1.0 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2187",
+          "6317 1.0 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --top-chrome-webui --gpu-client-id=5 --crashpad-handler-pid",
+          "6568 0.4 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run"
+        ],
+        "chromePost": 13
+      },
+      "chromePre": 17,
+      "chromePost": 13
+    }
+  },
+  "forward": {
+    "interpRate": 0.985945038808475,
+    "playheadRate": 0.8685052567423435,
+    "drawDelta": 182,
+    "holdDelta": 0
+  },
+  "reverse": {
+    "fps": 9.223783170143324,
+    "drawDelta": 130,
+    "holdDelta": 316,
+    "wallSec": 14.094,
+    "blackSamplesAfterWarmup": 0
+  },
+  "checks": {
+    "reversePlaybackCorrect": true,
+    "holdFiredInApp": true,
+    "noBlackInReverse": true
+  },
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "load1 trước-xuôi 2.16 ≥ 2",
+    "load1 trước-ngược 2.61 ≥ 2",
+    "load1 cuối lượt 2.57 ≥ 2",
+    "predictedRate xuôi (trừ tick biên) 0.947 < 0.98 (mất do gap >100ms, trừ tick biên: 0.236s / 2 gap)",
+    "có 17 tiến trình Chrome trước lượt (luồng browser khác)"
+  ],
+  "signals": {
+    "load1": {
+      "beforeFwd": 2.16,
+      "beforeRev": 2.61,
+      "atEnd": 2.57
+    },
+    "forwardInterpRate": 0.985945038808475,
+    "rafForward": {
+      "gapP50": 0.0084,
+      "gapP95": 0.0623,
+      "gapMax": 1.679,
+      "countOver100ms": 3,
+      "exclFirstOver100ms": 2,
+      "exclFirstLostSec": 0.236,
+      "exclFirstPredictedRate": 0.947,
+      "predictedRate": 0.963
+    },
+    "rafReverse": {
+      "gapP50": 0.0079,
+      "gapP95": 0.0664,
+      "predictedRate": 1.006
+    }
+  },
+  "comparability": "CHỈ so sánh hồi quy với các lượt CÙNG loadLabel (và cùng bundle, hoặc A/B cùng phiên). Số under-load KHÔNG được dùng làm baseline quiet; số quiet chỉ có giá trị khi đủ 3 lượt/GOP trong cùng cửa sổ quiet.",
+  "n2Log": "/home/hatch/workspace/tmp-round35-r2/invalid-test/q6-n2.log",
+  "n2Exit": 0,
+  "frozenDist": {
+    "valid": false,
+    "validity": "INVALID",
+    "problems": [
+      "dist đóng băng đổi giữa chừng: manifest trước 1a413dee23a2 ≠ sau 638f84ed9891"
+    ],
+    "dir": "/home/hatch/workspace/tmp-round35-r2/invalid-test-dist",
+    "bundle": "index-DgObvvhC.js",
+    "manifestBefore": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "manifestAfter": "638f84ed9891d413facef4fe9f1402c6374cddd80e6a1b0353ca9e3d2842228f",
+    "snapManifest": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "fileCount": 254,
+    "bundleSha256": "1f4ebcc7ae1ceff7ebcbfa9043ea6e829e89a689587bad9b8ba3b2fa382c3ca7"
+  },
+  "validity": "INVALID — dist đóng băng đổi giữa chừng hoặc snapshot lệch; fps của lượt này KHÔNG được dùng làm baseline, kể cả khi loadLabel=quiet.",
+  "usableAsBaseline": false
+}

@@ -1,0 +1,117 @@
+{
+  "protocol": "q6-measure-protocol v2 (Round 33 §3.2 / P5 §7.5; v1→v2: gap-count tuyệt đối đổi thành lost-rate, xem header)",
+  "runAt": "2026-11-01T19:14:55.126Z",
+  "bundle": "index-DgObvvhC.js",
+  "video": "dense-gop-flat.mp4",
+  "n2Verdict": "PASS",
+  "load": {
+    "atStart": "1.33 0.98 0.46",
+    "beforeFwd": "1.22 0.97 0.46",
+    "beforeRev": "1.18 0.97 0.46",
+    "atEnd": "1.00 0.94 0.46"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 1.35,
+          "load5": 0.98,
+          "load15": 0.46,
+          "raw": "1.35 0.98 0.46"
+        },
+        "top": [
+          "3810 100 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "67 3.7 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2187",
+          "750 0.3 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2187",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "3809 0.0 bash /bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && Q6_VIDEO=~/workspace/tmp-round34-q2/dense-gop-flat.mp4 Q6_SCRATCH=~/workspace",
+          "3818 0.0 ps ps -eo pid,pcpu,comm,args --sort=-pcpu"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 1,
+          "load5": 0.94,
+          "load15": 0.46,
+          "raw": "1.00 0.94 0.46"
+        },
+        "top": [
+          "3933 71.7 chrome [chrome] <defunct>",
+          "67 3.8 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2187",
+          "3865 0.7 chrome [chrome] <defunct>",
+          "3810 0.4 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "750 0.3 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2187",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "3809 0.0 bash /bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && Q6_VIDEO=~/workspace/tmp-round34-q2/dense-gop-flat.mp4 Q6_SCRATCH=~/workspace"
+        ],
+        "chromePost": 2
+      },
+      "chromePre": 0,
+      "chromePost": 2
+    }
+  },
+  "forward": {
+    "interpRate": 0.9883593235229519,
+    "playheadRate": 0.9054163298302345,
+    "drawDelta": 353,
+    "holdDelta": 1
+  },
+  "reverse": {
+    "fps": 25.569842197545295,
+    "drawDelta": 350,
+    "holdDelta": 470,
+    "wallSec": 13.688,
+    "blackSamplesAfterWarmup": 0
+  },
+  "checks": {
+    "reversePlaybackCorrect": true,
+    "holdFiredInApp": true,
+    "noBlackInReverse": true
+  },
+  "loadLabel": "quiet",
+  "labelReasons": [],
+  "signals": {
+    "load1": {
+      "beforeFwd": 1.22,
+      "beforeRev": 1.18,
+      "atEnd": 1
+    },
+    "forwardInterpRate": 0.9883593235229519,
+    "rafForward": {
+      "gapP50": 0.0083,
+      "gapP95": 0.0139,
+      "gapMax": 1.8162,
+      "countOver100ms": 2,
+      "exclFirstOver100ms": 1,
+      "exclFirstLostSec": 0.016,
+      "exclFirstPredictedRate": 0.987,
+      "predictedRate": 1.003
+    },
+    "rafReverse": {
+      "gapP50": 0.0082,
+      "gapP95": 0.0155,
+      "predictedRate": 1
+    }
+  },
+  "comparability": "CHỈ so sánh hồi quy với các lượt CÙNG loadLabel (và cùng bundle, hoặc A/B cùng phiên). Số under-load KHÔNG được dùng làm baseline quiet; số quiet chỉ có giá trị khi đủ 3 lượt/GOP trong cùng cửa sổ quiet.",
+  "n2Log": "/home/hatch/workspace/tmp-round35-r2/dense-2/q6-n2.log",
+  "n2Exit": 0,
+  "frozenDist": {
+    "valid": true,
+    "validity": "VALID",
+    "problems": [],
+    "dir": "/home/hatch/workspace/tmp-round35-r2/frozen-dist",
+    "bundle": "index-DgObvvhC.js",
+    "manifestBefore": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "manifestAfter": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "snapManifest": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "fileCount": 254,
+    "bundleSha256": "1f4ebcc7ae1ceff7ebcbfa9043ea6e829e89a689587bad9b8ba3b2fa382c3ca7"
+  },
+  "validity": "VALID — dist đóng băng không đổi trước/sau, bundle và snapshot khớp; lượt này đủ điều kiện 'cùng bundle' cho baseline (còn cần đủ 3 lượt quiet/GOP).",
+  "usableAsBaseline": true
+}

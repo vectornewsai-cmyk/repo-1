@@ -1,0 +1,282 @@
+{
+  "generatedBy": "probe-round35-r6-discard-dpr-pipe.mjs",
+  "runLabel": "run1",
+  "runAt": "2026-11-01T19:23:19.485Z",
+  "bundle": {
+    "file": "dist/assets/index-Cwsd35w5.js",
+    "sha256": "c341d0a523da27cb2df0b89d86a86d564d709a2dee6ce83fb5e33bb64280c8ca",
+    "note": "dist sẵn có, KHÔNG build lại (tránh đụng luồng khác)"
+  },
+  "chrome": "/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome",
+  "previewPort": 4196,
+  "display": ":85",
+  "methodNote": "Mô phỏng discard = reload trang. KHÔNG phải discard thật (không áp lực bộ nhớ, không tab ẩn hàng giờ, không bfcache). KHÔNG đo FPS.",
+  "cases": {
+    "D1_seededReload": {
+      "pass": true,
+      "specRestoredEqual": true,
+      "projectName": "R6-DISCARD-PROBE",
+      "hasPlayheadKeyInAutosave": false,
+      "envelopeKeys": [
+        "format",
+        "formatVersion",
+        "appVersion",
+        "specVersion",
+        "savedAt",
+        "name",
+        "spec"
+      ],
+      "specKeys": [
+        "version",
+        "meta",
+        "tracks"
+      ],
+      "relinkPresent": true,
+      "relinkListsR6A": true,
+      "relinkListsR6B": true,
+      "relinkListsBlob": true,
+      "relinkTextHead": "🔗 Media thiếu (3)\n✕\nProject này dùng 3 file media chưa có trong phiên làm việc. Chọn lại từng file để tiếp tục dựng — clip thiếu sẽ hiện placeholder cho tới khi được relink.\n🎬\nblob:http://127.0.0.1:4196/dead-beef\nVideo · dùng trong 1 clip (Video 1)\n🔗 Chọn lại\n🎬\nr6-a.webm\nVideo · dùng trong 1 clip (Video 1)\n🔗 Chọn lại\n🎬\nr6-b.webm\nVideo · dùng trong 1 clip (Video 1)\n🔗 Chọn lại\nBỏ qua — dựng t",
+      "tracksAfter": [
+        {
+          "id": "v1",
+          "kind": "video",
+          "clips": [
+            {
+              "id": "r6c1",
+              "kind": "video",
+              "src": "r6-a.webm",
+              "text": null,
+              "start": 0,
+              "duration": 4
+            },
+            {
+              "id": "r6c2",
+              "kind": "video",
+              "src": "r6-b.webm",
+              "text": null,
+              "start": 4,
+              "duration": 4
+            },
+            {
+              "id": "r6c3",
+              "kind": "video",
+              "src": "blob:http://127.0.0.1:4196/dead-beef",
+              "text": null,
+              "start": 8,
+              "duration": 2
+            }
+          ]
+        },
+        {
+          "id": "t1",
+          "kind": "text",
+          "clips": [
+            {
+              "id": "r6t1",
+              "kind": "text",
+              "src": null,
+              "text": "R6-DISCARD-PROBE",
+              "start": 0.5,
+              "duration": 5
+            },
+            {
+              "id": "r6t2",
+              "kind": "text",
+              "src": null,
+              "text": "caption r6 giữ lại",
+              "start": 6,
+              "duration": 3
+            }
+          ]
+        }
+      ]
+    },
+    "R_smoke_1280x800_dpr2": {
+      "label": "1280x800-dpr2",
+      "viewport": "1280x800",
+      "dprRequested": 2,
+      "asserts": [
+        {
+          "name": "webcodecs-flag-off",
+          "pass": true,
+          "detail": "flag=undefined"
+        },
+        {
+          "name": "reverse-engine-element",
+          "pass": true,
+          "detail": "engine=element"
+        },
+        {
+          "name": "reverse-button-clicked",
+          "pass": true,
+          "detail": "aria-label=Phát ngược"
+        },
+        {
+          "name": "playhead-runs-backwards",
+          "pass": true,
+          "detail": "7.5s → 5.1s"
+        },
+        {
+          "name": "canvas-size-dpr",
+          "pass": true,
+          "detail": "backing 1424x752 ≈ css 712x376 × min(dpr,2)=2 (dpr=2)"
+        },
+        {
+          "name": "canvas-not-blank",
+          "pass": true,
+          "detail": "distinctColors=34, nonBlack=558/594"
+        },
+        {
+          "name": "no-page-errors",
+          "pass": true,
+          "detail": "0 window error + 0 CDP exception trong cửa sổ ngược"
+        }
+      ],
+      "pass": true,
+      "timeDisplay": {
+        "beforeClick": "00:00.0 / 00:08.0",
+        "atReverseStart": "00:07.5 / 00:08.0",
+        "after2_5s": "00:05.1 / 00:08.0"
+      },
+      "canvas": {
+        "backingW": 1424,
+        "backingH": 752,
+        "cssW": 712,
+        "cssH": 376,
+        "wrapCssW": 712,
+        "wrapCssH": 376,
+        "dpr": 2,
+        "distinctColors": 34,
+        "sampled": 594,
+        "nonBlack": 558,
+        "blank": false
+      },
+      "pageErrors": [],
+      "cdpExceptions": 0,
+      "screenshot": {
+        "path": "/tmp/vcut-r6-dpr/r6-reverse-1280x800-dpr2.png",
+        "bytes": 510808,
+        "sha256": "80f0530cb45bf163"
+      }
+    },
+    "D2_sampleReload": {
+      "pass": true,
+      "preName": "Dự án mẫu",
+      "postName": "Dự án mẫu",
+      "specRestoredEqual": true,
+      "preClips": 3,
+      "postClips": 3,
+      "relinkPresent": true,
+      "relinkListsMau1": true,
+      "relinkListsMau2": true,
+      "relinkTextHead": "🔗 Media thiếu (2)\n✕\nProject này dùng 2 file media chưa có trong phiên làm việc. Chọn lại từng file để tiếp tục dựng — clip thiếu sẽ hiện placeholder cho tới khi được relink.\n🎬\nmau-1.webm\nVideo · dùng trong 1 clip (Video 1)\n🔗 Chọn lại\n🎬\nmau-2.webm\nVideo · dùng trong 1 clip (Video 1)\n🔗 Chọn lại\nBỏ qua — dựng tiếp với placeholder",
+      "tracksAfter": [
+        {
+          "id": "v1",
+          "kind": "video",
+          "clips": [
+            {
+              "id": "c_e0hmump",
+              "kind": "video",
+              "src": "mau-1.webm",
+              "text": null,
+              "start": 0,
+              "duration": 4
+            },
+            {
+              "id": "c_h0ie6s7",
+              "kind": "video",
+              "src": "mau-2.webm",
+              "text": null,
+              "start": 4,
+              "duration": 4
+            }
+          ]
+        },
+        {
+          "id": "t1",
+          "kind": "text",
+          "clips": [
+            {
+              "id": "c_yghn8aj",
+              "kind": "text",
+              "src": null,
+              "text": "Xin chào! Đây là VCut Studio",
+              "start": 0.5,
+              "duration": 5
+            }
+          ]
+        }
+      ]
+    },
+    "R_smoke_1920x1080_dpr2": {
+      "label": "1920x1080-dpr2",
+      "viewport": "1920x1080",
+      "dprRequested": 2,
+      "asserts": [
+        {
+          "name": "webcodecs-flag-off",
+          "pass": true,
+          "detail": "flag=undefined"
+        },
+        {
+          "name": "reverse-engine-element",
+          "pass": true,
+          "detail": "engine=element"
+        },
+        {
+          "name": "reverse-button-clicked",
+          "pass": true,
+          "detail": "aria-label=Phát ngược"
+        },
+        {
+          "name": "playhead-runs-backwards",
+          "pass": true,
+          "detail": "7.7s → 5.7s"
+        },
+        {
+          "name": "canvas-size-dpr",
+          "pass": true,
+          "detail": "backing 2704x1312 ≈ css 1352x656 × min(dpr,2)=2 (dpr=2)"
+        },
+        {
+          "name": "canvas-not-blank",
+          "pass": true,
+          "detail": "distinctColors=37, nonBlack=432/528"
+        },
+        {
+          "name": "no-page-errors",
+          "pass": true,
+          "detail": "0 window error + 0 CDP exception trong cửa sổ ngược"
+        }
+      ],
+      "pass": true,
+      "timeDisplay": {
+        "beforeClick": "00:00.0 / 00:08.0",
+        "atReverseStart": "00:07.7 / 00:08.0",
+        "after2_5s": "00:05.7 / 00:08.0"
+      },
+      "canvas": {
+        "backingW": 2704,
+        "backingH": 1312,
+        "cssW": 1352,
+        "cssH": 656,
+        "wrapCssW": 1352,
+        "wrapCssH": 656,
+        "dpr": 2,
+        "distinctColors": 37,
+        "sampled": 528,
+        "nonBlack": 432,
+        "blank": false
+      },
+      "pageErrors": [],
+      "cdpExceptions": 0,
+      "screenshot": {
+        "path": "/tmp/vcut-r6-dpr/r6-reverse-1920x1080-dpr2.png",
+        "bytes": 801573,
+        "sha256": "3a730573d66eabee"
+      }
+    }
+  },
+  "overallPass": true
+}

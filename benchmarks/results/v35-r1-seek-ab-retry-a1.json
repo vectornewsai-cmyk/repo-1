@@ -1,0 +1,177 @@
+{
+  "run": "retry-a1",
+  "variant": "retry",
+  "attempt": 1,
+  "bundle": "index-BqxQgBuf.js",
+  "bundleSha256": "f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d",
+  "frozenDist": "/home/hatch/workspace/tmp-round35-r1/dist-retry",
+  "frozenShaBefore": "f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d",
+  "frozenShaAfter": "f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d",
+  "pre": {
+    "loadavg": "1.67 1.12 0.55 2/453 4521",
+    "chromePre": 0,
+    "top": "   4473 93.2 MainThread      node /home/hatch/workspace/repo-1/node_modules/.bin/tsc --noEmit\n     67  4.4 hatch           /opt/hatch/bin/hatch daemon --runtime-cell-leader=2187\n   4459  3.7 npm exec tsc -- npm exec tsc --noEmit\n    750  0.5 hatch-execd     /opt/hatch/bin/hatch-execd --runtime-cell-leader=2187\n      1  0.0 systemd         /usr/lib/systemd/systemd\n   4079  0.0 bash            bash apps/web/scripts/seek-ab-quiet-run.sh retry 1 /home/hatch/workspace/tmp-round35-r1/dist-retry f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d\n     17  0.0 systemd-journal /usr/lib/systemd/systemd-journald\n   4078  0.0 bash            /bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && bash apps/web/scripts/seek-ab-quiet-run.sh retry 1 ~/workspace/tmp-round35-r1/dist-retry f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d 2>&1 | grep -v \"c???ng ch???\" ; echo \"===== SINGLE-a1 =====\"; bash apps/web/scripts/seek-ab-quiet-run.sh single 1 ~/workspace/tmp-round35-r1/dist-single fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a 2>&1 | grep -v \"c???ng ch???\""
+  },
+  "post": {
+    "loadavg": "3.87 1.79 0.80 3/658 5097",
+    "chromePost": 16
+  },
+  "q6Exit": 0,
+  "n2Verdict": "PASS",
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "load1 trước-xuôi 2.76 ≥ 2",
+    "load1 trước-ngược 4 ≥ 2",
+    "load1 cuối lượt 3.87 ≥ 2",
+    "predictedRate xuôi (trừ tick biên) 0.941 < 0.98 (mất do gap >100ms, trừ tick biên: 0.348s / 2 gap)"
+  ],
+  "decodeSide": {
+    "decodeLabel": "STARVED",
+    "reasons": [
+      "stall intervals sau warmup 4 > 1",
+      "chuỗi stall dài nhất 2 khoảng > 1",
+      "tickRate ngược 60.4/s < 80/s"
+    ],
+    "thresholds": {
+      "stallMax": 1,
+      "stallRunMax": 1,
+      "tickRateMin": 80
+    },
+    "signals": {
+      "intervals": 27,
+      "drawDeltaSeries": [
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        3,
+        1,
+        2,
+        1,
+        2,
+        1,
+        2,
+        2,
+        1,
+        4,
+        5,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0
+      ],
+      "holdDeltaSeries": [
+        19,
+        17,
+        19,
+        17,
+        20,
+        21,
+        24,
+        23,
+        20,
+        14,
+        13,
+        13,
+        12,
+        10,
+        10,
+        14,
+        10,
+        12,
+        12,
+        13,
+        13,
+        12,
+        9,
+        9,
+        6,
+        13,
+        14
+      ],
+      "stallIntervalsAfterWarmup": 4,
+      "maxStallRun": 2,
+      "firstIntervalDrawDelta": 1,
+      "reverseTickRate": 60.42,
+      "reverseRafN": 904,
+      "reverseRafWallSec": 14.963,
+      "reverseRafGapP50": 0.0082,
+      "reverseDrawDelta": 41,
+      "reverseFps": 2.862129144851658
+    }
+  },
+  "reverseFps": 2.862129144851658,
+  "reverseDrawDelta": 41,
+  "reverseWallSec": 14.325,
+  "forwardInterpRate": 0.9978768577494691,
+  "load": {
+    "atStart": "2.65 1.33 0.62",
+    "beforeFwd": "2.76 1.38 0.64",
+    "beforeRev": "4.00 1.69 0.75",
+    "atEnd": "3.87 1.79 0.80"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 1.67,
+          "load5": 1.12,
+          "load15": 0.55,
+          "raw": "1.67 1.12 0.55"
+        },
+        "top": [
+          "4473 93.7 MainThread node /home/hatch/workspace/repo-1/node_modules/.bin/tsc --noEmit",
+          "4531 29.7 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "67 4.4 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2187",
+          "4459 3.6 npm exec tsc -- npm exec tsc --noEmit",
+          "750 0.5 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2187",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "4079 0.0 bash bash apps/web/scripts/seek-ab-quiet-run.sh retry 1 /home/hatch/workspace/tmp-round35-r1/dist-retry f2fb01664045fcac30275d0d2459e38188f28b4413988d3",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 3.87,
+          "load5": 1.79,
+          "load15": 0.8,
+          "raw": "3.87 1.79 0.80"
+        },
+        "top": [
+          "4871 35.7 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --gpu-client-id=7 --crashpad-handler-pid=4768 --enable-cra",
+          "5076 34.2 MainThread node /home/hatch/workspace/repo-1/node_modules/.bin/tsc --noEmit",
+          "5061 10.2 npm exec tsc -- npm exec tsc --noEmit",
+          "4766 7.7 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --no-sandbox --remote-debugging-pipe --no-first-run --no-default-browser-ch",
+          "4795 5.1 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=gpu-process --gpu-recent-crash-count=0 --no-sandbox --disable-dev-sh",
+          "67 4.6 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2187",
+          "4859 1.7 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --top-chrome-webui --gpu-client-id=5 --crashpad-handler-pid",
+          "5034 1.4 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=audio.mojom.AudioService --lang=en-US --s"
+        ],
+        "chromePost": 19
+      },
+      "chromePre": 0,
+      "chromePost": 19
+    }
+  },
+  "accepted": false,
+  "exclusionReasons": [
+    "v2: load1 trước-xuôi 2.76 ≥ 2",
+    "v2: load1 trước-ngược 4 ≥ 2",
+    "v2: load1 cuối lượt 3.87 ≥ 2",
+    "v2: predictedRate xuôi (trừ tick biên) 0.941 < 0.98 (mất do gap >100ms, trừ tick biên: 0.348s / 2 gap)",
+    "decode: stall intervals sau warmup 4 > 1",
+    "decode: chuỗi stall dài nhất 2 khoảng > 1",
+    "decode: tickRate ngược 60.4/s < 80/s"
+  ],
+  "q6LabeledPath": "/home/hatch/workspace/tmp-round35-r1/runs/retry-a1/q6-labeled.json"
+}

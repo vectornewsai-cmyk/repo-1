@@ -1,0 +1,160 @@
+{
+  "run": "single-a1",
+  "variant": "single",
+  "attempt": 1,
+  "bundle": "index-xfaJXEFE.js",
+  "bundleSha256": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "frozenDist": "/home/hatch/workspace/tmp-round35-r1/dist-single",
+  "frozenShaBefore": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "frozenShaAfter": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "pre": {
+    "loadavg": "1.47 1.47 0.75 1/430 5258",
+    "chromePre": 0,
+    "top": "     67  4.8 hatch           /opt/hatch/bin/hatch daemon --runtime-cell-leader=2187\n    750  0.7 hatch-execd     /opt/hatch/bin/hatch-execd --runtime-cell-leader=2187\n      1  0.0 systemd         /usr/lib/systemd/systemd\n     17  0.0 systemd-journal /usr/lib/systemd/systemd-journald\n   4078  0.0 bash            /bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && bash apps/web/scripts/seek-ab-quiet-run.sh retry 1 ~/workspace/tmp-round35-r1/dist-retry f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d 2>&1 | grep -v \"c???ng ch???\" ; echo \"===== SINGLE-a1 =====\"; bash apps/web/scripts/seek-ab-quiet-run.sh single 1 ~/workspace/tmp-round35-r1/dist-single fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a 2>&1 | grep -v \"c???ng ch???\"\n   5121  0.0 bash            bash apps/web/scripts/seek-ab-quiet-run.sh single 1 /home/hatch/workspace/tmp-round35-r1/dist-single fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a\n   5122  0.0 grep            grep -v c???ng ch???\n   5187  0.0 bash            /bin/bash --norc --noprofile -c umask 0007; sleep 180; cat /proc/loadavg; pgrep -f 'chrome-linux64/chrom[e]' | wc -l; ps -eo pid,pcpu,args --sort=-pcpu | head -6"
+  },
+  "post": {
+    "loadavg": "2.64 1.72 0.86 12/432 5592",
+    "chromePost": 0
+  },
+  "q6Exit": 0,
+  "n2Verdict": "PASS",
+  "loadLabel": "quiet",
+  "labelReasons": [],
+  "decodeSide": {
+    "decodeLabel": "HEALTHY",
+    "reasons": [],
+    "thresholds": {
+      "stallMax": 1,
+      "stallRunMax": 1,
+      "tickRateMin": 80
+    },
+    "signals": {
+      "intervals": 27,
+      "drawDeltaSeries": [
+        2,
+        2,
+        3,
+        2,
+        2,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        5,
+        5,
+        6,
+        8,
+        7,
+        9,
+        15,
+        11,
+        2,
+        2,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3
+      ],
+      "holdDeltaSeries": [
+        22,
+        21,
+        22,
+        23,
+        19,
+        19,
+        23,
+        20,
+        24,
+        21,
+        23,
+        24,
+        23,
+        24,
+        19,
+        20,
+        17,
+        15,
+        19,
+        22,
+        23,
+        24,
+        21,
+        24,
+        22,
+        22,
+        23
+      ],
+      "stallIntervalsAfterWarmup": 0,
+      "maxStallRun": 0,
+      "firstIntervalDrawDelta": 2,
+      "reverseTickRate": 101.89,
+      "reverseRafN": 1454,
+      "reverseRafWallSec": 14.27,
+      "reverseRafGapP50": 0.0065,
+      "reverseDrawDelta": 121,
+      "reverseFps": 8.81346055794304
+    }
+  },
+  "reverseFps": 8.81346055794304,
+  "reverseDrawDelta": 121,
+  "reverseWallSec": 13.729,
+  "forwardInterpRate": 0.9916262670780078,
+  "load": {
+    "atStart": "1.43 1.47 0.75",
+    "beforeFwd": "1.47 1.47 0.76",
+    "beforeRev": "1.39 1.46 0.76",
+    "atEnd": "1.48 1.48 0.77"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 1.47,
+          "load5": 1.47,
+          "load15": 0.75,
+          "raw": "1.47 1.47 0.75"
+        },
+        "top": [
+          "5268 48.0 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "67 4.8 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2187",
+          "750 0.7 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2187",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "4078 0.0 bash /bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && bash apps/web/scripts/seek-ab-quiet-run.sh retry 1 ~/workspace/tmp-round35-r1",
+          "5121 0.0 bash bash apps/web/scripts/seek-ab-quiet-run.sh single 1 /home/hatch/workspace/tmp-round35-r1/dist-single fffcd2c019461441b16860879841b0c019ef6fb208581",
+          "5122 0.0 grep grep -v c???ng ch???"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 2.64,
+          "load5": 1.72,
+          "load15": 0.86,
+          "raw": "2.64 1.72 0.86"
+        },
+        "top": [
+          "5391 83.3 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --gpu-client-id=7 --crashpad-handler-pid=5292 --enable-cra",
+          "5319 7.5 chrome [chrome] <defunct>",
+          "67 4.9 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2187",
+          "5379 1.6 chrome [chrome] <defunct>",
+          "5521 0.8 chrome [chrome] <defunct>",
+          "750 0.7 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2187",
+          "5320 0.6 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US",
+          "5268 0.3 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run"
+        ],
+        "chromePost": 2
+      },
+      "chromePre": 0,
+      "chromePost": 2
+    }
+  },
+  "accepted": true,
+  "exclusionReasons": [],
+  "q6LabeledPath": "/home/hatch/workspace/tmp-round35-r1/runs/single-a1/q6-labeled.json"
+}
