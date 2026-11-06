@@ -1,0 +1,112 @@
+{
+  "protocol": "q6-measure-protocol v2 (Round 33 §3.2 / P5 §7.5; v1→v2: gap-count tuyệt đối đổi thành lost-rate, xem header)",
+  "runAt": "2026-11-01T13:20:16.997Z",
+  "bundle": "index-BboLRS3K.js",
+  "video": "sparse-gop-flat.mp4",
+  "n2Verdict": "PASS",
+  "load": {
+    "atStart": "1.33 2.74 2.25",
+    "beforeFwd": "1.31 2.71 2.25",
+    "beforeRev": "2.16 2.86 2.30",
+    "atEnd": "1.90 2.77 2.28"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 1.36,
+          "load5": 2.77,
+          "load15": 2.26,
+          "raw": "1.36 2.77 2.26"
+        },
+        "top": [
+          "6766 107 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "67 10.6 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2170",
+          "751 3.7 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2170",
+          "6719 0.9 MainThread node run-q2.mjs",
+          "6727 0.1 Xvfb Xvfb :96 -screen 0 1280x800x24 -nolisten tcp",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "5881 0.0 bash /bin/bash --norc --noprofile -c umask 0007; for i in $(seq 1 15); do pgrep -f 'probe-round34-q3-decode-ahead' >/dev/null || { echo \"Q3 probe finis"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 1.9,
+          "load5": 2.77,
+          "load15": 2.28,
+          "raw": "1.90 2.77 2.28"
+        },
+        "top": [
+          "6890 83.3 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --gpu-client-id=7 --crashpad-handler-pid=6791 --enable-cra",
+          "67 10.8 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2170",
+          "6789 9.4 chrome [chrome] <defunct>",
+          "6819 8.8 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=gpu-process --gpu-recent-crash-count=0 --no-sandbox --disable-dev-sh",
+          "751 3.8 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2170",
+          "6878 2.5 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --top-chrome-webui --gpu-client-id=5 --crashpad-handler-pid",
+          "7007 1.4 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=audio.mojom.AudioService --lang=en-US --s",
+          "6821 1.1 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US"
+        ],
+        "chromePost": 3
+      },
+      "chromePre": 0,
+      "chromePost": 3
+    }
+  },
+  "forward": {
+    "interpRate": 1.0067848544539288,
+    "playheadRate": 0.9171359613837491,
+    "drawDelta": 319,
+    "holdDelta": 1
+  },
+  "reverse": {
+    "fps": 5.7195967684278255,
+    "drawDelta": 80,
+    "holdDelta": 583,
+    "wallSec": 13.987,
+    "blackSamplesAfterWarmup": 0
+  },
+  "checks": {
+    "reversePlaybackCorrect": true,
+    "holdFiredInApp": true,
+    "noBlackInReverse": true
+  },
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "load1 trước-ngược 2.16 ≥ 2",
+    "predictedRate xuôi (trừ tick biên) 0.955 < 0.98 (mất do gap >100ms, trừ tick biên: 0.215s / 2 gap)"
+  ],
+  "signals": {
+    "load1": {
+      "beforeFwd": 1.31,
+      "beforeRev": 2.16,
+      "atEnd": 1.9
+    },
+    "forwardInterpRate": 1.0067848544539288,
+    "rafForward": {
+      "gapP50": 0.0061,
+      "gapP95": 0.0171,
+      "gapMax": 1.8755,
+      "countOver100ms": 3,
+      "exclFirstOver100ms": 2,
+      "exclFirstLostSec": 0.215,
+      "exclFirstPredictedRate": 0.955,
+      "predictedRate": 0.971
+    },
+    "rafReverse": {
+      "gapP50": 0.0048,
+      "gapP95": 0.0455,
+      "predictedRate": 1.006
+    }
+  },
+  "comparability": "CHỈ so sánh hồi quy với các lượt CÙNG loadLabel (và cùng bundle, hoặc A/B cùng phiên). Số under-load KHÔNG được dùng làm baseline quiet; số quiet chỉ có giá trị khi đủ 3 lượt/GOP trong cùng cửa sổ quiet.",
+  "n2Log": "/home/hatch/workspace/tmp-round34-q6/fps-sparse-2/q6-n2.log",
+  "n2Exit": 0,
+  "relabeled": {
+    "from": "q6-measure-protocol v1 (run-time label)",
+    "to": "q6-measure-protocol v2",
+    "note": "Cùng dữ liệu N2 thô; chỉ đổi trường nhãn theo hiệu chuẩn v2 (gap-count tuyệt đối → lost-rate, xem LIMITS Q6 §2.2). Snapshot tiến trình pre/post của v1 được giữ nguyên."
+  }
+}

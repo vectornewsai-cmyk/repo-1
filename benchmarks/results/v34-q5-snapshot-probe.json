@@ -1,0 +1,89 @@
+{
+  "runAt": "2026-11-01T13:09:30.425Z",
+  "label": "v34-q5",
+  "targets": [
+    {
+      "id": "p5-pipe",
+      "checks": {
+        "rejectGoc": true,
+        "dung1FileMoi": true,
+        "pidKhop": true,
+        "psCoChrome": true,
+        "pipeSongSauTimeout": true,
+        "outDirBen": true,
+        "bundleNotCaptured": true,
+        "extraTransportPipe": true,
+        "timeoutMsGhiDung": true,
+        "all": true
+      },
+      "rejectMsg": "CDP timeout Target.getTargets",
+      "snapshotFile": "cdp-hang-20261101_130958109-Target.getTargets-2889.json",
+      "pid": 2889
+    },
+    {
+      "id": "p2-ws",
+      "checks": {
+        "rejectGoc": true,
+        "dung1FileMoi": true,
+        "pidKhop": true,
+        "psCoChrome": true,
+        "outDirBen": true,
+        "bundleNotCaptured": true,
+        "extraTransportWs": true,
+        "timeoutMsGhiDung": true,
+        "duongThuongVanResolve": true,
+        "all": true
+      },
+      "rejectMsg": "cdp timeout Target.getTargets",
+      "snapshotFile": "cdp-hang-20261101_131003524-Target.getTargets-3234.json",
+      "pid": 3234
+    },
+    {
+      "id": "mobile-ws",
+      "checks": {
+        "rejectGoc": true,
+        "dung1FileMoi": true,
+        "pidKhop": true,
+        "psCoChrome": true,
+        "outDirBen": true,
+        "bundleNotCaptured": true,
+        "extraTransportWs": true,
+        "timeoutMsGhiDung": true,
+        "duongThuongVanResolve": true,
+        "pendingSauTreoRong": true,
+        "all": true
+      },
+      "rejectMsg": "cdp timeout Target.getTargets",
+      "snapshotFile": "cdp-hang-20261101_131006527-Target.getTargets-3452.json",
+      "pid": 3452
+    },
+    {
+      "id": "module-bundle",
+      "checks": {
+        "nullThanhObject": true,
+        "nullStatus": true,
+        "nullNameRong": true,
+        "nullCoNote": true,
+        "capturedStatus": true,
+        "capturedGiuTenSha": true,
+        "dung2FileMoi": true,
+        "all": true
+      },
+      "files": [
+        "cdp-hang-20261101_131007492-Target.getTargets-nopid.json",
+        "cdp-hang-20261101_131007611-Target.getTargets-nopid.json"
+      ]
+    }
+  ],
+  "allPass": true,
+  "log": [
+    "[2026-11-01T13:09:57.919Z] pipe P5 warm-up OK, nTargets=3",
+    "[2026-11-01T13:09:58.505Z] CDP-HANG snapshot đã ghi: /home/hatch/workspace/vcut-cdp-hang-snapshots/probe-round32-p5-webcodecs-pipe/cdp-hang-20261101_130958109-Target.getTargets-2889.json",
+    "[2026-11-01T13:09:59.323Z] target P5-pipe: reject=\"CDP timeout Target.getTargets\" fresh=1 pidKhop=true bundle=not-captured aliveAfter=true all=true",
+    "[2026-11-01T13:10:03.510Z] WS P2 warm-up thủ công OK, nTargets=5",
+    "[2026-11-01T13:10:03.778Z] CDP-HANG snapshot đã ghi: /home/hatch/workspace/vcut-cdp-hang-snapshots/seek-p2-underload-probe/cdp-hang-20261101_131003524-Target.getTargets-3234.json",
+    "[2026-11-01T13:10:04.494Z] target P2-ws: reject=\"cdp timeout Target.getTargets\" fresh=1 pidKhop=true bundle=not-captured resolveThuc=true all=true",
+    "[2026-11-01T13:10:07.403Z] target mobile-ws: reject=\"cdp timeout Target.getTargets\" fresh=1 pidKhop=true bundle=not-captured resolveThuc=true all=true",
+    "[2026-11-01T13:10:07.710Z] target module-bundle: null->not-captured captured->captured fresh=2 all=true"
+  ]
+}

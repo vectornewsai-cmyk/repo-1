@@ -1,0 +1,117 @@
+{
+  "protocol": "q6-measure-protocol v2 (Round 33 §3.2 / P5 §7.5; v1→v2: gap-count tuyệt đối đổi thành lost-rate, xem header)",
+  "runAt": "2026-11-01T13:22:56.607Z",
+  "bundle": "index-4i4xoITZ.js",
+  "video": "sparse-gop-flat.mp4",
+  "n2Verdict": "PARTIAL",
+  "load": {
+    "atStart": "14.93 6.42 3.61",
+    "beforeFwd": "15.25 6.63 3.69",
+    "beforeRev": "17.52 7.40 3.97",
+    "atEnd": "15.83 7.53 4.07"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 13.34,
+          "load5": 5.72,
+          "load15": 3.34,
+          "raw": "13.34 5.72 3.34"
+        },
+        "top": [
+          "9111 26.7 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "8266 24.2 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --gpu-client-id=7 --crashpad-handler-pid=8160 --enable-cra",
+          "9121 13.5 cp cp -r /home/hatch/workspace/tmp-round34-q1/dist-retry-frozen apps/web/dist",
+          "67 11.0 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2170",
+          "8195 10.9 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-U",
+          "8135 4.1 MainThread node run-q2.mjs",
+          "751 3.9 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2170",
+          "8155 3.3 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --no-sandbox --remote-debugging-pipe --no-first-run --no-default-browser-ch"
+        ],
+        "chromePre": 13
+      },
+      "post": {
+        "loadavg": {
+          "load1": 15.83,
+          "load5": 7.53,
+          "load15": 4.07,
+          "raw": "15.83 7.53 4.07"
+        },
+        "top": [
+          "9388 29.4 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --gpu-client-id=7 --crashpad-handler-pid=9177 --enable-cra",
+          "9389 29.2 chrome [chrome] <defunct>",
+          "8266 28.2 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --gpu-client-id=7 --crashpad-handler-pid=8160 --enable-cra",
+          "67 11.1 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2170",
+          "8195 10.0 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-U",
+          "9170 6.0 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --no-sandbox --remote-debugging-pipe --no-first-run --no-default-browser-ch",
+          "9225 4.0 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=gpu-process --gpu-recent-crash-count=0 --no-sandbox --disable-dev-sh",
+          "9241 4.0 chrome [chrome] <defunct>"
+        ],
+        "chromePost": 30
+      },
+      "chromePre": 13,
+      "chromePost": 30
+    }
+  },
+  "forward": {
+    "interpRate": 0.6075533661740558,
+    "playheadRate": 0.5047540791172672,
+    "drawDelta": 13,
+    "holdDelta": 37
+  },
+  "reverse": {
+    "fps": 1.3608219364496157,
+    "drawDelta": 20,
+    "holdDelta": 229,
+    "wallSec": 14.697,
+    "blackSamplesAfterWarmup": 0
+  },
+  "checks": {
+    "reversePlaybackCorrect": false,
+    "holdFiredInApp": true,
+    "noBlackInReverse": true
+  },
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "load1 trước-xuôi 15.25 ≥ 2",
+    "load1 trước-ngược 17.52 ≥ 2",
+    "load1 cuối lượt 15.83 ≥ 2",
+    "tốc độ xuôi 0.6075533661740558 ngoài [0.98, 1.02]",
+    "gap rAF P50 xuôi 0.0655s > 0.015s",
+    "predictedRate xuôi (trừ tick biên) 0.695 < 0.98 (mất do gap >100ms, trừ tick biên: 2.495s / 27 gap)",
+    "có 13 tiến trình Chrome trước lượt (luồng browser khác)"
+  ],
+  "signals": {
+    "load1": {
+      "beforeFwd": 15.25,
+      "beforeRev": 17.52,
+      "atEnd": 15.83
+    },
+    "forwardInterpRate": 0.6075533661740558,
+    "rafForward": {
+      "gapP50": 0.0655,
+      "gapP95": 0.2172,
+      "gapMax": 1.7719,
+      "countOver100ms": 28,
+      "exclFirstOver100ms": 27,
+      "exclFirstLostSec": 2.495,
+      "exclFirstPredictedRate": 0.695,
+      "predictedRate": 0.707
+    },
+    "rafReverse": {
+      "gapP50": 0.014,
+      "gapP95": 0.0865,
+      "predictedRate": 0.999
+    }
+  },
+  "comparability": "CHỈ so sánh hồi quy với các lượt CÙNG loadLabel (và cùng bundle, hoặc A/B cùng phiên). Số under-load KHÔNG được dùng làm baseline quiet; số quiet chỉ có giá trị khi đủ 3 lượt/GOP trong cùng cửa sổ quiet.",
+  "n2Log": "/home/hatch/workspace/tmp-round34-q6/fps-sparse-4/q6-n2.log",
+  "n2Exit": 1,
+  "relabeled": {
+    "from": "q6-measure-protocol v1 (run-time label)",
+    "to": "q6-measure-protocol v2",
+    "note": "Cùng dữ liệu N2 thô; chỉ đổi trường nhãn theo hiệu chuẩn v2 (gap-count tuyệt đối → lost-rate, xem LIMITS Q6 §2.2). Snapshot tiến trình pre/post của v1 được giữ nguyên."
+  }
+}

@@ -1,0 +1,179 @@
+{
+  "errors": [],
+  "support": {
+    "prefer-software": true
+  },
+  "stages": {},
+  "hasVideoDecoder": true,
+  "fixture": {
+    "bytes": 210771214,
+    "sampleCount": 900,
+    "keyIndices": [
+      0,
+      300,
+      600
+    ],
+    "width": 1280,
+    "height": 720
+  },
+  "baseline": {
+    "jsHeap": {
+      "usedJSHeapSize": 211409286,
+      "totalJSHeapSize": 212113538
+    },
+    "measureMemory": "no-measureMemory"
+  },
+  "memoryLadder": [
+    {
+      "label": "held-300",
+      "from": 600,
+      "to": 899,
+      "decoded": 300,
+      "cacheSize": 300,
+      "wallSec": 38.888,
+      "fps": 7.7,
+      "rssAcked": true
+    },
+    {
+      "label": "held-600",
+      "from": 300,
+      "to": 599,
+      "decoded": 300,
+      "cacheSize": 600,
+      "wallSec": 31.312,
+      "fps": 9.6,
+      "rssAcked": true
+    },
+    {
+      "label": "held-900",
+      "from": 0,
+      "to": 299,
+      "decoded": 300,
+      "cacheSize": 900,
+      "wallSec": 21.474,
+      "fps": 14,
+      "rssAcked": true
+    }
+  ],
+  "afterRelease": {
+    "jsHeap": {
+      "usedJSHeapSize": 211871430,
+      "totalJSHeapSize": 212900014
+    },
+    "measureMemory": "no-measureMemory"
+  },
+  "releasedAcked": true,
+  "runA_window90": {
+    "present90": {
+      "drawn": 90,
+      "late": 0,
+      "firstLate": -1,
+      "wallSec": 3.005
+    },
+    "next90": {
+      "drawn": 0,
+      "late": 90,
+      "firstLate": 599,
+      "wallSec": 2.994
+    },
+    "prefetchWallSec": 6.055,
+    "prefetchDecoded": 300,
+    "prefetchCacheSizeAtEnd": 300
+  },
+  "runB_window300_depth1": {
+    "present300": {
+      "drawn": 300,
+      "late": 0,
+      "firstLate": -1,
+      "wallSec": 10.038
+    },
+    "next30": {
+      "drawn": 0,
+      "late": 30,
+      "firstLate": 599,
+      "wallSec": 0.993
+    },
+    "prefetchWallSec": 11.032,
+    "prefetchDecoded": 300,
+    "slackVsBoundarySec": -1.032
+  },
+  "runC_window300_depth2": {
+    "decodeWallGop2Sec": 13.032,
+    "decodedGop2": 300,
+    "decodeWallBothSec": 22.958,
+    "decodedGop3": 300,
+    "present300a": {
+      "drawn": 300,
+      "late": 0,
+      "firstLate": -1,
+      "wallSec": 10.013
+    },
+    "present300b": {
+      "drawn": 262,
+      "late": 38,
+      "firstLate": 599,
+      "wallSec": 9.994
+    },
+    "next30": {
+      "drawn": 0,
+      "late": 30,
+      "firstLate": 299,
+      "wallSec": 0.966
+    },
+    "peakHeld": 900,
+    "slackChainSec": -2.958
+  },
+  "final": {
+    "jsHeap": {
+      "usedJSHeapSize": 212156030,
+      "totalJSHeapSize": 213686446
+    },
+    "measureMemory": "no-measureMemory"
+  },
+  "rssByStage": {
+    "held-300": {
+      "bytes": 1350172672,
+      "procs": 11,
+      "loadavg": [
+        1.95,
+        2.44,
+        1.48
+      ],
+      "at": "2026-11-01T13:12:44.306Z"
+    },
+    "held-600": {
+      "bytes": 1802190848,
+      "procs": 11,
+      "loadavg": [
+        7.88,
+        3.85,
+        1.98
+      ],
+      "at": "2026-11-01T13:13:15.921Z"
+    },
+    "held-900": {
+      "bytes": 2311815168,
+      "procs": 11,
+      "loadavg": [
+        7.94,
+        4.13,
+        2.12
+      ],
+      "at": "2026-11-01T13:13:38.214Z"
+    },
+    "released": {
+      "bytes": 946429952,
+      "procs": 11,
+      "loadavg": [
+        7.86,
+        4.18,
+        2.14
+      ],
+      "at": "2026-11-01T13:13:39.300Z"
+    }
+  },
+  "pipe": {
+    "chromePid": 4748,
+    "display": ":97"
+  }
+}

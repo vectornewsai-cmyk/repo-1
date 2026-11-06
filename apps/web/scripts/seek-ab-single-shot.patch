@@ -1,0 +1,17 @@
+--- /home/hatch/workspace/tmp-round34-q1/seek.ts.ORIGINAL	2026-11-01 13:06:48.839898974 +0000
++++ apps/web/src/lib/seek.ts	2026-11-01 13:07:35.109468661 +0000
+@@ -181,9 +181,11 @@
+       const listener = () => {
+         if (done) return;
+         if (timer) clearTimeout(timer);
+-        // seeked vừa bắn có thể là của seek cũ đang bay: kiểm tra
+-        // lại, chưa đúng frame thì phát seek của mình ngay.
+-        attempt();
++        // A/B đợt 34 Q1 (single-shot, kiểu N2): trả về ngay ở seeked
++        // đầu tiên, không chờ settle (không kiểm tra lại seeking /
++        // đúng frame). CHỈ dùng cho bundle đo A/B, KHÔNG phải code
++        // sản phẩm — xem docs/PHASE9_ROUND34_Q1_SEEK_AB_LIMITS.md.
++        finish(true, false);
+       };
+       try {
+         el.addEventListener("seeked", listener, { once: true });

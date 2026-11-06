@@ -1,0 +1,109 @@
+{
+  "protocol": "q6-measure-protocol v2 (Round 33 §3.2 / P5 §7.5; v1→v2: gap-count tuyệt đối đổi thành lost-rate, xem header)",
+  "runAt": "2026-11-01T13:19:43.907Z",
+  "bundle": "index-BboLRS3K.js",
+  "video": "dense-gop-flat.mp4",
+  "n2Verdict": "PASS",
+  "load": {
+    "atStart": "1.07 2.84 2.27",
+    "beforeFwd": "1.71 2.94 2.30",
+    "beforeRev": "1.75 2.91 2.30",
+    "atEnd": "1.36 2.77 2.26"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 1.17,
+          "load5": 2.89,
+          "load15": 2.28,
+          "raw": "1.17 2.89 2.28"
+        },
+        "top": [
+          "6448 108 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "67 10.4 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2170",
+          "751 3.6 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2170",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "5881 0.0 bash /bin/bash --norc --noprofile -c umask 0007; for i in $(seq 1 15); do pgrep -f 'probe-round34-q3-decode-ahead' >/dev/null || { echo \"Q3 probe finis",
+          "5749 0.0 bash bash /home/hatch/workspace/tmp-round34-q6/run-q6-baseline-wait.sh",
+          "5746 0.0 bash /bin/bash --norc --noprofile -c umask 0007; chmod +x ~/workspace/tmp-round34-q6/run-q6-baseline-wait.sh && bash ~/workspace/tmp-round34-q6/run-q6-"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 1.36,
+          "load5": 2.77,
+          "load15": 2.26,
+          "raw": "1.36 2.77 2.26"
+        },
+        "top": [
+          "6569 73.3 chrome [chrome] <defunct>",
+          "6471 11.1 chrome [chrome] <defunct>",
+          "67 10.6 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2170",
+          "6502 10.1 chrome [chrome] <defunct>",
+          "751 3.7 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2170",
+          "6545 2.8 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --top-chrome-webui --gpu-client-id=5 --crashpad-handler-pid",
+          "6699 1.2 chrome [chrome] <defunct>",
+          "6506 1.1 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US"
+        ],
+        "chromePost": 3
+      },
+      "chromePre": 0,
+      "chromePost": 3
+    }
+  },
+  "forward": {
+    "interpRate": 0.980819529206626,
+    "playheadRate": 0.9073233959818535,
+    "drawDelta": 301,
+    "holdDelta": 1
+  },
+  "reverse": {
+    "fps": 16.06716363899544,
+    "drawDelta": 222,
+    "holdDelta": 473,
+    "wallSec": 13.817,
+    "blackSamplesAfterWarmup": 0
+  },
+  "checks": {
+    "reversePlaybackCorrect": true,
+    "holdFiredInApp": true,
+    "noBlackInReverse": true
+  },
+  "loadLabel": "quiet",
+  "labelReasons": [],
+  "signals": {
+    "load1": {
+      "beforeFwd": 1.71,
+      "beforeRev": 1.75,
+      "atEnd": 1.36
+    },
+    "forwardInterpRate": 0.980819529206626,
+    "rafForward": {
+      "gapP50": 0.0077,
+      "gapP95": 0.0234,
+      "gapMax": 1.7914,
+      "countOver100ms": 2,
+      "exclFirstOver100ms": 1,
+      "exclFirstLostSec": 0.02,
+      "exclFirstPredictedRate": 0.993,
+      "predictedRate": 1.009
+    },
+    "rafReverse": {
+      "gapP50": 0.005,
+      "gapP95": 0.0408,
+      "predictedRate": 1.005
+    }
+  },
+  "comparability": "CHỈ so sánh hồi quy với các lượt CÙNG loadLabel (và cùng bundle, hoặc A/B cùng phiên). Số under-load KHÔNG được dùng làm baseline quiet; số quiet chỉ có giá trị khi đủ 3 lượt/GOP trong cùng cửa sổ quiet.",
+  "n2Log": "/home/hatch/workspace/tmp-round34-q6/fps-dense-1/q6-n2.log",
+  "n2Exit": 0,
+  "relabeled": {
+    "from": "q6-measure-protocol v1 (run-time label)",
+    "to": "q6-measure-protocol v2",
+    "note": "Cùng dữ liệu N2 thô; chỉ đổi trường nhãn theo hiệu chuẩn v2 (gap-count tuyệt đối → lost-rate, xem LIMITS Q6 §2.2). Snapshot tiến trình pre/post của v1 được giữ nguyên."
+  }
+}
