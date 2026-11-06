@@ -58,6 +58,7 @@ import type { SpeedCurve, SpeedKeyframe } from "./speedcurve.js";
 import {
   integrateSpeed,
   normalizeSpeedKeyframes,
+  speedAt,
 } from "./speedcurve.js";
 
 /** Độ sâu lồng nhau tối đa (clip nested ngoài cùng = tầng 1). */
@@ -520,13 +521,30 @@ function validateNestedRec(
  * Fail fast (throw Error) khi:
  * - clip không phải nested clip, speed không hữu hạn hoặc <= 0,
  *   trim không hợp lệ (out <= in), subSpec không có tracks.
+ * - Nested mang speedKeyframes nhưng curve sai hình dạng (luật
+ *   validateNestedSpeedCurveShape), hoặc duration không hợp lệ (cần
+ *   duration output > 0 làm miền của τ).
  * - Độ sâu vượt MAX_NESTED_DEPTH hoặc phát hiện vòng lặp tham chiếu.
  *
  * Clip lá bị trim ngoài cắt hết (giao rỗng) thì BỊ BỎ (không có entry) —
  * đó là hành vi đúng, không phải lỗi. Clip lá có start/duration không
  * hữu hạn thì throw (input rác không được nuốt lặng).
  *
- * Xem FlatClip về việc hàm này KHÔNG viết lại nội dung clip lá.
+ * Đợt 22 luồng E — placement BIẾT CURVE: nested mang speedKeyframes
+ * không hằng được mở phẳng qua τ (nghịch đảo tích phân, mirror
+ * nestedRampTauOffset của preview và mapChildOffset của render), không
+ * còn đặt tuyến tính theo speed hằng như trước. Curve hằng (mọi
+ * keyframe cùng v) gộp chính xác về tốc độ hằng v — curve thắng speed
+ * hằng, khớp render/preview. Vị trí tuyệt đối trả về là thời gian
+ * OUTPUT: với transition cặp biên ở tầng ngoài, lá biên và cửa sổ fade
+ * [đầu, đầu+T] / [cuối−T, cuối] tính từ FlatClip này là đúng theo thời
+ * gian output dưới curve.
+ *
+ * Vẫn placement-only: hàm KHÔNG viết lại nội dung clip lá, KHÔNG áp
+ * shift/fade của transition qua biên (NestedClip chuẩn không có field
+ * transitionIn/Out — normalize bỏ chúng kèm warning; shift/fade thuộc
+ * về preview/render). Xem FlatClip về việc hàm này KHÔNG viết lại nội
+ * dung clip lá.
  */
 export function flattenNested(clip: NestedClip): FlatClip[] {
   if (!isNestedClip(clip)) {
@@ -545,42 +563,120 @@ export function flattenNested(clip: NestedClip): FlatClip[] {
   if (!Array.isArray((clip.subSpec as unknown as Record<string, unknown>)["tracks"])) {
     throw new Error("flattenNested: subSpec.tracks phải là một mảng");
   }
+  const rate = resolveNestedFlattenRate(clip);
+  const toOuter =
+    rate.kind === "constant"
+      ? (t: number): number => clip.start + (t - trim.in) / rate.speed
+      : (t: number): number =>
+          clip.start +
+          nestedRampTau(rate.curve, rate.duration, rate.totalConsumed, t - trim.in);
   const out: FlatClip[] = [];
-  flattenInto(
-    clip,
-    clip.start,
-    trim.in,
-    1 / speed,
-    trim.in,
-    trim.out,
-    1,
-    new Set<object>(),
-    [],
-    out,
-  );
+  flattenInto(clip, toOuter, trim.in, trim.out, 1, new Set<object>(), [], out);
   return out;
+}
+
+/**
+ * Tốc độ/curve hiệu dụng của 1 nested clip cho flatten (đợt 22 E).
+ * - Không có speedKeyframes → tốc độ hằng = nestedEffectiveSpeed.
+ * - Có speedKeyframes: validate hình dạng bằng validateNestedSpeedCurveShape
+ *   (1–128 keyframe, t ∈ [0, duration], v ∈ [0.25, 4], easing hợp lệ);
+ *   curve hằng gộp chính xác về tốc độ hằng (curve thắng speed hằng,
+ *   khớp render đợt 18 §1.5 và preview); curve không hằng → ramp với
+ *   tổng tiêu thụ ∫₀ᴰ s dùng làm miền của τ.
+ * Caller đã kiểm tra speed hữu hạn > 0 trước khi gọi (giữ nguyên thứ tự
+ * throw cũ của flattenNested); hàm này chỉ thêm kiểm tra curve.
+ */
+type NestedFlattenRate =
+  | { kind: "constant"; speed: number }
+  | {
+      kind: "ramp";
+      curve: SpeedCurve;
+      duration: number;
+      totalConsumed: number;
+    };
+
+function resolveNestedFlattenRate(
+  clip: NestedClip,
+  caller = "flattenNested",
+): NestedFlattenRate {
+  const raw = (clip as unknown as Record<string, unknown>)["speedKeyframes"];
+  if (raw === undefined) {
+    return { kind: "constant", speed: nestedEffectiveSpeed(clip) };
+  }
+  const label = `nested clip "${clip.id}"`;
+  const duration = clip.duration;
+  if (!Number.isFinite(duration) || duration <= 0) {
+    throw new Error(
+      `${caller}: ${label} mang speedKeyframes nhưng duration không hợp lệ ` +
+        `(${String(clip.duration)}) — cần duration output > 0 làm miền của τ`,
+    );
+  }
+  const errors = validateNestedSpeedCurveShape(raw, duration, label);
+  if (errors.length > 0) {
+    throw new Error(`${caller}: ${errors.join("; ")}`);
+  }
+  const norm = normalizeSpeedKeyframes((raw as SpeedCurve).keyframes);
+  if (norm.every((k) => Math.abs(k.v - norm[0].v) <= 1e-12)) {
+    return { kind: "constant", speed: norm[0].v };
+  }
+  return {
+    kind: "ramp",
+    curve: { keyframes: norm },
+    duration,
+    totalConsumed: integrateSpeed({ keyframes: norm }, 0, duration),
+  };
+}
+
+/**
+ * τ(w): thời gian output (tương đối so với đầu nested) ứng với vị trí
+ * con cách đầu cửa sổ w giây — mirror nestedRampTauOffset của preview
+ * và mapChildOffset của render: trong [0, tổng tiêu thụ] thì chia đôi
+ * 80 vòng (s ≥ 0.25 nên tích phân đơn điệu ngặt, nghiệm duy nhất);
+ * ngoài khoảng thì ngoại suy tuyến tính theo tốc độ biên (chỉ dùng cho
+ * cửa sổ lệch trim, không dùng cho đoạn khả kiến chuẩn).
+ */
+function nestedRampTau(
+  curve: SpeedCurve,
+  duration: number,
+  totalConsumed: number,
+  offset: number,
+): number {
+  if (offset <= 0) return offset / speedAt(curve, 0);
+  if (offset >= totalConsumed) {
+    return duration + (offset - totalConsumed) / speedAt(curve, duration);
+  }
+  let lo = 0;
+  let hi = duration;
+  for (let i = 0; i < 80; i++) {
+    const mid = (lo + hi) / 2;
+    if (integrateSpeed(curve, 0, mid) < offset) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
 }
 
 /**
  * Đệ quy mở phẳng.
  *
- * Ánh xạ thời gian: thời gian t trong subSpec của `nested` → thời gian
- * ngoài = mapP + (t − mapQ) * mapK. Chỉ phần t trong [winLo, winHi) mới
- * khả kiến (cửa sổ này đã gồm trim của `nested` và mọi trim tổ tiên).
+ * Ánh xạ thời gian: `toOuter` đổi thời gian trong subSpec của `nested`
+ * thành thời gian ngoài. Tầng tốc độ hằng: toOuter(t) = S + (t − in)/v
+ * (đúng công thức cũ); tầng ramp: toOuter(t) = S + τ(t − in). Chỉ phần
+ * t trong [winLo, winHi) mới khả kiến (cửa sổ này đã gồm trim của
+ * `nested` và mọi trim tổ tiên).
  * - Lá: giao [child.start, child.start+child.duration) với cửa sổ →
  *   entry tuyệt đối (bỏ nếu giao rỗng).
  * - Nested con M: cửa sổ của M trong subSpec của chính nó là
- *   [M.trim.in + (visStart − M.start)*M.speed,
- *    M.trim.in + (visEnd − M.start)*M.speed] giao với [M.trim.in, M.trim.out];
- *   ánh xạ mới: mapP' = mapP + (M.start − mapQ)*mapK,
- *   mapQ' = M.trim.in, mapK' = mapK / M.speed.
- *   (Vì thời gian M: τ = M.start + (t' − M.trim.in)/M.speed.)
+ *   [M.trim.in + f(visStart − M.start),
+ *    M.trim.in + f(visEnd − M.start)] giao với [M.trim.in, M.trim.out],
+ *   với f = (Δ × v) khi tốc độ hằng, f = ∫₀^Δ s khi ramp;
+ *   ánh xạ mới: toOuter'(t') = toOuter(M.start + g(t' − M.trim.in)),
+ *   với g = (Δ/v) khi tốc độ hằng, g = τ(Δ) khi ramp.
+ *   (Vì thời gian M: output = M.start + τ(t' − M.trim.in) khi ramp,
+ *   = M.start + (t' − M.trim.in)/M.speed khi tốc độ hằng.)
  */
 function flattenInto(
   nested: NestedClip,
-  mapP: number,
-  mapQ: number,
-  mapK: number,
+  toOuter: (t: number) => number,
   winLo: number,
   winHi: number,
   depth: number,
@@ -639,20 +735,45 @@ function flattenInto(
             `flattenNested: nested clip con "${child.id}" có trim không hợp lệ`,
           );
         }
-        const winLoPrime = Math.max(
-          childTrim.in,
-          childTrim.in + (visStart - childStart) * childSpeed,
-        );
-        const winHiPrime = Math.min(
-          childTrim.out,
-          childTrim.in + (visEnd - childStart) * childSpeed,
-        );
+        const rate = resolveNestedFlattenRate(child);
+        let winLoPrime: number;
+        let winHiPrime: number;
+        let childToOuter: (t: number) => number;
+        if (rate.kind === "constant") {
+          winLoPrime = Math.max(
+            childTrim.in,
+            childTrim.in + (visStart - childStart) * rate.speed,
+          );
+          winHiPrime = Math.min(
+            childTrim.out,
+            childTrim.in + (visEnd - childStart) * rate.speed,
+          );
+          childToOuter = (t: number): number =>
+            toOuter(childStart + (t - childTrim.in) / rate.speed);
+        } else {
+          winLoPrime = Math.max(
+            childTrim.in,
+            childTrim.in + integrateSpeed(rate.curve, 0, visStart - childStart),
+          );
+          winHiPrime = Math.min(
+            childTrim.out,
+            childTrim.in + integrateSpeed(rate.curve, 0, visEnd - childStart),
+          );
+          childToOuter = (t: number): number =>
+            toOuter(
+              childStart +
+                nestedRampTau(
+                  rate.curve,
+                  rate.duration,
+                  rate.totalConsumed,
+                  t - childTrim.in,
+                ),
+            );
+        }
         if (winHiPrime <= winLoPrime) continue;
         flattenInto(
           child,
-          mapP + (childStart - mapQ) * mapK,
-          childTrim.in,
-          mapK / childSpeed,
+          childToOuter,
           winLoPrime,
           winHiPrime,
           depth + 1,
@@ -663,8 +784,8 @@ function flattenInto(
       } else {
         out.push({
           clip: child,
-          absoluteStart: mapP + (visStart - mapQ) * mapK,
-          absoluteDuration: (visEnd - visStart) * mapK,
+          absoluteStart: toOuter(visStart),
+          absoluteDuration: toOuter(visEnd) - toOuter(visStart),
           path: leafPath,
           depth,
         });
@@ -703,6 +824,33 @@ function flattenInto(
  * - Lá: giao [leaf.start, leaf.start+leaf.duration) với cửa sổ tầng chứa
  *   nó → absoluteStart/absoluteDuration bằng ánh xạ cuối; visibleStart/
  *   visibleEnd = phần giao tính từ đầu lá (thời gian output của lá).
+ *
+ * ĐỢT 23 G3 — compose BIẾT CURVE: mỗi tầng mang speedKeyframes được
+ * resolve bằng resolveNestedFlattenRate (cùng luật flatten đợt 22 E:
+ * curve hằng gộp chính xác về tốc độ hằng, curve thắng speed hằng;
+ * curve sai hình dạng → throw fail-fast, KHÔNG lặng lẽ rơi về tuyến
+ * tính). Cửa sổ tầng con tính như flattenInto: tầng hằng dùng
+ * (vis − start) × speed, tầng ramp dùng ∫₀^(vis−start) s (tích phân
+ * tốc độ theo thời gian output, ngữ nghĩa render đợt 18 §2: duration
+ * là thời gian output, cửa sổ con [in, in + ∫s)). Ánh xạ ra ngoài:
+ * khi mọi tầng đều hằng thì giữ NGUYÊN đường affine cũ (mapP/mapQ/mapK,
+ * cùng thứ tự phép tính — hồi quy hằng không đổi 1 bit); khi có ít
+ * nhất 1 tầng ramp thì hợp hàm: toOuter(t) = toOuter_prev(start +
+ * g(t − trim.in)) với g = (Δ/v) khi hằng, g = τ(Δ) khi ramp (τ =
+ * nestedRampTau, nghịch đảo tích phân, giống flattenInto). Vì vậy
+ * absoluteStart/absoluteDuration của compose khớp flattenNested cho
+ * cùng lá (cùng khung thời gian, gồm cả top.start) cả khi có curve.
+ * visibleStart/visibleEnd vẫn tính trong timeline của tầng chứa lá
+ * (không đổi ngữ nghĩa cũ).
+ *
+ * cumulativeSpeed KHI CÓ RAMP: không còn là một tốc độ tức thời duy
+ * nhất. Trường này giữ ý nghĩa "tốc độ gộp": tầng hằng đóng góp
+ * rate.speed (curve hằng → v của curve), tầng ramp đóng góp tốc độ
+ * TRUNG BÌNH ∫₀ᴰ s / D. Nó KHÔNG dùng để suy ra absoluteStart/
+ * absoluteDuration khi có ramp (ánh xạ τ mới là chuẩn) — caller nào
+ * cần map thời gian ngoài ↔ lá dưới ramp phải đi qua τ, không nhân
+ * chia tuyến tính bằng cumulativeSpeed (xem nợ nestedSplitOffset trong
+ * PHASE9_ROUND23_G3_CURVE_WINDOW_LIMITS.md).
  *
  * THAM SỐ:
  * - `top`: nested clip ngoài cùng (tầng 1).
@@ -743,7 +891,13 @@ export interface ComposedLeafWindow {
   path: string[];
   /** Độ sâu của nested chứa trực tiếp lá (ngoài cùng = 1). */
   depth: number;
-  /** Tốc độ tích lũy lá chịu = tích speed của top và mọi tầng chain. */
+  /**
+   * Tốc độ tích lũy lá chịu = tích speed của top và mọi tầng chain.
+   * Đợt 23 G3: tầng mang speedKeyframes hằng đóng góp v của curve
+   * (curve thắng speed hằng, giống flatten); tầng ramp đóng góp tốc
+   * độ TRUNG BÌNH ∫₀ᴰ s / D — chỉ là số tóm tắt, KHÔNG dùng để suy
+   * ra absoluteStart/absoluteDuration khi có ramp (dùng τ).
+   */
   cumulativeSpeed: number;
 }
 
@@ -793,16 +947,26 @@ export function composeNestedLeafWindow(
     throw new Error("composeNestedLeafWindow: leaf có start/duration không hữu hạn");
   }
 
+  // Đợt 23 G3: resolve rate của top (fail-fast curve trước khi đi chain;
+  // thứ tự lỗi cũ cho mọi lỗi không-curve được giữ nguyên vì resolve chỉ
+  // chạy khi speed/trim/tracks/leaf đều đã qua kiểm tra ở trên).
+  const topRate = resolveNestedFlattenRate(top, "composeNestedLeafWindow");
+
   const ancestors = new Set<object>();
   ancestors.add(top.subSpec);
   let curSpec: VideoSpec = top.subSpec;
-  let mapP = top.start;
-  let mapQ = topTrim.in;
-  let mapK = 1 / topSpeed;
   let winLo = topTrim.in;
   let winHi = topTrim.out;
   let depth = 1;
   const path: string[] = [top.id];
+  // Các tầng đã đi qua, ngoài → trong (top + từng chain step đã resolve).
+  // Thu thập trước rồi mới tính ánh xạ ra ngoài: đường hằng cần đúng thứ
+  // tự phép tính cũ, đường ramp cần hợp hàm từ ngoài vào trong.
+  const levels: Array<{
+    clip: NestedClip;
+    trim: NestedTrim;
+    rate: NestedFlattenRate;
+  }> = [{ clip: top, trim: topTrim, rate: topRate }];
 
   for (const step of chain) {
     if (depth + 1 > MAX_NESTED_DEPTH) {
@@ -839,15 +1003,24 @@ export function composeNestedLeafWindow(
         `composeNestedLeafWindow: nested clip "${m.id}" có start/duration không hữu hạn`,
       );
     }
+    // Đợt 23 G3: resolve curve của tầng này TRƯỚC khi xét vis (fail-fast
+    // giống flattenInto: curve lỗi thì throw kể cả khi tầng này sắp bị
+    // trim cắt — chỉ khi tầng TRƯỚC đã cắt hết (return null ở vòng
+    // trước) thì mới không tới được đây, đúng thứ tự cũ).
+    const mRate = resolveNestedFlattenRate(m, "composeNestedLeafWindow");
     const visStart = Math.max(m.start, winLo);
     const visEnd = Math.min(m.start + m.duration, winHi);
     if (visEnd <= visStart) return null; // tầng này đã cắt hết phần còn lại
-    const winLoPrime = Math.max(mTrim.in, mTrim.in + (visStart - m.start) * mSpeed);
-    const winHiPrime = Math.min(mTrim.out, mTrim.in + (visEnd - m.start) * mSpeed);
+    // Cửa sổ con trong subSpec của m: hằng → (Δ × speed), ramp → ∫₀^Δ s
+    // (y hệt flattenInto; Δ = offset thời gian output tính từ m.start).
+    const advance =
+      mRate.kind === "constant"
+        ? (d: number): number => d * mRate.speed
+        : (d: number): number => integrateSpeed(mRate.curve, 0, d);
+    const winLoPrime = Math.max(mTrim.in, mTrim.in + advance(visStart - m.start));
+    const winHiPrime = Math.min(mTrim.out, mTrim.in + advance(visEnd - m.start));
     if (winHiPrime <= winLoPrime) return null;
-    mapP = mapP + (m.start - mapQ) * mapK;
-    mapQ = mTrim.in;
-    mapK = mapK / mSpeed;
+    levels.push({ clip: m, trim: mTrim, rate: mRate });
     winLo = winLoPrime;
     winHi = winHiPrime;
     ancestors.add(m.subSpec);
@@ -872,14 +1045,77 @@ export function composeNestedLeafWindow(
   const visStart = Math.max(leafStart, winLo);
   const visEnd = Math.min(leafEnd, winHi);
   if (visEnd <= visStart) return null;
+
+  let absoluteStart: number;
+  let absoluteDuration: number;
+  let cumulativeSpeed: number;
+  if (levels.every((lv) => lv.rate.kind === "constant")) {
+    // Đường tuyến tính cũ, giữ nguyên từng phép tính (mapP/mapQ/mapK)
+    // để hồi quy hằng khớp bit-exact với hành vi trước đợt 23.
+    let mapP = top.start;
+    let mapQ = topTrim.in;
+    let mapK =
+      1 / (levels[0].rate as { kind: "constant"; speed: number }).speed;
+    for (let i = 1; i < levels.length; i++) {
+      const lv = levels[i];
+      mapP = mapP + (lv.clip.start - mapQ) * mapK;
+      mapQ = lv.trim.in;
+      mapK = mapK / (lv.rate as { kind: "constant"; speed: number }).speed;
+    }
+    absoluteStart = mapP + (visStart - mapQ) * mapK;
+    absoluteDuration = (visEnd - visStart) * mapK;
+    cumulativeSpeed = 1 / mapK;
+  } else {
+    // Đường τ: hợp hàm từ ngoài vào trong, y hệt flattenInto.
+    // Tầng top: thời gian trong subSpec của top → thời gian ngoài.
+    let toOuter: (t: number) => number = (t: number): number =>
+      top.start +
+      (topRate.kind === "constant"
+        ? (t - topTrim.in) / topRate.speed
+        : nestedRampTau(
+            topRate.curve,
+            topRate.duration,
+            topRate.totalConsumed,
+            t - topTrim.in,
+          ));
+    for (let i = 1; i < levels.length; i++) {
+      const lv = levels[i];
+      const prev = toOuter;
+      // Rút rate ra biến local const để TS giữ narrowing vào trong
+      // closure (narrowing qua lv.rate sẽ bị reset trong closure).
+      const lvRate = lv.rate;
+      const g =
+        lvRate.kind === "constant"
+          ? (t: number): number => (t - lv.trim.in) / lvRate.speed
+          : (t: number): number =>
+              nestedRampTau(
+                lvRate.curve,
+                lvRate.duration,
+                lvRate.totalConsumed,
+                t - lv.trim.in,
+              );
+      toOuter = (t: number): number => prev(lv.clip.start + g(t));
+    }
+    absoluteStart = toOuter(visStart);
+    absoluteDuration = toOuter(visEnd) - toOuter(visStart);
+    // Tốc độ gộp: hằng → rate.speed, ramp → tốc độ trung bình ∫/D.
+    cumulativeSpeed = levels.reduce(
+      (acc, lv) =>
+        acc *
+        (lv.rate.kind === "constant"
+          ? lv.rate.speed
+          : lv.rate.totalConsumed / lv.rate.duration),
+      1,
+    );
+  }
   return {
     visibleStart: visStart - leafStart,
     visibleEnd: visEnd - leafStart,
-    absoluteStart: mapP + (visStart - mapQ) * mapK,
-    absoluteDuration: (visEnd - visStart) * mapK,
+    absoluteStart,
+    absoluteDuration,
     path,
     depth,
-    cumulativeSpeed: 1 / mapK,
+    cumulativeSpeed,
   };
 }
 

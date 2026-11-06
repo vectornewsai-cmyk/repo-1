@@ -42,10 +42,10 @@
  *      1 toast error (dạng fields-only nên toast nêu lý do chung, vẫn
  *      chứa chuỗi "[0.25, 4]" và câu fix curve).
  *  S5. Store: split nested reverse → false, 1 toast nêu "đảo timeline con".
- *  S6. Store: split nested lệch cửa sổ trim → false, 1 toast lý do chung
- *      (lý do chi tiết "cửa sổ trim lệch" chỉ có ở ForClip thuần D12
- *      cho tới khi store được nối dây — không mạo nhận toast store đã
- *      nêu chi tiết).
+ *  S6. Store: split nested lệch cửa sổ trim → false, 1 toast lý do CHI
+ *      TIẾT "cửa sổ trim lệch" (đợt 22 A đã nối dây store sang ForClip —
+ *      cập nhật từ bản T3 vốn khóa lý do chung vì lúc đó store chưa
+ *      được nối dây; xem LIMITS đợt 22 A).
  *  R1–R4. Action giữ-trim: 4 lần từ chối (track khóa / không phải nested /
  *      hai tầng / không tính được) đều trả reasonKey đúng + reason đã
  *      dịch đúng locale; câu tiếng Việt của 3 nhánh khóa / không phải
@@ -522,7 +522,7 @@ test("S5: split nested reverse → false, 1 toast nêu đảo timeline con", () 
   contains(ts[0].message, "đảo timeline con", "toast lý do reverse");
 });
 
-test("S6: split nested lệch cửa sổ trim → false, 1 toast lý do chung (chưa phải lý do chi tiết)", () => {
+test("S6: split nested lệch cửa sổ trim → false, 1 toast lý do CHI TIẾT (đợt 22 A đã nối dây store sang ForClip, không còn lý do chung)", () => {
   const top = nestedTop("s6", leafSpec(), {
     speedKeyframes: CURVE_VALID, trim: { in: 0, out: 4 },
   });
@@ -530,7 +530,7 @@ test("S6: split nested lệch cửa sổ trim → false, 1 toast lý do chung (c
   eq(useStore.getState().splitAtPlayhead(), false, "lệch cửa sổ phải tách thất bại");
   const ts = toastsNow();
   eq(ts.length, 1, "đúng 1 toast");
-  contains(ts[0].message, "curve không hợp lệ", "toast store (fields-only) nêu lý do chung");
+  contains(ts[0].message, "cửa sổ trim lệch", "toast store (clip-aware) nêu lý do chi tiết");
 });
 
 // ===========================================================================

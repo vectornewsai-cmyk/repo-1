@@ -37,10 +37,12 @@
  */
 import type { AdjustmentLayer, Clip, ComposedLeafWindow, NestedClip, SpeedCurve, SpeedKeyframe, Track, VideoSpec } from "@repo-1/video-spec";
 import {
+  applySpeedEasing,
   composeNestedLeafWindow,
   nestedEffectiveSpeed,
   nestedEffectiveTrim,
   nestedSourceDuration,
+  normalizeSpeedKeyframes,
   outputDurationForSource,
   sliceSpeedKeyframes,
   sourcePosAt,
@@ -849,6 +851,249 @@ export function deepNestedLeafVisibleSpeedCurve(
   };
 }
 
+// ---- Đợt 24 H1: nghịch đảo τ cho nestedSplitOffset ----
+//
+// NỢ ĐÓNG: đợt 23 §4 ghi `nestedSplitOffset` tuyến tính-only — dưới
+// ramp tổ tiên, `leafLocalTime` nội suy tuyến tính sai. Từ đợt này hàm
+// đảo đúng chuỗi τ (xem dưới), không còn chia tuyến tính khi có ramp.
+//
+// NGỮ NGHĨA (KHÔNG bịa mới — dùng đúng ánh xạ của compose/flatten):
+// composeNestedLeafWindow (đợt 23 G3) hợp ánh xạ ra ngoài F từ timeline
+// của tầng chứa lá lên timeline ngoài: tầng top map t → start +
+// (t − trim.in)/v (hằng) hoặc start + τ(t − trim.in) (ramp, τ =
+// nghịch đảo tích phân, mirror nestedRampTau của nested.ts); mỗi tầng
+// chain sau đó bọc ngoài bằng prev(clip.start + g(t)) với g = (Δ/v)
+// khi hằng, g = τ(Δ) khi ramp. Hàm này dựng lại đúng F đó từ các bản
+// ghi TRONG CÂY (khớp chain theo id như compose, không lấy bản copy
+// caller truyền vào), rồi đảo F bằng bisection trên khoảng khả kiến
+// [leafStart + visibleStart, leafStart + visibleEnd] (F đơn điệu ngặt
+// vì tốc độ ≥ 0.25 — cùng giả thiết đơn điệu của τ ở flatten/compose;
+// bezier overshoot y tự do có thể phá giả thiết này, xem LIMITS H1).
+// - Mọi tầng đều hằng (kể cả curve hằng đã gộp về v): giữ NGUYÊN
+//   công thức tuyến tính cũ từng phép tính → hồi quy hằng khớp
+//   bit-exact với hành vi trước đợt 24 (test H1 khóa bằng eq strict).
+// - Có ít nhất 1 tầng ramp: đảo chuỗi τ, không chia tuyến tính, không
+//   dùng cumulativeSpeed (chỉ là tốc độ trung bình khi có ramp — xem
+//   LIMITS G3, dùng nó để suy thời gian sẽ sai như đường cũ).
+// - Fail-fast: compose đã throw trước với curve sai hình dạng của
+//   top/chain (message chứa `speedKeyframes`); đường đảo ở đây kiểm
+//   tra lại hình dạng khi resolve rate và throw tiền tố
+//   `nestedSplitOffset:` kèm lý do (v ngoài [0.25, 4], t ngoài
+//   [0, duration], easing lạ, bezier x ngoài [0, 1], keyframes rỗng /
+//   > 128, duration không hợp lệ, tổng tiêu thụ không hữu hạn) —
+//   KHÔNG rơi lặng lẽ về tuyến tính khi curve lỗi. Ánh xạ F không hữu
+//   hạn / không đơn điệu ở hai biên cũng throw thay vì trả số sai.
+// - Mốc cắt ngoài cửa sổ khả kiến vẫn trả null như cũ (không phải lỗi
+//   curve); mốc đúng bằng biên trả đúng visibleStart/visibleEnd.
+
+/** Tốc độ/curve hiệu dụng của 1 tầng cho đường đảo τ (mirror luật flatten đợt 22 E). */
+type SplitLevelRate =
+  | { kind: "constant"; speed: number }
+  | { kind: "ramp"; curve: SpeedCurve; duration: number };
+
+/**
+ * Lỗi hình dạng đầu tiên của speedKeyframes (mirror
+ * validateNestedSpeedCurveShape của nested.ts — cùng ngưỡng: 1–128
+ * keyframe, t ∈ [0, duration + 1e-6], v ∈ [0.25, 4], easing hợp lệ,
+ * bezier [x1, y1, x2, y2] với x1, x2 ∈ [0, 1]). Trả null khi hợp lệ.
+ */
+function splitLevelCurveShapeError(
+  curve: unknown,
+  duration: number,
+  label: string,
+): string | null {
+  const where = `${label}.speedKeyframes`;
+  if (
+    !curve ||
+    typeof curve !== "object" ||
+    !Array.isArray((curve as { keyframes?: unknown }).keyframes)
+  ) {
+    return `${where} phải là object { keyframes: [...] }`;
+  }
+  const arr = (curve as { keyframes: unknown[] }).keyframes;
+  if (arr.length === 0) {
+    return `${where}.keyframes: mảng rỗng — cần ít nhất 1 keyframe`;
+  }
+  if (arr.length > 128) {
+    return `${where}.keyframes: quá 128 keyframe`;
+  }
+  const EASINGS = ["linear", "ease-in", "ease-out", "bezier"];
+  for (let i = 0; i < arr.length; i++) {
+    const kf = arr[i] as Record<string, unknown> | null;
+    const w = `${where}.keyframes[${i}]`;
+    if (!kf || typeof kf !== "object") return `${w} phải là object { t, v, easing }`;
+    const t = kf["t"];
+    const v = kf["v"];
+    const easing = kf["easing"];
+    if (typeof t !== "number" || !Number.isFinite(t) || t < 0 || t > duration + 1e-6) {
+      return `${w}.t phải trong [0, ${duration}] (nhận được: ${JSON.stringify(t)})`;
+    }
+    if (typeof v !== "number" || !Number.isFinite(v) || v < 0.25 || v > 4) {
+      return `${w}.v phải trong 0.25..4 (nhận được: ${JSON.stringify(v)})`;
+    }
+    if (typeof easing !== "string" || !EASINGS.includes(easing)) {
+      return `${w}.easing phải là linear | ease-in | ease-out | bezier (nhận được: ${JSON.stringify(easing)})`;
+    }
+    if (easing === "bezier") {
+      const b = kf["bezier"];
+      if (
+        !Array.isArray(b) || b.length !== 4 ||
+        !b.every((x) => typeof x === "number" && Number.isFinite(x)) ||
+        (b[0] as number) < 0 || (b[0] as number) > 1 ||
+        (b[2] as number) < 0 || (b[2] as number) > 1
+      ) {
+        return `${w}.bezier phải là [x1, y1, x2, y2]: x1, x2 trong [0, 1], y1, y2 tự do`;
+      }
+    }
+  }
+  return null;
+}
+
+/** Resolve rate 1 tầng cho đường đảo τ (fail-fast, không fallback tuyến tính). */
+function resolveSplitLevelRate(clip: NestedClip): SplitLevelRate {
+  const raw = (clip as unknown as Record<string, unknown>)["speedKeyframes"];
+  if (raw === undefined) {
+    const speed = nestedEffectiveSpeed(clip);
+    if (!Number.isFinite(speed) || speed <= 0) {
+      throw new Error(
+        `nestedSplitOffset: nested clip "${clip.id}" có speed không hợp lệ ` +
+          `(${String(clip.speed)}) — không đảo được chuỗi τ`,
+      );
+    }
+    return { kind: "constant", speed };
+  }
+  const label = `nested clip "${clip.id}"`;
+  const duration = clip.duration;
+  if (!Number.isFinite(duration) || duration <= 0) {
+    throw new Error(
+      `nestedSplitOffset: ${label} mang speedKeyframes nhưng duration không hợp lệ ` +
+        `(${String(clip.duration)}) — cần duration output > 0 làm miền của τ`,
+    );
+  }
+  const shapeErr = splitLevelCurveShapeError(raw, duration, label);
+  if (shapeErr) {
+    throw new Error(`nestedSplitOffset: ${shapeErr}`);
+  }
+  let norm: SpeedKeyframe[];
+  try {
+    norm = normalizeSpeedKeyframes((raw as SpeedCurve).keyframes);
+  } catch (e) {
+    throw new Error(
+      `nestedSplitOffset: ${label}.speedKeyframes không normalize được: ${(e as Error).message}`,
+    );
+  }
+  if (norm.length === 0) {
+    throw new Error(`nestedSplitOffset: ${label}.speedKeyframes rỗng sau normalize`);
+  }
+  // Curve hằng gộp chính xác về tốc độ hằng (curve thắng speed hằng —
+  // cùng luật flatten/compose, nên đường hằng cũ vẫn đúng cho case này).
+  if (norm.every((k) => Math.abs(k.v - norm[0].v) <= 1e-12)) {
+    return { kind: "constant", speed: norm[0].v };
+  }
+  let total: number;
+  try {
+    // sourcePosAt(curve, duration) = ∫₀ᴰ s (cùng hàm integrateSpeed của
+    // spec, chỉ khác tên gọi — nestUtils không import integrateSpeed).
+    total = sourcePosAt({ keyframes: norm }, duration);
+  } catch (e) {
+    throw new Error(
+      `nestedSplitOffset: ${label}.speedKeyframes không tính được tích phân: ${(e as Error).message}`,
+    );
+  }
+  if (!Number.isFinite(total) || total <= 0) {
+    throw new Error(
+      `nestedSplitOffset: ${label}.speedKeyframes có tổng tiêu thụ không hữu hạn/dương ` +
+        `(${String(total)}) — không đảo được τ`,
+    );
+  }
+  return { kind: "ramp", curve: { keyframes: norm }, duration };
+}
+
+/** Ánh xạ thuận F (tầng chứa lá → timeline ngoài) + cờ ramp + start lá trong cây. */
+interface SplitForwardMap {
+  toOuter: (t: number) => number;
+  hasRamp: boolean;
+  leafStart: number;
+}
+
+/**
+ * Dựng F đúng như composeNestedLeafWindow (đợt 23 G3): top map trước,
+ * rồi bọc từng tầng chain bằng prev(clip.start + g(t)). τ mỗi tầng
+ * dùng twoLevelTauOffsetLocal (mirror nestedRampTau: bisection 80 vòng
+ * trên tích phân, ngoại suy tuyến tính theo tốc độ biên ngoài miền).
+ * Chain/lá khớp theo id trong cây như compose; không khớp → throw
+ * (compose đã throw trước nên đây chỉ là phòng thủ, không nuốt lặng).
+ */
+function buildSplitForwardMap(
+  top: NestedClip,
+  chain: NestedClip[],
+  leaf: Clip,
+): SplitForwardMap {
+  const levels: Array<{
+    clip: NestedClip;
+    trim: { in: number; out: number };
+    rate: SplitLevelRate;
+  }> = [{ clip: top, trim: nestedEffectiveTrim(top), rate: resolveSplitLevelRate(top) }];
+  let curSpec: VideoSpec = top.subSpec;
+  for (const step of chain) {
+    const found = findNestedChildInSpec(curSpec, step.id);
+    if (!found) {
+      throw new Error(
+        `nestedSplitOffset: chain không khớp cây — không tìm thấy nested clip "${step.id}" ` +
+          `trong tầng hiện tại (compose đã kiểm tra trước, đây là lỗi nội bộ không được nuốt lặng)`,
+      );
+    }
+    levels.push({
+      clip: found,
+      trim: nestedEffectiveTrim(found),
+      rate: resolveSplitLevelRate(found),
+    });
+    curSpec = found.subSpec;
+  }
+  let leafRec: Clip | undefined;
+  if (Array.isArray(curSpec.tracks)) {
+    for (const t of curSpec.tracks) {
+      if (!Array.isArray(t.clips)) continue;
+      for (const c of t.clips) {
+        if ((c as { id?: unknown }).id === leaf.id) leafRec = c;
+      }
+    }
+  }
+  if (!leafRec) {
+    throw new Error(
+      `nestedSplitOffset: không tìm thấy clip lá "${leaf.id}" trong tầng chứa nó`,
+    );
+  }
+  if (!Number.isFinite(leafRec.start)) {
+    throw new Error(
+      `nestedSplitOffset: clip lá "${leaf.id}" có start không hữu hạn — không đảo được τ`,
+    );
+  }
+  const topLv = levels[0];
+  const topRate = topLv.rate;
+  let toOuter: (t: number) => number = (t: number): number =>
+    top.start +
+    (topRate.kind === "constant"
+      ? (t - topLv.trim.in) / topRate.speed
+      : twoLevelTauOffsetLocal(topRate.curve, topRate.duration, t - topLv.trim.in));
+  for (let i = 1; i < levels.length; i++) {
+    const lv = levels[i];
+    const prev = toOuter;
+    const lvRate = lv.rate;
+    const g =
+      lvRate.kind === "constant"
+        ? (t: number): number => (t - lv.trim.in) / lvRate.speed
+        : (t: number): number =>
+            twoLevelTauOffsetLocal(lvRate.curve, lvRate.duration, t - lv.trim.in);
+    toOuter = (t: number): number => prev(lv.clip.start + g(t));
+  }
+  return {
+    toOuter,
+    hasRamp: levels.some((lv) => lv.rate.kind === "ramp"),
+    leafStart: leafRec.start,
+  };
+}
+
 /**
  * Điểm cắt qua biên nested: một mốc thời gian trong khung timeline ngoài
  * của `top` (cùng khung với ComposedLeafWindow.absoluteStart, tức đã gồm
@@ -861,6 +1106,11 @@ export function deepNestedLeafVisibleSpeedCurve(
  * `sourceTime` vắng cho clip chữ và reverse + speedKeyframes (xem
  * DeepLeafMedia). Mốc cắt đúng bằng biên lá vẫn map được (về đầu/cuối
  * phần khả kiến) — caller quyết định nửa nào nhận điểm biên.
+ *
+ * Đợt 24 H1: dưới ramp tổ tiên, mốc ngoài được đảo qua chuỗi τ (bisection
+ * trên ánh xạ F đã hợp — xem khối chú thích H1 ở trên), không còn nội
+ * suy tuyến tính. Khi không có ramp, công thức tuyến tính cũ giữ nguyên
+ * từng phép tính (hồi quy hằng khớp strict).
  */
 export interface NestedSplitPoint {
   /** Thời gian output của lá tại điểm cắt (tính từ đầu lá). */
@@ -886,10 +1136,74 @@ export function nestedSplitOffset(
   ) {
     return null;
   }
-  // mapK = tỉ lệ thời gian ngoài / thời gian output của lá.
-  const mapK = window.absoluteDuration / (window.visibleEnd - window.visibleStart);
-  const leafLocalTime =
-    window.visibleStart + (splitTimeTop - window.absoluteStart) / mapK;
+  // Đường hằng: giữ nguyên công thức tuyến tính cũ (mapK) từng phép
+  // tính — hồi quy hằng khớp bit-exact với hành vi trước đợt 24.
+  // Đường ramp: đảo chuỗi τ; lỗi trong lúc đảo thì throw (xem H1),
+  // không rơi về tuyến tính. compose đã validate curve nên tới đây
+  // resolve rate chỉ throw khi cây lệch khỏi thứ compose đã thấy
+  // (lỗi nội bộ) hoặc khi đánh giá F thất bại — đều không được nuốt.
+  const fwd = buildSplitForwardMap(top, chain, leaf);
+  let leafLocalTime: number;
+  if (!fwd.hasRamp) {
+    // mapK = tỉ lệ thời gian ngoài / thời gian output của lá.
+    const mapK = window.absoluteDuration / (window.visibleEnd - window.visibleStart);
+    leafLocalTime =
+      window.visibleStart + (splitTimeTop - window.absoluteStart) / mapK;
+  } else {
+    const lo = fwd.leafStart + window.visibleStart;
+    const hi = fwd.leafStart + window.visibleEnd;
+    // Mốc đúng bằng biên: trả đúng đầu/cuối phần khả kiến (tránh sai
+    // số bisection tại biên; hành vi này khớp đường tuyến tính cũ).
+    if (splitTimeTop === window.absoluteStart) {
+      leafLocalTime = window.visibleStart;
+    } else if (splitTimeTop === window.absoluteStart + window.absoluteDuration) {
+      leafLocalTime = window.visibleEnd;
+    } else {
+      let fLo: number;
+      let fHi: number;
+      try {
+        fLo = fwd.toOuter(lo);
+        fHi = fwd.toOuter(hi);
+      } catch (e) {
+        throw new Error(
+          `nestedSplitOffset: không đánh giá được ánh xạ τ tại biên cửa sổ lá ` +
+            `"${leaf.id}": ${(e as Error).message}`,
+        );
+      }
+      if (!Number.isFinite(fLo) || !Number.isFinite(fHi) || fHi <= fLo) {
+        throw new Error(
+          `nestedSplitOffset: ánh xạ τ qua các tầng của lá "${leaf.id}" không đơn điệu/hữu hạn ` +
+            `(F(lo)=${String(fLo)}, F(hi)=${String(fHi)}) — không đảo được, không rơi về tuyến tính`,
+        );
+      }
+      let a = lo;
+      let b = hi;
+      for (let i = 0; i < 100; i++) {
+        const mid = (a + b) / 2;
+        let fm: number;
+        try {
+          fm = fwd.toOuter(mid);
+        } catch (e) {
+          throw new Error(
+            `nestedSplitOffset: không đánh giá được ánh xạ τ tại điểm giữa cửa sổ lá ` +
+              `"${leaf.id}": ${(e as Error).message}`,
+          );
+        }
+        if (!Number.isFinite(fm)) {
+          throw new Error(
+            `nestedSplitOffset: ánh xạ τ tại điểm giữa cửa sổ lá "${leaf.id}" không hữu hạn — không đảo được`,
+          );
+        }
+        if (fm < splitTimeTop) a = mid;
+        else b = mid;
+      }
+      leafLocalTime = (a + b) / 2 - fwd.leafStart;
+      // Kẹp sai số float về đúng miền khả kiến (bisection đã nằm trong
+      // [lo, hi] theo cấu tạo nên kẹp này chỉ sửa epsilon, không giấu lỗi).
+      if (leafLocalTime < window.visibleStart) leafLocalTime = window.visibleStart;
+      if (leafLocalTime > window.visibleEnd) leafLocalTime = window.visibleEnd;
+    }
+  }
   const sourceTime = leafSourceTimeAt(leaf, leafLocalTime);
   return {
     leafLocalTime,
@@ -1582,10 +1896,107 @@ export function nestedSubtreeHasSpeedCurve(top: NestedClip): boolean {
 //  - Lá nằm ngoài cửa sổ trim của tầng ngoài hoàn toàn (không có đoạn
 //    khả kiến) được bỏ qua ở bước lấy mẫu vì render sẽ drop lá đó, không
 //    fail; các kiểm tra hình dạng/reverse/attachment vẫn áp cho nó.
-/** Kết quả kiểm tra hai tầng: ok + reason rỗng, hoặc !ok + lý do tiếng Việt để store toast/trả về. */
+//
+// ---- Đợt 22 B: thắt chặt cổng lấy mẫu (THAY cho hai gạch đầu dòng về
+// lấy mẫu/biên tích ở trên — phần còn lại của header T2 giữ nguyên) ----
+//
+// Nợ T2 §3: (a) lấy mẫu 257 điểm đều có thể bỏ sót đỉnh vượt hẹp của
+// bezier giữa hai mẫu; (b) lá sâu chỉ kiểm tra biên tích keyframe
+// (điều kiện cần, không đủ cho bezier). Đợt này thắt chặt cả hai mà
+// KHÔNG nới/chặt sai so với render:
+// - Lá trực tiếp (combinedRampSpeedInRange): giữ nguyên tập mẫu cũ
+//   (257 điểm đều + knot ngoài + knot trong map ngược qua τ) cộng thêm
+//   cực trị bezier trong đoạn của cả hai tầng (giải đúng bằng công thức
+//   bậc 2, xem bezierSegmentExtremaTimes) và chia nhỏ thích ứng giữa
+//   các điểm mẫu liên tiếp (lệch dây cung > 1e-4 thì chẻ đôi tới sâu 10,
+//   ngân sách 100000 lần đánh giá). Tập mẫu cũ là tập con của tập mẫu
+//   mới nên case cũ cho qua vẫn cho qua, trừ case cũ vốn đã vi phạm
+//   nhưng bị bỏ sót — đó đúng là lỗi cần chặn.
+// - Lá sâu: giữ biên tích keyframe, cộng thêm (a) cặp trong-cùng × lá
+//   bằng đúng bộ lấy mẫu trực tiếp — render flatten từ trong ra ngoài
+//   nên bước trong-cùng này render kiểm tra thật ở bước mã hoá Hermite,
+//   chặn ở đây là sound; và (b) lấy mẫu toàn chuỗi qua τ hợp
+//   (deepComposedSpeedInRange): tích mọi tầng dọc chain tại thời gian
+//   output của tầng ngoài, hạt giống là knot/cực trị/cạnh của mọi tầng
+//   map ngược lên trục ngoài + chia nhỏ thích ứng. Sampler trả null
+//   (fallback về chỉ biên tích) khi chain không ánh xạ được (trim tầng
+//   có curve lệch tích phân > 1e-4, tốc độ hằng ≤ 0, duration không hợp
+//   lệ) — không bao giờ chặn trên ánh xạ hỏng.
+// - CỐ TÌNH KHÔNG lấy mẫu cặp tầng-trung-gian × tầng-ngoài: render
+//   flatten từ trong ra ngoài nên chỉ kiểm tra (trong-cùng × lá) rồi
+//   (ngoài × curve đã hợp), không bao giờ kiểm tra riêng ngoài × trung
+//   gian — chặn cặp đó sẽ chặn oan trạng thái mà mọi lá dưới trung gian
+//   đều kéo tích về trong khoảng. Vì vậy nested con mang curve vẫn chỉ
+//   kiểm tra biên tích như T2.
+// - Message tái sử dụng (luồng A giữ wording): các ca chặn mới của lá
+//   sâu dùng lại đúng message lấy mẫu của lá trực tiếp ("Tốc độ hợp
+//   ... tại điểm mẫu"); với lá sâu "tích hai tốc độ" hiểu là tích toàn
+//   chuỗi tại điểm mẫu, luồng A có thể viết lại cho chính xác hơn.
+// - Giới hạn còn lại (xem docs/PHASE9_ROUND22_B_GATE_SAMPLING_LIMITS.md):
+//   đỉnh tương tác tích hẹp hơn bề rộng tối thiểu của chia nhỏ
+//   (~khoảng gốc/1024, khoảng 0.04ms với clip 10s) mà né được mọi điểm
+//   1/4 ở mọi tầng vẫn có thể sót; đỉnh của MỘT thừa số đơn lẻ nay đã
+//   bắt đúng bằng cực trị bezier nên chỉ còn đỉnh tương tác tích cực
+//   hẹp phụ thuộc chia nhỏ. Render vẫn là chốt chặn cuối.
+/**
+ * Mã lý do ổn định của cổng hai tầng (đợt 23 G1). Mỗi nhánh từ chối có
+ * đúng một code; wording `reason` giữ nguyên để test cũ không vỡ, nhưng
+ * call site dịch theo code trước (xem translateTwoLevelReasonByCode trong
+ * nestedRejection.ts) nên đổi wording cổng không còn làm lệch bản dịch.
+ * "valid" = cổng cho qua (ok === true, reason rỗng).
+ */
+export type TwoLevelReasonCode =
+  | "valid"
+  | "topReverse"
+  | "outerInvalid"
+  | "leafReverse"
+  | "leafAttachment"
+  | "leafCurveInvalid"
+  | "combinedRange"
+  | "keyframeProduct"
+  | "nestedCurveInvalid"
+  | "nestedKeyframeProduct"
+  | "noSourceAxis"
+  | "leafSelfReverse"
+  | "leafNonMedia"
+  | "leafSelfAttachment"
+  | "leafSelfCurveInvalid"
+  | "ancestorReverse"
+  | "ancestorCurveInvalid"
+  | "ancestorKeyframeProduct"
+  | "ancestorCombinedRange";
+
+/** Biến {id}/{kind} kèm code, để dịch theo code không cần tách chuỗi. */
+export interface TwoLevelReasonVars {
+  id?: string;
+  kind?: string;
+  // Index signature để gán được cho Record<string, string | undefined>
+  // mà translateTwoLevelReasonByCode nhận (tránh cast ở call site).
+  [key: string]: string | undefined;
+}
+
+/**
+ * Kết quả kiểm tra hai tầng: ok + reason rỗng, hoặc !ok + lý do tiếng
+ * Việt để store toast/trả về. Đợt 23 G1 thêm `reasonCode` (luôn có, kể
+ * cả khi ok) và `reasonVars` (khi nhánh có id/kind); `reason` giữ nguyên
+ * từng ký tự để tương thích ngược với mapper khớp chuỗi cũ.
+ */
 export interface TwoLevelCheck {
   ok: boolean;
   reason: string;
+  reasonCode: TwoLevelReasonCode;
+  reasonVars?: TwoLevelReasonVars;
+}
+
+/** Dựng kết quả từ chối hai tầng: reason + code + biến (nếu có). */
+function twoLevelFail(
+  reason: string,
+  reasonCode: TwoLevelReasonCode,
+  reasonVars?: TwoLevelReasonVars,
+): TwoLevelCheck {
+  return reasonVars
+    ? { ok: false, reason, reasonCode, reasonVars }
+    : { ok: false, reason, reasonCode };
 }
 
 const T2_SPEED_MIN = 0.25;
@@ -1652,7 +2063,313 @@ function twoLevelTauOffsetLocal(curve: SpeedCurve, duration: number, childOffset
   return (lo + hi) / 2;
 }
 
-/** Tốc độ hợp lấy mẫu của một lá trực tiếp dưới tầng ngoài có nằm trong [0.25, 4] không. */
+// ---- Đợt 22 B: cổng lấy mẫu tốc độ hợp chặt hơn (xem khối chú thích
+// trước TwoLevelCheck; chỉ đổi logic kiểm tra bên trong, không đổi API
+// hay message) ----
+
+/** Dung sai lệch dây cung cho chia nhỏ thích ứng (đơn vị tốc độ). */
+const T2_ADAPT_TOL = 1e-4;
+/** Độ sâu chia nhỏ thích ứng tối đa (mỗi tầng chẻ đôi khoảng). */
+const T2_ADAPT_MAX_DEPTH = 10;
+/** Ngân sách đánh giá tốc độ hợp cho một lần kiểm tra (vượt thì dừng chẻ). */
+const T2_ADAPT_MAX_EVALS = 100000;
+/** Số hạt giống map ngược tối đa cho lấy mẫu lá sâu (vượt thì bỏ bớt). */
+const T2_DEEP_MAX_SEEDS = 800;
+
+/** Ngân sách đánh giá dùng chung cho một lần kiểm tra lấy mẫu. */
+interface SampleBudget {
+  evals: number;
+  exhausted: boolean;
+}
+
+/**
+ * Thời điểm cực trị TRONG đoạn của một curve (trục thời gian output của
+ * chính curve đó) — chỉ đoạn bezier mới có: linear/ease-in/ease-out đơn
+ * điệu trong đoạn. Với đoạn bezier v(t) = v0 + Δv·B(p), B là cubic-bezier
+ * kiểu CSS: B'(p) = y'(u)/x'(u); x'(u) > 0 trên (0,1) khi x1,x2 ∈ [0,1]
+ * nên cực trị ⟺ y'(u) = 0, mà y'(u)/3 = A·u² + B·u + C với
+ * A = 3y1−3y2+1, B = 2y2−4y1, C = y1 — giải ĐÚNG bằng công thức bậc 2.
+ * Đoạn không có mảng bezier thì dùng default CSS ease như speedAt;
+ * đoạn có x1/x2 ngoài [0,1] (curve chưa qua validate) thì bỏ qua để
+ * chia nhỏ thích ứng lo phần đó. Trả về các t trong đoạn (không gồm biên).
+ */
+function bezierSegmentExtremaTimes(curve: SpeedCurve): number[] {
+  const out: number[] = [];
+  let ks: SpeedKeyframe[];
+  try {
+    ks = normalizeSpeedKeyframes(curve.keyframes);
+  } catch {
+    return out;
+  }
+  for (let i = 0; i < ks.length - 1; i++) {
+    const a = ks[i];
+    const b = ks[i + 1];
+    if (a.easing !== "bezier") continue;
+    const span = b.t - a.t;
+    if (span <= 0 || b.v === a.v) continue;
+    const bez = a.bezier ?? [0.25, 0.1, 0.25, 1];
+    const [x1, y1, x2, y2] = bez;
+    if (![x1, y1, x2, y2].every(Number.isFinite)) continue;
+    if (x1 < 0 || x1 > 1 || x2 < 0 || x2 > 1) continue;
+    const A = 3 * y1 - 3 * y2 + 1;
+    const B = 2 * y2 - 4 * y1;
+    const C = y1;
+    const roots: number[] = [];
+    if (Math.abs(A) < 1e-12) {
+      if (Math.abs(B) > 1e-12) roots.push(-C / B);
+    } else {
+      const disc = B * B - 4 * A * C;
+      if (disc < 0) continue;
+      const sq = Math.sqrt(disc);
+      roots.push((-B - sq) / (2 * A), (-B + sq) / (2 * A));
+    }
+    for (const u of roots) {
+      if (!(u > 1e-9 && u < 1 - 1e-9)) continue;
+      const v = 1 - u;
+      const p = 3 * v * v * u * x1 + 3 * v * u * u * x2 + u * u * u;
+      if (!(p > 0 && p < 1)) continue;
+      const t = a.t + p * span;
+      if (t > a.t && t < b.t) out.push(t);
+    }
+  }
+  return out;
+}
+
+/**
+ * Đánh giá nhanh speed/integral trên keyframes đã normalize MỘT lần
+ * (đợt 22 B — lý do hiệu năng).
+ *
+ * speedAt/sourcePosAt của engine normalize (sắp xếp) lại toàn bộ mảng
+ * keyframes MỖI lần gọi nên lấy mẫu hàng chục nghìn điểm trên curve
+ * 128 keyframe trở nên quá chậm cho cổng UI (hàng chục giây, đo thật
+ * ở stress test B8 trước khi có fast path). FastCurve normalize một lần
+ * rồi đánh giá theo đoạn bằng ĐÚNG công thức của engine: giá trị đoạn
+ * = v0 + Δv·applySpeedEasing; tích phân đoạn = nguyên hàm
+ * (linear/ease-in/ease-out) hoặc Simpson 64 (bezier) — cùng lưới Simpson
+ * và cùng công thức nguyên hàm nên kết quả khớp engine trong sai số
+ * float; ngoài khoảng keyframe thì kẹp về giá trị biên như engine.
+ * Chỉ dùng cho curve đã qua validate hình dạng (t/v hữu hạn, t không
+ * âm, easing thuộc 4 loại); fastCurveOf trả null khi gặp dị thường và
+ * caller rơi về engine (không bao giờ đánh giá sai lặng lẽ).
+ */
+interface FastCurve {
+  ks: SpeedKeyframe[];
+  /** prefix[i] = ∫₀^{ks[i].t} (vùng trước knot đầu = tốc độ biên × t). */
+  prefix: number[];
+}
+
+/** Tích phân trên đoạn con [a, b] nằm trong đoạn keyframe i (đúng công thức engine). */
+function fastSegmentIntegral(ks: SpeedKeyframe[], i: number, a: number, b: number): number | null {
+  const s0 = ks[i];
+  const s1 = ks[i + 1];
+  const S = s1.t - s0.t;
+  if (!(S > 0) || b < a) return null;
+  const span = b - a;
+  if (span === 0) return 0;
+  if (s0.easing === "bezier") {
+    const bez: [number, number, number, number] = s0.bezier ?? [0.25, 0.1, 0.25, 1];
+    const f = (t: number): number => {
+      const p = (t - s0.t) / S;
+      return s0.v + (s1.v - s0.v) * applySpeedEasing("bezier", p, bez);
+    };
+    const n = 64;
+    const h = span / n;
+    let s = f(a) + f(b);
+    for (let k = 1; k < n; k++) s += (k % 2 === 0 ? 2 : 4) * f(a + k * h);
+    return (s * h) / 3;
+  }
+  if (s0.easing !== "linear" && s0.easing !== "ease-in" && s0.easing !== "ease-out") return null;
+  const p0 = (a - s0.t) / S;
+  const p1 = (b - s0.t) / S;
+  const anti = (p: number): number =>
+    s0.easing === "linear" ? (p * p) / 2
+    : s0.easing === "ease-in" ? (p * p * p) / 3
+    : p + Math.pow(1 - p, 3) / 3;
+  return s0.v * span + (s1.v - s0.v) * S * (anti(p1) - anti(p0));
+}
+
+function fastCurveOf(curve: SpeedCurve): FastCurve | null {
+  let ks: SpeedKeyframe[];
+  try {
+    ks = normalizeSpeedKeyframes(curve.keyframes);
+  } catch {
+    return null;
+  }
+  if (ks.length === 0) return null;
+  for (const k of ks) {
+    if (!Number.isFinite(k.t) || !Number.isFinite(k.v) || k.t < 0) return null;
+    if (k.easing !== "linear" && k.easing !== "ease-in" && k.easing !== "ease-out" && k.easing !== "bezier") return null;
+    if (k.easing === "bezier" && k.bezier !== undefined && !k.bezier.every(Number.isFinite)) return null;
+  }
+  if (ks.length === 1) return { ks, prefix: [0] };
+  const prefix: number[] = [ks[0].v * ks[0].t];
+  for (let i = 0; i < ks.length - 1; i++) {
+    const seg = fastSegmentIntegral(ks, i, ks[i].t, ks[i + 1].t);
+    if (seg === null) return null;
+    prefix.push(prefix[prefix.length - 1] + seg);
+  }
+  return { ks, prefix };
+}
+
+/** speedAt trên FastCurve (binary search đoạn, cùng giá trị với engine tại knot chung). */
+function fastSpeedAt(fc: FastCurve, t: number): number {
+  const ks = fc.ks;
+  if (ks.length === 1) return ks[0].v;
+  if (t <= ks[0].t) return ks[0].v;
+  const last = ks[ks.length - 1];
+  if (t >= last.t) return last.v;
+  let lo = 0;
+  let hi = ks.length - 2;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (t < ks[mid].t) hi = mid - 1;
+    else if (t > ks[mid + 1].t) lo = mid + 1;
+    else {
+      const a = ks[mid];
+      const b = ks[mid + 1];
+      const span = b.t - a.t;
+      const p = span <= 0 ? 0 : (t - a.t) / span;
+      return a.v + (b.v - a.v) * applySpeedEasing(a.easing, p, a.bezier);
+    }
+  }
+  return last.v;
+}
+
+/** sourcePosAt trên FastCurve (∫₀ᵗ, NaN khi gặp đoạn suy biến — caller xử lý như engine throw). */
+function fastSourcePosAt(fc: FastCurve, t: number): number {
+  const ks = fc.ks;
+  if (t <= 0) return 0;
+  if (ks.length === 1) return ks[0].v * t;
+  if (t <= ks[0].t) return ks[0].v * t;
+  const last = ks[ks.length - 1];
+  if (t >= last.t) return fc.prefix[fc.prefix.length - 1] + last.v * (t - last.t);
+  let lo = 0;
+  let hi = ks.length - 2;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (t < ks[mid].t) hi = mid - 1;
+    else if (t > ks[mid + 1].t) lo = mid + 1;
+    else {
+      const piece = fastSegmentIntegral(ks, mid, ks[mid].t, t);
+      if (piece === null) return NaN;
+      return fc.prefix[mid] + piece;
+    }
+  }
+  return NaN;
+}
+
+/** τ ngược trên FastCurve: cùng ngữ nghĩa biên với twoLevelTauOffsetLocal (bisection 50 vòng). */
+function fastTauInverse(fc: FastCurve, duration: number, childOffset: number): number | null {
+  const total = fastSourcePosAt(fc, duration);
+  if (!Number.isFinite(total) || total <= 0) return null;
+  if (childOffset <= 0) {
+    const v0 = fastSpeedAt(fc, 0);
+    if (v0 === 0) return null;
+    return childOffset / v0;
+  }
+  if (childOffset >= total) {
+    const v1 = fastSpeedAt(fc, duration);
+    if (v1 === 0) return null;
+    return duration + (childOffset - total) / v1;
+  }
+  let lo = 0;
+  let hi = duration;
+  for (let i = 0; i < 50; i++) {
+    const mid = (lo + hi) / 2;
+    if (fastSourcePosAt(fc, mid) < childOffset) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+/**
+ * Kiểm tra mọi điểm mẫu đều trong [T2_SPEED_MIN, T2_SPEED_MAX].
+ * evalAt(t) trả tốc độ tại t, null = điểm ngoài cửa sổ (bỏ qua).
+ * - Giá trị không hữu hạn hoặc throw tại một điểm = VI PHẠM
+ *   (fail-closed, giống cổng cũ: catch → false). Caller lá sâu tự bắt
+ *   throw trong evalAt và đặt cờ broken riêng nên helper này không cần
+ *   phân biệt (xem deepComposedSpeedInRange).
+ * - Giữa hai hạt giống liên tiếp đều đánh giá được: đánh giá thêm điểm
+ *   giữa + 2 điểm 1/4; nếu lệch khỏi dây cung > tol thì chẻ đôi đệ quy
+ *   tới maxDepth. Vượt ngân sách evals thì dừng chẻ thêm (trả kết quả
+ *   tới lúc đó — xem LIMITS đợt 22 B, thực tế không chạm ngưỡng với
+ *   ≤ 128 keyframe).
+ * Trả true = không phát hiện vi phạm trong ngân sách.
+ */
+function sampledSpeedInRange(
+  evalAt: (t: number) => number | null,
+  seeds: number[],
+  tol: number,
+  maxDepth: number,
+  budget: SampleBudget,
+): boolean {
+  const sorted = [...seeds].filter((t) => Number.isFinite(t)).sort((a, b) => a - b);
+  const pts: number[] = [];
+  for (const p of sorted) {
+    if (pts.length === 0 || Math.abs(p - pts[pts.length - 1]) > 1e-9) pts.push(p);
+  }
+  const inRange = (v: number): boolean =>
+    Number.isFinite(v) && v >= T2_SPEED_MIN - 1e-9 && v <= T2_SPEED_MAX + 1e-9;
+  const ev = (t: number): number | null => {
+    if (budget.evals >= T2_ADAPT_MAX_EVALS) {
+      budget.exhausted = true;
+      return null;
+    }
+    budget.evals++;
+    try {
+      const v = evalAt(t);
+      if (v === null) return null;
+      if (!inRange(v)) return Infinity; // vi phạm: đánh dấu bằng Infinity
+      return v;
+    } catch {
+      return Infinity; // đánh giá throw = vi phạm (fail-closed, như cổng cũ)
+    }
+  };
+  const vals: (number | null)[] = pts.map(ev);
+  for (const v of vals) if (v === Infinity) return false;
+  const checkInterval = (a: number, fa: number, b: number, fb: number, depth: number): boolean => {
+    if (depth >= maxDepth || budget.exhausted) return true;
+    const m = (a + b) / 2;
+    const q1 = a + (b - a) / 4;
+    const q3 = a + (3 * (b - a)) / 4;
+    const fm = ev(m);
+    const f1 = ev(q1);
+    const f3 = ev(q3);
+    for (const v of [fm, f1, f3]) if (v === Infinity) return false;
+    // Điểm ngoài cửa sổ (null) thì không chẻ nhánh đó — cửa sổ khả kiến
+    // là một khoảng liên tục nên nhánh kẹp giữa hai đầu null cũng bỏ.
+    if (fm === null && f1 === null && f3 === null) return true;
+    let dev = 0;
+    for (const [t, f] of [[q1, f1], [m, fm], [q3, f3]] as const) {
+      if (f === null) continue;
+      const chord = fa + ((fb - fa) * (t - a)) / (b - a);
+      dev = Math.max(dev, Math.abs(f - chord));
+    }
+    if (dev <= tol) return true;
+    if (fm === null) return true; // không có điểm giữa để chẻ — dừng nhánh
+    if (!checkInterval(a, fa, m, fm, depth + 1)) return false;
+    if (!checkInterval(m, fm, b, fb, depth + 1)) return false;
+    return true;
+  };
+  for (let i = 0; i < pts.length - 1; i++) {
+    const fa = vals[i];
+    const fb = vals[i + 1];
+    if (fa === null || fb === null || fa === Infinity || fb === Infinity) continue;
+    if (!checkInterval(pts[i], fa, pts[i + 1], fb, 0)) return false;
+  }
+  return true;
+}
+
+/**
+ * Tốc độ hợp lấy mẫu của một lá trực tiếp dưới tầng ngoài có nằm trong
+ * [0.25, 4] không (đợt 22 B: giữ nguyên tập mẫu cũ — 257 điểm đều +
+ * knot ngoài + knot trong map ngược qua τ — cộng thêm cực trị bezier
+ * trong đoạn của cả hai tầng và chia nhỏ thích ứng giữa các điểm mẫu).
+ * Tập mẫu cũ là tập con của tập mẫu mới nên case cũ cho qua vẫn cho
+ * qua, trừ case cũ vốn đã vi phạm nhưng bị bỏ sót — đó đúng là lỗi cần
+ * chặn. Ngữ nghĩa cửa sổ/biên giữ nguyên cổng T2 (lá ngoài cửa sổ hoàn
+ * toàn → cho qua; đánh giá throw → chặn).
+ */
 function combinedRampSpeedInRange(
   outerCurve: SpeedCurve,
   outerDuration: number,
@@ -1662,39 +2379,302 @@ function combinedRampSpeedInRange(
   leafDuration: number,
 ): boolean {
   try {
-    const total = sourcePosAt(outerCurve, outerDuration);
+    // Fast path (đợt 22 B): normalize một lần, fallback engine khi dị thường.
+    const outerFast = fastCurveOf(outerCurve);
+    const innerFast = fastCurveOf(innerCurve);
+    const tauLocal = (childOffset: number): number => {
+      if (outerFast) {
+        const inv = fastTauInverse(outerFast, outerDuration, childOffset);
+        if (inv !== null) return inv;
+      }
+      return twoLevelTauOffsetLocal(outerCurve, outerDuration, childOffset);
+    };
+    const total = outerFast ? fastSourcePosAt(outerFast, outerDuration) : sourcePosAt(outerCurve, outerDuration);
     const winStart = outerIn;
     const winEnd = outerIn + total;
     const vs = Math.max(leafStart, winStart);
     const ve = Math.min(leafStart + leafDuration, winEnd);
     if (ve - vs <= 1e-6) return true; // lá ngoài cửa sổ hoàn toàn → render drop, không fail
     const leftCut = vs - leafStart;
-    const tStart = twoLevelTauOffsetLocal(outerCurve, outerDuration, vs - outerIn);
-    const tEnd = twoLevelTauOffsetLocal(outerCurve, outerDuration, ve - outerIn);
+    const tStart = tauLocal(vs - outerIn);
+    const tEnd = tauLocal(ve - outerIn);
     if (!(tEnd > tStart)) return false;
-    const base = sourcePosAt(outerCurve, tStart);
-    const points: number[] = [];
-    const N = 256;
-    for (let i = 0; i <= N; i++) points.push(tStart + (i / N) * (tEnd - tStart));
-    for (const k of outerCurve.keyframes) {
-      if (k.t > tStart && k.t < tEnd) points.push(k.t);
-    }
+    const base = outerFast ? fastSourcePosAt(outerFast, tStart) : sourcePosAt(outerCurve, tStart);
     const visible = ve - vs;
+    const evalAt = (T: number): number => {
+      if (outerFast && innerFast) {
+        const x = leftCut + (fastSourcePosAt(outerFast, T) - base);
+        return fastSpeedAt(outerFast, T) * fastSpeedAt(innerFast, x);
+      }
+      const x = leftCut + (sourcePosAt(outerCurve, T) - base);
+      return speedAt(outerCurve, T) * speedAt(innerCurve, x);
+    };
+    const seeds: number[] = [tStart, tEnd];
+    const N = 256;
+    for (let i = 0; i <= N; i++) seeds.push(tStart + (i / N) * (tEnd - tStart));
+    for (const k of outerCurve.keyframes) {
+      if (k.t > tStart && k.t < tEnd) seeds.push(k.t);
+    }
     for (const k of innerCurve.keyframes) {
       if (k.t > leftCut && k.t < leftCut + visible) {
-        const T = twoLevelTauOffsetLocal(outerCurve, outerDuration, (vs - outerIn) + (k.t - leftCut));
-        if (T > tStart && T < tEnd) points.push(T);
+        const T = tauLocal((vs - outerIn) + (k.t - leftCut));
+        if (T > tStart && T < tEnd) seeds.push(T);
       }
     }
-    for (const T of points) {
-      const x = leftCut + (sourcePosAt(outerCurve, T) - base);
-      const c = speedAt(outerCurve, T) * speedAt(innerCurve, x);
-      if (!Number.isFinite(c) || c < T2_SPEED_MIN - 1e-9 || c > T2_SPEED_MAX + 1e-9) return false;
+    // Đợt 22 B — cực trị bezier trong đoạn (giải đúng, xem helper).
+    for (const t of bezierSegmentExtremaTimes(outerCurve)) {
+      if (t > tStart && t < tEnd) seeds.push(t);
     }
-    return true;
+    for (const x of bezierSegmentExtremaTimes(innerCurve)) {
+      if (x > leftCut && x < leftCut + visible) {
+        const T = tauLocal((vs - outerIn) + (x - leftCut));
+        if (T > tStart && T < tEnd) seeds.push(T);
+      }
+    }
+    const budget: SampleBudget = { evals: 0, exhausted: false };
+    return sampledSpeedInRange(evalAt, seeds, T2_ADAPT_TOL, T2_ADAPT_MAX_DEPTH, budget);
   } catch {
     return false;
   }
+}
+
+/** Một tầng trong chain lá sâu, theo thứ tự từ ngoài vào trong (stages[0] = tầng ngoài cùng). */
+interface DeepChainStage {
+  /** Vị trí tầng trong timeline của tầng cha (không dùng cho stages[0]). */
+  start: number;
+  trimIn: number;
+  trimOut: number;
+  duration: number;
+  curve?: SpeedCurve;
+  /** Tốc độ hằng khi không có curve. */
+  speed: number;
+}
+
+/** Stage cho một nested clip có sẵn (trim/speed hiệu dụng theo spec). */
+function deepStageOfNested(n: NestedClip): DeepChainStage {
+  const trim = nestedEffectiveTrim(n);
+  return {
+    start: n.start,
+    trimIn: trim.in,
+    trimOut: trim.out,
+    duration: n.duration,
+    curve: nestedOwnCurve(n),
+    speed: nestedEffectiveSpeed(n),
+  };
+}
+
+/**
+ * Stage tầng ngoài cho đường checkTwoLevelOuterCurve: tầng này sắp nhận
+ * curve mới nên cửa sổ dùng là cửa sổ THEO CURVE MỚI (trimOut = in +
+ * ∫₀ᴰ curve mới — đúng cửa sổ sau khi patch áp dụng, xem LIMITS),
+ * không phải trim ghi sẵn. Null khi tích phân không tính được.
+ */
+function deepStagesForOuter(
+  top: NestedClip,
+  outerCurve: SpeedCurve,
+  outerTrim: { in: number; out: number },
+  chain: NestedClip[],
+): DeepChainStage[] | null {
+  let topOut: number;
+  try {
+    topOut = outerTrim.in + sourcePosAt(outerCurve, top.duration);
+  } catch {
+    return null;
+  }
+  if (!Number.isFinite(topOut) || topOut <= outerTrim.in) return null;
+  return [
+    { start: 0, trimIn: outerTrim.in, trimOut: topOut, duration: top.duration, curve: outerCurve, speed: 1 },
+    ...chain.map(deepStageOfNested),
+  ];
+}
+
+/** τ ngược có chặn biên: null khi childOffset ngoài [0, ∫₀ᴰ] (bisection 50 vòng, đủ 1e-12). */
+function tauInverseBoundedLocal(curve: SpeedCurve, duration: number, childOffset: number): number | null {
+  let total: number;
+  try {
+    total = sourcePosAt(curve, duration);
+  } catch {
+    return null;
+  }
+  if (!Number.isFinite(total) || total <= 0) return null;
+  if (childOffset < -1e-9 || childOffset > total + 1e-9) return null;
+  const target = Math.min(Math.max(childOffset, 0), total);
+  let lo = 0;
+  let hi = duration;
+  for (let i = 0; i < 50; i++) {
+    const mid = (lo + hi) / 2;
+    if (sourcePosAt(curve, mid) < target) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+/**
+ * Lấy mẫu tốc độ hợp toàn chuỗi cho lá sâu (đợt 22 B).
+ * stages theo thứ tự ngoài → trong; lá nằm trong timeline con của
+ * stages[stages.length - 1] tại leafStart.
+ * Trả true = mọi điểm mẫu trong [0.25, 4]; false = phát hiện vi phạm;
+ * null = chain không ánh xạ được (fallback: caller chỉ dùng biên tích).
+ * Đánh giá theo chiều XUỐNG trên trục thời gian output của tầng ngoài:
+ * T → vị trí timeline con → ... → thời gian output của lá, tích mọi
+ * thừa số tốc độ dọc đường (sourcePosAt, không cần đảo tích phân từng
+ * điểm). Hạt giống: 257 điểm đều + knot/cực trị của tầng ngoài +
+ * knot/cực trị/cạnh của mọi tầng trong + của lá map NGƯỢC lên trục
+ * ngoài (τ ngược có chặn biên) + chia nhỏ thích ứng như cổng trực tiếp.
+ */
+function deepComposedSpeedInRange(
+  stages: DeepChainStage[],
+  leafCurve: SpeedCurve,
+  leafStart: number,
+  leafDuration: number,
+): boolean | null {
+  if (stages.length === 0) return null;
+  if (!Number.isFinite(leafDuration) || leafDuration <= 0) return null;
+  const top = stages[0];
+  if (!Number.isFinite(top.duration) || top.duration <= 0) return null;
+  // Fast path (đợt 22 B): evaluator theo tầng, fallback engine khi fast null.
+  const fasts: (FastCurve | null | undefined)[] = stages.map((s) => (s.curve ? fastCurveOf(s.curve) : undefined));
+  const leafFast = fastCurveOf(leafCurve);
+  const stageSpeedAt = (i: number, t: number): number => {
+    const s = stages[i];
+    if (!s.curve) return s.speed;
+    const f = fasts[i];
+    return f ? fastSpeedAt(f, t) : speedAt(s.curve, t);
+  };
+  const stageSourcePosAt = (i: number, t: number): number => {
+    const s = stages[i];
+    if (!s.curve) return t * s.speed;
+    const f = fasts[i];
+    return f ? fastSourcePosAt(f, t) : sourcePosAt(s.curve, t);
+  };
+  const stageTauInverse = (i: number, off: number): number | null => {
+    const s = stages[i];
+    if (!s.curve) {
+      const t = off / s.speed;
+      if (t < -1e-9 || t > s.duration + 1e-9) return null;
+      return Math.min(Math.max(t, 0), s.duration);
+    }
+    const f = fasts[i];
+    return f ? fastTauInverse(f, s.duration, off) : tauInverseBoundedLocal(s.curve, s.duration, off);
+  };
+  // Validate trước: tầng có curve mà trim lệch tích phân thì ánh xạ
+  // không khớp cửa sổ render → fallback, không chặn trên ánh xạ hỏng.
+  for (let si = 0; si < stages.length; si++) {
+    const s = stages[si];
+    if (!Number.isFinite(s.duration) || s.duration <= 0) return null;
+    if (!Number.isFinite(s.trimIn) || !Number.isFinite(s.trimOut) || s.trimOut <= s.trimIn) return null;
+    if (s.curve) {
+      let consumed: number;
+      try {
+        consumed = stageSourcePosAt(si, s.duration);
+      } catch {
+        return null;
+      }
+      if (!Number.isFinite(consumed) || Math.abs(s.trimOut - (s.trimIn + consumed)) > 1e-4) return null;
+    } else if (!Number.isFinite(s.speed) || s.speed <= 0) {
+      return null;
+    }
+  }
+  const broken = { value: false };
+  // Đánh giá tích toàn chuỗi tại thời gian output T của tầng ngoài.
+  // null = T ngoài đoạn khả kiến của lá (bỏ qua, giống lá ngoài cửa sổ).
+  const evalAt = (T: number): number | null => {
+    try {
+      let factor = stageSpeedAt(0, T);
+      let pos = top.trimIn + stageSourcePosAt(0, T);
+      for (let i = 1; i < stages.length; i++) {
+        const s = stages[i];
+        const t = pos - s.start;
+        if (t < -1e-9 || t > s.duration + 1e-9) return null;
+        const tc = Math.min(Math.max(t, 0), s.duration);
+        factor *= stageSpeedAt(i, tc);
+        pos = s.trimIn + stageSourcePosAt(i, tc);
+      }
+      const u = pos - leafStart;
+      if (u < -1e-9 || u > leafDuration + 1e-9) return null;
+      const uc = Math.min(Math.max(u, 0), leafDuration);
+      factor *= leafFast ? fastSpeedAt(leafFast, uc) : speedAt(leafCurve, uc);
+      if (!Number.isFinite(factor)) {
+        broken.value = true;
+        return null;
+      }
+      return factor;
+    } catch {
+      broken.value = true;
+      return null;
+    }
+  };
+  // Map một thời điểm trên trục output của stages[i] (i >= 1) hoặc của
+  // lá (fromStage = stages.length) lên trục output của tầng ngoài;
+  // null khi ngoài cửa sổ tầng nào trên đường đi.
+  const mapUpToTop = (fromStage: number, time: number): number | null => {
+    if (fromStage <= 0) return time;
+    let pos: number;
+    let j: number;
+    if (fromStage >= stages.length) {
+      pos = leafStart + time;
+      j = stages.length - 1;
+    } else {
+      pos = stages[fromStage].start + time;
+      j = fromStage - 1;
+    }
+    for (; j >= 0; j--) {
+      const t = stageTauInverse(j, pos - stages[j].trimIn);
+      if (t === null) return null;
+      if (j === 0) return t;
+      pos = stages[j].start + t;
+    }
+    return null;
+  };
+  const seeds: number[] = [0, top.duration];
+  const N = 256;
+  for (let i = 0; i <= N; i++) seeds.push((i / N) * top.duration);
+  if (top.curve) {
+    for (const k of top.curve.keyframes) {
+      if (k.t > 0 && k.t < top.duration) seeds.push(k.t);
+    }
+    for (const t of bezierSegmentExtremaTimes(top.curve)) {
+      if (t > 0 && t < top.duration) seeds.push(t);
+    }
+  }
+  // Hạt giống map ngược: knot + cực trị bezier + cạnh (0, duration) của
+  // lá trước, rồi các tầng từ trong ra ngoài; giới hạn T2_DEEP_MAX_SEEDS.
+  let mapped = 0;
+  const addMapped = (fromStage: number, times: number[]): void => {
+    for (const t of times) {
+      if (mapped >= T2_DEEP_MAX_SEEDS) return;
+      const T = mapUpToTop(fromStage, t);
+      if (T !== null && T > 0 && T < top.duration) {
+        seeds.push(T);
+        mapped++;
+      }
+    }
+  };
+  const leafTimes: number[] = [0, leafDuration];
+  for (const k of leafCurve.keyframes) {
+    if (k.t > 0 && k.t < leafDuration) leafTimes.push(k.t);
+  }
+  for (const t of bezierSegmentExtremaTimes(leafCurve)) {
+    if (t > 0 && t < leafDuration) leafTimes.push(t);
+  }
+  addMapped(stages.length, leafTimes);
+  for (let i = stages.length - 1; i >= 1; i--) {
+    const s = stages[i];
+    const times: number[] = [0, s.duration];
+    if (s.curve) {
+      for (const k of s.curve.keyframes) {
+        if (k.t > 0 && k.t < s.duration) times.push(k.t);
+      }
+      for (const t of bezierSegmentExtremaTimes(s.curve)) {
+        if (t > 0 && t < s.duration) times.push(t);
+      }
+    }
+    addMapped(i, times);
+  }
+  const budget: SampleBudget = { evals: 0, exhausted: false };
+  const ok = sampledSpeedInRange(evalAt, seeds, T2_ADAPT_TOL, T2_ADAPT_MAX_DEPTH, budget);
+  if (broken.value) return null;
+  return ok;
 }
 
 /** Biên tích keyframe ngoài × trong có nằm trong [0.25, 4] không (điều kiện cần, xem header T2). */
@@ -1720,22 +2700,25 @@ function keyframeProductInRange(outerCurve: SpeedCurve, innerCurve: SpeedCurve):
  * Đường patchClip / patchNestedCurveFixedTrim: đặt curve ngoài lên một
  * nested clip thì toàn bộ cây con có tạo thành trạng thái hai tầng hợp
  * lệ theo R1 không. Cây con không có curve nào → luôn ok (một tầng).
- * Trả { ok: false, reason } khi bất kỳ điều kiện nào ở header T2 vi phạm.
+ * Trả { ok: false, reason, reasonCode } khi bất kỳ điều kiện nào ở header T2 vi phạm (đợt 23 G1).
  */
 export function checkTwoLevelOuterCurve(top: NestedClip, outerCurve: SpeedCurve): TwoLevelCheck {
   if ((top as unknown as { reverse?: boolean }).reverse === true) {
-    return { ok: false, reason: "Nested clip đang reverse — render cấm kết hợp reverse với speed curve." };
+    return twoLevelFail("Nested clip đang reverse — render cấm kết hợp reverse với speed curve.", "topReverse");
   }
   if (!isValidTwoLevelRampCurve(outerCurve, top.duration)) {
     return {
       ok: false,
       reason:
         "Speed curve ngoài không hợp lệ theo luật render R1 (keyframes rỗng/quá 128, t ngoài [0, duration], v ngoài [0.25, 4] hoặc easing không hợp lệ).",
+      reasonCode: "outerInvalid",
     };
   }
   const outerTrim = nestedEffectiveTrim(top);
   const seen = new Set<object>();
-  const walk = (spec: VideoSpec, direct: boolean): TwoLevelCheck | null => {
+  // chain: các nested trung gian từ con trực tiếp của top xuống tầng
+  // chứa spec đang duyệt (rỗng = lá trực tiếp của top).
+  const walk = (spec: VideoSpec, chain: NestedClip[]): TwoLevelCheck | null => {
     if (seen.has(spec)) return null;
     seen.add(spec);
     if (!Array.isArray(spec.tracks)) return null;
@@ -1743,32 +2726,67 @@ export function checkTwoLevelOuterCurve(top: NestedClip, outerCurve: SpeedCurve)
       if (!Array.isArray(t.clips)) continue;
       for (const c of t.clips) {
         if ((c as unknown as { reverse?: boolean }).reverse === true) {
-          return { ok: false, reason: `Clip "${c.id}" đang reverse — render cấm lá reverse dưới nested có curve.` };
+          return twoLevelFail(`Clip "${c.id}" đang reverse — render cấm lá reverse dưới nested có curve.`, "leafReverse", { id: c.id });
         }
         if (c.kind === "video" || c.kind === "audio") {
           if (clipHasTimeAttachment(c)) {
             return {
               ok: false,
               reason: `Clip "${c.id}" mang attachment thời gian (track/karaoke/animations/volumeKeyframes) — render chưa nội suy attachment qua τ phi tuyến.`,
+              reasonCode: "leafAttachment",
+              reasonVars: { id: c.id },
             };
           }
           const curve = nestedOwnCurve(c);
           if (curve) {
             if (!isValidTwoLevelRampCurve(curve, c.duration)) {
-              return { ok: false, reason: `Speed curve của clip "${c.id}" không hợp lệ theo luật render R1.` };
+              return twoLevelFail(`Speed curve của clip "${c.id}" không hợp lệ theo luật render R1.`, "leafCurveInvalid", { id: c.id });
             }
-            if (direct) {
+            if (chain.length === 0) {
               if (!combinedRampSpeedInRange(outerCurve, top.duration, outerTrim.in, curve, c.start, c.duration)) {
                 return {
                   ok: false,
                   reason: `Tốc độ hợp của curve ngoài với curve của clip "${c.id}" vượt khoảng [0.25, 4] (tích hai tốc độ tại điểm mẫu).`,
+                  reasonCode: "combinedRange",
+                  reasonVars: { id: c.id },
                 };
               }
-            } else if (!keyframeProductInRange(outerCurve, curve)) {
-              return {
-                ok: false,
-                reason: `Tích tốc độ keyframe của curve ngoài với curve của clip "${c.id}" vượt khoảng [0.25, 4].`,
-              };
+            } else {
+              // Lá sâu (đợt 22 B): giữ biên tích, cộng cặp trong-cùng
+              // × lá và lấy mẫu toàn chuỗi — xem header đợt 22 B.
+              if (!keyframeProductInRange(outerCurve, curve)) {
+                return {
+                  ok: false,
+                  reason: `Tích tốc độ keyframe của curve ngoài với curve của clip "${c.id}" vượt khoảng [0.25, 4].`,
+                  reasonCode: "keyframeProduct",
+                  reasonVars: { id: c.id },
+                };
+              }
+              const parent = chain[chain.length - 1];
+              const parentCurve = nestedOwnCurve(parent);
+              if (parentCurve) {
+                const parentTrim = nestedEffectiveTrim(parent);
+                if (!combinedRampSpeedInRange(parentCurve, parent.duration, parentTrim.in, curve, c.start, c.duration)) {
+                  return {
+                    ok: false,
+                    reason: `Tốc độ hợp của curve ngoài với curve của clip "${c.id}" vượt khoảng [0.25, 4] (tích hai tốc độ tại điểm mẫu).`,
+                    reasonCode: "combinedRange",
+                    reasonVars: { id: c.id },
+                  };
+                }
+              }
+              const stages = deepStagesForOuter(top, outerCurve, outerTrim, chain);
+              if (stages) {
+                const deep = deepComposedSpeedInRange(stages, curve, c.start, c.duration);
+                if (deep === false) {
+                  return {
+                    ok: false,
+                    reason: `Tốc độ hợp của curve ngoài với curve của clip "${c.id}" vượt khoảng [0.25, 4] (tích hai tốc độ tại điểm mẫu).`,
+                    reasonCode: "combinedRange",
+                    reasonVars: { id: c.id },
+                  };
+                }
+              }
             }
           }
         } else if (c.kind === "nested") {
@@ -1777,29 +2795,36 @@ export function checkTwoLevelOuterCurve(top: NestedClip, outerCurve: SpeedCurve)
             const cc = nestedOwnCurve(child);
             if (cc) {
               if (!isValidTwoLevelRampCurve(cc, child.duration)) {
-                return { ok: false, reason: `Speed curve của nested clip "${child.id}" không hợp lệ theo luật render R1.` };
+                return twoLevelFail(`Speed curve của nested clip "${child.id}" không hợp lệ theo luật render R1.`, "nestedCurveInvalid", { id: child.id });
               }
+              // CỐ TÌNH chỉ biên tích cho nested trung gian (đợt 22 B):
+              // render không kiểm tra riêng cặp ngoài × trung gian nên
+              // lấy mẫu cặp đó sẽ chặn oan — xem header đợt 22 B.
               if (!keyframeProductInRange(outerCurve, cc)) {
                 return {
                   ok: false,
                   reason: `Tích tốc độ keyframe của curve ngoài với curve của nested clip "${child.id}" vượt khoảng [0.25, 4].`,
+                  reasonCode: "nestedKeyframeProduct",
+                  reasonVars: { id: child.id },
                 };
               }
             }
-            const r = walk(child.subSpec, false);
+            const r = walk(child.subSpec, [...chain, child]);
             if (r) return r;
           }
         } else if (nestedOwnCurve(c)) {
           return {
             ok: false,
             reason: `Clip "${c.id}" (${c.kind}) mang speedKeyframes nhưng không có trục nguồn — render chỉ hợp curve cho lá video/audio.`,
+            reasonCode: "noSourceAxis",
+            reasonVars: { id: c.id, kind: c.kind },
           };
         }
       }
     }
     return null;
   };
-  return walk(top.subSpec, true) ?? { ok: true, reason: "" };
+  return walk(top.subSpec, []) ?? { ok: true, reason: "", reasonCode: "valid" };
 }
 
 /**
@@ -1817,57 +2842,89 @@ export function checkTwoLevelLeafCurve(
   effDuration?: number,
 ): TwoLevelCheck {
   const curveLevels = levels.filter((l) => nestedOwnCurve(l));
-  if (curveLevels.length === 0) return { ok: true, reason: "" };
+  if (curveLevels.length === 0) return { ok: true, reason: "", reasonCode: "valid" };
   if ((leaf as unknown as { reverse?: boolean }).reverse === true) {
-    return { ok: false, reason: "Clip lá đang reverse — render cấm kết hợp reverse với speed curve." };
+    return twoLevelFail("Clip lá đang reverse — render cấm kết hợp reverse với speed curve.", "leafSelfReverse");
   }
   if (leaf.kind !== "video" && leaf.kind !== "audio") {
-    return { ok: false, reason: "Chỉ lá video/audio mới mang speed curve dưới nested có curve (lá khác không có trục nguồn)." };
+    return twoLevelFail("Chỉ lá video/audio mới mang speed curve dưới nested có curve (lá khác không có trục nguồn).", "leafNonMedia");
   }
   if (clipHasTimeAttachment(leaf)) {
     return {
       ok: false,
       reason: "Clip lá mang attachment thời gian (track/karaoke/animations/volumeKeyframes) — render chưa nội suy attachment qua τ phi tuyến.",
+      reasonCode: "leafSelfAttachment",
     };
   }
   const leafDuration = effDuration ?? leaf.duration;
   if (!isValidTwoLevelRampCurve(leafCurve, leafDuration)) {
-    return { ok: false, reason: "Speed curve của clip lá không hợp lệ theo luật render R1." };
+    return twoLevelFail("Speed curve của clip lá không hợp lệ theo luật render R1.", "leafSelfCurveInvalid");
   }
   for (const level of levels) {
     if ((level as unknown as { reverse?: boolean }).reverse === true) {
-      return { ok: false, reason: `Nested clip tổ tiên "${level.id}" đang reverse — render cấm reverse ở tầng mang curve.` };
+      return twoLevelFail(`Nested clip tổ tiên "${level.id}" đang reverse — render cấm reverse ở tầng mang curve.`, "ancestorReverse", { id: level.id });
     }
     const ac = nestedOwnCurve(level);
     if (ac) {
       if (!isValidTwoLevelRampCurve(ac, level.duration)) {
-        return { ok: false, reason: `Speed curve của nested clip tổ tiên "${level.id}" không hợp lệ theo luật render R1.` };
+        return twoLevelFail(`Speed curve của nested clip tổ tiên "${level.id}" không hợp lệ theo luật render R1.`, "ancestorCurveInvalid", { id: level.id });
       }
       if (!keyframeProductInRange(ac, leafCurve)) {
         return {
           ok: false,
           reason: `Tích tốc độ keyframe của curve tổ tiên "${level.id}" với curve của clip lá vượt khoảng [0.25, 4].`,
+          reasonCode: "ancestorKeyframeProduct",
+          reasonVars: { id: level.id },
         };
       }
     }
   }
   // Lấy mẫu đúng khi chỉ có một tầng tổ tiên mang curve và đó là cha
   // trực tiếp (lá nằm trực tiếp trong timeline con của tầng đó).
-  if (curveLevels.length === 1) {
-    const parent = levels[levels.length - 1];
-    const ac = nestedOwnCurve(parent);
-    if (ac) {
-      const trim = nestedEffectiveTrim(parent);
-      const leafStart = effStart ?? leaf.start;
-      if (!combinedRampSpeedInRange(ac, parent.duration, trim.in, leafCurve, leafStart, leafDuration)) {
-        return {
-          ok: false,
-          reason: `Tốc độ hợp của curve tổ tiên "${parent.id}" với curve của clip lá vượt khoảng [0.25, 4] (tích hai tốc độ tại điểm mẫu).`,
-        };
-      }
+  const directParent = levels[levels.length - 1];
+  const directParentCurve = nestedOwnCurve(directParent);
+  let alreadySampledDirect = false;
+  if (curveLevels.length === 1 && directParentCurve) {
+    alreadySampledDirect = true;
+    const trim = nestedEffectiveTrim(directParent);
+    const leafStart = effStart ?? leaf.start;
+    if (!combinedRampSpeedInRange(directParentCurve, directParent.duration, trim.in, leafCurve, leafStart, leafDuration)) {
+      return {
+        ok: false,
+        reason: `Tốc độ hợp của curve tổ tiên "${directParent.id}" với curve của clip lá vượt khoảng [0.25, 4] (tích hai tốc độ tại điểm mẫu).`,
+        reasonCode: "ancestorCombinedRange",
+        reasonVars: { id: directParent.id },
+      };
     }
   }
-  return { ok: true, reason: "" };
+  // Đợt 22 B — lá sâu (nhiều tầng mang curve, hoặc tầng mang curve duy
+  // nhất không phải cha trực tiếp): giữ biên tích ở vòng lặp trên, cộng
+  // (a) cặp cha-trực-tiếp × lá và (b) lấy mẫu toàn chuỗi. Message tái sử
+  // dụng message lấy mẫu của đường trực tiếp (luồng A giữ wording).
+  if (!alreadySampledDirect) {
+    const leafStart = effStart ?? leaf.start;
+    if (directParentCurve) {
+      const parentTrim = nestedEffectiveTrim(directParent);
+      if (!combinedRampSpeedInRange(directParentCurve, directParent.duration, parentTrim.in, leafCurve, leafStart, leafDuration)) {
+        return {
+          ok: false,
+          reason: `Tốc độ hợp của curve tổ tiên "${directParent.id}" với curve của clip lá vượt khoảng [0.25, 4] (tích hai tốc độ tại điểm mẫu).`,
+        reasonCode: "ancestorCombinedRange",
+        reasonVars: { id: directParent.id },
+      };
+      }
+    }
+    const deep = deepComposedSpeedInRange(levels.map(deepStageOfNested), leafCurve, leafStart, leafDuration);
+    if (deep === false) {
+      return {
+        ok: false,
+        reason: `Tốc độ hợp của curve tổ tiên "${directParent.id}" với curve của clip lá vượt khoảng [0.25, 4] (tích hai tốc độ tại điểm mẫu).`,
+        reasonCode: "ancestorCombinedRange",
+        reasonVars: { id: directParent.id },
+      };
+    }
+  }
+  return { ok: true, reason: "", reasonCode: "valid" };
 }
 
 /** Patch cho 1 clip lá ở cấp sâu (mở rộng NestedInnerPatch thêm speed). */
@@ -2099,7 +3156,7 @@ export function updateNestedDeepInnerClip(
   innerTrackId: string,
   innerClipId: string,
   patch: NestedDeepPatch,
-): { spec: VideoSpec; nested: NestedClip; curveDropped?: number } | { error: string } {
+): { spec: VideoSpec; nested: NestedClip; curveDropped?: number } | { error: string; twoLevelCheck?: TwoLevelCheck } {
   const host = trackOf(spec, hostTrackId);
   if (!host) return { error: `Không tìm thấy track ${hostTrackId}.` };
   if (host.locked) return { error: `Track "${host.label ?? host.kind}" đang khóa.` };
@@ -2134,7 +3191,18 @@ export function updateNestedDeepInnerClip(
       patch.duration ?? leaf.duration,
     );
     if (!check.ok) {
-      return { error: `Không tạo được trạng thái hai tầng: ${check.reason}` };
+      // Đợt 24 H2 — trả KÈM check object để store dịch theo reasonCode
+      // mà không phải tách chuỗi. Chuỗi error chỉ còn là thông báo
+      // hiển thị cho caller trực tiếp (đã đổi format, kèm code trong
+      // ngoặc vuông, nên tiền tố cũ "…hai tầng: <reason>" mà store
+      // đợt 23 G2 tách bằng startsWith KHÔNG còn khớp — cố tình để
+      // test G2 chứng minh store không còn tách tiền tố: G2 vẫn xanh
+      // chỉ khi store đi đường check object). Caller KHÔNG được tách
+      // reason khỏi chuỗi này; dùng twoLevelCheck.
+      return {
+        error: `Không tạo được trạng thái hai tầng [${check.reasonCode}]: ${check.reason}`,
+        twoLevelCheck: check,
+      };
     }
   }
   const siblings = parentTrack.clips.filter((c) => c.id !== innerClipId);
@@ -2182,6 +3250,172 @@ export function updateNestedDeepInnerClip(
       : t,
   );
   return { spec: { ...spec, tracks }, nested: newTop, curveDropped: applied.curveDropped };
+}
+
+/** Patch vị trí cho 1 nested TRUNG GIAN ở cấp sâu (chỉ start/duration). */
+export interface NestedDeepIntermediatePatch {
+  start?: number;
+  duration?: number;
+}
+
+/**
+ * Sửa vị trí của 1 nested trung gian ở cấp sâu (đợt 25 I3 — đóng nợ
+ * panel lá sâu đợt 24 H6 §1.4: action sâu cũ từ chối clip đích là
+ * nested nên vị trí của trung gian sâu không sửa được qua panel).
+ *
+ * ĐỊA CHỈ — cùng quy ước chain của updateNestedDeepInnerClip, nhưng
+ * parentChainIds chỉ tới tầng CHỨA TRỰC TIẾP đích (không bao gồm đích):
+ * đích trực tiếp trong top → parentChainIds = []; đích trong N1 →
+ * ["N1"]; đích trong N2 của N1 → ["N1", "N2"]. innerTrackId là track
+ * trong tầng chứa đó, innerClipId là id của chính nested trung gian.
+ * Đích KHÔNG phải nested → error (lá dùng action lá sâu, không dùng
+ * action này để tránh hai đường sửa lá lệch nhau).
+ *
+ * KIỂM TRA (thứ tự có chủ đích, đều fail-fast trước khi ghi):
+ *  1. host khóa / top không phải nested / chain không hợp lệ
+ *     (resolveDeepLevels: id sai, vòng lặp subSpec, sâu > 8) → error
+ *     thường, không twoLevelCheck, không toast cổng.
+ *  2. Hình học: start >= 0, duration >= 0.2, không vượt duration của
+ *     tầng chứa trực tiếp, không đè clip anh em cùng track (giống
+ *     updateNestedInnerClip tầng 1, chỉ khác tầng chứa là sâu).
+ *  3. Curve của chính đích đi theo hình học như lá tầng 1
+ *     (trimSpeedKeyframes khi đổi không đều hai mép; dời thuần giữ
+ *     nguyên) — keyframe mồ côi ngoài duration mới bị cắt, số cắt
+ *     trả về qua curveDropped.
+ *  4. Cổng hai tầng (checkTwoLevelOuterCurve, cùng guard patchClip
+ *     dùng): đích mang curve riêng VÀ cây con có curve → cặp đích ×
+ *     cây con phải hợp R1, nếu không trả { error, twoLevelCheck }
+ *     để store dịch theo reasonCode. Lưu ý trung thực: đổi start/
+ *     duration không đổi giá trị keyframe nên KHÔNG tự tạo ra vi
+ *     phạm mới — cổng này chặn đích vốn đã vi phạm sẵn (import/
+ *     MCP/dựng tay) khỏi bị sửa trong trạng thái vi phạm, giống
+ *     patchClip từ chối đặt curve lên cặp vi phạm.
+ *  5. Guard nguồn của tầng chứa trực tiếp (giống hàm lá sâu): tầng
+ *     chứa ghi trim → nguồn mới không được co dưới trim.out; không
+ *     ghi trim → độ dài nguồn không được đổi. Các tầng tổ tiên trên
+ *     tầng chứa không cần guard riêng vì clip của tầng chứa trên
+ *     timeline/tầng cha không đổi start/duration.
+ * Trả về spec mới + top mới + curveDropped, hoặc { error }.
+ * Hàm thuần KHÔNG kiểm tra track khóa của tầng chứa sâu (chỉ host
+ * ngoài có khái niệm khóa ở tầng store) và KHÔNG đụng undo — store
+ * action chịu trách nhiệm execCommand / không exec khi bị chặn.
+ */
+export function updateNestedDeepIntermediateClip(
+  spec: VideoSpec,
+  hostTrackId: string,
+  topId: string,
+  parentChainIds: string[],
+  innerTrackId: string,
+  innerClipId: string,
+  patch: NestedDeepIntermediatePatch,
+): { spec: VideoSpec; nested: NestedClip; curveDropped?: number } | { error: string; twoLevelCheck?: TwoLevelCheck } {
+  const host = trackOf(spec, hostTrackId);
+  if (!host) return { error: `Không tìm thấy track ${hostTrackId}.` };
+  if (host.locked) return { error: `Track "${host.label ?? host.kind}" đang khóa.` };
+  const found = clipOf(host, topId);
+  const top = found ? asNestedClip(found) : null;
+  if (!top) return { error: "Clip này không phải nested clip." };
+  const resolved = resolveDeepLevels(top, parentChainIds);
+  if ("error" in resolved) return resolved;
+  const levels = resolved.levels;
+  const parent = levels[levels.length - 1];
+  const parentTrack = parent.subSpec.tracks.find((t) => t.id === innerTrackId);
+  if (!parentTrack) return { error: `Không tìm thấy track con ${innerTrackId}.` };
+  const target = parentTrack.clips.find((c) => c.id === innerClipId);
+  if (!target) return { error: `Không tìm thấy clip con ${innerClipId}.` };
+  const targetNested = asNestedClip(target);
+  if (!targetNested) {
+    return { error: "Clip đích không phải nested clip — dùng action lá sâu để sửa clip lá." };
+  }
+  const newStart = patch.start ?? target.start;
+  const newDuration = patch.duration ?? target.duration;
+  if (!Number.isFinite(newStart) || newStart < 0) {
+    return { error: "Start của nested trung gian phải >= 0." };
+  }
+  if (!Number.isFinite(newDuration) || newDuration < 0.2) {
+    return { error: "Duration của nested trung gian phải >= 0.2s." };
+  }
+  if (newStart + newDuration > parent.duration + N3_EPS) {
+    return { error: "Nested trung gian vượt ngoài compound clip cha trực tiếp." };
+  }
+  for (const other of parentTrack.clips) {
+    if (other.id === innerClipId) continue;
+    if (overlapsAt(newStart, newDuration, other.start, other.duration)) {
+      return { error: "Nested trung gian mới đè lên clip khác trong compound clip." };
+    }
+  }
+  // Curve của chính đích đi theo hình học (mẫu lá tầng 1): dời thuần
+  // (hai mép dịch cùng lượng) giữ nguyên; trim một mép / đổi không
+  // đều thì dịch-cắt bằng trimSpeedKeyframes.
+  let curveDropped = 0;
+  let patchedCurve: SpeedCurve | undefined = nestedOwnCurve(targetNested);
+  const oldEnd = target.start + target.duration;
+  const newEnd = newStart + newDuration;
+  const dxStart = newStart - target.start;
+  const dxEnd = newEnd - oldEnd;
+  if (
+    patchedCurve && patchedCurve.keyframes.length > 0 &&
+    (Math.abs(dxStart) > N3_EPS || Math.abs(dxEnd) > N3_EPS) &&
+    Math.abs(dxStart - dxEnd) > N3_EPS
+  ) {
+    const adj = trimSpeedKeyframes(patchedCurve.keyframes, dxStart, newDuration);
+    curveDropped = adj.dropped;
+    patchedCurve = adj.keyframes.length > 0 ? { keyframes: adj.keyframes } : undefined;
+  }
+  const patchedRec: Record<string, unknown> = {
+    ...targetNested,
+    start: newStart,
+    duration: newDuration,
+  };
+  if (nestedOwnCurve(targetNested) !== undefined) {
+    if (patchedCurve) patchedRec["speedKeyframes"] = patchedCurve;
+    else delete patchedRec["speedKeyframes"];
+  }
+  const patched = patchedRec as unknown as NestedClip;
+  // Cổng hai tầng cho cặp đích × cây con (chỉ khi đích mang curve và
+  // cây con có curve — một tầng thì luôn cho qua như patchClip).
+  if (patchedCurve && nestedSubtreeHasSpeedCurve(patched)) {
+    const check = checkTwoLevelOuterCurve(patched, patchedCurve);
+    if (!check.ok) {
+      return {
+        error: `Không sửa được nested trung gian ở trạng thái hai tầng [${check.reasonCode}]: ${check.reason}`,
+        twoLevelCheck: check,
+      };
+    }
+  }
+  const newParentTrack: Track = {
+    ...parentTrack,
+    clips: parentTrack.clips.map((c) => (c.id === innerClipId ? (patched as unknown as Clip) : c)),
+  };
+  // Guard nguồn của tầng chứa trực tiếp (giống hàm lá sâu).
+  const oldSource = parent.subSpec.tracks.reduce(
+    (m, t) => Math.max(m, ...t.clips.map((c) => c.start + c.duration)),
+    0,
+  );
+  const newSource = parent.subSpec.tracks.reduce(
+    (m, t) => Math.max(m, ...(t.id === newParentTrack.id ? newParentTrack.clips : t.clips).map((c) => c.start + c.duration)),
+    0,
+  );
+  if (parent.trim !== undefined) {
+    if (parent.trim.out > newSource + N3_EPS) {
+      return {
+        error:
+          "Nested trung gian thu ngắn làm độ dài nguồn của compound clip cha co lại dưới trim.out của cha — trim cha trước rồi sửa lại.",
+      };
+    }
+  } else if (Math.abs(newSource - oldSource) > N3_EPS) {
+    return {
+      error:
+        "Nested trung gian làm đổi độ dài nguồn của compound clip cha (cha không ghi trim nên duration cha bằng đúng độ dài nguồn) — sửa duration/trim của cha trước rồi sửa lại.",
+    };
+  }
+  const newTop = rebuildDeepLevels(levels, newParentTrack);
+  const tracks = spec.tracks.map((t) =>
+    t.id === hostTrackId
+      ? { ...t, clips: t.clips.map((c) => (c.id === topId ? (newTop as unknown as Clip) : c)) }
+      : t,
+  );
+  return { spec: { ...spec, tracks }, nested: newTop, curveDropped };
 }
 
 /**

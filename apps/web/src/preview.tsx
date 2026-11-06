@@ -35,9 +35,93 @@ import {
 import {
   radialGradientWeight,
   radialSoftWeight,
+  singleClipDipPixel,
   transitionClipVisual,
   type TransitionLayerSpec,
 } from "./lib/transitionPreview";
+import { decideVideoFrame } from "./lib/holdFrame";
+// ROUND40-V3-T0: sửa lỗi frame pause t=0 không vẽ (nợ đợt 39 §5.3) —
+// chỉ gán lastDrawn khi render không skip clip video nào + tick vẽ lại
+// khi seek đã xong mà frame chưa vẽ (xem pauseDraw40V3.ts).
+import {
+  pauseDrawComplete,
+  pauseTickNeedsRetry,
+} from "./lib/pauseDraw40V3";
+// ROUND41-W2: cap cho vòng lặp vẽ lại pause của V3 (nợ đợt 40 §5.7) —
+// media hỏng vĩnh viễn thì sau 600 lần render pause bị skip liên tiếp
+// vòng lặp được ngủ thay vì tick rAF mãi (xem pauseDraw41W2.ts).
+// ROUND50-F2 (§7.7): thêm trần tường 10 s cho cùng chuỗi skip — cap
+// tick không chặn được thời gian quay dưới tải (baseline 6,1 tick/s →
+// 103,6 s mới ngủ); xem pauseRetryWallExhausted.
+import {
+  pauseRetryAdvance,
+  pauseRetryWallExhausted,
+} from "./lib/pauseDraw41W2";
+// ROUND50-F2 (§7.6): quyết định ngủ/tick của scheduleNext tách thành
+// hàm thuần (khóa ngữ nghĩa ngủ khi thiếu surface) — xem
+// previewLoop50F2.ts.
+import { previewLoopShouldSleep } from "./lib/previewLoop50F2";
+// ROUND42-X2: cap cho đường seek-timeout / seek-error của vòng lặp
+// pause (nợ đợt 41 §5.3) — timeout/error liên tiếp cho cùng playhead
+// thì sau cap vòng lặp ngủ ở trạng thái lỗi rõ ràng thay vì request
+// seek mới mãi (xem pauseSeekCap42X2.ts).
+import {
+  classifySeekOutcome,
+  seekFailureAdvance,
+} from "./lib/pauseSeekCap42X2";
+// ROUND43-Y2: phục hồi sau khi cạn cap seek (nợ đợt 42 §5.3) — đúng lúc
+// cạn cap thì drop actives khỏi pool để lần seek sau tạo element mới
+// (xem pauseSeekRecovery43Y2.ts).
+import { planSeekRecovery } from "./lib/pauseSeekRecovery43Y2";
+// ROUND44-Z2: guard khôi phục khi scrub về đúng t đã vẽ sau khi cạn cap
+// (nợ đợt 43 Y2 §5.2 — playhead === lastDrawn nhưng lastRequested vẫn
+// là t đã cạn thì cả 3 đường seek/vẽ/ngủ đều đóng, vòng lặp tick mãi).
+import { planDrawnPlayheadRecovery } from "./lib/pauseLoopGuard44Z2";
+// Đợt 27 K4: phát ngược toàn cục + stepping cho clip reverse (xem
+// reversePlayback.ts). Chỉ luồng này sửa các vùng phát ngược/hold.
+import {
+  MAX_HOLD_AGE_SEC,
+  holdStale,
+  justCompletedSeek,
+  resolveReverseEngine,
+  resolveReverseEngineDetailed,
+  reversePlayhead,
+  reverseStep,
+  shouldIssueStepSeek,
+  stepDrawAllowedWithCompletion,
+} from "./lib/reversePlayback";
+// Đợt 34 Q2: hook đo gap rAF riêng vòng preview (P5 đợt 32, nay mới
+// nối — xem previewRafHook.ts) + đường phát ngược WebCodecs opt-in
+// (mặc định TẮT, xem reverseWebcodecs.ts). Cả hai đều không đổi hành
+// vi vẽ khi cờ tắt: hook chỉ ghi mẫu đo, đường cache chỉ chạy khi
+// resolveReverseEngine() = "webcodecs".
+import { createPreviewRafHook } from "./lib/previewRafHook";
+import {
+  disposeReverseWebcodecsControllers,
+  getReverseDecodeAheadWanted,
+  getReversePreviewController, // ROUND45-A6: đọc controller.failed cho badge từng frame
+  reverseDecodeAheadStatus,
+  reverseWebcodecsFrameFor,
+  setReverseDecodeAheadWanted,
+} from "./lib/reverseWebcodecs";
+// ROUND45-A6: badge từng frame theo controller.failed + hiển thị đổi
+// lang không chờ tick (xem reverseBadge45A6.ts; bọc hàm Z6, không sửa
+// reversePlayback.ts).
+import {
+  resolveReverseEngineBadge45A6,
+  reverseEngineBadgeDisplay45A6,
+  type ReverseEngineBadge45A6,
+} from "./lib/reverseBadge45A6";
+// Đợt 38 U1: toggle decode-ahead Q3 — chuỗi mới qua i18n, key lý do cổng
+// qua module thuần (không hardcode tiếng Việt trong preview).
+import { t as i18nT, useLang } from "./i18n";
+import {
+  blockedReasonsDiffer,
+  decodeAheadReasonI18nKey,
+} from "./lib/reverseDecodeAheadToggle";
+// Đợt 29 L2: pacing phát xuôi — sửa bug snap nửa frame làm playhead
+// chạy nhanh 1.158× (xem playheadPacing.ts). Chỉ nhánh phát xuôi dùng.
+import { forwardPlayhead, forwardStep } from "./lib/playheadPacing";
 import { ffmpegDissolveFrand } from "./lib/dissolveFrand";
 import { applyWebglLut, getLutBadge } from "./lib/webglLut";
 import {
@@ -47,7 +131,10 @@ import {
 } from "./lib/effectCanvas";
 // N5 (Phase 9): preview dùng spec đã làm phẳng nested + gộp adjustment
 // (xem apps/web/src/lib/NESTED_PREVIEW_LIMITS.md). Chỉ luồng này sửa preview.tsx.
-import { buildPreviewSpec } from "./lib/nestedPreview";
+import { buildPreviewSpecFailsoft } from "./lib/nestedPreview";
+import { normalizeTextStyle } from "./lib/projectRepo";
+import { pushToast } from "./lib/toast";
+import { knownSizeBytesForPreview } from "./lib/proxy";
 import { MixerMeter } from "./components/MixerMeter";
 
 interface Viewport {
@@ -99,7 +186,10 @@ const CHROMA_MAX_W = 640; // giới hạn để giữ 30fps (xem PREVIEW_LIMITS.
 let chromaCanvas: HTMLCanvasElement | null = null;
 
 function chromaKeyedSource(
-  src: HTMLVideoElement | HTMLImageElement,
+  // Đợt 34 Q2: nới sang CanvasImageSource để nhận cả VideoFrame từ
+  // đường WebCodecs (hàm chỉ dùng drawImage nên không đổi hành vi
+  // với các nguồn cũ).
+  src: CanvasImageSource,
   vw: number,
   vh: number,
   chroma: ChromaParams,
@@ -396,7 +486,11 @@ function warnSkippedEffects(skipped: string[]): void {
 }
 
 function textFont(c: TextClip): string {
-  const s = c.style;
+  // Phase 9 đợt 27 K1 — guard bug đợt 26 J6 §6: text clip thiếu style
+  // (lọt qua cổng load cũ) từng ném TypeError ngay tại đây. Chuẩn hóa
+  // qua cùng hàm cổng load dùng, nên mọi caller của textFont đều an toàn
+  // kể cả clip tạo trong phiên không qua parseProjectText.
+  const s = normalizeTextStyle(c.style);
   return `${s.italic ? "italic " : ""}${s.bold ? "700 " : "400 "}${s.fontSize}px ${s.fontFamily}`;
 }
 
@@ -458,6 +552,13 @@ function drawTextClip(
   t: number,
   selected: boolean,
 ) {
+  // Phase 9 đợt 27 K1 — guard bug đợt 26 J6 §6: chuẩn hóa style TRƯỚC
+  // mọi lần đọc (kể cả textClipVisual trong previewEngine cũng đọc
+  // clip.style trực tiếp). Bản sao nông: không mutate clip trong store,
+  // mọi đường vẽ sau đó (karaoke, SR, parity) đều dùng bản đã chuẩn hóa.
+  // Clip đã có style đầy đủ → normalize trả về giá trị tương đương,
+  // hành vi render không đổi.
+  clip = { ...clip, style: normalizeTextStyle(clip.style) };
   const s = clip.style;
   const { width: W, height: H } = spec.meta;
   const localT = t - clip.start;
@@ -605,6 +706,18 @@ function drawVideoClipWithTransition(
 ) {
   const { width: W, height: H } = spec.meta;
   const tv = transitionClipVisual(clip, t - clip.start, W, H);
+  // Phase 9 đợt 26 (J3): clip đơn trong cửa sổ fadewhite/fadegrays —
+  // composite dip (trắng / xám theo pixel) ĐẰNG SAU clip qua offscreen
+  // (drawVideoClipWithDip), thay vì vẽ trên nền đen như trước (sai
+  // hướng dip). Chỉ mở nhánh này khi không có hình học (họ fade là
+  // geometric=false); fadeblack giữ đường alpha cũ vì dip đen ≡ nền
+  // đen. Nhánh này KHÔNG đụng drawVideoClip: nó chỉ gọi drawVideoClip
+  // với bản sao clip đã strip transition để lấy pixel ở alpha đầy đủ,
+  // rồi tự composite theo tv.alpha.
+  if (!tv.geometric && (tv.dipMode === "white" || tv.dipMode === "gray")) {
+    drawVideoClipWithDip(ctx, spec, pool, mediaByName, clip, t, tv, W, H);
+    return;
+  }
   if (!tv.geometric || !tv.layer) {
     drawVideoClip(ctx, spec, pool, mediaByName, clip, t);
     return;
@@ -658,6 +771,91 @@ function drawVideoClipWithTransition(
   applyTransitionLayer(ctx, tv.layer, W, H);
   drawVideoClip(ctx, spec, pool, mediaByName, clip, t);
   ctx.restore();
+}
+
+/**
+ * Vẽ 1 clip đơn trong cửa sổ fadewhite/fadegrays kèm dip ĐẰNG SAU clip
+ * (đợt 26 J3 — đóng nợ follow-up đợt 25 I4 §7).
+ *
+ * Vấn đề I4 để lại: fill nền trắng/xám toàn khung trước khi vẽ clip sẽ
+ * xóa clip track khác đã vẽ trước trong cùng frame (mọi clip video
+ * chiếm toàn khung). Cách này tránh điều đó bằng phạm vi pixel:
+ *   1. Vẽ clip lên canvas offscreen với bản sao đã strip transition
+ *      (transitionIn/Out = undefined) để drawVideoClip vẽ ở alpha đầy
+ *      đủ (không nhân tv.alpha) — mọi hiệu ứng/mask/SR/track của clip
+ *      vẫn giữ nguyên vì bản sao chỉ khác 2 trường transition.
+ *   2. Composite từng pixel bằng singleClipDipPixel (chính hàm thuần
+ *      của transitionPreview.ts, có unit test): pixel nào offscreen
+ *      có alpha = 0 (clip không vẽ tới: viền letterbox, góc xoay SR,
+ *      vùng mask/chroma trong suốt) thì BỎ QUA — dip không bao giờ vẽ
+ *      ra ngoài vùng clip đã chiếm, nên track dưới và nền đen khung
+ *      vẫn hiện ở đó. Pixel đã vẽ giữ nguyên alpha (coverage từ
+ *      opacity/mask), chỉ đổi màu thẳng thành
+ *      alpha·clip + (1−alpha)·dip; khi đưa offscreen lên ctx chính
+ *      bằng source-over, phần (1−coverage) vẫn cho thấy nội dung bên
+ *      dưới — đúng ngữ nghĩa opacity/mask cũ, chỉ thêm dip.
+ *   3. alpha = tv.alpha (lớp A khi ra, lớp B khi vào). Cả 2 cửa sổ
+ *      cùng active (clip ngắn hơn tổng duration): alpha là tích 2
+ *      lớp, dip lấy theo cửa sổ vào — xấp xỉ đã ghi, không phải
+ *      composite cặp đầy đủ (thiếu clip còn lại của cặp, xem LIMITS).
+ * Fallback về đường vẽ thường khi: thiếu media (tránh nhuộm màu
+ * placeholder "Thiếu media"), alpha >= 1 (trọng số dip = 0), hoặc
+ * không lấy được offscreen context. Chi phí: 1 vòng ImageData toàn
+ * khung mỗi frame trong cửa sổ dip (cùng họ chi phí với mask dissolve
+ * — đo Node ở LIMITS; chỉ trong frame transition, thường ≤ 1s).
+ */
+function drawVideoClipWithDip(
+  ctx: CanvasRenderingContext2D,
+  spec: VideoSpec,
+  pool: MediaPool,
+  mediaByName: Map<string, MediaItem>,
+  clip: VideoClip,
+  t: number,
+  tv: ReturnType<typeof transitionClipVisual>,
+  W: number,
+  H: number,
+): void {
+  const item = mediaByName.get(clip.src);
+  if (!item) {
+    drawVideoClip(ctx, spec, pool, mediaByName, clip, t);
+    return;
+  }
+  const alpha = clamp(tv.alpha, 0, 1);
+  if (alpha >= 1 || (tv.dipMode !== "white" && tv.dipMode !== "gray")) {
+    drawVideoClip(ctx, spec, pool, mediaByName, clip, t);
+    return;
+  }
+  const off = document.createElement("canvas");
+  off.width = Math.max(1, Math.round(W));
+  off.height = Math.max(1, Math.round(H));
+  const octx = off.getContext("2d");
+  if (!octx) {
+    drawVideoClip(ctx, spec, pool, mediaByName, clip, t);
+    return;
+  }
+  const stripped: VideoClip = {
+    ...clip,
+    transitionIn: undefined,
+    transitionOut: undefined,
+  };
+  drawVideoClip(octx, spec, pool, mediaByName, stripped, t);
+  const img = octx.getImageData(0, 0, off.width, off.height);
+  const data = img.data;
+  const mode = tv.dipMode;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] === 0) continue;
+    const [r, g, b] = singleClipDipPixel(
+      [data[i], data[i + 1], data[i + 2]],
+      alpha,
+      mode,
+    );
+    data[i] = Math.round(r);
+    data[i + 1] = Math.round(g);
+    data[i + 2] = Math.round(b);
+    // data[i + 3] giữ nguyên: coverage (opacity/mask) không đổi.
+  }
+  octx.putImageData(img, 0, 0);
+  ctx.drawImage(off, 0, 0);
 }
 
 /**
@@ -872,6 +1070,98 @@ function tracePolygon(
   ctx.closePath();
 }
 
+// ---- J4 (Phase 9 đợt 26): giữ frame tốt cuối cùng khi đang phát mà
+// decoder tụt (nợ I6 §5h đợt 25) ----
+// Cache nguồn frame tốt cuối cùng theo clip (khóa gồm clip.id + clip.src
+// để relink/đổi src không vẽ nhầm frame của src cũ). Chỉ lưu khi quyết
+// định là "draw" (frame hiện tại dùng được); nhánh "hold" vẽ lại canvas
+// này qua đúng pipeline thường (letterbox/LUT/chroma/mask/SR/opacity tại
+// t hiện tại) nên geometry/effect vẫn theo t, chỉ nội dung frame là cũ.
+// Chi phí: 1 drawImage thêm mỗi tick vẽ thành công cho mỗi clip video
+// (bản sao kích thước gốc, không qua filter) — rẻ hơn nhiều so với vẽ
+// lại toàn bộ pipeline, và là giá bắt buộc vì element video không giữ
+// được "frame cũ" để vẽ lại sau khi decoder tụt (frame hiện tại của nó
+// đã thay đổi/trống). Giới hạn 16 clip (evict cũ nhất) để không giữ
+// canvas vô hạn khi project đổi clip liên tục. Không có document (SSR)
+// thì không cache, hành vi rơi về guard cũ. Xem holdFrame.ts (quyết
+// định thuần, có unit test) và PHASE9_ROUND26_J4_HOLD_FRAME_LIMITS.md.
+const HELD_FRAME_MAX_CLIPS = 16;
+// Đợt 27 K4: cache frame giữ ghi thêm firstHeldT (playhead lúc bắt đầu
+// giữ — để đo tuổi frame giữ) và holdTicks. firstHeldT = null nghĩa là
+// frame trong cache là frame vừa draw xong, chưa từng bị giữ.
+// Thống kê draw/hold/skip + tuổi giữ lớn nhất được phơi qua
+// window.__vcutHoldStats cho harness đo (kiểu hook đo __vcutPreviewIdle
+// đã có sẵn trong file này) — KHÔNG phải state React nên không gây
+// re-render mỗi tick. tickHadHold: tick renderFrame vừa rồi có clip nào
+// rơi vào nhánh hold không (badge "FRAME GIỮ" đọc ở tick sau).
+interface HeldFrameEntry {
+  canvas: HTMLCanvasElement;
+  w: number;
+  h: number;
+  firstHeldT: number | null;
+  holdTicks: number;
+}
+const heldFrameCache = new Map<string, HeldFrameEntry>();
+export interface HoldStats {
+  draw: number;
+  hold: number;
+  skip: number;
+  /** Tuổi giữ lớn nhất từng đo được (giây timeline), 0 = chưa từng giữ. */
+  maxHoldAgeSec: number;
+  /** true khi có clip đang giữ quá MAX_HOLD_AGE_SEC (vẫn giữ hình, chỉ báo). */
+  stale: boolean;
+}
+const holdStats: HoldStats = { draw: 0, hold: 0, skip: 0, maxHoldAgeSec: 0, stale: false };
+let holdStatsExposed = false;
+function exposeHoldStats(): void {
+  if (holdStatsExposed || typeof window === "undefined") return;
+  holdStatsExposed = true;
+  (window as unknown as { __vcutHoldStats?: HoldStats }).__vcutHoldStats = holdStats;
+}
+let tickHadHold = false;
+// Đợt 27 K4: ngữ cảnh transport của lần renderFrame hiện tại, để
+// drawVideoClip biết clip nào đang seek-stepping mà không phải luồn thêm
+// tham số qua toàn bộ wrapper transition/dip/mask (vùng của luồng khác).
+// Vòng lặp đặt trước mỗi lần gọi renderFrame: nhánh phát đặt
+// {playing: true, reversePlayback}, nhánh pause/seek đặt playing: false.
+// stepping của 1 clip = playing && (reversePlayback toàn cục || clip.reverse).
+let drawTransport = { playing: false, reversePlayback: false };
+function heldFrameKey(clipId: string, src: string): string {
+  return `${clipId}::${src}`;
+}
+function storeHeldFrame(clipId: string, src: string, v: HTMLVideoElement, mw: number, mh: number): void {
+  if (typeof document === "undefined") return;
+  try {
+    const key = heldFrameKey(clipId, src);
+    let slot = heldFrameCache.get(key);
+    if (!slot) {
+      if (heldFrameCache.size >= HELD_FRAME_MAX_CLIPS) {
+        const oldest = heldFrameCache.keys().next();
+        if (!oldest.done) heldFrameCache.delete(oldest.value);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = mw;
+      canvas.height = mh;
+      slot = { canvas, w: mw, h: mh, firstHeldT: null, holdTicks: 0 };
+      heldFrameCache.set(key, slot);
+    } else if (slot.canvas.width !== mw || slot.canvas.height !== mh) {
+      slot.canvas.width = mw;
+      slot.canvas.height = mh;
+      slot.w = mw;
+      slot.h = mh;
+    }
+    // Đợt 27 K4: frame vừa draw xong là frame tươi — reset tuổi giữ để
+    // lần hold sau (nếu có) đo lại từ đầu, không cộng dồn qua lần draw.
+    slot.firstHeldT = null;
+    slot.holdTicks = 0;
+    const cctx = slot.canvas.getContext("2d");
+    if (!cctx) return;
+    cctx.drawImage(v, 0, 0, mw, mh);
+  } catch {
+    /* canvas lỗi → bỏ qua, frame đó không được giữ (rơi về skip như cũ) */
+  }
+}
+
 /** Vẽ 1 video clip — mirror pipeline render.js (letterbox + transforms). */
 function drawVideoClip(
   ctx: CanvasRenderingContext2D,
@@ -904,7 +1194,12 @@ function drawVideoClip(
     ctx.fillText(`Thiếu media: ${clip.src}`, W / 2, H / 2);
     return;
   }
-  let srcEl: HTMLVideoElement | HTMLImageElement | null = null;
+  let srcEl:
+    | HTMLVideoElement
+    | HTMLImageElement
+    | HTMLCanvasElement
+    | VideoFrame
+    | null = null;
   let mw = 0;
   let mh = 0;
   if (item.kind === "image") {
@@ -915,11 +1210,130 @@ function drawVideoClip(
       mh = img.naturalHeight;
     }
   } else if (item.kind === "video") {
+    // J4 (đợt 26, nợ I6 §5h): quyết định draw/hold/skip qua helper thuần
+    // (xem holdFrame.ts). "Đang phát" suy ra từ !v.paused — không luồn
+    // trạng thái playing của store qua đây để khỏi đụng vùng transition/
+    // dip. K4 (đợt 27) sửa hệ quả cũ "phát ngược vẫn skip": ngữ cảnh
+    // drawTransport (vòng lặp đặt trước renderFrame) cho biết tick này
+    // có đang stepping không — phát ngược toàn cục hoặc clip.reverse —
+    // và cờ stepping đó được truyền vào decideVideoFrame, nên element
+    // paused nhưng đang seek từng frame vẫn hold thay vì skip. Nới
+    // guard thành videoWidth > 0 vẫn KHÔNG được chọn: harness Chromium
+    // (xem LIMITS §2 đợt 26) đo được ở
+    // readyState 1 hai hành vi — trước frame đầu drawImage là no-op
+    // (sau khi renderFrame xóa nền vẫn đen), sau khi đã có frame thì
+    // Chromium vẽ frame cũ cuối (không đen nhưng phụ thuộc trình
+    // duyệt, không khóa được bằng unit test). Chỉ nhánh hold (vẽ lại
+    // frame tốt do chính mình cache) mới giữ hình một cách xác định.
+    // Nhánh hold đi tiếp qua đúng pipeline bên dưới nên
+    // mask/SR/LUT/chroma/effects/opacity vẫn tính tại t hiện tại.
+    // K4 (đợt 27): stepping = tick này playhead đang chạy từng frame
+    // nhưng element vẫn paused vì seek-stepping — phát ngược toàn cục
+    // (drawTransport.reversePlayback) hoặc clip.reverse.
+    const stepping =
+      drawTransport.playing &&
+      (drawTransport.reversePlayback || (clip.reverse ?? false));
+    // Đợt 34 Q2: đường WebCodecs opt-in (mặc định TẮT). Chỉ khi stepping
+    // + cờ bật + có VideoDecoder mới hỏi cache: có frame đúng mốc
+    // source time (cùng mốc mà đường element seek tới) thì vẽ frame
+    // cache, đi tiếp đúng pipeline bên dưới (mask/SR/LUT/chroma/
+    // effects/opacity — VideoFrame là CanvasImageSource hợp lệ); chưa
+    // có frame (đang decode / source không demux được) thì rơi về
+    // nhánh element cũ nguyên vẹn bên dưới, không skip, không đen.
+    // Nguồn cache lấy đúng source element đang dùng (proxy nếu có).
+    let wcFrame: {
+      frame: VideoFrame;
+      width: number;
+      height: number;
+    } | null = null;
+    if (stepping && resolveReverseEngine() === "webcodecs") {
+      // Đợt 36 S4 + đợt 38 U2: chặn đỉnh heap file lớn bằng size truyền
+      // trước qua cổng S4. knownSizeBytesForPreview chọn đúng size của
+      // chính URL đang fetch: bản gốc -> item.file.size; proxy ->
+      // proxySizeBytes khi bridge đã trả (metadata proxy), chưa biết
+      // thì undefined — KHÔNG truyền item.file.size cho proxy (size gốc
+      // không phải size proxy, truyền sai sẽ chặn nhầm proxy nhỏ).
+      // Khi proxy chưa biết size, cổng S4 không áp dụng và các cổng
+      // HEAD/GET của đợt 35 R3 + late-abort của đợt 37 T5 vẫn làm việc.
+      // ROUND40-V2-GOP: bật đường GOP Range cho controller này (ngưỡng
+      // 32 MiB < size <= 128 MiB, cache GOP 32 MiB; lỗi GOP rơi về
+      // full-file, file > 128 MiB vẫn khóa S4 như cũ — xem LIMITS V2).
+      wcFrame = reverseWebcodecsFrameFor(
+        item.proxyUrl ?? item.url,
+        rampSourceTimeAt(clip, t),
+        knownSizeBytesForPreview(item),
+        { gopRangeEnabled: true },
+      );
+    }
     const v = pool.videoFor(item);
-    if (v && v.readyState >= 2 && v.videoWidth > 0) {
-      srcEl = v;
-      mw = v.videoWidth;
-      mh = v.videoHeight;
+    if (wcFrame) {
+      srcEl = wcFrame.frame;
+      mw = wcFrame.width;
+      mh = wcFrame.height;
+    } else if (v) {
+      // Khi stepping, element chỉ được draw khi đã seek đúng target
+      // (±0.5 frame, xem seekOnTarget): seek còn bay mà vẽ thì frame
+      // trên element vẫn là frame cũ nhưng sẽ bị mạo nhận là frame tại
+      // t — thay vào đó hold frame tốt cũ (nội dung đúng frame trước
+      // đó, không đen). Nhánh pause thật (không stepping) không qua
+      // guard này vì Seeker đã chờ seeked rồi mới vẽ. Thống kê
+      // draw/hold/skip phơi qua window.__vcutHoldStats cho harness đo
+      // (xem đầu file).
+      const key = heldFrameKey(clip.id, clip.src);
+      let decision = decideVideoFrame({
+        readyState: v.readyState,
+        videoWidth: v.videoWidth,
+        paused: v.paused,
+        hasHeldFrame: heldFrameCache.has(key),
+        stepping,
+      });
+      if (decision === "draw" && stepping) {
+        const fps = spec.meta.fps > 0 ? spec.meta.fps : 30;
+        // Đợt 28 L2: guard K4 (chỉ vẽ khi khớp nửa frame) giữ nguyên cho
+        // trường hợp khớp; nới thêm cho seek ĐÃ XONG nhưng lag ≤ 2 s
+        // (stepDrawAllowed): trên GOP thưa seek hoàn tất sau ~0.5–1 s,
+        // playhead đã lùi xa nên guard cũ chặn mọi draw → kẹt 8.5 s dù
+        // seek vẫn hoàn tất đều. Frame vẽ ra luôn mới hơn frame giữ cũ
+        // (target stepping đơn điệu) và lag có giới hạn 2 s — đánh đổi
+        // này ghi rõ trong PHASE9_ROUND28_L2_REVERSE_LIMITS.md. Đang
+        // seeking mà lệch thì vẫn hold (frame cũ chưa phải frame mới).
+        // Đợt 39 T6: bypass thêm cho tick vừa hoàn tất seek — seek bay
+        // 1,2–6,8 s trên file GOP thưa 420 MB nên lag lúc xong thường
+        // 2,2–4,9 s, vượt guard 2 s → 4 lần xong liên tiếp đều bị chặn,
+        // frame đầu tới sau 17,8 s (baseline đợt 39). Frame ở tick này
+        // là frame của seek vừa xong (không phải frame cũ mạo nhận) nên
+        // vẽ nó: chuỗi ngược hiện đúng thứ tự, chỉ chậm theo tốc độ
+        // seek. Guard 2 s vẫn áp cho mọi tick khác.
+        if (!stepDrawAllowedWithCompletion(v.seeking, v.currentTime, rampSourceTimeAt(clip, t), fps, seekCompletedThisTick.has(v))) {
+          decision = heldFrameCache.has(key) ? "hold" : "skip";
+        }
+      }
+      exposeHoldStats();
+      if (decision === "draw") {
+        holdStats.draw++;
+        srcEl = v;
+        mw = v.videoWidth;
+        mh = v.videoHeight;
+        storeHeldFrame(clip.id, clip.src, v, mw, mh);
+      } else if (decision === "hold") {
+        const held = heldFrameCache.get(key);
+        if (held) {
+          holdStats.hold++;
+          tickHadHold = true;
+          if (held.firstHeldT === null) held.firstHeldT = t;
+          held.holdTicks++;
+          const age = Math.abs(t - held.firstHeldT);
+          if (age > holdStats.maxHoldAgeSec) holdStats.maxHoldAgeSec = age;
+          // Vượt ngưỡng tuổi: VẪN GIỮ (quay lại đen còn tệ hơn) — chỉ
+          // đánh dấu stale để badge/thống kê báo rõ, xem LIMITS K4 §4.
+          if (holdStale(held.firstHeldT, t, MAX_HOLD_AGE_SEC)) holdStats.stale = true;
+          srcEl = held.canvas;
+          mw = held.w;
+          mh = held.h;
+        }
+      } else {
+        holdStats.skip++;
+      }
     }
   }
   if (!srcEl || mw <= 0 || mh <= 0) return;
@@ -1258,6 +1672,9 @@ function renderFrame(
   selected: { trackId: string; clipId: string } | null,
 ) {
   const { width: W, height: H } = spec.meta;
+  // K4 (đợt 27): tick mới thì reset cờ hold — drawVideoClip sẽ đặt lại
+  // nếu tick này có clip rơi vào nhánh hold (badge đọc ở tick sau).
+  tickHadHold = false;
   // nền đen toàn canvas (tọa độ device px)
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = "#000";
@@ -1399,7 +1816,18 @@ function collectActives(
  * R1-062: khi pause, hàm này KHÔNG set currentTime trực tiếp nữa — việc seek
  * chính xác do Seeker đảm nhiệm (pause all → seek → chờ `seeked` → vẽ frame),
  * tránh hiển thị frame cũ do seek bất đồng bộ.
+ *
+ * Đợt 28 L2: steppingPrevSeeking ghi seeking ở tick trước cho mỗi element
+ * (chỉ dùng trong 2 nhánh stepping) để nhận biết "tick vừa hoàn tất seek"
+ * — xem justCompletedSeek trong reversePlayback.ts.
  */
+const steppingPrevSeeking = new WeakMap<object, boolean>();
+// Đợt 39 T6: element vừa hoàn tất seek ở tick hiện tại — syncMedia ghi
+// trước renderFrame, drawVideoClip đọc để bypass guard lag đúng tick đó
+// (xem stepDrawAllowedWithCompletion). Set bị xóa đầu mỗi lần syncMedia
+// chạy (1 lần/tick) nên không bao giờ rò sang tick sau; nhánh pause
+// (playing=false) không set gì nên scrub/pause không bị ảnh hưởng.
+const seekCompletedThisTick = new Set<object>();
 function syncMedia(
   spec: VideoSpec,
   pool: MediaPool,
@@ -1408,7 +1836,13 @@ function syncMedia(
   playing: boolean,
   engine: AudioEngine,
   forceSeek: boolean,
+  // K4 (đợt 27): true = phát ngược toàn cục — playhead lùi từng frame,
+  // MỌI element đều paused + seek-stepping như clip reverse (không
+  // element nào được play() xuôi), audio mute toàn bộ (xem dưới).
+  reversePlayback = false,
 ) {
+  // Đợt 39 T6: mở đầu tick mới — cờ hoàn tất seek của tick trước hết hạn.
+  seekCompletedThisTick.clear();
   const { actives, audioSources } = collectActives(spec, pool, mediaByName, t);
   const seen = new Set<HTMLVideoElement | HTMLAudioElement>();
   for (const a of actives) {
@@ -1426,14 +1860,54 @@ function syncMedia(
       /* bỏ qua nếu trình duyệt không hỗ trợ */
     }
     if (playing) {
-      if (a.reverse) {
+      // K4 (đợt 27): ngưỡng seek cho stepping là nửa frame (0.5/fps) thay
+      // vì 0.03 cố định — phải khớp với guard stepDrawAllowed trong
+      // drawVideoClip, nếu không sẽ có vùng drift (0.5/fps, 0.03] mà
+      // syncMedia không seek nhưng tầng vẽ lại coi là stale và hold mãi.
+      const stepEps = 0.5 / (spec.meta.fps > 0 ? spec.meta.fps : 30);
+      if (reversePlayback) {
+        // Phát ngược toàn cục: TẤT CẢ clip đều seek-stepping như clip
+        // reverse (target của mỗi clip đã tính đúng chiều qua
+        // collectActives: clip xuôi thì target lùi, clip reverse thì
+        // target tiến khi playhead lùi). Không play() element nào.
+        // Đợt 28 L2 (pacing): không phát seek mới khi seek cũ còn bay
+        // (el.seeking) — phát chồng làm decoder khởi động lại từ keyframe
+        // liên tục, đo được 410/426 seek bị thay thế trước khi hoàn tất
+        // trên GOP thưa → kẹt 8.5 s. Chờ seek cũ xong rồi seek tới target
+        // hiện tại (bỏ qua frame trung gian cho hiển thị).
+        // Đợt 28 L2 (cửa sổ vẽ ở tick hoàn tất): vòng lặp gọi syncMedia
+        // TRƯỚC renderFrame, nên tick seek vừa xong cũng là tick phát
+        // seek tiếp — frame vừa xong không bao giờ được vẽ (đo được 103
+        // lần hoàn tất, 0 lần vẽ tương ứng). Tick vừa hoàn tất thì
+        // KHÔNG phát seek mới, để renderFrame tick đó vẽ frame vừa xong
+        // (lag ≤ 2 s theo guard nới lỏng); tick sau mới seek tiếp.
+        a.el.pause();
+        const wasSeekingGlobal = steppingPrevSeeking.get(a.el) ?? false;
+        steppingPrevSeeking.set(a.el, a.el.seeking);
+        // Đợt 39 T6: ghi tick vừa hoàn tất để drawVideoClip bypass guard
+        // lag đúng tick này (frame vừa seek xong, xem reversePlayback.ts).
+        if (justCompletedSeek(wasSeekingGlobal, a.el.seeking)) seekCompletedThisTick.add(a.el);
+        if (!justCompletedSeek(wasSeekingGlobal, a.el.seeking) && shouldIssueStepSeek(a.el.seeking, a.el.currentTime, a.target, stepEps)) {
+          try {
+            a.el.currentTime = a.target;
+          } catch {
+            /* seek chưa sẵn sàng */
+          }
+        }
+      } else if (a.reverse) {
         // P1 (Phase 7): phát ngược từng frame — giữ element ở trạng thái
         // pause và seek tới target mỗi frame (target giảm dần theo
         // sourceTimeAt). Không mượt như phát xuôi (seek từng frame, phụ thuộc
         // mật độ keyframe), nhưng đúng chiều và đúng vị trí — trước đây clip
         // reverse phát XUÔI (sai hoàn toàn).
+        // Đợt 28 L2: cùng pacing + cửa sổ vẽ ở tick hoàn tất như nhánh
+        // ngược toàn cục (xem trên).
         a.el.pause();
-        if (Math.abs(a.el.currentTime - a.target) > 0.03) {
+        const wasSeekingClip = steppingPrevSeeking.get(a.el) ?? false;
+        steppingPrevSeeking.set(a.el, a.el.seeking);
+        // Đợt 39 T6: như nhánh ngược toàn cục (ghi tick vừa hoàn tất).
+        if (justCompletedSeek(wasSeekingClip, a.el.seeking)) seekCompletedThisTick.add(a.el);
+        if (!justCompletedSeek(wasSeekingClip, a.el.seeking) && shouldIssueStepSeek(a.el.seeking, a.el.currentTime, a.target, stepEps)) {
           try {
             a.el.currentTime = a.target;
           } catch {
@@ -1469,7 +1943,14 @@ function syncMedia(
   // (render dùng areverse) — khi đang phát thì mute để khỏi phát xuôi lệch
   // với hình bước ngược; khi pause thì element vốn đã dừng nên gain không
   // ảnh hưởng gì.
-  const outSources = playing
+  // K4 (đợt 27): phát ngược TOÀN CỤC thì mute TOÀN BỘ audio (không chỉ
+  // clip reverse) — playhead lùi nên không có luồng audio xuôi nào đồng
+  // bộ được với hình; im lặng trung thực hơn tiếng xuôi lệch hình. Trạng
+  // thái này được báo rõ bằng badge "PHÁT NGƯỢC — không audio" ở preview
+  // và trong LIMITS (không giả vờ audio chạy ngược đồng bộ).
+  const outSources = playing && reversePlayback
+    ? audioSources.map((s) => ({ ...s, gain: 0 }))
+    : playing
     ? (() => {
         const revEls = new Set(
           actives.filter((a) => a.reverse).map((a) => a.el),
@@ -1502,6 +1983,9 @@ export function togglePreviewFullscreen(): void {
 export function PreviewCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  // Đợt 38 U1: re-render khi đổi ngôn ngữ để chuỗi toggle/badge decode-ahead
+  // (cập nhật qua DOM) dùng đúng locale hiện tại ở lần refresh tiếp theo.
+  const previewLang = useLang();
   // K5: trạng thái fullscreen (đổi icon nút) + số clip để hiện gợi ý khi trống.
   const [isFullscreen, setIsFullscreen] = useState(false);
   const clipCount = useStore((s) =>
@@ -1511,6 +1995,9 @@ export function PreviewCanvas() {
   // thái playing qua selector (re-render nhẹ khi toggle play, không chạm
   // vào vòng lặp preview vì effect của nó có deps []).
   const isPlaying = useStore((s) => s.playing);
+  // K4 (đợt 27): cờ phát ngược toàn cục — badge PHÁT NGƯỢC render theo
+  // React (chỉ đổi khi bật/tắt chế độ, không phải mỗi frame).
+  const isReversePlayback = useStore((s) => s.reversePlayback);
   const poolRef = useRef<MediaPool | null>(null);
   // Q8: cache mediaByName theo identity mảng media (tránh build Map mới mỗi
   // frame rAF khi project có nhiều media) + badge PROXY cập nhật qua DOM
@@ -1530,6 +2017,43 @@ export function PreviewCanvas() {
   // preview, render dùng tmix thật.
   const motionBadgeRef = useRef<HTMLDivElement | null>(null);
   const lastMotionBadgeRef = useRef<string>("");
+  // J1 (Phase 9 đợt 26): badge cảnh báo curve fail-soft — cập nhật qua DOM
+  // trực tiếp như các badge trên (không re-render mỗi frame). Toast chỉ
+  // bắn 1 lần mỗi khi tập warning đổi (keyed bởi lastCurveWarnKeyRef).
+  const curveWarnBadgeRef = useRef<HTMLDivElement | null>(null);
+  const lastCurveWarnKeyRef = useRef<string>("");
+  // Đợt 37 T2: badge cảnh báo decode-ahead Q3 — cập nhật qua DOM trực
+  // tiếp như badge curve (không re-render mỗi frame). Chỉ hiện khi có
+  // controller đang bật decode-ahead qua cổng S3; text/title là đúng
+  // chuỗi trong module cổng (không tự bịa chuỗi mới). Toast 1 lần mỗi
+  // khi tập warning đổi (keyed bởi lastDecodeAheadWarnKeyRef).
+  // Đợt 38 U1: thêm nút toggle + trạng thái gộp (tắt / bị chặn + lý do /
+  // đang chạy + số frame prefetch) — cùng cập nhật trong
+  // refreshDecodeAheadUi (gọi từ vòng lặp mỗi tick và ngay sau click,
+  // vì vòng lặp có thể đang ngủ khi pause). Badge chỉ hiện khi user đã
+  // chạm toggle hoặc đang có cảnh báo/đang chạy — chưa chạm thì ẩn để
+  // khỏi làm phiền user chưa quan tâm tới tính năng thử nghiệm này.
+  const decodeAheadWarnBadgeRef = useRef<HTMLDivElement | null>(null);
+  const lastDecodeAheadWarnKeyRef = useRef<string>("");
+  const decodeAheadToggleBtnRef = useRef<HTMLButtonElement | null>(null);
+  const decodeAheadTouchedRef = useRef(false);
+  const lastDecodeAheadBlockedKeyRef = useRef<string>("");
+  // K4 (đợt 27): badge FRAME GIỮ — cập nhật qua DOM trực tiếp như các
+  // badge trên (không re-render React mỗi frame).
+  const holdBadgeRef = useRef<HTMLDivElement | null>(null);
+  const lastHoldBadgeRef = useRef<string>("");
+  // ROUND43-Y6: badge đường phát ngược (WebCodecs/element) — cập nhật
+  // qua DOM trực tiếp như các badge trên (không re-render React mỗi
+  // frame). Chỉ hiện khi user đã bật thử nghiệm WebCodecs (cờ opt-in):
+  // khi đó badge phải báo ĐÚNG đường đang chạy, kể cả khi trình duyệt
+  // thiếu API khiến đường chọn rơi về element. Khi cờ tắt, đường
+  // element là mặc định theo thiết kế nên không hiện badge (tránh ồn).
+  const reverseEngineBadgeRef = useRef<HTMLDivElement | null>(null);
+  const lastReverseEngineBadgeRef = useRef<string>("");
+  // ROUND45-A6: badge cuối cùng tick đã tính (để effect [previewLang]
+  // tính lại text/title ngay khi đổi lang, kể cả khi vòng lặp đang ngủ
+  // lúc pause — nợ Z6 §6.3). Null = badge đang ẩn, effect không làm gì.
+  const lastReverseEngineBadge45A6Ref = useRef<ReverseEngineBadge45A6 | null>(null);
   const dragRef = useRef<{ trackId: string; clipId: string; dx: number; dy: number } | null>(null);
   const engineRef = useRef<AudioEngine | null>(null);
   const vuBarRef = useRef<HTMLDivElement>(null);
@@ -1556,6 +2080,182 @@ export function PreviewCanvas() {
     });
   }
 
+  // Đợt 38 U1: đồng bộ nút toggle + badge decode-ahead từ trạng thái
+  // registry (reverseDecodeAheadStatus). Gọi từ vòng lặp mỗi tick VÀ
+  // ngay sau khi user bấm toggle — vòng lặp có thể đang ngủ khi pause
+  // nên không được chờ tick. Chỉ ghi DOM khi giá trị đổi (mẫu các badge
+  // khác); toast chỉ bắn 1 lần mỗi khi tập cảnh báo / decision chặn đổi
+  // (keyed). Chuỗi cổng (warnings) hiển thị nguyên văn theo luật T2;
+  // mọi chuỗi mới (nhãn toggle/badge, lý do chặn, toast chặn/tắt) đều
+  // qua i18n key decodeahead.* (vi/en).
+  const refreshDecodeAheadUi = () => {
+    const st = reverseDecodeAheadStatus();
+    // Đợt 39 T4: dòng lý do từng controller (để badge/title nhiều clip
+    // không hiện 1 lý do gộp đại diện gây hiểu nhầm — nợ U1 §5.4).
+    // Controller chưa thử cổng có reasons rỗng → hiện câu unknown, không
+    // bịa lý do. Trường hợp 0–1 controller giữ nguyên hành vi U1 cũ.
+    const blockedEntries = st.controllers.filter((e) => !e.active);
+    const blockedLine = (e: {
+      label: string;
+      reasons: string[];
+    }): string => {
+      const labels = e.reasons.map((r) =>
+        i18nT(decodeAheadReasonI18nKey(r)),
+      );
+      return `${e.label}: ${labels.join("; ") || i18nT("decodeahead.reason.unknown")}`;
+    };
+    const blockedLines = blockedEntries.map(blockedLine).join("\n");
+    const btn = decodeAheadToggleBtnRef.current;
+    if (btn) {
+      const label = st.active
+        ? i18nT("decodeahead.toggleOn")
+        : st.wanted
+          ? i18nT("decodeahead.toggleBlocked")
+          : i18nT("decodeahead.toggleOff");
+      if (btn.textContent !== label) btn.textContent = label;
+      btn.setAttribute("aria-pressed", st.active ? "true" : "false");
+      btn.dataset.status = st.uiStatus;
+      const reasonLabels = st.reasons.map((r) =>
+        i18nT(decodeAheadReasonI18nKey(r)),
+      );
+      // Đang chạy mà có clip khác bị chặn (trạng thái hỗn hợp) thì
+      // title kèm thêm dòng từng clip bị chặn sau warnings; bị chặn mà
+      // nhiều controller thì title là dòng từng clip thay cho hợp chung.
+      const title = st.active
+        ? [st.warnings.join("\n"), blockedLines].filter(Boolean).join("\n")
+        : st.wanted
+          ? st.controllers.length > 1
+            ? blockedLines || reasonLabels.join("; ")
+            : reasonLabels.join("; ")
+          : i18nT("decodeahead.toggleHint");
+      if (btn.title !== title) btn.title = title;
+    }
+    // Toast cảnh báo cổng (giữ đúng hành vi T2).
+    const warnKey = st.warnings.join("\n");
+    if (warnKey !== lastDecodeAheadWarnKeyRef.current) {
+      lastDecodeAheadWarnKeyRef.current = warnKey;
+      for (const w of st.warnings) pushToast(w, "info");
+    }
+    // Toast chặn: chỉ khi user đã bật toggle mà cổng chặn; tắt toggle
+    // thì reset key để lần bật sau lại báo (không spam mỗi tick).
+    if (st.wanted && !st.active && st.decision) {
+      const blockedKey = `blocked:${st.reasons.join(",")}`;
+      if (blockedKey !== lastDecodeAheadBlockedKeyRef.current) {
+        lastDecodeAheadBlockedKeyRef.current = blockedKey;
+        const reasonLabels = st.reasons.map((r) =>
+          i18nT(decodeAheadReasonI18nKey(r)),
+        );
+        pushToast(
+          i18nT("decodeahead.toastBlocked", {
+            reasons:
+              reasonLabels.join("; ") || i18nT("decodeahead.reason.unknown"),
+          }),
+          "info",
+        );
+      }
+    } else if (!st.wanted) {
+      lastDecodeAheadBlockedKeyRef.current = "";
+    }
+    const badge = decodeAheadWarnBadgeRef.current;
+    if (badge) {
+      let text = "";
+      let title = "";
+      if (st.active) {
+        text = i18nT("decodeahead.badgeRunning", {
+          n: String(st.prefetchFrames),
+        });
+        // Trạng thái hỗn hợp: đang chạy + clip khác bị chặn → title
+        // kèm dòng từng clip bị chặn (không giấu clip bị chặn sau
+        // badge "đang chạy" chung).
+        title = [st.warnings.join("\n"), blockedLines]
+          .filter(Boolean)
+          .join("\n");
+      } else if (st.wanted) {
+        const reasonLabels = st.reasons.map((r) =>
+          i18nT(decodeAheadReasonI18nKey(r)),
+        );
+        // Đợt 39 T4: nhiều clip bị chặn với lý do KHÁC nhau thì không
+        // hiện 1 lý do đại diện (gây hiểu nhầm — nợ U1 §5.4): badge
+        // hiện số clip + title liệt kê từng clip. 1 clip, hoặc nhiều
+        // clip cùng lý do, giữ nguyên text U1 cũ.
+        if (
+          st.controllers.length > 1 &&
+          blockedReasonsDiffer(st.controllers)
+        ) {
+          text = i18nT("decodeahead.badgeBlockedMulti", {
+            n: String(blockedEntries.length),
+          });
+        } else {
+          text =
+            reasonLabels.length > 0
+              ? `${i18nT("decodeahead.badgeBlocked")} — ${reasonLabels[0]}`
+              : i18nT("decodeahead.badgeBlocked");
+        }
+        title =
+          st.controllers.length > 1
+            ? blockedLines || reasonLabels.join("\n")
+            : reasonLabels.join("\n");
+      } else if (decodeAheadTouchedRef.current) {
+        text = i18nT("decodeahead.badgeOff");
+        title = i18nT("decodeahead.toggleHint");
+      }
+      if (badge.textContent !== text) badge.textContent = text;
+      if (badge.title !== title) badge.title = title;
+      badge.style.display = text ? "block" : "none";
+    }
+  };
+
+  // Đợt 38 U1: click toggle = đảo cờ wanted qua cổng (không bypass):
+  // bật → thử cổng ngay trên các controller đã có (chưa có số đo thì
+  // hiện "bị chặn" + lý do, và cửa sổ decode mới sẽ tự thử lại);
+  // tắt → dừng prefetch mới ngay + toast xác nhận. Refresh ngay sau
+  // click để phản hồi không phụ thuộc vòng lặp (có thể đang ngủ).
+  // Đợt 39 T4: tắt giữa chừng nay còn dọn prefetch đang bay khi nó
+  // settle (dropSettledPrefetchIfOff) — badge "prefetch 0" khớp cache;
+  // cổng KHÔNG re-gate khi đang chạy (giữ luật T2, xem quyết định
+  // re-gate trong reverseDecodeAheadToggle.ts).
+  const onDecodeAheadToggleClick = () => {
+    decodeAheadTouchedRef.current = true;
+    const next = !getReverseDecodeAheadWanted();
+    setReverseDecodeAheadWanted(next);
+    if (!next) pushToast(i18nT("decodeahead.toastOffNote"), "info");
+    refreshDecodeAheadUi();
+  };
+
+  // Đợt 38 U1: đổi ngôn ngữ re-render JSX về nhãn mặc định (toggleOff)
+  // nên phải refresh lại ngay — vòng lặp có thể đang ngủ khi pause nên
+  // không được chờ tick tiếp theo (nếu không nhãn sẽ kẹt sai trạng thái
+  // cho tới khi phát lại).
+  useEffect(() => {
+    refreshDecodeAheadUi();
+  }, [previewLang]);
+
+  // ROUND45-A6: đổi ngôn ngữ cũng refresh badge đường phát ngược ngay
+  // (nợ Z6 §6.3) — badge này cập nhật qua DOM trong tick vòng lặp,
+  // mà vòng lặp NGỦ khi pause nên đổi lang lúc pause sẽ kẹt chuỗi cũ
+  // cho tới khi vòng lặp tỉnh lại nếu chỉ trông chờ tick. Effect này
+  // tính lại text/title từ badge cuối cùng đã lưu (không cần spec hay
+  // tick mới); badge đang ẩn (null) thì không làm gì. Chạy cả ở lần
+  // mount đầu nhưng khi đó badge chưa có nên là no-op.
+  useEffect(() => {
+    const badge = lastReverseEngineBadge45A6Ref.current;
+    const el = reverseEngineBadgeRef.current;
+    if (!badge || !el) return;
+    try {
+      const display = reverseEngineBadgeDisplay45A6(badge, i18nT);
+      const key = `${display.text}\n${display.title}`;
+      if (lastReverseEngineBadgeRef.current !== key) {
+        lastReverseEngineBadgeRef.current = key;
+      }
+      el.textContent = display.text;
+      el.title = display.title;
+      if (display.bg) el.style.background = display.bg;
+      el.style.display = display.text ? "block" : "none";
+    } catch {
+      // Badge không được làm hỏng render khi đổi lang.
+    }
+  }, [previewLang]);
+
   // vòng lặp phát lại + vẽ
   // T5 (Phase 9 đợt 21): vòng lặp NGỦ khi đứng yên — nợ đợt 20 R5 §7.
   // Trước đây loop đặt rAF tiếp theo ngay đầu mỗi tick nên chạy liên tục
@@ -1575,9 +2275,70 @@ export function PreviewCanvas() {
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
+    // K4 (đợt 27): phần dư thời gian (< 1 frame) cho phát ngược — xem
+    // reverseStep. Reset khi không phát ngược để không bước bù 1 frame
+    // cũ khi bật lại chế độ ngược sau thời gian dài tạm dừng.
+    let reverseAcc = 0;
+    // Đợt 29 L2: phần dư thời gian (< 1 frame) cho phát XUÔI — đối xứng
+    // reverseAcc. Reset khi không phát xuôi để không bước bù 1 frame cũ
+    // khi phát lại sau thời gian dài tạm dừng.
+    let forwardAcc = 0;
     let sleeping = false;
+    // Đợt 34 Q2: tick đầu sau wake() — hook rAF loại mẫu này khỏi phân
+    // tích sustained (xem previewRafHook.ts §điểm chèn).
+    let justWoke = false;
+    // Đợt 34 Q2: engine phát ngược đã công bố lần cuối (để chỉ ghi
+    // window.__vcutReverseEngine khi đổi, không ghi mỗi tick).
+    let lastEngine: string | null = null;
     let pendingSeek = false;
     let redrawFlag = false;
+    // ROUND41-W2: bộ đếm cap vòng lặp vẽ lại pause (xem pauseDraw41W2.ts).
+    // Chỉ sống trong effect vòng lặp này; reset ở nhánh request-seek
+    // mới, justPaused và redrawFlag (cùng chỗ reset lastDrawn/
+    // lastRequested), và về 0 ngay khi một lần render vẽ được.
+    let pauseRetrySkipped = 0;
+    let pauseRetryExhausted = false;
+    // ROUND50-F2 (§7.6): tick gần nhất có lấy được ctx 2d không.
+    // getContext("2d") trả null thì tickInner chỉ return — cờ này để
+    // scheduleNext biết mà KHÔNG cho ngủ (xem previewLoopShouldSleep):
+    // ngủ khi thiếu ctx tuy vẫn tỉnh được qua store change, nhưng lần
+    // mount lại của canvas không chạm store nên vòng lặp có thể ngủ
+    // quên; tick tiếp là lựa chọn an toàn (lần tick sau có ctx sẽ vẽ
+    // bình thường, còn ctx hỏng vĩnh viễn thì thực tế không xảy ra —
+    // getContext("2d") trên canvas thật không trả null). Cờ chỉ được
+    // ghi ở đúng chỗ lấy ctx trong tickInner (false ngay khi lấy được),
+    // nên giá trị cũ (stale) chỉ xảy ra khi tick ném trước khi tới chỗ
+    // lấy ctx — lúc đó ép tick tiếp cũng là lựa chọn an toàn (vòng lặp
+    // đang lỗi, không được ngủ).
+    let ctxMissing = false;
+    // ROUND50-F2 (§7.7): thời điểm (cùng đồng hồ performance.now() với
+    // timestamp rAF `now`) của lần skip ĐẦU TIÊN trong chuỗi skip hiện
+    // tại — mốc tính trần tường 10 s. Chỉ ghi khi chuỗi vừa bắt đầu
+    // (pauseRetrySkipped === 0 trước lần advance), và KHÔNG cần xóa ở
+    // các chỗ reset đếm: khi đếm về 0 thì trần tường không chạm (cần
+    // ≥ PAUSE_RETRY_WALL_MIN_SKIPS skip), còn chuỗi mới sẽ ghi đè mốc
+    // ngay lần skip đầu của nó.
+    let pauseRetryStreakSince: number | null = null;
+    // ROUND42-X2: bộ đếm cap seek-timeout / seek-error (xem
+    // pauseSeekCap42X2.ts). Chỉ sống trong effect vòng lặp này;
+    // reset ở nhánh request-seek mới, justPaused và redrawFlag
+    // (cùng chỗ reset lastDrawn/lastRequested của W2), và ngay khi
+    // một lần seek thành công vào nhánh vẽ.
+    let seekFailureCount = 0;
+    let seekFailureExhausted = false;
+    let seekFailureKind: "timeout" | "error" | null = null;
+    let seekFailureTarget: number | null = null;
+    // ROUND43-Y2: số element đã drop khỏi pool ở lần cạn cap gần nhất +
+    // trong đó bao nhiêu cái đang seeking (phơi qua idleDebug để harness
+    // chẩn đoán; reset cùng mọi chỗ reset cap X2).
+    let seekElementRecreated = 0;
+    let seekRecreatedSeeking = 0;
+    // ROUND42-X2: playhead mà chuỗi thất bại trên đang đếm cho. BẮT
+    // BUỘC phải có: nhánh request-seek mới chạy cả cho lần retry cùng
+    // t (sau khi nhánh else mở guard bằng lastRequested = null) lẫn
+    // cho scrub sang t mới — chỉ target này mới phân biệt được hai
+    // trường hợp: retry cùng t PHẢI giữ đếm (nếu reset thì cap không
+    // bao giờ chạm), t mới thì reset. Reset cùng các chỗ reset cap.
     // T5: thế hệ seek — .then của request cũ (bị hủy/thay thế) không được
     // chạm vào pendingSeek của request mới hơn khi cùng playhead (so sánh
     // bằng giá trị t không phân biệt được request cũ/mới ở cùng t).
@@ -1591,6 +2352,29 @@ export function PreviewCanvas() {
       lastRequested: number | null;
       pendingSeek: boolean;
       redrawFlag: boolean;
+      // ROUND41-W2: phơi bộ đếm cap để harness đo được "vì sao ngủ"
+      // (ngủ thường vs ngủ vì cạn cap) mà không cần đoán từ ticks.
+      pauseRetrySkipped: number;
+      pauseRetryExhausted: boolean;
+      // ROUND42-X2: phơi bộ đếm cap seek để harness đo được "vì sao
+      // ngủ" ở đường seek (ngủ vì seek đã bỏ cuộc, kind nào) — cùng
+      // mẫu với cap W2, không phải trạng thái UI riêng.
+      seekFailureCount: number;
+      seekFailureExhausted: boolean;
+      seekFailureKind: "timeout" | "error" | null;
+      seekFailureTarget: number | null;
+      // ROUND43-Y2: phơi số element đã drop ở lần cạn cap gần nhất +
+      // số trong đó đang seeking (harness đọc để biết phục hồi đã chạy
+      // chưa và trường hợp nào thực sự xảy ra).
+      seekElementRecreated: number;
+      seekRecreatedSeeking: number;
+      // ROUND49-E4: số tick đã ném lỗi nhưng được bọc try/catch cứu
+      // (vòng lặp tiếp tục thay vì chết cứng — xem loop bên dưới).
+      tickErrors: number;
+      // ROUND50-F2 (§7.7): chuỗi skip hiện tại đã cạn trần tường 10 s
+      // chưa (pauseRetryWallExhausted) — phơi để harness phân biệt ngủ
+      // vì trần tường với ngủ vì cạn cap tick 600 (pauseRetryExhausted).
+      pauseRetryWallExhausted: boolean;
     };
     const idleDebug: PreviewIdleDebug = {
       ticks: 0,
@@ -1599,29 +2383,115 @@ export function PreviewCanvas() {
       lastRequested: null,
       pendingSeek: false,
       redrawFlag: false,
+      pauseRetrySkipped: 0,
+      pauseRetryExhausted: false,
+      seekFailureCount: 0,
+      seekFailureExhausted: false,
+      seekFailureKind: null,
+      seekFailureTarget: null,
+      seekElementRecreated: 0,
+      seekRecreatedSeeking: 0,
+      tickErrors: 0,
+      pauseRetryWallExhausted: false,
     };
-    const winHook = window as unknown as { __vcutPreviewIdle?: PreviewIdleDebug };
+    const winHook = window as unknown as {
+      __vcutPreviewIdle?: PreviewIdleDebug;
+      __vcutPreviewRaf?: ReturnType<typeof createPreviewRafHook>;
+      __vcutReverseEngine?: string;
+    };
     winHook.__vcutPreviewIdle = idleDebug;
-    const loop = (now: number) => {
+    // Đợt 34 Q2: hook rAF riêng vòng preview (đo gap/lost thật của
+    // vòng này, thay probe toàn cục N2). Ghi mẫu TRƯỚC khi last bị ghi
+    // đè ở dòng dt bên dưới, và trước nhánh early-return chưa có
+    // canvas/wrap để cả tick chưa vẽ cũng được đếm.
+    const rafDebug = createPreviewRafHook();
+    winHook.__vcutPreviewRaf = rafDebug;
+    const tickInner = (now: number) => {
       idleDebug.ticks++;
       const st = useStore.getState();
+      rafDebug.record(
+        now,
+        last,
+        st.playing,
+        st.reversePlayback,
+        justWoke,
+        st.playhead,
+      );
+      justWoke = false;
+      // Đợt 34 Q2: công bố engine phát ngược đang chọn (mặc định
+      // "element"; "webcodecs" chỉ khi cờ opt-in bật + có VideoDecoder).
+      // Tên revEngine để khỏi đụng biến `engine` (AudioEngine) ở cuối
+      // vòng lặp này.
+      const revEngine = resolveReverseEngine();
+      if (revEngine !== lastEngine) {
+        lastEngine = revEngine;
+        winHook.__vcutReverseEngine = revEngine;
+      }
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       if (st.playing) {
-        const d = st.duration();
-        const nt = st.playhead + dt;
-        if (nt >= d) {
-          st.setPlayhead(d);
-          useStore.setState({ playing: false });
+        if (st.reversePlayback) {
+          forwardAcc = 0;
+          // K4 (đợt 27): phát ngược toàn cục — playhead LÙI đúng từng
+          // frame (không dùng dt trực tiếp như phát xuôi vì setPlayhead
+          // snap về lưới frame sẽ làm tròn gây lặp/skip frame khi dt ~
+          // 16ms < 1 frame 33ms). Tích lũy dt rồi bước nguyên frame khi
+          // đủ; chạm 0 thì dừng (không quấn về cuối). Element được
+          // seek-stepping ở syncMedia bên dưới, audio mute toàn bộ.
+          const fps = st.spec.meta.fps > 0 ? st.spec.meta.fps : 30;
+          const frameDur = 1 / fps;
+          const step = reverseStep(reverseAcc, dt, frameDur);
+          reverseAcc = step.accumulated;
+          if (step.steps > 0) {
+            const r = reversePlayhead(st.playhead, step.steps, frameDur);
+            if (r.reachedStart) reverseAcc = 0;
+            st.setPlayhead(r.t);
+            if (r.reachedStart) useStore.setState({ playing: false });
+          }
         } else {
-          st.setPlayhead(nt);
+          reverseAcc = 0;
+          const d = st.duration();
+          if (!(d > 0)) {
+            // Giữ hành vi cũ khi timeline rỗng: dừng ngay, không chờ
+            // đủ 1 frame mới dừng (forwardStep với steps = 0 sẽ không
+            // bao giờ chạm nhánh dừng).
+            forwardAcc = 0;
+            st.setPlayhead(d);
+            useStore.setState({ playing: false });
+          } else {
+            // Đợt 29 L2: KHÔNG gọi setPlayhead(playhead + dt) trực tiếp
+            // nữa — snap Math.round trong setPlayhead làm tròn nửa frame
+            // lên, khiến playhead chạy nhanh 1.158× wall ở 30 fps và gây
+            // chu kỳ drift-seek của syncMedia (đợt 28 L2 §2.3). Tích lũy
+            // dt rồi chỉ bước nguyên frame khi đủ, như reverseStep ở
+            // chiều ngược; tick chưa đủ frame thì playhead đứng yên
+            // trên lưới frame (không gọi setPlayhead, không snap thừa).
+            const fps = st.spec.meta.fps > 0 ? st.spec.meta.fps : 30;
+            const frameDur = 1 / fps;
+            const step = forwardStep(forwardAcc, dt, frameDur);
+            forwardAcc = step.accumulated;
+            if (step.steps > 0) {
+              const r = forwardPlayhead(st.playhead, step.steps, frameDur, d);
+              if (r.reachedEnd) forwardAcc = 0;
+              st.setPlayhead(r.t);
+              if (r.reachedEnd) useStore.setState({ playing: false });
+            }
+          }
         }
+      } else {
+        reverseAcc = 0;
+        forwardAcc = 0;
       }
       const canvas = canvasRef.current;
       const wrap = wrapRef.current;
       // T5: chưa có canvas/wrap thì KHÔNG được ngủ (frame chưa từng vẽ) —
       // giữ hành vi cũ là tick tiếp để chờ mount.
-      if (!canvas || !wrap) { raf = requestAnimationFrame(loop); return; }
+      // ROUND50-F2 (§7.6): chỉ return — KHÔNG đặt rAF trực tiếp ở đây
+      // nữa; quyền đặt lịch thuộc về wrapper `loop` (finally →
+      // scheduleNext), và scheduleNext KHÔNG cho ngủ khi thiếu surface
+      // (xem previewLoopShouldSleep) nên ngữ nghĩa "tick tiếp chờ
+      // mount" được giữ nguyên ở điểm đặt lịch duy nhất.
+      if (!canvas || !wrap) return;
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const cw = Math.max(1, Math.floor(wrap.clientWidth * dpr));
       const ch = Math.max(1, Math.floor(wrap.clientHeight * dpr));
@@ -1636,11 +2506,93 @@ export function PreviewCanvas() {
         lastRequestedTRef.current = null;
       }
       const ctx = canvas.getContext("2d");
+      // ROUND50-F2 (§7.6): ctx null cũng chỉ return — wrapper `loop`
+      // sẽ đặt lịch lại (tick tiếp, không ngủ) qua cờ ctxMissing; trước
+      // đây return này không đặt lịch nên vòng lặp chết hẳn (sleeping
+      // vẫn false, wake() no-op — đo headed baseline: ticks đóng băng
+      // ở 1). Cờ được ghi false ngay khi lấy được ctx, true khi null.
+      ctxMissing = !ctx;
       if (!ctx) return;
       // N5: spec cho preview — nested đã phẳng, adjustment đã gộp vào clip
       // qua cắt đoạn. Spec gốc trong store không đổi; không có nested/
       // adjustment thì buildPreviewSpec trả đúng object cũ (không copy).
-      const spec = buildPreviewSpec(useStore.getState().spec);
+      // J1 (đợt 26): hot path dùng bản fail-soft — nested curve vi phạm
+      // không còn ném uncaught làm chết frame (đợt 25 I6 §5a): nested lỗi
+      // về 1× (hoặc bị bỏ), nested lành giữ ramp, warning hiện bằng
+      // badge thường trực dưới đây + toast 1 lần mỗi khi tập warning đổi.
+      // Guard cuối: lỗi ngoài phạm vi nested-curve (failsoft ném lại lỗi
+      // gốc) thì hiện spec gốc + toast, vòng lặp vẫn sống.
+      let spec: VideoSpec;
+      {
+        const rawSpec = useStore.getState().spec;
+        let warnText = "";
+        let warnTitle = "";
+        try {
+          const failsoft = buildPreviewSpecFailsoft(rawSpec);
+          spec = failsoft.spec;
+          if (failsoft.warnings.length > 0) {
+            const dropped = failsoft.warnings.filter((w) => w.fallback === "dropped").length;
+            warnText = dropped > 0
+              ? `⚠ Curve: ${failsoft.warnings.length} nested lỗi (${dropped} bị ẩn)`
+              : `⚠ Curve: ${failsoft.warnings.length} nested về 1×`;
+            warnTitle = failsoft.warnings.map((w) =>
+              `nested "${w.nestedId}": ${w.reason} → ${w.fallback === "linear-1x" ? "preview tạm về 1× (export vẫn fail-fast, cần sửa curve thật)" : "tạm ẩn khỏi preview"}`,
+            ).join("\n");
+            const key = failsoft.warnings.map((w) => `${w.nestedId}|${w.fallback}|${w.reason}`).join(";");
+            if (key !== lastCurveWarnKeyRef.current) {
+              lastCurveWarnKeyRef.current = key;
+              for (const w of failsoft.warnings) {
+                pushToast(
+                  `Preview: nested "${w.nestedId}" có speed curve không hợp lệ (${w.reason}) — đã ${w.fallback === "linear-1x" ? "tạm về 1×" : "tạm ẩn khỏi preview"} để preview không dừng. Export vẫn fail-fast theo luật render, cần sửa curve thật.`,
+                  "error",
+                );
+              }
+            }
+          } else if (lastCurveWarnKeyRef.current !== "") {
+            lastCurveWarnKeyRef.current = "";
+          }
+        } catch (e) {
+          spec = rawSpec;
+          const msg = e instanceof Error ? e.message : String(e);
+          warnText = "⚠ Preview lỗi làm phẳng";
+          warnTitle = `${msg} — đang hiện spec gốc, nested có thể không hiển thị.`;
+          const key = `err:${msg}`;
+          if (key !== lastCurveWarnKeyRef.current) {
+            lastCurveWarnKeyRef.current = key;
+            pushToast(`Preview không làm phẳng được project (${msg}) — đang hiện spec gốc, nested có thể không hiển thị.`, "error");
+          }
+        }
+        const badge = curveWarnBadgeRef.current;
+        if (badge) {
+          if (badge.textContent !== warnText) badge.textContent = warnText;
+          if (badge.title !== warnTitle) badge.title = warnTitle;
+          badge.style.display = warnText ? "block" : "none";
+        }
+      }
+      // Đợt 38 U1: toggle + badge decode-ahead Q3 — trạng thái gộp
+      // (tắt / bị chặn + lý do / đang chạy + số frame prefetch) trong
+      // refreshDecodeAheadUi; toast cảnh báo cổng + toast chặn đều keyed
+      // trong đó (không còn khối badge riêng của T2 nữa).
+      refreshDecodeAheadUi();
+      // K4 (đợt 27): badge FRAME GIỮ — hiện khi tick renderFrame trước
+      // đó có clip rơi vào nhánh hold (decoder tụt, đang vẽ lại frame
+      // tốt cũ thay vì đen). "(cũ)" = frame giữ đã quá MAX_HOLD_AGE_SEC
+      // (3 s timeline): hình vẫn giữ, không quay lại đen, nhưng người
+      // dùng cần biết hình đang đứng yên trong khi tiếng (nếu có) chạy.
+      // Badge đọc tickHadHold của tick trước (khối badge chạy trước
+      // renderFrame trong cùng tick) nên trễ tối đa 1 tick — chấp nhận
+      // được cho chỉ báo, không ảnh hưởng nội dung frame.
+      {
+        const holdText = tickHadHold
+          ? (holdStats.stale ? "⏸ FRAME GIỮ (cũ)" : "⏸ FRAME GIỮ")
+          : "";
+        const holdBadge = holdBadgeRef.current;
+        if (holdBadge && lastHoldBadgeRef.current !== holdText) {
+          lastHoldBadgeRef.current = holdText;
+          holdBadge.textContent = holdText;
+          holdBadge.style.display = holdText ? "block" : "none";
+        }
+      }
       const media = useStore.getState().media;
       // Q8: chỉ build lại Map khi mảng media đổi identity (import/xoá/gắn proxy).
       let mediaByName: Map<string, MediaItem>;
@@ -1671,6 +2623,99 @@ export function PreviewCanvas() {
           lastBadgeRef.current = badgeText;
           badge.textContent = badgeText;
           badge.style.display = badgeText ? "block" : "none";
+        }
+      }
+      // ROUND43-Y6: badge đường phát ngược — chỉ khi đang stepping
+      // (phát ngược toàn cục hoặc clip.reverse đang xem) VÀ cờ opt-in
+      // WebCodecs đang bật. Text/title lấy từ resolveReverseEngineDetailed
+      // (kiểm tra đủ 3 API, không chỉ VideoDecoder như hàm cũ), nên
+      // trình duyệt thiếu API sẽ hiện đúng "ELEMENT (thiếu ...)" thay
+      // vì im lặng vẽ element trong khi user tưởng đang chạy WebCodecs.
+      // ROUND44-Z6: badge = ĐƯỜNG ĐÃ CHỌN qua resolveReverseEngineBadge
+      // (hàm thuần, chỉ nhận đường đã chọn + stepping, KHÔNG nhận
+      // frame vừa vẽ) + chuỗi qua i18n key reverseEngine.* — hết
+      // hardcode tiếng Việt ở badge này. Frame chưa decode kịp vẫn vẽ
+      // bằng element qua nhánh fallback của drawVideoClip, nhưng badge
+      // vẫn báo đúng đường đã chọn (xem test lệch Z6).
+      // ROUND45-A6: badge TỪNG FRAME — khi đường đã chọn là webcodecs
+      // nhưng controller của clip đang xem đã failed (getter `failed`
+      // = cờ `unsupported`, dính sau load/decode hỏng hoặc khóa file
+      // lớn) thì badge đổi sang element-failed thay vì giữ WEBCODECS:
+      // frame thực tế đang vẽ bằng element, không phải WebCodecs.
+      // Controller lấy đúng bằng getReversePreviewController với cùng
+      // tham số đường vẽ dùng (proxyUrl ?? url, knownSize, GOP bật)
+      // nên lần tạo controller (nếu chưa có) không khác gì đường vẽ
+      // tạo sau đó trong cùng tick — không khóa nhầm GOP, không fetch
+      // thêm (fetch chỉ bắt đầu ở frameAt trong drawVideoClip). Chỉ
+      // hỏi controller khi đường đã chọn là webcodecs + đang stepping.
+      {
+        let engineText = "";
+        let engineTitle = "";
+        let engineBg = "";
+        try {
+          const detailed = resolveReverseEngineDetailed();
+          const reverseGlobal = useStore.getState().reversePlayback;
+          let stepping = reverseGlobal;
+          if (!stepping) {
+            for (const track of spec.tracks) {
+              if (track.hidden || track.kind !== "video") continue;
+              for (const clip of track.clips) {
+                if (clip.kind !== "video") continue;
+                if (t < clip.start || t >= clip.start + clip.duration) continue;
+                if (clip.reverse) { stepping = true; break; }
+              }
+              if (stepping) break;
+            }
+          }
+          let controllerFailed = false;
+          if (detailed.engine === "webcodecs" && stepping) {
+            for (const track of spec.tracks) {
+              if (track.hidden || track.kind !== "video") continue;
+              for (const clip of track.clips) {
+                if (clip.kind !== "video") continue;
+                if (t < clip.start || t >= clip.start + clip.duration) continue;
+                // Chỉ clip đang stepping mới có controller phát ngược:
+                // phát ngược toàn cục -> mọi clip; ngược lại chỉ clip
+                // có reverse=true. Clip phát xuôi dùng chung URL nhưng
+                // controller failed cũ không được làm lệch badge.
+                if (!reverseGlobal && !clip.reverse) continue;
+                const it = mediaByName.get(clip.src);
+                if (!it) continue;
+                try {
+                  const c = getReversePreviewController(
+                    it.proxyUrl ?? it.url,
+                    knownSizeBytesForPreview(it),
+                    { gopRangeEnabled: true },
+                  );
+                  if (c.failed) { controllerFailed = true; break; }
+                } catch {
+                  // Không đọc được controller thì giữ badge đường đã chọn.
+                }
+              }
+              if (controllerFailed) break;
+            }
+          }
+          const badge = resolveReverseEngineBadge45A6(
+            detailed,
+            stepping,
+            controllerFailed,
+          );
+          lastReverseEngineBadge45A6Ref.current = badge;
+          const display = reverseEngineBadgeDisplay45A6(badge, i18nT);
+          engineText = display.text;
+          engineTitle = display.title;
+          engineBg = display.bg;
+        } catch {
+          // Badge không được làm hỏng vòng lặp preview.
+        }
+        const engineBadge = reverseEngineBadgeRef.current;
+        const engineKey = `${engineText}\n${engineTitle}`;
+        if (engineBadge && lastReverseEngineBadgeRef.current !== engineKey) {
+          lastReverseEngineBadgeRef.current = engineKey;
+          engineBadge.textContent = engineText;
+          engineBadge.title = engineTitle;
+          if (engineBg) engineBadge.style.background = engineBg;
+          engineBadge.style.display = engineText ? "block" : "none";
         }
       }
       // R5: badge LUT — chỉ hiện khi clip đang xem có filter.lut. Chế độ
@@ -1730,11 +2775,27 @@ export function PreviewCanvas() {
       if (playing) engine.ensure();
       // Phát hiện cạnh lên của playing → force seek chính xác mọi source.
       const forceSeek = playing && !prevPlayingRef.current;
+      // I6 (Phase 9 đợt 25): cạnh XUỐNG playing→paused — frame cuối lúc
+      // phát có thể không phải frame tại t (guard readyState>=2 trong
+      // drawVideoClip bỏ qua frame khi decoder tụt, nhưng nhánh playing
+      // vẫn gán lastDrawn = t mỗi tick). Nếu không ép vẽ lại, nhánh
+      // pause thấy t === lastDrawn nên không seek/vẽ gì và canvas kẹt ở
+      // frame đó cho tới lần scrub sau. justPaused được xử lý trong
+      // nhánh pause bên dưới (cancel + reset lastDrawn/lastRequested
+      // để seek+vẽ đúng frame tại t; khi frame cuối đã đúng thì seek
+      // gần như no-op ngay lập tức).
+      const justPaused = prevPlayingRef.current && !playing;
       prevPlayingRef.current = playing;
       if (playing) {
         // Đang phát: hủy seek dở của Seeker, đồng bộ như cũ, vẽ mỗi frame.
         seekerRef.current!.cancel();
-        syncMedia(spec, pool, mediaByName, t, true, engine, forceSeek);
+        // K4 (đợt 27): đặt ngữ cảnh transport cho lần renderFrame này
+        // (phát ngược toàn cục → mọi clip stepping; phát xuôi → chỉ clip
+        // reverse stepping) rồi mới vẽ; nhánh pause bên dưới đặt lại
+        // playing: false trước khi vẽ sau seek.
+        const reversePlayback = useStore.getState().reversePlayback;
+        drawTransport = { playing: true, reversePlayback };
+        syncMedia(spec, pool, mediaByName, t, true, engine, forceSeek, reversePlayback);
         renderFrame(ctx, spec, pool, mediaByName, t, computeViewport(cw, ch, spec), useStore.getState().selection[0] ?? null);
         lastDrawnTRef.current = t;
         lastRequestedTRef.current = t;
@@ -1763,13 +2824,99 @@ export function PreviewCanvas() {
         // đo được ở idle ban đầu (xem LIMITS T5 §3). cancel() trước để
         // request cũ (nếu đang bay) settle dạng cancelled, không vẽ
         // frame cũ đè lên sau (generation guard ở .then chặn nốt).
+        // I6 (đợt 25): cạnh xuống playing→paused ép vẽ lại frame tại t
+        // (xem justPaused ở trên) — cùng 3 thao tác như redrawFlag.
+        if (justPaused) {
+          seekerRef.current!.cancel();
+          lastDrawnTRef.current = null;
+          lastRequestedTRef.current = null;
+          // ROUND41-W2: reset cap cùng lastDrawn/lastRequested.
+          pauseRetrySkipped = 0;
+          pauseRetryExhausted = false;
+          // ROUND42-X2: reset cap seek cùng chỗ.
+          seekFailureCount = 0;
+          seekFailureExhausted = false;
+          seekFailureKind = null;
+          seekFailureTarget = null;
+          // ROUND43-Y2: reset số đếm phục hồi cùng cap.
+          seekElementRecreated = 0;
+          seekRecreatedSeeking = 0;
+        }
         if (redrawFlag) {
           seekerRef.current!.cancel();
           lastDrawnTRef.current = null;
           lastRequestedTRef.current = null;
           redrawFlag = false;
+          // ROUND41-W2: reset cap cùng lastDrawn/lastRequested.
+          pauseRetrySkipped = 0;
+          pauseRetryExhausted = false;
+          // ROUND42-X2: reset cap seek cùng chỗ.
+          seekFailureCount = 0;
+          seekFailureExhausted = false;
+          seekFailureKind = null;
+          seekFailureTarget = null;
+          // ROUND43-Y2: reset số đếm phục hồi cùng cap.
+          seekElementRecreated = 0;
+          seekRecreatedSeeking = 0;
+        }
+        // ROUND44-Z2: scrub về đúng t đã vẽ sau khi cạn cap ở t khác
+        // (nợ Y2 §5.2): canvas đã hiện đúng frame tại t này nên cap cạn
+        // ở t khác hết hiệu lực — reset cap đó + căn lastRequested về t
+        // để đường ngủ thường xét đúng, thay vì tick mãi vì cả 3 đường
+        // seek/vẽ/ngủ đều đóng (t === lastDrawn chặn nhánh seek, t !==
+        // lastRequested chặn nhánh vẽ lại, lastRequested !== playhead
+        // chặn mọi đường ngủ). Chỉ kích khi KHÔNG có seek bay và t đúng
+        // bằng lastDrawn; đang ở chính t đã cạn thì giữ nguyên trạng
+        // thái bỏ cuộc của X2/W2. Đặt TRƯỚC nhánh request-seek để lần
+        // scrub tiếp theo (kể cả về lại t đã cạn) đi nhánh seek mới
+        // trên element mà Y2 đã drop/tạo lại.
+        {
+          const recovery = planDrawnPlayheadRecovery(
+            {
+              lastDrawn: lastDrawnTRef.current,
+              lastRequested: lastRequestedTRef.current,
+              pendingSeek,
+              pauseRetryExhausted,
+              seekFailureExhausted,
+              seekFailureTarget,
+            },
+            t,
+          );
+          if (recovery !== null) {
+            if (recovery.resetPauseRetry) {
+              pauseRetrySkipped = 0;
+              pauseRetryExhausted = false;
+            }
+            if (recovery.resetSeekFailure) {
+              seekFailureCount = 0;
+              seekFailureExhausted = false;
+              seekFailureKind = null;
+              seekFailureTarget = null;
+              // ROUND43-Y2: reset số đếm phục hồi cùng cap.
+              seekElementRecreated = 0;
+              seekRecreatedSeeking = 0;
+            }
+            lastRequestedTRef.current = recovery.lastRequested;
+          }
         }
         if (t !== lastDrawnTRef.current && t !== lastRequestedTRef.current) {
+          // ROUND41-W2: seek mới cho t mới → cap cũ hết hiệu lực.
+          pauseRetrySkipped = 0;
+          pauseRetryExhausted = false;
+          // ROUND42-X2: CHỈ reset cap seek khi t khác target đang đếm.
+          // Nhánh này chạy cả cho lần retry cùng t (nhánh else đã mở
+          // guard) — retry cùng t phải GIỮ đếm, nếu reset vô điều kiện
+          // như cap W2 thì cap seek không bao giờ chạm. Scrub sang t
+          // mới thì target khác t nên reset như thường.
+          if (seekFailureTarget !== null && seekFailureTarget !== t) {
+            seekFailureCount = 0;
+            seekFailureExhausted = false;
+            seekFailureKind = null;
+            seekFailureTarget = null;
+            // ROUND43-Y2: reset số đếm phục hồi cùng cap.
+            seekElementRecreated = 0;
+            seekRecreatedSeeking = 0;
+          }
           lastRequestedTRef.current = t;
           pendingSeek = true;
           const gen = ++seekGen;
@@ -1791,18 +2938,150 @@ export function PreviewCanvas() {
             // dưới reset lastRequested nên điều kiện ngủ vẫn sai và loop
             // tick tiếp để thử lại (không kẹt ngủ với frame sai).
             pendingSeek = false;
-            if (!outcome.cancelled && outcome.ok && lastRequestedTRef.current === t) {
+            // Đợt 31 N1 — SỬA BUG B (đợt 30 M1 §5): trước đây seek timeout
+            // (> 1200ms) vẫn đi vào nhánh vẽ vì Seeker resolve ok: true
+            // ngay cả khi timedOut — tick vẽ đó chạy lúc element chưa
+            // seek xong nên decideVideoFrame skip, nhưng renderFrame đã
+            // xóa nền trước → canvas đen, rồi lastDrawn = t khiến vòng
+            // lặp NGỦ với nền đen vĩnh viễn tới lần scrub tiếp theo.
+            // Nay timeout KHÔNG được vẽ, KHÔNG được đánh dấu đã vẽ: rơi
+            // xuống nhánh dưới reset lastRequested → tick sau retry
+            // (seekElement mới thấy element đang seeking thì chỉ chờ
+            // seeked, không gán lại để khỏi hủy seek đang bay — xem
+            // seek.ts). Vòng lặp không ngủ vì lastDrawn ≠ playhead nên
+            // vẫn tick để retry; khi seeked muộn tới thì vẽ đúng frame.
+            // failed (không timeout, vd metadata lỗi) giữ hành vi cũ.
+            if (!outcome.cancelled && outcome.ok && outcome.timedOut === 0 && lastRequestedTRef.current === t) {
+              // ROUND42-X2: seek đã thành công vào nhánh vẽ → chuỗi
+              // thất bại seek đứt ngay tại đây (dù lần vẽ này có bị
+              // skip thì skip đó thuộc cap W2, không thuộc cap seek).
+              seekFailureCount = 0;
+              seekFailureExhausted = false;
+              seekFailureKind = null;
+              seekFailureTarget = null;
+              // ROUND43-Y2: reset số đếm phục hồi cùng cap.
+              seekElementRecreated = 0;
+              seekRecreatedSeeking = 0;
+              // K4 (đợt 27): nhánh pause/seek — không stepping (seek đã
+              // chờ seeked), nên drawVideoClip giữ hành vi pause cũ.
+              drawTransport = { playing: false, reversePlayback: false };
+              // ROUND40-V3-T0: chỉ đánh dấu đã vẽ khi render này thực sự
+              // không skip clip video nào. Element có thể seeked xong
+              // nhưng chưa có frame (readyState < 2) → decideVideoFrame
+              // skip, renderFrame chỉ xóa nền đen; gán lastDrawn = t
+              // lúc đó sẽ ngủ vĩnh viễn với nền đen (nợ đợt 39 §5.3).
+              // Không vẽ được thì giữ nguyên lastDrawn + lastRequested
+              // = t để tick sau vẽ lại (không seek mới) thay vì ngủ.
+              const skipBefore = holdStats.skip;
               renderFrame(ctx, spec, pool, mediaByName, t, computeViewport(cw, ch, spec), useStore.getState().selection[0] ?? null);
-              lastDrawnTRef.current = t;
+              // ROUND41-W2: lần render trong .then cũng tính vào cap
+              // (lần skip đầu tiên của chuỗi); vẽ được thì đếm về 0.
+              if (pauseDrawComplete(skipBefore, holdStats.skip)) {
+                lastDrawnTRef.current = t;
+                pauseRetrySkipped = 0;
+                pauseRetryExhausted = false;
+              } else {
+                // ROUND50-F2 (§7.7): ghi mốc bắt đầu chuỗi skip (chỉ
+                // khi chuỗi vừa bắt đầu) để trần tường 10 s tính từ
+                // đây. .then không có timestamp rAF `now` nên dùng
+                // performance.now() (cùng đồng hồ).
+                if (pauseRetrySkipped === 0) pauseRetryStreakSince = performance.now();
+                const adv = pauseRetryAdvance(true, pauseRetrySkipped);
+                pauseRetrySkipped = adv.consecutiveSkipped;
+                pauseRetryExhausted = adv.exhausted;
+              }
             } else if (lastRequestedTRef.current === t) {
-              // Seek bị hủy/thất bại mà không có request mới hơn: mở
-              // guard để frame sau thử lại, tránh kẹt vĩnh viễn ở trạng
-              // thái "đã request nhưng chưa vẽ". (Khi đã có request mới
-              // hơn thì lastRequested đã là t mới, nhánh này không chạy
-              // và outcome cũ bị bỏ qua đúng như latest-wins.)
-              lastRequestedTRef.current = null;
+              // ROUND42-X2: seek bị hủy/thất bại mà không có request
+              // mới hơn. Cancelled giữ hành vi cũ (mở guard để frame
+              // sau thử lại, không đếm — bị thay thế / cancel khi phát
+              // không phải lỗi). Timeout/error thì đếm vào cap seek:
+              // chưa cạn → mở guard để tick sau retry như cũ; ĐÃ CẠN
+              // → GIỮ lastRequested = t (guard t !== lastRequested
+              // chặn request mới) và scheduleNext cho ngủ ở trạng thái
+              // lỗi rõ ràng (seekFailureExhausted/kind phơi qua
+              // idleDebug), thay vì request seek mới mãi. Lưu ý:
+              // failed-only (ok && timedOut === 0) không tới nhánh
+              // này mà đi nhánh vẽ — skip của nó thuộc cap W2.
+              const seekKind = classifySeekOutcome(outcome);
+              if (seekKind === null) {
+                lastRequestedTRef.current = null;
+              } else {
+                // ROUND43-Y2: đúng thời điểm chuyển sang cạn cap (false
+                // → true, chỉ một lần cho mỗi lần cạn) thì drop actives
+                // khỏi pool để lần seek sau tạo element mới — element
+                // cũ kẹt seeking / demuxer hỏng thì seek mới không bao
+                // giờ xong (nợ đợt 42 §5.3, xem
+                // pauseSeekRecovery43Y2.ts). Vòng lặp lúc này đã ngủ
+                // (pendingSeek = false, lastRequested giữ t) nên không
+                // cắt ngang seek đang bay; lần seek sau (scrub t mới,
+                // phát, redraw) tự tạo element mới qua videoFor.
+                const wasExhausted = seekFailureExhausted;
+                const adv = seekFailureAdvance(seekKind, seekFailureCount);
+                seekFailureCount = adv.consecutiveFailures;
+                seekFailureExhausted = adv.exhausted;
+                seekFailureKind = adv.kind;
+                seekFailureTarget = t;
+                if (adv.exhausted && !wasExhausted) {
+                  const { actives } = collectActives(spec, pool, mediaByName, t);
+                  const plan = planSeekRecovery(actives.map((a) => a.el));
+                  let recreated = 0;
+                  for (const el of plan.elements) {
+                    if (pool.dropElement(el)) {
+                      recreated++;
+                      // ROUND44-Z2: gỡ luôn graph AudioEngine của element
+                      // cũ (nợ Y2 §5.4) — nếu không, nodes Map giữ element
+                      // + chuỗi source→gain cho tới dispose toàn cục, mỗi
+                      // lần cạn cap rò 5 node/clip. Element lạ không có
+                      // node thì releaseElement trả false, không ném.
+                      // `engine` là AudioEngine của tick này (cùng
+                      // instance engineRef suốt phiên), gọi ở đây là an
+                      // toàn vì vòng lặp đã ngủ vì cạn cap, không còn
+                      // seek bay; element mới do pool tạo lại sẽ được
+                      // update() tạo source mới ở tick sau.
+                      engine.releaseElement(el);
+                    }
+                  }
+                  seekElementRecreated = recreated;
+                  seekRecreatedSeeking = plan.seekingCount;
+                }
+                if (!adv.exhausted) lastRequestedTRef.current = null;
+              }
             }
           });
+        } else if (
+          // ROUND40-V3-T0: seek đã xong cho t nhưng frame chưa vẽ được
+          // (lần render trong .then bị skip vì element chưa có frame) —
+          // vẽ lại ở tick này mà KHÔNG seek mới (xem pauseDraw40V3.ts:
+          // chỉ giữ lastDrawn thôi thì vòng lặp quay mãi không vẽ, vì
+          // nhánh pause chỉ vẽ trong .then của seek). Guard !pendingSeek
+          // trong helper: seek đang bay thì chờ .then của nó, khỏi vẽ
+          // frame sai vị trí. Khi vẽ được thì lastDrawn = t và vòng lặp
+          // ngủ lại bình thường; khi vẫn skip thì tick tiếp.
+          pauseTickNeedsRetry(t, lastDrawnTRef.current, lastRequestedTRef.current, pendingSeek)
+        ) {
+          // ROUND41-W2: đã cạn cap thì tick này KHÔNG render nữa —
+          // scheduleNext bên dưới sẽ cho vòng lặp ngủ (điều kiện ngủ
+          // kiểu bỏ cuộc), thay vì tick rAF mãi với nền đen.
+          // ROUND42-X2: đã cạn cap seek thì tick này cũng KHÔNG render
+          // nữa — scheduleNext cho ngủ kiểu seek-bỏ-cuộc (điều kiện
+          // ngủ mới), thay vì vẽ lại frame ở vị trí seek chưa xong.
+          if (!pauseRetryExhausted && !seekFailureExhausted) {
+            drawTransport = { playing: false, reversePlayback: false };
+            const skipBefore = holdStats.skip;
+            renderFrame(ctx, spec, pool, mediaByName, t, computeViewport(cw, ch, spec), useStore.getState().selection[0] ?? null);
+            if (pauseDrawComplete(skipBefore, holdStats.skip)) {
+              lastDrawnTRef.current = t;
+              pauseRetrySkipped = 0;
+              pauseRetryExhausted = false;
+            } else {
+              // ROUND50-F2 (§7.7): ghi mốc bắt đầu chuỗi skip (chỉ khi
+              // chuỗi vừa bắt đầu) để trần tường 10 s tính từ đây.
+              if (pauseRetrySkipped === 0) pauseRetryStreakSince = now;
+              const adv = pauseRetryAdvance(true, pauseRetrySkipped);
+              pauseRetrySkipped = adv.consecutiveSkipped;
+              pauseRetryExhausted = adv.exhausted;
+            }
+          }
         }
       }
       // T5: chụp trạng thái điều kiện ngủ cho hook đo trước khi đặt lịch.
@@ -1810,18 +3089,112 @@ export function PreviewCanvas() {
       idleDebug.lastRequested = lastRequestedTRef.current;
       idleDebug.pendingSeek = pendingSeek;
       idleDebug.redrawFlag = redrawFlag;
-      // T5: đặt lịch tick tiếp — hoặc NGỦ nếu không còn việc (xem đầu effect).
-      scheduleNext();
+      // ROUND41-W2: phơi bộ đếm cap cho harness đo.
+      idleDebug.pauseRetrySkipped = pauseRetrySkipped;
+      idleDebug.pauseRetryExhausted = pauseRetryExhausted;
+      // ROUND50-F2 (§7.7): phơi cờ trần tường cho harness đo (tính từ
+      // cùng mốc streak như scheduleNext, bằng timestamp rAF `now`).
+      idleDebug.pauseRetryWallExhausted = pauseRetryWallExhausted(
+        pauseRetrySkipped,
+        pauseRetryStreakSince,
+        now,
+      );
+      // ROUND42-X2: phơi bộ đếm cap seek cho harness đo.
+      idleDebug.seekFailureCount = seekFailureCount;
+      idleDebug.seekFailureExhausted = seekFailureExhausted;
+      idleDebug.seekFailureKind = seekFailureKind;
+      idleDebug.seekFailureTarget = seekFailureTarget;
+      // ROUND43-Y2: phơi số đếm phục hồi cho harness đo.
+      idleDebug.seekElementRecreated = seekElementRecreated;
+      idleDebug.seekRecreatedSeeking = seekRecreatedSeeking;
+      // ROUND50-F2 (§7.6): KHÔNG đặt lịch ở cuối tickInner nữa — quyền
+      // đặt lịch thuộc về wrapper `loop` (finally → scheduleNext), để
+      // mọi đường return trong tick (kể cả early-return chưa có canvas
+      // / ctx null) đều đi qua cùng một điểm đặt lịch. T5: đặt lịch tick
+      // tiếp — hoặc NGỦ nếu không còn việc (xem đầu effect) — nay do
+      // scheduleNext trong finally của `loop` quyết định.
+    };
+    // ROUND49-E4: bọc tick bằng try/catch — phòng thủ chiều sâu cho vòng
+    // lặp preview (nợ D3 §8.4: volumeKeyframes [null] từng giết tick ở
+    // syncMedia vì scheduleNext() ở cuối tick không chạy; sleeping vẫn
+    // false nên wake() no-op và vòng lặp chết cứng tới khi reload).
+    // Fix gốc rễ là sanitize ở cổng load (projectRepo.ts), nhưng đường
+    // in-memory (sửa tay qua MCP/devtools, undo, clip tạo trong phiên)
+    // không qua cổng load vẫn có thể đưa dữ liệu xấu vào tick — bọc này
+    // đảm bảo MỌI lỗi tick đều không giết được vòng lặp. KHÔNG nuốt lỗi
+    // âm thầm: mỗi lần ném đều console.error + đếm vào
+    // idleDebug.tickErrors để harness đo được; lỗi dai dẳng sẽ thấy rõ
+    // qua tickErrors tăng mỗi tick thay vì vòng lặp chết im.
+    // ROUND50-F2 (§7.6): wrapper `loop` giờ là NƠI DUY NHẤT đặt lịch —
+    // finally gọi scheduleNext() sau MỌI lần tickInner trả về (kể cả
+    // early-return chưa có canvas / ctx null) hoặc ném. Nhờ vậy không
+    // còn đường nào trong tick trả về mà không đặt lịch hoặc ngủ: lỗ
+    // `if (!ctx) return;` của E4 §7.6 đã kín (đo headed baseline: ticks
+    // đóng băng ở 1; sau sửa: ticks tăng, xem LIMITS đợt 50 F2).
+    // Chỉ có một đường scheduleNext duy nhất mỗi lần loop chạy nên
+    // không double-rAF, trừ khi chính scheduleNext ném (gần như không
+    // thể — chỉ đọc state + requestAnimationFrame; ghi nhận ở LIMITS
+    // đợt 49 E4 §3.3).
+    let tickErrors = 0;
+    const loop = (now: number) => {
+      try {
+        tickInner(now);
+      } catch (err) {
+        tickErrors++;
+        idleDebug.tickErrors = tickErrors;
+        console.error("[preview] tick lỗi, vòng lặp tiếp tục:", err);
+      } finally {
+        scheduleNext();
+      }
     };
     const scheduleNext = () => {
       const s = useStore.getState();
-      const canSleep =
-        !s.playing &&
-        !pendingSeek &&
-        s.playhead === lastDrawnTRef.current &&
-        lastRequestedTRef.current === s.playhead &&
-        !redrawFlag;
-      if (canSleep) {
+      // ROUND50-F2 (§7.7): cạn trần tường 10 s thì coi như cạn cap vẽ
+      // lại — gộp vào pauseRetryExhausted để mọi logic hạ nguồn (nhánh
+      // vẽ lại, guard Z2, điều kiện ngủ) đối xử y hệt cạn cap tick 600.
+      // Chỉ set khi vừa chuyển sang cạn (không ghi đè cờ đã cạn sẵn);
+      // các chỗ reset pauseRetryExhausted (seek mới / justPaused /
+      // redrawFlag / vẽ được) vẫn reset như cũ, không cần chỗ reset
+      // riêng cho trần tường. Cờ wall riêng phơi qua idleDebug để
+      // harness phân biệt nguyên nhân ngủ.
+      // LƯU Ý: phải publish cả hai cờ ra idleDebug NGAY TẠI ĐÂY (nơi
+      // quyết định ngủ), không chỉ trông chờ snapshot trong thân tick:
+      // snapshot chạy TRƯỚC scheduleNext trong cùng tick, nên tick mà
+      // trần tường vừa chạm ngưỡng (snapshot tính chưa đủ 10 s, còn
+      // scheduleNext tính đã đủ) sẽ ngủ mà idleDebug vẫn ghi cả hai cờ
+      // false — harness đo sau ngủ sẽ không thấy nguyên nhân. Đo
+      // headed lần đầu sau sửa bắt đúng trường hợp này (ngủ 11,5 s,
+      // skip 86, cả hai cờ false).
+      const wallExhaustedNow = pauseRetryWallExhausted(
+        pauseRetrySkipped,
+        pauseRetryStreakSince,
+        performance.now(),
+      );
+      if (!pauseRetryExhausted && wallExhaustedNow) {
+        pauseRetryExhausted = true;
+      }
+      idleDebug.pauseRetryWallExhausted = wallExhaustedNow;
+      idleDebug.pauseRetryExhausted = pauseRetryExhausted;
+      // ROUND50-F2 (§7.6): thiếu surface thì KHÔNG được ngủ — kiểm tra
+      // refs trực tiếp ở đây (luôn tươi, không qua cờ) để không bao giờ
+      // ngủ với surface đã biến mất; ctxMissing là cờ tickInner ghi ở
+      // chỗ lấy ctx (xem trên). Công thức ngủ còn lại giữ nguyên, nay
+      // nằm trong previewLoopShouldSleep để test khóa được.
+      const surfaceMissing =
+        !canvasRef.current || !wrapRef.current || ctxMissing;
+      if (
+        previewLoopShouldSleep({
+          playing: s.playing,
+          pendingSeek,
+          redrawFlag,
+          playhead: s.playhead,
+          lastDrawn: lastDrawnTRef.current,
+          lastRequested: lastRequestedTRef.current,
+          pauseRetryExhausted,
+          seekFailureExhausted,
+          surfaceMissing,
+        })
+      ) {
         sleeping = true;
         idleDebug.sleeping = true;
       } else {
@@ -1832,6 +3205,10 @@ export function PreviewCanvas() {
       if (!sleeping) return;
       sleeping = false;
       idleDebug.sleeping = false;
+      // Đợt 34 Q2: đánh dấu tick đầu sau giấc ngủ để hook rAF loại nó
+      // khỏi phân tích sustained (wake() reset last nên gap tick đó
+      // nhỏ theo cấu tạo, không phải gap thật).
+      justWoke = true;
       // Tránh dt đột biến ở tick đầu sau giấc ngủ dài (dù dt đã clamp 0.1).
       last = performance.now();
       raf = requestAnimationFrame(loop);
@@ -1856,6 +3233,28 @@ export function PreviewCanvas() {
     }
     const onResize = () => wake();
     window.addEventListener("resize", onResize);
+    // C (Phase 9 đợt 22): tab ẩn rồi hiện lại trong lúc NGỦ. rAF của tab
+    // ẩn vốn đã dừng, và khi hiện lại không có store change nào nên vòng
+    // ngủ không có lý do gì để tỉnh — baseline đo được nó vẫn tỉnh (ticks
+    // +9, draws +1, px không đổi) nhờ một trigger ngoài chưa xác định
+    // (nghi resize/focus lúc restore tab), tức hành vi đúng nhưng do may
+    // mắn, không được dựa vào. Khi tab hiện lại (visibilitychange ->
+    // visible, hoặc pageshow sau bfcache restore), ép vẽ lại ĐÚNG frame
+    // cũ rồi ngủ lại: redrawFlag buộc đường seek+vẽ ở cùng playhead,
+    // wake() đặt lại rAF. Vẽ lại là cần thiết vì bitmap canvas có thể bị
+    // hủy trong lúc tab ẩn lâu/bị discard; nếu bitmap còn nguyên thì vẽ
+    // lại cho cùng 1 frame (px hash không đổi, xem LIMITS đợt 22 C).
+    // Khi đang phát thì sleeping = false nên handler này no-op (vòng đã
+    // chạy, rAF bị kẹp lúc ẩn sẽ tự nổ lại khi hiện). pagehide không cần
+    // xử lý gì thêm: rAF tự dừng, không có state nào phải dọn.
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (!sleeping) return;
+      redrawFlag = true;
+      wake();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pageshow", onVisible);
     raf = requestAnimationFrame(loop);
     // R1-063: dự phòng — nếu AudioContext vẫn suspended (trình duyệt chặn resume
     // ngoài gesture), gesture tiếp theo sẽ mở nó.
@@ -1867,9 +3266,15 @@ export function PreviewCanvas() {
       unsub();
       ro?.disconnect();
       window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pageshow", onVisible);
       window.removeEventListener("pointerdown", kickAudio);
       window.removeEventListener("keydown", kickAudio);
       if (winHook.__vcutPreviewIdle === idleDebug) delete winHook.__vcutPreviewIdle;
+      // Đợt 34 Q2: dọn hook rAF + đóng mọi VideoFrame cache còn giữ.
+      if (winHook.__vcutPreviewRaf === rafDebug) delete winHook.__vcutPreviewRaf;
+      if (winHook.__vcutReverseEngine !== undefined) delete winHook.__vcutReverseEngine;
+      disposeReverseWebcodecsControllers();
     };
   }, []);
 
@@ -1905,10 +3310,15 @@ export function PreviewCanvas() {
         if (clip.kind !== "text") continue;
         if (t < clip.start || t >= clip.start + clip.duration) continue;
         // R1-061: hit-test tại đúng vị trí visual (kể cả khi animation đang chạy).
-        ctx.font = textFont(clip);
+        // Phase 9 đợt 27 K1 — cùng guard như drawTextClip: hit-test đọc
+        // clip.style.fontSize + textClipVisual đọc clip.style trực tiếp,
+        // nên dùng bản sao đã chuẩn hóa để đo; clip gốc vẫn trả về để
+        // select/drag giữ đúng identity trong store.
+        const styledClip = { ...clip, style: normalizeTextStyle(clip.style) };
+        ctx.font = textFont(styledClip);
         const textW = Math.max(1, ctx.measureText(clip.text || " ").width);
-        const textH = clip.style.fontSize * 1.35;
-        const vis = textClipVisual(clip, t - clip.start, W, H, { textW, textH });
+        const textH = styledClip.style.fontSize * 1.35;
+        const vis = textClipVisual(styledClip, t - clip.start, W, H, { textW, textH });
         // P1 (Phase 7): clip SR hit-test theo hình bao đã xoay (xấp xỉ trục
         // song song — chữ xoay xiên vẫn trúng trong hình bao, hơi rộng tay).
         const w = vis.sr && vis.bboxW != null ? vis.bboxW : textW + 24;
@@ -2053,6 +3463,169 @@ export function PreviewCanvas() {
         }}
         aria-hidden="true"
       />
+      {/* K4 (đợt 27): badge chế độ phát ngược — hiện suốt khi cờ
+          reversePlayback bật (dù đang phát ngược hay tạm dừng ở chế độ
+          ngược), báo rõ không có audio đồng bộ khi phát ngược. */}
+      {isReversePlayback && (
+        <div
+          className="preview-reverse-badge"
+          title="Đang ở chế độ phát ngược: playhead chạy lùi theo từng frame, mọi video seek từng frame, audio bị tắt vì không phát ngược đồng bộ được. Bấm nút ◀ hoặc phím J để dừng, nút ▶ để về phát xuôi."
+          style={{
+            position: "absolute",
+            right: 8,
+            bottom: 8,
+            padding: "2px 8px",
+            borderRadius: 4,
+            background: "rgba(120,40,160,0.92)",
+            color: "#fff",
+            fontSize: 12,
+            fontWeight: 700,
+            zIndex: 5,
+            pointerEvents: "none",
+            whiteSpace: "nowrap",
+          }}
+        >
+          ◀ PHÁT NGƯỢC — không audio
+        </div>
+      )}
+      {/* K4 (đợt 27): badge FRAME GIỮ — góc dưới-giữa, cập nhật qua ref
+          trong vòng lặp (xem khối badge K4): chỉ hiện khi tick trước có
+          clip rơi vào nhánh hold (decoder tụt, đang vẽ lại frame tốt cũ). */}
+      <div
+        ref={holdBadgeRef}
+        className="preview-hold-badge"
+        title="Decoder chưa kịp giao frame mới nên preview đang vẽ lại frame tốt cuối cùng thay vì để đen. Nếu hiện (cũ) nghĩa là frame đã giữ quá 3 giây timeline — hình đứng yên trong khi playhead vẫn chạy."
+        style={{
+          display: "none",
+          position: "absolute",
+          left: "50%",
+          bottom: 8,
+          transform: "translateX(-50%)",
+          padding: "2px 8px",
+          borderRadius: 4,
+          background: "rgba(180,120,0,0.92)",
+          color: "#fff",
+          fontSize: 12,
+          fontWeight: 700,
+          zIndex: 5,
+          pointerEvents: "none",
+          whiteSpace: "nowrap",
+        }}
+        aria-hidden="true"
+      />
+      {/* ROUND43-Y6: badge đường phát ngược — góc dưới-trái, chồng lên
+          trên badge curve (bottom 32). Chỉ hiện khi đang stepping và cờ
+          opt-in WebCodecs bật; text + title cập nhật qua ref trong vòng
+          lặp, báo đúng WEBCODECS hay ELEMENT (thiếu API nào).
+          ROUND44-Z6: chuỗi qua i18n key reverseEngine.* (vi/en); badge
+          báo đường ĐÃ CHỌN, không phải đường vẽ từng frame.
+          ROUND45-A6: ngoại lệ từng frame — controller đã failed thì
+          badge đổi sang element-failed; đổi lang lúc pause refresh
+          ngay qua effect [previewLang], không chờ tick. */}
+      <div
+        ref={reverseEngineBadgeRef}
+        className="preview-reverse-engine-badge"
+        title=""
+        style={{
+          display: "none",
+          position: "absolute",
+          left: 8,
+          bottom: 32,
+          padding: "2px 8px",
+          borderRadius: 4,
+          background: "rgba(40,120,180,0.92)",
+          color: "#fff",
+          fontSize: 12,
+          fontWeight: 700,
+          zIndex: 5,
+          pointerEvents: "none",
+          whiteSpace: "nowrap",
+        }}
+        aria-hidden="true"
+      />
+      {/* J1 (đợt 26): badge cảnh báo curve fail-soft — góc dưới-trái, chỉ
+          hiện khi có nested lỗi (text + title cập nhật qua ref trong vòng
+          lặp, kèm toast 1 lần). Hover để đọc tên nested + lý do đầy đủ. */}
+      <div
+        ref={curveWarnBadgeRef}
+        className="preview-curve-warn-badge"
+        title=""
+        role="status"
+        style={{
+          display: "none",
+          position: "absolute",
+          left: 8,
+          bottom: 8,
+          padding: "2px 8px",
+          borderRadius: 4,
+          background: "rgba(180,40,40,0.92)",
+          color: "#fff",
+          fontSize: 12,
+          fontWeight: 700,
+          zIndex: 5,
+          pointerEvents: "none",
+          whiteSpace: "nowrap",
+        }}
+      />
+      {/* Đợt 37 T2 + đợt 38 U1: badge trạng thái decode-ahead Q3 — xếp
+          trên badge curve; text/title cập nhật trong
+          refreshDecodeAheadUi: đang chạy (+ số frame prefetch), bị chặn
+          (+ lý do đầu tiên, đủ lý do ở title), tắt (sau khi user đã
+          chạm toggle). Cảnh báo cổng đầy đủ (đúng chuỗi module cổng)
+          nằm ở title + toast khi đang chạy. */}
+      <div
+        ref={decodeAheadWarnBadgeRef}
+        className="preview-decodeahead-warn-badge"
+        title=""
+        role="status"
+        style={{
+          display: "none",
+          position: "absolute",
+          left: 8,
+          bottom: 32,
+          padding: "2px 8px",
+          borderRadius: 4,
+          background: "rgba(150,90,0,0.92)",
+          color: "#fff",
+          fontSize: 12,
+          fontWeight: 700,
+          zIndex: 5,
+          pointerEvents: "none",
+          whiteSpace: "nowrap",
+        }}
+      />
+      {/* Đợt 38 U1: toggle decode-ahead Q3 — góc trên-phải, ngay trái nút
+          fullscreen. Nút thật: bấm đảo cờ wanted qua cổng S3 (không
+          bypass); nhãn/trạng thái/title cập nhật qua ref trong
+          refreshDecodeAheadUi (không re-render mỗi frame). data-status
+          = off | blocked | running để harness/click-test đọc. */}
+      <button
+        ref={decodeAheadToggleBtnRef}
+        className="preview-decodeahead-toggle"
+        type="button"
+        title={i18nT("decodeahead.toggleHint")}
+        aria-label={i18nT("decodeahead.toggleAria")}
+        aria-pressed={false}
+        data-status="off"
+        onClick={onDecodeAheadToggleClick}
+        style={{
+          position: "absolute",
+          top: 10,
+          right: 50,
+          padding: "6px 8px",
+          borderRadius: 8,
+          border: "1px solid rgba(255, 255, 255, 0.25)",
+          background: "rgba(0, 0, 0, 0.55)",
+          color: "#fff",
+          fontSize: 12,
+          fontWeight: 700,
+          zIndex: 5,
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {i18nT("decodeahead.toggleOff")}
+      </button>
       {/* K5: nút fullscreen góc trên-phải (phím F cũng bật/tắt được). */}
       <button
         className="preview-fs-btn"

@@ -55,18 +55,16 @@
  *
  * HAI DẠNG GỌI — đọc kỹ trước khi nối dây (xem LIMITS T3 §3):
  * - Dạng cũ (fields-only): nestedSpeedRejectionMessage(i18nT, name,
- *   fields) — store notify + panel vẫn gọi dạng này. Với field curve,
- *   lý do chỉ nói chung là "curve không hợp lệ" kèm liệt kê mọi nguyên
- *   nhân có thể (vì chỉ có fields thì không biết curve hỏng ở đâu),
- *   không nêu sai nguyên nhân cụ thể nào. Với field reverse thì lý do
- *   đã chính xác hoàn toàn.
+ *   fields) — giữ lại cho caller chỉ có fields (test hồi quy D15).
+ *   Với field curve, lý do chỉ nói chung là "curve không hợp lệ" kèm
+ *   liệt kê mọi nguyên nhân có thể (vì chỉ có fields thì không biết
+ *   curve hỏng ở đâu), không nêu sai nguyên nhân cụ thể nào. Với field
+ *   reverse thì lý do đã chính xác hoàn toàn.
  * - Dạng mới (clip-aware): nestedSpeedRejectionMessageForClip(i18nT,
  *   clip, name) — phân loại từ clip thật nên nêu đúng lý do từng case
  *   (rỗng / sai hình / vượt biên / không tính được / lệch cửa sổ).
- *   Muốn toast store/panel nêu đúng lý do chi tiết thì phải nối dây
- *   call site sang dạng mới (1 dòng mỗi chỗ); T3 không tự sửa store
- *   notify hay panel (ngoài phạm vi sở hữu, panel đang do luồng T4
- *   giữ trong đợt 21) nên việc nối dây đó để lại cho parent/T4.
+ *   Từ đợt 22 A, store notify + panel (toast effect, dòng cảnh báo bền
+ *   vững) đã nối dây sang dạng mới; dạng cũ chỉ còn trong test hồi quy.
  */
 import { sourcePosAt, type SpeedCurve } from "@repo-1/video-spec";
 
@@ -296,4 +294,117 @@ export function nestedSpeedRejectionMessageForClip(
 ): string {
   const c = classifyNestedSpeedRejection(clip);
   return nestedSpeedRejectionMessage(translate, name, c.fields, c.curveReason);
+}
+
+/**
+ * Đợt 24 H2 — MAPPER KHỚP CHUỖI ĐÃ XÓA. Mọi call site sống nay đều cầm
+ * check object có reasonCode nên dịch theo code trước (translateTwoLevelCheck
+ * dưới đây); check không có code thì fallback trả nguyên reason gốc
+ * (không mất thông tin, nhưng cũng không dịch — caller nào còn đường
+ * chỉ-chuỗi thì phải đổi sang trả check, không được dựng lại mapper).
+ * Bảng code → key vẫn là TWO_LEVEL_CODE_TO_KEY; muốn key của một code
+ * mà không dịch thì dùng twoLevelReasonCodeKey.
+ *
+ * Lịch sử: đợt 22 A dựng mapper này vì cổng chỉ trả chuỗi tiếng Việt
+ * hardcode; đợt 23 G1 thêm reasonCode cho cổng; đợt 24 H2 nối nốt
+ * đường tạo curve (nestedCurveCreateTwoLevelCheck) và hàm sâu
+ * (updateNestedDeepInnerClip trả kèm twoLevelCheck) sang check object
+ * nên mapper không còn caller sống nào — xóa thay vì giữ làm fallback
+ * lặng lẽ (giữ mapper sẽ che việc một đường mới quên gắn code).
+ */
+
+/**
+ * Đợt 23 G1 — Dịch theo reasonCode ổn định của cổng hai tầng.
+ *
+ * Bảng code → key i18n `nested.twoLevel*` (đủ vi/en từ đợt 22 A, không
+ * cần thêm key mới). Code "valid" và code lạ → null để caller rơi về
+ * fallback trả nguyên reason gốc (xem translateTwoLevelCheck); key thiếu
+ * trong dict cũng → null (hàm t() trả về chính key khi thiếu, nên kiểm
+ * tra kết quả có bằng key thô không).
+ * Không bao giờ trả nguyên reason tiếng Việt: null là tín hiệu để
+ * fallback xử lý, không phải bản dịch.
+ */
+export type TwoLevelReasonCodeInput = string;
+
+const TWO_LEVEL_CODE_TO_KEY: Record<string, string> = {
+  topReverse: "nested.twoLevelTopReverse",
+  outerInvalid: "nested.twoLevelOuterInvalid",
+  leafReverse: "nested.twoLevelLeafReverse",
+  leafAttachment: "nested.twoLevelLeafAttachment",
+  leafCurveInvalid: "nested.twoLevelLeafCurveInvalid",
+  combinedRange: "nested.twoLevelCombinedRange",
+  keyframeProduct: "nested.twoLevelKeyframeProduct",
+  nestedCurveInvalid: "nested.twoLevelNestedCurveInvalid",
+  nestedKeyframeProduct: "nested.twoLevelNestedKeyframeProduct",
+  noSourceAxis: "nested.twoLevelNoSourceAxis",
+  leafSelfReverse: "nested.twoLevelLeafSelfReverse",
+  leafNonMedia: "nested.twoLevelLeafNonMedia",
+  leafSelfAttachment: "nested.twoLevelLeafSelfAttachment",
+  leafSelfCurveInvalid: "nested.twoLevelLeafSelfCurveInvalid",
+  ancestorReverse: "nested.twoLevelAncestorReverse",
+  ancestorCurveInvalid: "nested.twoLevelAncestorCurveInvalid",
+  ancestorKeyframeProduct: "nested.twoLevelAncestorKeyframeProduct",
+  ancestorCombinedRange: "nested.twoLevelAncestorCombinedRange",
+};
+
+/** Key i18n của một reasonCode; null khi code vắng/lạ (đợt 24 H2: store
+ * dùng hàm này để trả reasonKey từ check object, thay cho việc tách
+ * reason bằng mẫu khớp chuỗi như đợt 23 G2). */
+export function twoLevelReasonCodeKey(
+  code: string | undefined,
+): string | null {
+  if (!code || code === "valid") return null;
+  return TWO_LEVEL_CODE_TO_KEY[code] ?? null;
+}
+export function translateTwoLevelReasonByCode(
+  translate: NestedTranslate,
+  code: TwoLevelReasonCodeInput | undefined,
+  vars?: Record<string, string | undefined>,
+): string | null {
+  if (!code || code === "valid") return null;
+  const key = TWO_LEVEL_CODE_TO_KEY[code];
+  if (!key) return null;
+  // Lọc biến undefined trước khi đưa vào translate (kiểu của cổng cho
+  // phép id/kind vắng; hàm t() thay biến thiếu bằng "{tên}" nên lọc
+  // ở đây để không bao giờ rò "{id}" ra câu báo).
+  const clean: Record<string, string> = {};
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      if (v !== undefined) clean[k] = v;
+    }
+  }
+  const out = translate(key, clean);
+  return out === key ? null : out;
+}
+
+/**
+ * Hình dạng tối thiểu của kết quả cổng hai tầng mà call site dịch được.
+ * Dùng kiểu cấu trúc (không import nestUtils) để tránh vòng import:
+ * nestUtils không import file này, nhưng giữ lỏng ở đây thì store/panel
+ * vẫn dịch được cả kết quả cổng cũ (chỉ có reason, không có code).
+ */
+export interface TwoLevelCheckLike {
+  reason: string;
+  reasonCode?: string;
+  reasonVars?: Record<string, string | undefined>;
+}
+
+/**
+ * Dịch kết quả cổng hai tầng: ƯU TIÊN code; check không có code (cổng
+ * cũ, hoặc caller quên gắn code) thì fallback trả nguyên reason gốc —
+ * không dịch sai, nhưng ở locale en có thể lẫn tiếng Việt, và đó là
+ * tín hiệu để caller sửa sang gắn code chứ không phải để dựng lại
+ * mapper khớp chuỗi (mapper đợt 22 A đã xóa ở đợt 24 H2).
+ */
+export function translateTwoLevelCheck(
+  translate: NestedTranslate,
+  check: TwoLevelCheckLike,
+): string {
+  const byCode = translateTwoLevelReasonByCode(
+    translate,
+    check.reasonCode,
+    check.reasonVars,
+  );
+  if (byCode !== null) return byCode;
+  return check.reason;
 }

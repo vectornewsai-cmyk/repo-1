@@ -56,6 +56,31 @@
  * applyNestedCurveFixedTrim) nên khớp đúng số action sẽ áp; lỗi action
  * trim-cố-định bắn toast + dòng msg, không im lặng.
  *
+ * Đợt 23 G2: (a) đường tạo curve dùng helper dịch-tại-điểm-toast
+ * (nestedCurveCreateTwoLevelMessage) nên không còn ráp toast từ chuỗi
+ * Việt nội bộ của cổng; (b) InnerClipEditor thêm nút đặt curve 1× cho
+ * lá trực tiếp qua store action sâu (chain rỗng) — đường bấm sống tới
+ * cổng lá, store toast đúng nhánh khi bị chặn (xem LIMITS G2).
+ *
+ * Đợt 24 H6: (a) DeepInnerLevel duyệt đệ quy "Xem bên trong" xuống
+ * mọi tầng: lá sâu hơn 1 tầng (chain ≥ 1) nay có cùng nút "Đặt curve
+ * 1× cho lá" qua store action sâu với chainIds đúng (không còn chỉ lá
+ * trực tiếp); bị chặn thì store toast đúng nhánh + panel giữ dòng msg
+ * từ res.reason (API hiện có: reason + reasonKey — luồng H2 đợt 24
+ * chưa đổi store sang trả check object trên đĩa này, nên chưa dùng
+ * check object; xem LIMITS H6). (b) Giới hạn trung thực: nút preset
+ * 1× không tự sinh được leafSelfCurveInvalid / ancestorKeyframeProduct
+ * từ trạng thái chỉ tạo bằng panel (preset luôn hợp lệ, tích với 1×
+ * bằng đúng keyframe tổ tiên đã hợp lệ) — 3 nhánh chỉ tới được qua
+ * nút khi project đã có sẵn curve tổ tiên/lá vi phạm (import/MCP/dựng
+ * tay); test khóa đủ 3 nhánh ở tầng store action với chain sâu.
+ * Đợt 25 I3: panel lá sâu chuyển sang check object (setLeafCurve
+ * dịch lại từ res.twoLevelCheck thay vì phụ thuộc chuỗi res.reason;
+ * store vẫn trả reason + reasonKey để tương thích) và nested trung
+ * gian tầng sâu sửa được vị trí qua action mới
+ * updateNestedDeepIntermediateClip (đóng nợ H6; key i18n của ghi chú
+ * giới hạn cũ đã dọn ở đợt 27 K6).
+ *
  * Đợt 21 T4: block tạo curve MỚI cho nested chưa có curve
  * (NestedCurveCreateEditor, đóng nợ R4 vừa nêu — vẫn đặt ở panel này,
  * không phải SpeedPanel, vì lý do R4). Preset khởi đầu: curve hằng 1×
@@ -88,12 +113,13 @@ import {
 } from "./nestUtils";
 import {
   nestedSpeedRejectionFields,
-  nestedSpeedRejectionMessage,
+  nestedSpeedRejectionMessageForClip,
+  translateTwoLevelCheck,
 } from "./nestedRejection";
 import {
   createNestedCurvePreset,
   nestedCurveCreateBlock,
-  nestedCurveCreateTwoLevelReason,
+  nestedCurveCreateTwoLevelMessage,
 } from "./nestedCurveCreate";
 import { fmtTime } from "../../lib";
 import "./nested.css";
@@ -106,12 +132,15 @@ import "./nested.css";
 function InnerClipEditor({
   hostTrackId,
   nestedId,
+  chainIds,
   innerTrackId,
   clip,
   onMsg,
 }: {
   hostTrackId: string;
   nestedId: string;
+  /** Chain từ con trực tiếp của top xuống nested chứa trực tiếp clip này ([] = lá trực tiếp). Đợt 24 H6. */
+  chainIds: string[];
   innerTrackId: string;
   clip: Clip;
   onMsg: (msg: string) => void;
@@ -119,7 +148,101 @@ function InnerClipEditor({
   const [start, setStart] = useState(clip.start);
   const [duration, setDuration] = useState(clip.duration);
   const [text, setText] = useState((clip as { text?: string }).text ?? "");
+  const [outerOffset, setOuterOffset] = useState("");
   const isText = clip.kind === "text";
+
+  /**
+   * Đợt 23 G2 — đặt curve hằng 1× lên lá TRỰC TIẾP này qua store action
+   * sâu (chain rỗng). Đợt 24 H6 — cùng nút này, với chainIds của tầng
+   * chứa trực tiếp lá, phục vụ cả lá sâu (chain ≥ 1, qua DeepInnerLevel):
+   * khi bất kỳ tầng tổ tiên nào trong chain đã mang curve mà cặp lá ×
+   * tổ tiên vi phạm R1, cổng lá từ chối và store tự toast đúng nhánh
+   * (8 nhánh, xem LIMITS G2) + trả check object (twoLevelCheck) kèm
+   * reason/reasonKey để panel hiện dòng msg bền vững từ check (đợt
+   * 25 I3); lệnh bị chặn không qua execCommand nên không sinh undo.
+   * Lá đã có curve thì nút ẩn (hiện ghi chú) thay vì đặt
+   * đè. Clip con là nested (kind "nested") không phải lá nên không
+   * hiện nút — duyệt sâu hơn qua DeepInnerLevel, không qua nút này.
+   */
+  const leafCurve = (clip as unknown as { speedKeyframes?: SpeedCurve }).speedKeyframes;
+  const hasLeafCurve = !!leafCurve && leafCurve.keyframes.length > 0;
+  const setLeafCurve = () => {
+    const res = useStore.getState().updateNestedDeepInnerClip(hostTrackId, nestedId, chainIds, innerTrackId, clip.id, {
+      speedKeyframes: createNestedCurvePreset(),
+    });
+    if (res.ok) {
+      onMsg(i18nT("nested.deepLeafCurveOk"));
+    } else if (res.twoLevelCheck) {
+      // Đợt 25 I3 — hiển thị từ CHECK OBJECT mà store trả kèm (đợt
+      // 24 H2), không phụ thuộc chuỗi reason: dịch lại theo
+      // reasonCode tại thời điểm hiển thị rồi ráp đúng câu bọc
+      // nested.deepLeafTwoLevel mà store dùng cho toast (cùng key,
+      // cùng tên top, cùng bản dịch) nên dòng msg bền vững giữ
+      // nguyên nội dung như trước, chỉ đổi kênh nhận diện nhánh.
+      // reasonKey đi kèm check (caller cần nhận diện nhánh thì dùng
+      // key, panel không render key thô ra UI).
+      const topClip = useStore
+        .getState()
+        .spec.tracks.find((t) => t.id === hostTrackId)
+        ?.clips.find((c) => c.id === nestedId);
+      const topName = (topClip as unknown as { name?: string } | undefined)?.name ?? nestedId;
+      onMsg(
+        i18nT("nested.deepLeafTwoLevel", {
+          name: topName,
+          reason: translateTwoLevelCheck(i18nT, res.twoLevelCheck),
+        }),
+      );
+    } else if (res.reason) {
+      // Tương thích: lỗi không phải cổng lá (không có check) thì
+      // store không trả check — panel giữ chuỗi reason trả về, và
+      // KHÔNG tách nhánh nào khỏi chuỗi này.
+      onMsg(res.reason);
+    } else {
+      onMsg(i18nT("nested.innerSaveFail"));
+    }
+  };
+
+  /**
+   * Đợt 25 I2 — tách lá tại mốc NGOÀI: user nhập thời gian trên
+   * timeline ngoài của nested cha (đã gồm top.start — cùng khung với
+   * cửa sổ tuyệt đối của lá; nút "Lấy từ playhead" điền sẵn playhead
+   * hiện tại vì playhead cũng ở khung tuyệt đối đó). Panel chỉ gọi
+   * store action mới splitNestedDeepInnerClipAtOuterOffset — action
+   * đổi mốc qua nestedSplitOffset (đảo τ đợt 24 H1) rồi tách bằng hàm
+   * thuần cũ. Bị chặn thì store đã toast + trả reason, panel chỉ giữ
+   * dòng msg bền vững (cùng mẫu nút curve 1×). Không có DOM test
+   * runner nên phần component này chỉ kiểm chứng bằng tsc + vite
+   * build như các đợt trước; tầng store được khóa bằng test I2.
+   * Đợt 27 K6: ô rỗng / không phải số được chặn riêng tại panel
+   * (câu splitOffsetEmpty, không gọi store) và khóa bằng click-test
+   * browser thật (harness clicktest-k6-round27-pipe).
+   */
+  const usePlayheadOffset = () => {
+    setOuterOffset(String(useStore.getState().playhead));
+  };
+  const splitAtOuterOffset = () => {
+    const raw = outerOffset.trim();
+    if (raw === "" || !Number.isFinite(Number(raw))) {
+      // Đợt 27 K6: ô rỗng / không phải số thì chặn riêng tại panel —
+      // không gọi store (tránh Number("") = 0 bị dịch thành câu
+      // OutOfRange gây hiểu lầm), không toast (msg ngay cạnh ô nhập
+      // đã đủ, theo tiền lệ action trung gian không tự toast),
+      // không sinh undo.
+      onMsg(i18nT("nested.splitOffsetEmpty"));
+      return;
+    }
+    const res = useStore.getState().splitNestedDeepInnerClipAtOuterOffset(
+      hostTrackId, nestedId, chainIds, innerTrackId, clip.id, Number(raw),
+    );
+    if (res.ok) {
+      onMsg(i18nT("nested.splitOffsetOk", { t: fmtTime(res.leafLocalTime ?? 0) }));
+    } else if (res.reason) {
+      // Store đã toast (trừ lỗi lookup/khóa); panel giữ dòng msg.
+      onMsg(res.reason);
+    } else {
+      onMsg(i18nT("nested.innerSaveFail"));
+    }
+  };
 
   const save = () => {
     const res = useStore.getState().updateNestedInnerClip(hostTrackId, nestedId, innerTrackId, clip.id, {
@@ -181,6 +304,218 @@ function InnerClipEditor({
         </label>
       )}
       <button onClick={save}>{i18nT("nested.innerSave")}</button>
+      {clip.kind !== "nested" &&
+        (hasLeafCurve ? (
+          <span className="nested-panel-note">{i18nT("nested.deepLeafCurveHas")}</span>
+        ) : (
+          <button onClick={setLeafCurve}>{i18nT("nested.deepLeafCurveButton")}</button>
+        ))}
+      {clip.kind !== "nested" && (
+        <>
+          <label>
+            {i18nT("nested.splitOffsetLabel")}{" "}
+            <input
+              type="number"
+              step="any"
+              value={outerOffset}
+              aria-label={i18nT("nested.splitOffsetLabel")}
+              onChange={(e) => setOuterOffset(e.target.value)}
+            />
+          </label>
+          <button onClick={usePlayheadOffset}>{i18nT("nested.splitOffsetUsePlayhead")}</button>
+          <button onClick={splitAtOuterOffset}>{i18nT("nested.splitOffsetButton")}</button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Đợt 25 I3 — sửa vị trí (start/duration) của 1 nested TRUNG GIAN ở
+ * tầng sâu qua store action mới updateNestedDeepIntermediateClip
+ * (parentChainIds = chain tới tầng chứa trực tiếp đích). Component
+ * remount theo key start/duration ở phía parent như InnerClipEditor
+ * để input không kẹt giá trị cũ sau khi lưu. Lỗi cổng hai tầng của
+ * chính đích: action trả reason đã dịch + reasonKey + check nguyên;
+ * panel hiển thị reason trả về (không tách chuỗi, không toast trùng
+ * vì action này không tự toast — xem store.ts).
+ */
+function DeepIntermediateEditor({
+  hostTrackId,
+  topId,
+  parentChainIds,
+  innerTrackId,
+  clip,
+  onMsg,
+}: {
+  hostTrackId: string;
+  topId: string;
+  /** Chain tới tầng chứa trực tiếp đích (cùng quy ước hàm thuần sâu). */
+  parentChainIds: string[];
+  innerTrackId: string;
+  clip: NestedClip;
+  onMsg: (msg: string) => void;
+}) {
+  const [start, setStart] = useState(clip.start);
+  const [duration, setDuration] = useState(clip.duration);
+  const save = () => {
+    const res = useStore.getState().updateNestedDeepIntermediateClip(hostTrackId, topId, parentChainIds, innerTrackId, clip.id, {
+      start,
+      duration,
+    });
+    if (!res.ok) {
+      onMsg(res.reason ?? i18nT("nested.innerSaveFail"));
+    } else if (res.curveDropped > 0) {
+      onMsg(
+        `${i18nT("nested.innerSaveOk")} ${i18nT("nested.innerCurveDropped", { n: String(res.curveDropped) })}`,
+      );
+    } else {
+      onMsg(i18nT("nested.innerSaveOk"));
+    }
+  };
+  return (
+    <div className="nested-panel-row">
+      <span className="nested-inner-clip">
+        📦 {clip.name ?? clip.id} ({fmtTime(clip.start)}–{fmtTime(clip.start + clip.duration)})
+      </span>
+      <label>
+        {i18nT("nested.innerStart")}{" "}
+        <input
+          type="number"
+          min={0}
+          step={0.1}
+          value={start}
+          aria-label={i18nT("nested.innerStart")}
+          onChange={(e) => setStart(Number(e.target.value))}
+        />
+      </label>
+      <label>
+        {i18nT("nested.innerDuration")}{" "}
+        <input
+          type="number"
+          min={0.2}
+          step={0.1}
+          value={duration}
+          aria-label={i18nT("nested.innerDuration")}
+          onChange={(e) => setDuration(Number(e.target.value))}
+        />
+      </label>
+      <button onClick={save}>{i18nT("nested.innerSave")}</button>
+    </div>
+  );
+}
+
+/**
+ * Đợt 24 H6 — duyệt đệ quy các tầng bên trong một nested clip.
+ *
+ * Ngữ nghĩa chainIds (khớp resolveDeepLevels của hàm thuần sâu): chain
+ * là id các nested TRUNG GIAN từ con trực tiếp của top xuống nested
+ * chứa trực tiếp lá đang hiển thị. Với chính top thì chainIds = [];
+ * với nested con N1 của top thì chainIds = ["N1"]; với N2 trong N1 thì
+ * ["N1", "N2"]. Lá ở tầng này gọi InnerClipEditor với đúng chainIds
+ * đó nên nút "Đặt curve 1× cho lá" đi qua cổng lá với đủ tầng tổ tiên
+ * (không còn rỗng như G2 khi lá sâu hơn 1 tầng).
+ *
+ * Nested trung gian: ở tầng trực tiếp của top (chainIds = []) vẫn giữ
+ * nguyên InnerClipEditor cũ (lưu start/duration qua updateNestedInnerClip
+ * tầng 1); ở tầng sâu hơn (chainIds ≥ 1) đợt 25 I3 dùng
+ * DeepIntermediateEditor (lưu qua action mới
+ * updateNestedDeepIntermediateClip, parentChainIds = chainIds) thay
+ * cho dòng ghi chú giới hạn của H6 — vị trí trung gian sâu nay sửa
+ * được thật (không phải lá nên vẫn không có nút curve). Nút "Xem bên
+ * trong" đệ quy mở tầng con của nó. Đệ quy tin cậy cây spec là hữu
+ * hạn (như listNestedClips); hàm thuần sâu vẫn chặn vòng lặp/độ sâu
+ * > 8 ở tầng store nếu project dị thường.
+ */
+function DeepInnerLevel({
+  hostTrackId,
+  topId,
+  chainIds,
+  nestedClip,
+  onMsg,
+}: {
+  hostTrackId: string;
+  topId: string;
+  chainIds: string[];
+  nestedClip: NestedClip;
+  onMsg: (msg: string) => void;
+}) {
+  const [openIds, setOpenIds] = useState<string[]>([]);
+  const toggle = (id: string) =>
+    setOpenIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  return (
+    <div className="nested-inner">
+      {chainIds.length > 0 && (
+        <p className="nested-panel-note">
+          {i18nT("nested.deepLevelHead", { name: nestedClip.name ?? nestedClip.id })}
+        </p>
+      )}
+      {nestedClip.subSpec.tracks.map((t) => (
+        <div key={t.id} className="nested-inner-track">
+          <span className="nested-inner-track-label">{t.label ?? t.kind}:</span>{" "}
+          {t.clips.map((c) => {
+            if (isNestedClip(c)) {
+              const child = c as unknown as NestedClip;
+              const childChain = [...chainIds, c.id];
+              const open = openIds.includes(c.id);
+              return (
+                <div key={`${t.id}:${c.id}`}>
+                  {chainIds.length === 0 ? (
+                    <InnerClipEditor
+                      key={`${t.id}:${c.id}:${c.start}:${c.duration}:${(c as { text?: string }).text ?? ""}`}
+                      hostTrackId={hostTrackId}
+                      nestedId={topId}
+                      chainIds={chainIds}
+                      innerTrackId={t.id}
+                      clip={c}
+                      onMsg={onMsg}
+                    />
+                  ) : (
+                    // Đợt 25 I3: nested trung gian sâu nay sửa được vị
+                    // trí qua action mới (thay cho dòng ghi chú giới
+                    // hạn của H6; key i18n của ghi chú cũ đã dọn ở
+                    // đợt 27 K6).
+                    <DeepIntermediateEditor
+                      key={`${t.id}:${c.id}:${c.start}:${c.duration}`}
+                      hostTrackId={hostTrackId}
+                      topId={topId}
+                      parentChainIds={chainIds}
+                      innerTrackId={t.id}
+                      clip={child}
+                      onMsg={onMsg}
+                    />
+                  )}
+                  <div className="nested-panel-row">
+                    <button onClick={() => toggle(c.id)}>
+                      {open ? i18nT("nested.hideInside") : i18nT("nested.viewInside")}
+                    </button>
+                  </div>
+                  {open && (
+                    <DeepInnerLevel
+                      hostTrackId={hostTrackId}
+                      topId={topId}
+                      chainIds={childChain}
+                      nestedClip={child}
+                      onMsg={onMsg}
+                    />
+                  )}
+                </div>
+              );
+            }
+            return (
+              <InnerClipEditor
+                key={`${t.id}:${c.id}:${c.start}:${c.duration}:${(c as { text?: string }).text ?? ""}`}
+                hostTrackId={hostTrackId}
+                nestedId={topId}
+                chainIds={chainIds}
+                innerTrackId={t.id}
+                clip={c}
+                onMsg={onMsg}
+              />
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }
@@ -189,8 +524,15 @@ function InnerClipEditor({
  * Đợt 19 G3: detector + câu báo dùng chung nằm ở ./nestedRejection.ts
  * (store cũng dùng cho toast đúng thời điểm tách/trim); panel chỉ gọi
  * chúng với i18nT — không còn bản hardcode tiếng Việt riêng như đợt 18.
- * nestedSpeedRejectionMessage(clip.name, fields) ở các chỗ dùng dưới
- * đây thực chất là nestedSpeedRejectionMessage(i18nT, name, fields).
+ * Đợt 22 A: panel dùng dạng clip-aware (ForClip) cho toast effect và
+ * dòng cảnh báo bền vững, và dịch reason cổng hai tầng qua
+ * translateTwoLevelReason trước khi toast. Đợt 23 G1: đường áp curve
+ * trực tiếp (có check nguyên) dịch theo reasonCode trước
+ * (translateTwoLevelCheck); đường tạo curve chỉ có chuỗi reason nên
+ * vẫn fallback về mapper khớp chuỗi — xem LIMITS đợt 23 G1.
+ * Đợt 24 H2: đường tạo curve nay cũng cầm check nguyên
+ * (nestedCurveCreateTwoLevelCheck → translateTwoLevelCheck), mapper
+ * khớp chuỗi đã xóa — cả hai đường panel đều dịch theo reasonCode.
  */
 
 /**
@@ -415,14 +757,15 @@ function NestedCurveCreateEditor({
       return;
     }
     if (block === "twoLevel") {
-      // Luật T2: chỉ cặp vi phạm R1 mới tới đây — toast đúng lý do cụ
-      // thể của hàm check (key T2), không dùng câu chung cũ nữa.
-      // Fallback câu chung chỉ phòng khi reason rỗng bất thường.
-      const reason = nestedCurveCreateTwoLevelReason(clip);
+      // Luật T2: chỉ cặp vi phạm R1 mới tới đây. Đợt 23 G2: toast qua
+      // helper dịch-tại-điểm-toast (nestedCurveCreateTwoLevelMessage)
+      // thay vì tự ráp từ chuỗi tiếng Việt nội bộ của cổng — panel
+      // không còn cầm chuỗi Việt thô nên locale en không rò tiếng
+      // Việt. Helper trả null chỉ khi không còn ở nhánh này (không
+      // xảy ra vì block vừa kiểm tra), fallback câu chung phòng thủ.
       const msg =
-        reason !== null
-          ? i18nT("nested.curveTwoLevelInvalid", { name: clip.name ?? clip.id, reason })
-          : i18nT("nested.curveTwoLevel", { name: clip.name ?? clip.id });
+        nestedCurveCreateTwoLevelMessage(i18nT, clip) ??
+        i18nT("nested.curveTwoLevel", { name: clip.name ?? clip.id });
       pushToast(msg, "error");
       onMsg(msg);
       return;
@@ -535,7 +878,12 @@ function NestedCurveModeEditor({
     if (nestedSubtreeHasSpeedCurve(clip)) {
       const chk = checkTwoLevelOuterCurve(clip, curve);
       if (!chk.ok) {
-        const msg = i18nT("nested.curveTwoLevelInvalid", { name: clip.name ?? clip.id, reason: chk.reason });
+        // Đợt 23 G1: dịch theo reasonCode của check trước, fallback
+        // mapper khớp chuỗi khi code vắng (xem nestedRejection.ts).
+        const msg = i18nT("nested.curveTwoLevelInvalid", {
+          name: clip.name ?? clip.id,
+          reason: translateTwoLevelCheck(i18nT, chk),
+        });
         pushToast(msg, "error");
         onMsg(msg);
         return;
@@ -560,7 +908,8 @@ function NestedCurveModeEditor({
       if (!res.ok) {
         // Lỗi action KHÔNG im lặng: toast + dòng msg. Reason của action
         // đã sang key i18n từ đợt 21 T3 (reasonKey + reason đã dịch theo
-        // locale hiện tại), không còn hardcode tiếng Việt.
+        // locale hiện tại); đợt 22 A đóng nốt đuôi tiếng Việt của nhánh
+        // hai tầng (store dịch reason cổng trước khi trả về).
         const reason = res.reason ?? i18nT("nested.curveModeApplyFail");
         pushToast(reason, "error");
         onMsg(reason);
@@ -648,7 +997,9 @@ export function NestedClipPanel({ onClose }: { onClose: () => void }) {
       const key = `${clip.id}:${fields.join("+")}`;
       if (toastedSpeedRejections.current.has(key)) continue;
       toastedSpeedRejections.current.add(key);
-      pushToast(nestedSpeedRejectionMessage(i18nT, clip.name ?? clip.id, fields), "error");
+      // Đợt 22 A: toast clip-aware — nêu đúng lý do từng case thay vì
+      // lý do chung của dạng fields-only (fields vẫn dùng cho key).
+      pushToast(nestedSpeedRejectionMessageForClip(i18nT, clip, clip.name ?? clip.id), "error");
     }
     // Cố tình chỉ phụ thuộc spec: nestedList được tạo mới mỗi render
     // nên phụ thuộc nó sẽ chạy effect thừa (ref-set vẫn chặn toast lặp,
@@ -746,7 +1097,7 @@ export function NestedClipPanel({ onClose }: { onClose: () => void }) {
               </div>
               {speedRejectFields.length > 0 && (
                 <p className="nested-panel-warn">
-                  {nestedSpeedRejectionMessage(i18nT, clip.name ?? clip.id, speedRejectFields)}
+                  {nestedSpeedRejectionMessageForClip(i18nT, clip, clip.name ?? clip.id)}
                 </p>
               )}
               {/* Đợt 21 T4: tạo curve mới (chỉ hiện khi clip chưa có curve). */}
@@ -780,23 +1131,16 @@ export function NestedClipPanel({ onClose }: { onClose: () => void }) {
               {open && (
                 <div className="nested-inner">
                   <p className="nested-panel-note">{i18nT("nested.innerHead")}</p>
-                  {clip.subSpec.tracks.map((t) => (
-                    <div key={t.id} className="nested-inner-track">
-                      <span className="nested-inner-track-label">
-                        {t.label ?? t.kind}:
-                      </span>{" "}
-                      {t.clips.map((c) => (
-                        <InnerClipEditor
-                          key={`${t.id}:${c.id}:${c.start}:${c.duration}:${(c as { text?: string }).text ?? ""}`}
-                          hostTrackId={trackId}
-                          nestedId={clip.id}
-                          innerTrackId={t.id}
-                          clip={c}
-                          onMsg={setMsg}
-                        />
-                      ))}
-                    </div>
-                  ))}
+                  {/* Đợt 24 H6: duyệt đệ quy thay cho liệt kê 1 tầng cũ — lá sâu
+                      nhận đúng chainIds, nested trung gian có nút "Xem bên trong"
+                      riêng để mở tầng con của nó. */}
+                  <DeepInnerLevel
+                    hostTrackId={trackId}
+                    topId={clip.id}
+                    chainIds={[]}
+                    nestedClip={clip}
+                    onMsg={setMsg}
+                  />
                 </div>
               )}
             </div>

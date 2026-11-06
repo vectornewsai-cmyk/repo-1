@@ -1,0 +1,66 @@
+{
+  "runAt": "2026-10-29T13:17:12.766Z",
+  "display": ":97",
+  "port": 4197,
+  "cases": [
+    {
+      "id": "C0-sample-load",
+      "status": "PASS",
+      "detail": "project mẫu load xong, 2 clip video trên timeline"
+    },
+    {
+      "id": "C1-shift-select",
+      "status": "PASS",
+      "detail": "click cdp-input + Shift+click cdp-input -> 2 clip cùng selected"
+    },
+    {
+      "id": "C2-open-panel",
+      "status": "PASS",
+      "detail": "click cdp-input nút Nested -> panel mở, nút gộp enabled"
+    },
+    {
+      "id": "C3-nest",
+      "status": "PASS",
+      "detail": "click cdp-input gộp -> panel liệt kê nested (📦 Compound clip 1), timeline có clip-nested"
+    },
+    {
+      "id": "C4-select-nested",
+      "status": "PASS",
+      "detail": "click cdp-input lên clip-nested trên timeline -> class selected xuất hiện"
+    },
+    {
+      "id": "C5-create-curve",
+      "status": "PASS",
+      "detail": "click cdp-input tạo curve -> block tạo ẩn, block chế độ hiện, trim giữ [0, 8)"
+    },
+    {
+      "id": "C6-mode-fixedTrim",
+      "status": "PASS",
+      "detail": "click cdp-input/cdp-input đổi radio giữ-trim -> preview đổi, áp -> alreadyOk, panel còn sống"
+    },
+    {
+      "id": "C7-no-crash",
+      "status": "PASS",
+      "detail": "0 Runtime.exceptionThrown trong phiên click-test"
+    }
+  ],
+  "log": [
+    "[2026-10-29T13:16:52.721Z] harness clicktest-nested-ramp-pipe: bắt đầu",
+    "[2026-10-29T13:16:52.723Z] display=:97 port=4197 binaries=/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome | /opt/meta-chromium/chrome",
+    "[2026-10-29T13:16:52.755Z] Xvfb: socket /tmp/.X11-unix/X97 mồ côi (không thấy tiến trình Xvfb :97), xoá và bật mới",
+    "[2026-10-29T13:16:53.013Z] Xvfb lên: DISPLAY=:97",
+    "[2026-10-29T13:16:53.033Z] dist OK: bundle index-B6D3m0qx.js sha256[:16]=bc5f4e0fac99a61d",
+    "[2026-10-29T13:16:54.163Z] vite preview lên tại http://127.0.0.1:4197",
+    "[2026-10-29T13:16:55.697Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome): 3 target ban đầu",
+    "[2026-10-29T13:17:08.303Z]   C0 clip video mẫu: [\"c_ky1a8rd\",\"c_7asucn9\"]",
+    "[2026-10-29T13:17:08.304Z] CASE C0-sample-load: PASS — project mẫu load xong, 2 clip video trên timeline",
+    "[2026-10-29T13:17:09.426Z] CASE C1-shift-select: PASS — click cdp-input + Shift+click cdp-input -> 2 clip cùng selected",
+    "[2026-10-29T13:17:10.043Z] CASE C2-open-panel: PASS — click cdp-input nút Nested -> panel mở, nút gộp enabled",
+    "[2026-10-29T13:17:10.581Z] CASE C3-nest: PASS — click cdp-input gộp -> panel liệt kê nested (📦 Compound clip 1), timeline có clip-nested",
+    "[2026-10-29T13:17:11.101Z] CASE C4-select-nested: PASS — click cdp-input lên clip-nested trên timeline -> class selected xuất hiện",
+    "[2026-10-29T13:17:11.683Z] CASE C5-create-curve: PASS — click cdp-input tạo curve -> block tạo ẩn, block chế độ hiện, trim giữ [0, 8)",
+    "[2026-10-29T13:17:12.760Z] CASE C6-mode-fixedTrim: PASS — click cdp-input/cdp-input đổi radio giữ-trim -> preview đổi, áp -> alreadyOk, panel còn sống",
+    "[2026-10-29T13:17:12.762Z] CASE C7-no-crash: PASS — 0 Runtime.exceptionThrown trong phiên click-test",
+    "[2026-10-29T13:17:12.762Z] DONE clicktest-nested-ramp: 8/8 case pass, exit=0"
+  ]
+}

@@ -637,6 +637,195 @@ test("flatten: tốc độ nhân qua 2 tầng (2 x 2 = 4)", () => {
   assert.equal(flat[0].absoluteDuration, 2.5); // 10 / 4
 });
 
+// ---- flattenNested: nested mang speedKeyframes (đợt 22 E) ----
+// Ramp linear 1→3 trên duration 4: s(t) = 1 + t/2, ∫₀^τ = τ + τ²/4.
+// τ(2) = −2 + √12 ≈ 1.4641016151377546 (giải tích, không lấy từ code).
+// Số kỳ vọng dưới đây đều suy tay bằng công thức này.
+
+test("flatten: nested ramp 1→3 đặt lá qua τ, không tuyến tính", () => {
+  const l1 = videoLeaf("L1", 0, 2);
+  const l2 = videoLeaf("L2", 2, 6);
+  const clip = nested({
+    id: "B",
+    subSpec: subSpecWith([l1, l2]),
+    start: 10,
+    duration: 4,
+    trim: { in: 0, out: 8 },
+    speedKeyframes: {
+      keyframes: [
+        { t: 0, v: 1, easing: "linear" },
+        { t: 4, v: 3, easing: "linear" },
+      ],
+    },
+  });
+  const flat = flattenNested(clip);
+  assert.equal(flat.length, 2);
+  const tau2 = -2 + Math.sqrt(12);
+  assert.ok(Math.abs(flat[0].absoluteStart - 10) < 1e-9);
+  assert.ok(Math.abs(flat[0].absoluteDuration - tau2) < 1e-9);
+  assert.ok(Math.abs(flat[1].absoluteStart - (10 + tau2)) < 1e-9);
+  assert.ok(Math.abs(flat[1].absoluteDuration - (4 - tau2)) < 1e-9);
+  // Placement-only: giữ nguyên tham chiếu + in/out gốc, không viết lại lá.
+  assert.equal(flat[0].clip, l1);
+  assert.equal(flat[1].clip, l2);
+  assert.equal((l1 as { in: number }).in, 0);
+  assert.equal((l1 as { out: number }).out, 2);
+  // Neo biên cho transition tầng ngoài: lá biên bắt đầu đúng 10 và lá
+  // cuối kết thúc đúng 14 theo thời gian output dưới curve (cửa sổ fade
+  // [10, 10+T] / [14−T, 14] tính từ 2 mốc này mới đúng).
+  assert.ok(Math.abs(flat[0].absoluteStart - 10) < 1e-9);
+  assert.ok(
+    Math.abs(flat[1].absoluteStart + flat[1].absoluteDuration - 14) < 1e-9,
+  );
+});
+
+test("flatten: ramp dưới nested hằng speed 2 (hợp thành qua τ rồi chia 2)", () => {
+  // Ramp 1→2 trên duration 4: s(t) = 1 + t/4, ∫₀^τ = τ + τ²/8.
+  // τ(3) = −4 + √40 ≈ 2.324555320336759.
+  const inner = nested({
+    id: "B",
+    subSpec: subSpecWith([videoLeaf("L1", 0, 3), videoLeaf("L2", 3, 3)]),
+    start: 10,
+    duration: 4,
+    trim: { in: 0, out: 6 },
+    speedKeyframes: {
+      keyframes: [
+        { t: 0, v: 1, easing: "linear" },
+        { t: 4, v: 2, easing: "linear" },
+      ],
+    },
+  });
+  const outer = nested({
+    id: "P",
+    subSpec: subSpecWith([inner]),
+    start: 0,
+    duration: 8,
+    speed: 2,
+    trim: { in: 0, out: 16 },
+  });
+  const flat = flattenNested(outer);
+  assert.equal(flat.length, 2);
+  const tau3 = -4 + Math.sqrt(40);
+  assert.ok(Math.abs(flat[0].absoluteStart - 5) < 1e-9);
+  assert.ok(Math.abs(flat[0].absoluteDuration - tau3 / 2) < 1e-9);
+  assert.ok(Math.abs(flat[1].absoluteStart - (5 + tau3 / 2)) < 1e-9);
+  assert.ok(Math.abs(flat[1].absoluteDuration - (4 - tau3) / 2) < 1e-9);
+});
+
+test("flatten: ramp ngoài + nested hằng trong", () => {
+  const mid = nested({
+    id: "M",
+    subSpec: subSpecWith([videoLeaf("L", 0, 2)]),
+    start: 2,
+    duration: 2,
+    speed: 1,
+  });
+  const top = nested({
+    id: "B",
+    subSpec: subSpecWith([mid]),
+    start: 10,
+    duration: 4,
+    trim: { in: 0, out: 8 },
+    speedKeyframes: {
+      keyframes: [
+        { t: 0, v: 1, easing: "linear" },
+        { t: 4, v: 3, easing: "linear" },
+      ],
+    },
+  });
+  const flat = flattenNested(top);
+  assert.equal(flat.length, 1);
+  // M chiếm [2,4) trong timeline con của B nên cả hai đầu đều qua τ:
+  // τ(2) = −2+√12, τ(4) = −2+√20 (∫₀^τ = τ+τ²/4 = 4).
+  const tau2 = -2 + Math.sqrt(12);
+  const tau4 = -2 + Math.sqrt(20);
+  assert.ok(Math.abs(flat[0].absoluteStart - (10 + tau2)) < 1e-9);
+  assert.ok(Math.abs(flat[0].absoluteDuration - (tau4 - tau2)) < 1e-9);
+  assert.deepEqual(flat[0].path, ["B", "M"]);
+  assert.equal(flat[0].depth, 2);
+});
+
+test("flatten: curve hằng gộp về tốc độ hằng, curve thắng speed", () => {
+  const clip = nested({
+    id: "n1",
+    subSpec: subSpecWith([videoLeaf("v", 0, 8)]),
+    start: 0,
+    duration: 4,
+    speed: 1,
+    trim: { in: 0, out: 8 },
+    speedKeyframes: {
+      keyframes: [
+        { t: 0, v: 2, easing: "linear" },
+        { t: 4, v: 2, easing: "linear" },
+      ],
+    },
+  });
+  const flat = flattenNested(clip);
+  assert.equal(flat.length, 1);
+  assert.equal(flat[0].absoluteStart, 0);
+  assert.equal(flat[0].absoluteDuration, 4); // 8 / 2, không phải 8 / 1
+});
+
+test("flatten: curve sai hình dạng hoặc duration → throw", () => {
+  const base = {
+    id: "n1",
+    subSpec: subSpecWith([videoLeaf("v", 0, 8)]),
+    start: 0,
+    duration: 4,
+    trim: { in: 0, out: 8 },
+  };
+  assert.throws(
+    () =>
+      flattenNested(
+        nested({ ...base, speedKeyframes: { keyframes: [] } }),
+      ),
+    /mảng rỗng/,
+  );
+  assert.throws(
+    () =>
+      flattenNested(
+        nested({
+          ...base,
+          speedKeyframes: {
+            keyframes: [
+              { t: 0, v: 1, easing: "linear" },
+              { t: 4, v: 5, easing: "linear" },
+            ],
+          },
+        }),
+      ),
+    /v phải trong 0\.25\.\.4/,
+  );
+  assert.throws(
+    () =>
+      flattenNested(
+        nested({
+          ...base,
+          speedKeyframes: {
+            keyframes: [
+              { t: 0, v: 1, easing: "linear" },
+              { t: 6, v: 2, easing: "linear" },
+            ],
+          },
+        }),
+      ),
+    /t phải trong/,
+  );
+  assert.throws(
+    () =>
+      flattenNested(
+        nested({
+          ...base,
+          duration: 0,
+          speedKeyframes: {
+            keyframes: [{ t: 0, v: 1, easing: "linear" }],
+          },
+        }),
+      ),
+    /duration không hợp lệ/,
+  );
+});
+
 // ---- độ sâu + vòng lặp + dùng lại ----
 
 test("validate + flatten: chuỗi 8 tầng hợp lệ, lá ở depth 8", () => {

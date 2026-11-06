@@ -45,6 +45,7 @@ import {
   splitLinkedCaptionsInSpec,
   unlinkCaptionInSpec,
 } from "./lib/captionFollow";
+import { LoadSampleQueue } from "./lib/loadSampleQueue";
 import {
   isSpeedable,
   maxTrimLeft,
@@ -69,13 +70,30 @@ import { pushToast } from "./lib/toast";
 import { t as i18nT } from "./i18n";
 import {
   nestedSpeedRejectionFields,
-  nestedSpeedRejectionMessage,
+  nestedSpeedRejectionMessageForClip,
+  translateTwoLevelCheck,
+  twoLevelReasonCodeKey,
 } from "./components/nested/nestedRejection";
 import type { MediaItem, MediaKind } from "./media";
 import { fileToMediaItem } from "./media";
 import { buildSampleProject } from "./sample";
 import { clamp, uid } from "./lib";
 import { findMissingAssets, relinkAsset, type MissingAsset } from "./lib/relink";
+// Đợt 37 T3: ingest file import vào AssetStore để bền qua reload.
+import { AssetStore } from "./lib/assetStore";
+import type { StaleAliasReport } from "./lib/assetStore";
+import { ingestImportedItem, ingestImportedItemWithProgress } from "./lib/importAsset37T3";
+import type {
+  ImportFileProgressCallback,
+  IngestProgressCallback,
+} from "./lib/ingestProgress39T5";
+import {
+  formatSanitizeSummary,
+  sanitizeOneKeyframe,
+  sanitizeOneSpeedCurve,
+  sanitizeSpecSpeedCurves,
+  type SanitizeSpecResult,
+} from "./lib/curveFix";
 import { CommandStack, type SpecCommand } from "./lib/commands";
 import {
   isTrackLocked,
@@ -117,6 +135,7 @@ import {
   listNestedClips as listNestedClipsPure,
   moveAdjustmentLayer as moveAdjustmentLayerPure,
   nestClips as nestClipsPure,
+  nestedSplitOffset as nestedSplitOffsetPure,
   setNestedClipBoundary as setNestedClipBoundaryPure,
   splitNestedClip as splitNestedClipPure,
   splitNestedDeepInnerClip as splitNestedDeepInnerClipPure,
@@ -125,10 +144,13 @@ import {
   unnestClip as unnestClipPure,
   updateAdjustmentLayer as updateAdjustmentLayerPure,
   updateNestedDeepInnerClip as updateNestedDeepInnerClipPure,
+  updateNestedDeepIntermediateClip as updateNestedDeepIntermediateClipPure,
   updateNestedInnerClip as updateNestedInnerClipPure,
   updateSpecAdjustmentLayer as updateSpecAdjustmentLayerPure,
   type NestedBoundaryPatch,
+  type NestedDeepIntermediatePatch,
   type NestedDeepPatch,
+  type TwoLevelCheck,
   type NestedInnerPatch,
   type SpecAdjustmentPatch,
   type SpecAdjustmentScope,
@@ -139,7 +161,27 @@ export type { MoveItem, Selection } from "./lib/multiselect";
 const IMAGE_CLIP_DEFAULT = 3; // ảnh thêm vào timeline dài mặc định 3s
 
 let trackSeq = 0;
-let sampleLoading = false;
+// Đợt 48 D6 + đợt 49 E6 — queue/retry của loadSample, nay nằm trong
+// apps/web/src/lib/loadSampleQueue.ts (module thuần, test Node ở
+// loadSampleQueue49E6.test.ts): chồng nhau thì ghi nhớ yêu cầu + thế hệ
+// project lúc yêu cầu tới, không chạy song song; khi lượt đang bay xong,
+// chỉ chạy lại MỘT lượt mới khi (a) lượt vừa xong KHÔNG set được (bị bỏ
+// do đổi project, hoặc buildSampleProject ném lỗi) và (b) thế hệ không
+// đổi kể từ khi yêu cầu chồng tới. Xem giải thích đầy đủ + bảng 4 case
+// A/B/C/D trong loadSampleQueue.ts và
+// docs/PHASE9_ROUND48_D6_LOADSAMPLE_LIMITS.md §1.
+const loadSampleQueue = new LoadSampleQueue();
+
+/**
+ * Đợt 47 C1 — thế hệ project (generation counter) chống race loadSample:
+ * mọi lần đổi project (newProject / replaceProject / loadSample set
+ * thành công) tăng thế hệ lên 1. loadSample chụp thế hệ trước await
+ * buildSampleProject rồi chỉ set khi thế hệ không đổi — nếu user đã mở
+ * / tạo project khác trong lúc sample còn bay thì lệnh set cuối bị bỏ
+ * qua thay vì revert project vừa mở về mẫu (bug đợt 46 B1 §6.2).
+ * Module-level, không nằm trong state (không phải API công khai).
+ */
+let projectGeneration = 0;
 
 /**
  * Command stack cho undo/redo (R1-050, R1-051). Module-level (không nằm trong
@@ -270,7 +312,12 @@ function notifyNestedSplitTrimRejection(
   lastNestedRejectionToastAt = now;
   const rec = clip as unknown as Record<string, unknown>;
   const name = typeof rec["name"] === "string" ? (rec["name"] as string) : clipId;
-  pushToast(nestedSpeedRejectionMessage(i18nT, name, fields), "error");
+  // Đợt 22 A: toast clip-aware — nêu đúng lý do từng case (rỗng / sai
+  // hình / vượt biên / không tính được / lệch cửa sổ) thay vì lý do
+  // chung của dạng fields-only. fields vẫn dùng cho key chống spam.
+  const msg = nestedSpeedRejectionMessageForClip(i18nT, clip, name);
+  if (msg === "") return;
+  pushToast(msg, "error");
 }
 
 /**
@@ -421,12 +468,24 @@ interface EditorState {
   media: MediaItem[];
   playhead: number;
   playing: boolean;
+  /**
+   * Đợt 27 K4: true = đang ở chế độ phát ngược toàn cục (playhead chạy
+   * lùi theo từng frame, mọi element seek-stepping, audio mute). Cờ này
+   * chỉ là HƯỚNG phát: Space/K (togglePlay) tạm dừng/tiếp tục theo đúng
+   * hướng hiện tại; nút ▶ ở TopBar chuyển về phát xuôi; nút ◀ / phím J
+   * bật phát ngược. Tắt cờ không tự dừng phát (xem toggleReversePlayback).
+   */
+  reversePlayback: boolean;
   pxPerSec: number;
   selection: Selection[];
   ready: boolean;
 
   setPlayhead: (t: number) => void;
   togglePlay: () => void;
+  /** Đợt 27 K4: bật/tắt chế độ phát ngược (không đổi playhead). */
+  setReversePlayback: (on: boolean) => void;
+  /** Đợt 27 K4: phát ngược / tạm dừng phát ngược (phím J, nút ◀). */
+  toggleReversePlayback: () => void;
   stopPlayback: () => void;
   setZoom: (px: number) => void;
   /** Chọn 1 clip (thay thế selection hiện tại). Giữ chữ ký cũ để không vỡ caller. */
@@ -441,7 +500,14 @@ interface EditorState {
   clearSelection: () => void;
   setProjectName: (name: string) => void;
 
-  importFiles: (files: File[]) => Promise<void>;
+  /**
+   * Đợt 40 V5 — tham số thứ hai tuỳ chọn: callback tiến trình ingest
+   * theo từng file (dùng helper có tiến trình đợt 39 T5). Không truyền
+   * callback thì giữ đường ingest cũ nhanh (WebCrypto, không tiến
+   * trình) — mọi caller cũ không đổi hành vi. Khi có callback, pha
+   * storing vẫn chỉ báo "đang ghi — không có %", không bịa %.
+   */
+  importFiles: (files: File[], onProgress?: ImportFileProgressCallback) => Promise<void>;
   addTrack: (kind: TrackKind) => string;
   removeTrack: (trackId: string) => void;
   /** Bật/tắt mute/lock/hide trên track (R1-054). */
@@ -451,7 +517,12 @@ interface EditorState {
   addMediaToTrack: (mediaId: string, trackId: string, at: number) => void;
   addMediaAtPlayhead: (mediaId: string) => void;
   /** Q8: gắn proxy cho 1 media (chỉ ảnh hưởng preview, không đổi spec/export). */
-  setMediaProxy: (mediaId: string, proxyUrl: string, proxyHeight: number) => void;
+  setMediaProxy: (
+    mediaId: string,
+    proxyUrl: string,
+    proxyHeight: number,
+    proxySizeBytes?: number,
+  ) => void;
   addTextClip: (trackId?: string) => void;
   /**
    * Chèn track "Phụ đề" mới từ segments auto-caption (R1-072).
@@ -497,6 +568,39 @@ interface EditorState {
   /** deltaSec: dịch chuyển mép (dương = kéo sang phải). */
   trimClip: (trackId: string, clipId: string, edge: "left" | "right", deltaSec: number) => void;
   patchClip: (trackId: string, clipId: string, patch: Partial<Clip>) => number;
+  /**
+   * Phase 9 đợt 27 K2 — Sửa mọi speedKeyframes vi phạm trong spec (cấp
+   * cao + trong subSpec đệ quy) theo luật sanitize của lib/curveFix.
+   * CHỈ chạy khi user bấm nút "Sửa curve vi phạm" (ExportPanel xin xác
+   * nhận trước) — store không tự sửa lén. 1 bước undo duy nhất qua
+   * execCommand (label "Sửa curve tốc độ vi phạm"). Trả về kết quả
+   * sanitize để UI tóm tắt; không đổi gì thì trả changed=false và
+   * không push entry undo.
+   */
+  fixSpeedCurveViolations: (summary?: string) => SanitizeSpecResult;
+  /**
+   * Phase 9 đợt 29 L4 — Sửa CHỈ curve của đúng một clip trong báo cáo
+   * tải (path J5 của clip đó), theo luật sanitize của lib/curveFix.
+   * CHỈ chạy khi user bấm nút "Sửa dòng này" trên đúng dòng đó trong
+   * LoadReportPanel (App xin xác nhận trước). 1 bước undo duy nhất
+   * qua execCommand (label riêng, phân biệt với sửa toàn spec).
+   * `summary` (nếu App truyền) là tóm tắt đã dịch theo locale hiện
+   * tại để toast hiện đúng ngôn ngữ; không truyền → tóm tắt tiếng
+   * Việt mặc định của K2 (giữ tương thích ExportPanel). Trả về kết
+   * quả sanitize; không đổi gì thì trả changed=false, không push
+   * entry undo, không toast (giống action toàn spec).
+   */
+  fixOneSpeedCurveViolation: (path: string, summary?: string) => SanitizeSpecResult;
+  /**
+   * Phase 9 đợt 30 M4 — Sửa CHỈ keyframe `keyframeIndex` của đúng một
+   * clip trong báo cáo tải (path J5), theo luật mức keyframe của
+   * lib/curveFix. CHỈ chạy khi user bấm nút "Sửa keyframe này" trên
+   * đúng dòng có chỉ số keyframe đó trong LoadReportPanel (App xin
+   * xác nhận trước). 1 bước undo duy nhất qua execCommand (label
+   * riêng). `summary` tùy chọn như hai action trên; không đổi gì thì
+   * không push entry undo, không toast.
+   */
+  fixOneKeyframeViolation: (path: string, keyframeIndex: number, summary?: string) => SanitizeSpecResult;
   patchTextStyle: (trackId: string, clipId: string, style: Partial<TextStyle>) => void;
   splitAtPlayhead: () => boolean;
   /**
@@ -549,11 +653,47 @@ interface EditorState {
   updateNestedInnerClip: (hostTrackId: string, nestedId: string, innerTrackId: string, innerClipId: string, patch: NestedInnerPatch) => { ok: boolean; curveDropped: number };
   /** Đợt 17 N3: sửa 1 clip lá ở cấp sâu (chainIds từ con trực tiếp của
    * top xuống nested chứa trực tiếp lá; chain rỗng = lá trực tiếp
-   * trong top). 1 bước undo. Trả curveDropped như updateNestedInnerClip. */
-  updateNestedDeepInnerClip: (hostTrackId: string, topId: string, chainIds: string[], innerTrackId: string, innerClipId: string, patch: NestedDeepPatch) => { ok: boolean; curveDropped: number };
+   * trong top). 1 bước undo. Trả curveDropped như updateNestedInnerClip.
+   * Đợt 23 G2: khi patch đặt curve lên lá mà cổng lá
+   * (checkTwoLevelLeafCurve) từ chối, action trả thêm reason (câu toast
+   * đã dịch theo locale hiện tại, key nested.deepLeafTwoLevel) +
+   * reasonKey (key i18n nested.twoLevel* của nhánh bị chặn) và tự bắn
+   * 1 toast error — trước đợt này action nuốt mất error của hàm thuần
+   * nên không caller UI sống nào toast được 8 nhánh cổng lá. Lệnh bị
+   * chặn vẫn không qua execCommand nên không đổi spec, không sinh
+   * entry undo (quy ước guard đợt 18). Đợt 24 H2: action lấy nhánh từ
+   * check object mà hàm thuần trả kèm (twoLevelCheck), dịch bằng
+   * translateTwoLevelCheck + twoLevelReasonCodeKey — KHÔNG còn tách
+   * reason khỏi chuỗi error bằng tiền tố (hợp đồng tiền tố của đợt 23
+   * G2 đã chết; chuỗi error nay chỉ là thông báo hiển thị). Các lỗi
+   * khác (không tìm thấy, track khóa, guard nguồn cha) giữ hành vi cũ:
+   * ok:false, không reason, không toast — panel báo lỗi chung. */
+  updateNestedDeepInnerClip: (hostTrackId: string, topId: string, chainIds: string[], innerTrackId: string, innerClipId: string, patch: NestedDeepPatch) => { ok: boolean; curveDropped: number; reason?: string; reasonKey?: string; twoLevelCheck?: TwoLevelCheck };
+  /** Đợt 25 I3: sửa vị trí (start/duration) của 1 nested TRUNG GIAN ở
+   * cấp sâu (parentChainIds = chain tới tầng chứa trực tiếp đích, xem
+   * hàm thuần). 1 bước undo. Bị chặn (chain sai, hình học sai, guard
+   * nguồn cha, cặp hai tầng của chính đích vi phạm R1) → ok:false,
+   * không qua execCommand nên không đổi spec, không sinh undo. Khi
+   * chặn ở cổng hai tầng thì trả thêm twoLevelCheck nguyên + reason
+   * đã dịch + reasonKey để panel hiển thị đúng nhánh mà không tách
+   * chuỗi; lỗi khác giữ hành vi cũ (không reason, không toast). */
+  updateNestedDeepIntermediateClip: (hostTrackId: string, topId: string, parentChainIds: string[], innerTrackId: string, innerClipId: string, patch: NestedDeepIntermediatePatch) => { ok: boolean; curveDropped: number; reason?: string; reasonKey?: string; twoLevelCheck?: TwoLevelCheck };
   /** Đợt 17 N3: tách 1 clip lá ở cấp sâu tại splitTime (khung thời gian
    * của tầng cha trực tiếp, margin 0.05s). 1 bước undo. */
   splitNestedDeepInnerClip: (hostTrackId: string, topId: string, chainIds: string[], innerTrackId: string, innerClipId: string, splitTime: number) => boolean;
+  /** Đợt 25 I2: tách 1 clip lá ở cấp sâu tại mốc NGOÀI (thời gian trên
+   * timeline ngoài của nested cha, đã gồm top.start — cùng khung với
+   * ComposedLeafWindow.absoluteStart). Action đổi mốc ngoài về thời
+   * gian lá bằng nestedSplitOffset (đợt 24 H1, đảo chuỗi τ dưới ramp
+   * tổ tiên) rồi gọi splitNestedDeepInnerClipPure với
+   * leaf.start + leafLocalTime — KHÔNG đổi ngữ nghĩa tham số của
+   * action cũ (nó vẫn nhận thời gian của tầng chứa lá). Bị chặn →
+   * ok:false + reason/reasonKey đã dịch + (trừ lỗi lookup/khóa) 1
+   * toast error, KHÔNG qua execCommand nên không đổi spec, không
+   * sinh entry undo (quy ước guard đợt 18). Thành công → 1 bước
+   * undo, trả leafLocalTime (thời gian output của lá) + splitTime
+   * (thời gian tầng chứa lá đã truyền cho hàm thuần). */
+  splitNestedDeepInnerClipAtOuterOffset: (hostTrackId: string, topId: string, chainIds: string[], innerTrackId: string, innerClipId: string, outerTime: number) => { ok: boolean; reason?: string; reasonKey?: string; leafLocalTime?: number; splitTime?: number };
   /** Đợt 19 G2: đặt speed curve lên nested clip theo chế độ
    * trim-cố-định (spec đợt 18 §2): giữ trim, tính lại duration bằng
    * đảo tích phân. 1 bước undo. Trả ok:false + reason khi: không phải
@@ -592,8 +732,14 @@ interface EditorState {
   loadSample: () => Promise<void>;
   /** Tạo project trống (xoá media phiên hiện tại — blob URL không bền vững). */
   newProject: () => void;
-  /** Thay toàn bộ spec (mở file / khôi phục autosave). Media bị xoá vì blob URL cũ đã chết. */
+  /** Thay toàn bộ spec (mở file / khôi phục autosave). Media bị xoá vì blob URL cũ đã chết; App khôi phục autosave sẽ nạp lại media bin bằng rehydrate (đợt 36 S5) trước khi checkMissingMedia. */
   replaceProject: (spec: VideoSpec) => void;
+  /**
+   * Đợt 36 S5 — nạp lại media bin sau reload (từ AssetStore): thêm các
+   * item chưa có (khớp theo tên), KHÔNG đụng spec/history/selection.
+   * Idempotent: gọi lại với cùng item không nhân đôi media.
+   */
+  restoreMediaBin: (items: MediaItem[]) => void;
   duration: () => number;
 
   // ---- Relink (R1-033): media thiếu sau khi mở project ----
@@ -605,7 +751,18 @@ interface EditorState {
    * Relink 1 asset: import file user chọn, verify đọc được, cập nhật clip.
    * Trả về {ok, message} để panel hiển thị lỗi nếu file không đọc được.
    */
-  relinkMedia: (oldSrc: string, file: File) => Promise<{ ok: boolean; message: string }>;
+  relinkMedia: (
+    oldSrc: string,
+    file: File,
+    onProgress?: IngestProgressCallback,
+  ) => Promise<{ ok: boolean; message: string }>;
+  /**
+   * Đợt 39 T5 — dọn alias thừa trong AssetStore (alias trùng tên thật,
+   * tạo trước guard đợt 38 U3). Trả về báo cáo dọn; throw khi không mở
+   * được AssetStore (panel bắt và hiển thị lỗi). Chỉ gọi khi không có
+   * import/relink đang bay.
+   */
+  cleanupStaleAliases: () => Promise<StaleAliasReport>;
   /** Đóng panel relink (bỏ qua các asset còn thiếu). */
   dismissRelink: () => void;
 
@@ -669,6 +826,7 @@ export const useStore = create<EditorState>()((set, get) => {
   media: [],
   playhead: 0,
   playing: false,
+  reversePlayback: false,
   pxPerSec: 60,
   selection: [],
   clipboardSize: 0,
@@ -690,11 +848,31 @@ export const useStore = create<EditorState>()((set, get) => {
   },
 
   togglePlay: () => {
-    const { playing, playhead, duration } = get();
+    const { playing, playhead, duration, reversePlayback } = get();
     if (!playing && playhead >= duration() - 0.001) {
       set({ playhead: 0, playing: true }); // hết video -> phát lại từ đầu
+    } else if (!playing && reversePlayback && playhead <= 0.001) {
+      // Đợt 27 K4: đang ở chế độ ngược mà playhead đã về 0 thì phát
+      // ngược lại từ cuối (đối xứng với nhánh phát xuôi ở trên).
+      set({ playhead: duration(), playing: true });
     } else {
       set({ playing: !playing });
+    }
+  },
+
+  setReversePlayback: (on) => set({ reversePlayback: on }),
+
+  toggleReversePlayback: () => {
+    // Đợt 27 K4: đang phát ngược thì chỉ tạm dừng (giữ cờ để Space/K
+    // tiếp tục ngược); chưa phát ngược thì bật cờ + phát, và nếu
+    // playhead đang ở 0 thì nhảy về cuối mới có gì để lùi.
+    const { playing, playhead, duration, reversePlayback } = get();
+    if (playing && reversePlayback) {
+      set({ playing: false });
+    } else if (playhead <= 0.001) {
+      set({ reversePlayback: true, playhead: duration(), playing: true });
+    } else {
+      set({ reversePlayback: true, playing: true });
     }
   },
 
@@ -717,14 +895,26 @@ export const useStore = create<EditorState>()((set, get) => {
   setProjectName: (name) =>
     set((s) => ({ spec: { ...s.spec, meta: { ...s.spec.meta, name } } })),
 
-  setMediaProxy: (mediaId, proxyUrl, proxyHeight) =>
+  setMediaProxy: (mediaId, proxyUrl, proxyHeight, proxySizeBytes) =>
     set((s) => ({
-      media: s.media.map((m) =>
-        m.id === mediaId ? { ...m, proxyUrl, proxyHeight } : m,
-      ),
+      media: s.media.map((m) => {
+        if (m.id !== mediaId) return m;
+        // Đợt 38 U2: chỉ ghi proxySizeBytes khi là số hợp lệ (> 0);
+        // bridge cũ không trả trường này thì giữ nguyên (không xóa
+        // size đã biết bằng undefined, không ghi size rác).
+        const patch: Partial<typeof m> = { proxyUrl, proxyHeight };
+        if (
+          typeof proxySizeBytes === "number" &&
+          Number.isFinite(proxySizeBytes) &&
+          proxySizeBytes > 0
+        ) {
+          patch.proxySizeBytes = proxySizeBytes;
+        }
+        return { ...m, ...patch };
+      }),
     })),
 
-  importFiles: async (files) => {
+  importFiles: async (files, onProgress) => {
     const items: MediaItem[] = [];
     for (const f of files) {
       try {
@@ -751,6 +941,64 @@ export const useStore = create<EditorState>()((set, get) => {
       }
       return { media: [...s.media, ...items] };
     });
+    // Đợt 37 T3: ingest bytes vào AssetStore SAU khi tên đã chốt duy
+    // nhất (rehydrate khớp tên thô theo originalName) và SAU set() để
+    // giữ nguyên tính nguyên tử của bước làm duy nhất tên ở trên.
+    // Await đủ để khi importFiles resolve thì bytes đã bền: reload ngay
+    // sau import vẫn khôi phục được qua rehydrate (đợt 36 S5). Từng
+    // file best-effort (xem importAsset37T3): lỗi ingest không làm hỏng
+    // import trong phiên, chỉ mất bền vững — panel Relink sau reload sẽ
+    // báo như hành vi cũ thay vì crash lúc import.
+    // Đợt 38 U3 (dedup cùng bytes khác tên): ingest lần 2 trả về manifest
+    // cũ mang originalName khác tên item (nameMismatch) → ghi thêm tên
+    // này làm alias của asset đó; lần reload sau rehydrate khớp qua alias
+    // nên clip không còn Relink oan, mà KHÔNG cần đổi src clip sang
+    // `asset:` (không chạm addMediaToTrack/export/render). Alias ghi
+    // best-effort như ingest: lỗi thì bỏ qua, import trong phiên vẫn xong.
+    // ROUND43-Y6 — `new AssetStore()` trước đây KHÔNG được bọc, trong
+    // khi đường autosave (App.tsx), mở file (ProjectMenu.tsx) và relink
+    // (store.ts dưới) đều đã bọc try/catch cho cùng constructor này.
+    // Khi IndexedDB vắng mặt, constructor ném (xem defaultFactory ở
+    // assetStore.ts) SAU khi media đã set() vào bin, làm importFiles
+    // reject dù import trong phiên đã xong, và bước proxy tự động sau
+    // đó của caller bị bỏ qua. Nay bọc toàn bộ khối ingest: lỗi ở đây
+    // chỉ mất bền vững (reload sẽ hiện Relink như cũ), import trong
+    // phiên vẫn resolve bình thường. Đường happy-path không đổi.
+    try {
+      const assetStore = new AssetStore();
+      // Đợt 40 V5 — importFiles thường nay cũng có % thật: dùng đường
+      // có tiến trình đợt 39 T5 khi caller truyền callback (helper tự
+      // fallback về ingest thường khi không có callback, nên đường cũ
+      // không đổi). fileIndex/fileCount tính trên danh sách item đã
+      // chốt tên (file không hỗ trợ đã bị loại ở bước fileToMediaItem).
+      for (let idx = 0; idx < items.length; idx++) {
+        const it = items[idx];
+        const res = await ingestImportedItemWithProgress(
+          assetStore,
+          it,
+          onProgress
+            ? (ev) => {
+                onProgress({
+                  ...ev,
+                  fileIndex: idx,
+                  fileCount: items.length,
+                  fileName: it.name,
+                });
+              }
+            : undefined,
+        );
+        if (res.manifest && res.nameMismatch) {
+          try {
+            await assetStore.addAlias(res.manifest.assetId, it.name);
+          } catch {
+            // bỏ qua lặng lẽ như ingest: chỉ mất bền vững của tên bí danh
+          }
+        }
+      }
+    } catch {
+      // IndexedDB không khả dụng -> chỉ mất bền vững, import trong
+      // phiên vẫn xong (media đã set() ở trên, không rollback).
+    }
   },
 
   addTrack: (kind) => {
@@ -1492,11 +1740,12 @@ export const useStore = create<EditorState>()((set, get) => {
     //    khi out mới vượt độ dài nguồn con (đuôi có thể không có hình).
     // Đợt 20 R4: 3 câu toast G2 nay qua i18n (key nested.curve*,
     // đủ vi/en, theo mẫu nested.speedRejected của G3) — không còn
-    // hardcode tiếng Việt ở đường patchClip này (reason chi tiết của
-    // check hai tầng vẫn là chuỗi tiếng Việt, cùng tiền lệ reason của
-    // action trim-cố-định vốn chỉ có tiếng Việt).
+    // hardcode tiếng Việt ở đường patchClip này. Đợt 22 A: reason chi
+    // tiết của check hai tầng cũng qua i18n (đợt 23 G1: dịch theo
+    // reasonCode trước, fallback mapper chuỗi, xem nestedRejection.ts) nên locale en
+    // không còn lẫn đuôi tiếng Việt.
     type NestedG2Info =
-      | { conflict: true; reason: string }
+      | { conflict: true; reason: string; reasonCode?: string; reasonVars?: Record<string, string | undefined> }
       | { mismatch: true; expectedOut: number; actualOut: number }
       | { overSource: true; expectedOut: number; sourceDuration: number }
       | null;
@@ -1515,7 +1764,8 @@ export const useStore = create<EditorState>()((set, get) => {
       if (hasCurvePatch && patchCurve && Array.isArray(patchCurve.keyframes) && patchCurve.keyframes.length > 0) {
         const check = checkTwoLevelOuterCurvePure(nestedOld, patchCurve);
         if (!check.ok) {
-          return { conflict: true, reason: check.reason } as const;
+          // Đợt 23 G1: mang nguyên check sang toast để dịch theo code.
+          return { conflict: true, reason: check.reason, reasonCode: check.reasonCode, reasonVars: check.reasonVars } as const;
         }
       }
       const oldCurve = (clip as { speedKeyframes?: SpeedCurve }).speedKeyframes;
@@ -1560,7 +1810,10 @@ export const useStore = create<EditorState>()((set, get) => {
       const nestedName =
         (clip as unknown as { name?: string }).name ?? clip.id;
       pushToast(
-        i18nT("nested.curveTwoLevelInvalid", { name: nestedName, reason: nestedG2.reason }),
+        i18nT("nested.curveTwoLevelInvalid", {
+          name: nestedName,
+          reason: translateTwoLevelCheck(i18nT, nestedG2),
+        }),
         "error",
       );
       return 0;
@@ -1763,6 +2016,52 @@ export const useStore = create<EditorState>()((set, get) => {
       );
     }
     return patchCurveSlice?.dropped ?? 0;
+  },
+
+  // Phase 9 đợt 27 K2 — xem ghi chú ở interface. Chỉ ExportPanel gọi,
+  // sau khi user xác nhận (confirm liệt kê từng thay đổi). Không tự
+  // chạy ở load/save/render. Curve không cứu được / track khóa được
+  // để nguyên (xem curveFix) nên hàm này không bao giờ làm mất clip.
+  // Đợt 29 L4: thêm tham số summary tùy chọn (App truyền tóm tắt đã
+  // dịch theo locale; ExportPanel không truyền nên vẫn toast vi cũ).
+  fixSpeedCurveViolations: (summary?: string) => {
+    const st = get();
+    const res = sanitizeSpecSpeedCurves(st.spec);
+    if (!res.changed) return res;
+    execCommand({
+      label: "Sửa curve tốc độ vi phạm",
+      apply: (spec) => sanitizeSpecSpeedCurves(spec).spec,
+    });
+    pushToast(summary ?? formatSanitizeSummary(res), "info");
+    return res;
+  },
+
+  // Phase 9 đợt 30 M4 — xem ghi chú ở interface. Chỉ App (nút "Sửa
+  // keyframe này" của LoadReportPanel) gọi, sau khi user xác nhận.
+  fixOneKeyframeViolation: (path: string, keyframeIndex: number, summary?: string) => {
+    const st = get();
+    const res = sanitizeOneKeyframe(st.spec, path, keyframeIndex);
+    if (!res.changed) return res;
+    execCommand({
+      label: "Sửa 1 keyframe tốc độ (báo cáo tải)",
+      apply: (spec) => sanitizeOneKeyframe(spec, path, keyframeIndex).spec,
+    });
+    pushToast(summary ?? formatSanitizeSummary(res), "info");
+    return res;
+  },
+
+  // Phase 9 đợt 29 L4 — xem ghi chú ở interface. Chỉ App (nút "Sửa
+  // dòng này" của LoadReportPanel) gọi, sau khi user xác nhận.
+  fixOneSpeedCurveViolation: (path: string, summary?: string) => {
+    const st = get();
+    const res = sanitizeOneSpeedCurve(st.spec, path);
+    if (!res.changed) return res;
+    execCommand({
+      label: "Sửa curve tốc độ của 1 clip (báo cáo tải)",
+      apply: (spec) => sanitizeOneSpeedCurve(spec, path).spec,
+    });
+    pushToast(summary ?? formatSanitizeSummary(res), "info");
+    return res;
   },
 
   patchTextStyle: (trackId, clipId, style) => {
@@ -2262,10 +2561,74 @@ export const useStore = create<EditorState>()((set, get) => {
 
   updateNestedDeepInnerClip: (hostTrackId, topId, chainIds, innerTrackId, innerClipId, patch) => {
     const res = updateNestedDeepInnerClipPure(get().spec, hostTrackId, topId, chainIds, innerTrackId, innerClipId, patch);
-    if ("error" in res) return { ok: false, curveDropped: 0 };
+    if ("error" in res) {
+      // Đợt 24 H2 — nhận diện nhánh bị chặn từ check object hàm thuần
+      // trả kèm (res.twoLevelCheck), dịch theo reasonCode. KHÔNG tách
+      // chuỗi error bằng tiền tố nữa (hợp đồng tiền tố đợt 23 G2 đã
+      // chết cùng format error mới của hàm thuần). Không có check
+      // (lỗi không phải cổng lá) thì giữ hành vi cũ: không reason,
+      // không toast. Không qua execCommand → không đổi spec, không
+      // sinh entry undo.
+      if (res.twoLevelCheck) {
+        const translated = translateTwoLevelCheck(i18nT, res.twoLevelCheck);
+        const topClip = get().spec.tracks
+          .find((t) => t.id === hostTrackId)
+          ?.clips.find((c) => c.id === topId);
+        const topName =
+          (topClip as unknown as { name?: string } | undefined)?.name ?? topId;
+        const msg = i18nT("nested.deepLeafTwoLevel", {
+          name: topName,
+          reason: translated,
+        });
+        pushToast(msg, "error");
+        return {
+          ok: false,
+          curveDropped: 0,
+          reason: msg,
+          reasonKey: twoLevelReasonCodeKey(res.twoLevelCheck.reasonCode) ?? undefined,
+          // Đợt 25 I3: trả kèm check nguyên để panel (DeepInnerLevel)
+          // hiển thị từ check object thay vì phụ thuộc chuỗi reason;
+          // reason/reasonKey giữ nguyên để caller cũ + test H6/G2
+          // không đổi hành vi.
+          twoLevelCheck: res.twoLevelCheck,
+        };
+      }
+      return { ok: false, curveDropped: 0 };
+    }
     execCommand(
       {
         label: "Sửa clip con sâu trong compound clip",
+        apply: () => res.spec,
+      },
+      get().selection,
+    );
+    return { ok: true, curveDropped: res.curveDropped ?? 0 };
+  },
+
+  // Đợt 25 I3 — sửa vị trí nested trung gian sâu (đóng nợ H6 §1.4).
+  // Bị chặn → trả ok:false TRƯỚC execCommand nên spec không đổi và
+  // không sinh entry undo (quy ước guard đợt 18). Cổng hai tầng trả
+  // kèm check nguyên + reason đã dịch + reasonKey (không toast ở
+  // đây để tránh thêm key i18n mới trong đợt có nhiều luồng cùng
+  // chạm i18n — panel hiển thị msg từ check/reason trả về).
+  updateNestedDeepIntermediateClip: (hostTrackId, topId, parentChainIds, innerTrackId, innerClipId, patch) => {
+    const res = updateNestedDeepIntermediateClipPure(get().spec, hostTrackId, topId, parentChainIds, innerTrackId, innerClipId, patch);
+    if ("error" in res) {
+      if (res.twoLevelCheck) {
+        const translated = translateTwoLevelCheck(i18nT, res.twoLevelCheck);
+        return {
+          ok: false,
+          curveDropped: 0,
+          reason: translated,
+          reasonKey: twoLevelReasonCodeKey(res.twoLevelCheck.reasonCode) ?? undefined,
+          twoLevelCheck: res.twoLevelCheck,
+        };
+      }
+      return { ok: false, curveDropped: 0 };
+    }
+    execCommand(
+      {
+        label: "Sửa nested trung gian sâu trong compound clip",
         apply: () => res.spec,
       },
       get().selection,
@@ -2298,12 +2661,14 @@ export const useStore = create<EditorState>()((set, get) => {
     // phạm luật render R1 (checkTwoLevelOuterCurvePure); cặp hợp lệ
     // được cho qua vì render đã hợp thật. reasonKey giữ nguyên key
     // của T3 (caller cũ vẫn nhận diện được loại từ chối), reason gắn
-    // thêm lý do cụ thể của check để không nuốt thông tin.
+    // thêm lý do cụ thể của check để không nuốt thông tin. Đợt 22 A:
+    // lý do cụ thể đó qua i18n (đợt 23 G1: translateTwoLevelCheck) nên locale en
+    // không còn lẫn đuôi tiếng Việt như nợ T3 R3.
     const twoLevelCheck = checkTwoLevelOuterCurvePure(nested, curve);
     if (!twoLevelCheck.ok) {
       return {
         ok: false,
-        reason: `${i18nT("nested.fixedTrimTwoLevel")} ${twoLevelCheck.reason}`,
+        reason: `${i18nT("nested.fixedTrimTwoLevel")} ${translateTwoLevelCheck(i18nT, twoLevelCheck)}`,
         reasonKey: "nested.fixedTrimTwoLevel",
       };
     }
@@ -2340,6 +2705,85 @@ export const useStore = create<EditorState>()((set, get) => {
       get().selection,
     );
     return true;
+  },
+
+  // Đợt 25 I2: nối nestedSplitOffset (đợt 24 H1) vào store — caller sống
+  // đầu tiên của helper ngoài test. Đường đi: resolve cây bằng id từ
+  // spec hiện tại (không tin bản copy caller truyền vào — helper cũng
+  // khớp chain theo id trong cây) → nestedSplitOffset đổi mốc ngoài
+  // về leafLocalTime (fail-fast throw khi curve sai hình dạng, null
+  // khi mốc ngoài cửa sổ khả kiến) → kẹp margin → gọi hàm thuần cũ
+  // với leaf.start + leafLocalTime. Lỗi lookup/khóa trả ok:false +
+  // reason nhưng KHÔNG toast (quy ước lỗi chain của đợt 24 H6);
+  // các nhánh chặn do user gây ra (curve lỗi, ngoài miền, sát mép,
+  // hàm trong từ chối) toast 1 lần + trả reason để panel giữ dòng
+  // msg bền vững. Mọi nhánh chặn đều return trước execCommand nên
+  // không đổi spec, không sinh entry undo.
+  // Margin 0.05s là mirror của N3_SPLIT_MARGIN (private trong
+  // nestUtils, cùng giá trị với phép kiểm của hàm thuần): kiểm tra
+  // trước để trả reasonKey riêng sạch locale; nếu margin của hàm
+  // thuần đổi sau này, nhánh innerFailed vẫn chặn (không tách sai).
+  // Bất biến trim: phép tách chỉ viết lại track chứa lá trong tầng
+  // sâu nhất (rebuildDeepLevels của hàm thuần) nên trim/curve của
+  // top và các tầng trung gian giữ nguyên — trim.out = in + ∫ của
+  // chúng không bị đụng tới (test khóa bằng trim không đổi + ∫ tính
+  // tay ở fixture ramp).
+  splitNestedDeepInnerClipAtOuterOffset: (hostTrackId, topId, chainIds, innerTrackId, innerClipId, outerTime) => {
+    const SPLIT_OFFSET_EDGE_MARGIN = 0.05;
+    const blocked = (reasonKey: string, toast: boolean) => {
+      const reason = i18nT(reasonKey);
+      if (toast) pushToast(reason, "error");
+      return { ok: false as const, reason, reasonKey };
+    };
+    const spec = get().spec;
+    const host = spec.tracks.find((t) => t.id === hostTrackId);
+    if (!host) return blocked("nested.splitOffsetNotFound", false);
+    if (host.locked) return blocked("nested.splitOffsetLocked", false);
+    const topFound = host.clips.find((c) => c.id === topId);
+    const top = topFound ? asNestedClipPure(topFound) : null;
+    if (!top) return blocked("nested.splitOffsetNotFound", false);
+    const chain: Array<NonNullable<ReturnType<typeof asNestedClipPure>>> = [];
+    let curSpec = top.subSpec;
+    for (const id of chainIds) {
+      const found = curSpec.tracks.flatMap((t) => t.clips).find((c) => c.id === id);
+      const nested = found ? asNestedClipPure(found) : null;
+      if (!nested) return blocked("nested.splitOffsetNotFound", false);
+      chain.push(nested);
+      curSpec = nested.subSpec;
+    }
+    const parentTrack = curSpec.tracks.find((t) => t.id === innerTrackId);
+    if (!parentTrack) return blocked("nested.splitOffsetNotFound", false);
+    const leaf = parentTrack.clips.find((c) => c.id === innerClipId);
+    if (!leaf) return blocked("nested.splitOffsetNotFound", false);
+    let point: ReturnType<typeof nestedSplitOffsetPure>;
+    try {
+      point = nestedSplitOffsetPure(top, chain, leaf, outerTime);
+    } catch {
+      // Helper fail-fast khi curve sai hình dạng (message chứa
+      // speedKeyframes, tiếng Việt nội bộ): KHÔNG lộ message gốc vào
+      // toast để locale en không rò tiếng Việt — reason là câu i18n
+      // chung, chi tiết nằm trong LIMITS I2.
+      return blocked("nested.splitOffsetCurveInvalid", true);
+    }
+    if (!point) return blocked("nested.splitOffsetOutOfRange", true);
+    const leafLocalTime = point.leafLocalTime;
+    if (
+      leafLocalTime <= SPLIT_OFFSET_EDGE_MARGIN ||
+      leafLocalTime >= leaf.duration - SPLIT_OFFSET_EDGE_MARGIN
+    ) {
+      return blocked("nested.splitOffsetTooCloseToEdge", true);
+    }
+    const splitTime = leaf.start + leafLocalTime;
+    const res = splitNestedDeepInnerClipPure(spec, hostTrackId, topId, chainIds, innerTrackId, innerClipId, splitTime, () => uid("c"));
+    if ("error" in res) return blocked("nested.splitOffsetInnerFailed", true);
+    execCommand(
+      {
+        label: "Tách clip con sâu theo mốc ngoài (đảo τ)",
+        apply: () => res.spec,
+      },
+      get().selection,
+    );
+    return { ok: true as const, leafLocalTime, splitTime };
   },
 
   clearClipboard: () => {
@@ -2402,24 +2846,53 @@ export const useStore = create<EditorState>()((set, get) => {
   },
 
   loadSample: async () => {
-    if (sampleLoading) return;
-    sampleLoading = true;
-    const { spec, media } = await buildSampleProject();
-    trackSeq = 10; // tránh trùng id track mẫu (v1, t1)
-    clipboard = null; // K2: đổi project -> clipboard cũ không còn ý nghĩa
-    set({
-      spec,
-      media,
-      playhead: 0,
-      playing: false,
-      selection: [],
-      ready: true,
-      clipboardSize: 0,
-    });
-    clearHistory(); // đổi project -> không undo xuyên project
+    if (!loadSampleQueue.begin()) {
+      // Đợt 48 D6: chồng nhau → không chạy song song, ghi nhớ yêu cầu để
+      // xét retry khi lượt đang bay xong (xem loadSampleQueue.ts).
+      loadSampleQueue.noteOverlapping(projectGeneration);
+      return;
+    }
+    // Đợt 47 C1: chụp thế hệ trước await — set cuối chỉ chạy khi không
+    // có lần đổi project nào xen vào trong lúc buildSampleProject bay.
+    const genAtStart = projectGeneration;
+    // Đợt 48 D6: lượt này có set thành công không (để quyết định retry).
+    let didSet = false;
+    try {
+      const { spec, media } = await buildSampleProject();
+      if (genAtStart !== projectGeneration) return; // project đã đổi → bỏ set stale, giữ nguyên project hiện tại
+      projectGeneration += 1; // set này tự nó là một lần đổi project
+      trackSeq = 10; // tránh trùng id track mẫu (v1, t1)
+      clipboard = null; // K2: đổi project -> clipboard cũ không còn ý nghĩa
+      set({
+        spec,
+        media,
+        playhead: 0,
+        playing: false,
+        selection: [],
+        ready: true,
+        clipboardSize: 0,
+      });
+      didSet = true;
+      clearHistory(); // đổi project -> không undo xuyên project
+    } finally {
+      // Đợt 47 C1: guard chỉ chống gọi trùng, không phải cờ một-lần:
+      // trước đây sampleLoading không bao giờ reset nên nút "Dự án mẫu"
+      // chết sau lần tải đầu (kể cả khi buildSampleProject ném lỗi);
+      // reset ở finally để bấm lại vẫn chạy được (nay nằm trong
+      // loadSampleQueue.finish — xem loadSampleQueue.ts).
+      // Đợt 48 D6: retry có điều kiện — finish() trả true chỉ khi có yêu
+      // cầu chờ + lượt này KHÔNG set được + thế hệ không đổi; queue đã
+      // xóa trước khi trả về nên không có vòng lặp vô hạn. Gọi qua get()
+      // để đi đúng hàm loadSample hiện tại; chạy fire-and-forget như mọi
+      // caller UI (void ...), không await trong finally.
+      if (loadSampleQueue.finish(didSet, projectGeneration)) {
+        void get().loadSample();
+      }
+    }
   },
 
   newProject: () => {
+    projectGeneration += 1; // Đợt 47 C1: đổi project → thế hệ mới
     trackSeq = 0;
     clipboard = null; // K2: đổi project -> clipboard cũ không còn ý nghĩa
     set({
@@ -2435,6 +2908,7 @@ export const useStore = create<EditorState>()((set, get) => {
   },
 
   replaceProject: (spec) => {
+    projectGeneration += 1; // Đợt 47 C1: đổi project → thế hệ mới
     trackSeq = 100; // tránh trùng id khi thêm track mới sau khi mở file
     clipboard = null; // K2: đổi project -> clipboard cũ không còn ý nghĩa
     set({
@@ -2453,6 +2927,14 @@ export const useStore = create<EditorState>()((set, get) => {
   duration: () => projectDuration(get().spec),
 
   // ---- Relink (R1-033) ----
+  // Đợt 36 S5: nạp lại media bin sau reload (xem App.tsx + rehydrate36S5.ts).
+  restoreMediaBin: (items) => {
+    if (items.length === 0) return;
+    const existing = new Set(get().media.map((m) => m.name));
+    const fresh = items.filter((it) => !existing.has(it.name));
+    if (fresh.length > 0) set((s) => ({ media: [...s.media, ...fresh] }));
+  },
+
   checkMissingMedia: () => {
     const { spec, media } = get();
     const names = new Set(media.map((m) => m.name));
@@ -2460,7 +2942,7 @@ export const useStore = create<EditorState>()((set, get) => {
     set({ missingAssets: missing.length > 0 ? missing : null });
   },
 
-  relinkMedia: async (oldSrc, file) => {
+  relinkMedia: async (oldSrc, file, onProgress) => {
     // 1. Đọc + probe file user chọn (verify thật, không chỉ tin extension).
     let item: MediaItem;
     try {
@@ -2490,9 +2972,72 @@ export const useStore = create<EditorState>()((set, get) => {
       i += 1;
     }
     item.name = n;
-    const { spec: next, updatedCount } = relinkAsset(spec, oldSrc, n);
-    if (updatedCount === 0) {
-      return { ok: false, message: `Không còn clip nào dùng "${oldSrc}".` };
+    // ROUND44-Z3: trường hợp chọn lại đúng file gốc (n === oldSrc) KHÔNG
+    // phải thất bại. relinkAsset cố tình trả updatedCount = 0 khi tên
+    // không đổi (semantics thuần đã khóa bằng test relinkNested) vì spec
+    // không cần sửa — nhưng relinkMedia trước đây coi 0 là "không còn
+    // clip nào dùng", nên user chọn lại đúng file gốc (trường hợp thường
+    // gặp nhất, kể cả file > 128 MiB) sẽ kẹt panel vĩnh viễn với thông
+    // báo sai, và ingest bền vững không bao giờ chạy. Sửa ở đây: khi
+    // tên không đổi, lấy số clip từ entry missing đang hiện (spec đã
+    // đúng tên, việc còn lại là ingest + đóng panel); chỉ báo thất bại
+    // khi thật sự không còn entry nào dùng oldSrc. execCommand sau đó
+    // vẫn an toàn: apply trả đúng ref spec cũ → history.execute trả
+    // null, không push entry undo rỗng.
+    let next = spec;
+    let updatedCount = 0;
+    if (n === oldSrc) {
+      updatedCount = (missingAssets ?? []).find((m) => m.src === oldSrc)?.clipCount ?? 0;
+      if (updatedCount === 0) {
+        return { ok: false, message: `Không còn clip nào dùng "${oldSrc}".` };
+      }
+    } else {
+      const r = relinkAsset(spec, oldSrc, n);
+      next = r.spec;
+      updatedCount = r.updatedCount;
+      if (updatedCount === 0) {
+        return { ok: false, message: `Không còn clip nào dùng "${oldSrc}".` };
+      }
+    }
+    // Đợt 38 U3 — ingest đường relink tay (nợ đợt 37 T3 §4): relinkMedia
+    // trước đây chỉ thêm item vào phiên, không ingest nên lần reload sau
+    // lại hiện Relink cho đúng clip vừa relink. Nay ingest sau khi tên đã
+    // chốt (n) và TRƯỚC khi resolve, cùng helper importFiles dùng (đợt 37
+    // T3): await đủ để reload ngay sau relink vẫn bền; best-effort tuyệt
+    // đối — lỗi ingest chỉ mất bền vững, relink trong phiên vẫn thành công.
+    // Dedup cùng bytes khác tên: ingest trả manifest cũ (nameMismatch) →
+    // ghi alias cho tên n để reload sau khớp lại qua alias, không đổi src.
+    // Đợt 39 T5 — (a) có onProgress thì ingest bằng đường băm tăng dần
+    // (ingestWithProgress) để panel hiện %/byte thật thay vì spinner mù;
+    // không có onProgress thì giữ đường ingest cũ (WebCrypto nhanh hơn).
+    // (b) Đường relink một lần cho project cũ (ingest trước đợt 38):
+    // ngoài alias cho tên mới n, ghi thêm alias cho tên cũ oldSrc khi
+    // khác n — project khác dùng chung kho mà vẫn trỏ tên cũ cùng bytes
+    // cũng bền từ lần relink này (guard từ chối nếu oldSrc là tên thật
+    // của asset khác, nên không che tên thật).
+    let dedupNote = "";
+    try {
+      const assetStore = new AssetStore();
+      const res = onProgress
+        ? await ingestImportedItemWithProgress(assetStore, item, onProgress)
+        : await ingestImportedItem(assetStore, item);
+      if (res.manifest && res.nameMismatch) {
+        try {
+          await assetStore.addAlias(res.manifest.assetId, n);
+        } catch {
+          // bỏ qua lặng lẽ như ingest
+        }
+        dedupNote = ` (Nội dung trùng với file "${res.manifest.originalName}" đã lưu — dùng chung bản đó, lần mở sau không cần relink lại.)`;
+      }
+      if (res.manifest && oldSrc !== n) {
+        try {
+          await assetStore.addAlias(res.manifest.assetId, oldSrc);
+        } catch {
+          // best-effort: chỉ tăng bền cho project cũ, không ảnh hưởng relink
+        }
+      }
+    } catch {
+      // ingestImportedItem vốn không throw; lưới an toàn ngoài cùng
     }
     const rest = (missingAssets ?? []).filter((m) => m.src !== oldSrc);
     // Ghi nhận đổi src clip vào history (undo được).
@@ -2501,10 +3046,26 @@ export const useStore = create<EditorState>()((set, get) => {
       media: [...media, item],
       missingAssets: rest.length > 0 ? rest : null, // hết thiếu → tự đóng panel
     });
-    return { ok: true, message: `Đã relink ${updatedCount} clip → "${n}".` };
+    if (dedupNote) pushToast(`Đã relink → "${n}".${dedupNote}`, "info");
+    return { ok: true, message: `Đã relink ${updatedCount} clip → "${n}".${dedupNote}` };
   },
 
   dismissRelink: () => set({ missingAssets: null }),
+
+  // Đợt 39 T5 — dọn alias thừa (xem AssetStore.cleanupStaleAliases).
+  cleanupStaleAliases: async () => {
+    const assetStore = new AssetStore();
+    const report = await assetStore.cleanupStaleAliases();
+    if (report.removed.length > 0) {
+      pushToast(
+        `Đã dọn ${report.removed.length} alias thừa khỏi ${report.cleaned} asset.`,
+        "info",
+      );
+    } else {
+      pushToast(`Không có alias thừa (đã quét ${report.scanned} asset).`, "info");
+    }
+    return report;
+  },
 
   // ---- Undo/redo (R1-050, R1-051) ----
   undo: () => {

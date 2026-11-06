@@ -434,4 +434,93 @@ ok("P8 ramp kết thúc ở effOp 0.5", () => {
   assert.ok(leaf && eq(leaf["opacity"] as number, 0.5));
 });
 
+console.log("[E] transition biên tầng ngoài dưới nested ramp (đợt 22 E)");
+// Ramp linear 1→3 trên duration 4: ∫₀⁴ = 8. Kết quả đối chiếu render
+// (server/render/src/nested.js flattenSpecForRender) từng con số: P1/P2
+// render cho L start 8 dur 4 kf [0,0]→[2,1] / L start 0 dur 4 kf
+// [2,1]→[4,0] + C start 2 — preview phải khớp y hệt, vì T đo ở timeline
+// cha và fade tính bằng thời gian ngoài (localT = timelineT − start).
+const RAMP_E_1_3 = { keyframes: [
+  { t: 0, v: 1, easing: "linear" },
+  { t: 4, v: 3, easing: "linear" },
+] };
+const RAMP_E_1_2 = { keyframes: [
+  { t: 0, v: 1, easing: "linear" },
+  { t: 4, v: 2, easing: "linear" },
+] };
+ok("E1 fade-in: nested ramp phải dịch sớm 2s, fade 0→1 đúng 2s output", () => {
+  const r = flattenForPreview({
+    tracks: [vtrack("v", [
+      video("a", 0, 10),
+      nested("n", 10, 4, [vtrack("sv", [video("leaf", 0, 8)])], {
+        in: 0, trim: { in: 0, out: 8 }, speedKeyframes: RAMP_E_1_3,
+        transitionIn: { type: "fade", duration: 2 },
+      }),
+    ])],
+  });
+  const leaf = leafById(r, "leaf");
+  assert.ok(leaf && eq(leaf.start, 8));
+  assert.ok(leaf && eq(leaf.duration, 4));
+  const kf = leaf && opKeyframes(leaf);
+  assert.ok(kf && kf.length === 2);
+  assert.ok(kf && eq(kf[0].t, 0) && eq(kf[0].v, 0));
+  assert.ok(kf && eq(kf[1].t, 2) && eq(kf[1].v, 1));
+  // Giữa cửa sổ chồng lấn (t ngoài = 9, localT = 1): opacity = 0.5.
+  assert.ok(kf && eq(interp2(kf, 1), 0.5));
+});
+ok("E2 fade-out: nested ramp trái, clip phẳng sau dịch sớm 2s", () => {
+  const r = flattenForPreview({
+    tracks: [vtrack("v", [
+      nested("n", 0, 4, [vtrack("sv", [video("leaf", 0, 8)])], {
+        in: 0, trim: { in: 0, out: 8 }, speedKeyframes: RAMP_E_1_3,
+        transitionOut: { type: "fade", duration: 2 },
+      }),
+      video("c", 4, 10),
+    ])],
+  });
+  const leaf = leafById(r, "leaf");
+  assert.ok(leaf && eq(leaf.start, 0));
+  assert.ok(leaf && eq(leaf.duration, 4));
+  const kf = leaf && opKeyframes(leaf);
+  assert.ok(kf && kf.length === 2);
+  assert.ok(kf && eq(kf[0].t, 2) && eq(kf[0].v, 1));
+  assert.ok(kf && eq(kf[1].t, 4) && eq(kf[1].v, 0));
+  const c = leafById(r, "c");
+  assert.ok(c && eq(c.start, 2));
+});
+ok("E3 fade-in khai ở đầu trái phẳng, nested ramp phải vẫn đúng", () => {
+  const r = flattenForPreview({
+    tracks: [vtrack("v", [
+      video("a", 0, 10, { transitionOut: { type: "fade", duration: 2 } }),
+      nested("n", 10, 4, [vtrack("sv", [video("leaf", 0, 8)])], {
+        in: 0, trim: { in: 0, out: 8 }, speedKeyframes: RAMP_E_1_3,
+      }),
+    ])],
+  });
+  const leaf = leafById(r, "leaf");
+  assert.ok(leaf && eq(leaf.start, 8));
+  const kf = leaf && opKeyframes(leaf);
+  assert.ok(kf && eq(kf[1].t, 2) && eq(kf[1].v, 1));
+});
+ok("E4 biên trong nested hằng speed 2, nested con ramp: shift/fade chia 2", () => {
+  // T = 2s thời gian sequence con → overlap ngoài = (10−8)/2 = 1s.
+  const r = flattenForPreview({
+    tracks: [vtrack("v", [
+      nested("p", 0, 8, [vtrack("sv", [
+        video("a", 0, 10),
+        nested("n", 10, 4, [vtrack("sv2", [video("leaf", 0, 6)])], {
+          in: 0, trim: { in: 0, out: 6 }, speedKeyframes: RAMP_E_1_2,
+          transitionIn: { type: "fade", duration: 2 },
+        }),
+      ])], { in: 0, speed: 2 }),
+    ])],
+  });
+  const leaf = leafById(r, "leaf");
+  assert.ok(leaf && eq(leaf.start, 4));
+  assert.ok(leaf && eq(leaf.duration, 2));
+  const kf = leaf && opKeyframes(leaf);
+  assert.ok(kf && eq(kf[0].t, 0) && eq(kf[0].v, 0));
+  assert.ok(kf && eq(kf[1].t, 1) && eq(kf[1].v, 1));
+});
+
 console.log(`\n${pass} test passed`);
