@@ -13,10 +13,14 @@
  */
 import {
   barsFadePixelIsBar,
+  compositeFadePixel,
   describeTransition,
+  dipMidColors,
   dissolveHash,
   radialGradientWeight,
   radialSoftWeight,
+  singleClipDipPixel,
+  transitionClipVisual,
   type ClipRegion,
 } from "./transitionPreview.ts";
 import {
@@ -641,6 +645,158 @@ test("slices: 8 dải trượt đều cùng hướng", () => {
   approx(rectsOf(vd.b.region)[0].h, 50, 1e-9, "vdslice: dải B cao nửa trên");
 });
 
+test("fadeblack: dip qua đen hiệu chuẩn probe RGB FFmpeg (đợt 24 H3)", () => {
+  // Điểm neo từ probe dày đặc render thật FFmpeg 8.1.2 (xfade fadeblack,
+  // cặp đỏ→xanh phẳng, 30fps, đường RGB không offset mức đen — xem
+  // LIMITS đợt 24 H3 §3): p=0.5 render có B≈0.34 (A đã tắt), KHÔNG
+  // phải đen hẳn như dip tuyến tính nửa-nửa (đó từng cho MAD 34,6 ở
+  // đợt 23 G5), cũng không phải 0,28 như bản fit YUV đầu đợt H3 (bản
+  // đó lẫn offset mức đen Y=0 của đường YUV vào trọng số).
+  const mid = describeTransition("fadeblack", 0.5, W, H);
+  approx(mid.a.alpha, 0, 1e-9, "fadeblack p=0.5: A tắt hẳn");
+  approx(mid.b.alpha, 0.347, 0.01, "fadeblack p=0.5: B ≈ 0.347 (probe RGB 0.339)");
+  // Biên: p=0 → A đầy, B 0; p=1 → A 0, B đầy (giữ test catalog biên).
+  approx(describeTransition("fadeblack", 0, W, H).a.alpha, 1, 1e-9, "fadeblack p=0: A = 1 (biên ghim)");
+  approx(describeTransition("fadeblack", 0, W, H).b.alpha, 0, 1e-9, "fadeblack p=0: B = 0");
+  approx(describeTransition("fadeblack", 1, W, H).a.alpha, 0, 1e-9, "fadeblack p=1: A = 0");
+  approx(describeTransition("fadeblack", 1, W, H).b.alpha, 1, 1e-9, "fadeblack p=1: B = 1");
+  // Hình dạng dip: A tắt hẳn từ p≈0,20, B bắt đầu mở từ p≈0,12 (hai
+  // đường overlap nhẹ, đáy dip ≈ 8% độ sáng quanh p≈0,16) — khác hẳn
+  // alpha tuyến tính cũ (p=0.5 cho 0.5A+0.5B, không có dip).
+  assert(describeTransition("fadeblack", 0.2, W, H).a.alpha === 0, "fadeblack p=0.2: A tắt hẳn");
+  assert(describeTransition("fadeblack", 0.12, W, H).b.alpha === 0, "fadeblack p=0.12: B chưa mở");
+  assert(describeTransition("fadeblack", 0.25, W, H).b.alpha > 0, "fadeblack p=0.25: B đã mở");
+  // Đơn điệu trên lưới p (A giảm, B tăng, không nhấp nháy).
+  let prevA = 2;
+  let prevB = -1;
+  for (let k = 0; k <= 20; k++) {
+    const v = describeTransition("fadeblack", k / 20, W, H);
+    assert(v.a.alpha <= prevA + 1e-12, `fadeblack: A không đơn điệu tại p=${k / 20}`);
+    assert(v.b.alpha >= prevB - 1e-12, `fadeblack: B không đơn điệu tại p=${k / 20}`);
+    prevA = v.a.alpha;
+    prevB = v.b.alpha;
+  }
+  // Khóa hồi quy: các type khác KHÔNG đổi hành vi vì đợt này.
+  approx(describeTransition("fade", 0.25, W, H).b.alpha, 0.25, 1e-9, "hồi quy: fade vẫn tuyến tính");
+  approx(describeTransition("fade", 0.75, W, H).b.alpha, 0.75, 1e-9, "hồi quy: fade vẫn tuyến tính");
+  // Đợt 25 I4: fadewhite/fadegrays KHÔNG còn alpha tuyến tính cũ —
+  // chúng dùng chung đường cong smoothstep của fadeblack + dip
+  // (xem test "fade dip" dưới đây); fade tuyến tính vẫn giữ nguyên.
+  approx(describeTransition("fadewhite", 0.5, W, H).b.alpha, 0.347, 0.01, "hồi quy đợt 25 I4: fadewhite dùng trọng số smoothstep họ fade");
+  approx(describeTransition("fadegrays", 0.5, W, H).b.alpha, 0.347, 0.01, "hồi quy đợt 25 I4: fadegrays dùng trọng số smoothstep họ fade");
+  assert(describeTransition("dissolve", 0.5, W, H).geometric, "hồi quy: dissolve vẫn geometric");
+  assert(describeTransition("circleopen", 0.5, W, H).b.region?.kind === "radial-gradient", "hồi quy: circleopen vẫn radial-gradient");
+});
+
+test("fade dip (đợt 25 I4): fadeblack/fadewhite/fadegrays có số hạng trung gian", () => {
+  // Bất biến dip trên lưới p: dip.a + a.alpha = 1−p, dip.b + b.alpha = p;
+  // dip = 0 ở cả 2 biên; mode + offset đúng từng type.
+  for (const [type, mode, off] of [
+    ["fadeblack", "black", -21.05],
+    ["fadewhite", "white", 20.45],
+    ["fadegrays", "gray", undefined],
+  ] as const) {
+    for (let k = 0; k <= 20; k++) {
+      const p = k / 20;
+      const v = describeTransition(type, p, W, H);
+      assert(v.dip !== undefined, `${type} p=${p}: phải có dip`);
+      assert(v.dip.mode === mode, `${type} p=${p}: mode = ${mode}, nhận ${v.dip.mode}`);
+      approx(v.dip.a + v.a.alpha, 1 - p, 1e-9, `${type} p=${p}: dip.a + a.alpha = 1−p`);
+      approx(v.dip.b + v.b.alpha, p, 1e-9, `${type} p=${p}: dip.b + b.alpha = p`);
+    }
+    approx(describeTransition(type, 0, W, H).dip!.a, 0, 1e-9, `${type} p=0: dip.a = 0`);
+    approx(describeTransition(type, 0, W, H).dip!.b, 0, 1e-9, `${type} p=0: dip.b = 0`);
+    approx(describeTransition(type, 1, W, H).dip!.a, 0, 1e-9, `${type} p=1: dip.a = 0`);
+    approx(describeTransition(type, 1, W, H).dip!.b, 0, 1e-9, `${type} p=1: dip.b = 0`);
+    if (off !== undefined) {
+      approx(describeTransition(type, 0.5, W, H).yuvLevelOffset!, off, 1e-9, `${type}: yuvLevelOffset = ${off}`);
+    } else {
+      assert(describeTransition(type, 0.5, W, H).yuvLevelOffset === undefined, `${type}: không dùng offset hằng (gray YUV đổi sang luma)`);
+    }
+    // Trọng số cả họ khớp fadeblack trong 1e-9 (chung fadeDipWeights).
+    const fb = describeTransition("fadeblack", 0.5, W, H);
+    const v = describeTransition(type, 0.5, W, H);
+    approx(v.a.alpha, fb.a.alpha, 1e-9, `${type} p=0.5: a.alpha = fadeblack`);
+    approx(v.b.alpha, fb.b.alpha, 1e-9, `${type} p=0.5: b.alpha = fadeblack`);
+  }
+  // fade tuyến tính không có dip (không đổi hành vi).
+  assert(describeTransition("fade", 0.5, W, H).dip === undefined, "fade: không có dip");
+});
+
+test("fade dip composite (đợt 25 I4): công thức thống nhất + gray theo pixel", () => {
+  // Ví dụ số cụ thể (p=0.5, cặp đỏ→xanh, trọng số code):
+  // wA=0, wB≈0.347, dipA=0.5, dipB≈0.153.
+  const A: [number, number, number] = [253, 0, 0];
+  const B: [number, number, number] = [0, 0, 254];
+  const mid = describeTransition("fadegrays", 0.5, W, H);
+  const out = compositeFadePixel(A, B, mid, "rgb");
+  // gray(A)=84,33, gray(B)=84,67 → out ≈ (42,2; 42,2; 101,0) + wB·B:
+  // R = 0,5×84,33 + 0,153×84,67 ≈ 55,1; G ≈ 55,1; B ≈ 55,1 + 0,347×254 ≈ 143,2.
+  // (Số đo thật probe RGB: (55,55,142) — sai số do trọng số code 0,347
+  // vs probe 0,339 và làm tròn; dung sai 2 mức.)
+  approx(out[0], 55, 2, "fadegrays RGB p=0.5 cặp đỏ→xanh: R ≈ 55");
+  approx(out[1], 55, 2, "fadegrays RGB p=0.5 cặp đỏ→xanh: G ≈ 55");
+  approx(out[2], 143, 2, "fadegrays RGB p=0.5 cặp đỏ→xanh: B ≈ 143");
+  // fadewhite p=0.5 cặp đỏ→xanh: dip tổng = 1−wA−wB ≈ 0,653 nên
+  // R = G = 0,653×255 ≈ 166,5; B = 166,5 + 0,347×254 ≈ 254,7 (clamp 255).
+  // Số đo thật probe RGB: (167,167,254) — khớp trong dung sai 2.
+  const w = describeTransition("fadewhite", 0.5, W, H);
+  const outW = compositeFadePixel(A, B, w, "rgb");
+  approx(outW[0], 167, 2, "fadewhite RGB p=0.5: R ≈ 167 (probe 167)");
+  approx(outW[1], 167, 2, "fadewhite RGB p=0.5: G ≈ 167 (probe 167)");
+  approx(outW[2], 254, 2, "fadewhite RGB p=0.5: B ≈ 254 (probe 254)");
+  // fadeblack p=0.5 cặp đỏ→xanh đường RGB: out = wB·B ≈ (0,0,88)
+  // (probe RGB: B=86 — dung sai 3 do trọng số code vs probe).
+  const k = describeTransition("fadeblack", 0.5, W, H);
+  const outK = compositeFadePixel(A, B, k, "rgb");
+  approx(outK[0], 0, 1e-9, "fadeblack RGB p=0.5: R = 0");
+  approx(outK[2], 86, 3, "fadeblack RGB p=0.5: B ≈ 86 (probe 86)");
+  // Đường YUV fadeblack: cộng offset −21,05×m (m≈0,653) → B ≈ 86−13,7 ≈ 72
+  // (probe YUV: B=72). fadewhite YUV: +20,45×0,653 ≈ +13,4 → R ≈ 180
+  // (probe YUV: R=183 — dung sai 4 do offset fit + trọng số).
+  const outKY = compositeFadePixel(A, B, k, "yuv");
+  approx(outKY[2], 72, 3, "fadeblack YUV p=0.5: B ≈ 72 (probe 72)");
+  const outWY = compositeFadePixel(A, B, w, "yuv");
+  approx(outWY[0], 183, 4, "fadewhite YUV p=0.5: R ≈ 183 (probe 183)");
+  // dipMidColors: gray RGB = mean kênh; gray YUV = luma bt601.
+  const g = dipMidColors("gray", [200, 100, 50], [30, 180, 220], "rgb");
+  approx(g.midA[0], 116.67, 0.01, "gray RGB: mean(200,100,50) ≈ 116,67");
+  const gy = dipMidColors("gray", [200, 100, 50], [30, 180, 220], "yuv");
+  approx(gy.midA[0], 124.2, 0.1, "gray YUV: luma601(200,100,50) ≈ 124,2");
+  approx(gy.midB[0], 139.7, 0.1, "gray YUV: luma601(30,180,220) ≈ 139,7");
+  // dipColor passthrough + dipMode cho canvas đơn clip (đợt 26 J3 nối
+  // wiring: preview.tsx mở nhánh dip cho white/gray, xem test dưới).
+  const clipW = { duration: 2, transitionIn: { type: "fadewhite", duration: 1 } };
+  const vW = transitionClipVisual(clipW, 0.5, W, H);
+  assert(vW.dipColor?.r === 255 && vW.dipColor?.g === 255 && vW.dipColor?.b === 255, "fadewhite đơn clip: dipColor = trắng");
+  assert(vW.dipMode === "white", "fadewhite đơn clip: dipMode = white");
+  const clipG = { duration: 2, transitionIn: { type: "fadegrays", duration: 1 } };
+  assert(transitionClipVisual(clipG, 0.5, W, H).dipColor === null, "fadegrays đơn clip: dipColor = null (xám theo pixel)");
+  assert(transitionClipVisual(clipG, 0.5, W, H).dipMode === "gray", "fadegrays đơn clip: dipMode = gray");
+  const clipK = { duration: 2, transitionOut: { type: "fadeblack", duration: 1 } };
+  const vK = transitionClipVisual(clipK, 1.5, W, H);
+  assert(vK.dipColor?.r === 0 && vK.dipColor?.g === 0 && vK.dipColor?.b === 0, "fadeblack đơn clip: dipColor = đen");
+  assert(vK.dipMode === "black", "fadeblack đơn clip: dipMode = black");
+  const clipF = { duration: 2, transitionIn: { type: "fade", duration: 1 } };
+  assert(transitionClipVisual(clipF, 0.5, W, H).dipMode === null, "fade (không dip): dipMode = null");
+});
+
+test("fadeblack đơn clip: ra mờ về đen, vào sáng từ đen", () => {
+  // Canvas đơn clip vẽ trên nền đen nên chỉ alpha lớp của clip đó là
+  // đủ: clip ra (lớp A) mờ dần về đen, clip vào (lớp B) tối ở nửa đầu
+  // rồi sáng dần từ đen — đúng dip render mà không cần số hạng màu.
+  const clipOut = { duration: 2, transitionOut: { type: "fadeblack", duration: 1 } };
+  const early = transitionClipVisual(clipOut, 1.1, W, H);
+  assert(early.alpha > 0.3 && early.alpha < 0.5, `fadeblack ra p=0.1: alpha ≈ 0.45, nhận ${early.alpha}`);
+  const late = transitionClipVisual(clipOut, 1.9, W, H);
+  assert(late.alpha === 0, "fadeblack ra p=0.9: alpha = 0 (đã về đen)");
+  const clipIn = { duration: 2, transitionIn: { type: "fadeblack", duration: 1 } };
+  const inEarly = transitionClipVisual(clipIn, 0.1, W, H);
+  assert(inEarly.alpha === 0, "fadeblack vào p=0.1: alpha = 0 (đang ở khoảng đen)");
+  const inLate = transitionClipVisual(clipIn, 0.75, W, H);
+  assert(inLate.alpha > 0.6 && inLate.alpha < 0.8, `fadeblack vào p=0.75: alpha ≈ 0.73, nhận ${inLate.alpha}`);
+});
+
 test("fade family: alpha đúng, hblur fallback fade", () => {
   approx(describeTransition("fade", 0.25, W, H).b.alpha, 0.25, 1e-9, "fade B alpha = p");
   approx(describeTransition("fadefast", 0.5, W, H).b.alpha, 0.75, 1e-9, "fadefast B alpha = 1-(1-p)^2");
@@ -706,6 +862,62 @@ function regionNonEmpty(r: ClipRegion): boolean {
       return true;
   }
 }
+
+test("canvas đơn clip dip (đợt 26 J3): singleClipDipPixel = công thức preview.tsx dùng", () => {
+  // preview.tsx (drawVideoClipWithDip) gọi CHÍNH hàm này trong vòng lặp
+  // ImageData, chỉ trên pixel clip đã vẽ (alpha > 0) — test này khóa
+  // công thức đó; nhánh component (offscreen + strip transition) không
+  // test được bằng Node (cần DOM) nên khóa thêm bằng harness đo FFmpeg
+  // (docs/PHASE9_ROUND26_J3_CANVAS_DIP_LIMITS.md §4: model đơn clip
+  // vs tham chiếu FFmpeg geq/overlay).
+  const clip: [number, number, number] = [200, 100, 50];
+  // fadewhite: alpha 0 → trắng thuần; alpha 1 → clip thuần.
+  assert(singleClipDipPixel(clip, 0, "white").every((v) => v === 255), "fadewhite alpha=0 → trắng");
+  assert(singleClipDipPixel(clip, 1, "white").every((v, i) => v === clip[i]), "fadewhite alpha=1 → clip");
+  const halfW = singleClipDipPixel(clip, 0.5, "white");
+  approx(halfW[0], 227.5, 1e-9, "fadewhite alpha=0.5: R = 0,5×200+0,5×255");
+  approx(halfW[1], 177.5, 1e-9, "fadewhite alpha=0.5: G = 0,5×100+0,5×255");
+  approx(halfW[2], 152.5, 1e-9, "fadewhite alpha=0.5: B = 0,5×50+0,5×255");
+  // fadegrays: gray = mean kênh (đường RGB của canvas) = 116,67.
+  const halfG = singleClipDipPixel(clip, 0.5, "gray");
+  approx(halfG[0], 158.33, 0.01, "fadegrays alpha=0.5: R = 0,5×200+0,5×116,67");
+  approx(halfG[1], 108.33, 0.01, "fadegrays alpha=0.5: G = 0,5×100+0,5×116,67");
+  approx(halfG[2], 83.33, 0.01, "fadegrays alpha=0.5: B = 0,5×50+0,5×116,67");
+  assert(singleClipDipPixel(clip, 0, "gray").every((v) => Math.abs(v - 116.67) < 0.01), "fadegrays alpha=0 → xám mean");
+  // Clamp alpha ngoài [0,1] (phòng tv.alpha lệch).
+  assert(singleClipDipPixel(clip, -0.5, "white").every((v) => v === 255), "alpha < 0 clamp về 0");
+  assert(singleClipDipPixel(clip, 1.5, "gray").every((v, i) => v === clip[i]), "alpha > 1 clamp về 1");
+  // Quan hệ với composite cặp tại p=0.5 (đoạn này khóa GIỚI HẠN, không
+  // phải bug): clip VÀO fadewhite trùng cặp đúng vì a.alpha = 0 tại
+  // p=0.5 (dip tổng = 1−bAlpha); clip RA lệch đúng bAlpha·(trắng−B).
+  const B: [number, number, number] = [0, 0, 254];
+  const A: [number, number, number] = [253, 0, 0];
+  const visW = describeTransition("fadewhite", 0.5, W, H);
+  const pairW = compositeFadePixel(A, B, visW, "rgb");
+  const singleInW = singleClipDipPixel(B, visW.b.alpha, "white");
+  for (let c = 0; c < 3; c++) {
+    approx(singleInW[c], pairW[c], 1e-9, `fadewhite vào p=0.5: đơn clip = cặp (kênh ${c})`);
+  }
+  const singleOutW = singleClipDipPixel(A, visW.a.alpha, "white");
+  approx(singleOutW[0], 255, 1e-9, "fadewhite ra p=0.5: đơn clip = trắng (a.alpha = 0)");
+  approx(pairW[0] - singleOutW[0], -visW.b.alpha * 255, 1e-9, "fadewhite ra p=0.5: cặp − đơn = −bAlpha×255 (thiếu B)");
+  // fadegrays vào p=0.5: đơn clip dùng gray(B), cặp dùng dipA·gray(A) +
+  // dipB·gray(B) — bằng nhau chỉ khi gray(A) = gray(B). Cặp đỏ→xanh
+  // (gray 84,33 vs 84,67) lệch < 0,2; cặp xanh lá→magenta (85 vs 170)
+  // lệch đúng dipA×85 ≈ 42,5 — khóa con số này để luồng sau không
+  // tưởng wiring sai khi đo cặp đó.
+  const visG = describeTransition("fadegrays", 0.5, W, H);
+  const pairG = compositeFadePixel(A, B, visG, "rgb");
+  const singleInG = singleClipDipPixel(B, visG.b.alpha, "gray");
+  for (let c = 0; c < 3; c++) {
+    approx(singleInG[c], pairG[c], 0.2, `fadegrays vào p=0.5 đỏ→xanh: đơn ≈ cặp (kênh ${c})`);
+  }
+  const A2: [number, number, number] = [0, 255, 0];
+  const B2: [number, number, number] = [255, 0, 255];
+  const pairG2 = compositeFadePixel(A2, B2, visG, "rgb");
+  const singleInG2 = singleClipDipPixel(B2, visG.b.alpha, "gray");
+  approx(pairG2[0] - singleInG2[0], visG.dip!.a * (85 - 170), 1e-9, "fadegrays vào p=0.5 xanh lá→magenta: cặp − đơn = dipA×(grayA−grayB)");
+});
 
 console.log(`\n== KẾT QUẢ: ${pass} pass, ${fail} fail ==`);
 if (failedNames.length > 0) console.log(`Failed: ${failedNames.join(", ")}`);

@@ -1,0 +1,912 @@
+{
+ "generatedBy": "measure-v24-hidden-discard-pixel-pipe.mjs",
+ "bundle": "/assets/index-C9gJlTsu.js",
+ "runs": [
+  {
+   "run": "run1",
+   "ok": true,
+   "longHideMs": 600000,
+   "playHideMs": 10000,
+   "pressureMaxMb": 500,
+   "pressureFloorMb": 300,
+   "memAvailableMbStart": 2709,
+   "loadavgStart": "1.40 1.04 0.42 23/597 1919",
+   "bundle": "/assets/index-C9gJlTsu.js",
+   "welcomeModal": {
+    "before": true,
+    "afterClick": false
+   },
+   "caseL_longHidePixel": {
+    "pre": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 2388224,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 11,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 0
+    },
+    "sleepWaitTimedOut": false,
+    "pixPre": {
+     "stored": true,
+     "w": 1351,
+     "h": 512,
+     "sum": 194094592,
+     "sparse": 2388224,
+     "bytes": 2766848
+    },
+    "hiddenSamples": [
+     {
+      "atMs": 5000,
+      "time": "00:00.0 / 00:08.0",
+      "px": 2388224,
+      "vis": "hidden",
+      "hidden": true,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 11,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "lastRequested": 0,
+      "pendingSeek": false,
+      "draws": 0
+     },
+     {
+      "atMs": 60000,
+      "time": "00:00.0 / 00:08.0",
+      "px": 2388224,
+      "vis": "hidden",
+      "hidden": true,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 11,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "lastRequested": 0,
+      "pendingSeek": false,
+      "draws": 0
+     },
+     {
+      "atMs": 300000,
+      "time": "00:00.0 / 00:08.0",
+      "px": 2388224,
+      "vis": "hidden",
+      "hidden": true,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 11,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "lastRequested": 0,
+      "pendingSeek": false,
+      "draws": 0
+     },
+     {
+      "atMs": 600000,
+      "time": "00:00.0 / 00:08.0",
+      "px": 2388224,
+      "vis": "hidden",
+      "hidden": true,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 11,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "lastRequested": 0,
+      "pendingSeek": false,
+      "draws": 0
+     }
+    ],
+    "post1s": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 14,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 1
+    },
+    "pixDiff1s": {
+     "available": true,
+     "w": 1351,
+     "h": 512,
+     "totalPixels": 691712,
+     "diffPixels": 466432,
+     "diffPct": 67.4315,
+     "maxChannelDiff": 245,
+     "sumAbsDiff": 76461563,
+     "meanAbsDiffPerChannel": 27.6349,
+     "bbox": {
+      "minX": 220,
+      "minY": 0,
+      "maxX": 1130,
+      "maxY": 511
+     },
+     "firstDiffs": [
+      {
+       "x": 220,
+       "y": 0,
+       "pre": [
+        6,
+        7,
+        9,
+        255
+       ],
+       "post": [
+        22,
+        32,
+        64,
+        255
+       ]
+      },
+      {
+       "x": 221,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        64,
+        255
+       ]
+      },
+      {
+       "x": 222,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        64,
+        255
+       ]
+      },
+      {
+       "x": 223,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        65,
+        255
+       ]
+      },
+      {
+       "x": 224,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        64,
+        255
+       ]
+      },
+      {
+       "x": 225,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        64,
+        255
+       ]
+      },
+      {
+       "x": 226,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        64,
+        255
+       ]
+      },
+      {
+       "x": 227,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        65,
+        255
+       ]
+      },
+      {
+       "x": 228,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        64,
+        255
+       ]
+      },
+      {
+       "x": 229,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        64,
+        255
+       ]
+      }
+     ],
+     "preSum": 194094592,
+     "postSum": 270556155,
+     "preSparse": 2388224,
+     "postSparse": 12851050,
+     "sumEqual": false,
+     "sparseEqual": false
+    },
+    "post4s": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 14,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 1
+    },
+    "pixDiff4s": {
+     "available": true,
+     "w": 1351,
+     "h": 512,
+     "totalPixels": 691712,
+     "diffPixels": 466432,
+     "diffPct": 67.4315,
+     "maxChannelDiff": 245,
+     "sumAbsDiff": 76461563,
+     "meanAbsDiffPerChannel": 27.6349,
+     "bbox": {
+      "minX": 220,
+      "minY": 0,
+      "maxX": 1130,
+      "maxY": 511
+     },
+     "firstDiffs": [
+      {
+       "x": 220,
+       "y": 0,
+       "pre": [
+        6,
+        7,
+        9,
+        255
+       ],
+       "post": [
+        22,
+        32,
+        64,
+        255
+       ]
+      },
+      {
+       "x": 221,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        64,
+        255
+       ]
+      },
+      {
+       "x": 222,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        64,
+        255
+       ]
+      },
+      {
+       "x": 223,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        65,
+        255
+       ]
+      },
+      {
+       "x": 224,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        64,
+        255
+       ]
+      },
+      {
+       "x": 225,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        64,
+        255
+       ]
+      },
+      {
+       "x": 226,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        64,
+        255
+       ]
+      },
+      {
+       "x": 227,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        65,
+        255
+       ]
+      },
+      {
+       "x": 228,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        64,
+        255
+       ]
+      },
+      {
+       "x": 229,
+       "y": 0,
+       "pre": [
+        10,
+        12,
+        16,
+        255
+       ],
+       "post": [
+        21,
+        32,
+        64,
+        255
+       ]
+      }
+     ],
+     "preSum": 194094592,
+     "postSum": 270556155,
+     "preSparse": 2388224,
+     "postSparse": 12851050,
+     "sumEqual": false,
+     "sparseEqual": false
+    },
+    "post10s": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 14,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 1
+    }
+   },
+   "caseE_playToEndThroughHide": {
+    "prePlay": {
+     "time": "00:02.5 / 00:08.0",
+     "px": 13740396,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 136,
+     "sleeping": false,
+     "lastDrawn": 2.466666666666667,
+     "lastRequested": 2.466666666666667,
+     "pendingSeek": false,
+     "draws": 123
+    },
+    "hiddenAtEnd": {
+     "time": "00:02.5 / 00:08.0",
+     "px": 13740396,
+     "vis": "hidden",
+     "hidden": true,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 137,
+     "sleeping": false,
+     "lastDrawn": 2.5,
+     "lastRequested": 2.5,
+     "pendingSeek": false,
+     "draws": 123
+    },
+    "trajectory": [
+     {
+      "afterShowS": 1,
+      "time": "00:03.8 / 00:08.0",
+      "px": 6117989,
+      "vis": "visible",
+      "hidden": false,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 194,
+      "sleeping": false,
+      "lastDrawn": 3.8333333333333335,
+      "lastRequested": 3.8333333333333335,
+      "pendingSeek": false,
+      "draws": 182
+     },
+     {
+      "afterShowS": 2,
+      "time": "00:05.1 / 00:08.0",
+      "px": 14281830,
+      "vis": "visible",
+      "hidden": false,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 256,
+      "sleeping": false,
+      "lastDrawn": 5.1,
+      "lastRequested": 5.1,
+      "pendingSeek": false,
+      "draws": 242
+     },
+     {
+      "afterShowS": 3,
+      "time": "00:06.4 / 00:08.0",
+      "px": 13486091,
+      "vis": "visible",
+      "hidden": false,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 317,
+      "sleeping": false,
+      "lastDrawn": 6.366666666666666,
+      "lastRequested": 6.366666666666666,
+      "pendingSeek": false,
+      "draws": 304
+     },
+     {
+      "afterShowS": 4,
+      "time": "00:07.7 / 00:08.0",
+      "px": 2388224,
+      "vis": "visible",
+      "hidden": false,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 378,
+      "sleeping": false,
+      "lastDrawn": 7.666666666666667,
+      "lastRequested": 7.666666666666667,
+      "pendingSeek": false,
+      "draws": 365
+     },
+     {
+      "afterShowS": 5,
+      "time": "00:08.0 / 00:08.0",
+      "px": 2388224,
+      "vis": "visible",
+      "hidden": false,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 394,
+      "sleeping": true,
+      "lastDrawn": 8,
+      "lastRequested": 8,
+      "pendingSeek": false,
+      "draws": 379
+     }
+    ],
+    "reachedSleepAfterEnd": true,
+    "settled": {
+     "time": "00:08.0 / 00:08.0",
+     "px": 2388224,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 394,
+     "sleeping": true,
+     "lastDrawn": 8,
+     "lastRequested": 8,
+     "pendingSeek": false,
+     "draws": 379
+    }
+   },
+   "caseC_bfcachePixel": {
+    "depart": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 401,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 380
+    },
+    "pixPre": {
+     "stored": true,
+     "w": 1351,
+     "h": 512,
+     "sum": 270556155,
+     "sparse": 12851050,
+     "bytes": 2766848
+    },
+    "pre": {
+     "present": true,
+     "marker": "v24-bfcache-probe",
+     "pageshows": [],
+     "visChanges": [
+      "hidden",
+      "visible",
+      "hidden",
+      "visible"
+     ]
+    },
+    "back": {
+     "bcAfter": {
+      "present": true,
+      "marker": "v24-bfcache-probe",
+      "pageshows": [
+       {
+        "persisted": true,
+        "at": 1793324507983
+       }
+      ],
+      "visChanges": [
+       "hidden",
+       "visible",
+       "hidden",
+       "visible",
+       "hidden",
+       "visible"
+      ]
+     },
+     "bundleAfter": "/assets/index-C9gJlTsu.js",
+     "hrefAfter": "http://127.0.0.1:4191/",
+     "post1s": {
+      "time": "00:00.0 / 00:08.0",
+      "px": 12851050,
+      "vis": "visible",
+      "hidden": false,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 407,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "lastRequested": 0,
+      "pendingSeek": false,
+      "draws": 381
+     },
+     "pixDiff1s": {
+      "available": true,
+      "w": 1351,
+      "h": 512,
+      "totalPixels": 691712,
+      "diffPixels": 0,
+      "diffPct": 0,
+      "maxChannelDiff": 0,
+      "sumAbsDiff": 0,
+      "meanAbsDiffPerChannel": 0,
+      "bbox": null,
+      "firstDiffs": [],
+      "preSum": 270556155,
+      "postSum": 270556155,
+      "preSparse": 12851050,
+      "postSparse": 12851050,
+      "sumEqual": true,
+      "sparseEqual": true
+     },
+     "post4s": {
+      "time": "00:00.0 / 00:08.0",
+      "px": 12851050,
+      "vis": "visible",
+      "hidden": false,
+      "canvasW": 1351,
+      "canvasH": 512,
+      "ticks": 407,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "lastRequested": 0,
+      "pendingSeek": false,
+      "draws": 381
+     },
+     "pixDiff4s": {
+      "available": true,
+      "w": 1351,
+      "h": 512,
+      "totalPixels": 691712,
+      "diffPixels": 0,
+      "diffPct": 0,
+      "maxChannelDiff": 0,
+      "sumAbsDiff": 0,
+      "meanAbsDiffPerChannel": 0,
+      "bbox": null,
+      "firstDiffs": [],
+      "preSum": 270556155,
+      "postSum": 270556155,
+      "preSparse": 12851050,
+      "postSparse": 12851050,
+      "sumEqual": true,
+      "sparseEqual": true
+     }
+    },
+    "isBfcache": true
+   },
+   "caseX_discardPressure": {
+    "pre": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 408,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 381
+    },
+    "sleepWaitTimedOut": false,
+    "memAvailableMbBefore": 1375,
+    "hiddenPre": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "hidden",
+     "hidden": true,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 408,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 381
+    },
+    "pressureSamples": [
+     {
+      "atS": 5,
+      "memAvailableMb": 1052,
+      "tabAlive": true,
+      "ticks": 408,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "px": 12851050
+     },
+     {
+      "atS": 10,
+      "memAvailableMb": 851,
+      "tabAlive": true,
+      "ticks": 408,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "px": 12851050
+     },
+     {
+      "atS": 15,
+      "memAvailableMb": 853,
+      "tabAlive": true,
+      "ticks": 408,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "px": 12851050
+     },
+     {
+      "atS": 20,
+      "memAvailableMb": 822,
+      "tabAlive": true,
+      "ticks": 408,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "px": 12851050
+     },
+     {
+      "atS": 25,
+      "memAvailableMb": 831,
+      "tabAlive": true,
+      "ticks": 408,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "px": 12851050
+     },
+     {
+      "atS": 30,
+      "memAvailableMb": 824,
+      "tabAlive": true,
+      "ticks": 408,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "px": 12851050
+     },
+     {
+      "atS": 35,
+      "memAvailableMb": 833,
+      "tabAlive": true,
+      "ticks": 408,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "px": 12851050
+     },
+     {
+      "atS": 40,
+      "memAvailableMb": 779,
+      "tabAlive": true,
+      "ticks": 408,
+      "sleeping": true,
+      "lastDrawn": 0,
+      "px": 12851050
+     }
+    ],
+    "tabAliveDuringPressure": true,
+    "tabDeathAtS": null,
+    "memAvailableMbAfterKill": 1164,
+    "afterShow": {
+     "time": "00:00.0 / 00:08.0",
+     "px": 12851050,
+     "vis": "visible",
+     "hidden": false,
+     "canvasW": 1351,
+     "canvasH": 512,
+     "ticks": 415,
+     "sleeping": true,
+     "lastDrawn": 0,
+     "lastRequested": 0,
+     "pendingSeek": false,
+     "draws": 382,
+     "bcAfter": {
+      "present": true,
+      "marker": "v24-bfcache-probe",
+      "pageshows": [
+       {
+        "persisted": true,
+        "at": 1793324507983
+       }
+      ],
+      "visChanges": [
+       "hidden",
+       "visible",
+       "hidden",
+       "visible",
+       "hidden",
+       "visible",
+       "hidden",
+       "visible"
+      ]
+     }
+    },
+    "verdict": "TAB_SONG: tab không bị discard dưới áp lực tối đa 500MB (có trần an toàn) — discard thật CHƯA đo được, không phải \"đã chứng minh không discard\""
+   },
+   "loadavgEnd": "1.59 1.95 1.34 9/630 5097",
+   "memAvailableMbEnd": 1115
+  }
+ ]
+}

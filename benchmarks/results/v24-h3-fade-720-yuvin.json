@@ -1,0 +1,42 @@
+{
+  "mode": "footage",
+  "types": [
+    "fadeblack",
+    "fade"
+  ],
+  "workdir": "/home/hatch/workspace/repo-1/scratch-h3/foot720yuvin",
+  "yuvIn": true,
+  "rows": [
+    {
+      "type": "fadeblack",
+      "size": "720x1280",
+      "p": 0.5,
+      "rgb": {
+        "mad": 14.18,
+        "le8": 0.0099,
+        "verdict": "LỆCH"
+      },
+      "rgbOld": {
+        "mad": 48.1938,
+        "le8": 0.0012,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fade",
+      "size": "720x1280",
+      "p": 0.5,
+      "rgb": {
+        "mad": 0.8352,
+        "le8": 0.9991,
+        "verdict": "KHỚP"
+      }
+    }
+  ],
+  "windows": {
+    "winA": 28,
+    "winB": 24,
+    "size": "720x1280",
+    "repeatDiff": 0
+  }
+}

@@ -136,6 +136,32 @@ export interface TransitionLayerSpec {
   alpha: number;
 }
 
+/**
+ * Số hạng màu trung gian (dip) của họ fadeblack/fadewhite/fadegrays
+ * (đợt 25 I4 — trước đó TransitionVisual không có trường nào mang được
+ * nó nên fadewhite/fadegrays phải dùng alpha tuyến tính cũ).
+ * Composite cặp đầy đủ là:
+ *   out = a.alpha·A + b.alpha·B + dip.a·midA + dip.b·midB
+ * với midA/midB lấy từ dipMidColors (xem dưới). Bất biến:
+ *   dip.a + a.alpha = 1−p  và  dip.b + b.alpha = p
+ * (phần khung không thuộc A/B được gán cho màu trung gian của phía đó;
+ * dip = 0 ở cả 2 biên p=0 và p=1). midA/midB KHÔNG phải hằng số với
+ * mode "gray": chúng tính theo từng pixel (mean kênh đường RGB,
+ * luma bt601 đường YUV).
+ */
+export interface TransitionDip {
+  /** Trọng số dip của phía A: 1−p−a.alpha. */
+  a: number;
+  /** Trọng số dip của phía B: p−b.alpha. */
+  b: number;
+  /**
+   * "black": mid = (0,0,0) — fadeblack.
+   * "white": mid = (255,255,255) — fadewhite.
+   * "gray": midA = gray(pixel A), midB = gray(pixel B) — fadegrays.
+   */
+  mode: "black" | "white" | "gray";
+}
+
 /** Mô tả đầy đủ 1 cặp transition tại tiến độ p. */
 export interface TransitionVisual {
   type: string;
@@ -152,6 +178,24 @@ export interface TransitionVisual {
   a: TransitionLayerSpec;
   /** Lớp clip mới (B). */
   b: TransitionLayerSpec;
+  /**
+   * Số hạng dip của họ fade (chỉ fadeblack/fadewhite/fadegrays có).
+   * Rasterizer/harness áp dụng qua compositeFadePixel; canvas đơn clip
+   * áp dụng qua singleClipDipPixel + nhánh dip ở preview.tsx (đợt 26
+   * J3) cho mode white/gray — fadeblack giữ đường alpha cũ vì dip
+   * đen ≡ nền đen. Xem dipMode ở TransitionClipVisual.
+   */
+  dip?: TransitionDip;
+  /**
+   * Offset mức cộng thêm MỖI KÊNH trên đường YUV (render thật dùng
+   * yuv420p trước xfade) so với composite RGB:
+   *   outYuv = outRgb + yuvLevelOffset · (dip.a + dip.b).
+   * Chỉ dùng cho mode black/white (fadeblack ≈ −21,05, fadewhite
+   * ≈ +20,45 — fit phẳng đợt 25 I4, xem LIMITS §4–§5); mode gray
+   * đường YUV đổi gray sang luma nên không dùng trường này.
+   * Fade tuyến tính không có dip/offset.
+   */
+  yuvLevelOffset?: number;
 }
 
 function clamp01(v: number): number {
@@ -172,6 +216,143 @@ function layer(
 
 function full(alpha = 1): TransitionLayerSpec {
   return layer(null, alpha);
+}
+
+/**
+ * Đường cong trọng số chung của họ fadeblack/fadewhite/fadegrays,
+ * hiệu chuẩn lại đợt 31 N6 (thay smoothstep đợt 24 H3 + đợt 25 I4):
+ * nội suy tuyến tính qua các nút p cách 0,05 suy ra bằng cách đảo
+ * ngược (aAlpha, bAlpha) từ probe xfade đơn FFmpeg 8.1.2 ở 120fps
+ * (p chính xác, không lượng tử hoá 1/30), trung bình 3 type — xem
+ * docs/PHASE9_ROUND31_N6_DIP_WEIGHTS_LIMITS.md. Độ lệch của
+ * smoothstep cũ so với nút đảo ngược tới ±0,016 trọng số (tập trung
+ * ở p≈0,65–0,75 và p≈0,85–0,90), đủ gây dư số MAD 3,00 ở ô cặp
+ * FW/FG localT=0,75; đường cong nút đưa ô đó về KHỚP (MAD 1,33)
+ * mà không tụt verdict ô nào trên toàn bộ lưới đo (phẳng gốc +
+ * phẳng màu mới + footage + xfade đơn màu mới).
+ * Đợt 32 O1 hiệu chuẩn strict lại 10 nút B (giữ nguyên nút A và
+ * nút B tại p=0,25/0,75 để giữ ô đích FW/FG 0,75 KHỚP): trên lưới
+ * 99 ô của O1 (phẳng gốc + phẳng màu mới + xfade đơn màu mới +
+ * footage) không còn ô nào tăng MAD so với smoothstep cũ, 0 tier
+ * tụt, tổng MAD 60,47 (N6: 59,86 nhưng 12 ô tăng; smoothstep cũ:
+ * 100,27) — xem docs/PHASE9_ROUND32_O1_DIP_STRICT_LIMITS.md.
+ * bB kẹp 0 tới p=0,12 (giữ đúng hành vi đã ghim: B chưa mở ở
+ * p=0,12; probe fadeblack cho bB=0 ở p=0,10). Ghim 2 biên về đúng
+ * render (khung đầu thuần A, khung cuối thuần B). Chỉ số hạng
+ * trung gian (dip) khác nhau giữa các type; trọng số dùng chung.
+ */
+const FADE_DIP_KNOTS_A: ReadonlyArray<readonly [number, number]> = [
+  [0, 1], [0.05, 0.8012], [0.1, 0.4497], [0.15, 0.1329], [0.2, 0],
+  [0.25, 0], [0.3, 0], [0.35, 0], [0.4, 0], [0.45, 0], [0.5, 0],
+  [0.55, 0], [0.6, 0], [0.65, 0], [0.7, 0], [0.75, 0], [0.8, 0],
+  [0.85, 0], [0.9, 0], [0.95, 0], [1, 0],
+];
+const FADE_DIP_KNOTS_B: ReadonlyArray<readonly [number, number]> = [
+  [0, 0], [0.05, 0], [0.1, 0], [0.12, 0], [0.15, 0.0128], [0.2, 0.0313],
+  [0.25, 0.0562], [0.3, 0.0955], [0.35, 0.1441], [0.4, 0.2016],
+  [0.45, 0.2659], [0.5, 0.345], [0.55, 0.4216], [0.6, 0.5016],
+  [0.65, 0.5934], [0.7, 0.6697], [0.75, 0.7419], [0.8, 0.7982],
+  [0.85, 0.8479], [0.9, 0.9039], [0.95, 0.9523], [1, 1],
+];
+function fadeDipWeights(p: number): { aAlpha: number; bAlpha: number } {
+  const interp = (
+    knots: ReadonlyArray<readonly [number, number]>,
+  ): number => {
+    if (p <= 0) return knots[0][1];
+    if (p >= 1) return knots[knots.length - 1][1];
+    for (let i = 1; i < knots.length; i++) {
+      if (p <= knots[i][0]) {
+        const t =
+          (p - knots[i - 1][0]) / (knots[i][0] - knots[i - 1][0]);
+        return knots[i - 1][1] + t * (knots[i][1] - knots[i - 1][1]);
+      }
+    }
+    return knots[knots.length - 1][1];
+  };
+  return {
+    aAlpha: interp(FADE_DIP_KNOTS_A),
+    bAlpha: interp(FADE_DIP_KNOTS_B),
+  };
+}
+
+/**
+ * Màu trung gian (dip) của 1 cặp pixel cho họ fade.
+ * - "black": [0,0,0] cho cả 2 phía; "white": [255,255,255].
+ * - "gray": đường RGB: mean 3 kênh của pixel đó; đường YUV: luma
+ *   bt601 (0.299R+0.587G+0.114B) của pixel đó — đo thật đợt 25 I4:
+ *   gray YUV ≈ luma ±3–6 mức (xem LIMITS §5), không phải mean kênh
+ *   như đường RGB. Trả { midA, midB }, mỗi cái là [r, g, b]
+ *   (gray: 3 kênh bằng nhau).
+ */
+export function dipMidColors(
+  mode: TransitionDip["mode"],
+  aRgb: readonly [number, number, number],
+  bRgb: readonly [number, number, number],
+  path: "rgb" | "yuv",
+): { midA: [number, number, number]; midB: [number, number, number] } {
+  if (mode === "black") return { midA: [0, 0, 0], midB: [0, 0, 0] };
+  if (mode === "white")
+    return { midA: [255, 255, 255], midB: [255, 255, 255] };
+  const gray = (px: readonly [number, number, number]): number =>
+    path === "yuv"
+      ? 0.299 * px[0] + 0.587 * px[1] + 0.114 * px[2]
+      : (px[0] + px[1] + px[2]) / 3;
+  const ga = gray(aRgb);
+  const gb = gray(bRgb);
+  return { midA: [ga, ga, ga], midB: [gb, gb, gb] };
+}
+
+/**
+ * Composite 1 pixel của họ fade có dip (harness/rasterizer dùng hàm
+ * này làm nguồn chân lý duy nhất, thay vì cài lại công thức):
+ *   out = a.alpha·A + b.alpha·B + dip.a·midA + dip.b·midB
+ *        + (path "yuv" và mode black/white: yuvLevelOffset·(dip.a+dip.b))
+ * Kết quả clamp về [0,255], KHÔNG làm tròn (harness làm tròn khi ghi
+ * pixel). Type không có dip → crossfade thuần a.alpha·A + b.alpha·B.
+ */
+export function compositeFadePixel(
+  aRgb: readonly [number, number, number],
+  bRgb: readonly [number, number, number],
+  visual: TransitionVisual,
+  path: "rgb" | "yuv",
+): [number, number, number] {
+  const dip = visual.dip;
+  const clamp = (v: number): number => (v < 0 ? 0 : v > 255 ? 255 : v);
+  if (!dip) {
+    return [
+      clamp(visual.a.alpha * aRgb[0] + visual.b.alpha * bRgb[0]),
+      clamp(visual.a.alpha * aRgb[1] + visual.b.alpha * bRgb[1]),
+      clamp(visual.a.alpha * aRgb[2] + visual.b.alpha * bRgb[2]),
+    ];
+  }
+  const { midA, midB } = dipMidColors(dip.mode, aRgb, bRgb, path);
+  const off =
+    path === "yuv" && dip.mode !== "gray"
+      ? (visual.yuvLevelOffset ?? 0) * (dip.a + dip.b)
+      : 0;
+  return [
+    clamp(
+      visual.a.alpha * aRgb[0] +
+        visual.b.alpha * bRgb[0] +
+        dip.a * midA[0] +
+        dip.b * midB[0] +
+        off,
+    ),
+    clamp(
+      visual.a.alpha * aRgb[1] +
+        visual.b.alpha * bRgb[1] +
+        dip.a * midA[1] +
+        dip.b * midB[1] +
+        off,
+    ),
+    clamp(
+      visual.a.alpha * aRgb[2] +
+        visual.b.alpha * bRgb[2] +
+        dip.a * midA[2] +
+        dip.b * midB[2] +
+        off,
+    ),
+  ];
 }
 
 /**
@@ -203,6 +384,39 @@ export function radialGradientWeight(mid: number, rho: number): number {
   const g = rho - mid + 0.5;
   const gc = g < 0 ? 0 : g > 1 ? 1 : g;
   return 1 - (3 * gc * gc - 2 * gc * gc * gc);
+}
+
+/**
+ * Composite 1 pixel của CANVAS ĐƠN CLIP cho họ fade có dip (đợt 26 J3):
+ * clip vẽ trên nền dip của chính nó, KHÔNG phải composite cặp:
+ *   out = alpha·clip + (1−alpha)·dip
+ * với dip = trắng (fadewhite) hoặc xám theo từng pixel của chính clip
+ * đó (fadegrays, đường RGB của canvas: mean 3 kênh — cùng định nghĩa
+ * với dipMidColors mode "gray" đường "rgb"). alpha = tv.alpha của clip
+ * (lớp A khi ra, lớp B khi vào). preview.tsx dùng CHÍNH hàm này trong
+ * vòng lặp ImageData của nhánh dip, nên harness đo ở đây cũng là đo
+ * công thức canvas thật (không cài lại công thức trong script đo).
+ * Mode "black" cho đủ họ (dip đen ≡ nền đen sẵn có, preview giữ đường
+ * alpha cũ cho fadeblack nên nhánh dip không dùng mode này).
+ */
+export function singleClipDipPixel(
+  clipRgb: readonly [number, number, number],
+  alphaRaw: number,
+  mode: TransitionDip["mode"],
+): [number, number, number] {
+  const alpha = alphaRaw < 0 ? 0 : alphaRaw > 1 ? 1 : alphaRaw;
+  const dip =
+    mode === "white"
+      ? 255
+      : mode === "gray"
+        ? (clipRgb[0] + clipRgb[1] + clipRgb[2]) / 3
+        : 0;
+  const clamp = (v: number): number => (v < 0 ? 0 : v > 255 ? 255 : v);
+  return [
+    clamp(alpha * clipRgb[0] + (1 - alpha) * dip),
+    clamp(alpha * clipRgb[1] + (1 - alpha) * dip),
+    clamp(alpha * clipRgb[2] + (1 - alpha) * dip),
+  ];
 }
 
 /**
@@ -369,13 +583,78 @@ export function describeTransition(
     // ---- Fade family: chỉ alpha (giữ đúng hành vi fade cũ của preview) ----
     case "fade":
       return fade(p, "crossfade tuyến tính");
-    case "fadeblack":
+    case "fadeblack": {
+      // Dip qua đen, hiệu chuẩn từ probe dày đặc render thật FFmpeg 8.1.2
+      // (đợt 24 H3 + đợt 25 I4: xfade fadeblack trên cặp đỏ→xanh phẳng,
+      // 30fps, 2 đường vào xfade). ĐIỂM THEN CHỐT: trọng số phải lấy
+      // từ đường RGB (format=rgb24 ép TRƯỚC xfade — đường không bị
+      // offset mức đen), KHÔNG lấy từ đường YUV: đường YUV của FFmpeg
+      // blend về mức đen Y=0 thay vì Y=16 của limited range, nên frame
+      // render tối thêm một hằng số so với blend RGB. Đợt 25 I4 fit
+      // LSQ chính thức trên dữ liệu phẳng YUV (loại kênh bị clip):
+      // offset = −21,05×m (m = dip.a+dip.b; ≈ −13,9 ở p=0,5), rmse dư
+      // 1,15 — khác lý thuyết −18,63×m (1,164×16) khoảng 2,4, chưa rõ
+      // nguyên nhân (có thể do chuyển đổi YUV↔RGB nguyên của FFmpeg);
+      // giá trị fit là số code dùng, lý thuyết chỉ để tham chiếu (xem
+      // docs/PHASE9_ROUND25_I4_FADE_LEVEL_LIMITS.md §4). Fit trên dữ
+      // liệu YUV mà không tách offset sẽ cho đường cong sai thấp
+      // ~0,055 ở p=0,5 (đó là sai lầm của bản hiệu chuẩn đầu đợt H3).
+      // Trọng số (fadeDipWeights): nút nội suy hiệu chuẩn lại đợt 31
+      // N6 (A tắt hẳn từ p=0,20, B kẹp 0 tới p=0,12, tại p=0,5 B≈0,34;
+      // xem ghi chú trên fadeDipWeights). Công thức đóng của FFmpeg
+      // chưa xác định được nên nút là hằng số hiệu chuẩn.
+      // Composite cặp đầy đủ (harness): A·αA + B·αB + dip·đen
+      // (+ offset YUV khi đường yuv) qua compositeFadePixel; canvas
+      // đơn clip trên nền đen (preview.tsx) vẽ đúng dip này chỉ bằng
+      // alpha vì mid đen ≡ nền đen. Badge vẫn approx cho đến khi số
+      // footage mới chứng minh được (xem LIMITS đợt 25 I4).
+      const { aAlpha, bAlpha } = fadeDipWeights(p);
+      return {
+        ...base,
+        geometric: false,
+        note: "fadeblack: dip qua đen (hiệu chuẩn probe RGB FFmpeg, đợt 24 H3; offset YUV đợt 25 I4)",
+        a: full(aAlpha),
+        b: full(bAlpha),
+        dip: { a: 1 - p - aAlpha, b: p - bAlpha, mode: "black" },
+        yuvLevelOffset: -21.05,
+      };
+    }
     case "fadewhite":
-    case "fadegrays":
-      // Mô hình tuần tự của preview không vẽ được màu trung gian (đen/
-      // trắng/xám) vì clip kia chưa/không còn active — alpha tuyến tính là
-      // xấp xỉ gần nhất, xem LIMITS §3.
-      return fade(p, `${type}: alpha tuyến tính, bỏ qua màu trung gian`);
+    case "fadegrays": {
+      // Đợt 25 I4: cả hai dùng CHUNG đường cong trọng số của
+      // fadeblack và chỉ khác số hạng trung gian (đường cong đã
+      // hiệu chuẩn lại bằng nút nội suy đợt 31 N6) — công thức
+      // thống nhất:
+      //   out = wA·A + wB·B + (1−p−wA)·C_A + (p−wB)·C_B
+      // với fadewhite C = trắng (255,255,255); fadegrays C_A = gray(A),
+      // C_B = gray(B) theo từng pixel (đường RGB: mean kênh — đã chứng
+      // minh bằng gradient 3 đường P1/P2/P3: số hạng xám chỉ phụ thuộc
+      // tổng kênh, không phụ thuộc kênh nào; các giả thuyết xám cố
+      // định / khử bão hòa hỗn hợp / khử bão hòa chroma YUV đều bị
+      // bác, xem LIMITS §3). Đường YUV: fadewhite có offset +20,45×m
+      // (fit phẳng, rmse 1,61; lý thuyết +23,1×m); fadegrays YUV đổi
+      // gray sang luma bt601 (≈ luma ±3–6, không dùng offset hằng).
+      // Composite cặp qua compositeFadePixel; canvas đơn clip CHƯA
+      // áp được số hạng này (fadewhite vẽ trên nền đen là sai hướng
+      // dip — nợ follow-up, xem LIMITS §7).
+      const { aAlpha, bAlpha } = fadeDipWeights(p);
+      return {
+        ...base,
+        geometric: false,
+        note:
+          type === "fadewhite"
+            ? "fadewhite: dip qua trắng (trọng số nút chung họ fade, hiệu chuẩn lại đợt 31 N6)"
+            : "fadegrays: dip qua xám trung gian theo từng pixel (mean kênh RGB / luma YUV, đợt 25 I4)",
+        a: full(aAlpha),
+        b: full(bAlpha),
+        dip: {
+          a: 1 - p - aAlpha,
+          b: p - bAlpha,
+          mode: type === "fadewhite" ? "white" : "gray",
+        },
+        ...(type === "fadewhite" ? { yuvLevelOffset: 20.45 } : {}),
+      };
+    }
     case "fadefast":
       return fade(1 - (1 - p) * (1 - p), "fadefast: alpha tăng nhanh đầu (xấp xỉ)");
     case "fadeslow":
@@ -1639,6 +1918,24 @@ export interface TransitionClipVisual {
   alpha: number;
   /** Lớp hình học của clip này (null khi không có cửa sổ / chỉ alpha). */
   layer: TransitionLayerSpec | null;
+  /**
+   * Màu nền dip cho canvas đơn clip (chỉ họ fade có màu trung gian
+   * hằng số): fadeblack → đen, fadewhite → trắng; fadegrays → null
+   * (xám theo từng pixel, không có 1 màu nền); không có dip → null.
+   * Đợt 26 J3: preview.tsx ĐÃ tiêu thụ ý định này qua dipMode +
+   * nhánh dip (drawVideoClipWithDip) — fadewhite vẽ dip trắng,
+   * fadegrays vẽ dip xám theo pixel, đều chỉ trong vùng clip đã vẽ
+   * (xem LIMITS đợt 26 J3). Trường này giữ lại để tương thích.
+   */
+  dipColor: { r: number; g: number; b: number } | null;
+  /**
+   * Mode dip của visual cặp cho canvas đơn clip (đợt 26 J3):
+   * "black"/"white"/"gray" theo vis.dip.mode, null khi không có dip.
+   * preview.tsx chỉ mở nhánh dip cho "white"/"gray" (fadeblack giữ
+   * đường alpha cũ trên nền đen vì dip đen ≡ nền đen). Khi cả 2 cửa
+   * sổ cùng active, mode lấy theo cửa sổ vào (như dipColor).
+   */
+  dipMode: TransitionDip["mode"] | null;
   note: string;
 }
 
@@ -1649,8 +1946,22 @@ const NO_TRANSITION: TransitionClipVisual = {
   geometric: false,
   alpha: 1,
   layer: null,
+  dipColor: null,
+  dipMode: null,
   note: "không có transition",
 };
+
+/** Mode dip của 1 visual cặp (xem dipMode ở trên). */
+function dipModeOf(vis: TransitionVisual): TransitionDip["mode"] | null {
+  return vis.dip?.mode ?? null;
+}
+function dipColorOf(
+  vis: TransitionVisual,
+): { r: number; g: number; b: number } | null {
+  if (vis.dip?.mode === "black") return { r: 0, g: 0, b: 0 };
+  if (vis.dip?.mode === "white") return { r: 255, g: 255, b: 255 };
+  return null;
+}
 
 /**
  * Tính transition visual cho 1 clip tại localT.
@@ -1709,6 +2020,8 @@ export function transitionClipVisual(
       geometric: inVis.geometric,
       alpha: Math.min(1, Math.max(0, inVis.b.alpha * outVis.a.alpha)),
       layer: inVis.geometric ? inVis.b : null,
+      dipColor: dipColorOf(inVis),
+      dipMode: dipModeOf(inVis),
       note: `cả 2 cửa sổ transition cùng active; hình học theo vào (${inVis.type})`,
     };
   }
@@ -1720,6 +2033,8 @@ export function transitionClipVisual(
       geometric: inVis.geometric,
       alpha: inVis.b.alpha,
       layer: inVis.geometric ? inVis.b : null,
+      dipColor: dipColorOf(inVis),
+      dipMode: dipModeOf(inVis),
       note: inVis.note,
     };
   }
@@ -1731,6 +2046,8 @@ export function transitionClipVisual(
     geometric: outVis!.geometric,
     alpha: outVis!.a.alpha,
     layer: outVis!.geometric ? outVis!.a : null,
+    dipColor: dipColorOf(outVis!),
+    dipMode: dipModeOf(outVis!),
     note: outVis!.note,
   };
 }

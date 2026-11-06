@@ -1,0 +1,530 @@
+{
+  "mode": "flat-sweep",
+  "types": [
+    "fadeblack",
+    "fade"
+  ],
+  "workdir": "/home/hatch/workspace/repo-1/scratch-h3/flat2",
+  "yuvIn": false,
+  "rows": [
+    {
+      "n": 30,
+      "p": 0,
+      "madNew": 0,
+      "le8New": 1,
+      "verdictNew": "KHỚP",
+      "madOld": 0,
+      "le8Old": 1,
+      "verdictOld": "KHỚP"
+    },
+    {
+      "n": 31,
+      "p": 0.0333,
+      "madNew": 0,
+      "le8New": 1,
+      "verdictNew": "KHỚP",
+      "madOld": 10,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 32,
+      "p": 0.0667,
+      "madNew": 2,
+      "le8New": 1,
+      "verdictNew": "KHỚP",
+      "madOld": 28.3333,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 33,
+      "p": 0.1,
+      "madNew": 4.3333,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 51.3333,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 34,
+      "p": 0.1333,
+      "madNew": 5,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 71,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 35,
+      "p": 0.1667,
+      "madNew": 5.3333,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 85,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 36,
+      "p": 0.2,
+      "madNew": 1.6667,
+      "le8New": 1,
+      "verdictNew": "KHỚP",
+      "madOld": 84.6667,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 37,
+      "p": 0.2333,
+      "madNew": 3.3333,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 85,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 38,
+      "p": 0.2667,
+      "madNew": 5.3333,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 84.6667,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 39,
+      "p": 0.3,
+      "madNew": 6.6667,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 84,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 40,
+      "p": 0.3333,
+      "madNew": 6.3333,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 80.3333,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 41,
+      "p": 0.3667,
+      "madNew": 6.3333,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 77.3333,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 42,
+      "p": 0.4,
+      "madNew": 6.3333,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 73.6667,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 43,
+      "p": 0.4333,
+      "madNew": 6.6667,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 70.3333,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 44,
+      "p": 0.4667,
+      "madNew": 6.3333,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 65.6667,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 45,
+      "p": 0.5,
+      "madNew": 5.3333,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 61,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 46,
+      "p": 0.5333,
+      "madNew": 4.6667,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 56,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 47,
+      "p": 0.5667,
+      "madNew": 4.6667,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 51.3333,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 48,
+      "p": 0.6,
+      "madNew": 3.3333,
+      "le8New": 0.6667,
+      "verdictNew": "LỆCH",
+      "madOld": 45.6667,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 49,
+      "p": 0.6333,
+      "madNew": 2.6667,
+      "le8New": 1,
+      "verdictNew": "XẤP XỈ",
+      "madOld": 40.6667,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 50,
+      "p": 0.6667,
+      "madNew": 2,
+      "le8New": 1,
+      "verdictNew": "KHỚP",
+      "madOld": 35.6667,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 51,
+      "p": 0.7,
+      "madNew": 1.6667,
+      "le8New": 1,
+      "verdictNew": "KHỚP",
+      "madOld": 31,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 52,
+      "p": 0.7333,
+      "madNew": 1,
+      "le8New": 1,
+      "verdictNew": "KHỚP",
+      "madOld": 26,
+      "le8Old": 0.3333,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 53,
+      "p": 0.7667,
+      "madNew": 1,
+      "le8New": 1,
+      "verdictNew": "KHỚP",
+      "madOld": 22,
+      "le8Old": 0.6667,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 54,
+      "p": 0.8,
+      "madNew": 1.6667,
+      "le8New": 1,
+      "verdictNew": "KHỚP",
+      "madOld": 19,
+      "le8Old": 0.6667,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 55,
+      "p": 0.8333,
+      "madNew": 1.6667,
+      "le8New": 1,
+      "verdictNew": "KHỚP",
+      "madOld": 15.3333,
+      "le8Old": 0.6667,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 56,
+      "p": 0.8667,
+      "madNew": 2.6667,
+      "le8New": 1,
+      "verdictNew": "XẤP XỈ",
+      "madOld": 13,
+      "le8Old": 0.6667,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 57,
+      "p": 0.9,
+      "madNew": 2.3333,
+      "le8New": 1,
+      "verdictNew": "XẤP XỈ",
+      "madOld": 10,
+      "le8Old": 0.6667,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 58,
+      "p": 0.9333,
+      "madNew": 1.6667,
+      "le8New": 1,
+      "verdictNew": "KHỚP",
+      "madOld": 6.6667,
+      "le8Old": 0.6667,
+      "verdictOld": "LỆCH"
+    },
+    {
+      "n": 59,
+      "p": 0.9667,
+      "madNew": 0.3333,
+      "le8New": 1,
+      "verdictNew": "KHỚP",
+      "madOld": 3.3333,
+      "le8Old": 1,
+      "verdictOld": "XẤP XỈ"
+    }
+  ],
+  "worst": {
+    "madNew": 6.6667,
+    "madOld": 85
+  },
+  "rgbRows": [
+    {
+      "n": 30,
+      "p": 0,
+      "madNewRgb": 0,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 31,
+      "p": 0.0333,
+      "madNewRgb": 0.6667,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 32,
+      "p": 0.0667,
+      "madNewRgb": 0,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 33,
+      "p": 0.1,
+      "madNewRgb": 0.6667,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 34,
+      "p": 0.1333,
+      "madNewRgb": 0.6667,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 35,
+      "p": 0.1667,
+      "madNewRgb": 1,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 36,
+      "p": 0.2,
+      "madNewRgb": 0.6667,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 37,
+      "p": 0.2333,
+      "madNewRgb": 0.6667,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 38,
+      "p": 0.2667,
+      "madNewRgb": 0.3333,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 39,
+      "p": 0.3,
+      "madNewRgb": 0.3333,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 40,
+      "p": 0.3333,
+      "madNewRgb": 0.3333,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 41,
+      "p": 0.3667,
+      "madNewRgb": 0.6667,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 42,
+      "p": 0.4,
+      "madNewRgb": 0.6667,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 43,
+      "p": 0.4333,
+      "madNewRgb": 0.6667,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 44,
+      "p": 0.4667,
+      "madNewRgb": 1,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 45,
+      "p": 0.5,
+      "madNewRgb": 0.6667,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 46,
+      "p": 0.5333,
+      "madNewRgb": 0.3333,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 47,
+      "p": 0.5667,
+      "madNewRgb": 0,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 48,
+      "p": 0.6,
+      "madNewRgb": 0.3333,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 49,
+      "p": 0.6333,
+      "madNewRgb": 0.3333,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 50,
+      "p": 0.6667,
+      "madNewRgb": 0.6667,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 51,
+      "p": 0.7,
+      "madNewRgb": 1,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 52,
+      "p": 0.7333,
+      "madNewRgb": 1,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 53,
+      "p": 0.7667,
+      "madNewRgb": 0.6667,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 54,
+      "p": 0.8,
+      "madNewRgb": 0,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 55,
+      "p": 0.8333,
+      "madNewRgb": 0.6667,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 56,
+      "p": 0.8667,
+      "madNewRgb": 1,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 57,
+      "p": 0.9,
+      "madNewRgb": 1,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 58,
+      "p": 0.9333,
+      "madNewRgb": 0.6667,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    },
+    {
+      "n": 59,
+      "p": 0.9667,
+      "madNewRgb": 0,
+      "le8NewRgb": 1,
+      "verdictNewRgb": "KHỚP"
+    }
+  ],
+  "worstRgb": {
+    "madNew": 1
+  }
+}

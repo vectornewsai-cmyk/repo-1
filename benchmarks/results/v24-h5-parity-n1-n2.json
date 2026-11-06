@@ -1,0 +1,436 @@
+{
+  "a": "n1-guardian-bgvert.mp4",
+  "b": "n2-arctic-seaice-vert.mp4",
+  "a_start": 10.0,
+  "b_start": 10.0,
+  "size": "720x1280",
+  "fps": 30,
+  "frames": 60,
+  "transition": "dissolve",
+  "method": "frand float32 (vf_xfade.c) + p_hat measured from render frame",
+  "mad": 0.1,
+  "le8_pct": 99.92,
+  "verdict": "KHOP",
+  "per_frame": [
+    {
+      "frame": 0,
+      "p_hat": 0.0,
+      "p_nominal": 0.0167,
+      "mad": 0.0,
+      "le8_pct": 100.0
+    },
+    {
+      "frame": 1,
+      "p_hat": 0.0182,
+      "p_nominal": 0.0333,
+      "mad": 0.1443,
+      "le8_pct": 99.88
+    },
+    {
+      "frame": 2,
+      "p_hat": 0.0346,
+      "p_nominal": 0.05,
+      "mad": 0.0937,
+      "le8_pct": 99.92
+    },
+    {
+      "frame": 3,
+      "p_hat": 0.0503,
+      "p_nominal": 0.0667,
+      "mad": 0.0676,
+      "le8_pct": 99.94
+    },
+    {
+      "frame": 4,
+      "p_hat": 0.0685,
+      "p_nominal": 0.0833,
+      "mad": 0.1603,
+      "le8_pct": 99.86
+    },
+    {
+      "frame": 5,
+      "p_hat": 0.0844,
+      "p_nominal": 0.1,
+      "mad": 0.144,
+      "le8_pct": 99.88
+    },
+    {
+      "frame": 6,
+      "p_hat": 0.1008,
+      "p_nominal": 0.1167,
+      "mad": 0.0865,
+      "le8_pct": 99.93
+    },
+    {
+      "frame": 7,
+      "p_hat": 0.1169,
+      "p_nominal": 0.1333,
+      "mad": 0.0702,
+      "le8_pct": 99.94
+    },
+    {
+      "frame": 8,
+      "p_hat": 0.1353,
+      "p_nominal": 0.15,
+      "mad": 0.1699,
+      "le8_pct": 99.86
+    },
+    {
+      "frame": 9,
+      "p_hat": 0.1512,
+      "p_nominal": 0.1667,
+      "mad": 0.1472,
+      "le8_pct": 99.88
+    },
+    {
+      "frame": 10,
+      "p_hat": 0.1675,
+      "p_nominal": 0.1833,
+      "mad": 0.0866,
+      "le8_pct": 99.93
+    },
+    {
+      "frame": 11,
+      "p_hat": 0.1834,
+      "p_nominal": 0.2,
+      "mad": 0.0646,
+      "le8_pct": 99.95
+    },
+    {
+      "frame": 12,
+      "p_hat": 0.2017,
+      "p_nominal": 0.2167,
+      "mad": 0.169,
+      "le8_pct": 99.86
+    },
+    {
+      "frame": 13,
+      "p_hat": 0.2173,
+      "p_nominal": 0.2333,
+      "mad": 0.1437,
+      "le8_pct": 99.88
+    },
+    {
+      "frame": 14,
+      "p_hat": 0.2337,
+      "p_nominal": 0.25,
+      "mad": 0.0786,
+      "le8_pct": 99.93
+    },
+    {
+      "frame": 15,
+      "p_hat": 0.2495,
+      "p_nominal": 0.2667,
+      "mad": 0.0641,
+      "le8_pct": 99.95
+    },
+    {
+      "frame": 16,
+      "p_hat": 0.2679,
+      "p_nominal": 0.2833,
+      "mad": 0.1469,
+      "le8_pct": 99.88
+    },
+    {
+      "frame": 17,
+      "p_hat": 0.2845,
+      "p_nominal": 0.3,
+      "mad": 0.0895,
+      "le8_pct": 99.93
+    },
+    {
+      "frame": 18,
+      "p_hat": 0.3004,
+      "p_nominal": 0.3167,
+      "mad": 0.0726,
+      "le8_pct": 99.94
+    },
+    {
+      "frame": 19,
+      "p_hat": 0.3189,
+      "p_nominal": 0.3333,
+      "mad": 0.1819,
+      "le8_pct": 99.85
+    },
+    {
+      "frame": 20,
+      "p_hat": 0.3347,
+      "p_nominal": 0.35,
+      "mad": 0.1506,
+      "le8_pct": 99.88
+    },
+    {
+      "frame": 21,
+      "p_hat": 0.351,
+      "p_nominal": 0.3667,
+      "mad": 0.0856,
+      "le8_pct": 99.93
+    },
+    {
+      "frame": 22,
+      "p_hat": 0.3668,
+      "p_nominal": 0.3833,
+      "mad": 0.0701,
+      "le8_pct": 99.94
+    },
+    {
+      "frame": 23,
+      "p_hat": 0.385,
+      "p_nominal": 0.4,
+      "mad": 0.1653,
+      "le8_pct": 99.86
+    },
+    {
+      "frame": 24,
+      "p_hat": 0.401,
+      "p_nominal": 0.4167,
+      "mad": 0.1348,
+      "le8_pct": 99.89
+    },
+    {
+      "frame": 25,
+      "p_hat": 0.4174,
+      "p_nominal": 0.4333,
+      "mad": 0.0833,
+      "le8_pct": 99.93
+    },
+    {
+      "frame": 26,
+      "p_hat": 0.4331,
+      "p_nominal": 0.45,
+      "mad": 0.0685,
+      "le8_pct": 99.94
+    },
+    {
+      "frame": 27,
+      "p_hat": 0.4512,
+      "p_nominal": 0.4667,
+      "mad": 0.0926,
+      "le8_pct": 99.92
+    },
+    {
+      "frame": 28,
+      "p_hat": 0.4674,
+      "p_nominal": 0.4833,
+      "mad": 0.1454,
+      "le8_pct": 99.88
+    },
+    {
+      "frame": 29,
+      "p_hat": 0.4838,
+      "p_nominal": 0.5,
+      "mad": 0.0801,
+      "le8_pct": 99.93
+    },
+    {
+      "frame": 30,
+      "p_hat": 0.4998,
+      "p_nominal": 0.5167,
+      "mad": 0.0628,
+      "le8_pct": 99.95
+    },
+    {
+      "frame": 31,
+      "p_hat": 0.5183,
+      "p_nominal": 0.5333,
+      "mad": 0.1446,
+      "le8_pct": 99.88
+    },
+    {
+      "frame": 32,
+      "p_hat": 0.5345,
+      "p_nominal": 0.55,
+      "mad": 0.092,
+      "le8_pct": 99.92
+    },
+    {
+      "frame": 33,
+      "p_hat": 0.5505,
+      "p_nominal": 0.5667,
+      "mad": 0.0745,
+      "le8_pct": 99.94
+    },
+    {
+      "frame": 34,
+      "p_hat": 0.5688,
+      "p_nominal": 0.5833,
+      "mad": 0.1725,
+      "le8_pct": 99.86
+    },
+    {
+      "frame": 35,
+      "p_hat": 0.5844,
+      "p_nominal": 0.6,
+      "mad": 0.1453,
+      "le8_pct": 99.88
+    },
+    {
+      "frame": 36,
+      "p_hat": 0.6008,
+      "p_nominal": 0.6167,
+      "mad": 0.0913,
+      "le8_pct": 99.92
+    },
+    {
+      "frame": 37,
+      "p_hat": 0.6165,
+      "p_nominal": 0.6333,
+      "mad": 0.065,
+      "le8_pct": 99.95
+    },
+    {
+      "frame": 38,
+      "p_hat": 0.6345,
+      "p_nominal": 0.65,
+      "mad": 0.0943,
+      "le8_pct": 99.92
+    },
+    {
+      "frame": 39,
+      "p_hat": 0.6502,
+      "p_nominal": 0.6667,
+      "mad": 0.0659,
+      "le8_pct": 99.95
+    },
+    {
+      "frame": 40,
+      "p_hat": 0.6666,
+      "p_nominal": 0.6833,
+      "mad": 0.0638,
+      "le8_pct": 99.95
+    },
+    {
+      "frame": 41,
+      "p_hat": 0.6826,
+      "p_nominal": 0.7,
+      "mad": 0.0695,
+      "le8_pct": 99.94
+    },
+    {
+      "frame": 42,
+      "p_hat": 0.7007,
+      "p_nominal": 0.7167,
+      "mad": 0.087,
+      "le8_pct": 99.93
+    },
+    {
+      "frame": 43,
+      "p_hat": 0.7167,
+      "p_nominal": 0.7333,
+      "mad": 0.0651,
+      "le8_pct": 99.95
+    },
+    {
+      "frame": 44,
+      "p_hat": 0.7328,
+      "p_nominal": 0.75,
+      "mad": 0.0713,
+      "le8_pct": 99.94
+    },
+    {
+      "frame": 45,
+      "p_hat": 0.7485,
+      "p_nominal": 0.7667,
+      "mad": 0.0893,
+      "le8_pct": 99.92
+    },
+    {
+      "frame": 46,
+      "p_hat": 0.7671,
+      "p_nominal": 0.7833,
+      "mad": 0.0699,
+      "le8_pct": 99.94
+    },
+    {
+      "frame": 47,
+      "p_hat": 0.7835,
+      "p_nominal": 0.8,
+      "mad": 0.0649,
+      "le8_pct": 99.95
+    },
+    {
+      "frame": 48,
+      "p_hat": 0.7993,
+      "p_nominal": 0.8167,
+      "mad": 0.0826,
+      "le8_pct": 99.93
+    },
+    {
+      "frame": 49,
+      "p_hat": 0.8176,
+      "p_nominal": 0.8333,
+      "mad": 0.0855,
+      "le8_pct": 99.93
+    },
+    {
+      "frame": 50,
+      "p_hat": 0.8333,
+      "p_nominal": 0.85,
+      "mad": 0.0614,
+      "le8_pct": 99.95
+    },
+    {
+      "frame": 51,
+      "p_hat": 0.8498,
+      "p_nominal": 0.8667,
+      "mad": 0.0632,
+      "le8_pct": 99.95
+    },
+    {
+      "frame": 52,
+      "p_hat": 0.8655,
+      "p_nominal": 0.8833,
+      "mad": 0.0877,
+      "le8_pct": 99.93
+    },
+    {
+      "frame": 53,
+      "p_hat": 0.8837,
+      "p_nominal": 0.9,
+      "mad": 0.0689,
+      "le8_pct": 99.94
+    },
+    {
+      "frame": 54,
+      "p_hat": 0.8993,
+      "p_nominal": 0.9167,
+      "mad": 0.089,
+      "le8_pct": 99.93
+    },
+    {
+      "frame": 55,
+      "p_hat": 0.9156,
+      "p_nominal": 0.9333,
+      "mad": 0.1477,
+      "le8_pct": 99.88
+    },
+    {
+      "frame": 56,
+      "p_hat": 0.9314,
+      "p_nominal": 0.95,
+      "mad": 0.1726,
+      "le8_pct": 99.86
+    },
+    {
+      "frame": 57,
+      "p_hat": 0.9498,
+      "p_nominal": 0.9667,
+      "mad": 0.0643,
+      "le8_pct": 99.95
+    },
+    {
+      "frame": 58,
+      "p_hat": 0.9657,
+      "p_nominal": 0.9833,
+      "mad": 0.091,
+      "le8_pct": 99.92
+    },
+    {
+      "frame": 59,
+      "p_hat": 0.982,
+      "p_nominal": 1.0,
+      "mad": 0.1367,
+      "le8_pct": 99.88
+    }
+  ]
+}
