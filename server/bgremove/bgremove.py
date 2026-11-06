@@ -131,8 +131,11 @@ def feather_alpha(alpha, radius):
     c = np.cumsum(padded, axis=1, dtype=np.float32)
     c = np.concatenate([np.zeros((c.shape[0], 1), np.float32), c], axis=1)
     horiz = (c[:, k:] - c[:, :-k]) / k
-    padded2 = np.pad(horiz, ((pad, pad), (0, 0)), mode="edge")
-    c2 = np.cumsum(padded2, axis=0, dtype=np.float32)
+    # Đợt 42 X3: KHÔNG pad thêm hàng trước blur dọc — blur ngang không đổi
+    # số hàng nên horiz vẫn còn H+2r hàng đã edge-pad từ lần pad đầu; pad
+    # thêm sẽ làm kết quả thừa 2r hàng (540→542 với r=1) và dstack với
+    # frame gốc lỗi shape ở mode alpha. Không pad: (H+2r+1)-k = H, đúng.
+    c2 = np.cumsum(horiz, axis=0, dtype=np.float32)
     c2 = np.concatenate([np.zeros((1, c2.shape[1]), np.float32), c2], axis=0)
     return ((c2[k:, :] - c2[:-k, :]) / k).astype(np.float32)
 
