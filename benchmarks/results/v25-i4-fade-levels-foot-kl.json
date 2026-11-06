@@ -1,0 +1,108 @@
+{
+  "mode": "footage",
+  "types": [
+    "fadeblack",
+    "fadewhite",
+    "fadegrays",
+    "fade"
+  ],
+  "workdir": "/home/hatch/workspace/tmp-round25-i4/foot-kl",
+  "rows": [
+    {
+      "type": "fadeblack",
+      "path": "rgb",
+      "p": 0.5,
+      "mad": 1.0916,
+      "le8": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "type": "fadewhite",
+      "path": "rgb",
+      "p": 0.5,
+      "mad": 0.2541,
+      "le8": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "type": "fadegrays",
+      "path": "rgb",
+      "p": 0.5,
+      "mad": 0.7458,
+      "le8": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "type": "fade",
+      "path": "rgb",
+      "p": 0.5,
+      "mad": 0.5008,
+      "le8": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "type": "fadeblack",
+      "path": "yuv",
+      "p": 0.5,
+      "mad": 1.7299,
+      "le8": 0.9999,
+      "verdict": "KHỚP",
+      "variantTheory": {
+        "offset": -18.63,
+        "mad": 2.3149,
+        "le8": 0.9999,
+        "verdict": "XẤP XỈ"
+      },
+      "variantNoOffset": {
+        "mad": 14.18,
+        "le8": 0.0099,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fadewhite",
+      "path": "yuv",
+      "p": 0.5,
+      "mad": 1.5505,
+      "le8": 1,
+      "verdict": "KHỚP",
+      "variantTheory": {
+        "offset": 23.1,
+        "mad": 1.7377,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "variantNoOffset": {
+        "mad": 14.3665,
+        "le8": 0.0091,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fadegrays",
+      "path": "yuv",
+      "p": 0.5,
+      "mad": 1.389,
+      "le8": 0.9984,
+      "verdict": "KHỚP",
+      "variantGrayRgbMean": {
+        "mad": 1.9621,
+        "le8": 0.9852,
+        "verdict": "XẤP XỈ"
+      }
+    },
+    {
+      "type": "fade",
+      "path": "yuv",
+      "p": 0.5,
+      "mad": 0.8352,
+      "le8": 0.9991,
+      "verdict": "KHỚP"
+    }
+  ],
+  "windows": {
+    "winA": 28,
+    "winB": 24,
+    "size": "720x1280"
+  }
+}

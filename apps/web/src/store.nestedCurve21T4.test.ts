@@ -29,7 +29,9 @@
  *      clip thường → null; đã có curve → alreadyHas; reverse (clip
  *      ngoài) → reverse; lá con có curve HỢP LỆ (hằng 1×, tốc độ hợp
  *      với preset = 1) → null (được tạo, không chặn oan); lá con
- *      reverse → twoLevel + reason khác rỗng; duration 0 → previewFail.
+ *      reverse → twoLevel + check có reasonCode leafReverse (đợt 25
+ *      I3: hàm reason deprecated đã xóa, test chuyển sang API check);
+ *      duration 0 → previewFail.
  *  C1. Tạo từ 0 qua patchClip(preset): curve xuất hiện, trim [0,4) và
  *      duration 4 giữ nguyên (tích phân hằng 1× = D), validateNestedClip
  *      rỗng (clip tạo ra hợp lệ thật, không chỉ có field).
@@ -65,7 +67,7 @@ import { setLang, t as i18nT } from "./i18n";
 import {
   createNestedCurvePreset,
   nestedCurveCreateBlock,
-  nestedCurveCreateTwoLevelReason,
+  nestedCurveCreateTwoLevelCheck,
 } from "./components/nested/nestedCurveCreate";
 import {
   nestedCurveExpectedOut,
@@ -201,13 +203,17 @@ test("P2: luật chặn (T2) — thường null; đã có curve / reverse ngoài
   // Luật T2: lá hằng 1× × preset hằng 1× → tốc độ hợp 1, hợp lệ → cho qua.
   const twoValid = nestedTop("n1", subSpec([{ id: "it1", clips: [videoLeaf("c1", 0, 4, { speedKeyframes: LEAF_CURVE })] }]), 4, { in: 0, out: 4 });
   eq(nestedCurveCreateBlock(twoValid as unknown as NestedClip), null, "cặp hai tầng hợp lệ không bị chặn oan");
-  eq(nestedCurveCreateTwoLevelReason(twoValid as unknown as NestedClip), null, "cặp hợp lệ không có reason");
-  // Lá reverse: render cấm lá reverse dưới nested có curve → chặn + reason.
+  // Đợt 25 I3: hàm reason deprecated đã xóa — cùng assertion qua API
+  // trả check nguyên (nestedCurveCreateTwoLevelCheck).
+  eq(nestedCurveCreateTwoLevelCheck(twoValid as unknown as NestedClip), null, "cặp hợp lệ không có check");
+  // Lá reverse: render cấm lá reverse dưới nested có curve → chặn + check.
   const twoBad = nestedTop("n1", subSpec([{ id: "it1", clips: [videoLeaf("c1", 0, 4, { reverse: true })] }]), 4, { in: 0, out: 4 });
   eq(nestedCurveCreateBlock(twoBad as unknown as NestedClip), "twoLevel", "lá con reverse → chặn");
-  const reason = nestedCurveCreateTwoLevelReason(twoBad as unknown as NestedClip);
-  assert((reason ?? "").length > 0, "reason hai tầng vi phạm phải khác rỗng để panel toast được");
-  assert(reason!.includes("reverse"), `reason phải nói reverse: ${reason}`);
+  const check = nestedCurveCreateTwoLevelCheck(twoBad as unknown as NestedClip);
+  assert(check !== null, "check hai tầng vi phạm phải khác null để panel toast được");
+  eq(check.reasonCode, "leafReverse", "check phải mang code leafReverse (panel dịch theo code, không tách chuỗi)");
+  assert(check.reason.length > 0, "reason trong check phải khác rỗng");
+  assert(check.reason.includes("reverse"), `reason phải nói reverse: ${check.reason}`);
   const zero = nestedTop("n1", subSpec([{ id: "it1", clips: [videoLeaf("c1", 0, 8)] }]), 0, { in: 0, out: 4 });
   eq(nestedCurveCreateBlock(zero as unknown as NestedClip), "previewFail", "duration 0 không tính được trim.out");
 });

@@ -55,6 +55,20 @@
  * setRadialWeight/setDissolveFrand/setBarsFadeIsBar sau khi transpile
  * module TS (giống hệt cách 3 harness vẫn làm với biến cục bộ trước đây).
  *
+ * Đợt 25 I1: đo khớp màu (sửa nợ phương pháp đợt 24 H4 — toàn bộ số
+ * YUV đợt 20–23 đều mismatched: chuỗi render bt709 theo metadata
+ * nguồn vs preview chuyển bt601 mặc định, lệch hệ thống 0,66–1,71
+ * MAD theo nội dung; "ngoại lệ K→L" là artifact đo, không phải tính
+ * chất nội dung). Thêm ở cuối file, KHÔNG đổi hành vi cũ ngoài
+ * cảnh báo: ffmpegRgbToYuv420 giữ nguyên filter legacy bt601 khi
+ * caller không chỉ matrix (để số cũ tái lập đúng), nhưng in cảnh
+ * báo rõ một lần mỗi tiến trình; đường đo mới BẮT BUỘC chỉ matrix
+ * (ffmpegRgbToYuv420Matched / ffmpegYuvCompareMatched) và đọc
+ * matrix từ metadata nguồn bằng ffprobe (probeColorMetadata +
+ * matrixForMetadata) — metadata unknown/mismatch thì throw, KHÔNG
+ * đoán. Mặc định an toàn của harness mới: không có matrix tường
+ * minh thì không được claim "khớp màu".
+ *
  * Đợt 19 G6: thêm mode đo miền YUV qua FFmpeg (KHÔNG qua hàm JS
  * rgbToYuv420) + hợp nhất raster text (xem cuối file):
  * - yuv420PaddedDims / ffmpegRgbToYuv420 / ffmpegYuvToRgb420 /
@@ -444,24 +458,117 @@ function runFfmpegShared(args, label) {
  * - Trả về { yuv, w, h } với w/h là kích thước ĐÃ pad; caller phải
  *   dùng đúng w/h này khi gọi yuv420Mad.
  */
-function ffmpegRgbToYuv420(rgb, w, h, workDir, tag) {
+/**
+ * Đợt 25 I1: RGB24 -> yuv420p raw BẰNG FFmpeg, với matrix tường minh.
+ * - opts.matrix = "bt601" | "bt709": dùng filter
+ *   pad,scale=out_color_matrix=<matrix>,format=yuv420p.
+ * - opts.matrix không chỉ: GIỮ NGUYÊN filter legacy (pad,format=
+ *   yuv420p — rawvideo không metadata nên swscale mặc định bt601)
+ *   để số đo cũ tái lập đúng, NHƯNG in cảnh báo rõ một lần mỗi
+ *   tiến trình: kết quả này là chuyển bt601, và là MISMATCHED nếu
+ *   nguồn render là bt709 — không được dùng để kết luận "ngoại lệ
+ *   nội dung". Caller mới phải dùng ffmpegRgbToYuv420Matched.
+ * Trả về { yuv, w, h, matrix, legacy } — các field mới cộng thêm,
+ * caller cũ destructure { yuv, w, h } vẫn chạy đúng.
+ */
+let legacyMatrixWarned = false;
+function ffmpegRgbToYuv420(rgb, w, h, workDir, tag, opts = {}) {
   if (!Buffer.isBuffer(rgb) || rgb.length !== w * h * 3) {
     throw new Error(`ffmpegRgbToYuv420 cần Buffer rgb24 dài ${w * h * 3}, nhận ${rgb ? rgb.length : rgb}`);
+  }
+  const matrix = opts.matrix || null;
+  if (matrix !== null && matrix !== "bt601" && matrix !== "bt709") {
+    throw new Error(`ffmpegRgbToYuv420: matrix không hỗ trợ: ${matrix} (chỉ bt601/bt709)`);
+  }
+  if (matrix === null && !legacyMatrixWarned) {
+    legacyMatrixWarned = true;
+    console.warn("[harnessShared] CẢNH BÁO: ffmpegRgbToYuv420 gọi KHÔNG chỉ matrix — dùng filter legacy bt601 (rawvideo không metadata, swscale mặc định bt601). Nếu chuỗi render là bt709 thì đây là phép so sánh MISMATCHED (lệch hệ thống, xem đợt 24 H4) — không dùng kết quả này để kết luận tính chất nội dung. Dùng ffmpegRgbToYuv420Matched với matrix đọc từ metadata nguồn.");
   }
   const { w: pw, h: ph } = yuv420PaddedDims(w, h);
   const rawIn = path.join(workDir, `${tag}-rgb-in.raw`);
   const out = path.join(workDir, `${tag}.yuv`);
   fs.writeFileSync(rawIn, rgb);
+  const vf = matrix === null
+    ? "pad=ceil(iw/2)*2:ceil(ih/2)*2:0:0:black,format=yuv420p"
+    : `pad=ceil(iw/2)*2:ceil(ih/2)*2:0:0:black,scale=out_color_matrix=${matrix},format=yuv420p`;
   try {
     runFfmpegShared(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${w}x${h}`, "-i", rawIn,
-      "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2:0:0:black,format=yuv420p",
+      "-vf", vf,
       "-f", "rawvideo", "-y", out], `ffmpegRgbToYuv420 ${tag}`);
     const yuv = fs.readFileSync(out);
-    return { yuv, w: pw, h: ph };
+    return { yuv, w: pw, h: ph, matrix: matrix || "bt601", legacy: matrix === null };
   } finally {
     try { fs.unlinkSync(rawIn); } catch { /* bỏ qua */ }
     try { fs.unlinkSync(out); } catch { /* bỏ qua */ }
   }
+}
+
+/**
+ * Đợt 25 I1: bản BẮT BUỘC matrix của hàm trên — matrix thiếu hoặc
+ * không phải bt601/bt709 thì throw ngay (fail-visible, không đoán).
+ * Dùng cho mọi phép đo parity YUV mới: matrix phải lấy từ
+ * probeColorMetadata/matrixForMetadata của chính clip nguồn.
+ */
+function ffmpegRgbToYuv420Matched(rgb, w, h, workDir, tag, matrix) {
+  if (matrix !== "bt601" && matrix !== "bt709") {
+    throw new Error(`ffmpegRgbToYuv420Matched cần matrix bt601/bt709 tường minh, nhận: ${matrix}`);
+  }
+  const r = ffmpegRgbToYuv420(rgb, w, h, workDir, tag, { matrix });
+  return { yuv: r.yuv, w: r.w, h: r.h, matrix };
+}
+
+/**
+ * Đợt 25 I1: đọc metadata màu của stream video đầu tiên bằng ffprobe
+ * (không đoán, không fallback). Trả về { codec, width, height,
+ * colorSpace, colorTransfer, colorPrimaries, colorRange } với các
+ * field màu có thể là "unknown"/null khi file không gắn metadata
+ * (vd clip N1/N2 đợt 24 H5) — caller phải xử lý trường hợp đó
+ * tường minh (probe thực nghiệm hoặc dừng), không tự gán bt601.
+ */
+function probeColorMetadata(file) {
+  const r = spawnSync("ffprobe", ["-v", "error", "-select_streams", "v:0",
+    "-show_entries", "stream=codec_name,width,height,color_space,color_transfer,color_primaries,color_range",
+    "-of", "json", file], { encoding: "utf8" });
+  if (r.status !== 0) {
+    throw new Error(`probeColorMetadata: ffprobe exit ${r.status} cho ${file}: ${(r.stderr || "").slice(0, 300)}`);
+  }
+  let j;
+  try { j = JSON.parse(r.stdout); } catch { throw new Error(`probeColorMetadata: ffprobe không trả JSON cho ${file}`); }
+  const s = (j.streams || [])[0];
+  if (!s) throw new Error(`probeColorMetadata: không có video stream trong ${file}`);
+  return {
+    codec: s.codec_name || null,
+    width: s.width || null,
+    height: s.height || null,
+    colorSpace: s.color_space || null,
+    colorTransfer: s.color_transfer || null,
+    colorPrimaries: s.color_primaries || null,
+    colorRange: s.color_range || null,
+  };
+}
+
+/**
+ * Đợt 25 I1: matrix chuyển màu suy ra từ metadata ffprobe.
+ * - bt709 -> bt709; bt601/smpte170m -> bt601.
+ * - Mọi trường hợp khác (unknown, thiếu, bt2020, smpte240m...)
+ *   đều throw — harness không được tự gán matrix cho nguồn lạ.
+ */
+function matrixForMetadata(meta) {
+  const cs = meta && meta.colorSpace;
+  if (cs === "bt709") return "bt709";
+  if (cs === "bt601" || cs === "smpte170m") return "bt601";
+  throw new Error(`matrixForMetadata: color_space không suy được matrix (nhận: ${cs}) — không đoán; dùng chế độ probe thực nghiệm hoặc dừng đo`);
+}
+
+/**
+ * Đợt 25 I1: so 2 frame RGB trong miền YUV với matrix khớp tường
+ * minh ở CẢ HAI phía (dùng ffmpegRgbToYuv420Matched). opts của
+ * hàm cũ vẫn được giữ ở ffmpegYuvCompare để tương thích.
+ */
+function ffmpegYuvCompareMatched(previewRgb, renderRgb, w, h, workDir, tag, matrix) {
+  const a = ffmpegRgbToYuv420Matched(previewRgb, w, h, workDir, `${tag}-prev`, matrix);
+  const b = ffmpegRgbToYuv420Matched(renderRgb, w, h, workDir, `${tag}-rend`, matrix);
+  return yuv420Mad(a.yuv, b.yuv, a.w, a.h);
 }
 
 /**
@@ -494,9 +601,9 @@ function ffmpegYuvToRgb420(yuv, w, h, workDir, tag) {
  * yuv420Mad ({ mad, madY, madU, madV, le8, samples }); caller phân
  * loại bằng classifyYuvRef và in bằng formatYuvMad.
  */
-function ffmpegYuvCompare(previewRgb, renderRgb, w, h, workDir, tag) {
-  const a = ffmpegRgbToYuv420(previewRgb, w, h, workDir, `${tag}-prev`);
-  const b = ffmpegRgbToYuv420(renderRgb, w, h, workDir, `${tag}-rend`);
+function ffmpegYuvCompare(previewRgb, renderRgb, w, h, workDir, tag, opts = {}) {
+  const a = ffmpegRgbToYuv420(previewRgb, w, h, workDir, `${tag}-prev`, opts);
+  const b = ffmpegRgbToYuv420(renderRgb, w, h, workDir, `${tag}-rend`, opts);
   return yuv420Mad(a.yuv, b.yuv, a.w, a.h);
 }
 
@@ -533,6 +640,10 @@ module.exports = {
   yuv420Mad,
   yuv420PaddedDims,
   ffmpegRgbToYuv420,
+  ffmpegRgbToYuv420Matched,
+  probeColorMetadata,
+  matrixForMetadata,
+  ffmpegYuvCompareMatched,
   ffmpegYuvToRgb420,
   ffmpegYuvCompare,
   classifyYuvRef,

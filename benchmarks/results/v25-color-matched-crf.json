@@ -1,0 +1,1001 @@
+{
+  "method": "matched: product chain (default format=yuv420p) vs preview converted with source matrix (auto from ffprobe metadata; probe-empirical bt601 for N1/N2 unknown metadata)",
+  "frame": "720x1280, frame 45 @30fps (p=0.5), libx264 preset medium, each cell encoded 2x, repeat diff 0.0000",
+  "pairs": {
+    "r25-KL": {
+      "pair": "K-L",
+      "size": "720x1280",
+      "windows": {
+        "a": 28,
+        "b": 24
+      },
+      "metadata": {
+        "a": {
+          "codec": "h264",
+          "width": 1080,
+          "height": 1920,
+          "colorSpace": "bt709",
+          "colorTransfer": "bt709",
+          "colorPrimaries": "bt709",
+          "colorRange": "tv"
+        },
+        "b": {
+          "codec": "h264",
+          "width": 608,
+          "height": 1080,
+          "colorSpace": "bt709",
+          "colorTransfer": "bt709",
+          "colorPrimaries": "bt709",
+          "colorRange": "tv"
+        }
+      },
+      "previewMatrix": "bt709",
+      "matrixHow": "auto: metadata cả 2 nguồn đồng nhất",
+      "chain": "default",
+      "method": "matched: chuỗi sản phẩm (hoặc forced theo --chain) vs preview chuyển cùng matrix",
+      "cells": [
+        {
+          "type": "dissolve",
+          "crf": 0,
+          "guardRgb": {
+            "mad": 0.003926866319444444,
+            "le8": 0.9999623842592592
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 0.0022786458333333335,
+              "madY": 0.0028938802083333334,
+              "madU": 0.0011805555555555556,
+              "madV": 0.0009157986111111112,
+              "le8": 0.9999652777777778,
+              "samples": 1382400
+            },
+            {
+              "mad": 0.0022786458333333335,
+              "madY": 0.0028938802083333334,
+              "madU": 0.0011805555555555556,
+              "madV": 0.0009157986111111112,
+              "le8": 0.9999652777777778,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 10,
+          "guardRgb": {
+            "mad": 0.003926866319444444,
+            "le8": 0.9999623842592592
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 1.487316261574074,
+              "madY": 1.6198253038194443,
+              "madU": 1.202790798611111,
+              "madV": 1.2418055555555556,
+              "le8": 0.9986067708333334,
+              "samples": 1382400
+            },
+            {
+              "mad": 1.487316261574074,
+              "madY": 1.6198253038194443,
+              "madU": 1.202790798611111,
+              "madV": 1.2418055555555556,
+              "le8": 0.9986067708333334,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 12,
+          "guardRgb": {
+            "mad": 0.003926866319444444,
+            "le8": 0.9999623842592592
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 1.8384895833333332,
+              "madY": 2.0287565104166667,
+              "madU": 1.4503559027777777,
+              "madV": 1.4655555555555555,
+              "le8": 0.9952524594907407,
+              "samples": 1382400
+            },
+            {
+              "mad": 1.8384895833333332,
+              "madY": 2.0287565104166667,
+              "madU": 1.4503559027777777,
+              "madV": 1.4655555555555555,
+              "le8": 0.9952524594907407,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 14,
+          "guardRgb": {
+            "mad": 0.003926866319444444,
+            "le8": 0.9999623842592592
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 2.247482638888889,
+              "madY": 2.5107552083333333,
+              "madU": 1.7266102430555557,
+              "madV": 1.7152647569444444,
+              "le8": 0.9871100983796296,
+              "samples": 1382400
+            },
+            {
+              "mad": 2.247482638888889,
+              "madY": 2.5107552083333333,
+              "madU": 1.7266102430555557,
+              "madV": 1.7152647569444444,
+              "le8": 0.9871100983796296,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "XẤP XỈ",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "circleopen",
+          "crf": 0,
+          "guardRgb": {
+            "mad": 0.4995236545138889,
+            "le8": 1
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 0.3283687789351852,
+              "madY": 0.4292491319444444,
+              "madU": 0.12757378472222222,
+              "madV": 0.1256423611111111,
+              "le8": 1,
+              "samples": 1382400
+            },
+            {
+              "mad": 0.3283687789351852,
+              "madY": 0.4292491319444444,
+              "madU": 0.12757378472222222,
+              "madV": 0.1256423611111111,
+              "le8": 1,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "circleopen",
+          "crf": 10,
+          "guardRgb": {
+            "mad": 0.4995236545138889,
+            "le8": 1
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 0.6421274594907408,
+              "madY": 0.7870128038194445,
+              "madU": 0.3557986111111111,
+              "madV": 0.34891493055555556,
+              "le8": 0.9999920428240741,
+              "samples": 1382400
+            },
+            {
+              "mad": 0.6421274594907408,
+              "madY": 0.7870128038194445,
+              "madU": 0.3557986111111111,
+              "madV": 0.34891493055555556,
+              "le8": 0.9999920428240741,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "circleopen",
+          "crf": 12,
+          "guardRgb": {
+            "mad": 0.4995236545138889,
+            "le8": 1
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 0.716456886574074,
+              "madY": 0.8857161458333334,
+              "madU": 0.38155815972222223,
+              "madV": 0.3743185763888889,
+              "le8": 0.9999674479166667,
+              "samples": 1382400
+            },
+            {
+              "mad": 0.716456886574074,
+              "madY": 0.8857161458333334,
+              "madU": 0.38155815972222223,
+              "madV": 0.3743185763888889,
+              "le8": 0.9999674479166667,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "circleopen",
+          "crf": 14,
+          "guardRgb": {
+            "mad": 0.4995236545138889,
+            "le8": 1
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 0.7980902777777777,
+              "madY": 0.9905316840277778,
+              "madU": 0.41804253472222225,
+              "madV": 0.40837239583333335,
+              "le8": 0.9998784722222223,
+              "samples": 1382400
+            },
+            {
+              "mad": 0.7980902777777777,
+              "madY": 0.9905316840277778,
+              "madU": 0.41804253472222225,
+              "madV": 0.40837239583333335,
+              "le8": 0.9998784722222223,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        }
+      ]
+    },
+    "r25-JL": {
+      "pair": "J-L",
+      "size": "720x1280",
+      "windows": {
+        "a": 28,
+        "b": 24
+      },
+      "metadata": {
+        "a": {
+          "codec": "h264",
+          "width": 1080,
+          "height": 1920,
+          "colorSpace": "bt709",
+          "colorTransfer": "bt709",
+          "colorPrimaries": "bt709",
+          "colorRange": "tv"
+        },
+        "b": {
+          "codec": "h264",
+          "width": 608,
+          "height": 1080,
+          "colorSpace": "bt709",
+          "colorTransfer": "bt709",
+          "colorPrimaries": "bt709",
+          "colorRange": "tv"
+        }
+      },
+      "previewMatrix": "bt709",
+      "matrixHow": "auto: metadata cả 2 nguồn đồng nhất",
+      "chain": "default",
+      "method": "matched: chuỗi sản phẩm (hoặc forced theo --chain) vs preview chuyển cùng matrix",
+      "cells": [
+        {
+          "type": "dissolve",
+          "crf": 0,
+          "guardRgb": {
+            "mad": 0.002669994212962963,
+            "le8": 0.999964916087963
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 0.0018467881944444445,
+              "madY": 0.002250434027777778,
+              "madU": 0.0010069444444444444,
+              "madV": 0.001072048611111111,
+              "le8": 0.9999660011574074,
+              "samples": 1382400
+            },
+            {
+              "mad": 0.0018467881944444445,
+              "madY": 0.002250434027777778,
+              "madU": 0.0010069444444444444,
+              "madV": 0.001072048611111111,
+              "le8": 0.9999660011574074,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 10,
+          "guardRgb": {
+            "mad": 0.002669994212962963,
+            "le8": 0.999964916087963
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 1.0350499131944444,
+              "madY": 1.0729611545138888,
+              "madU": 0.9262413194444444,
+              "madV": 0.9922135416666666,
+              "le8": 0.9998451967592593,
+              "samples": 1382400
+            },
+            {
+              "mad": 1.0350499131944444,
+              "madY": 1.0729611545138888,
+              "madU": 0.9262413194444444,
+              "madV": 0.9922135416666666,
+              "le8": 0.9998451967592593,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 12,
+          "guardRgb": {
+            "mad": 0.002669994212962963,
+            "le8": 0.999964916087963
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 1.3144849537037038,
+              "madY": 1.36466796875,
+              "madU": 1.1572395833333333,
+              "madV": 1.2709982638888888,
+              "le8": 0.9993880208333333,
+              "samples": 1382400
+            },
+            {
+              "mad": 1.3144849537037038,
+              "madY": 1.36466796875,
+              "madU": 1.1572395833333333,
+              "madV": 1.2709982638888888,
+              "le8": 0.9993880208333333,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 14,
+          "guardRgb": {
+            "mad": 0.002669994212962963,
+            "le8": 0.999964916087963
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 1.6567375578703705,
+              "madY": 1.732370876736111,
+              "madU": 1.4301779513888888,
+              "madV": 1.5807638888888889,
+              "le8": 0.9978175636574074,
+              "samples": 1382400
+            },
+            {
+              "mad": 1.6567375578703705,
+              "madY": 1.732370876736111,
+              "madU": 1.4301779513888888,
+              "madV": 1.5807638888888889,
+              "le8": 0.9978175636574074,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        }
+      ]
+    },
+    "r25-R1R2": {
+      "pair": "R1-R2",
+      "size": "720x1280",
+      "windows": {
+        "a": 20,
+        "b": 10
+      },
+      "metadata": {
+        "a": {
+          "codec": "h264",
+          "width": 608,
+          "height": 1080,
+          "colorSpace": "bt709",
+          "colorTransfer": "bt709",
+          "colorPrimaries": "bt709",
+          "colorRange": "tv"
+        },
+        "b": {
+          "codec": "h264",
+          "width": 608,
+          "height": 1080,
+          "colorSpace": "bt709",
+          "colorTransfer": "bt709",
+          "colorPrimaries": "bt709",
+          "colorRange": "tv"
+        }
+      },
+      "previewMatrix": "bt709",
+      "matrixHow": "auto: metadata cả 2 nguồn đồng nhất",
+      "chain": "default",
+      "method": "matched: chuỗi sản phẩm (hoặc forced theo --chain) vs preview chuyển cùng matrix",
+      "cells": [
+        {
+          "type": "dissolve",
+          "crf": 0,
+          "guardRgb": {
+            "mad": 0.004904875578703703,
+            "le8": 0.9999638310185185
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 0.0030656828703703705,
+              "madY": 0.004235026041666667,
+              "madU": 0.0008203125,
+              "madV": 0.0006336805555555555,
+              "le8": 0.9999717881944444,
+              "samples": 1382400
+            },
+            {
+              "mad": 0.0030656828703703705,
+              "madY": 0.004235026041666667,
+              "madU": 0.0008203125,
+              "madV": 0.0006336805555555555,
+              "le8": 0.9999717881944444,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 10,
+          "guardRgb": {
+            "mad": 0.004904875578703703,
+            "le8": 0.9999638310185185
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 1.718423755787037,
+              "madY": 1.8430772569444445,
+              "madU": 1.4967708333333334,
+              "madV": 1.4414626736111111,
+              "le8": 0.9984707754629629,
+              "samples": 1382400
+            },
+            {
+              "mad": 1.718423755787037,
+              "madY": 1.8430772569444445,
+              "madU": 1.4967708333333334,
+              "madV": 1.4414626736111111,
+              "le8": 0.9984707754629629,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 12,
+          "guardRgb": {
+            "mad": 0.004904875578703703,
+            "le8": 0.9999638310185185
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 2.130724103009259,
+              "madY": 2.322099609375,
+              "madU": 1.8204210069444444,
+              "madV": 1.6755251736111112,
+              "le8": 0.9938932291666667,
+              "samples": 1382400
+            },
+            {
+              "mad": 2.130724103009259,
+              "madY": 2.322099609375,
+              "madU": 1.8204210069444444,
+              "madV": 1.6755251736111112,
+              "le8": 0.9938932291666667,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "XẤP XỈ",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 14,
+          "guardRgb": {
+            "mad": 0.004904875578703703,
+            "le8": 0.9999638310185185
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 2.6093120659722224,
+              "madY": 2.897810329861111,
+              "madU": 2.1632378472222222,
+              "madV": 1.9013932291666666,
+              "le8": 0.9791681134259259,
+              "samples": 1382400
+            },
+            {
+              "mad": 2.6093120659722224,
+              "madY": 2.897810329861111,
+              "madU": 2.1632378472222222,
+              "madV": 1.9013932291666666,
+              "le8": 0.9791681134259259,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "XẤP XỈ",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        }
+      ]
+    },
+    "r25-N1N2": {
+      "pair": "N1-N2",
+      "size": "720x1280",
+      "windows": {
+        "a": 10,
+        "b": 10
+      },
+      "metadata": {
+        "a": {
+          "codec": "h264",
+          "width": 1080,
+          "height": 1920,
+          "colorSpace": null,
+          "colorTransfer": null,
+          "colorPrimaries": null,
+          "colorRange": null
+        },
+        "b": {
+          "codec": "h264",
+          "width": 1080,
+          "height": 1920,
+          "colorSpace": null,
+          "colorTransfer": null,
+          "colorPrimaries": null,
+          "colorRange": null
+        }
+      },
+      "previewMatrix": "bt601",
+      "matrixHow": "probe thực nghiệm: sàn crf0 chuỗi mặc định nhỏ hơn ở bt601 (MAD 0.0030 so với 0.7676 ở matrix kia)",
+      "chain": "default",
+      "method": "matched: chuỗi sản phẩm (hoặc forced theo --chain) vs preview chuyển cùng matrix",
+      "cells": [
+        {
+          "type": "dissolve",
+          "crf": 0,
+          "guardRgb": {
+            "mad": 0.005157335069444445,
+            "le8": 0.9999660011574074
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 0.0030483217592592593,
+              "madY": 0.004369574652777777,
+              "madU": 0.00037760416666666666,
+              "madV": 0.00043402777777777775,
+              "le8": 0.9999782986111111,
+              "samples": 1382400
+            },
+            {
+              "mad": 0.0030483217592592593,
+              "madY": 0.004369574652777777,
+              "madU": 0.00037760416666666666,
+              "madV": 0.00043402777777777775,
+              "le8": 0.9999782986111111,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 10,
+          "guardRgb": {
+            "mad": 0.005157335069444445,
+            "le8": 0.9999660011574074
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 1.18529296875,
+              "madY": 1.2505381944444445,
+              "madU": 1.0224175347222222,
+              "madV": 1.0871875,
+              "le8": 0.9995493344907408,
+              "samples": 1382400
+            },
+            {
+              "mad": 1.18529296875,
+              "madY": 1.2505381944444445,
+              "madU": 1.0224175347222222,
+              "madV": 1.0871875,
+              "le8": 0.9995493344907408,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 12,
+          "guardRgb": {
+            "mad": 0.005157335069444445,
+            "le8": 0.9999660011574074
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 1.472355324074074,
+              "madY": 1.5803342013888888,
+              "madU": 1.2006076388888889,
+              "madV": 1.3121875,
+              "le8": 0.9986950231481482,
+              "samples": 1382400
+            },
+            {
+              "mad": 1.472355324074074,
+              "madY": 1.5803342013888888,
+              "madU": 1.2006076388888889,
+              "madV": 1.3121875,
+              "le8": 0.9986950231481482,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 14,
+          "guardRgb": {
+            "mad": 0.005157335069444445,
+            "le8": 0.9999660011574074
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 1.810384837962963,
+              "madY": 1.9965928819444445,
+              "madU": 1.3568272569444444,
+              "madV": 1.5191102430555556,
+              "le8": 0.9956018518518519,
+              "samples": 1382400
+            },
+            {
+              "mad": 1.810384837962963,
+              "madY": 1.9965928819444445,
+              "madU": 1.3568272569444444,
+              "madV": 1.5191102430555556,
+              "le8": 0.9956018518518519,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        }
+      ]
+    },
+    "r25-JK": {
+      "pair": "J-K",
+      "size": "720x1280",
+      "windows": {
+        "a": 28,
+        "b": 28
+      },
+      "metadata": {
+        "a": {
+          "codec": "h264",
+          "width": 1080,
+          "height": 1920,
+          "colorSpace": "bt709",
+          "colorTransfer": "bt709",
+          "colorPrimaries": "bt709",
+          "colorRange": "tv"
+        },
+        "b": {
+          "codec": "h264",
+          "width": 1080,
+          "height": 1920,
+          "colorSpace": "bt709",
+          "colorTransfer": "bt709",
+          "colorPrimaries": "bt709",
+          "colorRange": "tv"
+        }
+      },
+      "previewMatrix": "bt709",
+      "matrixHow": "auto: metadata cả 2 nguồn đồng nhất",
+      "chain": "default",
+      "method": "matched: chuỗi sản phẩm (hoặc forced theo --chain) vs preview chuyển cùng matrix",
+      "cells": [
+        {
+          "type": "dissolve",
+          "crf": 0,
+          "guardRgb": {
+            "mad": 0.0028851996527777778,
+            "le8": 0.9999652777777778
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 0.001882957175925926,
+              "madY": 0.002492404513888889,
+              "madU": 0.0006944444444444445,
+              "madV": 0.0006336805555555555,
+              "le8": 0.9999797453703704,
+              "samples": 1382400
+            },
+            {
+              "mad": 0.001882957175925926,
+              "madY": 0.002492404513888889,
+              "madU": 0.0006944444444444445,
+              "madV": 0.0006336805555555555,
+              "le8": 0.9999797453703704,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 10,
+          "guardRgb": {
+            "mad": 0.0028851996527777778,
+            "le8": 0.9999652777777778
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 1.1843728298611111,
+              "madY": 1.2182269965277779,
+              "madU": 1.0876692708333333,
+              "madV": 1.1456597222222222,
+              "le8": 0.999871238425926,
+              "samples": 1382400
+            },
+            {
+              "mad": 1.1843728298611111,
+              "madY": 1.2182269965277779,
+              "madU": 1.0876692708333333,
+              "madV": 1.1456597222222222,
+              "le8": 0.999871238425926,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 12,
+          "guardRgb": {
+            "mad": 0.0028851996527777778,
+            "le8": 0.9999652777777778
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 1.484840133101852,
+              "madY": 1.5298133680555555,
+              "madU": 1.3388541666666667,
+              "madV": 1.4509331597222221,
+              "le8": 0.9994878472222222,
+              "samples": 1382400
+            },
+            {
+              "mad": 1.484840133101852,
+              "madY": 1.5298133680555555,
+              "madU": 1.3388541666666667,
+              "madV": 1.4509331597222221,
+              "le8": 0.9994878472222222,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        },
+        {
+          "type": "dissolve",
+          "crf": 14,
+          "guardRgb": {
+            "mad": 0.0028851996527777778,
+            "le8": 0.9999652777777778
+          },
+          "guardVerdict": "KHỚP",
+          "runs": [
+            {
+              "mad": 1.838083767361111,
+              "madY": 1.9186588541666667,
+              "madU": 1.5969184027777779,
+              "madV": 1.7569487847222223,
+              "le8": 0.9979210069444444,
+              "samples": 1382400
+            },
+            {
+              "mad": 1.838083767361111,
+              "madY": 1.9186588541666667,
+              "madU": 1.5969184027777779,
+              "madV": 1.7569487847222223,
+              "le8": 0.9979210069444444,
+              "samples": 1382400
+            }
+          ],
+          "verdict": "KHỚP",
+          "repeatVerdictMatch": true,
+          "maxMadDiff": 0,
+          "maxLe8Diff": 0
+        }
+      ]
+    }
+  },
+  "validation_forced601_KL_crf14": {
+    "pair": "K-L",
+    "size": "720x1280",
+    "windows": {
+      "a": 28,
+      "b": 24
+    },
+    "metadata": {
+      "a": {
+        "codec": "h264",
+        "width": 1080,
+        "height": 1920,
+        "colorSpace": "bt709",
+        "colorTransfer": "bt709",
+        "colorPrimaries": "bt709",
+        "colorRange": "tv"
+      },
+      "b": {
+        "codec": "h264",
+        "width": 608,
+        "height": 1080,
+        "colorSpace": "bt709",
+        "colorTransfer": "bt709",
+        "colorPrimaries": "bt709",
+        "colorRange": "tv"
+      }
+    },
+    "previewMatrix": "bt601",
+    "matrixHow": "ép tường minh --matrix bt601 (giả định, không phải auto từ metadata)",
+    "chain": "forced601",
+    "method": "matched: chuỗi sản phẩm (hoặc forced theo --chain) vs preview chuyển cùng matrix",
+    "cells": [
+      {
+        "type": "dissolve",
+        "crf": 14,
+        "guardRgb": {
+          "mad": 0.003926866319444444,
+          "le8": 0.9999623842592592
+        },
+        "guardVerdict": "KHỚP",
+        "runs": [
+          {
+            "mad": 2.2842708333333333,
+            "madY": 2.532495659722222,
+            "madU": 1.7799262152777777,
+            "madV": 1.7957161458333333,
+            "le8": 0.9868569155092592,
+            "samples": 1382400
+          }
+        ],
+        "verdict": "XẤP XỈ",
+        "repeatVerdictMatch": true,
+        "maxMadDiff": 0,
+        "maxLe8Diff": 0
+      }
+    ]
+  },
+  "probe_N1N2": {
+    "pair": "N1-N2",
+    "matrixHow": "probe thực nghiệm: sàn crf0 chuỗi mặc định nhỏ hơn ở bt601 (MAD 0.0030 so với 0.7676 ở matrix kia)",
+    "probe": {
+      "bt601": {
+        "mad": 0.0030483217592592593,
+        "madY": 0.004369574652777777,
+        "madU": 0.00037760416666666666,
+        "madV": 0.00043402777777777775,
+        "le8": 0.9999782986111111,
+        "samples": 1382400
+      },
+      "bt709": {
+        "mad": 0.7675983796296296,
+        "madY": 0.8602625868055556,
+        "madU": 0.7705425347222222,
+        "madV": 0.3939973958333333,
+        "le8": 0.9984215856481482,
+        "samples": 1382400
+      },
+      "effective": "bt601"
+    },
+    "cells": []
+  }
+}

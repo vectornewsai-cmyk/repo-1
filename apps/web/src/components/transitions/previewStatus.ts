@@ -168,7 +168,71 @@ const TRANSITION_MATCHED = new Set(["fade", "none", "circleopen", "circleclose",
   // 72×45 p=0,5 + V13 ở 1920×1080 p=0,25/0,5/0,75, MAD ≤ 0,75,
   // ≤8 = 100% — xem chú thích đầu file; bars-fade vẫn giữ giới
   // hạn canvas đơn clip ghi ở đó).
-  "blinds-h", "plus", "checker", "grid", "bars-fade"]);
+  "blinds-h", "plus", "checker", "grid", "bars-fade",
+  // Đợt 25 I4: fadeblack lên matched theo số đo cặp mới (xem
+  // docs/PHASE9_ROUND25_I4_FADE_LEVEL_LIMITS.md §6): mô hình dip +
+  // offset YUV KHỚP cả 2 đường trên 2 cặp footage 720×1280 p=0,5
+  // (RGB MAD 0,94–1,09; YUV MAD 0,86–1,73, ≤8 ≥ 99,99% — từ LỆCH
+  // 14,18 của đợt 24 H3); canvas đơn clip cũng đúng vì dip đen ≡
+  // nền đen (vẽ tuần tự sai khác composite cặp ≤ 0,1 mức do vùng
+  // overlap aAlpha·bAlpha nhỏ). fadewhite/fadegrays KHÔNG lên cùng
+  // đợt này dù mô hình cặp đã KHỚP (MAD 0,25–1,55): canvas đơn clip
+  // vẫn vẽ trên nền đen, sai hướng dip trắng/xám — cần wiring nền
+  // ở frame loop, là nợ follow-up (xem LIMITS §7), nên giữ approx.
+  "fadeblack",
+  // Đợt 26 J3: fadewhite/fadegrays lên matched sau khi wiring dip
+  // canvas xong (preview.tsx drawVideoClipWithDip + singleClipDipPixel
+  // — dip trắng/xám vẽ ĐẰNG SAU clip, chỉ trong vùng clip đã vẽ nên
+  // không xóa track dưới; xem docs/PHASE9_ROUND26_J3_CANVAS_DIP_LIMITS.md):
+  // (B) wiring KHỚP 40/40 ô đo — model đơn clip (chính code sản phẩm)
+  // vs tham chiếu FFmpeg độc lập (nền dip geq + overlay alpha nguyên):
+  // phẳng MAD ≤ 2,00, footage 720×1280 MAD ≤ 1,72, ≤8 ≥ 99,91%.
+  // Mô hình cặp đã KHỚP từ I4 (fadewhite/fadegrays RGB MAD 0,25–1,55).
+  // GIỚI HẠN GHI RÕ (cùng họ giới hạn chung "clip riêng lẻ ≠ crossfade
+  // cặp" như bars-fade/dissolve): gap đơn-clip-vs-cặp cùng p vẫn lớn
+  // ở cửa sổ ra (fadewhite p=0,5: 46–50 MAD; fadegrays: 42–51 MAD)
+  // vì thiếu clip còn lại của cặp, và đường YUV của canvas RGB không
+  // mang offset mức (fadewhite vào yuv gap = đúng số tắt-offset của
+  // I4: 14,37/14,58). Riêng fadegrays vào trên cặp K→L, wired (52,17)
+  // còn thua nền đen cũ (32,52) — cả hai đều LỆCH, do gray(A)≠gray(B)
+  // theo từng pixel; wiring vẫn là projection đúng mô hình (dip xám
+  // thay vì đen), không phải hồi quy wiring (B vẫn KHỚP 1,40).
+  // Đợt 28 L6 + đợt 29 L6 (giữ matched, bổ sung 2 giới hạn + 1 giới hạn
+  // mới vào mô tả này — xem docs/PHASE9_ROUND28_L6_DIP_COVERAGE_LIMITS.md
+  // và docs/PHASE9_ROUND29_L6_DIP_BROWSER_LIMITS.md):
+  // (i) đường YUV của render bão hòa về trắng/đen thuần ở p ≈ 0,17–0,27
+  // nên gapYUV ≈ 0 trong khi gapRGB = 7–10 — canvas RGB đúng model hơn
+  // render YUV đã clip ở vùng này, không được "sửa" canvas cho khớp;
+  // (ii) clip có mask/track/SR: gap preview-vs-render lớn hơn clip
+  // thường vì dip render phủ toàn khung còn dip canvas chỉ trong vùng
+  // clip chiếm (mask+fadewhite (A) tới ~128, track+fadewhite ~62, so
+  // với ~46 không tổ hợp — đợt 29 xác nhận wiring (B) của các tổ hợp
+  // này KHỚP trên browser thật 1080p, nên gap (A) là giới hạn kiến
+  // trúc, không phải lỗi wiring);
+  // (iii) clip ngắn (2 cửa sổ cùng active, alpha tích, dip theo cửa sổ
+  // vào — wiring (B) KHỚP 0,0000 trên cả Node lẫn browser): gap (A)
+  // tăng nhanh sau đầu vùng chồng, tới ~248 MAD (in fadeblack / out
+  // fadewhite), vì preview sụp về dip thuần khi alpha tích = 0 trong
+  // khi render vẫn mang nội dung B+C qua xfade thứ hai.
+  // Đợt 30 M6 (quyết định kiến trúc, xem
+  // docs/PHASE9_ROUND30_M6_PAIRGAP_DECISION_LIMITS.md): GIỮ mô hình
+  // đơn clip, không đổi model cặp trong đợt này. Bằng chứng offline
+  // (mô hình dùng chính code sản phẩm, chuỗi xfade kép FFmpeg rgb):
+  // M1 (cặp B+C theo cửa sổ ra) LỆCH ở đầu vùng chồng mọi combo
+  // phẳng (10–93 MAD) và làm tệ đi ô đang KHỚP (FW/FW localT=0,6:
+  // 2,00→46,00; FB/FB: 1,00→10,33) nên không đạt bar không-hồi-quy;
+  // M2 (đủ 3 clip A/B/C) đạt KHỚP/XẤP XỈ ở 20/21 ô nhưng còn 1 ô
+  // LỆCH (FW/FG phẳng localT=0,75: 5,00, le8 66,7%) do dư số hiệu
+  // chuẩn dip xám, không phải do thiếu clip. Đổi model chỉ kích hoạt
+  // khi: (a) hiệu chuẩn lại trọng số dip cho mô hình cặp đạt KHỚP
+  // mọi p; (b) harness before/after (clip ngắn 5 combo phẳng + 2
+  // combo footage, wiring (B), browser) xanh và không ô nào tệ đi;
+  // (c) chi phí composite trong ngân sách (~1,5× dip đơn); (d) phạm
+  // vi họ fade trước, geometric cần mô hình cặp riêng. Workaround
+  // cho user tới lúc đó: tránh đặt tổng 2 duration transition vượt
+  // quá duration clip (điều kiện kích hoạt gap); chỉ nửa sau vùng
+  // chồng (alpha tích = 0) mới tệ nhất.
+  "fadewhite", "fadegrays"]);
 
 export function transitionPreviewStatus(type: string): PreviewStatus {
   return TRANSITION_MATCHED.has(type) ? "matched" : "approx";

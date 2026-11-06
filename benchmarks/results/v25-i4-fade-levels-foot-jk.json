@@ -1,0 +1,108 @@
+{
+  "mode": "footage",
+  "types": [
+    "fadeblack",
+    "fadewhite",
+    "fadegrays",
+    "fade"
+  ],
+  "workdir": "/home/hatch/workspace/tmp-round25-i4/foot-jk",
+  "rows": [
+    {
+      "type": "fadeblack",
+      "path": "rgb",
+      "p": 0.5,
+      "mad": 0.9417,
+      "le8": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "type": "fadewhite",
+      "path": "rgb",
+      "p": 0.5,
+      "mad": 0.4612,
+      "le8": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "type": "fadegrays",
+      "path": "rgb",
+      "p": 0.5,
+      "mad": 0.5067,
+      "le8": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "type": "fade",
+      "path": "rgb",
+      "p": 0.5,
+      "mad": 0.4981,
+      "le8": 1,
+      "verdict": "KHỚP"
+    },
+    {
+      "type": "fadeblack",
+      "path": "yuv",
+      "p": 0.5,
+      "mad": 0.8626,
+      "le8": 1,
+      "verdict": "KHỚP",
+      "variantTheory": {
+        "offset": -18.63,
+        "mad": 1.5156,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "variantNoOffset": {
+        "mad": 12.9213,
+        "le8": 0.0059,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fadewhite",
+      "path": "yuv",
+      "p": 0.5,
+      "mad": 1.2296,
+      "le8": 1,
+      "verdict": "KHỚP",
+      "variantTheory": {
+        "offset": 23.1,
+        "mad": 1.2686,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "variantNoOffset": {
+        "mad": 14.583,
+        "le8": 0.0018,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fadegrays",
+      "path": "yuv",
+      "p": 0.5,
+      "mad": 0.8451,
+      "le8": 0.9991,
+      "verdict": "KHỚP",
+      "variantGrayRgbMean": {
+        "mad": 2.5078,
+        "le8": 0.9878,
+        "verdict": "XẤP XỈ"
+      }
+    },
+    {
+      "type": "fade",
+      "path": "yuv",
+      "p": 0.5,
+      "mad": 0.7113,
+      "le8": 0.9977,
+      "verdict": "KHỚP"
+    }
+  ],
+  "windows": {
+    "winA": 28,
+    "winB": 28,
+    "size": "720x1280"
+  }
+}

@@ -1,0 +1,402 @@
+{
+  "mode": "flat-sweep",
+  "types": [
+    "fadeblack",
+    "fadewhite",
+    "fadegrays",
+    "fade"
+  ],
+  "workdir": "/home/hatch/workspace/tmp-round25-i4/flat-run",
+  "rows": [
+    {
+      "pair": "rb",
+      "type": "fadeblack",
+      "path": "rgb",
+      "p05": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 1
+    },
+    {
+      "pair": "rb",
+      "type": "fadeblack",
+      "path": "yuv",
+      "p05": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 1.6667
+    },
+    {
+      "pair": "rb",
+      "type": "fadeblack",
+      "path": "yuv-variant",
+      "theoryOffset": -18.63,
+      "theory": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "noOffset": {
+        "mad": 5.3333,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "pair": "rb",
+      "type": "fadewhite",
+      "path": "rgb",
+      "p05": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 3.3333
+    },
+    {
+      "pair": "rb",
+      "type": "fadewhite",
+      "path": "yuv",
+      "p05": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 2.6667
+    },
+    {
+      "pair": "rb",
+      "type": "fadewhite",
+      "path": "yuv-variant",
+      "theoryOffset": 23.1,
+      "theory": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "noOffset": {
+        "mad": 10,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "pair": "rb",
+      "type": "fadegrays",
+      "path": "rgb",
+      "p05": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 2
+    },
+    {
+      "pair": "rb",
+      "type": "fadegrays",
+      "path": "yuv",
+      "p05": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 1.6667
+    },
+    {
+      "pair": "rb",
+      "type": "fadegrays",
+      "path": "yuv-variant",
+      "grayRgbMean": {
+        "mad": 13.6667,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "pair": "rb",
+      "type": "fade",
+      "path": "rgb",
+      "p05": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 0.6667
+    },
+    {
+      "pair": "rb",
+      "type": "fade",
+      "path": "yuv",
+      "p05": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 1.3333
+    },
+    {
+      "pair": "gm",
+      "type": "fadeblack",
+      "path": "rgb",
+      "p05": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 2
+    },
+    {
+      "pair": "gm",
+      "type": "fadeblack",
+      "path": "yuv",
+      "p05": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 2.6667
+    },
+    {
+      "pair": "gm",
+      "type": "fadeblack",
+      "path": "yuv-variant",
+      "theoryOffset": -18.63,
+      "theory": {
+        "mad": 2.3333,
+        "le8": 1,
+        "verdict": "XẤP XỈ"
+      },
+      "noOffset": {
+        "mad": 10.3333,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "pair": "gm",
+      "type": "fadewhite",
+      "path": "rgb",
+      "p05": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 2.6667
+    },
+    {
+      "pair": "gm",
+      "type": "fadewhite",
+      "path": "yuv",
+      "p05": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 2.6667
+    },
+    {
+      "pair": "gm",
+      "type": "fadewhite",
+      "path": "yuv-variant",
+      "theoryOffset": 23.1,
+      "theory": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "noOffset": {
+        "mad": 5.6667,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "pair": "gm",
+      "type": "fadegrays",
+      "path": "rgb",
+      "p05": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 2
+    },
+    {
+      "pair": "gm",
+      "type": "fadegrays",
+      "path": "yuv",
+      "p05": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 3
+    },
+    {
+      "pair": "gm",
+      "type": "fadegrays",
+      "path": "yuv-variant",
+      "grayRgbMean": {
+        "mad": 5,
+        "le8": 1,
+        "verdict": "XẤP XỈ"
+      }
+    },
+    {
+      "pair": "gm",
+      "type": "fade",
+      "path": "rgb",
+      "p05": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 1
+    },
+    {
+      "pair": "gm",
+      "type": "fade",
+      "path": "yuv",
+      "p05": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 2
+    },
+    {
+      "pair": "gen",
+      "type": "fadeblack",
+      "path": "rgb",
+      "p05": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 2
+    },
+    {
+      "pair": "gen",
+      "type": "fadeblack",
+      "path": "yuv",
+      "p05": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 2.6667
+    },
+    {
+      "pair": "gen",
+      "type": "fadeblack",
+      "path": "yuv-variant",
+      "theoryOffset": -18.63,
+      "theory": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "noOffset": {
+        "mad": 12.3333,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "pair": "gen",
+      "type": "fadewhite",
+      "path": "rgb",
+      "p05": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 2.6667
+    },
+    {
+      "pair": "gen",
+      "type": "fadewhite",
+      "path": "yuv",
+      "p05": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 3
+    },
+    {
+      "pair": "gen",
+      "type": "fadewhite",
+      "path": "yuv-variant",
+      "theoryOffset": 23.1,
+      "theory": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "noOffset": {
+        "mad": 13.6667,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "pair": "gen",
+      "type": "fadegrays",
+      "path": "rgb",
+      "p05": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 1.3333
+    },
+    {
+      "pair": "gen",
+      "type": "fadegrays",
+      "path": "yuv",
+      "p05": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 1.6667
+    },
+    {
+      "pair": "gen",
+      "type": "fadegrays",
+      "path": "yuv-variant",
+      "grayRgbMean": {
+        "mad": 2.3333,
+        "le8": 1,
+        "verdict": "XẤP XỈ"
+      }
+    },
+    {
+      "pair": "gen",
+      "type": "fade",
+      "path": "rgb",
+      "p05": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 1
+    },
+    {
+      "pair": "gen",
+      "type": "fade",
+      "path": "yuv",
+      "p05": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "worstMad": 1.3333
+    }
+  ]
+}
