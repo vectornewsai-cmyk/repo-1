@@ -17,7 +17,7 @@
  * - Giới hạn: tối đa 10.000 file, tổng giải nén tối đa 8 GiB.
  */
 import JSZip from "jszip";
-import { parseProjectText, serializeProject } from "./projectRepo";
+import { archiveMissingNote, parseProjectText, serializeProject } from "./projectRepo";
 import type { VideoSpec } from "@repo-1/video-spec";
 
 export const ARCHIVE_EXT = ".vcut.zip";
@@ -61,6 +61,15 @@ export interface ExportArchiveResult {
   errors: string[];
   /** Cảnh báo không chặn (vd: media thiếu file gốc). */
   warnings: string[];
+  /**
+   * Đợt 31 N4 — dạng cấu trúc của warnings từ serializeProject (hiện
+   * chỉ blobUrl). Đợt 32 O4 — thêm note archiveMissingExport khi thiếu
+   * file gốc. Tùy chọn như speedCurveWarnings: đường fail không đặt.
+   * UI dịch qua key `structuredNotes.*`, chuỗi trong warnings giữ
+   * nguyên để tương thích — UI trừ trùng bằng fallback (xem loadReport
+   * .formatNoteLines).
+   */
+  structuredNotes?: import("./projectRepo").StructuredNote[];
   stats: { mediaFiles: number; mediaBytes: number; zipBytes: number };
 }
 
@@ -72,23 +81,62 @@ export interface ImportArchiveResult {
   mediaFiles: File[];
   errors: string[];
   warnings: string[];
+  /**
+   * Đợt 27 K5: warnings speedKeyframes có cấu trúc từ parseProjectText
+   * (trước đây importArchive nuốt mất — chỉ còn chuỗi trong warnings).
+   * Tùy chọn để các đường fail cũ không phải sửa; panel load report
+   * dùng trường này, vắng thì coi như rỗng.
+   */
+  speedCurveWarnings?: import("./projectRepo").SpeedCurveWarning[];
+  /**
+   * Đợt 31 N4 — dạng cấu trúc của warnings từ parseProjectText
+   * (blob/migration/format/style), cùng mẫu speedCurveWarnings trên.
+   */
+  structuredNotes?: import("./projectRepo").StructuredNote[];
 }
 
 // ---------------------------------------------------------------------------
 // Helpers thuần.
 // ---------------------------------------------------------------------------
 
-/** Thu thập mọi `src` duy nhất từ các clip có media (video/audio/sticker/image). */
+/**
+ * Thu thập mọi `src` duy nhất từ các clip có media (video/audio/sticker/image).
+ *
+ * Đợt 32 P4 — đệ quy vào subSpec của clip nested (đóng nợ §3.2 của
+ * LIMITS đợt 32 O4: trước đây chỉ quét clip cấp cao nên media trong
+ * nested thiếu file gốc không được archive cảnh báo, dù cảnh báo blob
+ * đã quét đệ quy từ O4). Cùng mẫu duyệt của findBlobWarningItems
+ * (projectRepo.ts): pre-order, seen-set sao chép theo nhánh để subSpec
+ * dùng chung ở 2 clip anh em vẫn quét đủ cả hai và subSpec tự trỏ lại
+ * không treo. `blob:` vẫn loại như cũ (archive không đóng gói được
+ * blob: URL — cảnh báo đó thuộc về save/load, không thuộc archive).
+ * Hệ quả có chủ đích: stats export (mediaFiles/mediaBytes) và chuỗi
+ * thiếu media nay tính cả src trong nested.
+ */
 export function collectMediaSrcs(spec: VideoSpec): string[] {
   const out = new Set<string>();
-  for (const t of spec.tracks ?? []) {
-    for (const c of t.clips ?? []) {
-      const src = (c as { src?: unknown }).src;
-      if (typeof src === "string" && src.length > 0 && !src.startsWith("blob:")) {
-        out.add(src);
+  const walk = (s: unknown, seen: Set<object>): void => {
+    if (typeof s !== "object" || s === null || seen.has(s as object)) return;
+    const chain = new Set(seen);
+    chain.add(s as object);
+    const tracks = (s as { tracks?: unknown }).tracks;
+    if (!Array.isArray(tracks)) return;
+    for (const t of tracks) {
+      if (typeof t !== "object" || t === null || !Array.isArray((t as { clips?: unknown }).clips)) continue;
+      for (const c of (t as { clips: unknown[] }).clips) {
+        if (typeof c !== "object" || c === null) continue;
+        const src = (c as { src?: unknown }).src;
+        if (typeof src === "string" && src.length > 0 && !src.startsWith("blob:")) {
+          out.add(src);
+        }
+        if ((c as { kind?: unknown }).kind === "nested") {
+          const sub = (c as { subSpec?: unknown }).subSpec;
+          if (typeof sub === "object" && sub !== null) walk(sub, chain);
+        }
       }
     }
-  }
+  };
+  walk(spec, new Set());
   return [...out];
 }
 
@@ -166,7 +214,7 @@ export async function exportArchive(
     stats: { mediaFiles: 0, mediaBytes: 0, zipBytes: 0 },
   });
 
-  const { json, warnings: projWarnings } = serializeProject(spec, name);
+  const { json, warnings: projWarnings, structuredNotes: projNotes } = serializeProject(spec, name);
   warnings.push(...projWarnings);
 
   const srcs = collectMediaSrcs(spec);
@@ -202,12 +250,13 @@ export async function exportArchive(
   }
 
   if (errors.length > 0) return fail(errors);
+  // Đợt 32 O4 — thiếu media sang dạng cấu trúc (cùng thứ tự với warnings
+  // chuỗi): note archiveMissingExport, fallback byte-identical với chuỗi
+  // cũ để UI trừ trùng qua formatNoteLines/buildLoadReport.
+  let archiveNote: import("./projectRepo").StructuredNote | undefined;
   if (missing.length > 0) {
-    warnings.push(
-      `Thiếu file gốc của ${missing.length} media (sẽ cần relink khi import): ` +
-        missing.slice(0, 5).join(", ") +
-        (missing.length > 5 ? `… (+${missing.length - 5})` : ""),
-    );
+    archiveNote = archiveMissingNote("export", missing);
+    warnings.push(archiveNote.fallback);
   }
 
   const manifest: ArchiveManifest = {
@@ -239,6 +288,7 @@ export async function exportArchive(
     blob,
     errors: [],
     warnings,
+    structuredNotes: archiveNote ? [...projNotes, archiveNote] : projNotes,
     stats: { mediaFiles: entries.length, mediaBytes, zipBytes: blob.size },
   };
 }
@@ -370,15 +420,17 @@ export async function importArchive(zipBlob: Blob): Promise<ImportArchiveResult>
   const srcs = collectMediaSrcs(parsed.spec);
   const have = new Set(mediaFiles.map((f) => f.name));
   const missing = srcs.filter((s) => !have.has(s));
+  // Đợt 32 O4 — như export: note archiveMissingImport, fallback
+  // byte-identical với chuỗi cũ; buildLoadReport trừ fallback nên panel
+  // không hiện trùng, toast dịch qua key structuredNotes.*.
+  const importNotes = [...(parsed.structuredNotes ?? [])];
   if (missing.length > 0) {
-    warnings.push(
-      `Archive thiếu ${missing.length} media có trong project (cần relink thủ công): ` +
-        missing.slice(0, 5).join(", ") +
-        (missing.length > 5 ? `… (+${missing.length - 5})` : ""),
-    );
+    const note = archiveMissingNote("import", missing);
+    warnings.push(note.fallback);
+    importNotes.push(note);
   }
 
-  return { ok: true, spec: parsed.spec, name: parsed.name, mediaFiles, errors: [], warnings };
+  return { ok: true, spec: parsed.spec, name: parsed.name, mediaFiles, errors: [], warnings, speedCurveWarnings: parsed.speedCurveWarnings, structuredNotes: importNotes };
 }
 
 /** Đoán MIME type từ đuôi file (đủ cho preview local). */

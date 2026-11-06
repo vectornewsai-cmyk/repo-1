@@ -21,6 +21,24 @@ import {
   importArchive,
 } from "../../lib/archive";
 import { pushToast } from "../../lib/toast";
+// Đợt 37 T3: rehydrate cho đường mở file .vcut.json (cùng cơ chế với
+// đường khôi phục autosave ở App.tsx, đợt 36 S5).
+import { AssetStore } from "../../lib/assetStore";
+import { rehydrateMediaItems } from "../../lib/rehydrate36S5";
+import { t } from "../../i18n";
+import { formatImportProgressText } from "../../lib/importProgressText41W3";
+import type { ImportFileProgressEvent } from "../../lib/ingestProgress39T5";
+// Đợt 27 K5 (load report): chỉ 3 dòng ghi/xoá báo cáo lần load gần
+// nhất — không đổi luồng mở/lưu, không reformat file.
+import {
+  buildLoadReport,
+  clearLastLoadReport,
+  formatNoteLines,
+  formatStructuredNote,
+  formatWarningTranslated,
+  setLastLoadReport,
+  type LoadReport,
+} from "../../lib/loadReport";
 import { HistoryPanel } from "./HistoryPanel";
 import {
   getCurrentProjectId,
@@ -29,17 +47,50 @@ import {
   setProjectIdForFile,
 } from "../../lib/projectHistory";
 
-/** Lưu project hiện tại thành file. Trả về warnings để caller hiển thị. */
-export function saveCurrentProject(): string[] {
+/**
+ * Đợt 31 N4 — lưu project hiện tại thành file. Trả về kết quả có cấu
+ * trúc của saveProject (structuredNotes: code + tham số) kèm warnings
+ * chuỗi cũ để tương thích. Caller dịch qua formatNoteLines (App dùng
+ * chung cho Ctrl+S).
+ */
+export function saveCurrentProject(): {
+  warnings: string[];
+  structuredNotes: { code: string; params: Record<string, string>; fallback: string }[];
+} {
   const st = useStore.getState();
-  const { warnings } = saveProject(st.spec, st.spec.meta.name);
-  return warnings;
+  return saveProject(st.spec, st.spec.meta.name);
 }
 
-function warnList(warnings: string[]): void {
-  if (warnings.length > 0) {
-    // K5: toast thay window.alert (không chặn luồng làm việc).
-    pushToast("Đã xong, nhưng có lưu ý: " + warnings.join("; "), "info");
+/**
+ * Đợt 31 N4 — các dòng lưu ý sau khi LƯU FILE, đã dịch theo locale
+ * hiện tại (structuredNotes qua key `structuredNotes.*`, chuỗi lẻ còn
+ * lại giữ nguyên, không trùng lặp nhờ formatNoteLines). App dùng chung
+ * cho Ctrl+S; nút Lưu trong menu tự push toast bằng key loadNotes.
+ */
+export function saveNotesLines(
+  result: { warnings: string[]; structuredNotes: { code: string; params: Record<string, string>; fallback: string }[] },
+): string[] {
+  return formatNoteLines(result.structuredNotes, result.warnings, (k, vars) => t(k, vars));
+}
+
+/**
+ * Đợt 30 M4 — toast lưu ý sau khi MỞ FILE / NHẬP BẢN NÉN, dịch theo
+ * locale hiện tại. Đợt 31 N4: các lưu ý blob/migration/format/style
+ * nay cũng dịch được qua structuredNotes (formatStructuredNote, nhóm
+ * key `structuredNotes.*`); đợt 32 O4 thiếu media của archive cũng đã
+ * có dạng cấu trúc nên otherWarnings chỉ còn chuỗi lẻ thật sự. Câu tràn
+ * 100 dùng key loadReport.atCap. Caller nên tái dùng chính report này
+ * cho setLastLoadReport để toast và panel khớp nhau.
+ */
+function warnListReport(report: LoadReport): void {
+  const lines = [
+    ...report.warnings.map((w) => formatWarningTranslated(w, (k, vars) => t(k, vars))),
+    ...report.structuredNotes.map((n) => formatStructuredNote(n, (k, vars) => t(k, vars))),
+    ...report.otherWarnings,
+  ];
+  if (report.atCap) lines.push(t("loadReport.atCap"));
+  if (lines.length > 0) {
+    pushToast(t("projectMenu.loadNotes", { notes: lines.join("; ") }), "info");
   }
 }
 
@@ -57,6 +108,8 @@ export function ProjectMenu() {
   const dirty = isDirty(spec);
   const lastAuto = getLastAutosaveAt();
   const [showHistory, setShowHistory] = useState(false);
+  // Đợt 41 W3 — tiến trình importFiles của media trong bản nén (như MediaBin V5).
+  const [importProgress, setImportProgress] = useState<ImportFileProgressEvent | null>(null);
 
   const confirmDiscard = (): boolean => {
     const st = useStore.getState();
@@ -70,6 +123,7 @@ export function ProjectMenu() {
     st.newProject();
     rotateProjectId(); // project mới → chuỗi lịch sử mới (Q7)
     clearAutosave();
+    clearLastLoadReport(); // Đợt 27 K5: project mới không còn "lần load gần nhất".
     markSaved(useStore.getState().spec);
     force();
   };
@@ -83,7 +137,9 @@ export function ProjectMenu() {
     if (!confirmDiscard()) return;
     const res = await loadProject(f);
     if (!res.ok || !res.spec) {
-      pushToast("Không mở được file: " + res.errors.join("; "), "error");
+      // Đợt 31 N4: tiền tố qua key, chi tiết lỗi giữ nguyên (cùng mẫu
+      // errorDetail của bridge — nội dung lỗi là dữ liệu, không dịch).
+      pushToast(t("projectMenu.openFileError", { errors: res.errors.join("; ") }), "error");
       return;
     }
     const st = useStore.getState();
@@ -93,13 +149,45 @@ export function ProjectMenu() {
     markSaved(res.spec);
     clearAutosave();
     autosave(res.spec, res.name); // ghi ngay để reload khôi phục đúng project vừa mở
+    // Đợt 37 T3: nạp lại media bin từ AssetStore TRƯỚC checkMissingMedia
+    // (thứ tự y hệt đường khôi phục autosave ở App.tsx, đợt 36 S5):
+    // project .vcut.json có src `asset:` hoặc tên thô đã ingest nay mở
+    // được ngay, không hiện Relink oan. Fail-soft như đường autosave —
+    // IndexedDB bị chặn thì bin rỗng và Relink báo như hành vi cũ.
+    // Không phá đường autosave: khối này chỉ chạy ở đường mở file.
+    try {
+      const assetStore = new AssetStore();
+      const rehydrated = await rehydrateMediaItems(
+        {
+          listManifests: () => assetStore.list(),
+          loadBlob: (id) => assetStore.getBlob(id),
+          makeObjectURL: (blob) => URL.createObjectURL(blob),
+        },
+        res.spec,
+      );
+      if (rehydrated.items.length > 0) st.restoreMediaBin(rehydrated.items);
+    } catch {
+      // IndexedDB không khả dụng → giữ bin rỗng, Relink báo như cũ.
+    }
     st.checkMissingMedia(); // R1-033: hiện panel relink nếu media thiếu
-    warnList(res.warnings);
+    // Đợt 30 M4: toast dịch từ báo cáo có cấu trúc (thay warnList
+    // chuỗi thô) + giữ báo cáo để panel xem lại sau khi toast đóng.
+    // Dùng chung một report cho cả hai để toast và panel khớp nhau.
+    const fileReport = buildLoadReport(res, "file", res.name);
+    warnListReport(fileReport);
+    setLastLoadReport(fileReport);
     force();
   };
 
   const doSave = () => {
-    warnList(saveCurrentProject());
+    // Đợt 31 N4: toast lưu ý đã dịch qua structuredNotes (thay warnList
+    // chuỗi thô của đợt 30 M4); không có lưu ý thì không hiện toast,
+    // giữ hành vi cũ của nút Lưu trong menu.
+    const lines = saveNotesLines(saveCurrentProject());
+    if (lines.length > 0) {
+      // K5: toast thay window.alert (không chặn luồng làm việc).
+      pushToast(t("projectMenu.loadNotes", { notes: lines.join("; ") }), "info");
+    }
     // Q7: lưu file cũng snapshot lịch sử (best-effort, trùng hash thì tự bỏ qua).
     void getHistoryStore()
       .saveVersion(getCurrentProjectId(), useStore.getState().spec, "")
@@ -124,14 +212,19 @@ export function ProjectMenu() {
       .map((m) => ({ name: m.name, data: m.file as File }));
     const res = await exportArchive(st.spec, st.spec.meta.name, mediaSources);
     if (!res.ok || !res.blob) {
-      pushToast("Không xuất được bản nén: " + res.errors.join("; "), "error");
+      // Đợt 31 N4: như toast lỗi mở file — tiền tố qua key, chi tiết giữ nguyên.
+      pushToast(t("projectMenu.exportArchiveError", { errors: res.errors.join("; ") }), "error");
       return;
     }
     downloadArchive(res.blob, st.spec.meta.name);
     const sizeMB = (res.stats.zipBytes / 1024 / 1024).toFixed(1);
+    // Đợt 31 N4: câu hoàn tất + lưu ý qua key; đợt 32 O4 chuỗi thiếu
+    // media cũng đã có dạng cấu trúc (archiveMissingExport) nên dịch
+    // qua formatNoteLines, không còn chuỗi thô trong phần lưu ý.
+    const noteLines = formatNoteLines(res.structuredNotes ?? [], res.warnings, (k, vars) => t(k, vars));
     const msg =
-      `Đã xuất bản nén (${res.stats.mediaFiles} media, ${sizeMB} MB).` +
-      (res.warnings.length > 0 ? " Lưu ý: " + res.warnings.join("; ") : "");
+      t("projectMenu.exportArchiveDone", { media: String(res.stats.mediaFiles), size: sizeMB }) +
+      (noteLines.length > 0 ? " " + t("projectMenu.exportArchiveNotes", { notes: noteLines.join("; ") }) : "");
     pushToast(msg, "success");
   };
 
@@ -145,7 +238,8 @@ export function ProjectMenu() {
     if (!confirmDiscard()) return;
     const res = await importArchive(f);
     if (!res.ok || !res.spec) {
-      pushToast("Không nhập được bản nén: " + res.errors.join("; "), "error");
+      // Đợt 31 N4: như toast lỗi mở file — tiền tố qua key, chi tiết giữ nguyên.
+      pushToast(t("projectMenu.importArchiveError", { errors: res.errors.join("; ") }), "error");
       return;
     }
     const st = useStore.getState();
@@ -153,12 +247,17 @@ export function ProjectMenu() {
     st.replaceProject(res.spec);
     st.setProjectName(res.name);
     if (res.mediaFiles.length > 0) {
-      await st.importFiles(res.mediaFiles);
+      await st.importFiles(res.mediaFiles, (ev) => setImportProgress(ev));
+      setImportProgress(null);
     }
     markSaved(res.spec);
     clearAutosave();
     autosave(res.spec, res.name);
-    warnList(res.warnings);
+    // Đợt 30 M4: như đường mở file — toast dịch từ báo cáo có cấu
+    // trúc, dùng chung report với panel.
+    const archiveReport = buildLoadReport(res, "archive", res.name);
+    warnListReport(archiveReport);
+    setLastLoadReport(archiveReport);
     force();
   };
 
@@ -209,6 +308,11 @@ export function ProjectMenu() {
         style={{ display: "none" }}
         onChange={(e) => void onArchiveFile(e)}
       />
+      {importProgress && (
+        <span role="status" data-import-progress={importProgress.phase} style={{ fontSize: 12 }}>
+          ⏳ {formatImportProgressText(importProgress, (k, vars) => t(k, vars))}
+        </span>
+      )}
       <span
         className={`autosave-indicator${dirty ? " dirty" : ""}`}
         title={

@@ -9,8 +9,23 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { VideoSpec } from "@repo-1/video-spec";
 import { isVideoSpec, projectDuration, SPEC_VERSION } from "@repo-1/video-spec";
 import { buildSharePage, downloadSharePage, SHARE_EMBED_MAX_BYTES } from "./lib/sharePage";
+import { collectSpeedCurveWarnings } from "./lib/projectRepo";
+import {
+  exportCurveBlockers,
+  formatSanitizeSummaryLocalized,
+  sanitizeSpecSpeedCurves,
+} from "./lib/curveFix";
+import {
+  formatFixEntryChanges,
+  formatWarningTranslated,
+  resolveUnsalvageableReason,
+} from "./lib/loadReport";
+import { t } from "./i18n";
+import { localizedErrorSummary } from "./lib/errorDetailSummary";
 import { useStore } from "./store";
 import { fmtTime } from "./lib";
+import { formatImportProgressText } from "./lib/importProgressText41W3";
+import type { ImportFileProgressEvent } from "./lib/ingestProgress39T5";
 import {
   EXPORT_PRESETS,
   X264_PRESETS,
@@ -30,6 +45,21 @@ const BRIDGE_URL =
   "http://127.0.0.1:8787";
 
 type RenderStatus = "idle" | "uploading" | "rendering" | "done" | "error" | "cancelled";
+
+/** Đợt 29 L3 — errorDetail đã redact từ bridge (chỉ khi poll kèm ?detail=1).
+ *  Đợt 30 M4 — chuỗi UI của khối này đã qua key i18n `exportPanel.*`
+ *  (chuỗi cứng tạm của L3 đã thay hết, xem LIMITS đợt 30 M4). */
+interface RenderErrorDetail {
+  code: string;
+  summary: string;
+  // Đợt 34 Q4: bridge kèm thêm (additive); payload bridge cũ không có
+  // 2 field này thì localizedErrorSummary fallback về summary thô.
+  summaryKey?: string;
+  summaryParams?: Record<string, string>;
+  details: string[];
+  detailsOmitted: number;
+  redactedTail: string;
+}
 
 /** 1 điểm trajectory từ reframe.py --analyze-only (tọa độ pixel nguồn). */
 interface TrajPoint {
@@ -60,6 +90,8 @@ function ReframeSection({ media, bridgeUrl }: { media: import("./media").MediaIt
   const [aspect, setAspect] = useState<string>("9:16");
   const [status, setStatus] = useState<"idle" | "working" | "done" | "error">("idle");
   const [message, setMessage] = useState<string>("");
+  // Đợt 41 W3 — tiến trình importFiles của file reframe (như MediaBin V5).
+  const [importProgress, setImportProgress] = useState<ImportFileProgressEvent | null>(null);
   // Phase 7 P6: trajectory preview — xem trước quỹ đạo crop trước khi render.
   const [traj, setTraj] = useState<TrajSummary | null>(null);
   const [trajStatus, setTrajStatus] = useState<"idle" | "working" | "error">("idle");
@@ -167,7 +199,8 @@ function ReframeSection({ media, bridgeUrl }: { media: import("./media").MediaIt
       const base = dot > 0 ? item.name.slice(0, dot) : item.name;
       const outName = `${base}_${aspect.replace(":", "x")}.mp4`;
       const file = new File([blob], outName, { type: "video/mp4" });
-      await useStore.getState().importFiles([file]);
+      await useStore.getState().importFiles([file], (ev) => setImportProgress(ev));
+      setImportProgress(null);
       setStatus("done");
       setMessage(`✅ Đã thêm "${outName}" vào kho media — xuất bằng preset TikTok 9:16 để đăng.`);
     } catch (e) {
@@ -216,6 +249,11 @@ function ReframeSection({ media, bridgeUrl }: { media: import("./media").MediaIt
         </button>
       </div>
       {message && <p className="tips">{message}</p>}
+      {importProgress && (
+        <p className="tips" role="status" data-import-progress={importProgress.phase}>
+          ⏳ {formatImportProgressText(importProgress, (k, vars) => t(k, vars))}
+        </p>
+      )}
       {trajStatus === "error" && <p className="tips">❌ {trajError}</p>}
       {traj && (
         <div style={{ marginTop: 8 }}>
@@ -291,6 +329,7 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
   const [renderEta, setRenderEta] = useState<number | null>(null);
   const [queuePos, setQueuePos] = useState<number | null>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
+  const [renderErrorDetail, setRenderErrorDetail] = useState<RenderErrorDetail | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [shareStatus, setShareStatus] = useState<"idle" | "working" | "done" | "error">("idle");
   const [shareMsg, setShareMsg] = useState<string>("");
@@ -311,6 +350,50 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
 
   const setCustomField = <K extends keyof ExportPreset>(key: K, value: ExportPreset[K]) => {
     setCustom((c) => ({ ...c, [key]: value }));
+  };
+
+  // Phase 9 đợt 27 K2 — kiểm tra curve tốc độ TRƯỚC khi gửi bridge:
+  // trước đây spec vi phạm vẫn gửi đi, render worker exit 1, bridge cắt
+  // chi tiết stderr nên user chỉ thấy "Render worker thoát với mã 1."
+  // (mù). Nay chặn sớm với thông báo nêu rõ clip/curve vi phạm.
+  // - curveWarnings: mọi vi phạm J5 (kể cả chỉ lệch đơn điệu — render
+  //   vẫn chấp nhận loại này nhờ sort + dedupe, nên chỉ hiện banner).
+  // - curveBlocker: chỉ vi phạm render chặn được → chặn nút Xuất.
+  const curveWarnings = useMemo(() => collectSpeedCurveWarnings(spec), [spec]);
+  const curveBlocker = useMemo(() => exportCurveBlockers(spec), [spec]);
+  const [curveFixMsg, setCurveFixMsg] = useState<string | null>(null);
+
+  /** Lookup dịch cho các helper thuần (cùng mẫu App đợt 29 L4: lib
+   *  không import i18n, UI truyền lookup vào). */
+  const i18nLookup = (k: string, vars?: Record<string, string>): string => t(k, vars);
+
+  /** Nút "Sửa curve vi phạm": xin xác nhận (liệt kê từng thay đổi),
+   *  rồi gọi store action — 1 bước undo, curve hợp lệ không đổi.
+   *  Đợt 30 M4: confirm + tóm tắt sau sửa đều dịch theo locale hiện
+   *  tại, và store action nhận tóm tắt đã dịch (trước đây ExportPanel
+   *  gọi không tham số nên toast luôn tiếng Việt ở cả hai locale —
+   *  nợ §3.3 của đợt 29 L4, nay đóng). Preview `res` tính trên cùng
+   *  spec và confirm là đồng bộ nên tóm tắt truyền vào khớp kết quả
+   *  action áp dụng ngay sau đó. */
+  const fixCurves = () => {
+    const st = useStore.getState();
+    const res = sanitizeSpecSpeedCurves(st.spec);
+    if (!res.changed && res.fixed.length === 0) {
+      setCurveFixMsg(formatSanitizeSummaryLocalized(res, i18nLookup));
+      return;
+    }
+    const lines: string[] = [t("exportPanel.fixConfirmTitle")];
+    for (const f of res.fixed) {
+      lines.push(`• "${f.clipId}" (${f.path}):`);
+      for (const c of formatFixEntryChanges(f, i18nLookup)) lines.push(`    - ${c}`);
+    }
+    for (const u of res.unsalvageable) lines.push(`• "${u.clipId}" (${u.path}): ${t("loadReport.fixConfirmUnsalvageable", { reason: resolveUnsalvageableReason(u, i18nLookup) })}`);
+    for (const s of res.skippedLocked) lines.push(`• "${s.clipId}" (${s.path}): ${t("loadReport.fixConfirmLocked")}`);
+    lines.push(t("loadReport.fixConfirmTiming"));
+    if (!window.confirm(lines.join("\n"))) return;
+    const applied = st.fixSpeedCurveViolations(formatSanitizeSummaryLocalized(res, i18nLookup));
+    setCurveFixMsg(formatSanitizeSummaryLocalized(applied, i18nLookup));
+    setRenderError(null);
   };
 
   const { ok, issues, json } = useMemo(() => {
@@ -364,7 +447,17 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
 
   const startRender = async () => {
     if (!ok || !presetOk || renderStatus === "uploading" || renderStatus === "rendering") return;
+    // Đợt 27 K2 — chặn sớm thay vì gửi spec vi phạm đi rồi nhận lỗi mù
+    // từ bridge ("Render worker thoát với mã 1."). Thông báo nêu rõ
+    // clip/curve vi phạm + nhắc nút sửa (không tự sửa lén).
+    if (curveBlocker !== null) {
+      setRenderStatus("error");
+      setRenderError(curveBlocker);
+      setRenderErrorDetail(null);
+      return;
+    }
     setRenderError(null);
+    setRenderErrorDetail(null);
     setRenderProgress(0);
     setRenderEta(null); // R1-065
     setQueuePos(null);  // R1-065
@@ -373,6 +466,7 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
     if (missing.length > 0) {
       setRenderStatus("error");
       setRenderError(`Thiếu file media gốc (cần import lại): ${missing.join(", ")}`);
+      setRenderErrorDetail(null);
       return;
     }
 
@@ -425,7 +519,9 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
     if (pollRef.current) window.clearInterval(pollRef.current);
     pollRef.current = window.setInterval(async () => {
       try {
-        const res = await fetch(`${BRIDGE_URL}/api/render/${id}`);
+        // Đợt 29 L3: poll kèm ?detail=1 để nhận errorDetail đã redact
+        // khi job lỗi; job không lỗi thì field này vắng (không đổi hành vi).
+        const res = await fetch(`${BRIDGE_URL}/api/render/${id}?detail=1`);
         if (!res.ok) throw new Error(`status ${res.status}`);
         const data = await res.json();
         setRenderProgress(data.progress ?? 0);
@@ -438,7 +534,14 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
         } else if (data.status === "error") {
           stopPolling();
           setRenderStatus("error");
+          // Giữ nguyên error cũ làm thông báo mặc định; detail chỉ là
+          // phần mở rộng (summary + dòng lỗi đã redact), không thay error.
           setRenderError(data.error || "Render thất bại (không rõ lý do).");
+          setRenderErrorDetail(
+            data.errorDetail && typeof data.errorDetail.summary === "string"
+              ? (data.errorDetail as RenderErrorDetail)
+              : null,
+          );
         } else if (data.status === "cancelled") {
           stopPolling();
           setRenderStatus("cancelled");
@@ -735,8 +838,48 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
               )}
             </div>
           )}
+          {/* Đợt 27 K2 — cảnh báo curve tốc độ vi phạm (từ warnings J5):
+              chặn export chỉ khi render-fatal (curveBlocker); chỉ lệch
+              đơn điệu thì vẫn xuất được nhưng vẫn hiện để user sửa. */}
+          {curveWarnings.length > 0 && (
+            <div className={curveBlocker !== null ? "valid-banner bad" : "tips"}>
+              ⚠️ {t("exportPanel.curveWarningsTitle", { count: String(curveWarnings.length) })}
+              <ul>
+                {curveWarnings.slice(0, 5).map((w, i) => (
+                  <li key={i}>{formatWarningTranslated(w, i18nLookup)}</li>
+                ))}
+                {curveWarnings.length > 5 && <li>{t("exportPanel.curveWarningsMore", { count: String(curveWarnings.length - 5) })}</li>}
+              </ul>
+              {curveBlocker !== null && <p>{t("exportPanel.curveBlockerNote")}</p>}
+              <button onClick={fixCurves}>🔧 {t("exportPanel.fixCurves")}</button>
+              {curveFixMsg && <p>{curveFixMsg}</p>}
+            </div>
+          )}
           {renderStatus === "error" && renderError && (
             <div className="valid-banner bad">❌ {renderError}</div>
+          )}
+          {/* Đợt 29 L3 — chi tiết lỗi đã redact (chỉ khi bridge trả về):
+              mã + summary + tối đa 5 dòng lỗi; không bao giờ in đường
+              dẫn tuyệt đối/token (bridge đã redact, xem LIMITS). */}
+          {renderStatus === "error" && renderErrorDetail && (
+            <div className="tips">
+              <div>
+                <b>{t("exportPanel.errorDetailTitle", { code: renderErrorDetail.code })}</b> {localizedErrorSummary(renderErrorDetail, t)}
+              </div>
+              {renderErrorDetail.details.length > 0 && (
+                <ul>
+                  {renderErrorDetail.details.map((d, i) => (
+                    <li key={i}>{d}</li>
+                  ))}
+                </ul>
+              )}
+              {renderErrorDetail.detailsOmitted > 0 && (
+                <p>{t("exportPanel.errorDetailMore", { count: String(renderErrorDetail.detailsOmitted) })}</p>
+              )}
+              {renderErrorDetail.details.length === 0 && renderErrorDetail.redactedTail && (
+                <pre>{renderErrorDetail.redactedTail}</pre>
+              )}
+            </div>
           )}
           {renderStatus === "cancelled" && (
             <div className="tips">Đã hủy render.</div>

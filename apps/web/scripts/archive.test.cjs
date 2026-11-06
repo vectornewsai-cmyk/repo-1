@@ -53,7 +53,10 @@ function makeSpec() {
             text: "Xin chào",
             start: 0,
             duration: 5,
-            style: { fontFamily: "Arial", fontSize: 48, color: "#fff" },
+            // Đợt 27 K1: import chuẩn hóa style text thiếu field về default
+            // (bold/italic/x/y/animation) nên fixture dùng style đầy đủ để
+            // assertion round-trip chính xác vẫn giữ ý nghĩa gốc.
+            style: { fontFamily: "Arial", fontSize: 48, color: "#fff", bold: true, italic: false, x: 0.5, y: 0.5, animation: "none" },
           },
         ],
       },

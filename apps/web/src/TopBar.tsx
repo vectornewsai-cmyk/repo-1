@@ -8,6 +8,10 @@ import { useState } from "react";
 import { useStore } from "./store";
 import { subscribeToasts } from "./lib/toast";
 import { fmtTime } from "./lib";
+import {
+  readReverseWebcodecsOptIn,
+  setReverseWebcodecsOptIn,
+} from "./lib/reversePlayback";
 import { ProjectMenu } from "./components/project/ProjectMenu";
 import { t, useLang, setLang, getLang } from "./i18n";
 
@@ -34,6 +38,8 @@ export function TopBar({ onExport, onCaption, onSilence, onTemplate, onWelcome }
   useLang(); // re-render khi đổi ngôn ngữ
   const name = useStore((s) => s.spec.meta.name);
   const playing = useStore((s) => s.playing);
+  // K4 (đợt 27): cờ phát ngược toàn cục (xem store.ts).
+  const reversePlayback = useStore((s) => s.reversePlayback);
   const playhead = useStore((s) => s.playhead);
   const selection = useStore((s) => s.selection);
   const media = useStore((s) => s.media);
@@ -43,6 +49,15 @@ export function TopBar({ onExport, onCaption, onSilence, onTemplate, onWelcome }
   const redoLabel = useStore((s) => s.redoLabel);
   const clipboardSize = useStore((s) => s.clipboardSize); // K2: bật/tắt nút Dán
   const [flash, setFlash] = useState<string | null>(null);
+  // Đợt 47 C5 — toggle đường phát ngược WebCodecs (trong đó có GOP
+  // Range cho file lớn): MẶC ĐỊNH BẬT, tắt được, lưu localStorage
+  // `vcut-reverse-webcodecs` (xem reversePlayback.ts).
+  // ROUND48-D4: nhãn/title lấy từ key i18n topbar.reverseWebcodecs*
+  // (vi + en, parity khóa ở reverseToggleI18n48D4.test.ts) thay cho
+  // chuỗi Việt trực tiếp của C5; aria-label là điểm bám ổn định cho
+  // harness đo; preview đọc cờ mỗi tick nên bật/tắt có hiệu lực ngay
+  // ở lần stepping kế tiếp, không cần reload.
+  const [reverseWc, setReverseWc] = useState(readReverseWebcodecsOptIn);
   const st = useStore.getState();
   const duration = st.duration();
   // R1-072: chỉ bật nút phụ đề khi có file video/audio gốc để transcribe.
@@ -106,9 +121,60 @@ export function TopBar({ onExport, onCaption, onSilence, onTemplate, onWelcome }
           title={playing ? t("topbar.pause") : t("topbar.play")}
           aria-label={playing ? t("topbar.pause") : t("topbar.play")}
           aria-pressed={playing}
-          onClick={() => st.togglePlay()}
+          onClick={() => {
+            // K4 (đợt 27): nút ▶ luôn nghĩa là phát XUÔI — nếu đang ở
+            // chế độ ngược thì tắt cờ trước; đang phát ngược thì giữ
+            // nguyên playing (chuyển hướng ngay), đang dừng thì phát.
+            // Space/K (togglePlay) thì giữ nguyên hướng hiện tại.
+            if (reversePlayback) {
+              st.setReversePlayback(false);
+              if (!playing) st.togglePlay();
+            } else {
+              st.togglePlay();
+            }
+          }}
         >
           <span aria-hidden="true">{playing ? "⏸" : "▶"}</span>
+        </button>
+        {/* K4 (đợt 27): phát ngược toàn cục — playhead lùi từng frame,
+            mọi video seek từng frame, audio tắt (không phát ngược đồng
+            bộ được). ROUND49-E2: title/aria-label lấy từ i18n
+            (topbar.reversePlayback*) thay cho chuỗi Việt trực tiếp;
+            giá trị vi giữ nguyên "Phát ngược" nên selector harness
+            [aria-label="Phát ngược"] không đổi. */}
+        <button
+          className={`tbtn${reversePlayback && playing ? " play" : ""}`}
+          title={t("topbar.reversePlaybackHint")}
+          aria-label={t("topbar.reversePlayback")}
+          aria-pressed={reversePlayback && playing}
+          onClick={() => st.toggleReversePlayback()}
+        >
+          <span aria-hidden="true">◀</span>
+        </button>
+        {/* Đợt 47 C5 — toggle đường phát ngược WebCodecs (GOP cho file
+            lớn): mặc định BẬT. Tắt thì preview ngược rơi về đường
+            element-seek cũ; bật lại thì file trong (32, 128] MiB dùng
+            GOP Range thay vì tải toàn file. Trạng thái hiển thị đúng
+            qua aria-pressed + class "play" (sáng khi bật).
+            ROUND48-D4: title/aria-label lấy từ i18n
+            (topbar.reverseWebcodecs*) thay cho chuỗi Việt trực tiếp. */}
+        <button
+          className={`tbtn${reverseWc ? " play" : ""}`}
+          title={
+            reverseWc
+              ? t("topbar.reverseWebcodecsOn")
+              : t("topbar.reverseWebcodecsOff")
+          }
+          aria-label={t("topbar.reverseWebcodecs")}
+          aria-pressed={reverseWc}
+          data-testid="reverse-webcodecs-toggle"
+          onClick={() => {
+            const v = !reverseWc;
+            setReverseWebcodecsOptIn(v);
+            setReverseWc(v);
+          }}
+        >
+          <span aria-hidden="true">⚡</span>
         </button>
         <div className="time-display" aria-live="off">
           {fmtTime(playhead)} <span>/</span> {fmtTime(duration)}
