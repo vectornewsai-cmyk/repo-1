@@ -1,0 +1,58 @@
+{
+  "browser": "chromium-headless-playwright-1248",
+  "result": {
+    "1080p/white": {
+      "productMs": [
+        51.6,
+        50.2,
+        50.3,
+        50.9,
+        50.7
+      ],
+      "inlineMs": [
+        18.6,
+        17.8,
+        17.8,
+        18.7,
+        18.5
+      ],
+      "productMedian": 50.7,
+      "inlineMedian": 18.5,
+      "mad": 0
+    },
+    "1080p/gray": {
+      "productMs": [
+        58.2,
+        56.5,
+        58.3,
+        56.2,
+        56.8
+      ],
+      "inlineMs": [
+        25,
+        27.1,
+        23.2,
+        23.1,
+        27.2
+      ],
+      "productMedian": 56.8,
+      "inlineMedian": 25,
+      "mad": 0
+    },
+    "4K/white": {
+      "productMs": [
+        241.8,
+        173.3,
+        177.7
+      ],
+      "inlineMs": [
+        71.8,
+        71.1,
+        72.2
+      ],
+      "productMedian": 177.7,
+      "inlineMedian": 71.8,
+      "mad": 0
+    }
+  }
+}

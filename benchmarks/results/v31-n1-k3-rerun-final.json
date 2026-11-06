@@ -1,0 +1,1699 @@
+{
+  "run": "round31-n1-final",
+  "date": "2026-10-31T19:51:36.574Z",
+  "bundle": "index-D6dGXQYg.js",
+  "bundleSha256_16": "2971b5a7e356ce69",
+  "display": ":95",
+  "port": 4195,
+  "origin": "http://127.0.0.1:4195",
+  "cases": [
+    {
+      "id": "S1-sanity-red-mid",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 1.5,
+      "playhead": 1.5,
+      "localT": 1.5,
+      "p": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 1.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        255,
+        24,
+        0
+      ],
+      "expMean": [
+        255,
+        24,
+        0
+      ],
+      "ctlMean": [
+        255,
+        24,
+        0
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 1.5
+      },
+      "settled": {
+        "hash": 13425930,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "S2-sanity-green-mid",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 6,
+      "playhead": 6,
+      "localT": 2,
+      "p": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 6,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        0,
+        216,
+        2
+      ],
+      "expMean": [
+        0,
+        216,
+        2
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 2
+      },
+      "settled": {
+        "hash": 19407780,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FW-OUT-red-p0333",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": "out",
+      "type": "fadewhite",
+      "target": 3.0333,
+      "playhead": 3.033333333333333,
+      "localT": 3.033333333333333,
+      "p": 0.033333333333333215,
+      "alpha": 0.8858674300710606,
+      "mode": "white",
+      "mad": 0.15614299515483243,
+      "le8": 1,
+      "maxDiff": 0.3646236535849994,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.033333333333333,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        255,
+        50,
+        29
+      ],
+      "expMean": [
+        255,
+        50.36462365358596,
+        29.103805331882814
+      ],
+      "ctlMean": [
+        255,
+        24,
+        0
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 3.033333
+      },
+      "settled": {
+        "hash": 19585020,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FW-OUT-red-p01",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": "out",
+      "type": "fadewhite",
+      "target": 3.1,
+      "playhead": 3.1,
+      "localT": 3.1,
+      "p": 0.10000000000000009,
+      "alpha": 0.4491075996108812,
+      "mode": "white",
+      "mad": 0.24456886303720624,
+      "le8": 1,
+      "maxDiff": 0.47756209922528114,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.1,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        255,
+        151,
+        140
+      ],
+      "expMean": [
+        255,
+        151.2561444898672,
+        140.47756209922917
+      ],
+      "ctlMean": [
+        255,
+        24,
+        0
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 3.1
+      },
+      "settled": {
+        "hash": 43290870,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FW-OUT-red-p05",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": "out",
+      "type": "fadewhite",
+      "target": 3.5,
+      "playhead": 3.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        255,
+        255,
+        255
+      ],
+      "expMean": [
+        255,
+        255,
+        255
+      ],
+      "ctlMean": [
+        255,
+        24,
+        0
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 3.5
+      },
+      "settled": {
+        "hash": 67794300,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FW-IN-green-p01",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.1,
+      "playhead": 4.1,
+      "localT": 0.09999999999999964,
+      "p": 0.09999999999999964,
+      "alpha": 0,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.1,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        255,
+        255,
+        255
+      ],
+      "expMean": [
+        255,
+        255,
+        255
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 0.1
+      },
+      "settled": {
+        "hash": 67794300,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FW-IN-green-p05",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.5,
+      "playhead": 4.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0.3922455002003384,
+      "le8": 1,
+      "maxDiff": 0.483587122255301,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        167,
+        241,
+        167
+      ],
+      "expMean": [
+        166.6234542608791,
+        241.4835871222758,
+        167.31660363924675
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 0.5
+      },
+      "settled": {
+        "hash": 50956500,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FW-IN-green-p0733",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.7333,
+      "playhead": 4.733333333333333,
+      "localT": 0.7333333333333334,
+      "p": 0.7333333333333334,
+      "alpha": 0.7056320507375885,
+      "mode": "white",
+      "mad": 0.3397560821797415,
+      "le8": 1,
+      "maxDiff": 0.48035002123404524,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.733333333333333,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        75,
+        227,
+        76
+      ],
+      "expMean": [
+        75.0638270619101,
+        227.4803500212577,
+        76.47509116340417
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 0.733333
+      },
+      "settled": {
+        "hash": 33542670,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FW-IN-green-p0933",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.9333,
+      "playhead": 4.933333333333334,
+      "localT": 0.9333333333333336,
+      "p": 0.9333333333333336,
+      "alpha": 0.9395970508111922,
+      "mode": "white",
+      "mad": 0.3468044020925753,
+      "le8": 1,
+      "maxDiff": 0.4027520431460001,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.933333333333334,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        15,
+        218,
+        17
+      ],
+      "expMean": [
+        15.402752043144483,
+        218.35571501838876,
+        17.281946144766174
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 0.933333
+      },
+      "settled": {
+        "hash": 22243620,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FG-OUT-green-p01",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 7.1,
+      "playhead": 7.1,
+      "localT": 3.0999999999999996,
+      "p": 0.09999999999999964,
+      "alpha": 0.4491075996108843,
+      "mode": "gray",
+      "mad": 0.04684691500165417,
+      "le8": 1,
+      "maxDiff": 0.0702703725024918,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 7.1,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        40,
+        137,
+        41
+      ],
+      "expMean": [
+        40.03151442827041,
+        137.03875594423113,
+        40.92972962750197
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 3.1
+      },
+      "settled": {
+        "hash": 19363470,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FG-OUT-green-p05",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 7.5,
+      "playhead": 7.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0.33333333333333326,
+      "le8": 1,
+      "maxDiff": 0.3333333333333286,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 7.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        73,
+        73,
+        73
+      ],
+      "expMean": [
+        72.66666666667416,
+        72.66666666667416,
+        72.66666666667416
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 3.5
+      },
+      "settled": {
+        "hash": 19407780,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FG-IN-mag-p01",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "flat-magenta.mp4"
+      },
+      "window": "in",
+      "type": "fadegrays",
+      "target": 8.1,
+      "playhead": 8.1,
+      "localT": 0.09999999999999964,
+      "p": 0.09999999999999964,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0.3333333333333337,
+      "le8": 1,
+      "maxDiff": 0.3333333333333428,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 8.1,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        182,
+        182,
+        182
+      ],
+      "expMean": [
+        182.3333333333316,
+        182.3333333333316,
+        182.3333333333316
+      ],
+      "ctlMean": [
+        255,
+        39,
+        253
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 0.1
+      },
+      "settled": {
+        "hash": 48386520,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FG-IN-mag-p05",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "flat-magenta.mp4"
+      },
+      "window": "in",
+      "type": "fadegrays",
+      "target": 8.5,
+      "playhead": 8.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "alpha": 0.34657468917294143,
+      "mode": "gray",
+      "mad": 0.333333333333332,
+      "le8": 1,
+      "maxDiff": 0.4822392534329083,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 8.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        208,
+        133,
+        207
+      ],
+      "expMean": [
+        207.5177607465799,
+        132.65762788522363,
+        206.8246113682029
+      ],
+      "ctlMean": [
+        255,
+        39,
+        253
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 0.5
+      },
+      "settled": {
+        "hash": 48519450,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FG-OUT-custom-p01",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "flat-custom.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 15.1,
+      "playhead": 15.1,
+      "localT": 3.0999999999999996,
+      "p": 0.09999999999999964,
+      "alpha": 0.4491075996108843,
+      "mode": "gray",
+      "mad": 0.17066131085110922,
+      "le8": 1,
+      "maxDiff": 0.255991966276639,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 15.1,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        160,
+        115,
+        89
+      ],
+      "expMean": [
+        160.25599196625618,
+        114.8961244055625,
+        88.84788362814504
+      ],
+      "ctlMean": [
+        208,
+        107,
+        49
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 3.1
+      },
+      "settled": {
+        "hash": 29111670,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FG-OUT-custom-p05",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "flat-custom.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 15.5,
+      "playhead": 15.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0.33333333333333326,
+      "le8": 1,
+      "maxDiff": 0.3333333333333286,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 15.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        121,
+        121,
+        121
+      ],
+      "expMean": [
+        121.33333333334362,
+        121.33333333334362,
+        121.33333333334362
+      ],
+      "ctlMean": [
+        208,
+        107,
+        49
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 3.5
+      },
+      "settled": {
+        "hash": 32169060,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "GRAD-FW-IN-p01",
+      "clip": {
+        "start": 16,
+        "dur": 4,
+        "file": "grad-static.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 16.1,
+      "playhead": 16.1,
+      "localT": 0.10000000000000142,
+      "p": 0.10000000000000142,
+      "alpha": 0,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 16.1,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        255,
+        255,
+        255
+      ],
+      "expMean": [
+        255,
+        255,
+        255
+      ],
+      "ctlMean": [
+        126.50198412698413,
+        125.72250566893425,
+        126.12726757369614
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 0.1
+      },
+      "settled": {
+        "hash": 67794300,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "GRAD-FW-IN-p05",
+      "clip": {
+        "start": 16,
+        "dur": 4,
+        "file": "grad-static.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 16.5,
+      "playhead": 16.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0.31281527672346043,
+      "le8": 1,
+      "maxDiff": 1.5192675833070268,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 16.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        210.2891156462585,
+        210.12429138321994,
+        210.21130952380952
+      ],
+      "expMean": [
+        210.4430494636522,
+        210.1998675920391,
+        210.32379161992827
+      ],
+      "ctlMean": [
+        126.43622448979592,
+        125.73455215419501,
+        126.09212018140589
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 0.5
+      },
+      "settled": {
+        "hash": 55966321,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "GRAD-FG-OUT-p05",
+      "clip": {
+        "start": 16,
+        "dur": 4,
+        "file": "grad-static.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 19.5,
+      "playhead": 19.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0.3883692365835223,
+      "le8": 1,
+      "maxDiff": 2.3333333333333286,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 19.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        125.85827664399093,
+        125.85827664399093,
+        125.85827664399093
+      ],
+      "expMean": [
+        126.08319160997738,
+        126.08319160997738,
+        126.08319160997738
+      ],
+      "ctlMean": [
+        126.42942176870748,
+        125.7359693877551,
+        126.08418367346938
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ct": 3.5
+      },
+      "settled": {
+        "hash": 33687054,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "REAL-PROXY-DIAG",
+      "proxyDiag": {
+        "badge": "",
+        "badgeDisplay": "none",
+        "mediaProxy": [
+          "Proxy lỗi, thử lại"
+        ],
+        "toasts": [
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×",
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×",
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.",
+          "×"
+        ]
+      },
+      "gating": false
+    },
+    {
+      "id": "REAL-FW-IN-k-p05",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 0.5,
+      "playhead": 0.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 12.70866154422152,
+      "le8": 0.3526404494382023,
+      "maxDiff": 86,
+      "verdict": "LỆCH",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 0.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        221.70337078651684,
+        221.5841011235955,
+        221.39870786516855
+      ],
+      "expMean": [
+        221.6987089942136,
+        255,
+        221.98901397262048
+      ],
+      "ctlMean": [
+        158.91308988764044,
+        255,
+        159.75073033707866
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ct": 0.5
+      },
+      "settled": {
+        "hash": 20983964,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": false,
+      "frameSearchWide": [
+        {
+          "frameOffset": -1,
+          "mad": 12.70866154422152,
+          "le8": 0.3526404494382023,
+          "madResampled": 0,
+          "le8Resampled": 1,
+          "verdict": "LỆCH",
+          "verdictResampled": "KHỚP"
+        },
+        {
+          "frameOffset": -2,
+          "mad": 12.842302421985007,
+          "le8": 0.35292134831460675,
+          "madResampled": 0.8424531835205993,
+          "le8Resampled": 0.9889887640449438,
+          "verdict": "LỆCH",
+          "verdictResampled": "XẤP XỈ"
+        },
+        {
+          "frameOffset": 1,
+          "mad": 12.825886985131044,
+          "le8": 0.35191011235955055,
+          "madResampled": 0.8671348314606742,
+          "le8Resampled": 0.9902247191011236,
+          "verdict": "LỆCH",
+          "verdictResampled": "KHỚP"
+        },
+        {
+          "frameOffset": -3,
+          "mad": 13.127091074780095,
+          "le8": 0.35258426966292133,
+          "madResampled": 1.6085393258426965,
+          "le8Resampled": 0.9566292134831461,
+          "verdict": "LỆCH",
+          "verdictResampled": "XẤP XỈ"
+        },
+        {
+          "frameOffset": 2,
+          "mad": 13.096467906077795,
+          "le8": 0.3511797752808989,
+          "madResampled": 1.6100187265917603,
+          "le8Resampled": 0.9579213483146067,
+          "verdict": "LỆCH",
+          "verdictResampled": "XẤP XỈ"
+        },
+        {
+          "frameOffset": 3,
+          "mad": 13.402696922293808,
+          "le8": 0.3495505617977528,
+          "madResampled": 2.275112359550562,
+          "le8Resampled": 0.9248876404494382,
+          "verdict": "LỆCH",
+          "verdictResampled": "XẤP XỈ"
+        },
+        {
+          "frameOffset": -4,
+          "mad": 13.440156754970129,
+          "le8": 0.35196629213483144,
+          "madResampled": 2.2996441947565542,
+          "le8Resampled": 0.922247191011236,
+          "verdict": "LỆCH",
+          "verdictResampled": "XẤP XỈ"
+        },
+        {
+          "frameOffset": 4,
+          "mad": 13.713948895650692,
+          "le8": 0.34837078651685394,
+          "madResampled": 2.8739700374531836,
+          "le8Resampled": 0.8956741573033707,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": -6,
+          "mad": 13.753383000807336,
+          "le8": 0.35151685393258425,
+          "madResampled": 2.894194756554307,
+          "le8Resampled": 0.8939887640449439,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": 6,
+          "mad": 14.000373313474917,
+          "le8": 0.34662921348314607,
+          "madResampled": 3.4219475655430713,
+          "le8Resampled": 0.8647752808988765,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": -9,
+          "mad": 14.542159057526986,
+          "le8": 0.35,
+          "madResampled": 4.348876404494382,
+          "le8Resampled": 0.8134831460674158,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": 9,
+          "mad": 14.771016994673802,
+          "le8": 0.3432584269662921,
+          "madResampled": 4.751741573033708,
+          "le8Resampled": 0.7933146067415731,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": -12,
+          "mad": 14.93202639617084,
+          "le8": 0.34876404494382024,
+          "madResampled": 5.025449438202247,
+          "le8Resampled": 0.7823595505617977,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": 12,
+          "mad": 15.223019785153268,
+          "le8": 0.3413483146067416,
+          "madResampled": 5.485880149812734,
+          "le8Resampled": 0.7687640449438202,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": -15,
+          "mad": 15.265040029650923,
+          "le8": 0.34775280898876404,
+          "madResampled": 5.619794007490636,
+          "le8Resampled": 0.7591011235955056,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": 15,
+          "mad": 15.630818392952694,
+          "le8": 0.33870786516853935,
+          "madResampled": 6.15934456928839,
+          "le8Resampled": 0.7464606741573033,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        }
+      ]
+    },
+    {
+      "id": "REAL-FG-OUT-k-p05",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 3.5,
+      "playhead": 3.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 42.630749063670415,
+      "le8": 0.36196629213483145,
+      "maxDiff": 151,
+      "verdict": "LỆCH",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 78.29050561797753,
+      "le8Resampled": 0.20780898876404494,
+      "maxDiffResampled": 235,
+      "verdictResampled": "LỆCH",
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        221.70337078651684,
+        221.5841011235955,
+        221.39870786516855
+      ],
+      "expMean": [
+        182.1354681647973,
+        182.1354681647973,
+        182.1354681647973
+      ],
+      "ctlMean": [
+        145.3699438202247,
+        255,
+        146.0364606741573
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ct": 3.5
+      },
+      "settled": {
+        "hash": 20983964,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": false,
+      "frameSearchWide": [
+        {
+          "frameOffset": -1,
+          "mad": 36.75455056179775,
+          "le8": 0.3509550561797753,
+          "madResampled": 0,
+          "le8Resampled": 1,
+          "verdict": "LỆCH",
+          "verdictResampled": "KHỚP"
+        },
+        {
+          "frameOffset": 1,
+          "mad": 36.51940074906367,
+          "le8": 0.35308988764044946,
+          "madResampled": 2.5270224719101124,
+          "le8Resampled": 0.911685393258427,
+          "verdict": "LỆCH",
+          "verdictResampled": "XẤP XỈ"
+        },
+        {
+          "frameOffset": -2,
+          "mad": 36.7789138576779,
+          "le8": 0.35359550561797753,
+          "madResampled": 2.5446067415730336,
+          "le8Resampled": 0.9124719101123595,
+          "verdict": "LỆCH",
+          "verdictResampled": "XẤP XỈ"
+        },
+        {
+          "frameOffset": 2,
+          "mad": 36.88037453183521,
+          "le8": 0.354438202247191,
+          "madResampled": 4.641460674157304,
+          "le8Resampled": 0.8279213483146067,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": -3,
+          "mad": 37.0401872659176,
+          "le8": 0.3565730337078652,
+          "madResampled": 4.80376404494382,
+          "le8Resampled": 0.8224157303370786,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": 3,
+          "mad": 37.07825842696629,
+          "le8": 0.3551685393258427,
+          "madResampled": 6.486516853932584,
+          "le8Resampled": 0.77,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": -4,
+          "mad": 37.100767790262175,
+          "le8": 0.36129213483146067,
+          "madResampled": 6.777303370786517,
+          "le8Resampled": 0.7664606741573033,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": 4,
+          "mad": 37.39797752808989,
+          "le8": 0.3552247191011236,
+          "madResampled": 8.177022471910112,
+          "le8Resampled": 0.7320224719101124,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": -6,
+          "mad": 37.62930711610487,
+          "le8": 0.36337078651685395,
+          "madResampled": 8.388426966292135,
+          "le8Resampled": 0.7332022471910112,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": 6,
+          "mad": 37.47683520599251,
+          "le8": 0.35674157303370785,
+          "madResampled": 9.704606741573034,
+          "le8Resampled": 0.7051123595505618,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": -9,
+          "mad": 38.38200374531835,
+          "le8": 0.3701123595505618,
+          "madResampled": 12.31376404494382,
+          "le8Resampled": 0.6705056179775281,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": 9,
+          "mad": 38.49722846441948,
+          "le8": 0.35185393258426967,
+          "madResampled": 13.175112359550562,
+          "le8Resampled": 0.6537078651685393,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": -12,
+          "mad": 39.1525468164794,
+          "le8": 0.3698314606741573,
+          "madResampled": 14.204044943820225,
+          "le8Resampled": 0.6464606741573033,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": 12,
+          "mad": 39.123970037453184,
+          "le8": 0.3450561797752809,
+          "madResampled": 15.0011797752809,
+          "le8Resampled": 0.6342134831460674,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": -15,
+          "mad": 40.07181647940075,
+          "le8": 0.37112359550561796,
+          "madResampled": 16.524101123595507,
+          "le8Resampled": 0.6246629213483146,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        },
+        {
+          "frameOffset": 15,
+          "mad": 39.55807116104869,
+          "le8": 0.3442696629213483,
+          "madResampled": 16.62943820224719,
+          "le8Resampled": 0.6174157303370786,
+          "verdict": "LỆCH",
+          "verdictResampled": "LỆCH"
+        }
+      ]
+    },
+    {
+      "id": "REAL-SANITY-k-mid",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 2,
+      "playhead": 2,
+      "localT": 2,
+      "p": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 40.55647940074906,
+      "le8": 0.0028651685393258426,
+      "maxDiff": 254,
+      "verdict": "LỆCH",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "handleDeltaFrames": 0,
+      "handleRaw": 2,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "appMean": [
+        150.393202247191,
+        149.715,
+        149.40724719101124
+      ],
+      "expMean": [
+        149.35932584269662,
+        255,
+        150.20455056179776
+      ],
+      "ctlMean": [
+        149.35932584269662,
+        255,
+        150.20455056179776
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ct": 2
+      },
+      "settled": {
+        "hash": 14993999,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": false
+    }
+  ],
+  "perf": {
+    "dip": [
+      {
+        "target": 4.5,
+        "t0": 37579.10000000009,
+        "t1": 40159.60000000009,
+        "entries": [
+          {
+            "duration": 83,
+            "start": 37692.200000000186
+          }
+        ],
+        "durations": [
+          83
+        ]
+      },
+      {
+        "target": 4.5,
+        "t0": 42701.200000000186,
+        "t1": 45263.5,
+        "entries": [
+          {
+            "duration": 84,
+            "start": 42803.5
+          }
+        ],
+        "durations": [
+          84
+        ]
+      },
+      {
+        "target": 4.5,
+        "t0": 47861.80000000028,
+        "t1": 50454.60000000009,
+        "entries": [
+          {
+            "duration": 59,
+            "start": 47987.60000000009
+          },
+          {
+            "duration": 117,
+            "start": 48062.30000000028
+          }
+        ],
+        "durations": [
+          59,
+          117
+        ]
+      }
+    ],
+    "plain": [
+      {
+        "target": 6,
+        "t0": 40171.39999999991,
+        "t1": 42697.80000000028,
+        "entries": [],
+        "durations": []
+      },
+      {
+        "target": 6,
+        "t0": 45266.39999999991,
+        "t1": 47853.700000000186,
+        "entries": [],
+        "durations": []
+      },
+      {
+        "target": 6,
+        "t0": 50460.60000000009,
+        "t1": 53067.39999999991,
+        "entries": [],
+        "durations": []
+      }
+    ]
+  },
+  "exceptions": [],
+  "realFootage": {
+    "file": "clip-k-dod-iwo.mp4",
+    "shaVerified": true
+  },
+  "log": [
+    "[2026-10-31T19:49:35.794Z] harness clicktest-dip-browser-pipe: bắt đầu (label=round31-n1-final, display=:95, port=4195)",
+    "[2026-10-31T19:49:35.808Z] video phẳng OK: flat-red.mp4 (11048 byte)",
+    "[2026-10-31T19:49:35.808Z] video phẳng OK: flat-green.mp4 (11048 byte)",
+    "[2026-10-31T19:49:35.808Z] video phẳng OK: flat-magenta.mp4 (11049 byte)",
+    "[2026-10-31T19:49:35.808Z] video phẳng OK: flat-custom.mp4 (11048 byte)",
+    "[2026-10-31T19:49:35.808Z] video gradient tĩnh OK: grad-static.mp4 (41688 byte)",
+    "[2026-10-31T19:49:35.825Z] Xvfb: socket /tmp/.X11-unix/X95 mồ côi, xoá và bật mới",
+    "[2026-10-31T19:49:36.083Z] Xvfb lên: DISPLAY=:95",
+    "[2026-10-31T19:49:36.390Z] dist snapshot OK: bundle index-D6dGXQYg.js sha256[:16]=2971b5a7e356ce69 -> /home/hatch/workspace/tmp-round27-k3/dist-snapshot",
+    "[2026-10-31T19:49:36.393Z] video đã copy vào snapshot (clip-k-dod-iwo.mp4, flat-custom.mp4, flat-green.mp4, flat-magenta.mp4, flat-red.mp4, grad-static.mp4)",
+    "[2026-10-31T19:49:36.403Z] static server lên tại http://127.0.0.1:4195 (root /home/hatch/workspace/tmp-round27-k3/dist-snapshot)",
+    "[2026-10-31T19:49:40.943Z] real footage: license IA OK (publicdomain: https://creativecommons.org/publicdomain/mark/1.0/)",
+    "[2026-10-31T19:49:41.581Z] real footage: SHA khớp J3, ffprobe: h264,1080,1920",
+    "[2026-10-31T19:49:43.051Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-31T19:49:46.167Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T19:49:47.447Z]   media vào bin: flat-red.mp4",
+    "[2026-10-31T19:49:47.448Z]   media vào bin: flat-green.mp4",
+    "[2026-10-31T19:49:47.448Z]   media vào bin: flat-magenta.mp4",
+    "[2026-10-31T19:49:47.449Z]   media vào bin: flat-custom.mp4",
+    "[2026-10-31T19:49:47.449Z]   media vào bin: grad-static.mp4",
+    "[2026-10-31T19:49:47.454Z]   hiệu chuẩn vạch: offset handle-ruler lúc playhead 0 = -6.50px",
+    "[2026-10-31T19:49:47.856Z] ruler rect: {\"x\":152,\"y\":813,\"w\":1440,\"h\":27,\"innerH\":1057,\"handleLeft\":145.5,\"ppsInput\":60}",
+    "[2026-10-31T19:49:49.502Z]   PASS S1-sanity-red-mid: playhead 1.5 p=- alpha=1.0000 MAD=0.000 <=8=100.00% appMean=[255.0,24.0,0.0] expMean=[255.0,24.0,0.0] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:49:51.114Z]   PASS S2-sanity-green-mid: playhead 6 p=- alpha=1.0000 MAD=0.000 <=8=100.00% appMean=[0.0,216.0,2.0] expMean=[0.0,216.0,2.0] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:49:52.759Z]   PASS FW-OUT-red-p0333: playhead 3.033333333333333 p=0.0333 alpha=0.8859 MAD=0.156 <=8=100.00% appMean=[255.0,50.0,29.0] expMean=[255.0,50.4,29.1] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:49:54.374Z]   PASS FW-OUT-red-p01: playhead 3.1 p=0.1000 alpha=0.4491 MAD=0.245 <=8=100.00% appMean=[255.0,151.0,140.0] expMean=[255.0,151.3,140.5] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:49:56.000Z]   PASS FW-OUT-red-p05: playhead 3.5 p=0.5000 alpha=0.0000 MAD=0.000 <=8=100.00% appMean=[255.0,255.0,255.0] expMean=[255.0,255.0,255.0] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:49:57.576Z]   PASS FW-IN-green-p01: playhead 4.1 p=0.1000 alpha=0.0000 MAD=0.000 <=8=100.00% appMean=[255.0,255.0,255.0] expMean=[255.0,255.0,255.0] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:49:59.170Z]   PASS FW-IN-green-p05: playhead 4.5 p=0.5000 alpha=0.3466 MAD=0.392 <=8=100.00% appMean=[167.0,241.0,167.0] expMean=[166.6,241.5,167.3] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:50:00.801Z]   PASS FW-IN-green-p0733: playhead 4.733333333333333 p=0.7333 alpha=0.7056 MAD=0.340 <=8=100.00% appMean=[75.0,227.0,76.0] expMean=[75.1,227.5,76.5] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:50:02.489Z]   PASS FW-IN-green-p0933: playhead 4.933333333333334 p=0.9333 alpha=0.9396 MAD=0.347 <=8=100.00% appMean=[15.0,218.0,17.0] expMean=[15.4,218.4,17.3] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:50:04.596Z]   PASS FG-OUT-green-p01: playhead 7.1 p=0.1000 alpha=0.4491 MAD=0.047 <=8=100.00% appMean=[40.0,137.0,41.0] expMean=[40.0,137.0,40.9] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:50:07.090Z]   PASS FG-OUT-green-p05: playhead 7.5 p=0.5000 alpha=0.0000 MAD=0.333 <=8=100.00% appMean=[73.0,73.0,73.0] expMean=[72.7,72.7,72.7] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:50:10.091Z]   PASS FG-IN-mag-p01: playhead 8.1 p=0.1000 alpha=0.0000 MAD=0.333 <=8=100.00% appMean=[182.0,182.0,182.0] expMean=[182.3,182.3,182.3] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:50:12.678Z]   PASS FG-IN-mag-p05: playhead 8.5 p=0.5000 alpha=0.3466 MAD=0.333 <=8=100.00% appMean=[208.0,133.0,207.0] expMean=[207.5,132.7,206.8] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:50:14.756Z]   PASS FG-OUT-custom-p01: playhead 15.1 p=0.1000 alpha=0.4491 MAD=0.171 <=8=100.00% appMean=[160.0,115.0,89.0] expMean=[160.3,114.9,88.8] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:50:16.528Z]   PASS FG-OUT-custom-p05: playhead 15.5 p=0.5000 alpha=0.0000 MAD=0.333 <=8=100.00% appMean=[121.0,121.0,121.0] expMean=[121.3,121.3,121.3] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:50:18.159Z]   PASS GRAD-FW-IN-p01: playhead 16.1 p=0.1000 alpha=0.0000 MAD=0.000 <=8=100.00% appMean=[255.0,255.0,255.0] expMean=[255.0,255.0,255.0] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:50:19.748Z]   PASS GRAD-FW-IN-p05: playhead 16.5 p=0.5000 alpha=0.3466 MAD=0.313 <=8=100.00% appMean=[210.3,210.1,210.2] expMean=[210.4,210.2,210.3] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:50:21.578Z]   PASS GRAD-FG-OUT-p05: playhead 19.5 p=0.5000 alpha=0.0000 MAD=0.388 <=8=100.00% appMean=[125.9,125.9,125.9] expMean=[126.1,126.1,126.1] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:50:24.166Z]   perf dip (target 4.5): longtask durations ms = [83]",
+    "[2026-10-31T19:50:26.700Z]   perf plain (target 6): longtask durations ms = []",
+    "[2026-10-31T19:50:29.265Z]   perf dip (target 4.5): longtask durations ms = [84]",
+    "[2026-10-31T19:50:31.855Z]   perf plain (target 6): longtask durations ms = []",
+    "[2026-10-31T19:50:34.456Z]   perf dip (target 4.5): longtask durations ms = [59, 117]",
+    "[2026-10-31T19:50:37.071Z]   perf plain (target 6): longtask durations ms = []",
+    "[2026-10-31T19:50:37.075Z]   perf tổng: dip longtask = [83, 84, 59/117], plain = [-, -, -]",
+    "[2026-10-31T19:50:40.704Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T19:50:42.484Z]   media vào bin: clip-k-dod-iwo.mp4",
+    "[2026-10-31T19:50:42.559Z]   real proxy diag: {\"badge\":\"\",\"badgeDisplay\":\"none\",\"mediaProxy\":[\"Proxy lỗi, thử lại\"],\"toasts\":[\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×\",\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×\",\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.\",\"×\"]}",
+    "[2026-10-31T19:50:45.654Z]   INFO REAL-FW-IN-k-p05 [LỆCH]: playhead 0.5 p=0.5000 alpha=0.3466 MAD=12.709 <=8=35.26% appMean=[221.7,221.6,221.4] expMean=[221.7,255.0,222.0] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:50:54.864Z]   REAL frame-search-wide REAL-FW-IN-k-p05 (sắp theo madResampled): [{\"frameOffset\":-1,\"mad\":12.70866154422152,\"le8\":0.3526404494382023,\"madResampled\":0,\"le8Resampled\":1,\"verdict\":\"LỆCH\",\"verdictResampled\":\"KHỚP\"},{\"frameOffset\":-2,\"mad\":12.842302421985007,\"le8\":0.35292134831460675,\"madResampled\":0.8424531835205993,\"le8Resampled\":0.9889887640449438,\"verdict\":\"LỆCH\",\"verdictResampled\":\"XẤP XỈ\"},{\"frameOffset\":1,\"mad\":12.825886985131044,\"le8\":0.35191011235955055,\"madResampled\":0.8671348314606742,\"le8Resampled\":0.9902247191011236,\"verdict\":\"LỆCH\",\"verdictResampled\":\"KHỚP\"},{\"frameOffset\":-3,\"mad\":13.127091074780095,\"le8\":0.35258426966292133,\"madResampled\":1.6085393258426965,\"le8Resampled\":0.9566292134831461,\"verdict\":\"LỆCH\",\"verdictResampled\":\"XẤP XỈ\"},{\"frameOffset\":2,\"mad\":13.096467906077795,\"le8\":0.3511797752808989,\"madResampled\":1.6100187265917603,\"le8Resampled\":0.9579213483146067,\"verdict\":\"LỆCH\",\"verdictResampled\":\"XẤP XỈ\"}]",
+    "[2026-10-31T19:50:58.471Z]   INFO REAL-FG-OUT-k-p05 [LỆCH]: playhead 3.5 p=0.5000 alpha=0.0000 MAD=42.631 <=8=36.20% appMean=[221.7,221.6,221.4] expMean=[182.1,182.1,182.1] resampled: MAD=78.291 <=8=20.78% (LỆCH)",
+    "[2026-10-31T19:51:27.375Z]   REAL frame-search-wide REAL-FG-OUT-k-p05 (sắp theo madResampled): [{\"frameOffset\":-1,\"mad\":36.75455056179775,\"le8\":0.3509550561797753,\"madResampled\":0,\"le8Resampled\":1,\"verdict\":\"LỆCH\",\"verdictResampled\":\"KHỚP\"},{\"frameOffset\":1,\"mad\":36.51940074906367,\"le8\":0.35308988764044946,\"madResampled\":2.5270224719101124,\"le8Resampled\":0.911685393258427,\"verdict\":\"LỆCH\",\"verdictResampled\":\"XẤP XỈ\"},{\"frameOffset\":-2,\"mad\":36.7789138576779,\"le8\":0.35359550561797753,\"madResampled\":2.5446067415730336,\"le8Resampled\":0.9124719101123595,\"verdict\":\"LỆCH\",\"verdictResampled\":\"XẤP XỈ\"},{\"frameOffset\":2,\"mad\":36.88037453183521,\"le8\":0.354438202247191,\"madResampled\":4.641460674157304,\"le8Resampled\":0.8279213483146067,\"verdict\":\"LỆCH\",\"verdictResampled\":\"LỆCH\"},{\"frameOffset\":-3,\"mad\":37.0401872659176,\"le8\":0.3565730337078652,\"madResampled\":4.80376404494382,\"le8Resampled\":0.8224157303370786,\"verdict\":\"LỆCH\",\"verdictResampled\":\"LỆCH\"}]",
+    "[2026-10-31T19:51:30.868Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T19:51:32.584Z]   media vào bin: clip-k-dod-iwo.mp4",
+    "[2026-10-31T19:51:36.573Z]   INFO REAL-SANITY-k-mid [LỆCH]: playhead 2 p=- alpha=1.0000 MAD=40.556 <=8=0.29% appMean=[150.4,149.7,149.4] expMean=[149.4,255.0,150.2] resampled: MAD=0.000 <=8=100.00% (KHỚP)",
+    "[2026-10-31T19:51:36.573Z] exceptions trong phiên: 0",
+    "[2026-10-31T19:51:36.574Z] DONE clicktest-dip-browser: 18/18 case chính KHỚP, 0 không KHỚP, exit=0"
+  ]
+}

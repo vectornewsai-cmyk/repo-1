@@ -13,6 +13,7 @@ import { CliError, numFlag, optFlag, reqFlag, type ParsedArgs } from "../args.js
 import { newId } from "../ids.js";
 import { PYTHON_BIN, TTS_PY } from "../paths.js";
 import { findOrCreateTrack, loadProject, saveProject } from "../project.js";
+import { runStreamed } from "../streamedWorker.js";
 
 export async function cmdTts(args: ParsedArgs): Promise<void> {
   const projectPath = reqFlag(args.flags, "project", ["p"]);
@@ -39,12 +40,13 @@ export async function cmdTts(args: ParsedArgs): Promise<void> {
     if (voice) pyArgs.push("--voice", voice);
 
     console.error(`[vcut] tts: "${text.slice(0, 40)}${text.length > 40 ? "…" : ""}" — đang tổng hợp...`);
-    const r = spawnSync(PYTHON_BIN, pyArgs, {
-      encoding: "utf8",
-      timeout: 10 * 60 * 1000,
-      maxBuffer: 16 * 1024 * 1024,
-      stdio: ["ignore", "inherit", "inherit"],
-    });
+    // Đợt 31 N3 — theo đúng mẫu đợt 30 M3 (render không-quiet): stdout
+    // giữ inherit, stderr pipe + redact theo dòng rồi mới ra terminal.
+    // Không còn `stdio: "inherit"` cho stderr. Timeout 10 phút như
+    // spawnSync trước đây; mã exit/signal trả nguyên về, thông điệp
+    // lỗi giữ nguyên định dạng cũ (process exit 1 qua handler CliError
+    // ở index.ts, như trước).
+    const r = await runStreamed(PYTHON_BIN, pyArgs, 10 * 60 * 1000, "tts");
     if (r.status !== 0) throw new CliError(`tts.py thất bại (exit ${r.status})`);
 
     await fs.copyFile(tmpWav, destWav);

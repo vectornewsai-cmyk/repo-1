@@ -52,6 +52,13 @@ import fs from "node:fs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
+import { captureCdpHangSnapshot } from "./cdp-snapshot.mjs";
+
+// Phase 9 đợt 31 N5 — kỷ luật snapshot treo CDP (xem cdp-snapshot.mjs):
+// bundle đang đo, gán trong main() sau snapshotDist() nếu có; các
+// harness không snapshot dist giữ null (snapshot vẫn ghi proc/ps).
+let HANG_BUNDLE = null;
+const CDP_HANG_OUT_DIR = path.join(os.homedir(), "workspace", "vcut-cdp-hang-snapshots", "measure-headed-fps-pipe");
 
 const ROOT = path.resolve(import.meta.dirname, "..", "..", ".."); // scripts/ -> web/ -> apps/ -> repo
 const WEB_DIR = path.join(ROOT, "apps", "web");
@@ -102,6 +109,15 @@ class PipeCdp {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
+        try {
+          const hangSnap = captureCdpHangSnapshot({
+            proc: this.proc, pendingCount: this.pending.size, method, timeoutMs,
+            outDir: CDP_HANG_OUT_DIR, bundle: HANG_BUNDLE,
+            extra: { display: DISPLAY, port: PREVIEW_PORT },
+          });
+          if (hangSnap.file) log(`CDP-HANG snapshot đã ghi: ${hangSnap.file}`);
+          else log(`CDP-HANG snapshot GHI LỖI: ${hangSnap.error} (vẫn reject lỗi timeout gốc)`);
+        } catch (e) { log(`CDP-HANG snapshot lỗi ngoài dự kiến: ${e.message} (vẫn reject lỗi timeout gốc)`); }
         reject(new Error(`CDP timeout ${method} sau ${timeoutMs}ms`));
       }, timeoutMs);
       this.pending.set(id, {

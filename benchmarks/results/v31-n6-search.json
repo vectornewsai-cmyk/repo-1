@@ -1,0 +1,335 @@
+{
+  "search": {
+    "baseline": {
+      "pairMean": 1.4,
+      "pairWorst": 3,
+      "offCell": {
+        "mad": 3,
+        "le8": 1,
+        "verdict": "XẤP XỈ"
+      },
+      "singleMean": 0.81,
+      "singleWorst": 3.667,
+      "pairCells": {
+        "fadewhite/fadewhite@0.6": {
+          "mad": 2,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "fadewhite/fadewhite@0.75": {
+          "mad": 1.333,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "fadewhite/fadewhite@0.9": {
+          "mad": 1,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "fadegrays/fadewhite@0.6": {
+          "mad": 2,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "fadegrays/fadewhite@0.75": {
+          "mad": 1.333,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "fadegrays/fadewhite@0.9": {
+          "mad": 1,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "fadewhite/fadegrays@0.6": {
+          "mad": 2.333,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        },
+        "fadewhite/fadegrays@0.75": {
+          "mad": 3,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        },
+        "fadewhite/fadegrays@0.9": {
+          "mad": 0.333,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "fadeblack/fadeblack@0.6": {
+          "mad": 1,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "fadeblack/fadeblack@0.75": {
+          "mad": 1.333,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "fadeblack/fadeblack@0.9": {
+          "mad": 1.333,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "fadeblack/fadewhite@0.6": {
+          "mad": 0.667,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "fadeblack/fadewhite@0.75": {
+          "mad": 1.333,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "fadeblack/fadewhite@0.9": {
+          "mad": 1,
+          "le8": 1,
+          "verdict": "KHỚP"
+        }
+      }
+    },
+    "top": [
+      {
+        "prm": {
+          "aStart": 0.02,
+          "aEnd": 0.17,
+          "bStart": 0.122,
+          "bEnd": 1.076
+        },
+        "grayDef": "mean",
+        "pairMean": 1.311,
+        "pairWorst": 3,
+        "offMad": 3,
+        "offVerdict": "XẤP XỈ",
+        "singleMean": 1.757,
+        "singleWorst": 17,
+        "nRegress": 0
+      },
+      {
+        "prm": {
+          "aStart": -0.01,
+          "aEnd": 0.196,
+          "bStart": 0.122,
+          "bEnd": 1.076
+        },
+        "grayDef": "mean",
+        "pairMean": 1.4,
+        "pairWorst": 3,
+        "offMad": 3,
+        "offVerdict": "XẤP XỈ",
+        "singleMean": 0.81,
+        "singleWorst": 3.667,
+        "nRegress": 0
+      },
+      {
+        "prm": {
+          "aStart": -0.04,
+          "aEnd": 0.23,
+          "bStart": 0.122,
+          "bEnd": 1.076
+        },
+        "grayDef": "mean",
+        "pairMean": 1.578,
+        "pairWorst": 4,
+        "offMad": 3,
+        "offVerdict": "XẤP XỈ",
+        "singleMean": 1.741,
+        "singleWorst": 12.667,
+        "nRegress": 2
+      },
+      {
+        "prm": {
+          "aStart": 0.02,
+          "aEnd": 0.17,
+          "bStart": 0.122,
+          "bEnd": 1.076
+        },
+        "grayDef": "luma",
+        "pairMean": 1.978,
+        "pairWorst": 8,
+        "offMad": 8,
+        "offVerdict": "LỆCH",
+        "singleMean": 1.82,
+        "singleWorst": 17,
+        "nRegress": 3
+      },
+      {
+        "prm": {
+          "aStart": -0.01,
+          "aEnd": 0.196,
+          "bStart": 0.122,
+          "bEnd": 1.076
+        },
+        "grayDef": "luma",
+        "pairMean": 2.067,
+        "pairWorst": 8,
+        "offMad": 8,
+        "offVerdict": "LỆCH",
+        "singleMean": 0.878,
+        "singleWorst": 3.667,
+        "nRegress": 3
+      },
+      {
+        "prm": {
+          "aStart": -0.04,
+          "aEnd": 0.23,
+          "bStart": 0.122,
+          "bEnd": 1.076
+        },
+        "grayDef": "luma",
+        "pairMean": 2.267,
+        "pairWorst": 8,
+        "offMad": 8,
+        "offVerdict": "LỆCH",
+        "singleMean": 1.82,
+        "singleWorst": 12.667,
+        "nRegress": 4
+      },
+      {
+        "prm": {
+          "aStart": 0.02,
+          "aEnd": 0.17,
+          "bStart": 0.155,
+          "bEnd": 1.02
+        },
+        "grayDef": "luma",
+        "pairMean": 1.511,
+        "pairWorst": 3.667,
+        "offMad": 2,
+        "offVerdict": "KHỚP",
+        "singleMean": 2.995,
+        "singleWorst": 18,
+        "nRegress": 5
+      },
+      {
+        "prm": {
+          "aStart": -0.01,
+          "aEnd": 0.196,
+          "bStart": 0.155,
+          "bEnd": 1.02
+        },
+        "grayDef": "luma",
+        "pairMean": 1.556,
+        "pairWorst": 3.667,
+        "offMad": 2,
+        "offVerdict": "KHỚP",
+        "singleMean": 2.053,
+        "singleWorst": 10,
+        "nRegress": 5
+      },
+      {
+        "prm": {
+          "aStart": -0.04,
+          "aEnd": 0.196,
+          "bStart": 0.122,
+          "bEnd": 1.076
+        },
+        "grayDef": "mean",
+        "pairMean": 4.667,
+        "pairWorst": 21.667,
+        "offMad": 3,
+        "offVerdict": "XẤP XỈ",
+        "singleMean": 2.175,
+        "singleWorst": 22.333,
+        "nRegress": 5
+      },
+      {
+        "prm": {
+          "aStart": -0.01,
+          "aEnd": 0.23,
+          "bStart": 0.122,
+          "bEnd": 1.076
+        },
+        "grayDef": "mean",
+        "pairMean": 5,
+        "pairWorst": 25,
+        "offMad": 3,
+        "offVerdict": "XẤP XỈ",
+        "singleMean": 2.45,
+        "singleWorst": 20.667,
+        "nRegress": 5
+      },
+      {
+        "prm": {
+          "aStart": 0.02,
+          "aEnd": 0.196,
+          "bStart": 0.122,
+          "bEnd": 1.076
+        },
+        "grayDef": "mean",
+        "pairMean": 5.244,
+        "pairWorst": 26.667,
+        "offMad": 3,
+        "offVerdict": "XẤP XỈ",
+        "singleMean": 2.238,
+        "singleWorst": 20,
+        "nRegress": 5
+      },
+      {
+        "prm": {
+          "aStart": -0.01,
+          "aEnd": 0.17,
+          "bStart": 0.122,
+          "bEnd": 1.076
+        },
+        "grayDef": "mean",
+        "pairMean": 5.6,
+        "pairWorst": 27.333,
+        "offMad": 3,
+        "offVerdict": "XẤP XỈ",
+        "singleMean": 2.317,
+        "singleWorst": 20.333,
+        "nRegress": 5
+      },
+      {
+        "prm": {
+          "aStart": -0.04,
+          "aEnd": 0.17,
+          "bStart": 0.122,
+          "bEnd": 1.076
+        },
+        "grayDef": "mean",
+        "pairMean": 8.644,
+        "pairWorst": 45.333,
+        "offMad": 3,
+        "offVerdict": "XẤP XỈ",
+        "singleMean": 3.593,
+        "singleWorst": 33.667,
+        "nRegress": 5
+      },
+      {
+        "prm": {
+          "aStart": 0.02,
+          "aEnd": 0.23,
+          "bStart": 0.122,
+          "bEnd": 1.076
+        },
+        "grayDef": "mean",
+        "pairMean": 9.4,
+        "pairWorst": 51.667,
+        "offMad": 3,
+        "offVerdict": "XẤP XỈ",
+        "singleMean": 4.153,
+        "singleWorst": 37.667,
+        "nRegress": 5
+      },
+      {
+        "prm": {
+          "aStart": -0.01,
+          "aEnd": 0.196,
+          "bStart": 0.09,
+          "bEnd": 1.076
+        },
+        "grayDef": "mean",
+        "pairMean": 2.489,
+        "pairWorst": 6.333,
+        "offMad": 1.667,
+        "offVerdict": "KHỚP",
+        "singleMean": 1.423,
+        "singleWorst": 7.333,
+        "nRegress": 6
+      }
+    ],
+    "allCount": 162
+  }
+}

@@ -1,0 +1,1310 @@
+{
+  "flatNew": [
+    {
+      "kind": "flat-new",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "cur": {
+        "mad": 1.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "flat-new",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "flat-new",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "cur": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "flat-new",
+      "inType": "fadegrays",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "flat-new",
+      "inType": "fadegrays",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "flat-new",
+      "inType": "fadegrays",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "cur": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "flat-new",
+      "inType": "fadewhite",
+      "outType": "fadegrays",
+      "localT": 0.6,
+      "cur": {
+        "mad": 2,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "flat-new",
+      "inType": "fadewhite",
+      "outType": "fadegrays",
+      "localT": 0.75,
+      "cur": {
+        "mad": 2.3333,
+        "le8": 1,
+        "verdict": "XẤP XỈ"
+      },
+      "shp": {
+        "mad": 1.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "flat-new",
+      "inType": "fadewhite",
+      "outType": "fadegrays",
+      "localT": 0.9,
+      "cur": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "flat-new",
+      "inType": "fadeblack",
+      "outType": "fadeblack",
+      "localT": 0.6,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "flat-new",
+      "inType": "fadeblack",
+      "outType": "fadeblack",
+      "localT": 0.75,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "flat-new",
+      "inType": "fadeblack",
+      "outType": "fadeblack",
+      "localT": 0.9,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "flat-new",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "cur": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "flat-new",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "flat-new",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "cur": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    }
+  ],
+  "singleNew": [
+    {
+      "type": "fadeblack",
+      "p": 0,
+      "cur": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.05,
+      "cur": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.1,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.15,
+      "cur": {
+        "mad": 1.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.2,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.25,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.3,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.35,
+      "cur": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.4,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.45,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.5,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.55,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.6,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.65,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.7,
+      "cur": {
+        "mad": 2,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.75,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.8,
+      "cur": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": true
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.85,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.9,
+      "cur": {
+        "mad": 2,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 0.95,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadeblack",
+      "p": 1,
+      "cur": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0,
+      "cur": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.05,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.1,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.15,
+      "cur": {
+        "mad": 2.3333,
+        "le8": 1,
+        "verdict": "XẤP XỈ"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.2,
+      "cur": {
+        "mad": 1.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.25,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.3,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.35,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.4,
+      "cur": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.45,
+      "cur": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.5,
+      "cur": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.55,
+      "cur": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.6,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.65,
+      "cur": {
+        "mad": 1.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.7,
+      "cur": {
+        "mad": 2,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.75,
+      "cur": {
+        "mad": 2,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.8,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.85,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.9,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 0.95,
+      "cur": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadewhite",
+      "p": 1,
+      "cur": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0,
+      "cur": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.05,
+      "cur": {
+        "mad": 1.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.1,
+      "cur": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.15,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.2,
+      "cur": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.25,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.3,
+      "cur": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.35,
+      "cur": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.4,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.45,
+      "cur": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.5,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.55,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.6,
+      "cur": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": true
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.65,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.7,
+      "cur": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.75,
+      "cur": {
+        "mad": 1.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.8,
+      "cur": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.85,
+      "cur": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.9,
+      "cur": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 0.95,
+      "cur": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "type": "fadegrays",
+      "p": 1,
+      "cur": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    }
+  ],
+  "footage": [
+    {
+      "kind": "footage",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "cur": {
+        "mad": 1.5414,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1.2861,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "footage",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "cur": {
+        "mad": 1.5399,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.7635,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "footage",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "cur": {
+        "mad": 0.2482,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3972,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "footage",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "cur": {
+        "mad": 1.1566,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 1.2505,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "footage",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "cur": {
+        "mad": 1.5399,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.7635,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    },
+    {
+      "kind": "footage",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "cur": {
+        "mad": 0.2482,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "shp": {
+        "mad": 0.3972,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "regress": false
+    }
+  ]
+}

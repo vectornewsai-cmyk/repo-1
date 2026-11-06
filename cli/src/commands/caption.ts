@@ -3,7 +3,6 @@
  *
  * Gọi trực tiếp server/caption/caption.py (không cần bridge server chạy).
  */
-import { spawnSync } from "node:child_process";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -12,6 +11,7 @@ import { CliError, optFlag, reqFlag, type ParsedArgs } from "../args.js";
 import { newId } from "../ids.js";
 import { CAPTION_PY, PYTHON_BIN } from "../paths.js";
 import { loadProject, saveProject } from "../project.js";
+import { runStreamed } from "../streamedWorker.js";
 
 export async function cmdCaption(args: ParsedArgs): Promise<void> {
   const projectPath = reqFlag(args.flags, "project", ["p"]);
@@ -38,13 +38,18 @@ export async function cmdCaption(args: ParsedArgs): Promise<void> {
     if (maxChars) pyArgs.push("--max-chars", maxChars);
     if (maxDur) pyArgs.push("--max-dur", maxDur);
 
-    console.error(`[vcut] caption: ${srcAbs} (lang=${lang}) — có thể mất vài phút...`);
-    const r = spawnSync(PYTHON_BIN, pyArgs, {
-      encoding: "utf8",
-      timeout: 20 * 60 * 1000,
-      maxBuffer: 32 * 1024 * 1024,
-      stdio: ["ignore", "inherit", "inherit"],
-    });
+    // Đợt 31 N3 — dòng thông báo của chính CLI cũng chỉ in basename
+    // (trước đây in srcAbs tuyệt đối, tức stderr vẫn rò đường dẫn dù
+    // stderr worker đã qua redact; chuẩn basename giống redact của
+    // bridge). Không đổi nội dung khác của dòng này.
+    console.error(`[vcut] caption: ${path.basename(srcAbs)} (lang=${lang}) — có thể mất vài phút...`);
+    // Đợt 31 N3 — theo đúng mẫu đợt 30 M3 (render không-quiet): stdout
+    // giữ inherit, stderr pipe + redact theo dòng rồi mới ra terminal.
+    // Không còn `stdio: "inherit"` cho stderr. Timeout 20 phút như
+    // spawnSync trước đây; mã exit/signal trả nguyên về, thông điệp
+    // lỗi giữ nguyên định dạng cũ (process exit 1 qua handler CliError
+    // ở index.ts, như trước).
+    const r = await runStreamed(PYTHON_BIN, pyArgs, 20 * 60 * 1000, "caption");
     if (r.status !== 0) throw new CliError(`caption.py thất bại (exit ${r.status})`);
 
     const trackRaw = await fs.readFile(trackOut, "utf8");

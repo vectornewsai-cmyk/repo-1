@@ -1,0 +1,1297 @@
+{
+  "single": {
+    "pureA": [
+      253,
+      0,
+      0
+    ],
+    "pureB": [
+      0,
+      127,
+      0
+    ],
+    "rows": [
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0,
+        "out": [
+          253,
+          0,
+          0
+        ],
+        "prodA": 1,
+        "prodB": 0,
+        "madProd": 0,
+        "invMean": {
+          "a": 1,
+          "b": 0,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.05,
+        "out": [
+          202,
+          0,
+          0
+        ],
+        "prodA": 0.7949,
+        "prodB": 0,
+        "madProd": 0.333,
+        "invMean": {
+          "a": 0.7984,
+          "b": 0,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.1,
+        "out": [
+          113,
+          0,
+          0
+        ],
+        "prodA": 0.4491,
+        "prodB": 0,
+        "madProd": 0.333,
+        "invMean": {
+          "a": 0.4466,
+          "b": 0,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.15,
+        "out": [
+          33,
+          1,
+          0
+        ],
+        "prodA": 0.1273,
+        "prodB": 0.0025,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0.1304,
+          "b": 0.0079,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.2,
+        "out": [
+          0,
+          3,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.019,
+        "madProd": 0.333,
+        "invMean": {
+          "a": 0,
+          "b": 0.0236,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.25,
+        "out": [
+          0,
+          7,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.0492,
+        "madProd": 0.333,
+        "invMean": {
+          "a": 0,
+          "b": 0.0551,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.3,
+        "out": [
+          0,
+          12,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.0914,
+        "madProd": 0,
+        "invMean": {
+          "a": 0,
+          "b": 0.0945,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.35,
+        "out": [
+          0,
+          18,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.1441,
+        "madProd": 0,
+        "invMean": {
+          "a": 0,
+          "b": 0.1417,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.4,
+        "out": [
+          0,
+          25,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.2053,
+        "madProd": 0.333,
+        "invMean": {
+          "a": 0,
+          "b": 0.1969,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.45,
+        "out": [
+          0,
+          33,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.2733,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0,
+          "b": 0.2598,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.5,
+        "out": [
+          0,
+          43,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.3466,
+        "madProd": 0.333,
+        "invMean": {
+          "a": 0,
+          "b": 0.3386,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.55,
+        "out": [
+          0,
+          53,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.4232,
+        "madProd": 0.333,
+        "invMean": {
+          "a": 0,
+          "b": 0.4173,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.6,
+        "out": [
+          0,
+          64,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.5016,
+        "madProd": 0,
+        "invMean": {
+          "a": 0,
+          "b": 0.5039,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.65,
+        "out": [
+          0,
+          74,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.5799,
+        "madProd": 0,
+        "invMean": {
+          "a": 0,
+          "b": 0.5827,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.7,
+        "out": [
+          0,
+          85,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.6564,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0,
+          "b": 0.6693,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.75,
+        "out": [
+          0,
+          94,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.7295,
+        "madProd": 0.333,
+        "invMean": {
+          "a": 0,
+          "b": 0.7402,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.8,
+        "out": [
+          0,
+          101,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.7973,
+        "madProd": 0,
+        "invMean": {
+          "a": 0,
+          "b": 0.7953,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.85,
+        "out": [
+          0,
+          107,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.8582,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0,
+          "b": 0.8425,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.9,
+        "out": [
+          0,
+          114,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.9105,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0,
+          "b": 0.8976,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 0.95,
+        "out": [
+          0,
+          120,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 0.9523,
+        "madProd": 0.333,
+        "invMean": {
+          "a": 0,
+          "b": 0.9449,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadeblack",
+        "mode": "black",
+        "p": 1,
+        "out": [
+          0,
+          127,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 1,
+        "madProd": 0,
+        "invMean": {
+          "a": 0,
+          "b": 1,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0,
+        "out": [
+          253,
+          0,
+          0
+        ],
+        "prodA": 1,
+        "prodB": 0,
+        "madProd": 0,
+        "invMean": {
+          "a": 1,
+          "b": 0,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.05,
+        "out": [
+          253,
+          50,
+          50
+        ],
+        "prodA": 0.7949,
+        "prodB": 0,
+        "madProd": 1.333,
+        "invMean": {
+          "a": 0.8029,
+          "b": 0.0014,
+          "rmse": 0.076
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.1,
+        "out": [
+          253,
+          139,
+          139
+        ],
+        "prodA": 0.4491,
+        "prodB": 0,
+        "madProd": 1,
+        "invMean": {
+          "a": 0.452,
+          "b": 0.0038,
+          "rmse": 0.21
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.15,
+        "out": [
+          251,
+          219,
+          217
+        ],
+        "prodA": 0.1273,
+        "prodB": 0.0025,
+        "madProd": 3.667,
+        "invMean": {
+          "a": 0.134,
+          "b": 0.0148,
+          "rmse": 0.054
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.2,
+        "out": [
+          247,
+          251,
+          247
+        ],
+        "prodA": 0,
+        "prodB": 0.019,
+        "madProd": 2.667,
+        "invMean": {
+          "a": 0,
+          "b": 0.0314,
+          "rmse": 0.006
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.25,
+        "out": [
+          240,
+          247,
+          240
+        ],
+        "prodA": 0,
+        "prodB": 0.0492,
+        "madProd": 2,
+        "invMean": {
+          "a": 0.0012,
+          "b": 0.0584,
+          "rmse": 0.181
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.3,
+        "out": [
+          230,
+          242,
+          230
+        ],
+        "prodA": 0,
+        "prodB": 0.0914,
+        "madProd": 1.667,
+        "invMean": {
+          "a": 0.0012,
+          "b": 0.0976,
+          "rmse": 0.173
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.35,
+        "out": [
+          218,
+          236,
+          218
+        ],
+        "prodA": 0,
+        "prodB": 0.1441,
+        "madProd": 0.333,
+        "invMean": {
+          "a": 0.0011,
+          "b": 0.1447,
+          "rmse": 0.164
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.4,
+        "out": [
+          204,
+          229,
+          204
+        ],
+        "prodA": 0,
+        "prodB": 0.2053,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0.0011,
+          "b": 0.1996,
+          "rmse": 0.154
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.45,
+        "out": [
+          186,
+          220,
+          186
+        ],
+        "prodA": 0,
+        "prodB": 0.2733,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0.001,
+          "b": 0.2703,
+          "rmse": 0.14
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.5,
+        "out": [
+          167,
+          211,
+          167
+        ],
+        "prodA": 0,
+        "prodB": 0.3466,
+        "madProd": 0,
+        "invMean": {
+          "a": -0.0005,
+          "b": 0.3453,
+          "rmse": 0.066
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.55,
+        "out": [
+          147,
+          200,
+          147
+        ],
+        "prodA": 0,
+        "prodB": 0.4232,
+        "madProd": 0.333,
+        "invMean": {
+          "a": 0.0021,
+          "b": 0.4228,
+          "rmse": 0.303
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.6,
+        "out": [
+          125,
+          190,
+          125
+        ],
+        "prodA": 0,
+        "prodB": 0.5016,
+        "madProd": 1.667,
+        "invMean": {
+          "a": -0.0007,
+          "b": 0.51,
+          "rmse": 0.098
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.65,
+        "out": [
+          104,
+          179,
+          104
+        ],
+        "prodA": 0,
+        "prodB": 0.5799,
+        "madProd": 2.667,
+        "invMean": {
+          "a": 0.0005,
+          "b": 0.592,
+          "rmse": 0.078
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.7,
+        "out": [
+          84,
+          169,
+          84
+        ],
+        "prodA": 0,
+        "prodB": 0.6564,
+        "madProd": 3.333,
+        "invMean": {
+          "a": 0.0004,
+          "b": 0.6704,
+          "rmse": 0.063
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.75,
+        "out": [
+          65,
+          160,
+          65
+        ],
+        "prodA": 0,
+        "prodB": 0.7295,
+        "madProd": 3.333,
+        "invMean": {
+          "a": -0.001,
+          "b": 0.7454,
+          "rmse": 0.143
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.8,
+        "out": [
+          50,
+          152,
+          50
+        ],
+        "prodA": 0,
+        "prodB": 0.7973,
+        "madProd": 1.667,
+        "invMean": {
+          "a": 0.0003,
+          "b": 0.8038,
+          "rmse": 0.038
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.85,
+        "out": [
+          38,
+          146,
+          38
+        ],
+        "prodA": 0,
+        "prodB": 0.8582,
+        "madProd": 1.667,
+        "invMean": {
+          "a": 0.0002,
+          "b": 0.8509,
+          "rmse": 0.029
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.9,
+        "out": [
+          25,
+          139,
+          25
+        ],
+        "prodA": 0,
+        "prodB": 0.9105,
+        "madProd": 1.667,
+        "invMean": {
+          "a": 0.0014,
+          "b": 0.9015,
+          "rmse": 0.211
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 0.95,
+        "out": [
+          12,
+          133,
+          12
+        ],
+        "prodA": 0,
+        "prodB": 0.9523,
+        "madProd": 0,
+        "invMean": {
+          "a": 0.0001,
+          "b": 0.9529,
+          "rmse": 0.009
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadewhite",
+        "mode": "white",
+        "p": 1,
+        "out": [
+          0,
+          127,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 1,
+        "madProd": 0,
+        "invMean": {
+          "a": 0,
+          "b": 1,
+          "rmse": 0
+        },
+        "invLuma": null
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0,
+        "out": [
+          253,
+          0,
+          0
+        ],
+        "prodA": 1,
+        "prodB": 0,
+        "madProd": 0,
+        "invMean": {
+          "a": 1,
+          "b": 0,
+          "rmse": 0
+        },
+        "invLuma": {
+          "a": 1,
+          "b": 0,
+          "rmse": 0
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.05,
+        "out": [
+          217,
+          14,
+          14
+        ],
+        "prodA": 0.7949,
+        "prodB": 0,
+        "madProd": 1,
+        "invMean": {
+          "a": 0.8024,
+          "b": 0,
+          "rmse": 0.567
+        },
+        "invLuma": {
+          "a": 0.8038,
+          "b": 0.0075,
+          "rmse": 0.773
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.1,
+        "out": [
+          155,
+          42,
+          41
+        ],
+        "prodA": 0.4491,
+        "prodB": 0,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0.4506,
+          "b": 0.0079,
+          "rmse": 0.8
+        },
+        "invLuma": {
+          "a": 0.4504,
+          "b": 0.0067,
+          "rmse": 0.117
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.15,
+        "out": [
+          99,
+          67,
+          65
+        ],
+        "prodA": 0.1273,
+        "prodB": 0.0025,
+        "madProd": 1,
+        "invMean": {
+          "a": 0.1344,
+          "b": 0.0157,
+          "rmse": 1.033
+        },
+        "invLuma": {
+          "a": 0.133,
+          "b": 0.0086,
+          "rmse": 0.741
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.2,
+        "out": [
+          74,
+          78,
+          74
+        ],
+        "prodA": 0,
+        "prodB": 0.019,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0,
+          "b": 0.0315,
+          "rmse": 0.6
+        },
+        "invLuma": {
+          "a": -0.0015,
+          "b": 0.0238,
+          "rmse": 0.795
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.25,
+        "out": [
+          71,
+          78,
+          71
+        ],
+        "prodA": 0,
+        "prodB": 0.0492,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0,
+          "b": 0.0551,
+          "rmse": 0.5
+        },
+        "invLuma": {
+          "a": 0.0004,
+          "b": 0.0573,
+          "rmse": 0.228
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.3,
+        "out": [
+          67,
+          79,
+          67
+        ],
+        "prodA": 0,
+        "prodB": 0.0914,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0,
+          "b": 0.0945,
+          "rmse": 0.733
+        },
+        "invLuma": {
+          "a": 0.0021,
+          "b": 0.1051,
+          "rmse": 1.1
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.35,
+        "out": [
+          63,
+          81,
+          63
+        ],
+        "prodA": 0,
+        "prodB": 0.1441,
+        "madProd": 1,
+        "invMean": {
+          "a": 0,
+          "b": 0.1417,
+          "rmse": 0.633
+        },
+        "invLuma": {
+          "a": 0.0028,
+          "b": 0.1559,
+          "rmse": 1.465
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.4,
+        "out": [
+          58,
+          84,
+          58
+        ],
+        "prodA": 0,
+        "prodB": 0.2053,
+        "madProd": 1,
+        "invMean": {
+          "a": 0,
+          "b": 0.2047,
+          "rmse": 0.867
+        },
+        "invLuma": {
+          "a": 0.0032,
+          "b": 0.2209,
+          "rmse": 1.68
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.45,
+        "out": [
+          53,
+          87,
+          53
+        ],
+        "prodA": 0,
+        "prodB": 0.2733,
+        "madProd": 1.333,
+        "invMean": {
+          "a": 0,
+          "b": 0.2677,
+          "rmse": 1.1
+        },
+        "invLuma": {
+          "a": 0.0036,
+          "b": 0.286,
+          "rmse": 1.895
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.5,
+        "out": [
+          48,
+          92,
+          48
+        ],
+        "prodA": 0,
+        "prodB": 0.3466,
+        "madProd": 1,
+        "invMean": {
+          "a": 0,
+          "b": 0.3465,
+          "rmse": 0.667
+        },
+        "invLuma": {
+          "a": 0.0021,
+          "b": 0.357,
+          "rmse": 1.097
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.55,
+        "out": [
+          43,
+          96,
+          43
+        ],
+        "prodA": 0,
+        "prodB": 0.4232,
+        "madProd": 0.333,
+        "invMean": {
+          "a": 0,
+          "b": 0.4173,
+          "rmse": 0.567
+        },
+        "invLuma": {
+          "a": 0.0015,
+          "b": 0.4251,
+          "rmse": 0.805
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.6,
+        "out": [
+          37,
+          101,
+          37
+        ],
+        "prodA": 0,
+        "prodB": 0.5016,
+        "madProd": 1,
+        "invMean": {
+          "a": 0,
+          "b": 0.5039,
+          "rmse": 0.8
+        },
+        "invLuma": {
+          "a": 0.0007,
+          "b": 0.5074,
+          "rmse": 0.363
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.65,
+        "out": [
+          31,
+          106,
+          31
+        ],
+        "prodA": 0,
+        "prodB": 0.5799,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0,
+          "b": 0.5906,
+          "rmse": 1.033
+        },
+        "invLuma": {
+          "a": -0.0002,
+          "b": 0.5898,
+          "rmse": 0.079
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.7,
+        "out": [
+          26,
+          111,
+          26
+        ],
+        "prodA": 0,
+        "prodB": 0.6564,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0,
+          "b": 0.6693,
+          "rmse": 0.6
+        },
+        "invLuma": {
+          "a": -0.0017,
+          "b": 0.6608,
+          "rmse": 0.878
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.75,
+        "out": [
+          21,
+          115,
+          21
+        ],
+        "prodA": 0,
+        "prodB": 0.7295,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0,
+          "b": 0.7402,
+          "rmse": 0.5
+        },
+        "invLuma": {
+          "a": -0.0022,
+          "b": 0.7289,
+          "rmse": 1.17
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.8,
+        "out": [
+          16,
+          118,
+          16
+        ],
+        "prodA": 0,
+        "prodB": 0.7973,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0,
+          "b": 0.8031,
+          "rmse": 0.733
+        },
+        "invLuma": {
+          "a": -0.0018,
+          "b": 0.7939,
+          "rmse": 0.955
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.85,
+        "out": [
+          12,
+          120,
+          12
+        ],
+        "prodA": 0,
+        "prodB": 0.8582,
+        "madProd": 0.333,
+        "invMean": {
+          "a": 0,
+          "b": 0.8504,
+          "rmse": 0.633
+        },
+        "invLuma": {
+          "a": -0.0011,
+          "b": 0.8447,
+          "rmse": 0.589
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.9,
+        "out": [
+          8,
+          122,
+          8
+        ],
+        "prodA": 0,
+        "prodB": 0.9105,
+        "madProd": 0.667,
+        "invMean": {
+          "a": 0,
+          "b": 0.8976,
+          "rmse": 0.533
+        },
+        "invLuma": {
+          "a": -0.0004,
+          "b": 0.8955,
+          "rmse": 0.224
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 0.95,
+        "out": [
+          4,
+          124,
+          4
+        ],
+        "prodA": 0,
+        "prodB": 0.9523,
+        "madProd": 0.333,
+        "invMean": {
+          "a": 0,
+          "b": 0.9449,
+          "rmse": 0.433
+        },
+        "invLuma": {
+          "a": 0.0003,
+          "b": 0.9462,
+          "rmse": 0.142
+        }
+      },
+      {
+        "type": "fadegrays",
+        "mode": "gray",
+        "p": 1,
+        "out": [
+          0,
+          127,
+          0
+        ],
+        "prodA": 0,
+        "prodB": 1,
+        "madProd": 0,
+        "invMean": {
+          "a": 0,
+          "b": 1,
+          "rmse": 0
+        },
+        "invLuma": {
+          "a": 0,
+          "b": 1,
+          "rmse": 0
+        }
+      }
+    ]
+  }
+}

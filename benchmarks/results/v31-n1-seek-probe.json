@@ -1,0 +1,4608 @@
+{
+  "run": "round31-n1",
+  "date": "2026-10-31T19:28:36.109Z",
+  "bundle": "index-bwcje758.js",
+  "bundleSha256_16": "d08567e4a9342688",
+  "display": ":92",
+  "port": 4192,
+  "origin": "http://127.0.0.1:4192",
+  "footage": {
+    "file": "clip-k-dod-iwo.mp4",
+    "sha256": "49f33b83f0e7694e560557e08379b4bef628fed4f89662898764d5c12db6d69c",
+    "ffprobe": "h264 1080x1920 24000/1001 bt709"
+  },
+  "probes": [
+    {
+      "id": "PROXY-DIAG",
+      "proxyDiag": {
+        "badge": "",
+        "badgeDisplay": "none",
+        "mediaProxy": [
+          "Proxy lỗi, thử lại"
+        ],
+        "toasts": [
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×",
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×",
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.",
+          "×"
+        ]
+      },
+      "gating": false
+    },
+    {
+      "id": "M1-FGOUT-legacy-back1f",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 11.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 11.5333,
+      "playhead": 11.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "darkFirst": false,
+      "secondMeasure": null,
+      "preScrub": {
+        "snapped": 11.533333333333333,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 81,
+          "seekT": 3.3992,
+          "mad": 4.80376404494382,
+          "le8": 0.8224157303370786,
+          "maxDiff": 118,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 82,
+          "seekT": 3.4409,
+          "mad": 2.5446067415730336,
+          "le8": 0.9124719101123595,
+          "maxDiff": 75,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 83,
+          "seekT": 3.4826,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 84,
+          "seekT": 3.5244,
+          "mad": 2.5270224719101124,
+          "le8": 0.911685393258427,
+          "maxDiff": 53,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 85,
+          "seekT": 3.5661,
+          "mad": 4.641460674157304,
+          "le8": 0.8279213483146067,
+          "maxDiff": 117,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 11.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 83,
+      "edgeStart": 0.0382083333333334,
+      "edgeEnd": 0.0034999999999998366,
+      "appMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "correctMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.482645,
+        "ctSrc": 3.5
+      },
+      "holdBefore": {
+        "draw": 2,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 3,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 10,
+        "pollWallMs": 1704,
+        "hashStableFrom": 7,
+        "seekingAtStable": false,
+        "ctAtStable": 3.5,
+        "ctMatchesAtStable": true,
+        "ctAtCapture": 3.5,
+        "expectedCt": 3.5,
+        "ctMatches": true,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 4,
+            "hash": 3647616,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 165,
+            "hash": 3647616,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 370,
+            "hash": 3647616,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 569,
+            "hash": 3647616,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 764,
+            "hash": 3647616,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 985,
+            "hash": 3647616,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 1168,
+            "hash": 3647616,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 7,
+            "wallMs": 1386,
+            "hash": 3657936,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 8,
+            "wallMs": 1541,
+            "hash": 3657936,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 9,
+            "wallMs": 1704,
+            "hash": 3657936,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 8403,
+          "id": 3,
+          "value": 3.5,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 8404,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 3.5,
+          "src": "blob:http://"
+        },
+        {
+          "t": 9589,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 3.5,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 3657936,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 3.5,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FGOUT-legacy-fwd1f",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 11.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 11.4667,
+      "playhead": 11.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "darkFirst": false,
+      "secondMeasure": null,
+      "preScrub": {
+        "snapped": 11.466666666666667,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 81,
+          "seekT": 3.3992,
+          "mad": 4.80376404494382,
+          "le8": 0.8224157303370786,
+          "maxDiff": 118,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 82,
+          "seekT": 3.4409,
+          "mad": 2.5446067415730336,
+          "le8": 0.9124719101123595,
+          "maxDiff": 75,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 83,
+          "seekT": 3.4826,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 84,
+          "seekT": 3.5244,
+          "mad": 2.5270224719101124,
+          "le8": 0.911685393258427,
+          "maxDiff": 53,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 85,
+          "seekT": 3.5661,
+          "mad": 4.641460674157304,
+          "le8": 0.8279213483146067,
+          "maxDiff": 117,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 11.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 83,
+      "edgeStart": 0.0382083333333334,
+      "edgeEnd": 0.0034999999999998366,
+      "appMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "correctMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.482645,
+        "ctSrc": 3.5
+      },
+      "holdBefore": {
+        "draw": 4,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 5,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 8,
+        "pollWallMs": 1316,
+        "hashStableFrom": 0,
+        "seekingAtStable": false,
+        "ctAtStable": 3.466666,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 3.5,
+        "expectedCt": 3.5,
+        "ctMatches": true,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 5,
+            "hash": 3657936,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.4667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 168,
+            "hash": 3657936,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 367,
+            "hash": 3657936,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 560,
+            "hash": 3657936,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 760,
+            "hash": 3657936,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 956,
+            "hash": 3657936,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 1161,
+            "hash": 3657936,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 7,
+            "wallMs": 1316,
+            "hash": 3657936,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 22108,
+          "id": 3,
+          "value": 3.5,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 22108,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 3.5,
+          "src": "blob:http://"
+        },
+        {
+          "t": 23195,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 3.5,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 3657936,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 3.5,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FGOUT-legacy-fwd0",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 11.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 0,
+      "playhead": 11.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "darkFirst": false,
+      "secondMeasure": null,
+      "preScrub": {
+        "snapped": 0,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 81,
+          "seekT": 3.3992,
+          "mad": 4.80376404494382,
+          "le8": 0.8224157303370786,
+          "maxDiff": 118,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 82,
+          "seekT": 3.4409,
+          "mad": 2.5446067415730336,
+          "le8": 0.9124719101123595,
+          "maxDiff": 75,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 83,
+          "seekT": 3.4826,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 84,
+          "seekT": 3.5244,
+          "mad": 2.5270224719101124,
+          "le8": 0.911685393258427,
+          "maxDiff": 53,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 85,
+          "seekT": 3.5661,
+          "mad": 4.641460674157304,
+          "le8": 0.8279213483146067,
+          "maxDiff": 117,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 11.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 83,
+      "edgeStart": 0.0382083333333334,
+      "edgeEnd": 0.0034999999999998366,
+      "appMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "correctMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.482645,
+        "ctSrc": 3.5
+      },
+      "holdBefore": {
+        "draw": 6,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 7,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 9,
+        "pollWallMs": 1531,
+        "hashStableFrom": 6,
+        "seekingAtStable": false,
+        "ctAtStable": 3.5,
+        "ctMatchesAtStable": true,
+        "ctAtCapture": 3.5,
+        "expectedCt": 3.5,
+        "ctMatches": true,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 11,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 172,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 375,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 577,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 777,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 976,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 1216,
+            "hash": 3657936,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 7,
+            "wallMs": 1376,
+            "hash": 3657936,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 8,
+            "wallMs": 1531,
+            "hash": 3657936,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 35387,
+          "id": 3,
+          "value": 3.5,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 35387,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 3.5,
+          "src": "blob:http://"
+        },
+        {
+          "t": 36423,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 3.5,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 3657936,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 3.5,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-SANITY-back1f",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 14.0333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 14.0667,
+      "playhead": 14.033333333333333,
+      "localT": 2.033333333333333,
+      "p": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "darkFirst": false,
+      "secondMeasure": null,
+      "preScrub": {
+        "snapped": 14.066666666666666,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 46,
+          "seekT": 1.9394,
+          "mad": 5.863782771535581,
+          "le8": 0.7791573033707865,
+          "maxDiff": 163,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 47,
+          "seekT": 1.9811,
+          "mad": 3.2832771535580525,
+          "le8": 0.8701123595505618,
+          "maxDiff": 90,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 48,
+          "seekT": 2.0229,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 49,
+          "seekT": 2.0646,
+          "mad": 3.30249063670412,
+          "le8": 0.8717977528089887,
+          "maxDiff": 119,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 50,
+          "seekT": 2.1063,
+          "mad": 5.961666666666667,
+          "le8": 0.7785393258426966,
+          "maxDiff": 170,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 14.033333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 48,
+      "edgeStart": 0.031333333333333435,
+      "edgeEnd": 0.010374999999999801,
+      "appMean": [
+        149.78449438202247,
+        149.34028089887641,
+        148.77893258426965
+      ],
+      "correctMean": [
+        149.78449438202247,
+        149.34028089887641,
+        148.77893258426965
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 2.022854,
+        "ctSrc": 2.033332
+      },
+      "holdBefore": {
+        "draw": 8,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 9,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 7,
+        "pollWallMs": 966,
+        "hashStableFrom": 4,
+        "seekingAtStable": false,
+        "ctAtStable": 2.033332,
+        "ctMatchesAtStable": true,
+        "ctAtCapture": 2.033332,
+        "expectedCt": 2.033333333333333,
+        "ctMatches": true,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 5,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 166,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 326,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 501,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 656,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 811,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 966,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 47668,
+          "id": 3,
+          "value": 2.033333333333333,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 47668,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 2.033333,
+          "src": "blob:http://"
+        },
+        {
+          "t": 48124,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 2.033332,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 3732790,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 2.033332,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-SANITY-fwd1f",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 14.0333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 14,
+      "playhead": 14.033333333333333,
+      "localT": 2.033333333333333,
+      "p": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "darkFirst": false,
+      "secondMeasure": null,
+      "preScrub": {
+        "snapped": 14,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 46,
+          "seekT": 1.9394,
+          "mad": 5.863782771535581,
+          "le8": 0.7791573033707865,
+          "maxDiff": 163,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 47,
+          "seekT": 1.9811,
+          "mad": 3.2832771535580525,
+          "le8": 0.8701123595505618,
+          "maxDiff": 90,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 48,
+          "seekT": 2.0229,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 49,
+          "seekT": 2.0646,
+          "mad": 3.30249063670412,
+          "le8": 0.8717977528089887,
+          "maxDiff": 119,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 50,
+          "seekT": 2.1063,
+          "mad": 5.961666666666667,
+          "le8": 0.7785393258426966,
+          "maxDiff": 170,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 14.033333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 48,
+      "edgeStart": 0.031333333333333435,
+      "edgeEnd": 0.010374999999999801,
+      "appMean": [
+        149.78449438202247,
+        149.34028089887641,
+        148.77893258426965
+      ],
+      "correctMean": [
+        149.78449438202247,
+        149.34028089887641,
+        148.77893258426965
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 2.022854,
+        "ctSrc": 2.033332
+      },
+      "holdBefore": {
+        "draw": 10,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 11,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 8,
+        "pollWallMs": 1146,
+        "hashStableFrom": 5,
+        "seekingAtStable": false,
+        "ctAtStable": 2.033332,
+        "ctMatchesAtStable": true,
+        "ctAtCapture": 2.033332,
+        "expectedCt": 2.033333333333333,
+        "ctMatches": true,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 5,
+            "hash": 3748867,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 165,
+            "hash": 3748867,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 370,
+            "hash": 3748867,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 525,
+            "hash": 3748867,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 681,
+            "hash": 3748867,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 836,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 992,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 7,
+            "wallMs": 1146,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 55402,
+          "id": 3,
+          "value": 2.033333333333333,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 55402,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 2.033333,
+          "src": "blob:http://"
+        },
+        {
+          "t": 55993,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 2.033332,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 3732790,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 2.033332,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-SANITY-fwd0",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 14.0333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 0,
+      "playhead": 14.033333333333333,
+      "localT": 2.033333333333333,
+      "p": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "darkFirst": false,
+      "secondMeasure": null,
+      "preScrub": {
+        "snapped": 0,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 46,
+          "seekT": 1.9394,
+          "mad": 5.863782771535581,
+          "le8": 0.7791573033707865,
+          "maxDiff": 163,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 47,
+          "seekT": 1.9811,
+          "mad": 3.2832771535580525,
+          "le8": 0.8701123595505618,
+          "maxDiff": 90,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 48,
+          "seekT": 2.0229,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 49,
+          "seekT": 2.0646,
+          "mad": 3.30249063670412,
+          "le8": 0.8717977528089887,
+          "maxDiff": 119,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 50,
+          "seekT": 2.1063,
+          "mad": 5.961666666666667,
+          "le8": 0.7785393258426966,
+          "maxDiff": 170,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 14.033333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 48,
+      "edgeStart": 0.031333333333333435,
+      "edgeEnd": 0.010374999999999801,
+      "appMean": [
+        149.78449438202247,
+        149.34028089887641,
+        148.77893258426965
+      ],
+      "correctMean": [
+        149.78449438202247,
+        149.34028089887641,
+        148.77893258426965
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 2.022854,
+        "ctSrc": 2.033332
+      },
+      "holdBefore": {
+        "draw": 12,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 13,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 7,
+        "pollWallMs": 1008,
+        "hashStableFrom": 4,
+        "seekingAtStable": false,
+        "ctAtStable": 2.033332,
+        "ctMatchesAtStable": true,
+        "ctAtCapture": 2.033332,
+        "expectedCt": 2.033333333333333,
+        "ctMatches": true,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 4,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 160,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 357,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 541,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 696,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 852,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 1008,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 63519,
+          "id": 3,
+          "value": 2.033333333333333,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 63519,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 2.033333,
+          "src": "blob:http://"
+        },
+        {
+          "t": 63948,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 2.033332,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 3732790,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 2.033332,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-SANITY-back1f-repeat",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 14.0333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 14.0667,
+      "playhead": 14.033333333333333,
+      "localT": 2.033333333333333,
+      "p": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "darkFirst": false,
+      "secondMeasure": null,
+      "preScrub": {
+        "snapped": 14.066666666666666,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 46,
+          "seekT": 1.9394,
+          "mad": 5.863782771535581,
+          "le8": 0.7791573033707865,
+          "maxDiff": 163,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 47,
+          "seekT": 1.9811,
+          "mad": 3.2832771535580525,
+          "le8": 0.8701123595505618,
+          "maxDiff": 90,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 48,
+          "seekT": 2.0229,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 49,
+          "seekT": 2.0646,
+          "mad": 3.30249063670412,
+          "le8": 0.8717977528089887,
+          "maxDiff": 119,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 50,
+          "seekT": 2.1063,
+          "mad": 5.961666666666667,
+          "le8": 0.7785393258426966,
+          "maxDiff": 170,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 14.033333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 48,
+      "edgeStart": 0.031333333333333435,
+      "edgeEnd": 0.010374999999999801,
+      "appMean": [
+        149.78449438202247,
+        149.34028089887641,
+        148.77893258426965
+      ],
+      "correctMean": [
+        149.78449438202247,
+        149.34028089887641,
+        148.77893258426965
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 2.022854,
+        "ctSrc": 2.033332
+      },
+      "holdBefore": {
+        "draw": 14,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 15,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 7,
+        "pollWallMs": 967,
+        "hashStableFrom": 4,
+        "seekingAtStable": false,
+        "ctAtStable": 2.033332,
+        "ctMatchesAtStable": true,
+        "ctAtCapture": 2.033332,
+        "expectedCt": 2.033333333333333,
+        "ctMatches": true,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 4,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 161,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 339,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 495,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 656,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 812,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 967,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 71334,
+          "id": 3,
+          "value": 2.033333333333333,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 71334,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 2.033333,
+          "src": "blob:http://"
+        },
+        {
+          "t": 71826,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 2.033332,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 3732790,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 2.033332,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FWIN-legacy-back1f",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 4.5333,
+      "playhead": 4.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "darkFirst": false,
+      "secondMeasure": null,
+      "preScrub": {
+        "snapped": 4.533333333333333,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 9,
+          "seekT": 0.3962,
+          "mad": 1.6085393258426965,
+          "le8": 0.9566292134831461,
+          "maxDiff": 44,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 10,
+          "seekT": 0.4379,
+          "mad": 0.8424531835205993,
+          "le8": 0.9889887640449438,
+          "maxDiff": 23,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 11,
+          "seekT": 0.4796,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 12,
+          "seekT": 0.5214,
+          "mad": 0.8671348314606742,
+          "le8": 0.9902247191011236,
+          "maxDiff": 23,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 13,
+          "seekT": 0.5631,
+          "mad": 1.6100187265917603,
+          "le8": 0.9579213483146067,
+          "maxDiff": 47,
+          "verdict": "XẤP XỈ"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 11,
+      "edgeStart": 0.04120833333333335,
+      "edgeEnd": 0.0004999999999999449,
+      "appMean": [
+        221.70337078651684,
+        221.5841011235955,
+        221.39870786516855
+      ],
+      "correctMean": [
+        221.70337078651684,
+        221.5841011235955,
+        221.39870786516855
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 0.479645,
+        "ctSrc": 0.5
+      },
+      "holdBefore": {
+        "draw": 16,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 17,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 6,
+        "pollWallMs": 790,
+        "hashStableFrom": 2,
+        "seekingAtStable": false,
+        "ctAtStable": 0.5,
+        "ctMatchesAtStable": true,
+        "ctAtCapture": 0.5,
+        "expectedCt": 0.5,
+        "ctMatches": true,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 5,
+            "hash": 5140622,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 163,
+            "hash": 5140622,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 0.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 324,
+            "hash": 5245805,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 480,
+            "hash": 5245805,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 635,
+            "hash": 5245805,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 790,
+            "hash": 5245805,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 79304,
+          "id": 3,
+          "value": 0.5,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 79304,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 0.5,
+          "src": "blob:http://"
+        },
+        {
+          "t": 79485,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 0.5,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 5245805,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 0.5,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FWIN-legacy-fwd1f",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 4.4667,
+      "playhead": 4.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "darkFirst": false,
+      "secondMeasure": null,
+      "preScrub": {
+        "snapped": 4.466666666666667,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 9,
+          "seekT": 0.3962,
+          "mad": 1.6085393258426965,
+          "le8": 0.9566292134831461,
+          "maxDiff": 44,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 10,
+          "seekT": 0.4379,
+          "mad": 0.8424531835205993,
+          "le8": 0.9889887640449438,
+          "maxDiff": 23,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 11,
+          "seekT": 0.4796,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 12,
+          "seekT": 0.5214,
+          "mad": 0.8671348314606742,
+          "le8": 0.9902247191011236,
+          "maxDiff": 23,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 13,
+          "seekT": 0.5631,
+          "mad": 1.6100187265917603,
+          "le8": 0.9579213483146067,
+          "maxDiff": 47,
+          "verdict": "XẤP XỈ"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 11,
+      "edgeStart": 0.04120833333333335,
+      "edgeEnd": 0.0004999999999999449,
+      "appMean": [
+        221.70337078651684,
+        221.5841011235955,
+        221.39870786516855
+      ],
+      "correctMean": [
+        221.70337078651684,
+        221.5841011235955,
+        221.39870786516855
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 0.479645,
+        "ctSrc": 0.5
+      },
+      "holdBefore": {
+        "draw": 18,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 19,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 6,
+        "pollWallMs": 792,
+        "hashStableFrom": 2,
+        "seekingAtStable": false,
+        "ctAtStable": 0.5,
+        "ctMatchesAtStable": true,
+        "ctAtCapture": 0.5,
+        "expectedCt": 0.5,
+        "ctMatches": true,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 4,
+            "hash": 5346519,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.4667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 160,
+            "hash": 5346519,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 0.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 326,
+            "hash": 5245805,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 481,
+            "hash": 5245805,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 636,
+            "hash": 5245805,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 792,
+            "hash": 5245805,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 85218,
+          "id": 3,
+          "value": 0.5,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 85218,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 0.5,
+          "src": "blob:http://"
+        },
+        {
+          "t": 85383,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 0.5,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 5245805,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 0.5,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FBOUT-p01-back1f",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadeblack",
+      "target": 3.1,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 3.1333,
+      "playhead": 3.1,
+      "localT": 3.1,
+      "p": 0.10000000000000009,
+      "alpha": 0.4491075996108812,
+      "mode": "black",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "darkFirst": false,
+      "secondMeasure": null,
+      "preScrub": {
+        "snapped": 3.1333333333333333,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 72,
+          "seekT": 3.0239,
+          "mad": 2.7557677902621722,
+          "le8": 0.8956741573033707,
+          "maxDiff": 84,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 73,
+          "seekT": 3.0656,
+          "mad": 1.5037640449438203,
+          "le8": 0.9596629213483147,
+          "maxDiff": 60,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 74,
+          "seekT": 3.1073,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 75,
+          "seekT": 3.149,
+          "mad": 1.4847003745318352,
+          "le8": 0.9602808988764044,
+          "maxDiff": 43,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 76,
+          "seekT": 3.1907,
+          "mad": 2.721123595505618,
+          "le8": 0.8964044943820225,
+          "maxDiff": 77,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.1,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 74,
+      "edgeStart": 0.013583333333333503,
+      "edgeEnd": 0.028124999999999734,
+      "appMean": [
+        71.30404494382023,
+        72.01691011235955,
+        73.80539325842696
+      ],
+      "correctMean": [
+        71.30404494382023,
+        72.01691011235955,
+        73.80539325842696
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.10727,
+        "ctSrc": 3.1
+      },
+      "holdBefore": {
+        "draw": 20,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 21,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 8,
+        "pollWallMs": 1156,
+        "hashStableFrom": 5,
+        "seekingAtStable": false,
+        "ctAtStable": 3.1,
+        "ctMatchesAtStable": true,
+        "ctAtCapture": 3.1,
+        "expectedCt": 3.1,
+        "ctMatches": true,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 5,
+            "hash": 1507049,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 163,
+            "hash": 1507049,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 318,
+            "hash": 1507049,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 491,
+            "hash": 1507049,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 686,
+            "hash": 1507049,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 846,
+            "hash": 2144067,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 1000,
+            "hash": 2144067,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 7,
+            "wallMs": 1156,
+            "hash": 2144067,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 91084,
+          "id": 3,
+          "value": 3.1,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 91084,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 3.1,
+          "src": "blob:http://"
+        },
+        {
+          "t": 91679,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 3.1,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 2144067,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 3.1,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FBOUT-p01-fwd1f",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadeblack",
+      "target": 3.1,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 3.0667,
+      "playhead": 3.1,
+      "localT": 3.1,
+      "p": 0.10000000000000009,
+      "alpha": 0.4491075996108812,
+      "mode": "black",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "darkFirst": false,
+      "secondMeasure": null,
+      "preScrub": {
+        "snapped": 3.066666666666667,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 72,
+          "seekT": 3.0239,
+          "mad": 2.7557677902621722,
+          "le8": 0.8956741573033707,
+          "maxDiff": 84,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 73,
+          "seekT": 3.0656,
+          "mad": 1.5037640449438203,
+          "le8": 0.9596629213483147,
+          "maxDiff": 60,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 74,
+          "seekT": 3.1073,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 75,
+          "seekT": 3.149,
+          "mad": 1.4847003745318352,
+          "le8": 0.9602808988764044,
+          "maxDiff": 43,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 76,
+          "seekT": 3.1907,
+          "mad": 2.721123595505618,
+          "le8": 0.8964044943820225,
+          "maxDiff": 77,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.1,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 74,
+      "edgeStart": 0.013583333333333503,
+      "edgeEnd": 0.028124999999999734,
+      "appMean": [
+        71.30404494382023,
+        72.01691011235955,
+        73.80539325842696
+      ],
+      "correctMean": [
+        71.30404494382023,
+        72.01691011235955,
+        73.80539325842696
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.10727,
+        "ctSrc": 3.1
+      },
+      "holdBefore": {
+        "draw": 22,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 23,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 8,
+        "pollWallMs": 1152,
+        "hashStableFrom": 5,
+        "seekingAtStable": false,
+        "ctAtStable": 3.1,
+        "ctMatchesAtStable": true,
+        "ctAtCapture": 3.1,
+        "expectedCt": 3.1,
+        "ctMatches": true,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 4,
+            "hash": 2808837,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 159,
+            "hash": 2808837,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 316,
+            "hash": 2808837,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 490,
+            "hash": 2808837,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 687,
+            "hash": 2808837,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 842,
+            "hash": 2144067,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 997,
+            "hash": 2144067,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 7,
+            "wallMs": 1152,
+            "hash": 2144067,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 100168,
+          "id": 3,
+          "value": 3.1,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 100168,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 3.1,
+          "src": "blob:http://"
+        },
+        {
+          "t": 100789,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 3.1,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 2144067,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 3.1,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    }
+  ],
+  "exceptions": [],
+  "log": [
+    "[2026-10-31T19:26:41.696Z] harness clicktest-dip-seek-round30-m1: bắt đầu (label=round31-n1, display=:92, port=4192)",
+    "[2026-10-31T19:26:41.941Z] footage K OK: SHA khớp J3, 45788099 byte",
+    "[2026-10-31T19:26:42.087Z] Xvfb: socket /tmp/.X11-unix/X92 mồ côi, xoá và bật mới",
+    "[2026-10-31T19:26:42.346Z] Xvfb lên: DISPLAY=:92",
+    "[2026-10-31T19:26:42.614Z] dist snapshot OK: bundle index-bwcje758.js sha256[:16]=d08567e4a9342688 -> /home/hatch/workspace/tmp-round30-m1/dist-snapshot",
+    "[2026-10-31T19:26:42.615Z] video K đã copy vào snapshot",
+    "[2026-10-31T19:26:42.627Z] static server lên tại http://127.0.0.1:4192 (root /home/hatch/workspace/tmp-round30-m1/dist-snapshot)",
+    "[2026-10-31T19:26:46.071Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-31T19:26:50.188Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T19:26:51.086Z]   hook element probe: {\"installed\":true,\"setterError\":null}",
+    "[2026-10-31T19:26:52.153Z]   media vào bin: clip-k-dod-iwo.mp4",
+    "[2026-10-31T19:26:52.155Z]   footage proxy diag: {\"badge\":\"\",\"badgeDisplay\":\"none\",\"mediaProxy\":[\"Proxy lỗi, thử lại\"],\"toasts\":[\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×\",\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×\",\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.\",\"×\"]}",
+    "[2026-10-31T19:26:52.157Z]   hiệu chuẩn vạch: offset handle-ruler lúc playhead 0 = -6.50px",
+    "[2026-10-31T19:26:52.559Z] ruler: {\"x\":152,\"y\":813,\"w\":1200,\"h\":27,\"innerH\":1057,\"handleLeft\":145.5,\"ppsInput\":60}",
+    "[2026-10-31T19:26:54.100Z]   warm-up: pool blob elements = 3 (ids 1,2,3), tổng video tracked = 3",
+    "[2026-10-31T19:26:54.100Z]   CẢNH BÁO: warm-up thấy 3 pool element (kỳ vọng đúng 1) — v2 dùng activePoolElement (blob rs cao nhất), không lấy blob đầu tiên",
+    "[2026-10-31T19:26:54.100Z]   chạy 11 probe",
+    "[2026-10-31T19:27:08.377Z]   KHỚP M1-FGOUT-legacy-back1f: playhead 11.5 p=0.5000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:4.804 dk-1:2.545 dk+0:0.000 dk+1:2.527 dk+2:4.641 | poll: 10 lần, hash ổn định từ #7, active pool #3 lúc ổn định: seeking=false ct=3.5 (khớp kỳ vọng 3.5: true), lúc đo: ct=3.5 khớp=true, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=3.5,rs=4,seek=false], sets pool=1 events pool=2, idle2s: hash đổi=false",
+    "[2026-10-31T19:27:21.660Z]   KHỚP M1-FGOUT-legacy-fwd1f: playhead 11.5 p=0.5000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:4.804 dk-1:2.545 dk+0:0.000 dk+1:2.527 dk+2:4.641 | poll: 8 lần, hash ổn định từ #0, active pool #3 lúc ổn định: seeking=false ct=3.466666 (khớp kỳ vọng 3.5: false), lúc đo: ct=3.5 khớp=true, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=3.5,rs=4,seek=false], sets pool=1 events pool=2, idle2s: hash đổi=false",
+    "[2026-10-31T19:27:34.006Z]   KHỚP M1-FGOUT-legacy-fwd0: playhead 11.5 p=0.5000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:4.804 dk-1:2.545 dk+0:0.000 dk+1:2.527 dk+2:4.641 | poll: 9 lần, hash ổn định từ #6, active pool #3 lúc ổn định: seeking=false ct=3.5 (khớp kỳ vọng 3.5: true), lúc đo: ct=3.5 khớp=true, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=3.5,rs=4,seek=false], sets pool=1 events pool=2, idle2s: hash đổi=false",
+    "[2026-10-31T19:27:41.756Z]   KHỚP M1-SANITY-back1f: playhead 14.033333333333333 p=- alpha=1.0000 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:5.864 dk-1:3.283 dk+0:0.000 dk+1:3.302 dk+2:5.962 | poll: 7 lần, hash ổn định từ #4, active pool #3 lúc ổn định: seeking=false ct=2.033332 (khớp kỳ vọng 2.033333333333333: true), lúc đo: ct=2.033332 khớp=true, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=2.033332,rs=4,seek=false], sets pool=1 events pool=2, idle2s: hash đổi=false",
+    "[2026-10-31T19:27:49.880Z]   KHỚP M1-SANITY-fwd1f: playhead 14.033333333333333 p=- alpha=1.0000 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:5.864 dk-1:3.283 dk+0:0.000 dk+1:3.302 dk+2:5.962 | poll: 8 lần, hash ổn định từ #5, active pool #3 lúc ổn định: seeking=false ct=2.033332 (khớp kỳ vọng 2.033333333333333: true), lúc đo: ct=2.033332 khớp=true, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=2.033332,rs=4,seek=false], sets pool=1 events pool=2, idle2s: hash đổi=false",
+    "[2026-10-31T19:27:57.688Z]   KHỚP M1-SANITY-fwd0: playhead 14.033333333333333 p=- alpha=1.0000 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:5.864 dk-1:3.283 dk+0:0.000 dk+1:3.302 dk+2:5.962 | poll: 7 lần, hash ổn định từ #4, active pool #3 lúc ổn định: seeking=false ct=2.033332 (khớp kỳ vọng 2.033333333333333: true), lúc đo: ct=2.033332 khớp=true, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=2.033332,rs=4,seek=false], sets pool=1 events pool=2, idle2s: hash đổi=false",
+    "[2026-10-31T19:28:05.658Z]   KHỚP M1-SANITY-back1f-repeat: playhead 14.033333333333333 p=- alpha=1.0000 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:5.864 dk-1:3.283 dk+0:0.000 dk+1:3.302 dk+2:5.962 | poll: 7 lần, hash ổn định từ #4, active pool #3 lúc ổn định: seeking=false ct=2.033332 (khớp kỳ vọng 2.033333333333333: true), lúc đo: ct=2.033332 khớp=true, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=2.033332,rs=4,seek=false], sets pool=1 events pool=2, idle2s: hash đổi=false",
+    "[2026-10-31T19:28:11.575Z]   KHỚP M1-FWIN-legacy-back1f: playhead 4.5 p=0.5000 alpha=0.3466 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:1.609 dk-1:0.842 dk+0:0.000 dk+1:0.867 dk+2:1.610 | poll: 6 lần, hash ổn định từ #2, active pool #3 lúc ổn định: seeking=false ct=0.5 (khớp kỳ vọng 0.5: true), lúc đo: ct=0.5 khớp=true, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=0.5,rs=4,seek=false], sets pool=1 events pool=2, idle2s: hash đổi=false",
+    "[2026-10-31T19:28:17.415Z]   KHỚP M1-FWIN-legacy-fwd1f: playhead 4.5 p=0.5000 alpha=0.3466 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:1.609 dk-1:0.842 dk+0:0.000 dk+1:0.867 dk+2:1.610 | poll: 6 lần, hash ổn định từ #2, active pool #3 lúc ổn định: seeking=false ct=0.5 (khớp kỳ vọng 0.5: true), lúc đo: ct=0.5 khớp=true, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=0.5,rs=4,seek=false], sets pool=1 events pool=2, idle2s: hash đổi=false",
+    "[2026-10-31T19:28:26.486Z]   KHỚP M1-FBOUT-p01-back1f: playhead 3.1 p=0.1000 alpha=0.4491 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:2.756 dk-1:1.504 dk+0:0.000 dk+1:1.485 dk+2:2.721 | poll: 8 lần, hash ổn định từ #5, active pool #3 lúc ổn định: seeking=false ct=3.1 (khớp kỳ vọng 3.1: true), lúc đo: ct=3.1 khớp=true, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=3.1,rs=4,seek=false], sets pool=1 events pool=2, idle2s: hash đổi=false",
+    "[2026-10-31T19:28:36.095Z]   KHỚP M1-FBOUT-p01-fwd1f: playhead 3.1 p=0.1000 alpha=0.4491 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:2.756 dk-1:1.504 dk+0:0.000 dk+1:1.485 dk+2:2.721 | poll: 8 lần, hash ổn định từ #5, active pool #3 lúc ổn định: seeking=false ct=3.1 (khớp kỳ vọng 3.1: true), lúc đo: ct=3.1 khớp=true, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=3.1,rs=4,seek=false], sets pool=1 events pool=2, idle2s: hash đổi=false",
+    "[2026-10-31T19:28:36.095Z] exceptions trong phiên: 0",
+    "[2026-10-31T19:28:36.109Z] TỔNG PROBE: 11 có verdict, KHỚP 11, KHÔNG KHỚP: -, ERROR: 0",
+    "[2026-10-31T19:28:36.109Z] DONE r30m1-probe: exit=0 (diagnostic, không gating verdict)"
+  ]
+}

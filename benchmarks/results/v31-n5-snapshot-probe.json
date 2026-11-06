@@ -1,0 +1,100 @@
+{
+  "at": "2026-10-31T19:17:44.263Z",
+  "display": ":92",
+  "results": [
+    {
+      "file": "clicktest-split-intermediate-pipe.mjs",
+      "label": "J6",
+      "checks": {
+        "hasSnapshotImport": true,
+        "hasSnapshotCallInSend": true,
+        "hasBundleAssign": true,
+        "classExtracted": true,
+        "pipeOk": true,
+        "rejectIsOriginalTimeoutError": true,
+        "snapshotFileCount": 1,
+        "snapshotMethod": "Target.getTargets",
+        "snapshotTimeoutMs": 1,
+        "snapshotPidMatchesChrome": true,
+        "snapshotChromeAlive": true,
+        "snapshotPsHasChrome": true,
+        "snapshotBundleNull": true,
+        "pipeAliveAfterTimeout": true
+      },
+      "chromePid": 3749,
+      "timeoutErr": "CDP timeout Target.getTargets sau 1ms",
+      "pass": true
+    },
+    {
+      "file": "clicktest-l5-round29-spinnerprobe.mjs",
+      "label": "spinnerprobe",
+      "checks": {
+        "hasSnapshotImport": true,
+        "hasSnapshotCallInSend": true,
+        "hasBundleAssign": true,
+        "classExtracted": true,
+        "pipeOk": true,
+        "rejectIsOriginalTimeoutError": true,
+        "snapshotFileCount": 1,
+        "snapshotMethod": "Target.getTargets",
+        "snapshotTimeoutMs": 1,
+        "snapshotPidMatchesChrome": true,
+        "snapshotChromeAlive": true,
+        "snapshotPsHasChrome": true,
+        "snapshotBundleNull": true,
+        "pipeAliveAfterTimeout": true
+      },
+      "chromePid": 3896,
+      "timeoutErr": "CDP timeout Target.getTargets sau 1ms",
+      "pass": true
+    },
+    {
+      "file": "clicktest-dip-browser-pipe.mjs",
+      "label": "dip",
+      "checks": {
+        "hasSnapshotImport": true,
+        "hasSnapshotCallInSend": true,
+        "hasBundleAssign": true,
+        "classExtracted": true,
+        "pipeOk": true,
+        "rejectIsOriginalTimeoutError": true,
+        "snapshotFileCount": 1,
+        "snapshotMethod": "Target.getTargets",
+        "snapshotTimeoutMs": 1,
+        "snapshotPidMatchesChrome": true,
+        "snapshotChromeAlive": true,
+        "snapshotPsHasChrome": true,
+        "snapshotBundleName": "index-N5FAKE.js",
+        "snapshotBundleSha": "0123456789abcdef",
+        "snapshotBundleMatches": true,
+        "pipeAliveAfterTimeout": true
+      },
+      "chromePid": 4059,
+      "timeoutErr": "CDP timeout Target.getTargets sau 1ms",
+      "pass": true
+    },
+    {
+      "file": "clicktest-deep-leaf-ramp-pipe.mjs",
+      "label": "I6",
+      "checks": {
+        "hasSnapshotImport": true,
+        "hasSnapshotCallInSend": true,
+        "hasBundleAssign": true,
+        "classExtracted": true,
+        "pipeOk": true,
+        "rejectIsOriginalTimeoutError": true,
+        "snapshotFileCount": 1,
+        "snapshotMethod": "Target.getTargets",
+        "snapshotTimeoutMs": 1,
+        "snapshotPidMatchesChrome": true,
+        "snapshotChromeAlive": true,
+        "snapshotPsHasChrome": true,
+        "snapshotBundleNull": true,
+        "pipeAliveAfterTimeout": true
+      },
+      "chromePid": 4212,
+      "timeoutErr": "CDP timeout Target.getTargets sau 1ms",
+      "pass": true
+    }
+  ]
+}
