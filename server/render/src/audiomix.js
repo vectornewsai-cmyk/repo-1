@@ -38,9 +38,24 @@ function fadeCurveExpr(curve, pExpr) {
   return p; // linear
 }
 
-/** Biểu thức nội suy keyframes volume (mirror buildInterpExpr, chỉ dùng cho volume). */
+/** Biểu thức nội suy keyframes volume (mirror buildInterpExpr, chỉ dùng cho volume).
+ * Đợt 50 F1: lọc entry lỗi (null / không phải object / t hoặc v không
+ * phải số hữu hạn) TRƯỚC khi sort — sort comparator `a.t` ném TypeError
+ * khó hiểu với `[null]` (nợ E4 §7.4). Hết entry hợp lệ → ném lỗi rõ thay
+ * vì TypeError; còn entry hợp lệ thì nội suy trên chúng (khớp ngữ nghĩa
+ * sanitize ở cổng load web / keyframeSanitize.js). Easing lạ vẫn ném lỗi
+ * rõ như cũ (không lặng lẽ chuẩn hóa ở tầng builder).
+ */
 function buildVolumeInterpExpr(kv) {
-  const ks = [...kv.keyframes].sort((a, b) => a.t - b.t);
+  const raw = kv && Array.isArray(kv.keyframes) ? kv.keyframes : [];
+  const valid = raw.filter((k) =>
+    k && typeof k === "object" && Number.isFinite(k.t) && Number.isFinite(k.v));
+  if (valid.length === 0) {
+    throw new Error(
+      "buildVolumeInterpExpr: không còn keyframe hợp lệ " +
+      "(mảng rỗng hoặc toàn entry null/không hợp lệ)");
+  }
+  const ks = [...valid].sort((a, b) => a.t - b.t);
   const dedup = [];
   for (const k of ks) {
     const last = dedup[dedup.length - 1];

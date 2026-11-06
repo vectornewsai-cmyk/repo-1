@@ -92,9 +92,25 @@ export function applyEasing(easing: Easing, p: number): number {
 /**
  * Sắp xếp keyframe theo t tăng dần; trùng t thì giữ keyframe đứng sau.
  * Không mutate mảng gốc.
+ *
+ * Đợt 50 F1: loại entry lỗi (null / không phải object / t hoặc v không
+ * phải số hữu hạn) TRƯỚC khi sort — sort comparator `a.t` ném TypeError
+ * khó hiểu với `[null]`, và KeyframePanel derive `kfs` từ đây (dòng 127)
+ * rồi dùng `k.t`/`k.v` khắp nơi (marker lane dòng 256, selKf dòng 295)
+ * nên panel crash ngay khi render qua đường sửa tay in-memory. Entry hợp
+ * lệ giữ nguyên thứ tự/ngữ nghĩa; mảng rỗng sau lọc vẫn bị
+ * `interpolateKeyframes` ném lỗi rõ "mảng keyframes rỗng" như contract cũ.
+ * Mirror y hệt `normalizeKeyframes` trong server/render/src/keyframes.js.
  */
 export function normalizeKeyframes(kfs: Keyframe[]): Keyframe[] {
-  const sorted = [...kfs].sort((a, b) => a.t - b.t);
+  const clean = (Array.isArray(kfs) ? kfs : []).filter(
+    (k): k is Keyframe =>
+      !!k &&
+      typeof k === "object" &&
+      isFiniteNumber((k as Keyframe).t) &&
+      isFiniteNumber((k as Keyframe).v),
+  );
+  const sorted = [...clean].sort((a, b) => a.t - b.t);
   const out: Keyframe[] = [];
   for (const k of sorted) {
     const last = out[out.length - 1];

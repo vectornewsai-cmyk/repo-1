@@ -72,6 +72,9 @@ const { buildSpeedRampVideo, buildSpeedRampAudio, buildMotionPostChain } = requi
 // Phase 9 đợt 8 S2: slow-mo mượt / nội suy frame / motion blur (chỉ nhánh thường).
 const { buildMotionChain } = require("./motion");
 const { buildGainFilter, buildNormalizeFilter } = require("./audiomix");
+// Đợt 50 F1: sanitize keyframe array ở cổng render (mirror cổng load web
+// đợt 49 E4) — xem keyframeSanitize.js; nối vào main() trước flatten + validate.
+const { sanitizeKeyframeArrays } = require("./keyframeSanitize");
 const { probeGpuEncoder, buildVideoEncodeArgs, tryEncode } = require("./gpuencode");
 // Phase 9 N2: nested sequence — làm phẳng clip lồng nhau thành spec phẳng
 // (xem nested.js + NESTED_RENDER_LIMITS.md). Chỉ một điểm nối có cờ ở main().
@@ -1240,6 +1243,20 @@ function main() {
     );
     process.exit(1);
   }
+
+  // Đợt 50 F1: sanitize keyframe array (mirror cổng load web, đợt 49 E4)
+  // TRƯỚC legacy-adjust + flatten + validate. File project thô (sửa tay,
+  // MCP ghi trực tiếp, export cũ) có thể mang entry null trong
+  // volumeKeyframes / speedKeyframes / animations.*: không sanitize thì
+  // validateSpec từ chối cả job, trong khi cùng project đó web load lại
+  // mở được (đã sanitize ở parseProjectText) — lệch parity web/render.
+  // Sanitize ở đây cho render khớp web: loại entry lỗi, chuẩn hóa easing
+  // lạ về linear, xóa field rỗng sau lọc; giá trị ngoài khoảng (vd volume
+  // v=5) KHÔNG được che — validate sau đó vẫn bắt. Phải chạy TRƯỚC
+  // flatten vì validateNestedRamp fail khi gặp null trong speedKeyframes
+  // của clip lá. In warning ra stderr như các cảnh báo khác.
+  const kfFixes = sanitizeKeyframeArrays(spec);
+  for (const f of kfFixes) console.error(`⚠️  keyframes: ${f}`);
 
   // Phase 9 đợt 7 U2: normalize legacy UI adjustment clip THÀNH project
   // layer TRƯỚC flatten và TRƯỚC validate — legacy clip kind "adjustment"

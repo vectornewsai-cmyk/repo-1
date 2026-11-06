@@ -41,8 +41,23 @@ function applyEasing(easing, p) {
   throw new Error(`easing không hỗ trợ: ${easing}`);
 }
 
+/**
+ * Sắp xếp keyframe theo t tăng dần; trùng t thì giữ keyframe đứng sau.
+ * Không mutate mảng gốc.
+ *
+ * Đợt 50 F1: loại entry lỗi (null / không phải object / t hoặc v không
+ * phải số hữu hạn) TRƯỚC khi sort — sort comparator `a.t` ném TypeError
+ * khó hiểu với `[null]`, và mọi consumer (preview, panel, render) đều
+ * đi qua đây. Entry hợp lệ giữ nguyên thứ tự/ngữ nghĩa (trùng t thì
+ * sau thắng); mảng rỗng sau lọc vẫn bị `interpolateKeyframes` /
+ * `buildInterpExpr` ném lỗi rõ "mảng keyframes rỗng" như contract cũ.
+ * Mirror y hệt `normalizeKeyframes` trong packages/video-spec/src/keyframes.ts.
+ */
 function normalizeKeyframes(kfs) {
-  const sorted = [...kfs].sort((a, b) => a.t - b.t);
+  const clean = Array.isArray(kfs)
+    ? kfs.filter((k) => k && typeof k === "object" && isFiniteNumber(k.t) && isFiniteNumber(k.v))
+    : [];
+  const sorted = [...clean].sort((a, b) => a.t - b.t);
   const out = [];
   for (const k of sorted) {
     const last = out[out.length - 1];
