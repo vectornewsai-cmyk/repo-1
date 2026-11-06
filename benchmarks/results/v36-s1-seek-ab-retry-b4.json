@@ -1,0 +1,195 @@
+{
+  "run": "retry-b4",
+  "variant": "retry",
+  "attempt": "b4",
+  "bundle": "index-BqxQgBuf.js",
+  "bundleSha256": "f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d",
+  "frozenDist": "/home/hatch/workspace/tmp-round35-r1/dist-retry",
+  "frozenShaBefore": "f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d",
+  "frozenShaAfter": "f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d",
+  "pre": {
+    "loadavg": "0.78 2.27 2.05 11/445 15365",
+    "chromePre": 0,
+    "top": "  15202  100 ffmpeg          ffmpeg -y -v error -f lavfi -i testsrc2=size=1920x1080:rate=30:duration=15 -vf noise=alls=25:allf=t -c:v libx264 -preset veryfast -g 300 -bf 0 -sc_threshold 0 -pix_fmt yuv420p /home/hatch/workspace/tmp-round36-s3/wc/noise-1080-15s.mp4\n     67  8.2 hatch           /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174\n    751  2.2 hatch-execd     /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174\n      1  0.0 systemd         /usr/lib/systemd/systemd\n     17  0.0 systemd-journal /usr/lib/systemd/systemd-journald\n   6374  0.0 bash            bash /home/hatch/workspace/tmp-round36-s1/drive.sh\n   6371  0.0 bash            /bin/bash --norc --noprofile -c umask 0007; bash -n ~/workspace/tmp-round36-s1/drive.sh && bash ~/workspace/tmp-round36-s1/drive.sh > ~/workspace/tmp-round36-s1/drive.stdout.log 2>&1; echo \"DRIVER_EXIT=$?\"\n  15200  0.0 bash            /bin/bash --norc --noprofile -c umask 0007; rm -f ~/workspace/tmp-round36-s3/wc/noise-1080-15s.mp4 ~/workspace/tmp-round36-s3/t-static.mp4 ~/workspace/tmp-round36-s3/t-temporal.mp4 && ffmpeg -y -v error -f lavfi -i testsrc2=size=1920x1080:rate=30:duration=15 -vf noise=alls=25:allf=t -c:v libx264 -preset veryfast -g 300 -bf 0 -sc_threshold 0 -pix_fmt yuv420p ~/workspace/tmp-round36-s3/wc/noise-1080-15s.mp4 && ffprobe -v error -select_streams v:0 -show_entries stream=width,height,codec_name,r_frame_rate,bit_rate -show_entries format=size,duration -of default=noprint_wrappers=1 ~/workspace/tmp-round36-s3/wc/noise-1080-15s.mp4 && node -e ' const {generateProxy} = require(\"/home/hatch/workspace/repo-1/server/render/src/proxy.js\"); const t0 = Date.now(); const r = generateProxy(\"/home/hatch/workspace/tmp-round36-s3/wc/noise-1080-15s.mp4\", \"/home/hatch/workspace/tmp-round36-s3/wc\", {height: 720}); console.log(JSON.stringify({...r, genMs: Date.now()-t0})); ' && ffprobe -v error -select_streams v:0 -show_entries stream=width,height,codec_name,r_frame_rate,bit_rate -show_entries format=size,duration -of default=noprint_wrappers=1 ~/workspace/tmp-round36-s3/wc/noise-1080-15s__proxy_720p.mp4"
+  },
+  "post": {
+    "loadavg": "0.42 1.96 1.96 8/434 15673",
+    "chromePost": 0
+  },
+  "q6Exit": 1,
+  "n2Verdict": "PARTIAL",
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "tốc độ xuôi 0.72992700729927 ngoài [0.98, 1.02]",
+    "gap rAF P50 xuôi 0.0663s > 0.015s",
+    "predictedRate xuôi (trừ tick biên) 0.749 < 0.98 (mất do gap >100ms, trừ tick biên: 1.79s / 19 gap)"
+  ],
+  "decodeSide": {
+    "decodeLabel": "STARVED",
+    "reasons": [
+      "stall intervals sau warmup 12 > 1",
+      "chuỗi stall dài nhất 5 khoảng > 1",
+      "tickRate ngược 30.7/s < 80/s"
+    ],
+    "thresholds": {
+      "stallMax": 1,
+      "stallRunMax": 1,
+      "tickRateMin": 80,
+      "tailIntervals": 8,
+      "tailMeanMax": 1.5,
+      "tailMaxMax": 2
+    },
+    "signals": {
+      "intervals": 27,
+      "drawDeltaSeries": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "holdDeltaSeries": [
+        10,
+        10,
+        9,
+        11,
+        8,
+        7,
+        8,
+        12,
+        7,
+        9,
+        7,
+        6,
+        5,
+        5,
+        8,
+        7,
+        5,
+        4,
+        5,
+        8,
+        5,
+        6,
+        9,
+        6,
+        10,
+        17,
+        16
+      ],
+      "stallIntervalsAfterWarmup": 12,
+      "maxStallRun": 5,
+      "firstIntervalDrawDelta": 0,
+      "reverseTickRate": 30.7,
+      "reverseRafN": 482,
+      "reverseRafWallSec": 15.698,
+      "reverseRafGapP50": 0.0135,
+      "reverseDrawDelta": 14,
+      "reverseFps": 0.9272137227630969,
+      "tailSeries": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "tailMean": 0.5,
+      "tailMax": 1,
+      "tailMin": 0,
+      "tailFps": 1,
+      "headMean": 0.556,
+      "tailHeadRatio": 0.9,
+      "tailSlope": 0.143
+    }
+  },
+  "reverseFps": 0.9272137227630969,
+  "reverseDrawDelta": 14,
+  "reverseWallSec": 15.099,
+  "forwardInterpRate": 0.72992700729927,
+  "load": {
+    "atStart": "0.61 2.16 2.02",
+    "beforeFwd": "0.64 2.14 2.01",
+    "beforeRev": "0.54 2.07 1.99",
+    "atEnd": "0.42 1.96 1.96"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 0.72,
+          "load5": 2.23,
+          "load15": 2.04,
+          "raw": "0.72 2.23 2.04"
+        },
+        "top": [
+          "15202 101 ffmpeg ffmpeg -y -v error -f lavfi -i testsrc2=size=1920x1080:rate=30:duration=15 -vf noise=alls=25:allf=t -c:v libx264 -preset veryfast -g 300 -bf 0 ",
+          "15376 12.3 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "67 8.2 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "751 2.2 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "6374 0.0 bash bash /home/hatch/workspace/tmp-round36-s1/drive.sh",
+          "6371 0.0 bash /bin/bash --norc --noprofile -c umask 0007; bash -n ~/workspace/tmp-round36-s1/drive.sh && bash ~/workspace/tmp-round36-s1/drive.sh > ~/workspace/"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 0.42,
+          "load5": 1.96,
+          "load15": 1.96,
+          "raw": "0.42 1.96 1.96"
+        },
+        "top": [
+          "15501 30.1 chrome [chrome] <defunct>",
+          "15654 15.3 MainThread node -e const {generateProxy} = require(\"/home/hatch/workspace/repo-1/server/render/src/proxy.js\"); const t0 = Date.now(); const r = gener",
+          "67 8.2 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "15433 3.8 chrome [chrome] <defunct>",
+          "15492 2.3 chrome [chrome] <defunct>",
+          "751 2.2 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "15600 1.1 chrome [chrome] <defunct>",
+          "15434 0.8 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-U"
+        ],
+        "chromePost": 3
+      },
+      "chromePre": 0,
+      "chromePost": 3
+    }
+  },
+  "accepted": false,
+  "exclusionReasons": [
+    "v2: tốc độ xuôi 0.72992700729927 ngoài [0.98, 1.02]",
+    "v2: gap rAF P50 xuôi 0.0663s > 0.015s",
+    "v2: predictedRate xuôi (trừ tick biên) 0.749 < 0.98 (mất do gap >100ms, trừ tick biên: 1.79s / 19 gap)",
+    "decode: stall intervals sau warmup 12 > 1",
+    "decode: chuỗi stall dài nhất 5 khoảng > 1",
+    "decode: tickRate ngược 30.7/s < 80/s"
+  ],
+  "q6LabeledPath": "/home/hatch/workspace/tmp-round36-s1/runs/retry-b4/q6-labeled.json"
+}

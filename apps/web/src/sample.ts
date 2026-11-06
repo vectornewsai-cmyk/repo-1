@@ -7,6 +7,7 @@ import type { VideoSpec } from "@repo-1/video-spec";
 import { SPEC_VERSION } from "@repo-1/video-spec";
 import type { MediaItem } from "./media";
 import { uid } from "./lib";
+import { AssetStore } from "./lib/assetStore";
 
 const W = 640;
 const H = 360;
@@ -134,6 +135,33 @@ export async function buildSampleProject(): Promise<{ spec: VideoSpec; media: Me
     const isVideo = rec !== null;
     const { blob, thumb } = rec ?? stillSample(variant, seconds);
     const ext = isVideo ? "webm" : "png";
+    // Đợt 36 S5 — bền vững media mẫu qua reload: ingest blob mẫu vào
+    // AssetStore (IndexedDB) để bước rehydrate lúc khởi động nạp lại
+    // được media bin từ tên thô `mau-*.webm` (khớp originalName).
+    // Best-effort tuyệt đối: IndexedDB / crypto.subtle không khả dụng
+    // (private mode, non-secure context) thì mẫu vẫn chạy trong phiên,
+    // chỉ không bền qua reload — không được làm hỏng loadSample.
+    // Sau ingest, tỉa các manifest mẫu cũ cùng tên để kho mẫu không
+    // phình theo mỗi lần tạo mẫu (mỗi lần ghi MediaRecorder cho bytes
+    // khác nhau nên dedup theo sha không gom được chúng).
+    try {
+      const store = new AssetStore();
+      const kept = await store.ingest(blob, {
+        name: `mau-${variant + 1}.${ext}`,
+        width: W,
+        height: H,
+        duration: seconds,
+        thumbnail: thumb,
+      });
+      const all = await store.list();
+      for (const m of all) {
+        if (m.originalName === kept.originalName && m.assetId !== kept.assetId) {
+          await store.remove(m.assetId);
+        }
+      }
+    } catch {
+      // nuốt lỗi bền vững mẫu — xem chú thích trên.
+    }
     media.push({
       id: uid("m"),
       name: `mau-${variant + 1}.${ext}`,

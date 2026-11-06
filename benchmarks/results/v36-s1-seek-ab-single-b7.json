@@ -1,0 +1,180 @@
+{
+  "run": "single-b7",
+  "variant": "single",
+  "attempt": "b7",
+  "bundle": "index-xfaJXEFE.js",
+  "bundleSha256": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "frozenDist": "/home/hatch/workspace/tmp-round35-r1/dist-single",
+  "frozenShaBefore": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "frozenShaAfter": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "pre": {
+    "loadavg": "1.96 2.21 2.12 2/422 18867",
+    "chromePre": 0,
+    "top": "     67  8.6 hatch           /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174\n    751  2.4 hatch-execd     /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174\n      1  0.0 systemd         /usr/lib/systemd/systemd\n     17  0.0 systemd-journal /usr/lib/systemd/systemd-journald\n   6374  0.0 bash            bash /home/hatch/workspace/tmp-round36-s1/drive.sh\n   6371  0.0 bash            /bin/bash --norc --noprofile -c umask 0007; bash -n ~/workspace/tmp-round36-s1/drive.sh && bash ~/workspace/tmp-round36-s1/drive.sh > ~/workspace/tmp-round36-s1/drive.stdout.log 2>&1; echo \"DRIVER_EXIT=$?\"\n  18855  0.0 bash            bash /home/hatch/workspace/repo-1/apps/web/scripts/seek-ab-quiet-run36.sh single b7 /home/hatch/workspace/tmp-round35-r1/dist-single fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a\n  18868  0.0 bash            bash /home/hatch/workspace/repo-1/apps/web/scripts/seek-ab-quiet-run36.sh single b7 /home/hatch/workspace/tmp-round35-r1/dist-single fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a"
+  },
+  "post": {
+    "loadavg": "1.67 2.11 2.09 1/421 19153",
+    "chromePost": 0
+  },
+  "q6Exit": 0,
+  "n2Verdict": "PASS",
+  "loadLabel": "quiet",
+  "labelReasons": [],
+  "decodeSide": {
+    "decodeLabel": "HEALTHY",
+    "reasons": [],
+    "thresholds": {
+      "stallMax": 1,
+      "stallRunMax": 1,
+      "tickRateMin": 80,
+      "tailIntervals": 8,
+      "tailMeanMax": 1.5,
+      "tailMaxMax": 2
+    },
+    "signals": {
+      "intervals": 27,
+      "drawDeltaSeries": [
+        1,
+        2,
+        1,
+        2,
+        2,
+        2,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        3,
+        5,
+        5,
+        5,
+        8,
+        10,
+        6,
+        1,
+        2,
+        1,
+        2,
+        2,
+        1,
+        1,
+        2
+      ],
+      "holdDeltaSeries": [
+        24,
+        24,
+        21,
+        20,
+        24,
+        20,
+        21,
+        22,
+        24,
+        24,
+        20,
+        22,
+        21,
+        19,
+        18,
+        20,
+        19,
+        16,
+        20,
+        21,
+        19,
+        23,
+        23,
+        21,
+        20,
+        22,
+        20
+      ],
+      "stallIntervalsAfterWarmup": 0,
+      "maxStallRun": 0,
+      "firstIntervalDrawDelta": 1,
+      "reverseTickRate": 93,
+      "reverseRafN": 1345,
+      "reverseRafWallSec": 14.463,
+      "reverseRafGapP50": 0.0054,
+      "reverseDrawDelta": 81,
+      "reverseFps": 5.811033790085372,
+      "tailSeries": [
+        1,
+        2,
+        1,
+        2,
+        2,
+        1,
+        1,
+        2
+      ],
+      "tailMean": 1.5,
+      "tailMax": 2,
+      "tailMin": 1,
+      "tailFps": 3,
+      "headMean": 3.722,
+      "tailHeadRatio": 0.403,
+      "tailSlope": 0.024
+    }
+  },
+  "reverseFps": 5.811033790085372,
+  "reverseDrawDelta": 81,
+  "reverseWallSec": 13.939,
+  "forwardInterpRate": 1.0070052539404553,
+  "load": {
+    "atStart": "1.81 2.17 2.11",
+    "beforeFwd": "1.90 2.19 2.12",
+    "beforeRev": "1.68 2.13 2.10",
+    "atEnd": "1.67 2.11 2.09"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 1.96,
+          "load5": 2.21,
+          "load15": 2.12,
+          "raw": "1.96 2.21 2.12"
+        },
+        "top": [
+          "18878 52.9 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "67 8.6 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "751 2.4 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "6374 0.0 bash bash /home/hatch/workspace/tmp-round36-s1/drive.sh",
+          "6371 0.0 bash /bin/bash --norc --noprofile -c umask 0007; bash -n ~/workspace/tmp-round36-s1/drive.sh && bash ~/workspace/tmp-round36-s1/drive.sh > ~/workspace/",
+          "18855 0.0 bash bash /home/hatch/workspace/repo-1/apps/web/scripts/seek-ab-quiet-run36.sh single b7 /home/hatch/workspace/tmp-round35-r1/dist-single fffcd2c01946"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 1.67,
+          "load5": 2.11,
+          "load15": 2.09,
+          "raw": "1.67 2.11 2.09"
+        },
+        "top": [
+          "19001 90.7 chrome [chrome] <defunct>",
+          "18929 9.2 chrome [chrome] <defunct>",
+          "67 8.6 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "751 2.4 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "18988 2.3 chrome [chrome] <defunct>",
+          "18930 1.0 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-U",
+          "18878 0.5 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "1 0.0 systemd /usr/lib/systemd/systemd"
+        ],
+        "chromePost": 3
+      },
+      "chromePre": 0,
+      "chromePost": 3
+    }
+  },
+  "accepted": true,
+  "exclusionReasons": [],
+  "q6LabeledPath": "/home/hatch/workspace/tmp-round36-s1/runs/single-b7/q6-labeled.json"
+}

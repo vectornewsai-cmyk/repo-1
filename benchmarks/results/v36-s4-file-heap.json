@@ -1,0 +1,105 @@
+{
+  "noiseFile": "/home/hatch/workspace/tmp-round34-q2/sparse-gop-noise.mp4",
+  "noiseBytes": 419967521,
+  "noiseMiB": 400.5,
+  "flag": {
+    "NOISE_BYTES": 419967521,
+    "flag": true,
+    "engine": "webcodecs",
+    "hasDecoder": true
+  },
+  "baseline": {
+    "heapMiB": 0.7,
+    "rssKb": 1383676
+  },
+  "phases": {
+    "head": {
+      "kind": "head",
+      "ok": false,
+      "ms": 6,
+      "failed": true,
+      "largeFileFallback": true,
+      "knownFileSizeBytes": 419967521,
+      "retainedFileBytes": 0,
+      "frameAtNull": true,
+      "heapSamples": 0,
+      "heapMax": null,
+      "heapAfter": 740574,
+      "heapAfterGc": 508364,
+      "rssPeakKb": 1391176,
+      "rssDeltaMiB": 7.3,
+      "reqDelta": {
+        "HEAD /noise-head.mp4": 1
+      },
+      "heapPeakMiB": null,
+      "heapPeakDeltaMiB": null,
+      "heapAfterMiB": 0.7,
+      "heapAfterGcMiB": 0.5
+    },
+    "filegate": {
+      "kind": "filegate",
+      "ok": false,
+      "ms": 0,
+      "failed": true,
+      "largeFileFallback": true,
+      "knownFileSizeBytes": 419967521,
+      "retainedFileBytes": 0,
+      "frameAtNull": true,
+      "heapSamples": 0,
+      "heapMax": null,
+      "heapAfter": 512980,
+      "heapAfterGc": 507392,
+      "rssPeakKb": 1391356,
+      "rssDeltaMiB": 7.5,
+      "reqDelta": {},
+      "heapPeakMiB": null,
+      "heapPeakDeltaMiB": null,
+      "heapAfterMiB": 0.5,
+      "heapAfterGcMiB": 0.5
+    },
+    "nohead": {
+      "kind": "nohead",
+      "ok": false,
+      "ms": 4504,
+      "failed": true,
+      "largeFileFallback": true,
+      "knownFileSizeBytes": 419967521,
+      "retainedFileBytes": 0,
+      "frameAtNull": true,
+      "heapSamples": 78,
+      "heapMax": 517220,
+      "heapAfter": 420477410,
+      "heapAfterGc": 420476386,
+      "rssPeakKb": 2285368,
+      "rssDeltaMiB": 880.6,
+      "reqDelta": {
+        "HEAD /noise-nohead.mp4": 1,
+        "GET /noise-nohead.mp4": 1
+      },
+      "heapPeakMiB": 0.5,
+      "heapPeakDeltaMiB": -0.2,
+      "heapAfterMiB": 401,
+      "heapAfterGcMiB": 401
+    }
+  },
+  "rangeBlob": {
+    "rangeStatus": 206,
+    "rangeLen": 100,
+    "plainStatus": 200,
+    "plainLen": 1024
+  },
+  "gcRetry": {
+    "heapSeriesMiB": [
+      0.5,
+      0.5,
+      0.5,
+      0.5
+    ],
+    "totalMiB": 1.8
+  },
+  "reqLogTotal": {
+    "HEAD /noise-head.mp4": 1,
+    "HEAD /noise-nohead.mp4": 1,
+    "GET /noise-nohead.mp4": 1
+  }
+}

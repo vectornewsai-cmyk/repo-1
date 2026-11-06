@@ -1,0 +1,187 @@
+{
+  "run": "retry-b2",
+  "variant": "retry",
+  "attempt": "b2",
+  "bundle": "index-BqxQgBuf.js",
+  "bundleSha256": "f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d",
+  "frozenDist": "/home/hatch/workspace/tmp-round35-r1/dist-retry",
+  "frozenShaBefore": "f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d",
+  "frozenShaAfter": "f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d",
+  "pre": {
+    "loadavg": "1.96 2.57 1.80 1/448 9847",
+    "chromePre": 0,
+    "top": "     67  6.8 hatch           /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174\n    751  1.5 hatch-execd     /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174\n   9480  0.7 MainThread      node ./../../node_modules/.bin/vite preview --port 5193 --strictPort --host 127.0.0.1\n   9488  0.1 esbuild         /home/hatch/workspace/repo-1/node_modules/@esbuild/linux-x64/bin/esbuild --service=0.25.12 --ping\n      1  0.0 systemd         /usr/lib/systemd/systemd\n   7814  0.0 bash            bash /home/hatch/workspace/repo-1/apps/web/scripts/seek-ab-quiet-run36.sh retry b2 /home/hatch/workspace/tmp-round35-r1/dist-retry f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d\n     17  0.0 systemd-journal /usr/lib/systemd/systemd-journald\n   6371  0.0 bash            /bin/bash --norc --noprofile -c umask 0007; bash -n ~/workspace/tmp-round36-s1/drive.sh && bash ~/workspace/tmp-round36-s1/drive.sh > ~/workspace/tmp-round36-s1/drive.stdout.log 2>&1; echo \"DRIVER_EXIT=$?\""
+  },
+  "post": {
+    "loadavg": "1.83 2.48 1.80 1/431 10165",
+    "chromePost": 0
+  },
+  "q6Exit": 0,
+  "n2Verdict": "PASS",
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "load1 trước-ngược 2.35 ≥ 2"
+  ],
+  "decodeSide": {
+    "decodeLabel": "STEADY_SLOW",
+    "reasons": [
+      "chậm-đều đoạn cuối: tailMean 1.375 < 1.5 và tailMax 2 <= 2 (8 khoảng cuối, ~4 s)"
+    ],
+    "thresholds": {
+      "stallMax": 1,
+      "stallRunMax": 1,
+      "tickRateMin": 80,
+      "tailIntervals": 8,
+      "tailMeanMax": 1.5,
+      "tailMaxMax": 2
+    },
+    "signals": {
+      "intervals": 27,
+      "drawDeltaSeries": [
+        1,
+        1,
+        2,
+        1,
+        2,
+        2,
+        2,
+        3,
+        2,
+        2,
+        4,
+        3,
+        2,
+        4,
+        3,
+        4,
+        6,
+        9,
+        8,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        1,
+        1
+      ],
+      "holdDeltaSeries": [
+        22,
+        20,
+        20,
+        22,
+        21,
+        21,
+        24,
+        20,
+        22,
+        22,
+        20,
+        20,
+        20,
+        16,
+        18,
+        17,
+        18,
+        19,
+        19,
+        22,
+        18,
+        17,
+        22,
+        24,
+        19,
+        21,
+        22
+      ],
+      "stallIntervalsAfterWarmup": 0,
+      "maxStallRun": 0,
+      "firstIntervalDrawDelta": 1,
+      "reverseTickRate": 89.57,
+      "reverseRafN": 1285,
+      "reverseRafWallSec": 14.347,
+      "reverseRafGapP50": 0.0052,
+      "reverseDrawDelta": 74,
+      "reverseFps": 5.359988410835869,
+      "tailSeries": [
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        1,
+        1
+      ],
+      "tailMean": 1.375,
+      "tailMax": 2,
+      "tailMin": 1,
+      "tailFps": 2.75,
+      "headMean": 3.333,
+      "tailHeadRatio": 0.412,
+      "tailSlope": 0.036
+    }
+  },
+  "reverseFps": 5.359988410835869,
+  "reverseDrawDelta": 74,
+  "reverseWallSec": 13.806,
+  "forwardInterpRate": 1.0004349717268377,
+  "load": {
+    "atStart": "1.73 2.50 1.79",
+    "beforeFwd": "1.73 2.50 1.79",
+    "beforeRev": "2.35 2.61 1.83",
+    "atEnd": "1.83 2.48 1.80"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 1.88,
+          "load5": 2.54,
+          "load15": 1.8,
+          "raw": "1.88 2.54 1.80"
+        },
+        "top": [
+          "9858 44.1 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "67 6.8 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "751 1.5 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "9480 0.7 MainThread node ./../../node_modules/.bin/vite preview --port 5193 --strictPort --host 127.0.0.1",
+          "9488 0.1 esbuild /home/hatch/workspace/repo-1/node_modules/@esbuild/linux-x64/bin/esbuild --service=0.25.12 --ping",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "7814 0.0 bash bash /home/hatch/workspace/repo-1/apps/web/scripts/seek-ab-quiet-run36.sh retry b2 /home/hatch/workspace/tmp-round35-r1/dist-retry f2fb01664045fca",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 1.83,
+          "load5": 2.48,
+          "load15": 1.8,
+          "raw": "1.83 2.48 1.80"
+        },
+        "top": [
+          "9963 86.2 chrome [chrome] <defunct>",
+          "9910 9.2 chrome [chrome] <defunct>",
+          "67 6.9 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "9952 2.2 chrome [chrome] <defunct>",
+          "751 1.5 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "10106 1.3 chrome [chrome] <defunct>",
+          "9911 1.0 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US",
+          "9858 0.6 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run"
+        ],
+        "chromePost": 3
+      },
+      "chromePre": 0,
+      "chromePost": 3
+    }
+  },
+  "accepted": false,
+  "exclusionReasons": [
+    "v2: load1 trước-ngược 2.35 ≥ 2",
+    "decode: chậm-đều đoạn cuối: tailMean 1.375 < 1.5 và tailMax 2 <= 2 (8 khoảng cuối, ~4 s)"
+  ],
+  "q6LabeledPath": "/home/hatch/workspace/tmp-round36-s1/runs/retry-b2/q6-labeled.json"
+}

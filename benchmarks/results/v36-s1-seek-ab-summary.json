@@ -1,0 +1,527 @@
+{
+  "generatedBy": "seek-ab36-summarize.mjs (đợt 36 S1)",
+  "note": "Cặp ghép theo thứ tự nhận trong từng tập; tập gộp (36+R1) chỉ hợp lệ vì cùng bundle đóng băng R1 (retry BqxQgBuf / single xfaJXEFE, 212 module) — xem LIMITS S1.",
+  "round36": {
+    "runs": [
+      {
+        "run": "retry-b1",
+        "variant": "retry",
+        "fps": 5.06842372022301,
+        "loadLabel": "under-load",
+        "decodeLabelV2": "STEADY_SLOW",
+        "acceptedV2": false,
+        "exclusionReasons": [
+          "v2: predictedRate xuôi (trừ tick biên) 0.976 < 0.98 (mất do gap >100ms, trừ tick biên: 0.133s / 1 gap)",
+          "decode: chậm-đều đoạn cuối: tailMean 1.375 < 1.5 và tailMax 2 <= 2 (8 khoảng cuối, ~4 s)"
+        ],
+        "gateTimeout": false
+      },
+      {
+        "run": "retry-b2",
+        "variant": "retry",
+        "fps": 5.359988410835869,
+        "loadLabel": "under-load",
+        "decodeLabelV2": "STEADY_SLOW",
+        "acceptedV2": false,
+        "exclusionReasons": [
+          "v2: load1 trước-ngược 2.35 ≥ 2",
+          "decode: chậm-đều đoạn cuối: tailMean 1.375 < 1.5 và tailMax 2 <= 2 (8 khoảng cuối, ~4 s)"
+        ],
+        "gateTimeout": false
+      },
+      {
+        "run": "retry-b3",
+        "variant": "retry",
+        "fps": 1.454775458570525,
+        "loadLabel": "under-load",
+        "decodeLabelV2": "STARVED",
+        "acceptedV2": false,
+        "exclusionReasons": [
+          "v2: load1 cuối lượt 3.59 ≥ 2",
+          "v2: tốc độ xuôi 0.948429164196799 ngoài [0.98, 1.02]",
+          "v2: gap rAF P50 xuôi 0.0271s > 0.015s",
+          "v2: predictedRate xuôi (trừ tick biên) 0.904 < 0.98 (mất do gap >100ms, trừ tick biên: 0.63s / 4 gap)",
+          "decode: stall intervals sau warmup 8 > 1",
+          "decode: chuỗi stall dài nhất 3 khoảng > 1",
+          "decode: tickRate ngược 41.2/s < 80/s"
+        ],
+        "gateTimeout": false
+      },
+      {
+        "run": "retry-b4",
+        "variant": "retry",
+        "fps": 0.9272137227630969,
+        "loadLabel": "under-load",
+        "decodeLabelV2": "STARVED",
+        "acceptedV2": false,
+        "exclusionReasons": [
+          "v2: tốc độ xuôi 0.72992700729927 ngoài [0.98, 1.02]",
+          "v2: gap rAF P50 xuôi 0.0663s > 0.015s",
+          "v2: predictedRate xuôi (trừ tick biên) 0.749 < 0.98 (mất do gap >100ms, trừ tick biên: 1.79s / 19 gap)",
+          "decode: stall intervals sau warmup 12 > 1",
+          "decode: chuỗi stall dài nhất 5 khoảng > 1",
+          "decode: tickRate ngược 30.7/s < 80/s"
+        ],
+        "gateTimeout": false
+      },
+      {
+        "run": "retry-b5",
+        "variant": "retry",
+        "fps": 1.4164305949008498,
+        "loadLabel": "under-load",
+        "decodeLabelV2": "STARVED",
+        "acceptedV2": false,
+        "exclusionReasons": [
+          "v2: load1 cuối lượt 2.72 ≥ 2",
+          "v2: tốc độ xuôi 0.9247842170160296 ngoài [0.98, 1.02]",
+          "v2: gap rAF P50 xuôi 0.0225s > 0.015s",
+          "v2: predictedRate xuôi (trừ tick biên) 0.895 < 0.98 (mất do gap >100ms, trừ tick biên: 0.665s / 8 gap)",
+          "decode: stall intervals sau warmup 9 > 1",
+          "decode: chuỗi stall dài nhất 2 khoảng > 1",
+          "decode: tickRate ngược 38.8/s < 80/s"
+        ],
+        "gateTimeout": false
+      },
+      {
+        "run": "retry-b6",
+        "variant": "retry",
+        "fps": 6.404657933042213,
+        "loadLabel": "quiet",
+        "decodeLabelV2": "HEALTHY",
+        "acceptedV2": true,
+        "exclusionReasons": [],
+        "gateTimeout": false
+      },
+      {
+        "run": "retry-b7",
+        "variant": "retry",
+        "fps": 5.647263249348393,
+        "loadLabel": "quiet",
+        "decodeLabelV2": "HEALTHY",
+        "acceptedV2": true,
+        "exclusionReasons": [],
+        "gateTimeout": false
+      },
+      {
+        "run": "retry-b8",
+        "variant": "retry",
+        "fps": 5.578601058503791,
+        "loadLabel": "quiet",
+        "decodeLabelV2": "STEADY_SLOW",
+        "acceptedV2": false,
+        "exclusionReasons": [
+          "decode: chậm-đều đoạn cuối: tailMean 1.125 < 1.5 và tailMax 2 <= 2 (8 khoảng cuối, ~4 s)"
+        ],
+        "gateTimeout": false
+      },
+      {
+        "run": "single-b1",
+        "variant": "single",
+        "fps": 5.564163966755881,
+        "loadLabel": "under-load",
+        "decodeLabelV2": "STEADY_SLOW",
+        "acceptedV2": false,
+        "exclusionReasons": [
+          "v2: load1 trước-xuôi 2.92 ≥ 2",
+          "v2: load1 trước-ngược 2.54 ≥ 2",
+          "v2: load1 cuối lượt 3.32 ≥ 2",
+          "v2: tốc độ xuôi 0.9788992821405264 ngoài [0.98, 1.02]",
+          "decode: chậm-đều đoạn cuối: tailMean 1.000 < 1.5 và tailMax 1 <= 2 (8 khoảng cuối, ~4 s)"
+        ],
+        "gateTimeout": false
+      },
+      {
+        "run": "single-b2",
+        "variant": "single",
+        "fps": 1.3072794825925416,
+        "loadLabel": "under-load",
+        "decodeLabelV2": "STARVED",
+        "acceptedV2": false,
+        "exclusionReasons": [
+          "v2: tốc độ xuôi 0.7788753799392096 ngoài [0.98, 1.02]",
+          "v2: gap rAF P50 xuôi 0.0298s > 0.015s",
+          "v2: predictedRate xuôi (trừ tick biên) 0.831 < 0.98 (mất do gap >100ms, trừ tick biên: 1.164s / 19 gap)",
+          "decode: stall intervals sau warmup 10 > 1",
+          "decode: chuỗi stall dài nhất 2 khoảng > 1",
+          "decode: tickRate ngược 34.6/s < 80/s"
+        ],
+        "gateTimeout": false
+      },
+      {
+        "run": "single-b3",
+        "variant": "single",
+        "fps": 0.9818039010341667,
+        "loadLabel": "under-load",
+        "decodeLabelV2": "STARVED",
+        "acceptedV2": false,
+        "exclusionReasons": [
+          "v2: tốc độ xuôi 0.8091832894241625 ngoài [0.98, 1.02]",
+          "v2: gap rAF P50 xuôi 0.0214s > 0.015s",
+          "v2: predictedRate xuôi (trừ tick biên) 0.779 < 0.98 (mất do gap >100ms, trừ tick biên: 1.675s / 15 gap)",
+          "decode: stall intervals sau warmup 13 > 1",
+          "decode: chuỗi stall dài nhất 3 khoảng > 1",
+          "decode: tickRate ngược 26.3/s < 80/s"
+        ],
+        "gateTimeout": false
+      },
+      {
+        "run": "single-b4",
+        "variant": "single",
+        "fps": 0.5628869848020513,
+        "loadLabel": "under-load",
+        "decodeLabelV2": "STARVED",
+        "acceptedV2": false,
+        "exclusionReasons": [
+          "v2: tốc độ xuôi 0.6895300308473962 ngoài [0.98, 1.02]",
+          "v2: gap rAF P50 xuôi 0.0621s > 0.015s",
+          "v2: predictedRate xuôi (trừ tick biên) 0.601 < 0.98 (mất do gap >100ms, trừ tick biên: 3.437s / 23 gap)",
+          "decode: stall intervals sau warmup 17 > 1",
+          "decode: chuỗi stall dài nhất 10 khoảng > 1",
+          "decode: tickRate ngược 16.8/s < 80/s"
+        ],
+        "gateTimeout": false
+      },
+      {
+        "run": "single-b5",
+        "variant": "single",
+        "fps": 6.430171230402428,
+        "loadLabel": "under-load",
+        "decodeLabelV2": "HEALTHY",
+        "acceptedV2": false,
+        "exclusionReasons": [
+          "v2: load1 trước-xuôi 2.56 ≥ 2",
+          "v2: load1 trước-ngược 2.32 ≥ 2",
+          "v2: load1 cuối lượt 2.34 ≥ 2"
+        ],
+        "gateTimeout": false
+      },
+      {
+        "run": "single-b6",
+        "variant": "single",
+        "fps": 5.969505178365938,
+        "loadLabel": "under-load",
+        "decodeLabelV2": "HEALTHY",
+        "acceptedV2": false,
+        "exclusionReasons": [
+          "v2: predictedRate xuôi (trừ tick biên) 0.977 < 0.98 (mất do gap >100ms, trừ tick biên: 0.125s / 1 gap)"
+        ],
+        "gateTimeout": false
+      },
+      {
+        "run": "single-b7",
+        "variant": "single",
+        "fps": 5.811033790085372,
+        "loadLabel": "quiet",
+        "decodeLabelV2": "HEALTHY",
+        "acceptedV2": true,
+        "exclusionReasons": [],
+        "gateTimeout": false
+      },
+      {
+        "run": "single-b8",
+        "variant": "single",
+        "fps": 5.316855870096279,
+        "loadLabel": "under-load",
+        "decodeLabelV2": "HEALTHY",
+        "acceptedV2": false,
+        "exclusionReasons": [
+          "v2: tốc độ xuôi 0.9430255402750491 ngoài [0.98, 1.02]",
+          "v2: gap rAF P50 xuôi 0.025s > 0.015s",
+          "v2: predictedRate xuôi (trừ tick biên) 0.867 < 0.98 (mất do gap >100ms, trừ tick biên: 0.806s / 9 gap)"
+        ],
+        "gateTimeout": false
+      }
+    ],
+    "summary": {
+      "set": "round36-only",
+      "retry": {
+        "n": 2,
+        "median": 6.026,
+        "mean": 6.026,
+        "sd": 0.536,
+        "min": 5.647,
+        "max": 6.405
+      },
+      "single": {
+        "n": 1,
+        "median": 5.811,
+        "mean": 5.811,
+        "sd": null,
+        "min": 5.811,
+        "max": 5.811
+      },
+      "medianRatioSingleOverRetry": 0.9643,
+      "meanRatioSingleOverRetry": 0.9643,
+      "pairsByAcceptanceOrder": [
+        {
+          "pair": 1,
+          "retry": "retry-b6",
+          "single": "single-b7",
+          "ratio": 0.9073
+        }
+      ],
+      "welchCI_singleMinusRetry": null,
+      "requiredNPerSideFor10pct": null,
+      "smallEffectLockVerdict": "CHƯA ĐỦ DỮ LIỆU cho CI (cần n>=2/phía)"
+    }
+  },
+  "round35R1ReclassifiedV2": {
+    "runs": [
+      {
+        "file": "v35-r1-seek-ab-retry-a1.json",
+        "run": "retry-a1",
+        "variant": "retry",
+        "fps": 2.862129144851658,
+        "loadLabel": "under-load",
+        "decodeLabelV1": "STARVED",
+        "decodeLabelV2": "STARVED",
+        "decodeReasonsV2": [
+          "stall intervals sau warmup 4 > 1",
+          "chuỗi stall dài nhất 2 khoảng > 1",
+          "tickRate ngược 60.4/s < 80/s"
+        ],
+        "tailMean": 0.5,
+        "tailMax": 1,
+        "acceptedV2": false
+      },
+      {
+        "file": "v35-r1-seek-ab-retry-a2.json",
+        "run": "retry-a2",
+        "variant": "retry",
+        "fps": 8.753373696112044,
+        "loadLabel": "under-load",
+        "decodeLabelV1": "HEALTHY",
+        "decodeLabelV2": "HEALTHY",
+        "decodeReasonsV2": [],
+        "tailMean": 2.375,
+        "tailMax": 3,
+        "acceptedV2": false
+      },
+      {
+        "file": "v35-r1-seek-ab-retry-a3.json",
+        "run": "retry-a3",
+        "variant": "retry",
+        "fps": 3.0315557392862065,
+        "loadLabel": "quiet",
+        "decodeLabelV1": "STARVED",
+        "decodeLabelV2": "STARVED",
+        "decodeReasonsV2": [
+          "stall intervals sau warmup 7 > 1",
+          "chuỗi stall dài nhất 2 khoảng > 1",
+          "tickRate ngược 57.9/s < 80/s"
+        ],
+        "tailMean": 2,
+        "tailMax": 2,
+        "acceptedV2": false
+      },
+      {
+        "file": "v35-r1-seek-ab-retry-a4.json",
+        "run": "retry-a4",
+        "variant": "retry",
+        "fps": 8.907059940132877,
+        "loadLabel": "quiet",
+        "decodeLabelV1": "HEALTHY",
+        "decodeLabelV2": "HEALTHY",
+        "decodeReasonsV2": [],
+        "tailMean": 2.75,
+        "tailMax": 4,
+        "acceptedV2": true
+      },
+      {
+        "file": "v35-r1-seek-ab-retry-a5.json",
+        "run": "retry-a5",
+        "variant": "retry",
+        "fps": 8.745718242110634,
+        "loadLabel": "quiet",
+        "decodeLabelV1": "HEALTHY",
+        "decodeLabelV2": "HEALTHY",
+        "decodeReasonsV2": [],
+        "tailMean": 2.625,
+        "tailMax": 4,
+        "acceptedV2": true
+      },
+      {
+        "file": "v35-r1-seek-ab-retry-a6.json",
+        "run": "retry-a6",
+        "variant": "retry",
+        "fps": 9.345112068336132,
+        "loadLabel": "quiet",
+        "decodeLabelV1": "HEALTHY",
+        "decodeLabelV2": "HEALTHY",
+        "decodeReasonsV2": [],
+        "tailMean": 2.5,
+        "tailMax": 3,
+        "acceptedV2": true
+      },
+      {
+        "file": "v35-r1-seek-ab-single-a1.json",
+        "run": "single-a1",
+        "variant": "single",
+        "fps": 8.81346055794304,
+        "loadLabel": "quiet",
+        "decodeLabelV1": "HEALTHY",
+        "decodeLabelV2": "HEALTHY",
+        "decodeReasonsV2": [],
+        "tailMean": 2.5,
+        "tailMax": 3,
+        "acceptedV2": true
+      },
+      {
+        "file": "v35-r1-seek-ab-single-a2.json",
+        "run": "single-a2",
+        "variant": "single",
+        "fps": 9.566932009055723,
+        "loadLabel": "quiet",
+        "decodeLabelV1": "HEALTHY",
+        "decodeLabelV2": "HEALTHY",
+        "decodeReasonsV2": [],
+        "tailMean": 2.5,
+        "tailMax": 4,
+        "acceptedV2": true
+      },
+      {
+        "file": "v35-r1-seek-ab-single-a3.json",
+        "run": "single-a3",
+        "variant": "single",
+        "fps": 8.021585356960548,
+        "loadLabel": "under-load",
+        "decodeLabelV1": "HEALTHY",
+        "decodeLabelV2": "HEALTHY",
+        "decodeReasonsV2": [],
+        "tailMean": 2.625,
+        "tailMax": 4,
+        "acceptedV2": false
+      },
+      {
+        "file": "v35-r1-seek-ab-single-a4.json",
+        "run": "single-a4",
+        "variant": "single",
+        "fps": 7.32414793328499,
+        "loadLabel": "quiet",
+        "decodeLabelV1": "HEALTHY",
+        "decodeLabelV2": "STEADY_SLOW",
+        "decodeReasonsV2": [
+          "chậm-đều đoạn cuối: tailMean 1.000 < 1.5 và tailMax 1 <= 2 (8 khoảng cuối, ~4 s)"
+        ],
+        "tailMean": 1,
+        "tailMax": 1,
+        "acceptedV2": false
+      },
+      {
+        "file": "v35-r1-seek-ab-single-a5.json",
+        "run": "single-a5",
+        "variant": "single",
+        "fps": 9.560648080572179,
+        "loadLabel": "under-load",
+        "decodeLabelV1": "HEALTHY",
+        "decodeLabelV2": "HEALTHY",
+        "decodeReasonsV2": [],
+        "tailMean": 2.625,
+        "tailMax": 3,
+        "acceptedV2": false
+      }
+    ],
+    "summary": {
+      "set": "round35R1-under-v2",
+      "retry": {
+        "n": 3,
+        "median": 8.907,
+        "mean": 8.999,
+        "sd": 0.31,
+        "min": 8.746,
+        "max": 9.345
+      },
+      "single": {
+        "n": 2,
+        "median": 9.19,
+        "mean": 9.19,
+        "sd": 0.533,
+        "min": 8.813,
+        "max": 9.567
+      },
+      "medianRatioSingleOverRetry": 1.0318,
+      "meanRatioSingleOverRetry": 1.0212,
+      "pairsByAcceptanceOrder": [
+        {
+          "pair": 1,
+          "retry": "retry-a4",
+          "single": "single-a1",
+          "ratio": 0.9895
+        },
+        {
+          "pair": 2,
+          "retry": "retry-a5",
+          "single": "single-a2",
+          "ratio": 1.0939
+        }
+      ],
+      "welchCI_singleMinusRetry": {
+        "diff": 0.191,
+        "diffPctOfRetryMean": 2.12,
+        "se": 0.417,
+        "df": 1.5,
+        "tUsed": 2.776,
+        "lo": -0.967,
+        "hi": 1.349,
+        "loPct": -10.75,
+        "hiPct": 14.99
+      },
+      "requiredNPerSideFor10pct": 4,
+      "smallEffectLockVerdict": "CHƯA KHÓA ĐƯỢC (CI 95% vẫn chạm/vượt ±10%)"
+    }
+  },
+  "pooled36PlusR1": {
+    "set": "pooled-36+R1-v2",
+    "retry": {
+      "n": 5,
+      "median": 8.746,
+      "mean": 7.81,
+      "sd": 1.665,
+      "min": 5.647,
+      "max": 9.345
+    },
+    "single": {
+      "n": 3,
+      "median": 8.813,
+      "mean": 8.064,
+      "sd": 1.987,
+      "min": 5.811,
+      "max": 9.567
+    },
+    "medianRatioSingleOverRetry": 1.0077,
+    "meanRatioSingleOverRetry": 1.0325,
+    "pairsByAcceptanceOrder": [
+      {
+        "pair": 1,
+        "retry": "retry-b6",
+        "single": "single-b7",
+        "ratio": 0.9073
+      },
+      {
+        "pair": 2,
+        "retry": "retry-a4",
+        "single": "single-a1",
+        "ratio": 0.9895
+      },
+      {
+        "pair": 3,
+        "retry": "retry-a5",
+        "single": "single-a2",
+        "ratio": 1.0939
+      }
+    ],
+    "welchCI_singleMinusRetry": {
+      "diff": 0.254,
+      "diffPctOfRetryMean": 3.25,
+      "se": 1.368,
+      "df": 3.7,
+      "tUsed": 2.776,
+      "lo": -3.543,
+      "hi": 4.05,
+      "loPct": -45.36,
+      "hiPct": 51.86
+    },
+    "requiredNPerSideFor10pct": 82,
+    "smallEffectLockVerdict": "CHƯA KHÓA ĐƯỢC (CI 95% vẫn chạm/vượt ±10%)"
+  }
+}

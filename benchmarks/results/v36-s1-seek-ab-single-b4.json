@@ -1,0 +1,195 @@
+{
+  "run": "single-b4",
+  "variant": "single",
+  "attempt": "b4",
+  "bundle": "index-xfaJXEFE.js",
+  "bundleSha256": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "frozenDist": "/home/hatch/workspace/tmp-round35-r1/dist-single",
+  "frozenShaBefore": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "frozenShaAfter": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "pre": {
+    "loadavg": "0.42 1.96 1.96 10/462 15750",
+    "chromePre": 0,
+    "top": "  15667 97.2 ffmpeg          ffmpeg -y -v error -i /home/hatch/workspace/tmp-round36-s3/wc/noise-1080-15s.mp4 -vf scale=-2:720 -r 30 -c:v libx264 -preset veryfast -crf 23 -pix_fmt yuv420p -an -movflags +faststart /home/hatch/workspace/tmp-round36-s3/wc/noise-1080-15s__proxy_720p.mp4\n     67  8.3 hatch           /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174\n  15654  5.1 MainThread      node -e  const {generateProxy} = require(\"/home/hatch/workspace/repo-1/server/render/src/proxy.js\"); const t0 = Date.now(); const r = generateProxy(\"/home/hatch/workspace/tmp-round36-s3/wc/noise-1080-15s.mp4\", \"/home/hatch/workspace/tmp-round36-s3/wc\", {height: 720}); console.log(JSON.stringify({...r, genMs: Date.now()-t0})); \n    751  2.2 hatch-execd     /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174\n      1  0.0 systemd         /usr/lib/systemd/systemd\n     17  0.0 systemd-journal /usr/lib/systemd/systemd-journald\n   6374  0.0 bash            bash /home/hatch/workspace/tmp-round36-s1/drive.sh\n   6371  0.0 bash            /bin/bash --norc --noprofile -c umask 0007; bash -n ~/workspace/tmp-round36-s1/drive.sh && bash ~/workspace/tmp-round36-s1/drive.sh > ~/workspace/tmp-round36-s1/drive.stdout.log 2>&1; echo \"DRIVER_EXIT=$?\""
+  },
+  "post": {
+    "loadavg": "0.21 1.65 1.85 17/483 16108",
+    "chromePost": 0
+  },
+  "q6Exit": 1,
+  "n2Verdict": "PARTIAL",
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "tốc độ xuôi 0.6895300308473962 ngoài [0.98, 1.02]",
+    "gap rAF P50 xuôi 0.0621s > 0.015s",
+    "predictedRate xuôi (trừ tick biên) 0.601 < 0.98 (mất do gap >100ms, trừ tick biên: 3.437s / 23 gap)"
+  ],
+  "decodeSide": {
+    "decodeLabel": "STARVED",
+    "reasons": [
+      "stall intervals sau warmup 17 > 1",
+      "chuỗi stall dài nhất 10 khoảng > 1",
+      "tickRate ngược 16.8/s < 80/s"
+    ],
+    "thresholds": {
+      "stallMax": 1,
+      "stallRunMax": 1,
+      "tickRateMin": 80,
+      "tailIntervals": 8,
+      "tailMeanMax": 1.5,
+      "tailMaxMax": 2
+    },
+    "signals": {
+      "intervals": 27,
+      "drawDeltaSeries": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "holdDeltaSeries": [
+        6,
+        4,
+        5,
+        7,
+        3,
+        4,
+        7,
+        6,
+        5,
+        5,
+        9,
+        2,
+        6,
+        2,
+        9,
+        2,
+        5,
+        3,
+        2,
+        3,
+        3,
+        3,
+        4,
+        6,
+        3,
+        5,
+        5
+      ],
+      "stallIntervalsAfterWarmup": 17,
+      "maxStallRun": 10,
+      "firstIntervalDrawDelta": 0,
+      "reverseTickRate": 16.75,
+      "reverseRafN": 280,
+      "reverseRafWallSec": 16.715,
+      "reverseRafGapP50": 0.0697,
+      "reverseDrawDelta": 9,
+      "reverseFps": 0.5628869848020513,
+      "tailSeries": [
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "tailMean": 0.375,
+      "tailMax": 1,
+      "tailMin": 0,
+      "tailFps": 0.75,
+      "headMean": 0.333,
+      "tailHeadRatio": 1.125,
+      "tailSlope": -0.179
+    }
+  },
+  "reverseFps": 0.5628869848020513,
+  "reverseDrawDelta": 9,
+  "reverseWallSec": 15.989,
+  "forwardInterpRate": 0.6895300308473962,
+  "load": {
+    "atStart": "0.38 1.85 1.92",
+    "beforeFwd": "0.35 1.82 1.91",
+    "beforeRev": "0.29 1.76 1.89",
+    "atEnd": "0.23 1.67 1.86"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 0.38,
+          "load5": 1.93,
+          "load15": 1.95,
+          "raw": "0.38 1.93 1.95"
+        },
+        "top": [
+          "15667 113 ffmpeg ffmpeg -y -v error -i /home/hatch/workspace/tmp-round36-s3/wc/noise-1080-15s.mp4 -vf scale=-2:720 -r 30 -c:v libx264 -preset veryfast -crf 23 -",
+          "15761 10.0 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "67 8.3 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "15654 2.9 MainThread node -e const {generateProxy} = require(\"/home/hatch/workspace/repo-1/server/render/src/proxy.js\"); const t0 = Date.now(); const r = genera",
+          "751 2.2 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "6374 0.0 bash bash /home/hatch/workspace/tmp-round36-s1/drive.sh"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 0.23,
+          "load5": 1.67,
+          "load15": 1.86,
+          "raw": "0.23 1.67 1.86"
+        },
+        "top": [
+          "15667 96.9 ffmpeg ffmpeg -y -v error -i /home/hatch/workspace/tmp-round36-s3/wc/noise-1080-15s.mp4 -vf scale=-2:720 -r 30 -c:v libx264 -preset veryfast -crf 23 ",
+          "16081 19.2 MainThread node /home/hatch/workspace/repo-1/node_modules/.bin/tsc --noEmit",
+          "67 8.3 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "16061 5.9 npm exec tsc -- npm exec tsc --noEmit",
+          "16099 5.0 ps ps -eo pid,pcpu,comm,args --sort=-pcpu",
+          "751 2.2 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "15761 0.3 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "15654 0.2 MainThread node -e const {generateProxy} = require(\"/home/hatch/workspace/repo-1/server/render/src/proxy.js\"); const t0 = Date.now(); const r = genera"
+        ],
+        "chromePost": 0
+      },
+      "chromePre": 0,
+      "chromePost": 0
+    }
+  },
+  "accepted": false,
+  "exclusionReasons": [
+    "v2: tốc độ xuôi 0.6895300308473962 ngoài [0.98, 1.02]",
+    "v2: gap rAF P50 xuôi 0.0621s > 0.015s",
+    "v2: predictedRate xuôi (trừ tick biên) 0.601 < 0.98 (mất do gap >100ms, trừ tick biên: 3.437s / 23 gap)",
+    "decode: stall intervals sau warmup 17 > 1",
+    "decode: chuỗi stall dài nhất 10 khoảng > 1",
+    "decode: tickRate ngược 16.8/s < 80/s"
+  ],
+  "q6LabeledPath": "/home/hatch/workspace/tmp-round36-s1/runs/single-b4/q6-labeled.json"
+}

@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:5192",
+  "durationSec": 3,
+  "chromium": "/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome",
+  "timestamp": "2026-11-02T01:24:26.407Z",
+  "perfOverlayButton": true,
+  "playing": true,
+  "timeDisplay": {
+    "before": "00:00.0 / 00:08.0",
+    "after": "00:00.2 / 00:08.0",
+    "end": "00:01.2 / 00:08.0"
+  },
+  "frames": 11,
+  "fpsAvg": 2.88,
+  "fpsMin1s": null,
+  "fpsMax1s": null,
+  "dropsOver50ms": 10,
+  "maxIntervalMs": 602.7,
+  "hardwareConcurrency": 4,
+  "frozenDist": {
+    "validity": "VALID",
+    "valid": true,
+    "problems": [],
+    "distDir": "/home/hatch/workspace/repo-1/apps/web/dist",
+    "bundle": {
+      "name": "index-B3uq-AN2.js",
+      "sha256_16": "c7eae59af10f8778",
+      "source": "index-entry"
+    },
+    "manifestBefore": "fbface705adf4de12e9f1ff8505ba551b6d9026d9f75b3f05c805289f1b827b0",
+    "manifestAfter": "fbface705adf4de12e9f1ff8505ba551b6d9026d9f75b3f05c805289f1b827b0",
+    "fileCountBefore": 254,
+    "fileCountAfter": 254,
+    "servesDistAssumption": "Bundle/manifest này chỉ là bundle đang đo khi PAGE_URL serve đúng distDir này (vite preview). Khi đo vite dev, đây chỉ là dist trên đĩa lúc bắt đầu đo.",
+    "frozenCopyDir": "/home/hatch/workspace/tmp-round36-s6/bench-frozen-copy",
+    "frozenCopyManifest": "fbface705adf4de12e9f1ff8505ba551b6d9026d9f75b3f05c805289f1b827b0"
+  }
+}

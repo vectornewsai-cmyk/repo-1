@@ -1,0 +1,125 @@
+{
+  "protocol": "q6-measure-protocol v2 (Round 33 §3.2 / P5 §7.5; v1→v2: gap-count tuyệt đối đổi thành lost-rate, xem header)",
+  "runAt": "2026-11-02T01:27:41.967Z",
+  "bundle": "index-DgObvvhC.js",
+  "video": "dense-gop-flat.mp4",
+  "n2Verdict": "PASS",
+  "load": {
+    "atStart": "1.45 2.35 1.77",
+    "beforeFwd": "1.34 2.31 1.76",
+    "beforeRev": "1.13 2.24 1.74",
+    "atEnd": "0.88 2.13 1.71"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 1.62,
+          "load5": 2.42,
+          "load15": 1.79,
+          "raw": "1.62 2.42 1.79"
+        },
+        "top": [
+          "10354 37.7 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --gpu-client-id=7 --crashpad-handler-pid=10255 --enable-c",
+          "10253 25.6 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --no-sandbox --remote-debugging-pipe --no-first-run --no-default-browser-",
+          "10459 25.5 npm exec tsc -- npm exec tsc --noEmit",
+          "10531 19.3 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=audio.mojom.AudioService --lang=en-US -",
+          "10470 15.1 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "10342 8.2 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --top-chrome-webui --gpu-client-id=5 --crashpad-handler-pi",
+          "67 6.9 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "10281 5.6 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=gpu-process --gpu-recent-crash-count=0 --no-sandbox --disable-dev-s"
+        ],
+        "chromePre": 16
+      },
+      "post": {
+        "loadavg": {
+          "load1": 0.88,
+          "load5": 2.13,
+          "load15": 1.71,
+          "raw": "0.88 2.13 1.71"
+        },
+        "top": [
+          "10616 48.4 MainThread node /home/hatch/workspace/repo-1/node_modules/.bin/tsc --noEmit",
+          "67 7.1 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "10459 2.1 npm exec tsc -- npm exec tsc --noEmit",
+          "751 1.6 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "10470 0.5 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "6374 0.0 bash bash /home/hatch/workspace/tmp-round36-s1/drive.sh"
+        ],
+        "chromePost": 0
+      },
+      "chromePre": 16,
+      "chromePost": 0
+    }
+  },
+  "forward": {
+    "interpRate": 0.6721720760514692,
+    "playheadRate": 0.5129488302264482,
+    "drawDelta": 38,
+    "holdDelta": 10
+  },
+  "reverse": {
+    "fps": 5.627735704856527,
+    "drawDelta": 81,
+    "holdDelta": 220,
+    "wallSec": 14.393,
+    "blackSamplesAfterWarmup": 0
+  },
+  "checks": {
+    "reversePlaybackCorrect": true,
+    "holdFiredInApp": true,
+    "noBlackInReverse": true
+  },
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "tốc độ xuôi 0.6721720760514692 ngoài [0.98, 1.02]",
+    "gap rAF P50 xuôi 0.0688s > 0.015s",
+    "predictedRate xuôi (trừ tick biên) 0.753 < 0.98 (mất do gap >100ms, trừ tick biên: 1.949s / 26 gap)",
+    "có 16 tiến trình Chrome trước lượt (luồng browser khác)"
+  ],
+  "signals": {
+    "load1": {
+      "beforeFwd": 1.34,
+      "beforeRev": 1.13,
+      "atEnd": 0.88
+    },
+    "forwardInterpRate": 0.6721720760514692,
+    "rafForward": {
+      "gapP50": 0.0688,
+      "gapP95": 0.1898,
+      "gapMax": 1.5306,
+      "countOver100ms": 27,
+      "exclFirstOver100ms": 26,
+      "exclFirstLostSec": 1.949,
+      "exclFirstPredictedRate": 0.753,
+      "predictedRate": 0.765
+    },
+    "rafReverse": {
+      "gapP50": 0.0125,
+      "gapP95": 0.0792,
+      "predictedRate": 1.005
+    }
+  },
+  "comparability": "CHỈ so sánh hồi quy với các lượt CÙNG loadLabel (và cùng bundle, hoặc A/B cùng phiên). Số under-load KHÔNG được dùng làm baseline quiet; số quiet chỉ có giá trị khi đủ 3 lượt/GOP trong cùng cửa sổ quiet.",
+  "n2Log": "/home/hatch/workspace/tmp-round36-s2/invalid-c/q6-n2.log",
+  "n2Exit": 0,
+  "frozenDist": {
+    "valid": false,
+    "validity": "INVALID",
+    "problems": [
+      "snapshot dist-snap của N2 ≠ dist đóng băng (snap 9db35d42f17c ≠ frozen 1a413dee23a2)"
+    ],
+    "dir": "/home/hatch/workspace/tmp-round36-s2/invalid-c-dist",
+    "bundle": "index-DgObvvhC.js",
+    "manifestBefore": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "manifestAfter": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "snapManifest": "9db35d42f17c39b36795ad71f9d57b1608ac415f39156154a721cce0838023ce",
+    "fileCount": 254,
+    "bundleSha256": "1f4ebcc7ae1ceff7ebcbfa9043ea6e829e89a689587bad9b8ba3b2fa382c3ca7"
+  },
+  "validity": "INVALID — dist đóng băng đổi giữa chừng hoặc snapshot lệch; fps của lượt này KHÔNG được dùng làm baseline, kể cả khi loadLabel=quiet.",
+  "usableAsBaseline": false
+}

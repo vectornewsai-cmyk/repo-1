@@ -1,0 +1,193 @@
+{
+  "run": "single-b1",
+  "variant": "single",
+  "attempt": "b1",
+  "bundle": "index-xfaJXEFE.js",
+  "bundleSha256": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "frozenDist": "/home/hatch/workspace/tmp-round35-r1/dist-single",
+  "frozenShaBefore": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "frozenShaAfter": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "pre": {
+    "loadavg": "1.97 2.38 1.47 2/425 7260",
+    "chromePre": 0,
+    "top": "     67  5.7 hatch           /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174\n    751  0.9 hatch-execd     /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174\n      1  0.0 systemd         /usr/lib/systemd/systemd\n   5497  0.0 bash            bash /home/hatch/workspace/tmp-round36-s2/run-baseline-spaced.sh\n   6384  0.0 bash            bash /home/hatch/workspace/repo-1/apps/web/scripts/seek-ab-quiet-run36.sh single b1 /home/hatch/workspace/tmp-round35-r1/dist-single fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a\n     17  0.0 systemd-journal /usr/lib/systemd/systemd-journald\n   5496  0.0 bash            /bin/bash --norc --noprofile -c umask 0007; bash ~/workspace/tmp-round36-s2/run-baseline-spaced.sh; echo RUNNER_EXIT=$?; cat ~/workspace/tmp-round36-s2/baseline-b-summary.txt\n   6371  0.0 bash            /bin/bash --norc --noprofile -c umask 0007; bash -n ~/workspace/tmp-round36-s1/drive.sh && bash ~/workspace/tmp-round36-s1/drive.sh > ~/workspace/tmp-round36-s1/drive.stdout.log 2>&1; echo \"DRIVER_EXIT=$?\""
+  },
+  "post": {
+    "loadavg": "3.32 2.67 1.60 2/586 7776",
+    "chromePost": 13
+  },
+  "q6Exit": 0,
+  "n2Verdict": "PASS",
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "load1 trước-xuôi 2.92 ≥ 2",
+    "load1 trước-ngược 2.54 ≥ 2",
+    "load1 cuối lượt 3.32 ≥ 2",
+    "tốc độ xuôi 0.9788992821405264 ngoài [0.98, 1.02]"
+  ],
+  "decodeSide": {
+    "decodeLabel": "STEADY_SLOW",
+    "reasons": [
+      "chậm-đều đoạn cuối: tailMean 1.000 < 1.5 và tailMax 1 <= 2 (8 khoảng cuối, ~4 s)"
+    ],
+    "thresholds": {
+      "stallMax": 1,
+      "stallRunMax": 1,
+      "tickRateMin": 80,
+      "tailIntervals": 8,
+      "tailMeanMax": 1.5,
+      "tailMaxMax": 2
+    },
+    "signals": {
+      "intervals": 27,
+      "drawDeltaSeries": [
+        1,
+        1,
+        2,
+        2,
+        1,
+        1,
+        2,
+        2,
+        3,
+        2,
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        9,
+        12,
+        7,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "holdDeltaSeries": [
+        21,
+        22,
+        21,
+        20,
+        23,
+        19,
+        20,
+        21,
+        21,
+        19,
+        19,
+        15,
+        24,
+        20,
+        20,
+        19,
+        19,
+        16,
+        20,
+        22,
+        23,
+        19,
+        18,
+        17,
+        19,
+        14,
+        7
+      ],
+      "stallIntervalsAfterWarmup": 0,
+      "maxStallRun": 0,
+      "firstIntervalDrawDelta": 1,
+      "reverseTickRate": 83.76,
+      "reverseRafN": 1243,
+      "reverseRafWallSec": 14.84,
+      "reverseRafGapP50": 0.0061,
+      "reverseDrawDelta": 79,
+      "reverseFps": 5.564163966755881,
+      "tailSeries": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "tailMean": 1,
+      "tailMax": 1,
+      "tailMin": 1,
+      "tailFps": 2,
+      "headMean": 3.778,
+      "tailHeadRatio": 0.265,
+      "tailSlope": 0
+    }
+  },
+  "reverseFps": 5.564163966755881,
+  "reverseDrawDelta": 79,
+  "reverseWallSec": 14.198,
+  "forwardInterpRate": 0.9788992821405264,
+  "load": {
+    "atStart": "3.17 2.62 1.55",
+    "beforeFwd": "2.92 2.58 1.54",
+    "beforeRev": "2.54 2.51 1.53",
+    "atEnd": "3.32 2.67 1.60"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 1.97,
+          "load5": 2.38,
+          "load15": 1.47,
+          "raw": "1.97 2.38 1.47"
+        },
+        "top": [
+          "7271 41.6 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "67 5.7 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "751 0.9 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "5497 0.0 bash bash /home/hatch/workspace/tmp-round36-s2/run-baseline-spaced.sh",
+          "6384 0.0 bash bash /home/hatch/workspace/repo-1/apps/web/scripts/seek-ab-quiet-run36.sh single b1 /home/hatch/workspace/tmp-round35-r1/dist-single fffcd2c019461",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "5496 0.0 bash /bin/bash --norc --noprofile -c umask 0007; bash ~/workspace/tmp-round36-s2/run-baseline-spaced.sh; echo RUNNER_EXIT=$?; cat ~/workspace/tmp-round"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 3.32,
+          "load5": 2.67,
+          "load15": 1.6,
+          "raw": "3.32 2.67 1.60"
+        },
+        "top": [
+          "7399 82.3 chrome [chrome] <defunct>",
+          "7610 34.7 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --headless=new --no-sandbox --disable-dev-shm-usage --remote-debugging-por",
+          "7691 26.0 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --top-chrome-webui --gpu-client-id=5 --crashpad-handler-pi",
+          "7727 25.0 ps ps -eo pid,pcpu,comm,args --sort=-pcpu",
+          "7293 10.4 chrome [chrome] <defunct>",
+          "7704 10.0 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --gpu-client-id=6 --crashpad-handler-pid=7612 --enable-cra",
+          "7321 9.0 chrome [chrome] <defunct>",
+          "7643 8.0 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US"
+        ],
+        "chromePost": 13
+      },
+      "chromePre": 0,
+      "chromePost": 13
+    }
+  },
+  "accepted": false,
+  "exclusionReasons": [
+    "v2: load1 trước-xuôi 2.92 ≥ 2",
+    "v2: load1 trước-ngược 2.54 ≥ 2",
+    "v2: load1 cuối lượt 3.32 ≥ 2",
+    "v2: tốc độ xuôi 0.9788992821405264 ngoài [0.98, 1.02]",
+    "decode: chậm-đều đoạn cuối: tailMean 1.000 < 1.5 và tailMax 1 <= 2 (8 khoảng cuối, ~4 s)"
+  ],
+  "q6LabeledPath": "/home/hatch/workspace/tmp-round36-s1/runs/single-b1/q6-labeled.json"
+}

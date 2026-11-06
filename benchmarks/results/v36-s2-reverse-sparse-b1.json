@@ -1,0 +1,121 @@
+{
+  "protocol": "q6-measure-protocol v2 (Round 33 §3.2 / P5 §7.5; v1→v2: gap-count tuyệt đối đổi thành lost-rate, xem header)",
+  "runAt": "2026-11-02T01:18:53.958Z",
+  "bundle": "index-DgObvvhC.js",
+  "video": "sparse-gop-flat.mp4",
+  "n2Verdict": "PARTIAL",
+  "load": {
+    "atStart": "2.20 2.03 1.15",
+    "beforeFwd": "2.10 2.02 1.15",
+    "beforeRev": "2.17 2.03 1.16",
+    "atEnd": "1.69 1.93 1.14"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 1.43,
+          "load5": 1.88,
+          "load15": 1.1,
+          "raw": "1.43 1.88 1.10"
+        },
+        "top": [
+          "5551 43.9 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "67 5.0 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "751 0.7 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "5496 0.0 bash /bin/bash --norc --noprofile -c umask 0007; bash ~/workspace/tmp-round36-s2/run-baseline-spaced.sh; echo RUNNER_EXIT=$?; cat ~/workspace/tmp-round",
+          "5497 0.0 bash bash /home/hatch/workspace/tmp-round36-s2/run-baseline-spaced.sh",
+          "5559 0.0 ps ps -eo pid,pcpu,comm,args --sort=-pcpu"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 1.69,
+          "load5": 1.93,
+          "load15": 1.14,
+          "raw": "1.69 1.93 1.14"
+        },
+        "top": [
+          "5679 90.7 chrome [chrome] <defunct>",
+          "5836 11.1 ps ps -eo pid,pcpu,comm,args --sort=-pcpu",
+          "67 5.1 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "5609 1.1 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US",
+          "751 0.7 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "5551 0.5 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald"
+        ],
+        "chromePost": 0
+      },
+      "chromePre": 0,
+      "chromePost": 0
+    }
+  },
+  "forward": {
+    "interpRate": 1.0034904013961605,
+    "playheadRate": 0.9117551286225984,
+    "drawDelta": 347,
+    "holdDelta": 1
+  },
+  "reverse": {
+    "fps": 6.454420190006527,
+    "drawDelta": 89,
+    "holdDelta": 592,
+    "wallSec": 13.789,
+    "blackSamplesAfterWarmup": 0
+  },
+  "checks": {
+    "reversePlaybackCorrect": false,
+    "holdFiredInApp": true,
+    "noBlackInReverse": true
+  },
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "load1 trước-xuôi 2.1 ≥ 2",
+    "load1 trước-ngược 2.17 ≥ 2"
+  ],
+  "signals": {
+    "load1": {
+      "beforeFwd": 2.1,
+      "beforeRev": 2.17,
+      "atEnd": 1.69
+    },
+    "forwardInterpRate": 1.0034904013961605,
+    "rafForward": {
+      "gapP50": 0.0072,
+      "gapP95": 0.0153,
+      "gapMax": 1.8502,
+      "countOver100ms": 1,
+      "exclFirstOver100ms": 0,
+      "exclFirstLostSec": 0,
+      "exclFirstPredictedRate": 0.996,
+      "predictedRate": 1.012
+    },
+    "rafReverse": {
+      "gapP50": 0.0051,
+      "gapP95": 0.0401,
+      "predictedRate": 1.005
+    }
+  },
+  "comparability": "CHỈ so sánh hồi quy với các lượt CÙNG loadLabel (và cùng bundle, hoặc A/B cùng phiên). Số under-load KHÔNG được dùng làm baseline quiet; số quiet chỉ có giá trị khi đủ 3 lượt/GOP trong cùng cửa sổ quiet.",
+  "n2Log": "/home/hatch/workspace/tmp-round36-s2/sparse-b1/q6-n2.log",
+  "n2Exit": 1,
+  "frozenDist": {
+    "valid": true,
+    "validity": "VALID",
+    "problems": [],
+    "dir": "/home/hatch/workspace/tmp-round36-s2/frozen-dist",
+    "bundle": "index-DgObvvhC.js",
+    "manifestBefore": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "manifestAfter": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "snapManifest": "1a413dee23a20bc95cae1b51838f1220ec598e04e0d8be7156e3f7c365b013e0",
+    "fileCount": 254,
+    "bundleSha256": "1f4ebcc7ae1ceff7ebcbfa9043ea6e829e89a689587bad9b8ba3b2fa382c3ca7"
+  },
+  "validity": "VALID — dist đóng băng không đổi trước/sau, bundle và snapshot khớp; lượt này đủ điều kiện 'cùng bundle' cho baseline (còn cần đủ 3 lượt quiet/GOP).",
+  "usableAsBaseline": false
+}

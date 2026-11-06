@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:5193",
+  "durationSec": 3,
+  "chromium": "/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome",
+  "timestamp": "2026-11-02T01:25:20.091Z",
+  "perfOverlayButton": true,
+  "playing": true,
+  "timeDisplay": {
+    "before": "00:00.0 / 00:08.0",
+    "after": "00:00.8 / 00:08.0",
+    "end": "00:03.5 / 00:08.0"
+  },
+  "frames": 35,
+  "fpsAvg": 11.16,
+  "fpsMin1s": 10,
+  "fpsMax1s": 12,
+  "dropsOver50ms": 33,
+  "maxIntervalMs": 187,
+  "hardwareConcurrency": 4,
+  "frozenDist": {
+    "validity": "INVALID",
+    "valid": false,
+    "problems": [
+      "dist đổi giữa chừng: manifest trước fbface705adf4de12e9f1ff8505ba551b6d9026d9f75b3f05c805289f1b827b0 ≠ sau 9ab83f6ae84c587fceccd0778d1e608eff8110818971a4c7bba0ad3f556cf6c8"
+    ],
+    "distDir": "/home/hatch/workspace/tmp-round36-s6/invalid-dist",
+    "bundle": {
+      "name": "index-B3uq-AN2.js",
+      "sha256_16": "c7eae59af10f8778",
+      "source": "index-entry"
+    },
+    "manifestBefore": "fbface705adf4de12e9f1ff8505ba551b6d9026d9f75b3f05c805289f1b827b0",
+    "manifestAfter": "9ab83f6ae84c587fceccd0778d1e608eff8110818971a4c7bba0ad3f556cf6c8",
+    "fileCountBefore": 254,
+    "fileCountAfter": 254,
+    "servesDistAssumption": "Bundle/manifest này chỉ là bundle đang đo khi PAGE_URL serve đúng distDir này (vite preview). Khi đo vite dev, đây chỉ là dist trên đĩa lúc bắt đầu đo."
+  }
+}

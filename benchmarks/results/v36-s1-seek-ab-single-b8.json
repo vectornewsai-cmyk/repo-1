@@ -1,0 +1,188 @@
+{
+  "run": "single-b8",
+  "variant": "single",
+  "attempt": "b8",
+  "bundle": "index-xfaJXEFE.js",
+  "bundleSha256": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "frozenDist": "/home/hatch/workspace/tmp-round35-r1/dist-single",
+  "frozenShaBefore": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "frozenShaAfter": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "pre": {
+    "loadavg": "1.41 2.00 2.06 3/443 19595",
+    "chromePre": 0,
+    "top": "  19536 99.4 MainThread      node /home/hatch/workspace/repo-1/node_modules/.bin/tsc --noEmit -p apps/web/tsconfig.json\n  19516 22.2 npm exec tsc -- npm exec tsc --noEmit -p apps/web/tsconfig.json\n     67  8.6 hatch           /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174\n    751  2.4 hatch-execd     /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174\n      1  0.0 systemd         /usr/lib/systemd/systemd\n     17  0.0 systemd-journal /usr/lib/systemd/systemd-journald\n   6374  0.0 bash            bash /home/hatch/workspace/tmp-round36-s1/drive.sh\n   6371  0.0 bash            /bin/bash --norc --noprofile -c umask 0007; bash -n ~/workspace/tmp-round36-s1/drive.sh && bash ~/workspace/tmp-round36-s1/drive.sh > ~/workspace/tmp-round36-s1/drive.stdout.log 2>&1; echo \"DRIVER_EXIT=$?\""
+  },
+  "post": {
+    "loadavg": "1.23 1.90 2.02 3/421 19892",
+    "chromePost": 0
+  },
+  "q6Exit": 1,
+  "n2Verdict": "PARTIAL",
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "tốc độ xuôi 0.9430255402750491 ngoài [0.98, 1.02]",
+    "gap rAF P50 xuôi 0.025s > 0.015s",
+    "predictedRate xuôi (trừ tick biên) 0.867 < 0.98 (mất do gap >100ms, trừ tick biên: 0.806s / 9 gap)"
+  ],
+  "decodeSide": {
+    "decodeLabel": "HEALTHY",
+    "reasons": [],
+    "thresholds": {
+      "stallMax": 1,
+      "stallRunMax": 1,
+      "tickRateMin": 80,
+      "tailIntervals": 8,
+      "tailMeanMax": 1.5,
+      "tailMaxMax": 2
+    },
+    "signals": {
+      "intervals": 27,
+      "drawDeltaSeries": [
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        2,
+        3,
+        3,
+        4,
+        4,
+        5,
+        6,
+        8,
+        9,
+        5,
+        1,
+        2,
+        1,
+        2,
+        1,
+        2,
+        2,
+        2
+      ],
+      "holdDeltaSeries": [
+        13,
+        17,
+        12,
+        18,
+        20,
+        20,
+        17,
+        20,
+        20,
+        19,
+        20,
+        22,
+        20,
+        18,
+        20,
+        22,
+        19,
+        18,
+        20,
+        21,
+        21,
+        24,
+        22,
+        23,
+        22,
+        20,
+        22
+      ],
+      "stallIntervalsAfterWarmup": 1,
+      "maxStallRun": 1,
+      "firstIntervalDrawDelta": 1,
+      "reverseTickRate": 84.81,
+      "reverseRafN": 1229,
+      "reverseRafWallSec": 14.492,
+      "reverseRafGapP50": 0.0057,
+      "reverseDrawDelta": 74,
+      "reverseFps": 5.316855870096279,
+      "tailSeries": [
+        1,
+        2,
+        1,
+        2,
+        1,
+        2,
+        2,
+        2
+      ],
+      "tailMean": 1.625,
+      "tailMax": 2,
+      "tailMin": 1,
+      "tailFps": 3.25,
+      "headMean": 3.278,
+      "tailHeadRatio": 0.496,
+      "tailSlope": 0.107
+    }
+  },
+  "reverseFps": 5.316855870096279,
+  "reverseDrawDelta": 74,
+  "reverseWallSec": 13.918,
+  "forwardInterpRate": 0.9430255402750491,
+  "load": {
+    "atStart": "1.68 2.04 2.07",
+    "beforeFwd": "1.86 2.07 2.08",
+    "beforeRev": "1.58 2.00 2.05",
+    "atEnd": "1.23 1.90 2.02"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 1.3,
+          "load5": 1.97,
+          "load15": 2.04,
+          "raw": "1.30 1.97 2.04"
+        },
+        "top": [
+          "19536 96.2 MainThread node /home/hatch/workspace/repo-1/node_modules/.bin/tsc --noEmit -p apps/web/tsconfig.json",
+          "19606 33.3 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "19516 18.8 npm exec tsc -- npm exec tsc --noEmit -p apps/web/tsconfig.json",
+          "67 8.6 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "751 2.4 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "6374 0.0 bash bash /home/hatch/workspace/tmp-round36-s1/drive.sh"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 1.23,
+          "load5": 1.9,
+          "load15": 2.02,
+          "raw": "1.23 1.90 2.02"
+        },
+        "top": [
+          "19889 100 ps ps -eo pid,pcpu,comm,args --sort=-pcpu",
+          "19734 67.0 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --gpu-client-id=7 --crashpad-handler-pid=19630 --enable-c",
+          "19628 9.0 chrome [chrome] <defunct>",
+          "67 8.6 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "19657 6.7 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=gpu-process --gpu-recent-crash-count=0 --no-sandbox --disable-dev-s",
+          "19714 2.5 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --top-chrome-webui --gpu-client-id=5 --crashpad-handler-pi",
+          "751 2.4 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "19839 1.9 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=audio.mojom.AudioService --lang=en-US --"
+        ],
+        "chromePost": 3
+      },
+      "chromePre": 0,
+      "chromePost": 3
+    }
+  },
+  "accepted": false,
+  "exclusionReasons": [
+    "v2: tốc độ xuôi 0.9430255402750491 ngoài [0.98, 1.02]",
+    "v2: gap rAF P50 xuôi 0.025s > 0.015s",
+    "v2: predictedRate xuôi (trừ tick biên) 0.867 < 0.98 (mất do gap >100ms, trừ tick biên: 0.806s / 9 gap)"
+  ],
+  "q6LabeledPath": "/home/hatch/workspace/tmp-round36-s1/runs/single-b8/q6-labeled.json"
+}

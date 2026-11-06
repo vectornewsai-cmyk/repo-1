@@ -1,0 +1,28 @@
+{
+  "runAt": "2026-11-02T01:37:33.984Z",
+  "dist": "/tmp/vcut-s5-dist",
+  "url": "http://127.0.0.1:4295/",
+  "mode": "headless-new",
+  "phaA": {
+    "projectNameRestored": true,
+    "relinkAbsent": true,
+    "relinkText": "",
+    "binHasMau1": true,
+    "binHasMau2": true,
+    "playheadBefore": 4,
+    "playheadAfter": 4,
+    "playheadRestored": true,
+    "pausedAfterReload": true,
+    "sessionPlayhead": 4,
+    "sessionMatches": true,
+    "pass": true
+  },
+  "phaB": {
+    "seeded": true,
+    "relinkPresent": true,
+    "relinkListsFakeSrc": true,
+    "relinkText": "🔗 Media thiếu (1)\n✕\nProject này dùng 1 file media chưa có trong phiên làm việc. Chọn lại từng file để tiếp tục dựng — clip thiếu sẽ hiện placeholder cho tới khi được relink.\n🎬\nfile-that-does-not-exist-xyz.mp4\nVideo · dùng trong 1 clip (Video 1)\n🔗 Chọn lại\nBỏ qua — dựng tiếp với placeholder",
+    "pass": true
+  },
+  "allPass": true
+}

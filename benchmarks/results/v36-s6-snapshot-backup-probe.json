@@ -1,0 +1,225 @@
+{
+  "date": "2026-11-02T01:22:31.446Z",
+  "allPass": true,
+  "checks": {
+    "u1.manifestDeterministic": {
+      "pass": true,
+      "detail": "manifest=95b50e0b6c6f34648e6e33f76c68fbbd487471ffadf2f5d8eb1b3e1792365336 files=2"
+    },
+    "u2.freezeCopyMatches": {
+      "pass": true,
+      "detail": "copy=95b50e0b6c6f34648e6e33f76c68fbbd487471ffadf2f5d8eb1b3e1792365336"
+    },
+    "u3.freezeCopyNonEmptyThrows": {
+      "pass": true,
+      "detail": "đích không rỗng → throw, không tự xóa"
+    },
+    "u4.tamperInvalid": {
+      "pass": true,
+      "detail": "dist đổi giữa chừng: manifest trước 95b50e0b6c6f34648e6e33f76c68fbbd487471ffadf2f5d8eb1b3e1792365336 ≠ sau 0a13f5d3735c108e1fb224c94846e01b80cec977a079e9b38097b4359bb54e6b"
+    },
+    "u5.untouchedCopyStillValid": {
+      "pass": true,
+      "detail": "copy manifest=95b50e0b6c6f34648e6e33f76c68fbbd487471ffadf2f5d8eb1b3e1792365336"
+    },
+    "a1.backupExit0OneDir": {
+      "pass": true,
+      "detail": "exit=0 dirs=20261102-012213 out=[backup] files=2 totalBytes=161 manifestSha256=7b77afb8742551059b837aa55742767ddf28d9d71a09c0170ff4d5f77fbfd3ff"
+    },
+    "a2.backupManifest2Files": {
+      "pass": true,
+      "detail": "fileCount=2"
+    },
+    "a3.verifyOk": {
+      "pass": true,
+      "detail": "exit=0"
+    },
+    "a4.tamperedVerifyFails": {
+      "pass": true,
+      "detail": "exit=1"
+    },
+    "a5.restoreHashesMatch": {
+      "pass": true,
+      "detail": "exit=0"
+    },
+    "w1.benchBundleWiring": {
+      "pass": true,
+      "detail": "import + HANG_BUNDLE + truyền vào snapshot"
+    },
+    "w2.benchFreezeWiring": {
+      "pass": true,
+      "detail": "manifest trước/sau + frozenDist + exit 3"
+    },
+    "w3.seekO3FreezeWiring": {
+      "pass": true,
+      "detail": "seek-o3 manifest SNAP + frozenDist"
+    },
+    "w4.backupScriptModes": {
+      "pass": true,
+      "detail": "backup/verify/restore + manifest"
+    },
+    "h0.bundleOnDisk": {
+      "pass": true,
+      "detail": "index-B3uq-AN2.js sha=c7eae59af10f8778 source=index-entry"
+    },
+    "h.chromeJsonUp": {
+      "pass": true,
+      "detail": "4 targets"
+    },
+    "h.bundleActuallyLoaded": {
+      "pass": true,
+      "detail": "resource entries chứa index-B3uq-AN2.js"
+    },
+    "h1.timeoutRejects": {
+      "pass": true,
+      "detail": "cdp timeout Runtime.evaluate"
+    },
+    "h1.wallApprox": {
+      "pass": true,
+      "detail": "5018ms (đặt 5000ms)"
+    },
+    "h1.exactlyOneSnapshot": {
+      "pass": true,
+      "detail": "cdp-hang-20261102_012223376-Runtime.evaluate-7610.json"
+    },
+    "h1.snapshotFields": {
+      "pass": true,
+      "detail": "{\"name\":\"index-B3uq-AN2.js\",\"sha256_16\":\"c7eae59af10f8778\",\"status\":\"captured\",\"dist\":\"/home/hatch/workspace/repo-1/apps/web/dist\"}"
+    },
+    "h1.browserAliveAfter": {
+      "pass": true,
+      "detail": "pending=0"
+    },
+    "h1.rendererStillFree": {
+      "pass": true,
+      "detail": "{\"result\":{\"type\":\"number\",\"value\":2,\"description\":\"2\"}}"
+    },
+    "h2.timeoutRejects": {
+      "pass": true,
+      "detail": "cdp timeout Runtime.evaluate"
+    },
+    "h2.wallApprox": {
+      "pass": true,
+      "detail": "5021ms (đặt 5000ms)"
+    },
+    "h2.exactlyOneSnapshot": {
+      "pass": true,
+      "detail": "cdp-hang-20261102_012228400-Runtime.evaluate-7610.json"
+    },
+    "h2.snapshotFields": {
+      "pass": true,
+      "detail": "{\"name\":\"index-B3uq-AN2.js\",\"sha256_16\":\"c7eae59af10f8778\",\"status\":\"captured\",\"dist\":\"/home/hatch/workspace/repo-1/apps/web/dist\"}"
+    },
+    "h2.cpuSignatureRecorded": {
+      "pass": true,
+      "detail": "H1 maxCpu=15.5 H2 maxCpu=9.7 (lifetime-average, không phân biệt — xem LIMITS §5)"
+    },
+    "h2.browserAliveAfter": {
+      "pass": true,
+      "detail": "pending=0 (Target.getTargets ở mức browser vẫn trả lời dù renderer spin)"
+    },
+    "h2.rendererBlocked": {
+      "pass": true,
+      "detail": "err=cdp timeout Runtime.evaluate newSnapshots=1 timeoutMs=3000"
+    },
+    "h.cleanupDirBackToBaseline": {
+      "pass": true,
+      "detail": "trước=0 sau=0"
+    }
+  },
+  "dist": {
+    "dir": "/home/hatch/workspace/repo-1/apps/web/dist",
+    "bundle": {
+      "bundle": "index-B3uq-AN2.js",
+      "sha": "c7eae59af10f8778",
+      "dist": "/home/hatch/workspace/repo-1/apps/web/dist",
+      "source": "index-entry"
+    },
+    "bundleMtime": "2026-11-02T01:16:46.940Z"
+  },
+  "hangResults": {
+    "h1": {
+      "wallMs": 5018,
+      "snapshot": {
+        "capturedAt": "2026-11-02T01:22:23.376Z",
+        "method": "Runtime.evaluate",
+        "timeoutMs": 5000,
+        "proc": {
+          "pid": 7610,
+          "exitCode": null,
+          "signalCode": null,
+          "killed": false
+        },
+        "pendingCount": 0,
+        "ps": "   7610    7570 Sl         00:08 15.5  2.8 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --headless=new --no-sandbox --disable-dev-shm-usage --remote-debugging-port=19447 --user-data-dir=/tmp/s6-chrome-boBlMl about:blank\n   7612       1 Sl         00:08  0.0  0.0 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome_crashpad_handler --monitor-self --monitor-self-annotation=ptype=crashpad-handler --user-stream-region=4,65568 --database=/home/hatch/.config/google-chrome-for-testing/Crash Reports --annotation=lsb-release=Ubuntu 24.04.5 LTS --annotation=plat=Linux --annotation=prod=Chrome_Linux --annotation=ver=156.0.8078.4 --initial-client-fd=7 --shared-client-connection\n   7614       1 S          00:08  0.0  0.0 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome_crashpad_handler --no-periodic-tasks --monitor-self-annotation=ptype=crashpad-handler --database=/home/hatch/.config/google-chrome-for-testing/Crash Reports --annotation=lsb-release=Ubuntu 24.04.5 LTS --annotation=plat=Linux --annotation=prod=Chrome_Linux --annotation=ver=156.0.8078.4 --initial-client-fd=4 --shared-client-connection\n   7617    7610 S          00:08  0.6  0.9 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=zygote --no-zygote-sandbox --no-sandbox --headless=new --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --change-stack-guard-on-fork=enable --no-first-run --ozone-platform=headless --ozone-override-screen-size=800,600 --use-angle=swiftshader-webgl\n   7618    7610 S          00:08  0.8  0.9 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=zygote --no-sandbox --headless=new --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --change-stack-guard-on-fork=enable --no-first-run --ozone-platform=headless --ozone-override-screen-size=800,600 --use-angle=swiftshader-webgl\n   7640    7617 Sl         00:08  3.3  1.0 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=gpu-process --gpu-recent-crash-count=0 --no-sandbox --disable-dev-shm-usage --headless=new --ozone-platform=headless --use-angle=swiftshader-webgl --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --change-stack-guard-on-fork=enable --gpu-preferences=YAAAAAAAAAAgAAAEAAAAAAAAAAAAAGAASAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAMAAAAAQAAAAAAAAAAAAAACAAAAAAAAAAIAAAAAAAAAA== --shared-files --field-trial-handle=3,i,3610758104882831233,16999198099005125664,262144 --disable-features=PaintHolding --variations-seed-version --pseudonymization-salt-handle=7,i,7450895476513406473,16637927897264838326,4 --trace-process-track-uuid=3190708988185955192\n   7643    7610 Sl         00:08  2.9  1.4 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --no-sandbox --disable-dev-shm-usage --use-angle=swiftshader-webgl --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --change-stack-guard-on-fork=enable --shared-files=v8_context_snapshot_data:100 --field-trial-handle=3,i,3610758104882831233,16999198099005125664,262144 --disable-features=PaintHolding --variations-seed-version --pseudonymization-salt-handle=7,i,7450895476513406473,16637927897264838326,4 --trace-process-track-uuid=3190708989122997041\n   7650    7618 Sl         00:07  0.1  0.6 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=storage.mojom.StorageService --lang=en-US --service-sandbox-type=utility --no-sandbox --disable-dev-shm-usage --use-angle=swiftshader-webgl --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --chan",
+        "bundle": {
+          "name": "index-B3uq-AN2.js",
+          "sha256_16": "c7eae59af10f8778",
+          "status": "captured",
+          "dist": "/home/hatch/workspace/repo-1/apps/web/dist"
+        },
+        "extra": {
+          "transport": "websocket",
+          "port": 19448,
+          "distDir": "/home/hatch/workspace/repo-1/apps/web/dist"
+        }
+      },
+      "maxChromeCpuAtHang": 15.5
+    },
+    "h2": {
+      "wallMs": 5021,
+      "snapshot": {
+        "capturedAt": "2026-11-02T01:22:28.400Z",
+        "method": "Runtime.evaluate",
+        "timeoutMs": 5000,
+        "proc": {
+          "pid": 7610,
+          "exitCode": null,
+          "signalCode": null,
+          "killed": false
+        },
+        "pendingCount": 0,
+        "ps": "   7610    7570 Sl         00:13  9.7  2.8 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --headless=new --no-sandbox --disable-dev-shm-usage --remote-debugging-port=19447 --user-data-dir=/tmp/s6-chrome-boBlMl about:blank\n   7612       1 Sl         00:13  0.0  0.0 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome_crashpad_handler --monitor-self --monitor-self-annotation=ptype=crashpad-handler --user-stream-region=4,65568 --database=/home/hatch/.config/google-chrome-for-testing/Crash Reports --annotation=lsb-release=Ubuntu 24.04.5 LTS --annotation=plat=Linux --annotation=prod=Chrome_Linux --annotation=ver=156.0.8078.4 --initial-client-fd=7 --shared-client-connection\n   7614       1 S          00:13  0.0  0.0 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome_crashpad_handler --no-periodic-tasks --monitor-self-annotation=ptype=crashpad-handler --database=/home/hatch/.config/google-chrome-for-testing/Crash Reports --annotation=lsb-release=Ubuntu 24.04.5 LTS --annotation=plat=Linux --annotation=prod=Chrome_Linux --annotation=ver=156.0.8078.4 --initial-client-fd=4 --shared-client-connection\n   7617    7610 S          00:13  0.3  0.9 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=zygote --no-zygote-sandbox --no-sandbox --headless=new --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --change-stack-guard-on-fork=enable --no-first-run --ozone-platform=headless --ozone-override-screen-size=800,600 --use-angle=swiftshader-webgl\n   7618    7610 S          00:13  0.5  0.9 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=zygote --no-sandbox --headless=new --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --change-stack-guard-on-fork=enable --no-first-run --ozone-platform=headless --ozone-override-screen-size=800,600 --use-angle=swiftshader-webgl\n   7640    7617 Sl         00:13  3.2  1.0 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=gpu-process --gpu-recent-crash-count=0 --no-sandbox --disable-dev-shm-usage --headless=new --ozone-platform=headless --use-angle=swiftshader-webgl --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --change-stack-guard-on-fork=enable --gpu-preferences=YAAAAAAAAAAgAAAEAAAAAAAAAAAAAGAASAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAMAAAAAQAAAAAAAAAAAAAACAAAAAAAAAAIAAAAAAAAAA== --shared-files --field-trial-handle=3,i,3610758104882831233,16999198099005125664,262144 --disable-features=PaintHolding --variations-seed-version --pseudonymization-salt-handle=7,i,7450895476513406473,16637927897264838326,4 --trace-process-track-uuid=3190708988185955192\n   7643    7610 Sl         00:13  1.8  1.4 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --no-sandbox --disable-dev-shm-usage --use-angle=swiftshader-webgl --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --change-stack-guard-on-fork=enable --shared-files=v8_context_snapshot_data:100 --field-trial-handle=3,i,3610758104882831233,16999198099005125664,262144 --disable-features=PaintHolding --variations-seed-version --pseudonymization-salt-handle=7,i,7450895476513406473,16637927897264838326,4 --trace-process-track-uuid=3190708989122997041\n   7650    7618 Sl         00:12  0.0  0.6 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=storage.mojom.StorageService --lang=en-US --service-sandbox-type=utility --no-sandbox --disable-dev-shm-usage --use-angle=swiftshader-webgl --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --chan",
+        "bundle": {
+          "name": "index-B3uq-AN2.js",
+          "sha256_16": "c7eae59af10f8778",
+          "status": "captured",
+          "dist": "/home/hatch/workspace/repo-1/apps/web/dist"
+        },
+        "extra": {
+          "transport": "websocket",
+          "port": 19448,
+          "distDir": "/home/hatch/workspace/repo-1/apps/web/dist"
+        }
+      },
+      "maxChromeCpuAtHang": 9.7
+    },
+    "h2BlockedProbe": {
+      "error": "cdp timeout Runtime.evaluate",
+      "snapshot": {
+        "capturedAt": "2026-11-02T01:22:31.419Z",
+        "method": "Runtime.evaluate",
+        "timeoutMs": 3000,
+        "proc": {
+          "pid": 7610,
+          "exitCode": null,
+          "signalCode": null,
+          "killed": false
+        },
+        "pendingCount": 0,
+        "ps": "   7610    7570 Sl         00:16  8.0  2.8 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --headless=new --no-sandbox --disable-dev-shm-usage --remote-debugging-port=19447 --user-data-dir=/tmp/s6-chrome-boBlMl about:blank\n   7612       1 Sl         00:16  0.0  0.0 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome_crashpad_handler --monitor-self --monitor-self-annotation=ptype=crashpad-handler --user-stream-region=4,65568 --database=/home/hatch/.config/google-chrome-for-testing/Crash Reports --annotation=lsb-release=Ubuntu 24.04.5 LTS --annotation=plat=Linux --annotation=prod=Chrome_Linux --annotation=ver=156.0.8078.4 --initial-client-fd=7 --shared-client-connection\n   7614       1 S          00:16  0.0  0.0 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome_crashpad_handler --no-periodic-tasks --monitor-self-annotation=ptype=crashpad-handler --database=/home/hatch/.config/google-chrome-for-testing/Crash Reports --annotation=lsb-release=Ubuntu 24.04.5 LTS --annotation=plat=Linux --annotation=prod=Chrome_Linux --annotation=ver=156.0.8078.4 --initial-client-fd=4 --shared-client-connection\n   7617    7610 S          00:16  0.3  0.9 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=zygote --no-zygote-sandbox --no-sandbox --headless=new --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --change-stack-guard-on-fork=enable --no-first-run --ozone-platform=headless --ozone-override-screen-size=800,600 --use-angle=swiftshader-webgl\n   7618    7610 S          00:16  0.4  0.9 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=zygote --no-sandbox --headless=new --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --change-stack-guard-on-fork=enable --no-first-run --ozone-platform=headless --ozone-override-screen-size=800,600 --use-angle=swiftshader-webgl\n   7640    7617 Sl         00:16  3.1  1.0 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=gpu-process --gpu-recent-crash-count=0 --no-sandbox --disable-dev-shm-usage --headless=new --ozone-platform=headless --use-angle=swiftshader-webgl --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --change-stack-guard-on-fork=enable --gpu-preferences=YAAAAAAAAAAgAAAEAAAAAAAAAAAAAGAASAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAMAAAAAQAAAAAAAAAAAAAACAAAAAAAAAAIAAAAAAAAAA== --shared-files --field-trial-handle=3,i,3610758104882831233,16999198099005125664,262144 --disable-features=PaintHolding --variations-seed-version --pseudonymization-salt-handle=7,i,7450895476513406473,16637927897264838326,4 --trace-process-track-uuid=3190708988185955192\n   7643    7610 Sl         00:16  1.4  1.4 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --no-sandbox --disable-dev-shm-usage --use-angle=swiftshader-webgl --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --change-stack-guard-on-fork=enable --shared-files=v8_context_snapshot_data:100 --field-trial-handle=3,i,3610758104882831233,16999198099005125664,262144 --disable-features=PaintHolding --variations-seed-version --pseudonymization-salt-handle=7,i,7450895476513406473,16637927897264838326,4 --trace-process-track-uuid=3190708989122997041\n   7650    7618 Sl         00:15  0.0  0.6 /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=storage.mojom.StorageService --lang=en-US --service-sandbox-type=utility --no-sandbox --disable-dev-shm-usage --use-angle=swiftshader-webgl --crashpad-handler-pid=7612 --enable-crash-reporter=, --noerrdialogs --user-data-dir=/tmp/s6-chrome-boBlMl --chan",
+        "bundle": {
+          "name": "index-B3uq-AN2.js",
+          "sha256_16": "c7eae59af10f8778",
+          "status": "captured",
+          "dist": "/home/hatch/workspace/repo-1/apps/web/dist"
+        },
+        "extra": {
+          "transport": "websocket",
+          "port": 19448,
+          "distDir": "/home/hatch/workspace/repo-1/apps/web/dist"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,2362 @@
+{
+  "session": {
+    "startedAt": "2026-11-02T01:19:20.319Z",
+    "repo": "/home/hatch/workspace/repo-1",
+    "scratch": "/home/hatch/workspace/tmp-round36-s3/wc",
+    "display": ":99",
+    "port": 4299,
+    "quietLoad1Threshold": 2,
+    "nproc": 4,
+    "memTotalMB": 7934,
+    "chrome": {
+      "product": "Chrome/156.0.8078.4",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+    },
+    "devDriExists": false,
+    "finishedAt": "2026-11-02T01:20:55.662Z"
+  },
+  "fixtures": {
+    "noiseOrig": {
+      "servedAs": "noise-orig.mp4",
+      "srcRealpath": "/home/hatch/workspace/tmp-round34-q3/wc/noise-30s.mp4",
+      "bytes": 210771214,
+      "width": 1280,
+      "height": 720,
+      "codec": "avc1.64001F",
+      "sampleCount": 900,
+      "keyIndices": [
+        0,
+        300,
+        600
+      ],
+      "cttsDetected": false,
+      "codecSupport": {
+        "seq": 2,
+        "op": "supportCodec",
+        "prefer-software": {
+          "supported": true
+        },
+        "prefer-hardware": {
+          "supported": false
+        },
+        "default": {
+          "supported": true
+        }
+      }
+    },
+    "flatOrig": {
+      "servedAs": "flat-orig.mp4",
+      "srcRealpath": "/home/hatch/workspace/tmp-round27-k4/sparse-gop-flat.mp4",
+      "bytes": 45369,
+      "width": 1280,
+      "height": 720,
+      "codec": "avc1.64001F",
+      "sampleCount": 900,
+      "keyIndices": [
+        0,
+        300,
+        600
+      ],
+      "cttsDetected": false,
+      "codecSupport": {
+        "seq": 4,
+        "op": "supportCodec",
+        "prefer-software": {
+          "supported": true
+        },
+        "prefer-hardware": {
+          "supported": false
+        },
+        "default": {
+          "supported": true
+        }
+      }
+    },
+    "noiseProxy480": {
+      "servedAs": "noise-proxy480.mp4",
+      "srcRealpath": "/home/hatch/workspace/tmp-round36-s3/wc/noise-30s__proxy_480p.mp4",
+      "bytes": 37122084,
+      "width": 854,
+      "height": 480,
+      "codec": "avc1.64001F",
+      "sampleCount": 900,
+      "keyIndices": [
+        0,
+        45,
+        107,
+        183,
+        432,
+        497,
+        572,
+        621,
+        682
+      ],
+      "cttsDetected": false,
+      "codecSupport": {
+        "seq": 6,
+        "op": "supportCodec",
+        "prefer-software": {
+          "supported": true
+        },
+        "prefer-hardware": {
+          "supported": false
+        },
+        "default": {
+          "supported": true
+        }
+      }
+    },
+    "flatProxy480": {
+      "servedAs": "flat-proxy480.mp4",
+      "srcRealpath": "/home/hatch/workspace/tmp-round36-s3/wc/sparse-gop-flat__proxy_480p.mp4",
+      "bytes": 34697,
+      "width": 854,
+      "height": 480,
+      "codec": "avc1.64001F",
+      "sampleCount": 900,
+      "keyIndices": [
+        0,
+        250,
+        500,
+        750
+      ],
+      "cttsDetected": false,
+      "codecSupport": {
+        "seq": 8,
+        "op": "supportCodec",
+        "prefer-software": {
+          "supported": true
+        },
+        "prefer-hardware": {
+          "supported": false
+        },
+        "default": {
+          "supported": true
+        }
+      }
+    }
+  },
+  "build": {
+    "mp4DemuxTsSha256": "5fe0a3fe133cdfbc501ef5ddf9f767265e3b1fc6c35eb2e7d6b5608cae1131a7",
+    "reverseWebcodecsTsSha256": "925e7cdbe0dd2d488f576cfcae7ef401ce2484f7203255f149dd55794ae01e2b",
+    "mp4DemuxJsSha256": "60805c6468deeeec25b2eb3d8d3d7408422e7afe725dec61d40922d67f309a4c",
+    "reverseWebcodecsJsSha256": "e2b851591c6f7af6b9a1f2d36bdad78720003b4fb9d7649723ca91e2f70eb09a",
+    "importSpecifierRewritten": true
+  },
+  "support": {
+    "done": {
+      "seq": 21,
+      "op": "done",
+      "ok": true
+    }
+  },
+  "runs": [
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-noise-orig",
+      "key": "noiseOrig",
+      "from": 300,
+      "to": 599,
+      "attempt": 1,
+      "loadBefore": {
+        "loadavg": [
+          2.93,
+          2.13,
+          1.24
+        ],
+        "at": "2026-11-02T01:19:32.860Z",
+        "chromeTotal": 28,
+        "chromeOwnTree": 13,
+        "chromeOther": 15,
+        "heavyOther": [],
+        "memAvailableMB": 653,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 2.93 >= 2",
+        "15 Chrome ngo\u00e0i c\u00e2y probe"
+      ],
+      "seq": 9,
+      "op": "wcdecode",
+      "decoded": 300,
+      "requested": 300,
+      "cacheSize": 300,
+      "decodeWallSec": 17.65,
+      "decodeFps": 17,
+      "presentDrawn": 300,
+      "presentMissing": 0,
+      "presentWallSec": 2.895,
+      "presentFps": 103.6
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-noise-orig",
+      "key": "noiseOrig",
+      "from": 300,
+      "to": 599,
+      "attempt": 2,
+      "loadBefore": {
+        "loadavg": [
+          2.6,
+          2.11,
+          1.25
+        ],
+        "at": "2026-11-02T01:19:53.661Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 688,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 2.60 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe"
+      ],
+      "seq": 10,
+      "op": "wcdecode",
+      "decoded": 300,
+      "requested": 300,
+      "cacheSize": 300,
+      "decodeWallSec": 14.191,
+      "decodeFps": 21.1,
+      "presentDrawn": 300,
+      "presentMissing": 0,
+      "presentWallSec": 5.864,
+      "presentFps": 51.2
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-noise-proxy480",
+      "key": "noiseProxy480",
+      "from": 183,
+      "to": 431,
+      "attempt": 1,
+      "loadBefore": {
+        "loadavg": [
+          4,
+          2.45,
+          1.38
+        ],
+        "at": "2026-11-02T01:20:13.876Z",
+        "chromeTotal": 28,
+        "chromeOwnTree": 11,
+        "chromeOther": 17,
+        "heavyOther": [
+          "6419:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && node apps/web/scripts/probe-round36-s4-file-heap-pi",
+          "6420:node apps/web/scripts/probe-round36-s4-file-heap-pipe.mjs"
+        ],
+        "memAvailableMB": 468,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 4.00 >= 2",
+        "17 Chrome ngo\u00e0i c\u00e2y probe",
+        "2 ti\u1ebfn tr\u00ecnh n\u1eb7ng kh\u00e1c"
+      ],
+      "seq": 11,
+      "op": "wcdecode",
+      "decoded": 249,
+      "requested": 249,
+      "cacheSize": 249,
+      "decodeWallSec": 4.083,
+      "decodeFps": 61,
+      "presentDrawn": 249,
+      "presentMissing": 0,
+      "presentWallSec": 2.102,
+      "presentFps": 118.5
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-noise-proxy480",
+      "key": "noiseProxy480",
+      "from": 183,
+      "to": 431,
+      "attempt": 2,
+      "loadBefore": {
+        "loadavg": [
+          4.64,
+          2.6,
+          1.43
+        ],
+        "at": "2026-11-02T01:20:20.216Z",
+        "chromeTotal": 28,
+        "chromeOwnTree": 11,
+        "chromeOther": 17,
+        "heavyOther": [
+          "6419:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && node apps/web/scripts/probe-round36-s4-file-heap-pi",
+          "6420:node apps/web/scripts/probe-round36-s4-file-heap-pipe.mjs"
+        ],
+        "memAvailableMB": 410,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 4.64 >= 2",
+        "17 Chrome ngo\u00e0i c\u00e2y probe",
+        "2 ti\u1ebfn tr\u00ecnh n\u1eb7ng kh\u00e1c"
+      ],
+      "seq": 12,
+      "op": "wcdecode",
+      "decoded": 249,
+      "requested": 249,
+      "cacheSize": 249,
+      "decodeWallSec": 3.604,
+      "decodeFps": 69.1,
+      "presentDrawn": 249,
+      "presentMissing": 0,
+      "presentWallSec": 0.927,
+      "presentFps": 268.6
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-flat-orig",
+      "key": "flatOrig",
+      "from": 300,
+      "to": 599,
+      "attempt": 1,
+      "loadBefore": {
+        "loadavg": [
+          5.23,
+          2.76,
+          1.49
+        ],
+        "at": "2026-11-02T01:20:24.841Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1037,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 5.23 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe"
+      ],
+      "seq": 13,
+      "op": "wcdecode",
+      "decoded": 300,
+      "requested": 300,
+      "cacheSize": 300,
+      "decodeWallSec": 0.55,
+      "decodeFps": 545.9,
+      "presentDrawn": 300,
+      "presentMissing": 0,
+      "presentWallSec": 2.506,
+      "presentFps": 119.7
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-flat-orig",
+      "key": "flatOrig",
+      "from": 300,
+      "to": 599,
+      "attempt": 2,
+      "loadBefore": {
+        "loadavg": [
+          5.05,
+          2.77,
+          1.5
+        ],
+        "at": "2026-11-02T01:20:27.998Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 785,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 5.05 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe"
+      ],
+      "seq": 14,
+      "op": "wcdecode",
+      "decoded": 300,
+      "requested": 300,
+      "cacheSize": 300,
+      "decodeWallSec": 0.501,
+      "decodeFps": 598.2,
+      "presentDrawn": 300,
+      "presentMissing": 0,
+      "presentWallSec": 2.468,
+      "presentFps": 121.6
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-flat-proxy480",
+      "key": "flatProxy480",
+      "from": 250,
+      "to": 499,
+      "attempt": 1,
+      "loadBefore": {
+        "loadavg": [
+          4.73,
+          2.74,
+          1.5
+        ],
+        "at": "2026-11-02T01:20:31.068Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 760,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 4.73 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe"
+      ],
+      "seq": 15,
+      "op": "wcdecode",
+      "decoded": 250,
+      "requested": 250,
+      "cacheSize": 250,
+      "decodeWallSec": 0.201,
+      "decodeFps": 1246.3,
+      "presentDrawn": 250,
+      "presentMissing": 0,
+      "presentWallSec": 1.001,
+      "presentFps": 249.8
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-flat-proxy480",
+      "key": "flatProxy480",
+      "from": 250,
+      "to": 499,
+      "attempt": 2,
+      "loadBefore": {
+        "loadavg": [
+          4.73,
+          2.74,
+          1.5
+        ],
+        "at": "2026-11-02T01:20:32.372Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1051,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 4.73 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe"
+      ],
+      "seq": 16,
+      "op": "wcdecode",
+      "decoded": 250,
+      "requested": 250,
+      "cacheSize": 250,
+      "decodeWallSec": 0.311,
+      "decodeFps": 803.9,
+      "presentDrawn": 250,
+      "presentMissing": 0,
+      "presentWallSec": 1.006,
+      "presentFps": 248.5
+    },
+    {
+      "kind": "element-reverse",
+      "cell": "element-noise-orig",
+      "key": "noiseOrig",
+      "url": "/noise-orig.mp4",
+      "startFrame": 349,
+      "endFrame": 260,
+      "loadBefore": {
+        "loadavg": [
+          4.73,
+          2.74,
+          1.5
+        ],
+        "at": "2026-11-02T01:20:33.790Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1094,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 4.73 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe"
+      ],
+      "seq": 17,
+      "op": "elementReverse",
+      "videoWidth": 1280,
+      "videoHeight": 720,
+      "duration": 30,
+      "windowFrames": 89,
+      "drawn": 3,
+      "seeksIssued": 3,
+      "seekedEvents": 3,
+      "holds": 160,
+      "rafTicks": 163,
+      "wallSec": 3.04,
+      "displayedFps": 0.99,
+      "hitCap": false,
+      "playheadEndFrame": 260,
+      "firstDrawnFrame": 349,
+      "lastDrawnFrame": 307,
+      "medianLagFrames": 12,
+      "maxLagFrames": 40,
+      "draws": [
+        {
+          "frame": 349,
+          "playheadFrame": 349,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        {
+          "frame": 347,
+          "playheadFrame": 307,
+          "lagFrames": 40,
+          "wallSec": 1.456
+        },
+        {
+          "frame": 307,
+          "playheadFrame": 295,
+          "lagFrames": 12,
+          "wallSec": 1.859
+        }
+      ],
+      "drawsSummary": {
+        "first": {
+          "frame": 349,
+          "playheadFrame": 349,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        "last": {
+          "frame": 307,
+          "playheadFrame": 295,
+          "lagFrames": 12,
+          "wallSec": 1.859
+        },
+        "count": 3
+      },
+      "attempt": 1
+    },
+    {
+      "kind": "element-reverse",
+      "cell": "element-noise-proxy480",
+      "key": "noiseProxy480",
+      "url": "/noise-proxy480.mp4",
+      "startFrame": 480,
+      "endFrame": 391,
+      "loadBefore": {
+        "loadavg": [
+          4.59,
+          2.74,
+          1.5
+        ],
+        "at": "2026-11-02T01:20:38.883Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1217,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 4.59 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe"
+      ],
+      "seq": 18,
+      "op": "elementReverse",
+      "videoWidth": 854,
+      "videoHeight": 480,
+      "duration": 30,
+      "windowFrames": 89,
+      "drawn": 2,
+      "seeksIssued": 2,
+      "seekedEvents": 2,
+      "holds": 161,
+      "rafTicks": 163,
+      "wallSec": 2.994,
+      "displayedFps": 0.67,
+      "hitCap": false,
+      "playheadEndFrame": 391,
+      "firstDrawnFrame": 480,
+      "lastDrawnFrame": 478,
+      "medianLagFrames": 52,
+      "maxLagFrames": 52,
+      "draws": [
+        {
+          "frame": 480,
+          "playheadFrame": 480,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        {
+          "frame": 478,
+          "playheadFrame": 426,
+          "lagFrames": 52,
+          "wallSec": 1.827
+        }
+      ],
+      "drawsSummary": {
+        "first": {
+          "frame": 480,
+          "playheadFrame": 480,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        "last": {
+          "frame": 478,
+          "playheadFrame": 426,
+          "lagFrames": 52,
+          "wallSec": 1.827
+        },
+        "count": 2
+      },
+      "attempt": 1
+    },
+    {
+      "kind": "element-reverse",
+      "cell": "element-flat-orig",
+      "key": "flatOrig",
+      "url": "/flat-orig.mp4",
+      "startFrame": 349,
+      "endFrame": 260,
+      "loadBefore": {
+        "loadavg": [
+          4.64,
+          2.81,
+          1.54
+        ],
+        "at": "2026-11-02T01:20:46.566Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1180,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 4.64 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe"
+      ],
+      "seq": 19,
+      "op": "elementReverse",
+      "videoWidth": 1280,
+      "videoHeight": 720,
+      "duration": 30,
+      "windowFrames": 89,
+      "drawn": 28,
+      "seeksIssued": 28,
+      "seekedEvents": 28,
+      "holds": 144,
+      "rafTicks": 172,
+      "wallSec": 3.044,
+      "displayedFps": 9.2,
+      "hitCap": false,
+      "playheadEndFrame": 260,
+      "firstDrawnFrame": 349,
+      "lastDrawnFrame": 269,
+      "medianLagFrames": 1,
+      "maxLagFrames": 11,
+      "draws": [
+        {
+          "frame": 349,
+          "playheadFrame": 349,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        {
+          "frame": 348,
+          "playheadFrame": 338,
+          "lagFrames": 10,
+          "wallSec": 0.444
+        },
+        {
+          "frame": 338,
+          "playheadFrame": 327,
+          "lagFrames": 11,
+          "wallSec": 0.78
+        },
+        {
+          "frame": 327,
+          "playheadFrame": 319,
+          "lagFrames": 8,
+          "wallSec": 1.063
+        },
+        {
+          "frame": 319,
+          "playheadFrame": 318,
+          "lagFrames": 1,
+          "wallSec": 1.097
+        },
+        {
+          "frame": 318,
+          "playheadFrame": 317,
+          "lagFrames": 1,
+          "wallSec": 1.131
+        },
+        {
+          "frame": 317,
+          "playheadFrame": 316,
+          "lagFrames": 1,
+          "wallSec": 1.164
+        },
+        {
+          "frame": 316,
+          "playheadFrame": 315,
+          "lagFrames": 1,
+          "wallSec": 1.197
+        },
+        {
+          "frame": 315,
+          "playheadFrame": 314,
+          "lagFrames": 1,
+          "wallSec": 1.231
+        },
+        {
+          "frame": 314,
+          "playheadFrame": 313,
+          "lagFrames": 1,
+          "wallSec": 1.263
+        },
+        {
+          "frame": 313,
+          "playheadFrame": 312,
+          "lagFrames": 1,
+          "wallSec": 1.297
+        },
+        {
+          "frame": 312,
+          "playheadFrame": 311,
+          "lagFrames": 1,
+          "wallSec": 1.345
+        },
+        {
+          "frame": 311,
+          "playheadFrame": 309,
+          "lagFrames": 2,
+          "wallSec": 1.381
+        },
+        {
+          "frame": 309,
+          "playheadFrame": 307,
+          "lagFrames": 2,
+          "wallSec": 1.445
+        },
+        {
+          "frame": 307,
+          "playheadFrame": 306,
+          "lagFrames": 1,
+          "wallSec": 1.48
+        },
+        {
+          "frame": 306,
+          "playheadFrame": 305,
+          "lagFrames": 1,
+          "wallSec": 1.514
+        },
+        {
+          "frame": 305,
+          "playheadFrame": 305,
+          "lagFrames": 0,
+          "wallSec": 1.53
+        },
+        {
+          "frame": 304,
+          "playheadFrame": 304,
+          "lagFrames": 0,
+          "wallSec": 1.564
+        },
+        {
+          "frame": 303,
+          "playheadFrame": 303,
+          "lagFrames": 0,
+          "wallSec": 1.596
+        },
+        {
+          "frame": 302,
+          "playheadFrame": 302,
+          "lagFrames": 0,
+          "wallSec": 1.63
+        },
+        {
+          "frame": 301,
+          "playheadFrame": 301,
+          "lagFrames": 0,
+          "wallSec": 1.663
+        },
+        {
+          "frame": 300,
+          "playheadFrame": 300,
+          "lagFrames": 0,
+          "wallSec": 1.697
+        },
+        {
+          "frame": 299,
+          "playheadFrame": 294,
+          "lagFrames": 5,
+          "wallSec": 1.88
+        },
+        {
+          "frame": 294,
+          "playheadFrame": 286,
+          "lagFrames": 8,
+          "wallSec": 2.163
+        },
+        {
+          "frame": 286,
+          "playheadFrame": 280,
+          "lagFrames": 6,
+          "wallSec": 2.364
+        },
+        {
+          "frame": 280,
+          "playheadFrame": 274,
+          "lagFrames": 6,
+          "wallSec": 2.546
+        },
+        {
+          "frame": 274,
+          "playheadFrame": 269,
+          "lagFrames": 5,
+          "wallSec": 2.713
+        },
+        {
+          "frame": 269,
+          "playheadFrame": 263,
+          "lagFrames": 6,
+          "wallSec": 2.913
+        }
+      ],
+      "drawsSummary": {
+        "first": {
+          "frame": 349,
+          "playheadFrame": 349,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        "last": {
+          "frame": 269,
+          "playheadFrame": 263,
+          "lagFrames": 6,
+          "wallSec": 2.913
+        },
+        "count": 28
+      },
+      "attempt": 1
+    },
+    {
+      "kind": "element-reverse",
+      "cell": "element-flat-proxy480",
+      "key": "flatProxy480",
+      "url": "/flat-proxy480.mp4",
+      "startFrame": 540,
+      "endFrame": 451,
+      "loadBefore": {
+        "loadavg": [
+          4.43,
+          2.8,
+          1.55
+        ],
+        "at": "2026-11-02T01:20:51.613Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [],
+        "memAvailableMB": 1110,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 4.43 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe"
+      ],
+      "seq": 20,
+      "op": "elementReverse",
+      "videoWidth": 854,
+      "videoHeight": 480,
+      "duration": 30,
+      "windowFrames": 89,
+      "drawn": 54,
+      "seeksIssued": 53,
+      "seekedEvents": 54,
+      "holds": 128,
+      "rafTicks": 182,
+      "wallSec": 3.01,
+      "displayedFps": 17.94,
+      "hitCap": false,
+      "playheadEndFrame": 451,
+      "firstDrawnFrame": 540,
+      "lastDrawnFrame": 455,
+      "medianLagFrames": 1,
+      "maxLagFrames": 4,
+      "draws": [
+        {
+          "frame": 540,
+          "playheadFrame": 540,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        {
+          "frame": 539,
+          "playheadFrame": 538,
+          "lagFrames": 1,
+          "wallSec": 0.092
+        },
+        {
+          "frame": 538,
+          "playheadFrame": 537,
+          "lagFrames": 1,
+          "wallSec": 0.125
+        },
+        {
+          "frame": 537,
+          "playheadFrame": 536,
+          "lagFrames": 1,
+          "wallSec": 0.159
+        },
+        {
+          "frame": 536,
+          "playheadFrame": 535,
+          "lagFrames": 1,
+          "wallSec": 0.192
+        },
+        {
+          "frame": 535,
+          "playheadFrame": 534,
+          "lagFrames": 1,
+          "wallSec": 0.226
+        },
+        {
+          "frame": 534,
+          "playheadFrame": 533,
+          "lagFrames": 1,
+          "wallSec": 0.259
+        },
+        {
+          "frame": 533,
+          "playheadFrame": 532,
+          "lagFrames": 1,
+          "wallSec": 0.292
+        },
+        {
+          "frame": 532,
+          "playheadFrame": 531,
+          "lagFrames": 1,
+          "wallSec": 0.325
+        },
+        {
+          "frame": 531,
+          "playheadFrame": 530,
+          "lagFrames": 1,
+          "wallSec": 0.359
+        },
+        {
+          "frame": 530,
+          "playheadFrame": 529,
+          "lagFrames": 1,
+          "wallSec": 0.392
+        },
+        {
+          "frame": 529,
+          "playheadFrame": 528,
+          "lagFrames": 1,
+          "wallSec": 0.426
+        },
+        {
+          "frame": 528,
+          "playheadFrame": 527,
+          "lagFrames": 1,
+          "wallSec": 0.459
+        },
+        {
+          "frame": 527,
+          "playheadFrame": 526,
+          "lagFrames": 1,
+          "wallSec": 0.492
+        },
+        {
+          "frame": 526,
+          "playheadFrame": 525,
+          "lagFrames": 1,
+          "wallSec": 0.525
+        },
+        {
+          "frame": 525,
+          "playheadFrame": 524,
+          "lagFrames": 1,
+          "wallSec": 0.559
+        },
+        {
+          "frame": 524,
+          "playheadFrame": 523,
+          "lagFrames": 1,
+          "wallSec": 0.592
+        },
+        {
+          "frame": 523,
+          "playheadFrame": 522,
+          "lagFrames": 1,
+          "wallSec": 0.625
+        },
+        {
+          "frame": 522,
+          "playheadFrame": 522,
+          "lagFrames": 0,
+          "wallSec": 0.642
+        },
+        {
+          "frame": 521,
+          "playheadFrame": 521,
+          "lagFrames": 0,
+          "wallSec": 0.676
+        },
+        {
+          "frame": 520,
+          "playheadFrame": 520,
+          "lagFrames": 0,
+          "wallSec": 0.709
+        },
+        {
+          "frame": 519,
+          "playheadFrame": 519,
+          "lagFrames": 0,
+          "wallSec": 0.743
+        },
+        {
+          "frame": 518,
+          "playheadFrame": 518,
+          "lagFrames": 0,
+          "wallSec": 0.776
+        },
+        {
+          "frame": 517,
+          "playheadFrame": 517,
+          "lagFrames": 0,
+          "wallSec": 0.809
+        },
+        {
+          "frame": 516,
+          "playheadFrame": 516,
+          "lagFrames": 0,
+          "wallSec": 0.842
+        },
+        {
+          "frame": 515,
+          "playheadFrame": 515,
+          "lagFrames": 0,
+          "wallSec": 0.875
+        },
+        {
+          "frame": 514,
+          "playheadFrame": 514,
+          "lagFrames": 0,
+          "wallSec": 0.909
+        },
+        {
+          "frame": 513,
+          "playheadFrame": 513,
+          "lagFrames": 0,
+          "wallSec": 0.943
+        },
+        {
+          "frame": 512,
+          "playheadFrame": 512,
+          "lagFrames": 0,
+          "wallSec": 0.975
+        },
+        {
+          "frame": 511,
+          "playheadFrame": 511,
+          "lagFrames": 0,
+          "wallSec": 1.008
+        },
+        {
+          "frame": 510,
+          "playheadFrame": 510,
+          "lagFrames": 0,
+          "wallSec": 1.042
+        },
+        {
+          "frame": 509,
+          "playheadFrame": 509,
+          "lagFrames": 0,
+          "wallSec": 1.077
+        },
+        {
+          "frame": 508,
+          "playheadFrame": 508,
+          "lagFrames": 0,
+          "wallSec": 1.109
+        },
+        {
+          "frame": 507,
+          "playheadFrame": 507,
+          "lagFrames": 0,
+          "wallSec": 1.142
+        },
+        {
+          "frame": 506,
+          "playheadFrame": 506,
+          "lagFrames": 0,
+          "wallSec": 1.175
+        },
+        {
+          "frame": 505,
+          "playheadFrame": 505,
+          "lagFrames": 0,
+          "wallSec": 1.209
+        },
+        {
+          "frame": 504,
+          "playheadFrame": 504,
+          "lagFrames": 0,
+          "wallSec": 1.242
+        },
+        {
+          "frame": 503,
+          "playheadFrame": 503,
+          "lagFrames": 0,
+          "wallSec": 1.276
+        },
+        {
+          "frame": 502,
+          "playheadFrame": 502,
+          "lagFrames": 0,
+          "wallSec": 1.309
+        },
+        {
+          "frame": 501,
+          "playheadFrame": 501,
+          "lagFrames": 0,
+          "wallSec": 1.342
+        },
+        {
+          "frame": 500,
+          "playheadFrame": 500,
+          "lagFrames": 0,
+          "wallSec": 1.375
+        },
+        {
+          "frame": 499,
+          "playheadFrame": 496,
+          "lagFrames": 3,
+          "wallSec": 1.492
+        },
+        {
+          "frame": 496,
+          "playheadFrame": 492,
+          "lagFrames": 4,
+          "wallSec": 1.626
+        },
+        {
+          "frame": 492,
+          "playheadFrame": 488,
+          "lagFrames": 4,
+          "wallSec": 1.775
+        },
+        {
+          "frame": 488,
+          "playheadFrame": 484,
+          "lagFrames": 4,
+          "wallSec": 1.909
+        },
+        {
+          "frame": 484,
+          "playheadFrame": 480,
+          "lagFrames": 4,
+          "wallSec": 2.026
+        },
+        {
+          "frame": 480,
+          "playheadFrame": 477,
+          "lagFrames": 3,
+          "wallSec": 2.126
+        },
+        {
+          "frame": 477,
+          "playheadFrame": 473,
+          "lagFrames": 4,
+          "wallSec": 2.275
+        },
+        {
+          "frame": 473,
+          "playheadFrame": 469,
+          "lagFrames": 4,
+          "wallSec": 2.392
+        },
+        {
+          "frame": 469,
+          "playheadFrame": 466,
+          "lagFrames": 3,
+          "wallSec": 2.508
+        },
+        {
+          "frame": 466,
+          "playheadFrame": 462,
+          "lagFrames": 4,
+          "wallSec": 2.626
+        },
+        {
+          "frame": 462,
+          "playheadFrame": 459,
+          "lagFrames": 3,
+          "wallSec": 2.725
+        },
+        {
+          "frame": 459,
+          "playheadFrame": 455,
+          "lagFrames": 4,
+          "wallSec": 2.876
+        },
+        {
+          "frame": 455,
+          "playheadFrame": 451,
+          "lagFrames": 4,
+          "wallSec": 2.992
+        }
+      ],
+      "drawsSummary": {
+        "first": {
+          "frame": 540,
+          "playheadFrame": 540,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        "last": {
+          "frame": 455,
+          "playheadFrame": 451,
+          "lagFrames": 4,
+          "wallSec": 2.992
+        },
+        "count": 54
+      },
+      "attempt": 1
+    },
+    {
+      "kind": "element-reverse",
+      "attempt": 2,
+      "cell": "element-noise-orig",
+      "key": "noiseOrig",
+      "url": "/noise-orig.mp4",
+      "startFrame": 349,
+      "endFrame": 260,
+      "loadBefore": {
+        "loadavg": [
+          4.56,
+          2.93,
+          1.84
+        ],
+        "at": "2026-11-02T01:25:04.160Z",
+        "chromeTotal": 15,
+        "chromeOwnTree": 13,
+        "chromeOther": 2,
+        "heavyOther": [
+          "9080:node /home/hatch/workspace/repo-1/node_modules/.bin/tsc --noEmit"
+        ],
+        "memAvailableMB": 1315,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 4.56 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe",
+        "1 ti\u1ebfn tr\u00ecnh n\u1eb7ng kh\u00e1c"
+      ],
+      "seq": 9,
+      "op": "elementReverse",
+      "videoWidth": 1280,
+      "videoHeight": 720,
+      "duration": 30,
+      "windowFrames": 89,
+      "drawn": 2,
+      "seeksIssued": 2,
+      "seekedEvents": 2,
+      "holds": 127,
+      "rafTicks": 129,
+      "wallSec": 3.001,
+      "displayedFps": 0.67,
+      "hitCap": false,
+      "playheadEndFrame": 260,
+      "firstDrawnFrame": 349,
+      "lastDrawnFrame": 348,
+      "medianLagFrames": 56,
+      "maxLagFrames": 56,
+      "draws": [
+        {
+          "frame": 349,
+          "playheadFrame": 349,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        {
+          "frame": 348,
+          "playheadFrame": 292,
+          "lagFrames": 56,
+          "wallSec": 1.917
+        }
+      ],
+      "drawsSummary": {
+        "first": {
+          "frame": 349,
+          "playheadFrame": 349,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        "last": {
+          "frame": 348,
+          "playheadFrame": 292,
+          "lagFrames": 56,
+          "wallSec": 1.917
+        },
+        "count": 2
+      },
+      "sessionRef": "repeat-element-attempt2"
+    },
+    {
+      "kind": "element-reverse",
+      "attempt": 2,
+      "cell": "element-noise-proxy480",
+      "key": "noiseProxy480",
+      "url": "/noise-proxy480.mp4",
+      "startFrame": 480,
+      "endFrame": 391,
+      "loadBefore": {
+        "loadavg": [
+          4.89,
+          3.1,
+          1.91
+        ],
+        "at": "2026-11-02T01:25:17.469Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [
+          "9475:/bin/bash --norc --noprofile -c umask 0007; rm -rf ~/workspace/tmp-round36-s6/invalid-dist && cp -r ~/workspace/repo-1/a",
+          "9478:/bin/bash --norc --noprofile -c umask 0007; rm -rf ~/workspace/tmp-round36-s6/invalid-dist && cp -r ~/workspace/repo-1/a",
+          "9480:node ./../../node_modules/.bin/vite preview --port 5193 --strictPort --host 127.0.0.1",
+          "9488:/home/hatch/workspace/repo-1/node_modules/@esbuild/linux-x64/bin/esbuild --service=0.25.12 --ping"
+        ],
+        "memAvailableMB": 1683,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 4.89 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe",
+        "4 ti\u1ebfn tr\u00ecnh n\u1eb7ng kh\u00e1c"
+      ],
+      "seq": 10,
+      "op": "elementReverse",
+      "videoWidth": 854,
+      "videoHeight": 480,
+      "duration": 30,
+      "windowFrames": 89,
+      "drawn": 1,
+      "seeksIssued": 1,
+      "seekedEvents": 1,
+      "holds": 110,
+      "rafTicks": 111,
+      "wallSec": 3.091,
+      "displayedFps": 0.32,
+      "hitCap": false,
+      "playheadEndFrame": 391,
+      "firstDrawnFrame": 480,
+      "lastDrawnFrame": 480,
+      "medianLagFrames": 0,
+      "maxLagFrames": 0,
+      "draws": [
+        {
+          "frame": 480,
+          "playheadFrame": 480,
+          "lagFrames": 0,
+          "wallSec": 0
+        }
+      ],
+      "drawsSummary": {
+        "first": {
+          "frame": 480,
+          "playheadFrame": 480,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        "last": {
+          "frame": 480,
+          "playheadFrame": 480,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        "count": 1
+      },
+      "sessionRef": "repeat-element-attempt2"
+    },
+    {
+      "kind": "element-reverse",
+      "attempt": 2,
+      "cell": "element-flat-orig",
+      "key": "flatOrig",
+      "url": "/flat-orig.mp4",
+      "startFrame": 349,
+      "endFrame": 260,
+      "loadBefore": {
+        "loadavg": [
+          4.14,
+          3,
+          1.89
+        ],
+        "at": "2026-11-02T01:25:27.190Z",
+        "chromeTotal": 27,
+        "chromeOwnTree": 11,
+        "chromeOther": 16,
+        "heavyOther": [
+          "9475:/bin/bash --norc --noprofile -c umask 0007; rm -rf ~/workspace/tmp-round36-s6/invalid-dist && cp -r ~/workspace/repo-1/a",
+          "9478:/bin/bash --norc --noprofile -c umask 0007; rm -rf ~/workspace/tmp-round36-s6/invalid-dist && cp -r ~/workspace/repo-1/a",
+          "9480:node ./../../node_modules/.bin/vite preview --port 5193 --strictPort --host 127.0.0.1",
+          "9488:/home/hatch/workspace/repo-1/node_modules/@esbuild/linux-x64/bin/esbuild --service=0.25.12 --ping",
+          "9514:/bin/bash --norc --noprofile -c umask 0007; rm -rf ~/workspace/tmp-round36-s6/invalid-dist && cp -r ~/workspace/repo-1/a"
+        ],
+        "memAvailableMB": 1316,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 4.14 >= 2",
+        "16 Chrome ngo\u00e0i c\u00e2y probe",
+        "5 ti\u1ebfn tr\u00ecnh n\u1eb7ng kh\u00e1c"
+      ],
+      "seq": 11,
+      "op": "elementReverse",
+      "videoWidth": 1280,
+      "videoHeight": 720,
+      "duration": 30,
+      "windowFrames": 89,
+      "drawn": 16,
+      "seeksIssued": 16,
+      "seekedEvents": 16,
+      "holds": 125,
+      "rafTicks": 141,
+      "wallSec": 3.085,
+      "displayedFps": 5.19,
+      "hitCap": false,
+      "playheadEndFrame": 260,
+      "firstDrawnFrame": 349,
+      "lastDrawnFrame": 280,
+      "medianLagFrames": 1,
+      "maxLagFrames": 36,
+      "draws": [
+        {
+          "frame": 349,
+          "playheadFrame": 349,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        {
+          "frame": 347,
+          "playheadFrame": 311,
+          "lagFrames": 36,
+          "wallSec": 1.377
+        },
+        {
+          "frame": 311,
+          "playheadFrame": 310,
+          "lagFrames": 1,
+          "wallSec": 1.418
+        },
+        {
+          "frame": 310,
+          "playheadFrame": 309,
+          "lagFrames": 1,
+          "wallSec": 1.451
+        },
+        {
+          "frame": 309,
+          "playheadFrame": 307,
+          "lagFrames": 2,
+          "wallSec": 1.501
+        },
+        {
+          "frame": 307,
+          "playheadFrame": 306,
+          "lagFrames": 1,
+          "wallSec": 1.534
+        },
+        {
+          "frame": 306,
+          "playheadFrame": 306,
+          "lagFrames": 0,
+          "wallSec": 1.551
+        },
+        {
+          "frame": 305,
+          "playheadFrame": 305,
+          "lagFrames": 0,
+          "wallSec": 1.584
+        },
+        {
+          "frame": 304,
+          "playheadFrame": 304,
+          "lagFrames": 0,
+          "wallSec": 1.618
+        },
+        {
+          "frame": 303,
+          "playheadFrame": 303,
+          "lagFrames": 0,
+          "wallSec": 1.651
+        },
+        {
+          "frame": 302,
+          "playheadFrame": 302,
+          "lagFrames": 0,
+          "wallSec": 1.685
+        },
+        {
+          "frame": 301,
+          "playheadFrame": 301,
+          "lagFrames": 0,
+          "wallSec": 1.718
+        },
+        {
+          "frame": 300,
+          "playheadFrame": 300,
+          "lagFrames": 0,
+          "wallSec": 1.75
+        },
+        {
+          "frame": 299,
+          "playheadFrame": 292,
+          "lagFrames": 7,
+          "wallSec": 2.018
+        },
+        {
+          "frame": 292,
+          "playheadFrame": 280,
+          "lagFrames": 12,
+          "wallSec": 2.401
+        },
+        {
+          "frame": 280,
+          "playheadFrame": 270,
+          "lagFrames": 10,
+          "wallSec": 2.734
+        }
+      ],
+      "drawsSummary": {
+        "first": {
+          "frame": 349,
+          "playheadFrame": 349,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        "last": {
+          "frame": 280,
+          "playheadFrame": 270,
+          "lagFrames": 10,
+          "wallSec": 2.734
+        },
+        "count": 16
+      },
+      "sessionRef": "repeat-element-attempt2"
+    },
+    {
+      "kind": "element-reverse",
+      "attempt": 2,
+      "cell": "element-flat-proxy480",
+      "key": "flatProxy480",
+      "url": "/flat-proxy480.mp4",
+      "startFrame": 540,
+      "endFrame": 451,
+      "loadBefore": {
+        "loadavg": [
+          3.81,
+          2.95,
+          1.88
+        ],
+        "at": "2026-11-02T01:25:33.383Z",
+        "chromeTotal": 28,
+        "chromeOwnTree": 11,
+        "chromeOther": 17,
+        "heavyOther": [
+          "9475:/bin/bash --norc --noprofile -c umask 0007; rm -rf ~/workspace/tmp-round36-s6/invalid-dist && cp -r ~/workspace/repo-1/a",
+          "9478:/bin/bash --norc --noprofile -c umask 0007; rm -rf ~/workspace/tmp-round36-s6/invalid-dist && cp -r ~/workspace/repo-1/a",
+          "9480:node ./../../node_modules/.bin/vite preview --port 5193 --strictPort --host 127.0.0.1",
+          "9488:/home/hatch/workspace/repo-1/node_modules/@esbuild/linux-x64/bin/esbuild --service=0.25.12 --ping"
+        ],
+        "memAvailableMB": 1199,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 3.81 >= 2",
+        "17 Chrome ngo\u00e0i c\u00e2y probe",
+        "4 ti\u1ebfn tr\u00ecnh n\u1eb7ng kh\u00e1c"
+      ],
+      "seq": 12,
+      "op": "elementReverse",
+      "videoWidth": 854,
+      "videoHeight": 480,
+      "duration": 30,
+      "windowFrames": 89,
+      "drawn": 35,
+      "seeksIssued": 35,
+      "seekedEvents": 35,
+      "holds": 104,
+      "rafTicks": 139,
+      "wallSec": 2.995,
+      "displayedFps": 11.69,
+      "hitCap": false,
+      "playheadEndFrame": 451,
+      "firstDrawnFrame": 540,
+      "lastDrawnFrame": 463,
+      "medianLagFrames": 1,
+      "maxLagFrames": 12,
+      "draws": [
+        {
+          "frame": 540,
+          "playheadFrame": 540,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        {
+          "frame": 539,
+          "playheadFrame": 538,
+          "lagFrames": 1,
+          "wallSec": 0.078
+        },
+        {
+          "frame": 538,
+          "playheadFrame": 537,
+          "lagFrames": 1,
+          "wallSec": 0.111
+        },
+        {
+          "frame": 537,
+          "playheadFrame": 536,
+          "lagFrames": 1,
+          "wallSec": 0.161
+        },
+        {
+          "frame": 536,
+          "playheadFrame": 535,
+          "lagFrames": 1,
+          "wallSec": 0.195
+        },
+        {
+          "frame": 535,
+          "playheadFrame": 533,
+          "lagFrames": 2,
+          "wallSec": 0.261
+        },
+        {
+          "frame": 533,
+          "playheadFrame": 532,
+          "lagFrames": 1,
+          "wallSec": 0.277
+        },
+        {
+          "frame": 532,
+          "playheadFrame": 531,
+          "lagFrames": 1,
+          "wallSec": 0.311
+        },
+        {
+          "frame": 531,
+          "playheadFrame": 529,
+          "lagFrames": 2,
+          "wallSec": 0.378
+        },
+        {
+          "frame": 529,
+          "playheadFrame": 528,
+          "lagFrames": 1,
+          "wallSec": 0.41
+        },
+        {
+          "frame": 528,
+          "playheadFrame": 528,
+          "lagFrames": 0,
+          "wallSec": 0.428
+        },
+        {
+          "frame": 527,
+          "playheadFrame": 526,
+          "lagFrames": 1,
+          "wallSec": 0.477
+        },
+        {
+          "frame": 526,
+          "playheadFrame": 525,
+          "lagFrames": 1,
+          "wallSec": 0.51
+        },
+        {
+          "frame": 525,
+          "playheadFrame": 524,
+          "lagFrames": 1,
+          "wallSec": 0.561
+        },
+        {
+          "frame": 524,
+          "playheadFrame": 523,
+          "lagFrames": 1,
+          "wallSec": 0.594
+        },
+        {
+          "frame": 523,
+          "playheadFrame": 521,
+          "lagFrames": 2,
+          "wallSec": 0.661
+        },
+        {
+          "frame": 521,
+          "playheadFrame": 520,
+          "lagFrames": 1,
+          "wallSec": 0.677
+        },
+        {
+          "frame": 520,
+          "playheadFrame": 520,
+          "lagFrames": 0,
+          "wallSec": 0.694
+        },
+        {
+          "frame": 519,
+          "playheadFrame": 518,
+          "lagFrames": 1,
+          "wallSec": 0.761
+        },
+        {
+          "frame": 518,
+          "playheadFrame": 517,
+          "lagFrames": 1,
+          "wallSec": 0.778
+        },
+        {
+          "frame": 517,
+          "playheadFrame": 517,
+          "lagFrames": 0,
+          "wallSec": 0.795
+        },
+        {
+          "frame": 515,
+          "playheadFrame": 514,
+          "lagFrames": 1,
+          "wallSec": 0.879
+        },
+        {
+          "frame": 514,
+          "playheadFrame": 511,
+          "lagFrames": 3,
+          "wallSec": 0.978
+        },
+        {
+          "frame": 511,
+          "playheadFrame": 509,
+          "lagFrames": 2,
+          "wallSec": 1.055
+        },
+        {
+          "frame": 509,
+          "playheadFrame": 508,
+          "lagFrames": 1,
+          "wallSec": 1.077
+        },
+        {
+          "frame": 508,
+          "playheadFrame": 506,
+          "lagFrames": 2,
+          "wallSec": 1.153
+        },
+        {
+          "frame": 506,
+          "playheadFrame": 505,
+          "lagFrames": 1,
+          "wallSec": 1.195
+        },
+        {
+          "frame": 505,
+          "playheadFrame": 502,
+          "lagFrames": 3,
+          "wallSec": 1.278
+        },
+        {
+          "frame": 502,
+          "playheadFrame": 502,
+          "lagFrames": 0,
+          "wallSec": 1.294
+        },
+        {
+          "frame": 500,
+          "playheadFrame": 500,
+          "lagFrames": 0,
+          "wallSec": 1.361
+        },
+        {
+          "frame": 499,
+          "playheadFrame": 487,
+          "lagFrames": 12,
+          "wallSec": 1.778
+        },
+        {
+          "frame": 487,
+          "playheadFrame": 481,
+          "lagFrames": 6,
+          "wallSec": 1.994
+        },
+        {
+          "frame": 481,
+          "playheadFrame": 475,
+          "lagFrames": 6,
+          "wallSec": 2.194
+        },
+        {
+          "frame": 475,
+          "playheadFrame": 463,
+          "lagFrames": 12,
+          "wallSec": 2.595
+        },
+        {
+          "frame": 463,
+          "playheadFrame": 453,
+          "lagFrames": 10,
+          "wallSec": 2.911
+        }
+      ],
+      "drawsSummary": {
+        "first": {
+          "frame": 540,
+          "playheadFrame": 540,
+          "lagFrames": 0,
+          "wallSec": 0
+        },
+        "last": {
+          "frame": 463,
+          "playheadFrame": 453,
+          "lagFrames": 10,
+          "wallSec": 2.911
+        },
+        "count": 35
+      },
+      "sessionRef": "repeat-element-attempt2"
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-noise-orig",
+      "key": "noiseOrig",
+      "from": 300,
+      "to": 449,
+      "attempt": 1,
+      "loadBefore": {
+        "loadavg": [
+          4.61,
+          2.42,
+          2.09
+        ],
+        "at": "2026-11-02T01:37:06.560Z",
+        "chromeTotal": 26,
+        "chromeOwnTree": 13,
+        "chromeOther": 13,
+        "heavyOther": [
+          "16775:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && timeout 400 node apps/web/scripts/probe-round36-s5-",
+          "16776:timeout 400 node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs",
+          "16778:node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs"
+        ],
+        "memAvailableMB": 1144,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 4.61 >= 2",
+        "13 Chrome ngo\u00e0i c\u00e2y probe",
+        "3 ti\u1ebfn tr\u00ecnh n\u1eb7ng kh\u00e1c"
+      ],
+      "seq": 9,
+      "op": "wcdecode",
+      "decoded": 150,
+      "requested": 150,
+      "cacheSize": 150,
+      "decodeWallSec": 17.4,
+      "decodeFps": 8.6,
+      "presentDrawn": 150,
+      "presentMissing": 0,
+      "presentWallSec": 2.444,
+      "presentFps": 61.4,
+      "case": "1080p-source",
+      "sessionRef": "1080-wc-only"
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-noise-orig",
+      "key": "noiseOrig",
+      "from": 300,
+      "to": 449,
+      "attempt": 2,
+      "loadBefore": {
+        "loadavg": [
+          5.86,
+          2.86,
+          2.24
+        ],
+        "at": "2026-11-02T01:37:26.520Z",
+        "chromeTotal": 28,
+        "chromeOwnTree": 11,
+        "chromeOther": 17,
+        "heavyOther": [
+          "16775:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && timeout 400 node apps/web/scripts/probe-round36-s5-",
+          "16776:timeout 400 node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs",
+          "16778:node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs"
+        ],
+        "memAvailableMB": 701,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 5.86 >= 2",
+        "17 Chrome ngo\u00e0i c\u00e2y probe",
+        "3 ti\u1ebfn tr\u00ecnh n\u1eb7ng kh\u00e1c"
+      ],
+      "seq": 10,
+      "op": "wcdecode",
+      "decoded": 150,
+      "requested": 150,
+      "cacheSize": 150,
+      "decodeWallSec": 11.971,
+      "decodeFps": 12.5,
+      "presentDrawn": 150,
+      "presentMissing": 0,
+      "presentWallSec": 2.055,
+      "presentFps": 73,
+      "case": "1080p-source",
+      "sessionRef": "1080-wc-only"
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-noise-proxy720",
+      "key": "noiseProxy720",
+      "from": 202,
+      "to": 449,
+      "attempt": 1,
+      "loadBefore": {
+        "loadavg": [
+          6.47,
+          3.1,
+          2.33
+        ],
+        "at": "2026-11-02T01:37:40.677Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [
+          "16775:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && timeout 400 node apps/web/scripts/probe-round36-s5-",
+          "16776:timeout 400 node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs",
+          "16778:node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs"
+        ],
+        "memAvailableMB": 881,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 6.47 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe",
+        "3 ti\u1ebfn tr\u00ecnh n\u1eb7ng kh\u00e1c"
+      ],
+      "seq": 11,
+      "op": "wcdecode",
+      "decoded": 248,
+      "requested": 248,
+      "cacheSize": 248,
+      "decodeWallSec": 3.834,
+      "decodeFps": 64.7,
+      "presentDrawn": 248,
+      "presentMissing": 0,
+      "presentWallSec": 2.154,
+      "presentFps": 115.2,
+      "case": "1080p-source",
+      "sessionRef": "1080-wc-only"
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-noise-proxy720",
+      "key": "noiseProxy720",
+      "from": 202,
+      "to": 449,
+      "attempt": 2,
+      "loadBefore": {
+        "loadavg": [
+          5.71,
+          3.04,
+          2.32
+        ],
+        "at": "2026-11-02T01:37:46.767Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [
+          "16775:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && timeout 400 node apps/web/scripts/probe-round36-s5-",
+          "16776:timeout 400 node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs",
+          "16778:node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs"
+        ],
+        "memAvailableMB": 1052,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 5.71 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe",
+        "3 ti\u1ebfn tr\u00ecnh n\u1eb7ng kh\u00e1c"
+      ],
+      "seq": 12,
+      "op": "wcdecode",
+      "decoded": 248,
+      "requested": 248,
+      "cacheSize": 248,
+      "decodeWallSec": 3.796,
+      "decodeFps": 65.3,
+      "presentDrawn": 248,
+      "presentMissing": 0,
+      "presentWallSec": 1.942,
+      "presentFps": 127.7,
+      "case": "1080p-source",
+      "sessionRef": "1080-wc-only"
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-flat-orig",
+      "key": "flatOrig",
+      "from": 300,
+      "to": 599,
+      "attempt": 1,
+      "loadBefore": {
+        "loadavg": [
+          5.57,
+          3.06,
+          2.33
+        ],
+        "at": "2026-11-02T01:37:52.605Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [
+          "16775:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && timeout 400 node apps/web/scripts/probe-round36-s5-",
+          "16776:timeout 400 node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs",
+          "16778:node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs"
+        ],
+        "memAvailableMB": 1045,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 5.57 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe",
+        "3 ti\u1ebfn tr\u00ecnh n\u1eb7ng kh\u00e1c"
+      ],
+      "seq": 13,
+      "op": "wcdecode",
+      "decoded": 300,
+      "requested": 300,
+      "cacheSize": 300,
+      "decodeWallSec": 0.606,
+      "decodeFps": 495.5,
+      "presentDrawn": 300,
+      "presentMissing": 0,
+      "presentWallSec": 2.574,
+      "presentFps": 116.6,
+      "case": "1080p-source",
+      "sessionRef": "1080-wc-only"
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-flat-orig",
+      "key": "flatOrig",
+      "from": 300,
+      "to": 599,
+      "attempt": 2,
+      "loadBefore": {
+        "loadavg": [
+          5.2,
+          3.03,
+          2.32
+        ],
+        "at": "2026-11-02T01:37:55.887Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [
+          "16775:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && timeout 400 node apps/web/scripts/probe-round36-s5-",
+          "16776:timeout 400 node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs",
+          "16778:node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs"
+        ],
+        "memAvailableMB": 959,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 5.20 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe",
+        "3 ti\u1ebfn tr\u00ecnh n\u1eb7ng kh\u00e1c"
+      ],
+      "seq": 14,
+      "op": "wcdecode",
+      "decoded": 300,
+      "requested": 300,
+      "cacheSize": 300,
+      "decodeWallSec": 0.602,
+      "decodeFps": 498.6,
+      "presentDrawn": 300,
+      "presentMissing": 0,
+      "presentWallSec": 2.338,
+      "presentFps": 128.3,
+      "case": "1080p-source",
+      "sessionRef": "1080-wc-only"
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-flat-proxy480",
+      "key": "flatProxy480",
+      "from": 250,
+      "to": 499,
+      "attempt": 1,
+      "loadBefore": {
+        "loadavg": [
+          5.2,
+          3.03,
+          2.32
+        ],
+        "at": "2026-11-02T01:37:58.928Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [
+          "16775:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && timeout 400 node apps/web/scripts/probe-round36-s5-",
+          "16776:timeout 400 node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs",
+          "16778:node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs"
+        ],
+        "memAvailableMB": 931,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 5.20 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe",
+        "3 ti\u1ebfn tr\u00ecnh n\u1eb7ng kh\u00e1c"
+      ],
+      "seq": 15,
+      "op": "wcdecode",
+      "decoded": 250,
+      "requested": 250,
+      "cacheSize": 250,
+      "decodeWallSec": 0.259,
+      "decodeFps": 966.4,
+      "presentDrawn": 250,
+      "presentMissing": 0,
+      "presentWallSec": 0.885,
+      "presentFps": 282.4,
+      "case": "1080p-source",
+      "sessionRef": "1080-wc-only"
+    },
+    {
+      "kind": "webcodecs-decode",
+      "cell": "wc-flat-proxy480",
+      "key": "flatProxy480",
+      "from": 250,
+      "to": 499,
+      "attempt": 2,
+      "loadBefore": {
+        "loadavg": [
+          5.2,
+          3.03,
+          2.32
+        ],
+        "at": "2026-11-02T01:38:00.173Z",
+        "chromeTotal": 13,
+        "chromeOwnTree": 11,
+        "chromeOther": 2,
+        "heavyOther": [
+          "16775:/bin/bash --norc --noprofile -c umask 0007; cd ~/workspace/repo-1 && timeout 400 node apps/web/scripts/probe-round36-s5-",
+          "16776:timeout 400 node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs",
+          "16778:node apps/web/scripts/probe-round36-s5-rehydrate-pipe.mjs"
+        ],
+        "memAvailableMB": 1223,
+        "error": null
+      },
+      "loadLabel": "under-load",
+      "labelReasons": [
+        "load1 5.20 >= 2",
+        "2 Chrome ngo\u00e0i c\u00e2y probe",
+        "3 ti\u1ebfn tr\u00ecnh n\u1eb7ng kh\u00e1c"
+      ],
+      "seq": 16,
+      "op": "wcdecode",
+      "decoded": 250,
+      "requested": 250,
+      "cacheSize": 250,
+      "decodeWallSec": 0.238,
+      "decodeFps": 1050.9,
+      "presentDrawn": 250,
+      "presentMissing": 0,
+      "presentWallSec": 0.938,
+      "presentFps": 266.5,
+      "case": "1080p-source",
+      "sessionRef": "1080-wc-only"
+    }
+  ],
+  "errors": [],
+  "sessions1080": {
+    "session": {
+      "startedAt": "2026-11-02T01:36:45.363Z",
+      "repo": "/home/hatch/workspace/repo-1",
+      "scratch": "/home/hatch/workspace/tmp-round36-s3/wc",
+      "display": ":99",
+      "port": 4299,
+      "quietLoad1Threshold": 2,
+      "nproc": 4,
+      "memTotalMB": 7934,
+      "chrome": {
+        "product": "Chrome/156.0.8078.4",
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+      },
+      "devDriExists": false,
+      "finishedAt": "2026-11-02T01:38:01.972Z"
+    },
+    "fixtures": {
+      "noiseOrig": {
+        "servedAs": "noise-orig.mp4",
+        "srcRealpath": "/home/hatch/workspace/tmp-round36-s3/wc/noise-1080-15s.mp4",
+        "bytes": 239570102,
+        "width": 1920,
+        "height": 1080,
+        "codec": "avc1.640028",
+        "sampleCount": 450,
+        "keyIndices": [
+          0,
+          300
+        ],
+        "cttsDetected": false,
+        "codecSupport": {
+          "seq": 2,
+          "op": "supportCodec",
+          "prefer-software": {
+            "supported": true
+          },
+          "prefer-hardware": {
+            "supported": false
+          },
+          "default": {
+            "supported": true
+          }
+        }
+      },
+      "flatOrig": {
+        "servedAs": "flat-orig.mp4",
+        "srcRealpath": "/home/hatch/workspace/tmp-round27-k4/sparse-gop-flat.mp4",
+        "bytes": 45369,
+        "width": 1280,
+        "height": 720,
+        "codec": "avc1.64001F",
+        "sampleCount": 900,
+        "keyIndices": [
+          0,
+          300,
+          600
+        ],
+        "cttsDetected": false,
+        "codecSupport": {
+          "seq": 4,
+          "op": "supportCodec",
+          "prefer-software": {
+            "supported": true
+          },
+          "prefer-hardware": {
+            "supported": false
+          },
+          "default": {
+            "supported": true
+          }
+        }
+      },
+      "noiseProxy720": {
+        "servedAs": "noise-proxy720.mp4",
+        "srcRealpath": "/home/hatch/workspace/tmp-round36-s3/wc/noise-1080-15s__proxy_720p.mp4",
+        "bytes": 42389653,
+        "width": 1280,
+        "height": 720,
+        "codec": "avc1.64001F",
+        "sampleCount": 450,
+        "keyIndices": [
+          0,
+          33,
+          68,
+          112,
+          149,
+          202
+        ],
+        "cttsDetected": false,
+        "codecSupport": {
+          "seq": 6,
+          "op": "supportCodec",
+          "prefer-software": {
+            "supported": true
+          },
+          "prefer-hardware": {
+            "supported": false
+          },
+          "default": {
+            "supported": true
+          }
+        }
+      },
+      "flatProxy480": {
+        "servedAs": "flat-proxy480.mp4",
+        "srcRealpath": "/home/hatch/workspace/tmp-round36-s3/wc/sparse-gop-flat__proxy_480p.mp4",
+        "bytes": 34697,
+        "width": 854,
+        "height": 480,
+        "codec": "avc1.64001F",
+        "sampleCount": 900,
+        "keyIndices": [
+          0,
+          250,
+          500,
+          750
+        ],
+        "cttsDetected": false,
+        "codecSupport": {
+          "seq": 8,
+          "op": "supportCodec",
+          "prefer-software": {
+            "supported": true
+          },
+          "prefer-hardware": {
+            "supported": false
+          },
+          "default": {
+            "supported": true
+          }
+        }
+      }
+    },
+    "build": {
+      "mp4DemuxTsSha256": "5fe0a3fe133cdfbc501ef5ddf9f767265e3b1fc6c35eb2e7d6b5608cae1131a7",
+      "reverseWebcodecsTsSha256": "925e7cdbe0dd2d488f576cfcae7ef401ce2484f7203255f149dd55794ae01e2b",
+      "mp4DemuxJsSha256": "60805c6468deeeec25b2eb3d8d3d7408422e7afe725dec61d40922d67f309a4c",
+      "reverseWebcodecsJsSha256": "e2b851591c6f7af6b9a1f2d36bdad78720003b4fb9d7649723ca91e2f70eb09a",
+      "importSpecifierRewritten": true
+    }
+  },
+  "mergedFrom": [
+    "v36-s3-proxy-reverse.json (phi\u00ean 1: WC x2 + element x1)",
+    "v36-s3-proxy-reverse-repeat.json (phi\u00ean 2: element l\u1eb7p x1)",
+    "v36-s3-proxy-reverse-1080.json (phi\u00ean 3: WC cho ngu\u1ed3n 1080p + proxy 720p, kh\u00f4ng element)"
+  ],
+  "corrections": [
+    "Tr\u01b0\u1eddng cttsDetected trong fixtures c\u1ee7a JSON n\u00e0y l\u00e0 S\u1ed0 GI\u1ea2, ph\u1ea3i b\u1ecf qua: trang probe \u0111\u00e3 \u0111\u1ecdc track.cttsDetected nh\u01b0ng Mp4VideoTrack kh\u00f4ng c\u00f3 field n\u00e0y n\u00ean m\u1ecdi fixture \u0111\u1ec1u ra false. Hi\u1ec7n di\u1ec7n ctts c\u1ee7a proxy KH\u00d4NG \u0111\u01b0\u1ee3c probe n\u00e0y x\u00e1c minh. B-frame c\u1ee7a proxy \u0111\u00e3 x\u00e1c nh\u1eadn \u0111\u1ed9c l\u1eadp b\u1eb1ng ffprobe (has_b_frames=2). Kh\u00f4ng k\u1ebft lu\u1eadn n\u00e0o trong LIMITS S3 ph\u1ee5 thu\u1ed9c v\u00e0o tr\u01b0\u1eddng n\u00e0y."
+  ]
+}

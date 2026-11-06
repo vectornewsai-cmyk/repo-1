@@ -1,0 +1,184 @@
+{
+  "run": "single-b6",
+  "variant": "single",
+  "attempt": "b6",
+  "bundle": "index-xfaJXEFE.js",
+  "bundleSha256": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "frozenDist": "/home/hatch/workspace/tmp-round35-r1/dist-single",
+  "frozenShaBefore": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "frozenShaAfter": "fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a",
+  "pre": {
+    "loadavg": "1.55 2.21 2.12 1/425 18174",
+    "chromePre": 0,
+    "top": "     67  8.6 hatch           /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174\n    751  2.4 hatch-execd     /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174\n      1  0.0 systemd         /usr/lib/systemd/systemd\n     17  0.0 systemd-journal /usr/lib/systemd/systemd-journald\n   6374  0.0 bash            bash /home/hatch/workspace/tmp-round36-s1/drive.sh\n   6371  0.0 bash            /bin/bash --norc --noprofile -c umask 0007; bash -n ~/workspace/tmp-round36-s1/drive.sh && bash ~/workspace/tmp-round36-s1/drive.sh > ~/workspace/tmp-round36-s1/drive.stdout.log 2>&1; echo \"DRIVER_EXIT=$?\"\n  18162  0.0 bash            bash /home/hatch/workspace/repo-1/apps/web/scripts/seek-ab-quiet-run36.sh single b6 /home/hatch/workspace/tmp-round35-r1/dist-single fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a\n  18175  0.0 bash            bash /home/hatch/workspace/repo-1/apps/web/scripts/seek-ab-quiet-run36.sh single b6 /home/hatch/workspace/tmp-round35-r1/dist-single fffcd2c019461441b16860879841b0c019ef6fb2085815eb1fa3764b1cf8136a"
+  },
+  "post": {
+    "loadavg": "1.96 2.24 2.13 1/427 18459",
+    "chromePost": 0
+  },
+  "q6Exit": 0,
+  "n2Verdict": "PASS",
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "predictedRate xuôi (trừ tick biên) 0.977 < 0.98 (mất do gap >100ms, trừ tick biên: 0.125s / 1 gap)"
+  ],
+  "decodeSide": {
+    "decodeLabel": "HEALTHY",
+    "reasons": [],
+    "thresholds": {
+      "stallMax": 1,
+      "stallRunMax": 1,
+      "tickRateMin": 80,
+      "tailIntervals": 8,
+      "tailMeanMax": 1.5,
+      "tailMaxMax": 2
+    },
+    "signals": {
+      "intervals": 27,
+      "drawDeltaSeries": [
+        2,
+        1,
+        2,
+        2,
+        2,
+        2,
+        2,
+        3,
+        3,
+        2,
+        3,
+        3,
+        3,
+        3,
+        4,
+        6,
+        8,
+        10,
+        7,
+        2,
+        1,
+        2,
+        1,
+        2,
+        2,
+        2,
+        2
+      ],
+      "holdDeltaSeries": [
+        19,
+        22,
+        23,
+        21,
+        22,
+        22,
+        20,
+        18,
+        23,
+        23,
+        20,
+        19,
+        24,
+        15,
+        18,
+        18,
+        19,
+        19,
+        19,
+        22,
+        21,
+        18,
+        22,
+        20,
+        21,
+        18,
+        22
+      ],
+      "stallIntervalsAfterWarmup": 0,
+      "maxStallRun": 0,
+      "firstIntervalDrawDelta": 2,
+      "reverseTickRate": 90.76,
+      "reverseRafN": 1308,
+      "reverseRafWallSec": 14.412,
+      "reverseRafGapP50": 0.0054,
+      "reverseDrawDelta": 83,
+      "reverseFps": 5.969505178365938,
+      "tailSeries": [
+        2,
+        1,
+        2,
+        1,
+        2,
+        2,
+        2,
+        2
+      ],
+      "tailMean": 1.75,
+      "tailMax": 2,
+      "tailMin": 1,
+      "tailFps": 3.5,
+      "headMean": 3.667,
+      "tailHeadRatio": 0.477,
+      "tailSlope": 0.071
+    }
+  },
+  "reverseFps": 5.969505178365938,
+  "reverseDrawDelta": 83,
+  "reverseWallSec": 13.904,
+  "forwardInterpRate": 1.001088139281828,
+  "load": {
+    "atStart": "1.75 2.24 2.13",
+    "beforeFwd": "1.61 2.20 2.11",
+    "beforeRev": "1.76 2.21 2.12",
+    "atEnd": "1.96 2.24 2.13"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 1.55,
+          "load5": 2.21,
+          "load15": 2.12,
+          "raw": "1.55 2.21 2.12"
+        },
+        "top": [
+          "18185 48.5 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "67 8.6 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "751 2.4 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "6374 0.0 bash bash /home/hatch/workspace/tmp-round36-s1/drive.sh",
+          "6371 0.0 bash /bin/bash --norc --noprofile -c umask 0007; bash -n ~/workspace/tmp-round36-s1/drive.sh && bash ~/workspace/tmp-round36-s1/drive.sh > ~/workspace/",
+          "18162 0.0 bash bash /home/hatch/workspace/repo-1/apps/web/scripts/seek-ab-quiet-run36.sh single b6 /home/hatch/workspace/tmp-round35-r1/dist-single fffcd2c01946"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 1.96,
+          "load5": 2.24,
+          "load15": 2.13,
+          "raw": "1.96 2.24 2.13"
+        },
+        "top": [
+          "67 8.6 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "751 2.4 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "18237 1.0 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-U",
+          "18185 0.5 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "1 0.0 systemd /usr/lib/systemd/systemd",
+          "17 0.0 systemd-journal /usr/lib/systemd/systemd-journald",
+          "6374 0.0 bash bash /home/hatch/workspace/tmp-round36-s1/drive.sh",
+          "6371 0.0 bash /bin/bash --norc --noprofile -c umask 0007; bash -n ~/workspace/tmp-round36-s1/drive.sh && bash ~/workspace/tmp-round36-s1/drive.sh > ~/workspace/"
+        ],
+        "chromePost": 2
+      },
+      "chromePre": 0,
+      "chromePost": 2
+    }
+  },
+  "accepted": false,
+  "exclusionReasons": [
+    "v2: predictedRate xuôi (trừ tick biên) 0.977 < 0.98 (mất do gap >100ms, trừ tick biên: 0.125s / 1 gap)"
+  ],
+  "q6LabeledPath": "/home/hatch/workspace/tmp-round36-s1/runs/single-b6/q6-labeled.json"
+}

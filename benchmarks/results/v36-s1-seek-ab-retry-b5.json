@@ -1,0 +1,197 @@
+{
+  "run": "retry-b5",
+  "variant": "retry",
+  "attempt": "b5",
+  "bundle": "index-BqxQgBuf.js",
+  "bundleSha256": "f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d",
+  "frozenDist": "/home/hatch/workspace/tmp-round35-r1/dist-retry",
+  "frozenShaBefore": "f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d",
+  "frozenShaAfter": "f2fb01664045fcac30275d0d2459e38188f28b4413988d33063331d503b4f65d",
+  "pre": {
+    "loadavg": "0.19 1.62 1.84 14/482 16158",
+    "chromePre": 0,
+    "top": "  15667 97.5 ffmpeg          ffmpeg -y -v error -i /home/hatch/workspace/tmp-round36-s3/wc/noise-1080-15s.mp4 -vf scale=-2:720 -r 30 -c:v libx264 -preset veryfast -crf 23 -pix_fmt yuv420p -an -movflags +faststart /home/hatch/workspace/tmp-round36-s3/wc/noise-1080-15s__proxy_720p.mp4\n  16081 18.7 MainThread      node /home/hatch/workspace/repo-1/node_modules/.bin/tsc --noEmit\n     67  8.3 hatch           /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174\n  16061  4.0 npm exec tsc -- npm exec tsc --noEmit\n    751  2.2 hatch-execd     /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174\n  15654  0.2 MainThread      node -e  const {generateProxy} = require(\"/home/hatch/workspace/repo-1/server/render/src/proxy.js\"); const t0 = Date.now(); const r = generateProxy(\"/home/hatch/workspace/tmp-round36-s3/wc/noise-1080-15s.mp4\", \"/home/hatch/workspace/tmp-round36-s3/wc\", {height: 720}); console.log(JSON.stringify({...r, genMs: Date.now()-t0})); \n      1  0.0 systemd         /usr/lib/systemd/systemd\n     17  0.0 systemd-journal /usr/lib/systemd/systemd-journald"
+  },
+  "post": {
+    "loadavg": "3.71 2.18 2.01 11/645 16712",
+    "chromePost": 15
+  },
+  "q6Exit": 1,
+  "n2Verdict": "PARTIAL",
+  "loadLabel": "under-load",
+  "labelReasons": [
+    "load1 cuối lượt 2.72 ≥ 2",
+    "tốc độ xuôi 0.9247842170160296 ngoài [0.98, 1.02]",
+    "gap rAF P50 xuôi 0.0225s > 0.015s",
+    "predictedRate xuôi (trừ tick biên) 0.895 < 0.98 (mất do gap >100ms, trừ tick biên: 0.665s / 8 gap)"
+  ],
+  "decodeSide": {
+    "decodeLabel": "STARVED",
+    "reasons": [
+      "stall intervals sau warmup 9 > 1",
+      "chuỗi stall dài nhất 2 khoảng > 1",
+      "tickRate ngược 38.8/s < 80/s"
+    ],
+    "thresholds": {
+      "stallMax": 1,
+      "stallRunMax": 1,
+      "tickRateMin": 80,
+      "tailIntervals": 8,
+      "tailMeanMax": 1.5,
+      "tailMaxMax": 2
+    },
+    "signals": {
+      "intervals": 27,
+      "drawDeltaSeries": [
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "holdDeltaSeries": [
+        14,
+        15,
+        18,
+        17,
+        11,
+        14,
+        14,
+        13,
+        12,
+        15,
+        11,
+        5,
+        7,
+        8,
+        9,
+        4,
+        5,
+        5,
+        8,
+        9,
+        7,
+        5,
+        7,
+        7,
+        8,
+        12,
+        7
+      ],
+      "stallIntervalsAfterWarmup": 9,
+      "maxStallRun": 2,
+      "firstIntervalDrawDelta": 1,
+      "reverseTickRate": 38.81,
+      "reverseRafN": 601,
+      "reverseRafWallSec": 15.487,
+      "reverseRafGapP50": 0.0113,
+      "reverseDrawDelta": 21,
+      "reverseFps": 1.4164305949008498,
+      "tailSeries": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "tailMean": 0.375,
+      "tailMax": 1,
+      "tailMin": 0,
+      "tailFps": 0.75,
+      "headMean": 0.889,
+      "tailHeadRatio": 0.422,
+      "tailSlope": 0.083
+    }
+  },
+  "reverseFps": 1.4164305949008498,
+  "reverseDrawDelta": 21,
+  "reverseWallSec": 14.826,
+  "forwardInterpRate": 0.9247842170160296,
+  "load": {
+    "atStart": "0.36 1.56 1.81",
+    "beforeFwd": "0.57 1.59 1.82",
+    "beforeRev": "0.52 1.56 1.81",
+    "atEnd": "2.72 1.96 1.94"
+  },
+  "machine": {
+    "nproc": 4,
+    "processes": {
+      "pre": {
+        "loadavg": {
+          "load1": 0.19,
+          "load5": 1.62,
+          "load15": 1.84,
+          "raw": "0.19 1.62 1.84"
+        },
+        "top": [
+          "15667 97.5 ffmpeg ffmpeg -y -v error -i /home/hatch/workspace/tmp-round36-s3/wc/noise-1080-15s.mp4 -vf scale=-2:720 -r 30 -c:v libx264 -preset veryfast -crf 23 ",
+          "16081 19.0 MainThread node /home/hatch/workspace/repo-1/node_modules/.bin/tsc --noEmit",
+          "16169 10.5 MainThread node apps/web/scripts/probe-round34-q6-measure-protocol.mjs run",
+          "67 8.3 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "16061 3.6 npm exec tsc -- npm exec tsc --noEmit",
+          "751 2.2 hatch-execd /opt/hatch/bin/hatch-execd --runtime-cell-leader=2174",
+          "15654 0.2 MainThread node -e const {generateProxy} = require(\"/home/hatch/workspace/repo-1/server/render/src/proxy.js\"); const t0 = Date.now(); const r = genera",
+          "1 0.0 systemd /usr/lib/systemd/systemd"
+        ],
+        "chromePre": 0
+      },
+      "post": {
+        "loadavg": {
+          "load1": 2.72,
+          "load5": 1.96,
+          "load15": 1.94,
+          "raw": "2.72 1.96 1.94"
+        },
+        "top": [
+          "16466 41.5 MainThread node /home/hatch/workspace/repo-1/node_modules/.bin/vite build --outDir /tmp/vcut-s5-dist",
+          "16519 15.1 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --no-sandbox --remote-debugging-pipe --no-first-run --no-default-browser-",
+          "16613 11.6 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=renderer --top-chrome-webui --gpu-client-id=5 --crashpad-handler-p",
+          "16698 10.0 ps ps -eo pid,pcpu,comm,args --sort=-pcpu",
+          "67 8.4 hatch /opt/hatch/bin/hatch daemon --runtime-cell-leader=2174",
+          "16549 5.8 chrome /home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-U",
+          "16474 5.5 esbuild /home/hatch/workspace/repo-1/node_modules/@esbuild/linux-x64/bin/esbuild --service=0.25.12 --ping",
+          "16452 4.9 npm exec vite b npm exec vite build --outDir /tmp/vcut-s5-dist"
+        ],
+        "chromePost": 16
+      },
+      "chromePre": 0,
+      "chromePost": 16
+    }
+  },
+  "accepted": false,
+  "exclusionReasons": [
+    "v2: load1 cuối lượt 2.72 ≥ 2",
+    "v2: tốc độ xuôi 0.9247842170160296 ngoài [0.98, 1.02]",
+    "v2: gap rAF P50 xuôi 0.0225s > 0.015s",
+    "v2: predictedRate xuôi (trừ tick biên) 0.895 < 0.98 (mất do gap >100ms, trừ tick biên: 0.665s / 8 gap)",
+    "decode: stall intervals sau warmup 9 > 1",
+    "decode: chuỗi stall dài nhất 2 khoảng > 1",
+    "decode: tickRate ngược 38.8/s < 80/s"
+  ],
+  "q6LabeledPath": "/home/hatch/workspace/tmp-round36-s1/runs/retry-b5/q6-labeled.json"
+}
