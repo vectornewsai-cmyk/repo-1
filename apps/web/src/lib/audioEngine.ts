@@ -163,7 +163,13 @@ export class AudioEngine {
   private analyser: AnalyserNode | null = null;
   private nodes = new Map<
     HTMLMediaElement,
-    { gain: GainNode; low: BiquadFilterNode; high: BiquadFilterNode; comp: DynamicsCompressorNode }
+    {
+      src: MediaElementAudioSourceNode;
+      gain: GainNode;
+      low: BiquadFilterNode;
+      high: BiquadFilterNode;
+      comp: DynamicsCompressorNode;
+    }
   >();
   private levelBuf: Uint8Array | null = null;
   private lastLevelAt = -1;
@@ -231,6 +237,7 @@ export class AudioEngine {
 
   /** Lấy (hoặc tạo) GainNode cho 1 element. Null = không tạo được → dùng fallback. */
   private nodeFor(el: HTMLMediaElement): {
+    src: MediaElementAudioSourceNode;
     gain: GainNode;
     low: BiquadFilterNode;
     high: BiquadFilterNode;
@@ -266,12 +273,47 @@ export class AudioEngine {
       // (tránh nhân đôi với GainNode).
       el.volume = 1;
       el.muted = false;
-      const rec = { gain, low, high, comp };
+      // ROUND44-Z2: giữ cả src (trước đây chỉ giữ 4 node hạ nguồn) để
+      // releaseElement ngắt được toàn bộ chuỗi; nếu không, src vẫn nối
+      // vào low và Map giữ element cũ sau khi pool drop nó.
+      const rec = { src, gain, low, high, comp };
       this.nodes.set(el, rec);
       return rec;
     } catch {
       return null;
     }
+  }
+
+  /**
+   * ROUND44-Z2: gỡ toàn bộ graph của 1 element khỏi engine. Dùng khi
+   * MediaPool.dropElement bỏ element cũ (phục hồi sau cạn cap seek đợt
+   * 43 Y2): trước đây nodes Map giữ element + 4 node hạ nguồn, còn
+   * MediaElementSourceNode (không được lưu) vẫn nối vào chuỗi — element
+   * đã pause + gỡ src nên chỉ xuất im lặng, nhưng không bao giờ được
+   * thu hồi cho tới dispose toàn cục; mỗi lần cạn cap rò thêm 5 node
+   * (source + low + high + comp + gain) cho mỗi clip active. Nay ngắt
+   * cả 5 node rồi xóa khỏi Map; lần update sau (element MỚI do pool
+   * tạo lại, khác object) sẽ tạo source mới — đúng vì Web Audio chỉ
+   * cho createMediaElementSource 1 lần / 1 element / 1 context, và
+   * element cũ không bao giờ được dùng lại sau drop.
+   * Trả true nếu element thực sự có node trong engine; element chưa
+   * từng update (fallback el.volume, chưa có graph) → false, không ném.
+   * An toàn khi gọi nhiều lần (lần 2 → false) và khi element đang phát:
+   * chỉ gọi ở điểm pool đã pause + gỡ src (vòng lặp đã ngủ vì cạn cap),
+   * không gọi trong lúc seek đang bay.
+   */
+  releaseElement(el: HTMLMediaElement): boolean {
+    const rec = this.nodes.get(el);
+    if (!rec) return false;
+    this.nodes.delete(el);
+    for (const n of [rec.src, rec.low, rec.high, rec.comp, rec.gain]) {
+      try {
+        n.disconnect();
+      } catch {
+        /* node mock / đã ngắt — bỏ qua */
+      }
+    }
+    return true;
   }
 
   /**
