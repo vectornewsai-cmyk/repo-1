@@ -12,6 +12,17 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../store";
 import { t as i18nT, useLang } from "../i18n";
+import { formatImportProgressText } from "../lib/importProgressText41W3";
+import { pushToast } from "../lib/toast";
+// ROUND50-F3: hậu tố giây cho toast done — header thật nếu đọc được,
+// khoảng theo GIỌNG đang chọn nếu header thiếu (xem
+// ttsEstimate50F3.ts). Chuyển từ helper E1 sang helper F3 ở đợt 50 F3
+// (1 import + 1 lời gọi + thêm voice); helper E1 vẫn tồn tại làm bản
+// ghi lịch sử, helper C4 vẫn là fallback cho giọng chưa đo (clone mode
+// → voice undefined → hệ số gộp chung). Component KHÔNG hardcode hệ
+// số nào: mọi số đều lấy từ lib F3 (chồng lên E1/C4).
+import { ttsDoneSuffixRange50F3 } from "../lib/ttsEstimate50F3";
+import type { ImportFileProgressEvent } from "../lib/ingestProgress39T5";
 
 const BRIDGE_URL =
   (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_BRIDGE_URL ||
@@ -29,6 +40,8 @@ export function TtsButton({ text }: { text: string }) {
   const [voice, setVoice] = useState<string>("Hải Đăng");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  // Đợt 41 W3 — tiến trình importFiles của file WAV TTS (như MediaBin V5).
+  const [importProgress, setImportProgress] = useState<ImportFileProgressEvent | null>(null);
   // Phase 9 R4: chế độ clone giọng từ file mẫu (VieNeu-TTS encode_reference,
   // 100% local). Mẫu tốt nhất: 3–30s, giọng rõ, ít nhiễu.
   const [cloneMode, setCloneMode] = useState(false);
@@ -84,15 +97,35 @@ export function TtsButton({ text }: { text: string }) {
       }
       const blob = await res.blob();
       if (!blob || blob.size === 0) throw new Error(i18nT("tts.bridgeEmpty"));
-      const dur = Number(res.headers.get("X-TTS-Duration") || 0);
+      // ROUND50-F3: đừng tự suy dur = 0 là "không có số giây" rồi bỏ
+      // hậu tố im lặng như trước — ttsDoneSuffixRange50F3 trả số thật khi
+      // header đọc được, và khoảng " (≈…–…s)" theo GIỌNG đang chọn
+      // (hệ số riêng khi giọng đã đo, fallback hệ số gộp C4 khi giọng
+      // lạ hoặc clone) khi header thiếu (nợ đợt 43 Y3 §6, nối lib
+      // F3 ở đợt 50 F3; trước đó dùng helper E1 nên toast cho 11 giọng
+      // chưa đo M4 và 19 giọng chưa đo M3 vẫn lệch có hệ thống — vd
+      // Trúc Ly M3 thực 13,6 s nhưng khoảng dense gộp bắt đầu từ
+      // 15,4 s (dự báo chậm hơn thực tế); xem LIMITS F3 §4).
+      // Header có thể thiếu vì CORS bridge chưa expose X-TTS-* (sửa gốc
+      // ở bridge, xem LIMITS B3 §4) hoặc proxy lột header.
+      const durSuffix = ttsDoneSuffixRange50F3({ headerValue: res.headers.get("X-TTS-Duration"), text: t, voice: cloneMode ? undefined : voice });
       const file = new File([blob], fileName, { type: "audio/wav" });
       const st = useStore.getState();
-      await st.importFiles([file]);
+      await st.importFiles([file], (ev) => setImportProgress(ev));
+      setImportProgress(null);
       // Tìm media item vừa thêm (tên file duy nhất)
       const item = useStore.getState().media.find((m) => m.name === file.name);
       if (!item) throw new Error(i18nT("tts.mediaErr"));
+      // ROUND43-Y3: ĐỪNG setMsg(done) ở đây — đó chính là bug đợt 42 X3
+      // §4.8: addMediaAtPlayhead() đi qua execCommand đặt selection sang
+      // clip audio mới → Inspector rời nhánh text → TtsButton unmount
+      // trước khi setMsg kịp render, nên thông báo done KHÔNG BAO GIỜ
+      // hiện. Giữ nguyên semantics selection (người dùng thấy clip mới
+      // được chọn, giống TemplatePackModal) và báo done bằng toast toàn
+      // cục — Toasts gắn ở App root nên sống sót qua lần unmount này.
+      // Msg cục bộ vẫn dùng cho busy/lỗi (xảy ra khi còn mounted).
       st.addMediaAtPlayhead(item.id);
-      setMsg(i18nT("tts.done", { dur: dur > 0 ? ` (${dur.toFixed(1)}s)` : "" }));
+      pushToast(i18nT("tts.done", { dur: durSuffix }), "success");
     } catch (e) {
       const m = e instanceof Error ? e.message : String(e);
       setMsg(m.includes("Failed to fetch")
@@ -156,6 +189,11 @@ export function TtsButton({ text }: { text: string }) {
         </div>
       )}
       {msg && <div className="tts-msg">{msg}</div>}
+      {importProgress && (
+        <div className="tts-msg" role="status" data-import-progress={importProgress.phase}>
+          ⏳ {formatImportProgressText(importProgress, (k, vars) => i18nT(k, vars))}
+        </div>
+      )}
     </div>
   );
 }

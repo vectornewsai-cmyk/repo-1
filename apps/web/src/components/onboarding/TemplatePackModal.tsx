@@ -10,6 +10,9 @@
  */
 import { useState } from "react";
 import { useStore } from "../../store";
+import { t as i18nT } from "../../i18n";
+import { formatImportProgressText } from "../../lib/importProgressText41W3";
+import type { ImportFileProgressEvent } from "../../lib/ingestProgress39T5";
 import { ot } from "../../lib/onboardingCopy";
 import {
   PackError,
@@ -45,6 +48,8 @@ export function TemplatePackModal({ onClose }: { onClose: () => void }) {
   const [done, setDone] = useState<DoneInfo | null>(null);
   const [ttsMsg, setTtsMsg] = useState<string | null>(null);
   const [ttsBusy, setTtsBusy] = useState(false);
+  // Đợt 41 W3 — tiến trình importFiles (create + makeTts dùng chung, như MediaBin V5).
+  const [importProgress, setImportProgress] = useState<ImportFileProgressEvent | null>(null);
 
   const create = async (tpl: TemplateDef) => {
     setBusy(true);
@@ -58,7 +63,8 @@ export function TemplatePackModal({ onClose }: { onClose: () => void }) {
       if (!res.ok) throw new Error(res.error);
       const st = useStore.getState();
       st.replaceProject(res.spec);
-      await st.importFiles(files);
+      await st.importFiles(files, (ev) => setImportProgress(ev));
+      setImportProgress(null);
       st.checkMissingMedia();
       const clipCount = res.spec.tracks.reduce((n, t) => n + t.clips.length, 0);
       setDone({ spec: res.spec, clipCount, firstText: firstTextOf(res.spec) });
@@ -111,7 +117,8 @@ export function TemplatePackModal({ onClose }: { onClose: () => void }) {
       const dur = Number(res.headers.get("X-TTS-Duration") || 0);
       const file = new File([blob], `tts-pack-${Date.now()}.wav`, { type: "audio/wav" });
       const st = useStore.getState();
-      await st.importFiles([file]);
+      await st.importFiles([file], (ev) => setImportProgress(ev));
+      setImportProgress(null);
       const item = useStore.getState().media.find((m) => m.name === file.name);
       if (!item) throw new Error("Không đưa được file vào kho media.");
       st.addMediaAtPlayhead(item.id);
@@ -160,6 +167,11 @@ export function TemplatePackModal({ onClose }: { onClose: () => void }) {
               </div>
             ))}
           {busy && <p className="muted">{ot("pack.creating")}</p>}
+          {importProgress && (
+            <p className="muted" role="status" data-import-progress={importProgress.phase}>
+              ⏳ {formatImportProgressText(importProgress, (k, vars) => i18nT(k, vars))}
+            </p>
+          )}
           {error && <p className="error">{error}</p>}
           {done && (
             <div>

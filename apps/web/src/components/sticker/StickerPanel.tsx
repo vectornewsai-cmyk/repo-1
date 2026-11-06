@@ -20,6 +20,8 @@ import { uid } from "../../lib";
 import { detectAnimatedImage } from "../../lib/userLut";
 import "./sticker.css";
 import { t as i18nT, useLang } from "../../i18n";
+import { formatImportProgressText } from "../../lib/importProgressText41W3";
+import type { ImportFileProgressEvent } from "../../lib/ingestProgress39T5";
 import {
   STICKER_CATEGORIES,
   STICKER_LIBRARY,
@@ -130,6 +132,8 @@ export function StickerPanel() {
   const selection = useStore((s) => s.selection);
   const spec = useStore((s) => s.spec);
   const [err, setErr] = useState<string | null>(null);
+  // Đợt 41 W3 — tiến trình importFiles của sticker APNG động (như MediaBin V5).
+  const [importProgress, setImportProgress] = useState<ImportFileProgressEvent | null>(null);
   const [tab, setTab] = useState<"all" | StickerCategory>("all");
   const [query, setQuery] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -162,7 +166,8 @@ export function StickerPanel() {
     }
     if (info?.format === "apng" && info.animated) {
       const st = useStore.getState();
-      await st.importFiles([f]);
+      await st.importFiles([f], (ev) => setImportProgress(ev));
+      setImportProgress(null);
       const item = useStore.getState().media.find((m) => m.file === f);
       setErr(null);
       const e = addStickerToTimeline(item ? item.name : f.name);
@@ -247,6 +252,11 @@ export function StickerPanel() {
         </>
       )}
       {err && <p className="warn">{err}</p>}
+      {importProgress && (
+        <p className="tips" role="status" data-import-progress={importProgress.phase}>
+          ⏳ {formatImportProgressText(importProgress, (k, vars) => i18nT(k, vars))}
+        </p>
+      )}
     </div>
   );
 }

@@ -14,6 +14,8 @@ import { useRef, useState } from "react";
 import { useStore } from "../store";
 import type { MediaItem } from "../media";
 import { t as i18nT, useLang } from "../i18n";
+import { formatImportProgressText } from "../lib/importProgressText41W3";
+import type { ImportFileProgressEvent } from "../lib/ingestProgress39T5";
 
 const BRIDGE_URL =
   (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_BRIDGE_URL ||
@@ -27,6 +29,8 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
   useLang();
   const [status, setStatus] = useState<Status>("idle");
   const [msg, setMsg] = useState("");
+  // Đợt 41 W3 — tiến trình importFiles của file MOV đã xoá nền (như MediaBin V5).
+  const [importProgress, setImportProgress] = useState<ImportFileProgressEvent | null>(null);
   // Phase 7 P6: chọn session — "auto" (mặc định) thử birefnet trước, lỗi/OOM
   // thì bridge tự chuyển sang u2net và báo qua header X-Bgremove-*.
   const [session, setSession] = useState<BgSession>("auto");
@@ -80,7 +84,8 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
 
       // Thêm vào media bin rồi đổi clip.src sang file mới (1 bước undo).
       const st = useStore.getState();
-      await st.importFiles([file]);
+      await st.importFiles([file], (ev) => setImportProgress(ev));
+      setImportProgress(null);
       const added = useStore.getState().media.find((m) => m.name === file.name)
         ?? useStore.getState().media[useStore.getState().media.length - 1];
       const sel = useStore.getState().selection[0];
@@ -163,6 +168,11 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
       )}
       {status === "idle" && msg && (
         <p style={{ fontSize: 12, color: "#30a46c" }}>{msg}</p>
+      )}
+      {importProgress && (
+        <p style={{ fontSize: 12 }} role="status" data-import-progress={importProgress.phase}>
+          ⏳ {formatImportProgressText(importProgress, (k, vars) => i18nT(k, vars))}
+        </p>
       )}
     </div>
   );
