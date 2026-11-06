@@ -1,0 +1,103 @@
+{
+  "fixture": "/home/hatch/workspace/tmp-round37-t6/noise-30s__proxy_480p.mp4",
+  "fixtureBytes": 37122084,
+  "fixtureSha256": "1167f321f4d4164a90db7bf561210c976a73518fae90a2f07aafd1014f0f7dc3",
+  "mp4DemuxSha256": "5fe0a3fe133cdfbc501ef5ddf9f767265e3b1fc6c35eb2e7d6b5608cae1131a7",
+  "reverseWebcodecsSha256": "d270ef1996469b62c225ae6d8f0f6fdbeae5d8d88370063b6cc2dd43ffc9e1e8",
+  "runs": {
+    "dsf2": {
+      "devicePixelRatio": 2,
+      "track": {
+        "width": 854,
+        "height": 480,
+        "codec": "avc1.64001F",
+        "samples": 900,
+        "timescale": 15360
+      },
+      "ctts": {
+        "nonzeroSamples": 770,
+        "presentDecreasesInDecodeOrder": 265
+      },
+      "gop": {
+        "from": 45,
+        "to": 106,
+        "targetDecodeIndex": 60,
+        "targetPts": 30720,
+        "targetPtsSec": 2
+      },
+      "element": {
+        "dpr": 2,
+        "dprCap": 2,
+        "cssW": 427,
+        "cssH": 240,
+        "backingW": 854,
+        "backingH": 480,
+        "videoCurrentTime": 2,
+        "centerMean": 127.58
+      },
+      "webcodecs": {
+        "dpr": 2,
+        "dprCap": 2,
+        "backingW": 854,
+        "backingH": 480,
+        "decoded": 62,
+        "drawn": 62,
+        "missing": 0,
+        "drawTimestampsStrictlyDecreasing": true,
+        "drawTimestampMatchesSamplePts": 62,
+        "drawTimestampMismatches": 0,
+        "drawOrderDiffersFromNaiveIndexDesc": true,
+        "firstDrawnPtsSec": 3.6,
+        "lastDrawnPtsSec": 1.5667,
+        "lastDrawnCenterMean": 127.18
+      }
+    },
+    "dsf3": {
+      "devicePixelRatio": 3,
+      "track": {
+        "width": 854,
+        "height": 480,
+        "codec": "avc1.64001F",
+        "samples": 900,
+        "timescale": 15360
+      },
+      "ctts": {
+        "nonzeroSamples": 770,
+        "presentDecreasesInDecodeOrder": 265
+      },
+      "gop": {
+        "from": 45,
+        "to": 106,
+        "targetDecodeIndex": 60,
+        "targetPts": 30720,
+        "targetPtsSec": 2
+      },
+      "element": {
+        "dpr": 3,
+        "dprCap": 2,
+        "cssW": 427,
+        "cssH": 240,
+        "backingW": 854,
+        "backingH": 480,
+        "videoCurrentTime": 2,
+        "centerMean": 127.58
+      },
+      "webcodecs": {
+        "dpr": 3,
+        "dprCap": 2,
+        "backingW": 854,
+        "backingH": 480,
+        "decoded": 62,
+        "drawn": 62,
+        "missing": 0,
+        "drawTimestampsStrictlyDecreasing": true,
+        "drawTimestampMatchesSamplePts": 62,
+        "drawTimestampMismatches": 0,
+        "drawOrderDiffersFromNaiveIndexDesc": true,
+        "firstDrawnPtsSec": 3.6,
+        "lastDrawnPtsSec": 1.5667,
+        "lastDrawnCenterMean": 127.18
+      }
+    }
+  }
+}

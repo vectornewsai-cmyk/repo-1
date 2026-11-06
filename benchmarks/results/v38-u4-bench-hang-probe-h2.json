@@ -1,0 +1,44 @@
+{
+  "url": "http://127.0.0.1:5197",
+  "durationSec": 10,
+  "chromium": "/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome",
+  "timestamp": "2026-11-02T13:09:37.131Z",
+  "hangProbe": {
+    "mode": "controlled-hang-H2-busy-loop",
+    "timeoutMs": 5000,
+    "wallMs": 5274,
+    "error": "CDP timeout: Runtime.evaluate",
+    "expression": "while(true){}",
+    "snapshotFilesBefore": 2,
+    "snapshotFilesNew": [
+      "cdp-hang-20261102_131008586-Runtime.evaluate-4500.json"
+    ],
+    "snapshotFile": "/home/hatch/workspace/vcut-cdp-hang-snapshots/bench-preview-fps/cdp-hang-20261102_131008586-Runtime.evaluate-4500.json",
+    "snapshotBundle": {
+      "name": "index-BNjMwXhb.js",
+      "sha256_16": "0169bac961fdef10",
+      "status": "captured",
+      "dist": "/home/hatch/workspace/repo-1/apps/web/dist"
+    },
+    "snapshotProcPid": 4500,
+    "chromePid": 4500,
+    "distDir": "apps/web/dist",
+    "ok": true
+  },
+  "frozenDist": {
+    "validity": "VALID",
+    "valid": true,
+    "problems": [],
+    "distDir": "/home/hatch/workspace/repo-1/apps/web/dist",
+    "bundle": {
+      "name": "index-BNjMwXhb.js",
+      "sha256_16": "0169bac961fdef10",
+      "source": "index-entry"
+    },
+    "manifestBefore": "7b800a66b068e1605a3a19c870519500d3fe8e5f5e3ae3dcd4a26acbfc42e151",
+    "manifestAfter": "7b800a66b068e1605a3a19c870519500d3fe8e5f5e3ae3dcd4a26acbfc42e151",
+    "fileCountBefore": 254,
+    "fileCountAfter": 254,
+    "servesDistAssumption": "Bundle/manifest này chỉ là bundle đang đo khi PAGE_URL serve đúng distDir này (vite preview). Khi đo vite dev, đây chỉ là dist trên đĩa lúc bắt đầu đo."
+  }
+}

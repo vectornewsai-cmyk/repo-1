@@ -30,6 +30,35 @@ export function shouldAutoProxy(item: MediaItem, enabled: boolean): boolean {
   return true;
 }
 
+/**
+ * Đợt 38 U2 — kích thước proxy đã biết (nếu có) để truyền qua cổng S4.
+ * Nguồn duy nhất được coi là "biết": field proxySizeBytes do bridge
+ * trả về lúc tạo proxy (POST /api/proxy) — tức kích thước của chính
+ * file proxy đang fetch, KHÔNG phải item.file.size của file gốc.
+ * Giá trị không hợp lệ (<= 0, NaN, vô cực, không phải số) coi như
+ * chưa biết -> trả undefined, đường cũ (cổng HEAD/GET của R3) chạy.
+ */
+export function proxyKnownSizeBytes(item: MediaItem): number | undefined {
+  const s = item.proxySizeBytes;
+  if (typeof s !== "number" || !Number.isFinite(s) || s <= 0) return undefined;
+  return s;
+}
+
+/**
+ * Đợt 38 U2 — kích thước cần truyền vào reverseWebcodecsFrameFor cho
+ * item này, theo đúng luật S4 + bổ sung U2:
+ * - Có proxyUrl: chỉ truyền proxySizeBytes khi biết (metadata bridge);
+ *   chưa biết thì undefined — KHÔNG truyền item.file.size (size gốc
+ *   không phải size proxy, truyền sai sẽ chặn nhầm proxy nhỏ).
+ * - Không proxyUrl: truyền item.file.size như cũ (đang phát bản gốc).
+ * Hàm này là điểm duy nhất quyết định size truyền đi, để preview
+ * không tự viết lại ternary ở nhiều chỗ rồi lệch nhau.
+ */
+export function knownSizeBytesForPreview(item: MediaItem): number | undefined {
+  if (item.proxyUrl) return proxyKnownSizeBytes(item);
+  return item.file?.size;
+}
+
 /** Nhãn badge hiển thị trên preview, "" khi không dùng proxy. */
 export function proxyBadgeLabel(item: MediaItem): string {
   if (!item.proxyUrl) return "";

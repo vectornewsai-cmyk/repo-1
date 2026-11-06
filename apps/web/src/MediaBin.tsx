@@ -6,6 +6,8 @@ import { fmtTime } from "./lib";
 import { t, useLang } from "./i18n";
 import { pushToast } from "./lib/toast";
 import { shouldAutoProxy } from "./lib/proxy";
+import type { ImportFileProgressEvent } from "./lib/ingestProgress39T5";
+import { formatBytes, ingestPercent } from "./lib/ingestProgress39T5";
 
 /** Trạng thái proxy tự động của 1 item (R3 Phase 9) — giữ ở MediaBin, không đụng store. */
 export type AutoStatus = "creating" | "done" | "failed" | "skipped";
@@ -50,7 +52,15 @@ function MediaCard({ item, autoStatus }: { item: MediaItem; autoStatus?: AutoSta
         return;
       }
       if (typeof data.proxyUrl !== "string") throw new Error("Bridge không trả proxyUrl.");
-      st.setMediaProxy(item.id, `${BRIDGE_URL}${data.proxyUrl}`, Number(data.proxyHeight) || 720);
+      // Đợt 38 U2: truyền proxySizeBytes khi bridge trả (kích thước
+      // của chính file proxy) để preview đưa qua cổng S4; bridge cũ
+      // không trả thì undefined và cổng HEAD/GET của R3 vẫn làm việc.
+      st.setMediaProxy(
+        item.id,
+        `${BRIDGE_URL}${data.proxyUrl}`,
+        Number(data.proxyHeight) || 720,
+        typeof data.proxySizeBytes === "number" ? data.proxySizeBytes : undefined,
+      );
       pushToast(`Đã gắn proxy ${data.proxyHeight ?? 720}p cho "${item.name}" — preview sẽ mượt hơn.`, "success");
     } catch (e) {
       pushToast(`Không tạo được proxy: ${e instanceof Error ? e.message : "lỗi không rõ"} (bridge: ${BRIDGE_URL})`, "error");
@@ -120,11 +130,20 @@ export function MediaBin() {
   // R3 (Phase 9): proxy tự động — mặc định BẬT, tắt được, lưu localStorage.
   const [autoProxy, setAutoProxy] = useState(readAutoProxy);
   const [autoStatus, setAutoStatus] = useState<Record<string, AutoStatus>>({});
+  // Đợt 40 V5 — tiến trình ingest của importFiles thường (theo từng
+  // file, % thật chỉ ở pha hashing; pha storing chỉ báo "đang ghi").
+  // Chỉ hiện trong lúc importFiles chạy; xong thì xoá để khỏi lẫn với
+  // vòng proxy tự động chạy sau đó.
+  const [importProgress, setImportProgress] = useState<ImportFileProgressEvent | null>(null);
 
   const onFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const before = new Set(useStore.getState().media.map((m) => m.id));
-    await st.importFiles([...files]);
+    try {
+      await st.importFiles([...files], (ev) => setImportProgress(ev));
+    } finally {
+      setImportProgress(null);
+    }
     if (fileRef.current) fileRef.current.value = "";
     if (!autoProxy) return;
     // Chỉ tạo cho item vừa import, tuần tự để khỏi đè CPU bridge.
@@ -145,7 +164,14 @@ export function MediaBin() {
           continue;
         }
         if (typeof data.proxyUrl !== "string") throw new Error("Bridge không trả proxyUrl.");
-        useStore.getState().setMediaProxy(item.id, `${BRIDGE_URL}${data.proxyUrl}`, Number(data.proxyHeight) || 720);
+        // Đợt 38 U2: như đường bấm tay ở trên — truyền proxySizeBytes
+        // khi bridge trả, để cổng S4 áp dụng được cho nguồn proxy.
+        useStore.getState().setMediaProxy(
+          item.id,
+          `${BRIDGE_URL}${data.proxyUrl}`,
+          Number(data.proxyHeight) || 720,
+          typeof data.proxySizeBytes === "number" ? data.proxySizeBytes : undefined,
+        );
         setAutoStatus((s) => ({ ...s, [item.id]: "done" }));
       } catch {
         setAutoStatus((s) => ({ ...s, [item.id]: "failed" }));
@@ -165,6 +191,58 @@ export function MediaBin() {
           {t("mediabin.import")}
         </button>
       </div>
+      {importProgress && (
+        <div
+          className="valid-banner"
+          role="status"
+          aria-live="polite"
+          data-import-progress={importProgress.phase}
+          style={{ fontSize: 13, margin: "6px 8px" }}
+        >
+          ⏳{" "}
+          {importProgress.phase === "hashing"
+            ? t("importProgress.hashing", {
+                index: String(importProgress.fileIndex + 1),
+                count: String(importProgress.fileCount),
+                name: importProgress.fileName,
+                done: formatBytes(importProgress.bytesDone),
+                total: formatBytes(importProgress.totalBytes),
+                percent: String(ingestPercent(importProgress)),
+              })
+            : importProgress.phase === "storing"
+              ? t("importProgress.storing", {
+                  index: String(importProgress.fileIndex + 1),
+                  count: String(importProgress.fileCount),
+                  name: importProgress.fileName,
+                  total: formatBytes(importProgress.totalBytes),
+                })
+              : t("importProgress.done", {
+                  index: String(importProgress.fileIndex + 1),
+                  count: String(importProgress.fileCount),
+                  name: importProgress.fileName,
+                  total: formatBytes(importProgress.totalBytes),
+                })}
+          {importProgress.phase === "hashing" && importProgress.totalBytes > 0 && (
+            <div
+              style={{
+                height: 8,
+                marginTop: 6,
+                borderRadius: 4,
+                background: "var(--border-soft)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${ingestPercent(importProgress)}%`,
+                  background: "var(--accent, #4da3ff)",
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
       <label style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "13px", padding: "6px 8px" }}>
         <input
           type="checkbox"

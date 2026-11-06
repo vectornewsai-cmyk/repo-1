@@ -1,0 +1,61 @@
+{
+  "allPass": true,
+  "results": {
+    "phaA.noFalseRelink": {
+      "pass": true,
+      "detail": ""
+    },
+    "phaA.binHasA": {
+      "pass": true,
+      "detail": "📁 THƯ VIỆN\n＋ Nhập file\nTự tạo proxy 720p khi import video (preview mượt hơn, export vẫn dùng gốc)\n00:04.0\nmau-1.webm\n＋ ThêmProxy 720p\n00:04.0\nmau-2.webm\n＋ ThêmProxy 720p\n00:02.0\nu3-dup-a.mp4\n＋ ThêmPr"
+    },
+    "phaB.noFalseRelink": {
+      "pass": true,
+      "detail": ""
+    },
+    "phaB.binHasBoth": {
+      "pass": true,
+      "detail": "📁 THƯ VIỆN\n＋ Nhập file\nTự tạo proxy 720p khi import video (preview mượt hơn, export vẫn dùng gốc)\n00:04.0\nmau-1.webm\n＋ ThêmProxy 720p\n00:04.0\nmau-2.webm\n＋ ThêmProxy 720p\n00:02.0\nu3-dup-a.mp4\n＋ ThêmProxy 720p\n00:02.0\nu3-dup-b.mp4\n＋ ThêmProxy 720p\n↺ Dự án mẫu"
+    },
+    "phaB.oneManifestWithAlias": {
+      "pass": true,
+      "detail": "[{\"assetId\":\"a_046b4c8ac3ad6b05\",\"originalName\":\"mau-1.webm\",\"aliases\":[]},{\"assetId\":\"a_4e7e42bacacfdc43\",\"originalName\":\"mau-2.webm\",\"aliases\":[]},{\"assetId\":\"a_5b5b5f2ce86109c1\",\"originalName\":\"u3-dup-a.mp4\",\"aliases\":[\"u3-dup-b.mp4\"]}]"
+    },
+    "phaC.relinkShownForMissing": {
+      "pass": true,
+      "detail": "🔗 Media thiếu (1)\n✕\nProject này dùng 1 file media chưa có trong phiên làm việc. Chọn lại từng file để tiếp tục dựng — clip thiếu sẽ hiện placeholder cho tới khi được relink.\n🎬\nmissing-u3.png\nVideo · dùng trong 1 clip (Video 3)\n🔗 Chọn lại\nBỏ qua — dựng tiếp với placeholder"
+    },
+    "phaC.noRelinkAfterRelinkReload": {
+      "pass": true,
+      "detail": ""
+    },
+    "phaC.binHasC": {
+      "pass": true,
+      "detail": "📁 THƯ VIỆN\n＋ Nhập file\nTự tạo proxy 720p khi import video (preview mượt hơn, export vẫn dùng gốc)\n00:04.0\nmau-1.webm\n＋ ThêmProxy 720p\n00:04.0\nmau-2.webm\n＋ ThêmProxy 720p\n00:02.0\nu3-dup-a.mp4\n＋ ThêmProxy 720p\n00:02.0\nu3-relink-c.mp4\n＋ ThêmProxy 720p\n↺ Dự án mẫu"
+    },
+    "phaC.aliasOrManifestForC": {
+      "pass": true,
+      "detail": "[{\"assetId\":\"a_046b4c8ac3ad6b05\",\"originalName\":\"mau-1.webm\",\"aliases\":[]},{\"assetId\":\"a_4e7e42bacacfdc43\",\"originalName\":\"mau-2.webm\",\"aliases\":[]},{\"assetId\":\"a_5b5b5f2ce86109c1\",\"originalName\":\"u3-dup-a.mp4\",\"aliases\":[\"u3-dup-b.mp4\",\"u3-relink-c.mp4\"]}]"
+    },
+    "phaD.relinkShownForRealMissing": {
+      "pass": true,
+      "detail": "🔗 Media thiếu (1)\n✕\nProject này dùng 1 file media chưa có trong phiên làm việc. Chọn lại từng file để tiếp tục dựng — clip thiếu sẽ hiện placeholder cho tới khi được relink.\n🎬\nfile-that-does-not-exist-u3.mp4\nVideo · dùng trong 1 clip (Video 3)\n🔗 Chọn lại\nBỏ qua — dựng tiếp với placeholder"
+    },
+    "phaE.restoredNoRelink": {
+      "pass": true,
+      "detail": ""
+    },
+    "phaE.exportPanelOpened": {
+      "pass": true,
+      "detail": "opened=true dialog=true"
+    },
+    "phaE.exportViaBridgeDone": {
+      "pass": true,
+      "detail": "⬇ Xuất video\n×\n✅ Spec hợp lệ (video-spec v0.2.0) — render worker đọc được.\nTHỜI LƯỢNG\n00:08.0\nTRACK\n4\nCLIP\n5\n🎬 XUẤT MP4\nChất lượng:\n720p · Nhanh\n1080p · Cân bằng\n4K · Chất lượng cao\nTikTok / Reels 9:16\nYouTube 1080p\nInstagram vuông 1:1\nTùy chỉnh…\n\n1920×1080 @30fps — chất lượng tốt, dung lượng vừa phải — 1920×1080 @30fps · CRF 20 · medium · audio 160k\n\nSẽ xuất: 1920×1080 @30fps · CRF 20 · medium ·"
+    },
+    "phaE.mp4Downloaded": {
+      "pass": true,
+      "detail": "vcut-faa987d1b9280d5d.mp4 2279135 bytes"
+    }
+  }
+}

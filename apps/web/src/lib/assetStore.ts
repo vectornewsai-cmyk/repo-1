@@ -18,6 +18,15 @@
  * ASSETSTORE_LIMITS.md.
  */
 
+// Đợt 39 T5: import kèm đuôi .ts theo quy ước test strip-types của repo
+// (test import "./assetStore.ts"); tsc với moduleResolution bundler mà
+// không bật allowImportingTsExtensions sẽ báo TS5097 cho đường dẫn đuôi
+// .ts nên dòng import này mang @ts-ignore có chủ đích — vite và node
+// strip-types đều resolve được đuôi .ts (tiền lệ: nestedPreview.ts).
+// @ts-ignore: xem ghi chú trên (TS5097, đuôi .ts cho strip-types)
+import { hashBlobIncremental, IMPORT_BANNER_MIN_DISPLAY_MS, INGEST_CHUNKED_THRESHOLD } from "./ingestProgress39T5.ts";
+import type { IngestProgressCallback } from "./ingestProgress39T5";
+
 export const ASSET_DB_NAME = "vcut-studio-assets";
 export const ASSET_DB_VERSION = 1;
 export const ASSET_STORE_MANIFESTS = "manifests";
@@ -33,6 +42,14 @@ export interface AssetManifest {
   /** `a_` + 16 ký tự hex đầu của sha256. Dedup tra theo full hash. */
   assetId: string;
   originalName: string;
+  /**
+   * Đợt 38 U3 — tên bí danh cùng bytes: khi cùng nội dung được import /
+   * relink dưới tên khác, tên đó được ghi thêm vào đây (xem `addAlias`)
+   * để rehydrate khớp lại clip sau reload mà KHÔNG cần đổi src clip sang
+   * `asset:` (không chạm export/render). Không có field này ở manifest cũ
+   * vẫn mở bình thường (tuỳ chọn, đọc bằng `?? []`).
+   */
+  aliases?: string[];
   /** SHA-256 hex đầy đủ (64 ký tự) của bytes gốc. */
   sha256: string;
   /** Kích thước bytes. */
@@ -64,15 +81,49 @@ export interface AssetStats {
   bytes: number;
 }
 
+/** Một alias thừa đã bị `cleanupStaleAliases` xoá khỏi manifest. */
+export interface StaleAliasRemoval {
+  assetId: string;
+  alias: string;
+}
+
+/** Báo cáo của `cleanupStaleAliases`. */
+export interface StaleAliasReport {
+  /** Số manifest đã quét. */
+  scanned: number;
+  /** Số manifest có ít nhất một alias thừa bị xoá. */
+  cleaned: number;
+  /** Từng alias đã xoá (để UI/log hiển thị rõ). */
+  removed: StaleAliasRemoval[];
+}
+
 /** Mặt tối thiểu của IDBFactory mà AssetStore cần (để inject fake khi test). */
 export interface IDBFactoryLike {
   open(name: string, version?: number): IDBOpenDBRequest;
   deleteDatabase(name: string): IDBOpenDBRequest;
 }
 
+/**
+ * Đợt 40 V5 — mặt tối thiểu của Web Locks API mà AssetStore cần, để
+ * inject fake khi test đa ngữ cảnh trong Node. Trình duyệt thật dùng
+ * `navigator.locks` (Chrome 69+, Firefox 96+, Safari 15.4+ — Baseline
+ * Widely Available; localhost là secure context nên dùng được).
+ * Lock KHÔNG thay hàng đợi trong-tab: nó chỉ thêm lớp khoá liên tab.
+ */
+export interface LockManagerLike {
+  request<T>(name: string, callback: () => Promise<T> | T): Promise<T>;
+}
+
 export interface AssetStoreOptions {
   idb?: IDBFactoryLike;
   dbName?: string;
+  /**
+   * Đợt 40 V5 — provider Web Locks. Mặc định đọc `navigator.locks`
+   * nếu có; test truyền fake chia sẻ giữa các instance để mô phỏng
+   * nhiều tab. Không truyền và trình duyệt không có locks → chỉ còn
+   * hàng đợi trong-tab (giới hạn một tab của đợt 39 T5 vẫn đúng).
+   */
+  locks?: LockManagerLike | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -173,6 +224,7 @@ function req<T>(r: IDBRequest<T>): Promise<T> {
 export class AssetStore {
   private readonly idb: IDBFactoryLike;
   private readonly dbName: string;
+  private readonly locks: LockManagerLike | null;
   private dbPromise: Promise<IDBDatabase> | null = null;
   /** Object URL đã cấp theo assetId — để thu hồi khi remove. */
   private readonly issuedURLs = new Map<string, Set<string>>();
@@ -180,6 +232,16 @@ export class AssetStore {
   constructor(opts: AssetStoreOptions = {}) {
     this.idb = opts.idb ?? defaultFactory();
     this.dbName = opts.dbName ?? ASSET_DB_NAME;
+    if (opts.locks !== undefined) {
+      this.locks = opts.locks;
+    } else {
+      const nav = globalThis as unknown as {
+        navigator?: { locks?: LockManagerLike };
+      };
+      const candidate = nav.navigator?.locks;
+      this.locks =
+        candidate && typeof candidate.request === "function" ? candidate : null;
+    }
   }
 
   private openDb(): Promise<IDBDatabase> {
@@ -215,19 +277,19 @@ export class AssetStore {
   }
 
   /**
-   * Ingest một Blob/File vào store. Tính SHA-256; nếu hash đã tồn tại thì
-   * trả về manifest cũ (dedup) mà không lưu trùng bytes.
+   * Ghi manifest + blob mới (hoặc trả về manifest đã thắng khi dedup).
+   * Dùng chung cho `ingest` (băm WebCrypto một lần) và
+   * `ingestWithProgress` (băm tăng dần có tiến trình) để hai đường
+   * không lệch nhau về ngữ nghĩa dedup.
    */
-  async ingest(input: Blob, meta: IngestMeta = {}): Promise<AssetManifest> {
-    if (!input || typeof input.arrayBuffer !== "function" || typeof input.size !== "number") {
-      throw new Error("ingest cần một Blob/File hợp lệ.");
-    }
-    const fileName = (input as Partial<File>).name;
-    const name = meta.name || fileName || "unnamed";
-    const mimeType = input.type || guessMime(name);
-    const hash = await sha256Hex(input);
-    const assetId = `a_${hash.slice(0, 16)}`;
-
+  private async putManifest(
+    hash: string,
+    assetId: string,
+    input: Blob,
+    meta: IngestMeta,
+    name: string,
+    mimeType: string,
+  ): Promise<AssetManifest> {
     const putNew = async (): Promise<AssetManifest> => {
       const db = await this.openDb();
       const tx = db.transaction([ASSET_STORE_MANIFESTS, ASSET_STORE_BLOBS], "readwrite");
@@ -274,6 +336,90 @@ export class AssetStore {
       }
       throw e;
     }
+  }
+
+  /**
+   * Ingest một Blob/File vào store. Tính SHA-256; nếu hash đã tồn tại thì
+   * trả về manifest cũ (dedup) mà không lưu trùng bytes.
+   */
+  async ingest(input: Blob, meta: IngestMeta = {}): Promise<AssetManifest> {
+    if (!input || typeof input.arrayBuffer !== "function" || typeof input.size !== "number") {
+      throw new Error("ingest cần một Blob/File hợp lệ.");
+    }
+    const fileName = (input as Partial<File>).name;
+    const name = meta.name || fileName || "unnamed";
+    const mimeType = input.type || guessMime(name);
+    const hash = await sha256Hex(input);
+    const assetId = `a_${hash.slice(0, 16)}`;
+    return this.putManifest(hash, assetId, input, meta, name, mimeType);
+  }
+
+  /**
+   * Đợt 39 T5 — ingest có tiến trình (dùng cho relink file lớn).
+   * Giống `ingest` về ngữ nghĩa dedup, khác ở chỗ băm tăng dần theo lát
+   * 8 MiB và báo `onProgress` sau mỗi lát (pha "hashing"), rồi báo pha
+   * "storing" trước khi ghi IDB và pha "done" sau khi ghi xong. Băm
+   * thuần JS chậm hơn WebCrypto (đo thật trong LIMITS đợt 39 T5) nhưng
+   * là cái giá để UI có % thật; đường `ingest` cũ giữ nguyên cho các
+   * đường không cần tiến trình. Giai đoạn "storing" là một lần `put`
+   * nguyên tử nên KHÔNG có % theo byte — callback chỉ báo pha, UI phải
+   * hiển thị đúng như vậy, không nội suy %.
+   * Hybrid (đợt 39 T5): file ≤ INGEST_CHUNKED_THRESHOLD (64 MiB) dùng
+   * WebCrypto một lần cho nhanh, callback chỉ nhận một sự kiện hashing
+   * chốt 100% (báo đã băm xong, không phải tiến trình từng lát).
+   */
+  async ingestWithProgress(
+    input: Blob,
+    meta: IngestMeta = {},
+    onProgress?: IngestProgressCallback,
+  ): Promise<AssetManifest> {
+    if (!input || typeof input.arrayBuffer !== "function" || typeof input.size !== "number") {
+      throw new Error("ingest cần một Blob/File hợp lệ.");
+    }
+    const fileName = (input as Partial<File>).name;
+    const name = meta.name || fileName || "unnamed";
+    const mimeType = input.type || guessMime(name);
+    // ROUND43-Y3: bọc callback để đo thời gian hiển thị banner từ sự
+    // kiện tiến trình đầu tiên (không đo từ lúc bắt đầu băm: nhánh
+    // one-shot chỉ bắn event đầu tiên khi băm xong, trước đó banner
+    // chưa hề xuất hiện nên pad tính từ đó mới đúng ý nghĩa hiển thị).
+    let firstProgressAt = 0;
+    const timedProgress: IngestProgressCallback | undefined = onProgress
+      ? (ev) => {
+          if (firstProgressAt === 0) firstProgressAt = Date.now();
+          onProgress(ev);
+        }
+      : undefined;
+    const hash =
+      input.size <= INGEST_CHUNKED_THRESHOLD
+        ? await sha256Hex(input).then(async (h) => {
+            timedProgress?.({ phase: "hashing", bytesDone: input.size, totalBytes: input.size });
+            // Đợt 42 X3: như hashBlobIncremental — nhường 1 macrotask để
+            // banner kịp vẽ sự kiện hashing 100% trước khi storing tới.
+            // Không có dòng này, click-test headed chứng minh UI chỉ vẽ
+            // storing (React batch 2 setState liên tiếp), trái với mô tả
+            // "UI hiển thị đúng như vậy" ở INGEST_CHUNKED_THRESHOLD.
+            await new Promise((r) => setTimeout(r, 0));
+            return h;
+          })
+        : await hashBlobIncremental(input, timedProgress);
+    // ROUND43-Y3 (min-display): nếu banner mới hiện chưa đủ 500 ms thì
+    // chờ nốt trước khi sang pha storing, để mắt người đọc được %/trạng
+    // thái. Chỉ pad trên đường thành công có callback (file lớn băm lâu
+    // hơn 500 ms thì pad = 0, không làm chậm thêm); lỗi trong lúc băm
+    // throw trước dòng này nên đường thất bại không bị giữ banner — và
+    // panel tự clear banner trong catch của nó, không kẹt.
+    if (timedProgress && firstProgressAt > 0) {
+      const elapsed = Date.now() - firstProgressAt;
+      if (elapsed < IMPORT_BANNER_MIN_DISPLAY_MS) {
+        await new Promise((r) => setTimeout(r, IMPORT_BANNER_MIN_DISPLAY_MS - elapsed));
+      }
+    }
+    const assetId = `a_${hash.slice(0, 16)}`;
+    onProgress?.({ phase: "storing", bytesDone: input.size, totalBytes: input.size });
+    const manifest = await this.putManifest(hash, assetId, input, meta, name, mimeType);
+    onProgress?.({ phase: "done", bytesDone: input.size, totalBytes: input.size });
+    return manifest;
   }
 
   /** Manifest của asset, null nếu không tồn tại. */
@@ -383,6 +529,154 @@ export class AssetStore {
     await req(tx.objectStore(ASSET_STORE_MANIFESTS).delete(assetId));
     this.revokeObjectURLs(assetId);
     return true;
+  }
+
+  /**
+   * Hàng đợi tuần tự hoá các thao tác alias theo assetId (đợt 39 T5).
+   * Mỗi thao tác alias chạy nối tiếp nhau trong cùng instance này, đọc
+   * manifest TƯƠI sau khi thao tác trước đã ghi xong — nhờ đó hai
+   * `addAlias` song song không còn làm mất alias (nợ đợt 38 U3 §4).
+   * Đợt 40 V5 thêm `withAliasLock` (Web Locks) trong hàng đợi này nên
+   * hai tab cùng origin cũng tuần tự hoá qua lock theo assetId khi
+   * trình duyệt có `navigator.locks`; trình duyệt không có locks thì
+   * giới hạn một tab của đợt 39 T5 vẫn đúng — xem LIMITS đợt 40 V5.
+   */
+  private readonly aliasQueues = new Map<string, Promise<void>>();
+
+  /**
+   * Đợt 40 V5 — khoá liên tab cho một thao tác alias. Tên lock theo
+   * assetId (`vcut-alias:<assetId>`, assetId chỉ chứa `a_` + hex nên
+   * an toàn làm tên lock). Web Locks là mutex thật theo origin: hai tab
+   * cùng origin không bao giờ chạy callback cùng tên đồng thời, và lock
+   * tự giải phóng khi tab giữ nó đóng/crash — không có flag kẹt như
+   * localStorage. Nếu `locks.request` throw (trình duyệt lạ, lock bị
+   * abort) thì vẫn chạy op không khoá liên tab thay vì làm hỏng ghi
+   * alias: hàng đợi trong-tab vẫn giữ, nhưng bảo đảm liên tab của lần
+   * gọi đó mất — caller best-effort (import/relink) chấp nhận được,
+   * và LIMITS ghi rõ fallback này. KHÔNG dùng BroadcastChannel thay
+   * thế: election bằng message không có mutual exclusion nguyên tử,
+   * phức tạp hơn mà yếu hơn Web Locks có sẵn.
+   */
+  private async withAliasLock<T>(assetId: string, op: () => Promise<T>): Promise<T> {
+    if (!this.locks) return op();
+    try {
+      return await this.locks.request(`vcut-alias:${assetId}`, op);
+    } catch {
+      return op();
+    }
+  }
+
+  private enqueueAliasOp<T>(assetId: string, op: () => Promise<T>): Promise<T> {
+    const prev = this.aliasQueues.get(assetId) ?? Promise.resolve();
+    // Thứ tự lồng: hàng đợi trong-tab trước, lock liên tab trong —
+    // op chỉ xin lock sau khi op trước cùng instance đã xong nên cùng
+    // một tab không bao giờ tự deadlock với chính mình; addAliases gọi
+    // addAlias tuần tự (await từng cái) nên cũng không lồng lock.
+    const run = prev.then(() => this.withAliasLock(assetId, op));
+    // Chuỗi chờ luôn resolve để thao tác sau không bị kẹt vì lỗi trước;
+    // caller vẫn nhận đúng kết quả/lỗi của chính mình qua `run`.
+    this.aliasQueues.set(
+      assetId,
+      run.then(
+        () => undefined,
+        () => undefined,
+      ),
+    );
+    return run;
+  }
+
+  /**
+   * Đợt 38 U3 — ghi bí danh cho một asset đã dedup (nay tuần tự hoá theo
+   * assetId, đợt 39 T5 — xem `aliasQueues`).
+   * - Trả false (không ghi) khi asset không tồn tại, alias rỗng, alias
+   *   trùng originalName của chính asset, hoặc alias trùng originalName
+   *   của MỘT asset khác (tránh che tên thật).
+   * - Alias đã có sẵn → trả true, không nhân đôi.
+   */
+  async addAlias(assetId: string, alias: string): Promise<boolean> {
+    return this.enqueueAliasOp(assetId, async () => {
+      if (!alias) return false;
+      const manifests = await this.list();
+      const target = manifests.find((m) => m.assetId === assetId);
+      if (!target) return false;
+      if (target.originalName === alias) return false;
+      if (manifests.some((m) => m.assetId !== assetId && m.originalName === alias)) {
+        return false;
+      }
+      const aliases = target.aliases ?? [];
+      if (aliases.includes(alias)) return true;
+      const db = await this.openDb();
+      const tx = db.transaction([ASSET_STORE_MANIFESTS], "readwrite");
+      await req(
+        tx.objectStore(ASSET_STORE_MANIFESTS).put({ ...target, aliases: [...aliases, alias] }),
+      );
+      return true;
+    });
+  }
+
+  /**
+   * Đợt 39 T5 — ghi nhiều bí danh cho một asset. Chạy tuần tự qua cùng
+   * hàng đợi `addAlias` nên an toàn khi gọi song song với `addAlias`
+   * khác; trả về số alias trong danh sách thực sự xuất hiện mới sau
+   * batch (alias đã có sẵn / bị guard từ chối không tính).
+   */
+  async addAliases(assetId: string, aliases: string[]): Promise<number> {
+    const before = new Set((await this.get(assetId))?.aliases ?? []);
+    for (const alias of aliases) {
+      await this.addAlias(assetId, alias);
+    }
+    const after = new Set((await this.get(assetId))?.aliases ?? []);
+    let added = 0;
+    for (const alias of new Set(aliases)) {
+      if (after.has(alias) && !before.has(alias)) added += 1;
+    }
+    return added;
+  }
+
+  /**
+   * Đợt 39 T5 — dọn alias thừa: alias trùng tên thật (originalName) của
+   * bất kỳ manifest nào. Loại alias này chỉ tồn tại khi nó được tạo
+   * trước khi đợt 38 U3 thêm guard (guard nay từ chối ngay lúc ghi);
+   * `planRehydrate` vốn đã ưu tiên tên thật nên alias thừa không che
+   * asset khác, nhưng vẫn nên dọn để manifest sạch. Trả về báo cáo
+   * (không throw khi không có gì để dọn). Chạy qua hàng đợi alias của
+   * từng asset nên không đua với `addAlias` đang bay trong cùng
+   * instance. Đây là thao tác bảo trì: chỉ chạy khi không có
+   * import/relink đang bay (UI RelinkPanel gọi khi user bấm nút dọn).
+   */
+  async cleanupStaleAliases(): Promise<StaleAliasReport> {
+    const snapshot = await this.list();
+    const realNames = new Set(snapshot.map((m) => m.originalName));
+    const removed: StaleAliasRemoval[] = [];
+    let cleaned = 0;
+    for (const manifest of snapshot) {
+      const aliases = manifest.aliases ?? [];
+      const stale = aliases.filter((a) => realNames.has(a));
+      if (stale.length === 0) continue;
+      // Chạy qua hàng đợi của asset để không đua với addAlias đang bay:
+      // đọc manifest tươi trong hàng đợi, chỉ xoá alias vẫn còn thừa.
+      const removedHere = await this.enqueueAliasOp(manifest.assetId, async () => {
+        const fresh = await this.get(manifest.assetId);
+        if (!fresh) return [] as string[];
+        const current = fresh.aliases ?? [];
+        const nowReal = new Set((await this.list()).map((m) => m.originalName));
+        const stillStale = current.filter((a) => nowReal.has(a));
+        if (stillStale.length === 0) return [] as string[];
+        const db = await this.openDb();
+        const tx = db.transaction([ASSET_STORE_MANIFESTS], "readwrite");
+        await req(
+          tx
+            .objectStore(ASSET_STORE_MANIFESTS)
+            .put({ ...fresh, aliases: current.filter((a) => !nowReal.has(a)) }),
+        );
+        return stillStale;
+      });
+      if (removedHere.length > 0) {
+        cleaned += 1;
+        for (const alias of removedHere) removed.push({ assetId: manifest.assetId, alias });
+      }
+    }
+    return { scanned: snapshot.length, cleaned, removed };
   }
 
   /** Xoá toàn bộ asset (manifest + blob). */

@@ -1,0 +1,46 @@
+{
+  "date": "2026-11-02",
+  "thread": "Phase 9 round 38, U4 (snapshot INVALID branches)",
+  "harness": "mobile-touch-check.mjs (KHONG SUA CODE — nhánh INVALID đã có sẵn từ đợt 37 T4, chỉ kích hoạt live)",
+  "isolation": "dist scratch /tmp/vcut-u4-mobile-dist (copy của apps/web/dist, manifest khớp dist thật lúc đó), serve bằng static server /tmp/u4-serve-dist.mjs cổng 4191; dist thật KHÔNG bị đụng",
+  "distBefore": {
+    "bundle": "index-BNjMwXhb.js",
+    "sha256_16": "0169bac961fdef10",
+    "fileCount": 254,
+    "manifestSha256": "7b800a66b068e1605a3a19c870519500d3fe8e5f5e3ae3dcd4a26acbfc42e151"
+  },
+  "attempt0_raceLost": {
+    "note": "Tamper viết sau khi lượt đã đối chiếu xong (VALID, exit 1 do TRUSTED SCRUB/PINCH FAIL như đợt 37) — không tính là bằng chứng INVALID, chỉ ghi để khỏi hiểu nhầm.",
+    "frozenDist": "VALID"
+  },
+  "attempt1_invalid": {
+    "tamper": "13:12:17 UTC (20:12:17 +07), khi mobile pid còn sống; lượt kết thúc 13:12:45 UTC",
+    "tamperFile": "u4-tamper.txt thêm vào dist scratch",
+    "frozenDist": {
+      "validity": "INVALID",
+      "fileCountBefore": 254,
+      "fileCountAfter": 255,
+      "manifestAfter": "3a21704d493df06e19d9c0cb7a6c273375f19375d06eca5527d34bbc0ec5eb0f"
+    },
+    "frozenInvalidLine": true,
+    "touch": "TRUSTED SCRUB PASS, TRUSTED PINCH PASS",
+    "exitCodeNote": "Runner đo exit bằng wait trên pid nền nên báo 0 sai — KHÔNG dùng số này; xem attempt2."
+  },
+  "attempt2_invalid_confirmed": {
+    "cdpPort": 9240,
+    "previewPort": 4191,
+    "tamper": "13:13:08 UTC, ngay sau dòng 'dist đóng băng'",
+    "frozenDist": {
+      "validity": "INVALID",
+      "fileCountBefore": 254,
+      "fileCountAfter": 255,
+      "manifestAfter": "cd3be4c5a73e2a13dbe60d9e7671d15f71651f87f09bb6ca1b93f9539a3cc451"
+    },
+    "frozenInvalidLine": true,
+    "touch": "TRUSTED SCRUB PASS, TRUSTED PINCH PASS",
+    "exitCode": 1,
+    "exitCodeSource": "WRAPPED-EXIT ghi bởi wrapper sau khi node kết thúc (đáng tin)"
+  },
+  "observation_touchDiffersFromRound37": "Trên static server scratch, touch PASS cả 2 lần, khác đợt 37 (FAIL cả 2 trên vite preview 4173). U4 không kết luận nguyên nhân (ngoài phạm vi); bằng chứng INVALID không phụ thuộc kết quả touch.",
+  "fullLog": "/tmp/u4-mobile-invalid3.log (ngoài repo, không vào batch)"
+}

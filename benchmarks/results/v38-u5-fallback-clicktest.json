@@ -1,0 +1,535 @@
+{
+  "noiseFile": "/home/hatch/workspace/tmp-round34-q2/sparse-gop-noise.mp4",
+  "noiseBytes": 419967521,
+  "appOrigin": "http://127.0.0.1:5199",
+  "proxyToggle": "unchecked",
+  "preReverse": {
+    "timeText": "00:30.0 / 00:30.0",
+    "stats": {
+      "draw": 0,
+      "hold": 0,
+      "skip": 1,
+      "maxHoldAgeSec": 0,
+      "stale": false
+    },
+    "wc": null,
+    "centerMean": 12.666666666668506,
+    "reverseBadge": false
+  },
+  "reverseSamples": [
+    {
+      "timeText": "00:29.7 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 4,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 3
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:29.2 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 9,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 8
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:28.9 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 13,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 12
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:28.4 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 21,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 20
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:28.0 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 25,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 24
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:27.5 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 30,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 29
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:27.2 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 34,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 33
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:26.8 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 39,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 38
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:26.2 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 47,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 46
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:25.8 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 51,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 50
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:25.4 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 55,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 54
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:25.0 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 59,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 58
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:24.5 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 65,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 64
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:24.2 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 68,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 67
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:23.8 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 73,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 72
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:23.3 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 79,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 78
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:22.9 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 83,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 82
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:22.3 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 89,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 88
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:21.9 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 95,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 94
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:21.4 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 100,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 99
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:21.0 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 107,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 106
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:20.4 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 113,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 112
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:19.9 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 119,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 118
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:19.4 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 126,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 125
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:19.0 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 130,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 129
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:18.5 / 00:30.0",
+      "stats": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 136,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 135
+      },
+      "centerMean": 12.666666666668506,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:18.1 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 2,
+        "skip": 137,
+        "maxHoldAgeSec": 0.10000000000000142,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 139
+      },
+      "centerMean": 162.08963333333352,
+      "reverseBadge": true
+    },
+    {
+      "timeText": "00:17.6 / 00:30.0",
+      "stats": {
+        "draw": 1,
+        "hold": 7,
+        "skip": 137,
+        "maxHoldAgeSec": 0.533333333333335,
+        "stale": false
+      },
+      "wc": {
+        "hits": 0,
+        "misses": 144
+      },
+      "centerMean": 162.08963333333352,
+      "reverseBadge": true
+    }
+  ],
+  "afterStop": {
+    "timeText": "00:17.5 / 00:30.0",
+    "stats": {
+      "draw": 1,
+      "hold": 8,
+      "skip": 137,
+      "maxHoldAgeSec": 0.6333333333333329,
+      "stale": false
+    },
+    "wc": {
+      "hits": 0,
+      "misses": 145
+    },
+    "centerMean": 162.08963333333352,
+    "reverseBadge": true
+  },
+  "drawDelta": 1,
+  "holdDelta": 7,
+  "wcHits": 0,
+  "wcMisses": 144,
+  "backgroundMean": 12.667,
+  "contentIndices": [
+    26,
+    27
+  ],
+  "firstContentIndex": 26,
+  "timeTexts": [
+    "00:29.7 / 00:30.0",
+    "00:29.2 / 00:30.0",
+    "00:28.9 / 00:30.0",
+    "00:28.4 / 00:30.0",
+    "00:28.0 / 00:30.0",
+    "00:27.5 / 00:30.0",
+    "00:27.2 / 00:30.0",
+    "00:26.8 / 00:30.0",
+    "00:26.2 / 00:30.0",
+    "00:25.8 / 00:30.0",
+    "00:25.4 / 00:30.0",
+    "00:25.0 / 00:30.0",
+    "00:24.5 / 00:30.0",
+    "00:24.2 / 00:30.0",
+    "00:23.8 / 00:30.0",
+    "00:23.3 / 00:30.0",
+    "00:22.9 / 00:30.0",
+    "00:22.3 / 00:30.0",
+    "00:21.9 / 00:30.0",
+    "00:21.4 / 00:30.0",
+    "00:21.0 / 00:30.0",
+    "00:20.4 / 00:30.0",
+    "00:19.9 / 00:30.0",
+    "00:19.4 / 00:30.0",
+    "00:19.0 / 00:30.0",
+    "00:18.5 / 00:30.0",
+    "00:18.1 / 00:30.0",
+    "00:17.6 / 00:30.0"
+  ],
+  "checks": {
+    "reverseBadgeSeen": true,
+    "elementDrawn": true,
+    "wcDeclinedEveryDraw": true,
+    "appResponsiveAfterStop": true,
+    "videoContentDrawn": true,
+    "videoContentEarly": false
+  },
+  "verdict": "PARTIAL",
+  "verdictNote": "Routing fallback đúng (wcHits 0, badge, playhead lùi) và có frame thật, nhưng frame thật tới muộn (firstContentIndex > 7): trước đó canvas chỉ vẽ nền #0a0c10 do skip (guard K4) trong lúc element seek đuổi target trên GOP thưa — độ trễ của đường element cũ, không phải do code T5."
+}

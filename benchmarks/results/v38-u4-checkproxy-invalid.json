@@ -1,0 +1,29 @@
+{
+  "date": "2026-11-02",
+  "thread": "Phase 9 round 38, U4 (snapshot INVALID branches)",
+  "harness": "check-proxy-auto.mjs (KHONG SUA CODE — nhánh INVALID đã có sẵn từ đợt 37 T4, chỉ kích hoạt live)",
+  "isolation": "Cây scratch /tmp/u4-checkproxy (apps/web copy + server/bridge copy + server/render copy + symlink node_modules); --preview-dist serve scratch dist; dist thật KHÔNG bị đụng",
+  "distBefore": {
+    "bundle": "index-BNjMwXhb.js",
+    "sha256_16": "0169bac961fdef10",
+    "fileCount": 254,
+    "manifestSha256": "7b800a66b068e1605a3a19c870519500d3fe8e5f5e3ae3dcd4a26acbfc42e151"
+  },
+  "precondition_port8787": "Lúc chuẩn bị, cổng 8787 bị bridge lạ pid 6314 (PPID 1, chạy từ ~13:13 UTC, thuộc luồng khác) chiếm — U4 KHÔNG chạy đè lên; chờ tới khi cổng trống (13:14:43 UTC) mới chạy, để khỏi dùng nhầm bridge của luồng khác.",
+  "video": "/tmp/r3-auto-proxy-test.mp4 (ffmpeg testsrc2 1920x1080 30fps 5s, tạo lại vì file cũ đã mất)",
+  "run": {
+    "tamper": "13:16:21 UTC (20:16:21 +07), ngay sau dòng 'dist đóng băng (preview)'",
+    "tamperFile": "u4-tamper.txt thêm vào scratch dist",
+    "verdictBeforeFreeze": "PROXY 720p OK",
+    "frozenDist": {
+      "validity": "INVALID",
+      "fileCountBefore": 254,
+      "fileCountAfter": 255,
+      "manifestAfter": "9226a6903ba6e5b0075a7575cf77d51a7a0359449737dedfc6869802ab813462"
+    },
+    "frozenInvalidLine": "FROZEN INVALID: dist đổi giữa chừng — verdict bị loại, exit 3",
+    "exitCode": 3,
+    "exitCodeSource": "WRAPPED-EXIT ghi bởi wrapper sau khi node kết thúc (đáng tin)"
+  },
+  "fullLog": "/tmp/u4-checkproxy.log (ngoài repo, không vào batch)"
+}

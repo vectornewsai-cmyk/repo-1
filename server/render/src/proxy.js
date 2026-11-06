@@ -125,6 +125,11 @@ function generateProxy(input, outDir, opts = {}) {
 
   const pmeta = probeMedia(outFile, opts);
   const st = fs.statSync(input);
+  // Đợt 38 U2: ghi kích thước của chính file proxy vào manifest
+  // (trường mới, cộng thêm — findProxy không kiểm tra trường này nên
+  // sidecar cũ/mới đều đọc được). Client dùng proxySizeBytes do bridge
+  // trả về làm nguồn chính; manifest là nguồn dự phòng cho tool ngoài.
+  const pst = fs.statSync(outFile);
   const sidecar = {
     version: 1,
     source: path.basename(input),
@@ -133,6 +138,7 @@ function generateProxy(input, outDir, opts = {}) {
     sourceSize: st.size,
     sourceMtimeMs: st.mtimeMs,
     proxy: path.basename(outFile),
+    proxySize: pst.size,
     proxyWidth: pmeta.width,
     proxyHeight: pmeta.height,
     fps: meta.fps,

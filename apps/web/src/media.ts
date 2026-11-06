@@ -29,6 +29,15 @@ export interface MediaItem {
   proxyUrl?: string;
   /** Chiều cao của proxy (480|720) — để hiển thị badge PROXY. */
   proxyHeight?: number;
+  /**
+   * Đợt 38 U2 — kích thước byte của chính file proxy (bridge trả về
+   * lúc tạo proxy, trường proxySizeBytes của POST /api/proxy; xem
+   * thêm sidecar proxySize trong server/render/src/proxy.js).
+   * Chỉ dùng để truyền qua cổng S4 khi phát bằng proxyUrl; vắng mặt
+   * nghĩa là "chưa biết size proxy" — KHÔNG được thay bằng
+   * file.size của file gốc.
+   */
+  proxySizeBytes?: number;
 }
 
 function kindOf(file: File): MediaKind | null {
@@ -197,6 +206,44 @@ export class MediaPool {
       this.images.set(item.id, el);
     }
     return el;
+  }
+
+  // ROUND43-Y2: bỏ element khỏi pool để lần videoFor/audioFor sau tạo
+  // element MỚI với cùng src (phục hồi sau khi cạn cap seek đợt 42 X2:
+  // element cũ kẹt seeking hoặc demuxer hỏng thì seek mới không bao giờ
+  // xong — xem pauseSeekRecovery43Y2.ts). Trả true nếu element thực sự
+  // nằm trong pool; element lạ (không do pool tạo) không bị đụng tới.
+  // Chỉ gọi khi vòng lặp đã ngủ vì cạn cap (không còn seek bay), nên
+  // không cắt ngang seek đang chạy; lần seek sau tự tạo element mới.
+  dropElement(el: HTMLVideoElement | HTMLAudioElement): boolean {
+    let found = false;
+    for (const [id, v] of this.videos) {
+      if (v === el) {
+        this.videos.delete(id);
+        this.videoItems.delete(id);
+        found = true;
+      }
+    }
+    for (const [id, a] of this.audios) {
+      if (a === el) {
+        this.audios.delete(id);
+        found = true;
+      }
+    }
+    if (!found) return false;
+    try {
+      el.pause();
+    } catch {
+      /* bỏ qua */
+    }
+    try {
+      // Gỡ src + load() để hủy hẳn lần nạp đang kẹt, giải phóng tài nguyên.
+      el.removeAttribute("src");
+      el.load();
+    } catch {
+      /* bỏ qua */
+    }
+    return true;
   }
 
   /** Dừng hết mọi phần tử đang phát (khi pause/stop/scrub). */
