@@ -21,6 +21,9 @@ import { ClipWaveform } from "./components/waveform";
 import { validateDrop } from "./lib/drop";
 import { pushToast } from "./lib/toast";
 import { pinchDistance, pinchZoom } from "./lib/pinch";
+// Đợt 40 V4: phép ánh xạ click ruler → thời gian (giữ nguyên hành vi
+// cũ, chỉ tách ra để test khóa được; xem timelineRulerSeek40V4.ts).
+import { rulerTimeFromClientX } from "./lib/timelineRulerSeek40V4";
 import { asAdjustmentLayer, isAdjustmentLayer, listAdjustmentLayers } from "./components/nested/nestUtils";
 import { NestedClipPanel } from "./components/nested/NestedClipPanel";
 import { AdjustmentLayerPanel } from "./components/nested/AdjustmentLayerPanel";
@@ -253,7 +256,7 @@ function Ruler({
         const el = rulerRef.current;
         if (!el) return;
         const rect = el.getBoundingClientRect();
-        st.setPlayhead((ev.clientX - rect.left) / st.pxPerSec);
+        st.setPlayhead(rulerTimeFromClientX(ev.clientX, rect.left, st.pxPerSec));
       } else if (pointers.current.size >= 2) {
         const [a, b] = [...pointers.current.values()];
         st.setZoom(pinchZoom(g.startDist, pinchDistance(a.x, a.y, b.x, b.y), g.startZoom));
@@ -275,7 +278,7 @@ function Ruler({
 
   const scrubTo = (clientX: number, el: HTMLElement) => {
     const rect = el.getBoundingClientRect();
-    useStore.getState().setPlayhead((clientX - rect.left) / useStore.getState().pxPerSec);
+    useStore.getState().setPlayhead(rulerTimeFromClientX(clientX, rect.left, useStore.getState().pxPerSec));
   };
 
   return (
