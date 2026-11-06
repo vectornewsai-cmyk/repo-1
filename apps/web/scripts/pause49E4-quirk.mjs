@@ -1,0 +1,373 @@
+// pause49E4-quirk.mjs — Phase 9 đợt 49, luồng E4: thử 1 hướng fixture mới
+// cho quirk đáp sai frame khác 0 (nợ D3 §8 mục 2, nối C3 §9 mục 2).
+//
+// Hướng mới (chưa thử): keyframe lỗi GIỮA chuỗi GOP — C3/D3 mới chỉ hỏng
+// keyframe 2.0 (GOP CUỐI của valid-gop.mp4, 3 GOP ở 0/1/2 s) và đều cho
+// pipeline error 3. Lần này hỏng keyframe 1.0 (GOP GIỮA: còn GOP 0 nguyên
+// trước nó + GOP 2 nguyên sau nó), probe seek 1.5 (vào GOP của keyframe
+// hỏng) và 2.5 (vào GOP sau). Giả thuyết: decoder có thể rơi về keyframe
+// 0.0 rồi decode tiến (đáp đúng 1.5), hoặc đáp sai về 1.0/0.0, hoặc hỏng
+// pipeline như var-kf20 — đo mới biết, không ép claim.
+// Hướng phụ (cùng lượt, rẻ): file 2 track video (var-multi.mp4),
+// probe seek 2.5 — Chrome chọn track nào, có đáp sai không.
+//
+// Chạy từ gốc repo:
+//   node apps/web/scripts/pause49E4-quirk.mjs
+// Script tự: copy fixture Y2 gốc (md5 verify), build 2 fixture biến thể
+// ở /tmp, bundle seek.mjs + pause45A2.mjs, bật Xvfb riêng + chromium-1248
+// (cờ C3: DSF=1 + autoplay) qua --remote-debugging-port, mở TAB MỚI cho
+// mỗi probe, in JSON. Exit 1 khi có kiểm tra FAIL; exit 0 khi PASS /
+// NOT_MEASURED / OBSERVED (không thấy quirk = NOT_MEASURED, không phải
+// FAIL của harness).
+
+import { spawn, execFileSync } from "node:child_process";
+import fs from "node:fs";
+import http from "node:http";
+import os from "node:os";
+import path from "node:path";
+
+const REPO = path.join(os.homedir(), "workspace", "repo-1");
+const WEB_DIR = path.join(REPO, "apps", "web");
+const SCRATCH = path.join("/tmp", "pause49e4-quirk-" + process.pid);
+const Y2_MEDIA = path.join(os.homedir(), "workspace", "tmp-round43-y2", "media");
+const CHROME = path.join(os.homedir(), ".cache/ms-playwright/chromium-1248/chrome-linux64/chrome");
+const ESBUILD = path.join(REPO, "node_modules", ".bin", "esbuild");
+const PORT = parseInt(process.env.E4_PORT || "9225", 10);
+
+function pickFreeDisplay() {
+  for (const n of [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]) {
+    if (!fs.existsSync("/tmp/.X11-unix/X" + n)) return ":" + n;
+  }
+  return null;
+}
+const DISPLAY = process.env.E4_DISPLAY || pickFreeDisplay();
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const stamp = () => new Date().toISOString();
+function log(...a) { console.log("[" + stamp() + "]", ...a); }
+function fail(msg) { console.error("BLOCKER: " + msg); process.exit(2); }
+
+// ---------- fixture ----------
+const Y2_MD5 = { "valid-gop.mp4": "2c2e4771954fd26e1c377ce5900e377d" };
+function md5(file) {
+  return execFileSync("md5sum", [file], { encoding: "utf8" }).split(/\s+/)[0];
+}
+function buildFixtures() {
+  fs.mkdirSync(SCRATCH, { recursive: true });
+  const out = {};
+  for (const [name, want] of Object.entries(Y2_MD5)) {
+    const src = path.join(Y2_MEDIA, name);
+    const dst = path.join(SCRATCH, name);
+    fs.copyFileSync(src, dst);
+    const got = md5(dst);
+    if (got !== want) fail("md5 " + name + " lệch: " + got + " != " + want);
+    out[name] = { file: dst, md5: got, size: fs.statSync(dst).size };
+  }
+  // Zero packet theo khoảng pts (cùng cách làm B2/Y2/C3).
+  const py = path.join(SCRATCH, "make-variant.py");
+  fs.writeFileSync(py, [
+    "import json, subprocess, sys",
+    "src, dst, lo, hi = sys.argv[1], sys.argv[2], float(sys.argv[3]), float(sys.argv[4])",
+    "out = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0',",
+    "  '-show_entries', 'packet=pts_time,pos,size', '-of', 'json', src],",
+    "  capture_output=True, text=True, check=True).stdout",
+    "packets = json.loads(out)['packets']",
+    "data = bytearray(open(src, 'rb').read())",
+    "n = 0; total = 0; first = None; last = None; lastSize = 0",
+    "for p in packets:",
+    "    try: t = float(p['pts_time'])",
+    "    except (KeyError, TypeError, ValueError): continue",
+    "    if lo <= t < hi:",
+    "        pos = int(p['pos']); size = int(p['size'])",
+    "        data[pos:pos+size] = b'\\x00' * size",
+    "        n += 1; total += size",
+    "        first = pos if first is None else first; last = pos; lastSize = size",
+    "open(dst, 'wb').write(bytes(data))",
+    "print(json.dumps({'packetsZeroed': n, 'bytesZeroed': total, 'firstPos': first, 'lastPos': last, 'lastEnd': last + lastSize if last is not None else None, 'size': len(data)}))",
+    "",
+  ].join("\n"));
+  const base = path.join(SCRATCH, "valid-gop.mp4");
+  // Chỉ keyframe 1.0 (GOP giữa): 1 packet, pts 1.0–1.0334.
+  const kf10 = JSON.parse(execFileSync("python3", [py, base, path.join(SCRATCH, "var-kf10.mp4"), "1.0", "1.0334"], { encoding: "utf8" }));
+  out["var-kf10.mp4"] = { file: path.join(SCRATCH, "var-kf10.mp4"), ...kf10 };
+  // 2 track video: cùng nguồn valid-gop map 2 lần (không encode lại).
+  execFileSync("ffmpeg", ["-y", "-v", "error", "-i", base, "-i", base, "-map", "0:v:0", "-map", "1:v:0",
+    "-c", "copy", path.join(SCRATCH, "var-multi.mp4")], { stdio: "ignore" });
+  const probe = JSON.parse(execFileSync("ffprobe", ["-v", "error", "-show_entries", "stream=index,codec_type,codec_name",
+    "-show_entries", "format=duration", "-of", "json", path.join(SCRATCH, "var-multi.mp4")], { encoding: "utf8" }));
+  out["var-multi.mp4"] = { file: path.join(SCRATCH, "var-multi.mp4"), size: fs.statSync(path.join(SCRATCH, "var-multi.mp4")).size, streams: probe.streams, duration: probe.format.duration };
+  return out;
+}
+
+function buildBundles() {
+  for (const [src, out] of [["seek.ts", "seek.mjs"], ["pause45A2.ts", "pause45A2.mjs"]]) {
+    execFileSync(ESBUILD, [path.join(WEB_DIR, "src", "lib", src), "--bundle", "--platform=browser", "--format=esm",
+      "--outfile=" + path.join(SCRATCH, out)], { stdio: "ignore" });
+  }
+}
+
+function buildPages() {
+  const raw = "<!doctype html><meta charset=\"utf-8\"><title>E4 raw probe</title><body>\n"
+    + "<script>\n"
+    + "window.__c3 = { events: [], error: null, seeked: false, setThrew: null, done: false };\n"
+    + "var q = new URLSearchParams(location.search);\n"
+    + "var f = q.get('f'); var t = parseFloat(q.get('t') || '0.1');\n"
+    + "window.__c3.targetParam = t; window.__c3.file = f;\n"
+    + "var v = document.createElement('video');\n"
+    + "v.preload = 'auto'; v.muted = true;\n"
+    + "v.addEventListener('error', function () { var e = v.error; window.__c3.error = e ? { code: e.code, message: e.message } : null; window.__c3.events.push('error'); });\n"
+    + "v.addEventListener('seeked', function () { window.__c3.seeked = true; window.__c3.atSeeked = v.currentTime; window.__c3.events.push('seeked@' + v.currentTime.toFixed(3)); });\n"
+    + "v.addEventListener('seeking', function () { window.__c3.events.push('seeking@' + v.currentTime.toFixed(3)); });\n"
+    + "v.addEventListener('loadedmetadata', function () { window.__c3.events.push('loadedmetadata'); });\n"
+    + "v.addEventListener('canplay', function () { window.__c3.events.push('canplay'); });\n"
+    + "v.addEventListener('waiting', function () { window.__c3.events.push('waiting'); });\n"
+    + "v.addEventListener('stalled', function () { window.__c3.events.push('stalled'); });\n"
+    + "v.src = '/media/' + f;\n"
+    + "document.body.appendChild(v);\n"
+    + "setTimeout(function () {\n"
+    + "  window.__c3.beforeSet = { seeking: v.seeking, readyState: v.readyState, currentTime: v.currentTime };\n"
+    + "  try { v.currentTime = t; window.__c3.setThrew = false; }\n"
+    + "  catch (err) { window.__c3.setThrew = String(err && err.name); }\n"
+    + "  setTimeout(function () {\n"
+    + "    window.__c3.after = { seeking: v.seeking, readyState: v.readyState, currentTime: v.currentTime };\n"
+    + "    window.__c3.done = true;\n"
+    + "  }, 6000);\n"
+    + "}, 3000);\n"
+    + "</script>\n";
+  fs.writeFileSync(path.join(SCRATCH, "raw.html"), raw);
+  const seekel = "<!doctype html><meta charset=\"utf-8\"><title>E4 seekElement probe</title>\n"
+    + "<script type=\"module\">\n"
+    + "window.__c3Uncaught = [];\n"
+    + "window.addEventListener('error', function (e) { window.__c3Uncaught.push('error:' + e.message); });\n"
+    + "window.addEventListener('unhandledrejection', function (e) { window.__c3Uncaught.push('unhandledrejection:' + String(e.reason && e.reason.message ? e.reason.message : e.reason)); });\n"
+    + "var R = { events: [], landings: [], seekingEvents: 0, done: false };\n"
+    + "function rangeList(tr) { var out = []; for (var i = 0; i < tr.length; i++) out.push([Math.round(tr.start(i) * 1000) / 1000, Math.round(tr.end(i) * 1000) / 1000]); return out; }\n"
+    + "function withTimeout(p, ms, label) { return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej(new Error(label + ' khong settle sau ' + ms + ' ms')); }, ms); })]); }\n"
+    + "try {\n"
+    + "  var seekMod = await import('./seek.mjs');\n"
+    + "  var a2Mod = await import('./pause45A2.mjs');\n"
+    + "  R.imports = 'ok';\n"
+    + "} catch (e) { R.imports = 'FAIL:' + (e && e.message ? e.message : String(e)); window.__c3 = R; window.__c3Ready = true; throw e; }\n"
+    + "var q = new URLSearchParams(location.search);\n"
+    + "var f = q.get('f'); var t = parseFloat(q.get('t') || '0.1');\n"
+    + "R.targetParam = t; R.file = f;\n"
+    + "var v = document.createElement('video');\n"
+    + "v.preload = 'auto'; v.muted = true;\n"
+    + "v.addEventListener('seeking', function () { R.seekingEvents++; R.events.push('seeking@' + v.currentTime.toFixed(3)); });\n"
+    + "v.addEventListener('seeked', function () { R.landings.push({ ct: v.currentTime, seeking: v.seeking, rs: v.readyState }); R.events.push('seeked@' + v.currentTime.toFixed(3)); });\n"
+    + "v.addEventListener('error', function () { var e = v.error; R.events.push('error:' + (e ? e.code : null)); });\n"
+    + "v.src = '/media/' + f;\n"
+    + "document.body.appendChild(v);\n"
+    + "await new Promise(function (resolve) {\n"
+    + "  var done = false;\n"
+    + "  function fin(k) { if (done) return; done = true; R.load = k; resolve(); }\n"
+    + "  v.addEventListener('loadedmetadata', function () { fin('loadedmetadata'); });\n"
+    + "  v.addEventListener('error', function () { fin('error'); });\n"
+    + "  setTimeout(function () { fin('timeout'); }, 10000);\n"
+    + "});\n"
+    + "await new Promise(function (r) { setTimeout(r, 3000); });\n"
+    + "R.preSeek = { buffered: rangeList(v.buffered), seekable: rangeList(v.seekable), readyState: v.readyState, currentTime: v.currentTime };\n"
+    + "var t0 = performance.now();\n"
+    + "try {\n"
+    + "  var res = await withTimeout(seekMod.seekElement(v, t, { fps: 30, timeoutMs: 1200 }), 20000, 'seekElement');\n"
+    + "  R.result = res; R.settled = true;\n"
+    + "} catch (e) { R.result = null; R.settled = false; R.error = String(e && e.message ? e.message : e); }\n"
+    + "R.elapsedMs = Math.round(performance.now() - t0);\n"
+    + "R.errorAfter = v.error ? v.error.code : null;\n"
+    + "R.currentTimeAfter = v.currentTime;\n"
+    + "var tr = new a2Mod.WrongLandingTracker();\n"
+    + "var targetFrame = Math.round(t * 30);\n"
+    + "R.classified = [];\n"
+    + "for (var i = 0; i < R.landings.length; i++) {\n"
+    + "  var lf = a2Mod.frameIndex45A2(R.landings[i].ct, 30);\n"
+    + "  var ob = tr.observe(lf, targetFrame);\n"
+    + "  R.classified.push({ landedFrame: lf, kind: ob.kind, consecutiveWrong: ob.consecutiveWrong, shouldFail: ob.shouldFail });\n"
+    + "}\n"
+    + "R.targetFrame = targetFrame;\n"
+    + "R.uncaught = window.__c3Uncaught;\n"
+    + "R.done = true;\n"
+    + "window.__c3 = R;\n"
+    + "window.__c3Ready = true;\n"
+    + "</script>\n";
+  fs.writeFileSync(path.join(SCRATCH, "seekel.html"), seekel);
+}
+
+class TabCdp {
+  constructor(wsUrl) {
+    this.ws = new WebSocket(wsUrl);
+    this.nextId = 1;
+    this.pending = new Map();
+    this.ready = new Promise((res, rej) => { this.ws.onopen = res; this.ws.onerror = rej; });
+    this.ws.onmessage = (m) => {
+      let d; try { d = JSON.parse(m.data); } catch { return; }
+      if (d.id && this.pending.has(d.id)) {
+        const { res, rej } = this.pending.get(d.id); this.pending.delete(d.id);
+        if (d.error) rej(new Error(JSON.stringify(d.error))); else res(d.result);
+      }
+    };
+  }
+  send(method, params = {}, timeoutMs = 30000) {
+    const id = this.nextId++;
+    return new Promise((res, rej) => {
+      const timer = setTimeout(() => { this.pending.delete(id); rej(new Error("CDP timeout " + method)); }, timeoutMs);
+      this.pending.set(id, { res: (v) => { clearTimeout(timer); res(v); }, rej: (e) => { clearTimeout(timer); rej(e); } });
+      this.ws.send(JSON.stringify({ id, method, params }));
+    });
+  }
+  async evaluate(expr) {
+    const r = await this.send("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true });
+    if (r.exceptionDetails) throw new Error("evaluate failed: " + JSON.stringify(r.exceptionDetails).slice(0, 400));
+    return r.result?.value;
+  }
+  close() { try { this.ws.close(); } catch {} }
+}
+
+async function runProbe(origin, page, query, timeoutMs = 40000) {
+  const target = await (await fetch("http://127.0.0.1:" + PORT + "/json/new", { method: "PUT" })).json();
+  if (!target || !target.webSocketDebuggerUrl) throw new Error("json/new không trả webSocketDebuggerUrl: " + JSON.stringify(target));
+  const cdp = new TabCdp(target.webSocketDebuggerUrl);
+  try {
+    await cdp.ready;
+    await cdp.send("Runtime.enable", {});
+    await cdp.send("Page.enable", {});
+    await cdp.send("Page.navigate", { url: origin + "/" + page + query });
+    await cdp.send("Page.bringToFront", {}).catch(() => {});
+    let result = null;
+    const t0 = Date.now();
+    while (Date.now() - t0 < timeoutMs) {
+      await sleep(500);
+      result = await cdp.evaluate("window.__c3").catch(() => null);
+      if (result && result.done) break;
+      const ready = await cdp.evaluate("!!window.__c3Ready").catch(() => false);
+      if (ready && result && result.done) break;
+    }
+    if (!result || !result.done) throw new Error("probe không done sau " + timeoutMs + " ms: " + JSON.stringify(result)?.slice(0, 300));
+    return result;
+  } finally {
+    cdp.close();
+    try { await fetch("http://127.0.0.1:" + PORT + "/json/close/" + target.id); } catch {}
+  }
+}
+
+async function main() {
+  if (!fs.existsSync(CHROME)) fail("không có chrome " + CHROME);
+  if (!DISPLAY) fail("không còn display trống trong :90-:99 (các luồng khác đang giữ)");
+  const fixtures = buildFixtures();
+  log("fixture: " + JSON.stringify(fixtures));
+  buildBundles();
+  buildPages();
+  const server = http.createServer((req, res) => {
+    const url = new URL(req.url, "http://x");
+    let file;
+    if (url.pathname.startsWith("/media/")) file = path.join(SCRATCH, decodeURIComponent(url.pathname.slice(7)));
+    else file = path.join(SCRATCH, decodeURIComponent(url.pathname.slice(1)) === "" ? "raw.html" : decodeURIComponent(url.pathname.slice(1)));
+    if (!file.startsWith(SCRATCH) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end(); return; }
+    const type = file.endsWith(".mjs") ? "text/javascript" : file.endsWith(".mp4") ? "video/mp4" : "text/html";
+    const size = fs.statSync(file).size;
+    res.writeHead(200, { "Content-Type": type, "Accept-Ranges": "bytes", "Content-Length": size });
+    fs.createReadStream(file).pipe(res);
+  });
+  await new Promise((r) => server.listen(0, "127.0.0.1", r));
+  const ORIGIN = "http://127.0.0.1:" + server.address().port;
+  log("scratch server tại " + ORIGIN + " display " + DISPLAY + " port " + PORT);
+
+  let xvfb = null; let chrome = null; let profileDir = null;
+  const cleanup = () => {
+    try { chrome?.kill("SIGKILL"); } catch {}
+    try { xvfb?.kill("SIGTERM"); } catch {}
+    try { server.close(); } catch {}
+    try { if (profileDir) fs.rmSync(profileDir, { recursive: true, force: true }); } catch {}
+  };
+  process.on("exit", cleanup);
+  try {
+    const num = DISPLAY.replace(":", "");
+    const sock = "/tmp/.X11-unix/X" + num;
+    if (fs.existsSync(sock)) fail("display " + DISPLAY + " vừa bị luồng khác chiếm");
+    xvfb = spawn("Xvfb", [DISPLAY, "-screen", "0", "1280x800x24", "-nolisten", "tcp"], { stdio: "ignore" });
+    for (let i = 0; i < 40 && !fs.existsSync(sock); i++) await sleep(250);
+    if (!fs.existsSync(sock)) fail("Xvfb không tạo socket");
+    profileDir = path.join(SCRATCH, "chrome-profile-" + process.pid);
+    const flags = ["--no-sandbox", "--remote-debugging-port=" + PORT, "--remote-debugging-address=127.0.0.1",
+      "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--disable-dev-shm-usage",
+      "--force-device-scale-factor=1", "--autoplay-policy=no-user-gesture-required",
+      "--user-data-dir=" + profileDir, "--window-size=1280,800", "--window-position=0,0", "about:blank"];
+    log("chrome flags: " + JSON.stringify(flags));
+    chrome = spawn(CHROME, flags, { stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, DISPLAY } });
+    chrome.stdout?.on("data", () => {}); chrome.stderr?.on("data", () => {});
+    let version = null;
+    for (let i = 0; i < 60 && !version; i++) {
+      await sleep(500);
+      try { const r = await fetch("http://127.0.0.1:" + PORT + "/json/version"); if (r.ok) version = await r.json(); } catch {}
+    }
+    if (!version) fail("Chrome không mở được DevTools port " + PORT + " sau 30 s");
+    log("Chrome DevTools: " + version.Browser + " | " + version["Protocol-Version"]);
+
+    const results = {};
+    const run = async (key, page, query) => {
+      try {
+        const r = await runProbe(ORIGIN, page, query);
+        results[key] = r;
+        log("PROBE " + key + " done: " + JSON.stringify(r).slice(0, 400));
+      } catch (e) {
+        results[key] = { error: String(e && e.message ? e.message : e) };
+        log("PROBE " + key + " ERROR: " + results[key].error);
+      }
+    };
+    // Đối chứng + hướng mới (keyframe 1.0 hỏng) + hướng phụ (2 track video).
+    await run("R1-raw-valid-1.5", "raw.html", "?f=valid-gop.mp4&t=1.5");
+    await run("R2-raw-kf10-1.5", "raw.html", "?f=var-kf10.mp4&t=1.5");
+    await run("R3-raw-kf10-2.5", "raw.html", "?f=var-kf10.mp4&t=2.5");
+    await run("R4-raw-multi-2.5", "raw.html", "?f=var-multi.mp4&t=2.5");
+    await run("R5-seekel-valid-1.5", "seekel.html", "?f=valid-gop.mp4&t=1.5");
+    // seekElement trên biến thể đáp sai khác 0 ở mức raw (nếu có).
+    const near = (ct, t) => typeof ct === "number" && Math.abs(ct - t) < 0.01;
+    const wrongNonZero = ["R2-raw-kf10-1.5", "R3-raw-kf10-2.5", "R4-raw-multi-2.5"]
+      .find((k) => {
+        const r = results[k];
+        return r && typeof r.atSeeked === "number" && r.atSeeked > 0 && Math.abs(r.atSeeked - (r.targetParam ?? 0)) > 0.01;
+      });
+    if (wrongNonZero) {
+      const r = results[wrongNonZero];
+      await run("R6-seekel-" + wrongNonZero.slice(3), "seekel.html", "?f=" + r.file + "&t=" + r.targetParam);
+      results["R6-source"] = wrongNonZero;
+    } else {
+      results["R6-source"] = null;
+      log("R6 bỏ qua: không biến thể nào đáp sai khác 0 ở mức raw");
+    }
+
+    const checks = [];
+    const check = (name, status, detail) => { checks.push({ name, status, detail }); log(status + " " + name + " " + JSON.stringify(detail ?? null).slice(0, 900)); };
+    const r1 = results["R1-raw-valid-1.5"] || {};
+    const r1Ok = Array.isArray(r1.events) && r1.events.some((e) => e.startsWith("seeked@") && near(parseFloat(e.slice(7)), 1.5));
+    check("CONTROL-valid-raw-1.5", r1Ok ? "PASS" : "FAIL", r1);
+    const r5 = results["R5-seekel-valid-1.5"] || {};
+    const r5Ok = r5.settled === true && r5.result && r5.result.seeked === true
+      && Array.isArray(r5.landings) && r5.landings.length >= 1 && r5.landings.every((l) => near(l.ct, 1.5));
+    check("CONTROL-valid-seekElement-1.5", r5Ok ? "PASS" : "FAIL", r5);
+    const variantSummary = {};
+    for (const k of ["R2-raw-kf10-1.5", "R3-raw-kf10-2.5", "R4-raw-multi-2.5"]) {
+      const r = results[k] || {};
+      variantSummary[k] = { file: r.file, target: r.targetParam, events: r.events, atSeeked: r.atSeeked, after: r.after, error: r.error };
+    }
+    check("E4-wrong-nonzero-raw-variants-observed", "OBSERVED", variantSummary);
+    if (!r1Ok) {
+      check("E4-wrong-nonzero-fail-fast-headed", "NOT_MEASURED", { reason: "đối chứng valid hỏng nên kết quả biến thể vô nghĩa", R5: r5 });
+    } else if (!results["R6-source"]) {
+      check("E4-wrong-nonzero-fail-fast-headed", "NOT_MEASURED", { reason: "không biến thể nào đáp sai khác 0 ở mức raw (xem variantSummary)", variantSummary });
+    } else {
+      const r6 = results["R6-seekel-" + results["R6-source"].slice(3)] || {};
+      const pass = r6.settled === true && r6.result && r6.result.seeked === false && r6.result.timedOut === false
+        && Array.isArray(r6.landings) && r6.landings.length === 3
+        && r6.landings.every((l) => l.ct > 0 && Math.abs(l.ct - (r6.targetParam ?? 0)) > 0.01);
+      check("E4-wrong-nonzero-fail-fast-headed", pass ? "PASS" : "FAIL", r6);
+    }
+
+    console.log(JSON.stringify({ chrome: version, fixtures, checks, results }, null, 2));
+    const failed = checks.filter((c) => c.status === "FAIL").length;
+    log("tổng: " + checks.length + " kiểm tra, FAIL=" + failed + " | scratch " + SCRATCH);
+    process.exit(failed > 0 ? 1 : 0);
+  } finally {
+    cleanup();
+  }
+}
+
+main().catch((e) => { console.error("HARNESS ERROR", e); process.exit(2); });
