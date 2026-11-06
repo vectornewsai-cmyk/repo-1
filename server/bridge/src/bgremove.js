@@ -20,6 +20,7 @@
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
+const { redactStderr } = require("./errorDetail"); // Đợt 29 L3
 
 // rembg birefnet-general ~973MB, CPU có thể mất vài phút cho video ngắn.
 // Timeout dài nhưng vẫn có giới hạn để không treo worker.
@@ -166,7 +167,7 @@ function runAttempt({ inputPath, outputPath, session, onPhase, cfg,
         });
         return;
       }
-      const tail = stderrAll.trim().split("\n").slice(-3).join("\n");
+      const tail = redactStderr(stderrAll).trim().split("\n").slice(-3).join("\n");
       const err = new Error(
         timedOut
           ? "Xóa nền quá thời gian (timeout) — thử video ngắn hơn."

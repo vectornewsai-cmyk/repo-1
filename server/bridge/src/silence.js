@@ -15,6 +15,7 @@ const path = require("path");
 const fs = require("fs");
 const os = require("os");
 const { spawn } = require("child_process");
+const { redactStderr } = require("./errorDetail"); // Đợt 29 L3
 
 const NOISE_DB_MIN = -80;
 const NOISE_DB_MAX = 0;
@@ -186,7 +187,7 @@ function runSilence({ inputPath, noiseDb, minDur, config } = {}) {
         if (code !== 0) {
           cleanupOut();
           reject(new Error(
-            `silence.py thoát mã ${code}: ${(stderrTail || "").slice(-300) || "không rõ lỗi"}`
+            `silence.py thoát mã ${code}: ${redactStderr(stderrTail).slice(-300) || "không rõ lỗi"}`
           ));
           return;
         }

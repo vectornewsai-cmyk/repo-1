@@ -15,6 +15,7 @@ const path = require("path");
 const fs = require("fs");
 const os = require("os");
 const { spawn } = require("child_process");
+const { redactStderr } = require("./errorDetail"); // Đợt 29 L3: tail lỗi phải redact trước khi ra API
 
 /**
  * Whitelist ngôn ngữ — caption.py chỉ nhận mã ISO ngắn; whitelist chặn
@@ -296,7 +297,7 @@ function runPythonScriptJob({
         if (code !== 0) {
           cleanupOut();
           reject(new Error(
-            `${scriptName} thoát mã ${code}: ${(stderrTail || "").slice(-300) || "không rõ lỗi"}`
+            `${scriptName} thoát mã ${code}: ${redactStderr(stderrTail).slice(-300) || "không rõ lỗi"}`
           ));
           return;
         }

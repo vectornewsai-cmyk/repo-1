@@ -1,0 +1,79 @@
+{
+  "runAt": "2026-10-31T07:20:26.440Z",
+  "label": "round29-main-fixed",
+  "display": ":97",
+  "port": 4197,
+  "bundle": "index-BgUUZ_xW.js",
+  "bundleSha256_16": "5d8281a8245111f4",
+  "distSrc": "/home/hatch/workspace/repo-1/apps/web/dist",
+  "cases": [
+    {
+      "id": "E0-seed-load-en",
+      "status": "PASS",
+      "detail": "panel en liệt kê đủ 11 item: TOP-SPLIT-OUT, TOP-SPLIT-EDGE, TOP-SPLIT-OK, TOP-SPLIT-PH, TOP-SPLIT2, TOP-SPLIT3, TOP-NEG2, TOP-NEG3, TOP-DEEP, TOP-DEEP-BLOCK, TOP-LEAFCHK"
+    },
+    {
+      "id": "E1-en-neg-three-level",
+      "status": "PASS",
+      "detail": "locale en: mốc âm \"-1\" vào bằng cdp-char-direct (thử: cdp-char-direct->\"-1\") + click cdp-input -> msg đúng từng chữ + toast đúng câu, spec không đổi, Ctrl+Z no-op, lá còn 1"
+    },
+    {
+      "id": "E2-en-before-window-two-level",
+      "status": "PASS",
+      "detail": "locale en: gõ cdp-char \"9.9\" (dương, trước cửa sổ bắt đầu ở 10) + click cdp-input -> msg đúng từng chữ + toast đúng câu, spec không đổi, Ctrl+Z no-op, lá còn 1"
+    },
+    {
+      "id": "E3-en-before-window-three-level",
+      "status": "PASS",
+      "detail": "locale en: gõ cdp-char \"9.9\" (dương, trước cửa sổ bắt đầu ở 10) + click cdp-input -> msg đúng từng chữ + toast đúng câu, spec không đổi, Ctrl+Z no-op, lá còn 1"
+    },
+    {
+      "id": "S1-spinner-positive",
+      "status": "PASS",
+      "detail": "spinner thật: rect {\"x\":1071.328125,\"y\":513,\"width\":80,\"height\":30}; dò tăng [{\"offFromRight\":2,\"x\":1149,\"y\":521,\"valueAfter\":\"10\"},{\"offFromRight\":5,\"x\":1146,\"y\":521,\"valueAfter\":\"10\"},{\"offFromRight\":8,\"x\":1143,\"y\":521,\"valueAfter\":\"10\"},{\"offFromRight\":11,\"x\":1140,\"y\":521,\"valueAfter\":\"11\"},{\"offFromRight\":14,\"x\":1137,\"y\":521,\"valueAfter\":\"11\"},{\"offFromRight\":17,\"x\":1134,\"y\":521,\"valueAfter\":\"11\"},{\"offFromRight\":20,\"x\":1131,\"y\":521,\"valueAfter\":\"11\"}] -> nút tăng ở cách mép phải 11px (1140,521); dò giảm [{\"offFromRight\":2,\"x\":1149,\"y\":533,\"valueAfter\":\"10\"},{\"offFromRight\":5,\"x\":1146,\"y\":533,\"valueAfter\":\"10\"},{\"offFromRight\":8,\"x\":1143,\"y\":533,\"valueAfter\":\"10\"},{\"offFromRight\":11,\"x\":1140,\"y\":533,\"valueAfter\":\"9\"},{\"offFromRight\":14,\"x\":1137,\"y\":533,\"valueAfter\":\"9\"},{\"offFromRight\":17,\"x\":1134,\"y\":533,\"valueAfter\":\"9\"},{\"offFromRight\":20,\"x\":1131,\"y\":533,\"valueAfter\":\"9\"}] -> nút giảm ở cách mép phải 11px (1140,533); xác nhận 10 -> 11 -> 12 (bước +1 đều) -> 11 -> 10; ô rỗng + tăng -> 1 (dương); spec không đổi, Ctrl+Z no-op"
+    },
+    {
+      "id": "E9-no-crash-en",
+      "status": "PASS",
+      "detail": "0 Runtime.exceptionThrown trong phiên en đợt 29"
+    }
+  ],
+  "log": [
+    "[2026-10-31T07:18:37.333Z] harness clicktest-l5-round29-pipe: bắt đầu (label=round29-main-fixed out=v29-l5-clicktest.json)",
+    "[2026-10-31T07:18:37.334Z] display=:97 port=4197 binaries=/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome | /opt/meta-chromium/chrome",
+    "[2026-10-31T07:18:37.342Z] Xvfb: socket /tmp/.X11-unix/X97 mồ côi, xoá và bật mới",
+    "[2026-10-31T07:18:37.597Z] Xvfb lên: DISPLAY=:97",
+    "[2026-10-31T07:18:37.866Z] dist snapshot OK: bundle index-BgUUZ_xW.js sha256[:16]=5d8281a8245111f4 -> /home/hatch/workspace/tmp-round29-l5/dist-snapshot",
+    "[2026-10-31T07:18:37.875Z] static server lên tại http://127.0.0.1:4197 (root /home/hatch/workspace/tmp-round29-l5/dist-snapshot)",
+    "[2026-10-31T07:18:39.434Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-31T07:18:43.356Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T07:18:45.447Z]   E0 item panel (en): [\"TOP-SPLIT-OUT\",\"TOP-SPLIT-EDGE\",\"TOP-SPLIT-OK\",\"TOP-SPLIT-PH\",\"TOP-SPLIT2\",\"TOP-SPLIT3\",\"TOP-NEG2\",\"TOP-NEG3\",\"TOP-DEEP\",\"TOP-DEEP-BLOCK\",\"TOP-LEAFCHK\"]",
+    "[2026-10-31T07:18:45.447Z] CASE E0-seed-load-en: PASS — panel en liệt kê đủ 11 item: TOP-SPLIT-OUT, TOP-SPLIT-EDGE, TOP-SPLIT-OK, TOP-SPLIT-PH, TOP-SPLIT2, TOP-SPLIT3, TOP-NEG2, TOP-NEG3, TOP-DEEP, TOP-DEEP-BLOCK, TOP-LEAFCHK",
+    "[2026-10-31T07:18:50.183Z]   E1 neg={\"method\":\"cdp-char-direct\",\"attempts\":[{\"method\":\"cdp-char-direct\",\"typed\":\"-1\",\"value\":\"-1\"}],\"value\":\"-1\"} msg=\"The outer time is outside the leaf clip's visible window — not split.\" toasts=[\"The outer time is outside the leaf clip's visible window — not split.\"]",
+    "[2026-10-31T07:19:05.028Z] CASE E1-en-neg-three-level: PASS — locale en: mốc âm \"-1\" vào bằng cdp-char-direct (thử: cdp-char-direct->\"-1\") + click cdp-input -> msg đúng từng chữ + toast đúng câu, spec không đổi, Ctrl+Z no-op, lá còn 1",
+    "[2026-10-31T07:19:07.861Z]   E2 msg=\"The outer time is outside the leaf clip's visible window — not split.\" toasts=[\"The outer time is outside the leaf clip's visible window — not split.\"] typed={\"method\":\"cdp-char\",\"value\":\"9.9\"}",
+    "[2026-10-31T07:19:22.739Z] CASE E2-en-before-window-two-level: PASS — locale en: gõ cdp-char \"9.9\" (dương, trước cửa sổ bắt đầu ở 10) + click cdp-input -> msg đúng từng chữ + toast đúng câu, spec không đổi, Ctrl+Z no-op, lá còn 1",
+    "[2026-10-31T07:19:26.355Z]   E3 msg=\"The outer time is outside the leaf clip's visible window — not split.\" toasts=[\"The outer time is outside the leaf clip's visible window — not split.\"] typed={\"method\":\"cdp-char\",\"value\":\"9.9\"}",
+    "[2026-10-31T07:19:41.172Z] CASE E3-en-before-window-three-level: PASS — locale en: gõ cdp-char \"9.9\" (dương, trước cửa sổ bắt đầu ở 10) + click cdp-input -> msg đúng từng chữ + toast đúng câu, spec không đổi, Ctrl+Z no-op, lá còn 1",
+    "[2026-10-31T07:19:41.798Z]   S1 input rect: {\"x\":1071.328125,\"y\":513,\"width\":80,\"height\":30}",
+    "[2026-10-31T07:19:43.516Z]   S1 probe-up off=2 -> value=\"10\"",
+    "[2026-10-31T07:19:45.236Z]   S1 probe-up off=5 -> value=\"10\"",
+    "[2026-10-31T07:19:46.949Z]   S1 probe-up off=8 -> value=\"10\"",
+    "[2026-10-31T07:19:48.666Z]   S1 probe-up off=11 -> value=\"11\"",
+    "[2026-10-31T07:19:50.382Z]   S1 probe-up off=14 -> value=\"11\"",
+    "[2026-10-31T07:19:52.100Z]   S1 probe-up off=17 -> value=\"11\"",
+    "[2026-10-31T07:19:53.818Z]   S1 probe-up off=20 -> value=\"11\"",
+    "[2026-10-31T07:19:55.531Z]   S1 probe-down off=2 -> value=\"10\"",
+    "[2026-10-31T07:19:57.249Z]   S1 probe-down off=5 -> value=\"10\"",
+    "[2026-10-31T07:19:58.965Z]   S1 probe-down off=8 -> value=\"10\"",
+    "[2026-10-31T07:20:00.683Z]   S1 probe-down off=11 -> value=\"9\"",
+    "[2026-10-31T07:20:02.402Z]   S1 probe-down off=14 -> value=\"9\"",
+    "[2026-10-31T07:20:04.116Z]   S1 probe-down off=17 -> value=\"9\"",
+    "[2026-10-31T07:20:05.833Z]   S1 probe-down off=20 -> value=\"9\"",
+    "[2026-10-31T07:20:09.982Z]   S1 confirm: 10 -> up \"11\" -> up \"12\" -> down \"11\" -> down \"10\"",
+    "[2026-10-31T07:20:11.617Z]   S1 empty-up: \"\" -> up -> \"1\"",
+    "[2026-10-31T07:20:26.434Z] CASE S1-spinner-positive: PASS — spinner thật: rect {\"x\":1071.328125,\"y\":513,\"width\":80,\"height\":30}; dò tăng [{\"offFromRight\":2,\"x\":1149,\"y\":521,\"valueAfter\":\"10\"},{\"offFromRight\":5,\"x\":1146,\"y\":521,\"valueAfter\":\"10\"},{\"offFromRight\":8,\"x\":1143,\"y\":521,\"valueAfter\":\"10\"},{\"offFromRight\":11,\"x\":1140,\"y\":521,\"valueAfter\":\"11\"},{\"offFromRight\":14,\"x\":1137,\"y\":521,\"valueAfter\":\"11\"},{\"offFromRight\":17,\"x\":1134,\"y\":521,\"valueAfter\":\"11\"},{\"offFromRight\":20,\"x\":1131,\"y\":521,\"valueAfter\":\"11\"}] -> nút tăng ở cách mép phải 11px (1140,521); dò giảm [{\"offFromRight\":2,\"x\":1149,\"y\":533,\"valueAfter\":\"10\"},{\"offFromRight\":5,\"x\":1146,\"y\":533,\"valueAfter\":\"10\"},{\"offFromRight\":8,\"x\":1143,\"y\":533,\"valueAfter\":\"10\"},{\"offFromRight\":11,\"x\":1140,\"y\":533,\"valueAfter\":\"9\"},{\"offFromRight\":14,\"x\":1137,\"y\":533,\"valueAfter\":\"9\"},{\"offFromRight\":17,\"x\":1134,\"y\":533,\"valueAfter\":\"9\"},{\"offFromRight\":20,\"x\":1131,\"y\":533,\"valueAfter\":\"9\"}] -> nút giảm ở cách mép phải 11px (1140,533); xác nhận 10 -> 11 -> 12 (bước +1 đều) -> 11 -> 10; ô rỗng + tăng -> 1 (dương); spec không đổi, Ctrl+Z no-op",
+    "[2026-10-31T07:20:26.434Z] CASE E9-no-crash-en: PASS — 0 Runtime.exceptionThrown trong phiên en đợt 29",
+    "[2026-10-31T07:20:26.440Z] DONE clicktest-l5-round29: 6/6 case pass, 0 fail, exit=0"
+  ]
+}

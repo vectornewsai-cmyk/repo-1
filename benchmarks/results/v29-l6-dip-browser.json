@@ -1,0 +1,1801 @@
+{
+  "run": "run1",
+  "date": "2026-10-31T07:28:32.199Z",
+  "bundle": "index-B1assKz-.js",
+  "bundleSha256_16": "7659cc3fb1474449",
+  "display": ":99",
+  "port": 4199,
+  "origin": "http://127.0.0.1:4199",
+  "cases": [
+    {
+      "id": "S1-sanity-red-mid",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 1.5,
+      "playhead": 1.5,
+      "localT": 1.5,
+      "p": null,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 1.5,
+      "nSamples": 15960,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": [
+        255,
+        24,
+        0
+      ],
+      "expMean": [
+        255,
+        24,
+        0
+      ],
+      "ctlMean": [
+        255,
+        24,
+        0
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 1.5
+      },
+      "settled": {
+        "hash": 4219578,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "S2-sanity-green-mid",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 6,
+      "playhead": 6,
+      "localT": 2,
+      "p": null,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 6,
+      "nSamples": 15960,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": [
+        0,
+        216,
+        2
+      ],
+      "expMean": [
+        0,
+        216,
+        2
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 2
+      },
+      "settled": {
+        "hash": 6099588,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FW-OUT-red-p01",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": "out",
+      "type": "fadewhite",
+      "target": 3.1,
+      "playhead": 3.1,
+      "localT": 3.1,
+      "p": 0.10000000000000009,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0.4491075996108812,
+      "mode": "white",
+      "mad": 0.24456886303719055,
+      "le8": 1,
+      "maxDiff": 0.47756209922528114,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.1,
+      "nSamples": 15960,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": [
+        255,
+        151,
+        140
+      ],
+      "expMean": [
+        255,
+        151.25614448989387,
+        140.47756209922937
+      ],
+      "ctlMean": [
+        255,
+        24,
+        0
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 3.1
+      },
+      "settled": {
+        "hash": 13605702,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FW-OUT-red-p05",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": "out",
+      "type": "fadewhite",
+      "target": 3.5,
+      "playhead": 3.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.5,
+      "nSamples": 15960,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": [
+        255,
+        255,
+        255
+      ],
+      "expMean": [
+        255,
+        255,
+        255
+      ],
+      "ctlMean": [
+        255,
+        24,
+        0
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 3.5
+      },
+      "settled": {
+        "hash": 21306780,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FW-IN-green-p01",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.1,
+      "playhead": 4.1,
+      "localT": 0.09999999999999964,
+      "p": 0.09999999999999964,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.1,
+      "nSamples": 15960,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": [
+        255,
+        255,
+        255
+      ],
+      "expMean": [
+        255,
+        255,
+        255
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 0.1
+      },
+      "settled": {
+        "hash": 21306780,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FW-IN-green-p05",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.5,
+      "playhead": 4.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0.3922455002004642,
+      "le8": 1,
+      "maxDiff": 0.483587122255301,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.5,
+      "nSamples": 15960,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": [
+        167,
+        241,
+        167
+      ],
+      "expMean": [
+        166.62345426092472,
+        241.48358712217728,
+        167.31660363920008
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 0.5
+      },
+      "settled": {
+        "hash": 16014900,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FG-OUT-green-p05",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 7.5,
+      "playhead": 7.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0.3333333333333333,
+      "le8": 1,
+      "maxDiff": 0.3333333333333286,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 7.5,
+      "nSamples": 15960,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": [
+        73,
+        73,
+        73
+      ],
+      "expMean": [
+        72.66666666666008,
+        72.66666666666008,
+        72.66666666666008
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 3.5
+      },
+      "settled": {
+        "hash": 6099588,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FG-IN-mag-p05",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "flat-magenta.mp4"
+      },
+      "window": "in",
+      "type": "fadegrays",
+      "target": 8.5,
+      "playhead": 8.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0.34657468917294143,
+      "mode": "gray",
+      "mad": 0.3333333333333327,
+      "le8": 1,
+      "maxDiff": 0.4822392534329083,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 8.5,
+      "nSamples": 15960,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": [
+        208,
+        133,
+        207
+      ],
+      "expMean": [
+        207.51776074661714,
+        132.6576278852271,
+        206.82461136815857
+      ],
+      "ctlMean": [
+        255,
+        39,
+        253
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 0.5
+      },
+      "settled": {
+        "hash": 15248970,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "FB-OUT-custom-p05",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "flat-custom.mp4"
+      },
+      "window": "out",
+      "type": "fadeblack",
+      "target": 15.5,
+      "playhead": 15.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0,
+      "mode": "black",
+      "mad": 12.666666666666666,
+      "le8": 0,
+      "maxDiff": 16,
+      "verdict": "LỆCH",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 12.666666666666666,
+      "le8Resampled": 0,
+      "maxDiffResampled": 16,
+      "verdictResampled": "LỆCH",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 15.5,
+      "nSamples": 15960,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": [
+        10,
+        12,
+        16
+      ],
+      "expMean": [
+        0,
+        0,
+        0
+      ],
+      "ctlMean": [
+        208,
+        107,
+        49
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 3.5
+      },
+      "settled": {
+        "hash": 1141932,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "MASK-FW-IN-p05",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 0.5,
+      "combo": "mask-rect",
+      "playhead": 0.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0.13448417149728006,
+      "le8": 1,
+      "maxDiff": 0.483587122255301,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": null,
+      "le8Resampled": null,
+      "maxDiffResampled": null,
+      "verdictResampled": null,
+      "madIn": 0.3922455002004002,
+      "le8In": 1,
+      "madOut": 0,
+      "le8Out": 1,
+      "nIn": 9720,
+      "nOut": 18630,
+      "nSkip": 4050,
+      "appMeanOut": [
+        10,
+        12,
+        16
+      ],
+      "appMeanIn": [
+        167,
+        241,
+        167
+      ],
+      "expMeanIn": [
+        166.62345426087734,
+        241.48358712225473,
+        167.3166036392238
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 0.5,
+      "nSamples": 28350,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": null,
+      "expMean": null,
+      "ctlMean": null,
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 0.5
+      },
+      "settled": {
+        "hash": 6549963,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "SR-FW-IN-p05",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-magenta.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.5,
+      "combo": "sr",
+      "playhead": 4.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0.1480266819611084,
+      "le8": 1,
+      "maxDiff": 0.3068506216541209,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": null,
+      "le8Resampled": null,
+      "maxDiffResampled": null,
+      "verdictResampled": null,
+      "madIn": 0.14890592009955442,
+      "le8In": 1,
+      "madOut": 0,
+      "le8Out": 1,
+      "nIn": 31988,
+      "nOut": 190,
+      "nSkip": 222,
+      "appMeanOut": [
+        10,
+        12,
+        16
+      ],
+      "appMeanIn": [
+        255,
+        180,
+        254
+      ],
+      "expMeanIn": [
+        255,
+        180.13986713872583,
+        254.30685062153304
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.5,
+      "nSamples": 32178,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": null,
+      "expMean": null,
+      "ctlMean": null,
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 0.5
+      },
+      "settled": {
+        "hash": 19043411,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "TRACK-FW-IN-p05",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 8.5,
+      "combo": "track",
+      "playhead": 8.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0.1184524385275894,
+      "le8": 1,
+      "maxDiff": 0.3765457391000666,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": null,
+      "le8Resampled": null,
+      "maxDiffResampled": null,
+      "verdictResampled": null,
+      "madIn": 0.14509964601650913,
+      "le8In": 1,
+      "madOut": 0,
+      "le8Out": 1,
+      "nIn": 25800,
+      "nOut": 5804,
+      "nSkip": 796,
+      "appMeanOut": [
+        10,
+        12,
+        16
+      ],
+      "appMeanIn": [
+        255,
+        175,
+        167
+      ],
+      "expMeanIn": [
+        255,
+        174.94124680105585,
+        166.62345426098233
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 8.5,
+      "nSamples": 31604,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": null,
+      "expMean": null,
+      "ctlMean": null,
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 0.5
+      },
+      "settled": {
+        "hash": 12815532,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "SHORT-BOTH-pIn075-pOut025",
+      "clip": {
+        "start": 12,
+        "dur": 1.5,
+        "file": "flat-green.mp4"
+      },
+      "window": "both",
+      "type": "fadewhite",
+      "target": 12.75,
+      "playhead": 12.766666666666667,
+      "localT": 0.7666666666666675,
+      "p": 0.7666666666666675,
+      "pIn": 0.7666666666666675,
+      "pOut": 0.2666666666666675,
+      "alpha": 0,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 12.766666666666667,
+      "nSamples": 15960,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": [
+        255,
+        255,
+        255
+      ],
+      "expMean": [
+        255,
+        255,
+        255
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 0.766666
+      },
+      "settled": {
+        "hash": 21306780,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "BLUR-FW-IN-p05",
+      "clip": {
+        "start": 13.5,
+        "dur": 4,
+        "file": "bar-moving.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 14,
+      "blur": true,
+      "status": "FAIL",
+      "error": "measure lỗi: evaluate lỗi: {\"exceptionId\":1,\"text\":\"Uncaught (in promise) Error: control video error\",\"lineNumber\":21,\"columnNumber\":51,\"scriptId\":\"40\",\"stackTrace\":{\"callFrames\":[{\"functionName\":\"v.onerror\",\"scriptId\":\"40\",\"url\":\"\",\"lineNumber\":20,\"columnNumber\":50}]},\"exception\":{\"type\":\"object\",\"subtype\":\"error\",\"className\":\"Error\",\"description\":\"Error: control video error\\n    at v.onerror (<anonymous>:21:51)\",\"objectId\":\"-8681474961173857531.5.1\"}}",
+      "scrub": {
+        "target": 14,
+        "dispatchedX": 992,
+        "rulerLeft": 152,
+        "rawPred": 14,
+        "snapped": 14,
+        "handleRaw": 14,
+        "handleSnap": 14,
+        "handleDeltaFrames": 0,
+        "settled": {
+          "hash": 1141932,
+          "w": 1352,
+          "h": 633
+        },
+        "textTime": "00:14.0 / 00:17.5",
+        "pps": 60
+      }
+    },
+    {
+      "id": "4K-S1-sanity-red-mid",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 1.5,
+      "playhead": 1.5,
+      "localT": 1.5,
+      "p": null,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 1.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.16484375,
+      "appMean": [
+        255,
+        24,
+        0
+      ],
+      "expMean": [
+        255,
+        24,
+        0
+      ],
+      "ctlMean": [
+        255,
+        24,
+        0
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 1.5
+      },
+      "settled": {
+        "hash": 4219578,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "4K-S2-sanity-green-mid",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 6,
+      "playhead": 6,
+      "localT": 2,
+      "p": null,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 6,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.16484375,
+      "appMean": [
+        0,
+        216,
+        2
+      ],
+      "expMean": [
+        0,
+        216,
+        2
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 2
+      },
+      "settled": {
+        "hash": 6099588,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "4K-FW-OUT-red-p01",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": "out",
+      "type": "fadewhite",
+      "target": 3.1,
+      "playhead": 3.1,
+      "localT": 3.1,
+      "p": 0.10000000000000009,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0.4491075996108812,
+      "mode": "white",
+      "mad": 0.24456886303720624,
+      "le8": 1,
+      "maxDiff": 0.47756209922528114,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.1,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.16484375,
+      "appMean": [
+        255,
+        151,
+        140
+      ],
+      "expMean": [
+        255,
+        151.2561444898672,
+        140.47756209922917
+      ],
+      "ctlMean": [
+        255,
+        24,
+        0
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 3.1
+      },
+      "settled": {
+        "hash": 13605702,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "4K-FW-OUT-red-p05",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": "out",
+      "type": "fadewhite",
+      "target": 3.5,
+      "playhead": 3.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.16484375,
+      "appMean": [
+        255,
+        255,
+        255
+      ],
+      "expMean": [
+        255,
+        255,
+        255
+      ],
+      "ctlMean": [
+        255,
+        24,
+        0
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 3.5
+      },
+      "settled": {
+        "hash": 21306780,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "4K-FW-IN-green-p01",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.1,
+      "playhead": 4.1,
+      "localT": 0.09999999999999964,
+      "p": 0.09999999999999964,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.1,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.16484375,
+      "appMean": [
+        255,
+        255,
+        255
+      ],
+      "expMean": [
+        255,
+        255,
+        255
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 0.1
+      },
+      "settled": {
+        "hash": 21306780,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "4K-FW-IN-green-p05",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.5,
+      "playhead": 4.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0.3922455002003384,
+      "le8": 1,
+      "maxDiff": 0.483587122255301,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.16484375,
+      "appMean": [
+        167,
+        241,
+        167
+      ],
+      "expMean": [
+        166.6234542608791,
+        241.4835871222758,
+        167.31660363924675
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 0.5
+      },
+      "settled": {
+        "hash": 16014900,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "4K-FG-OUT-green-p05",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 7.5,
+      "playhead": 7.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0.33333333333333326,
+      "le8": 1,
+      "maxDiff": 0.3333333333333286,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 7.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.16484375,
+      "appMean": [
+        73,
+        73,
+        73
+      ],
+      "expMean": [
+        72.66666666667416,
+        72.66666666667416,
+        72.66666666667416
+      ],
+      "ctlMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 3.5
+      },
+      "settled": {
+        "hash": 6099588,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "4K-FG-IN-mag-p05",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "flat-magenta.mp4"
+      },
+      "window": "in",
+      "type": "fadegrays",
+      "target": 8.5,
+      "playhead": 8.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0.34657468917294143,
+      "mode": "gray",
+      "mad": 0.333333333333332,
+      "le8": 1,
+      "maxDiff": 0.4822392534329083,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 0,
+      "le8Resampled": 1,
+      "maxDiffResampled": 0,
+      "verdictResampled": "KHỚP",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 8.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.16484375,
+      "appMean": [
+        208,
+        133,
+        207
+      ],
+      "expMean": [
+        207.5177607465799,
+        132.65762788522363,
+        206.8246113682029
+      ],
+      "ctlMean": [
+        255,
+        39,
+        253
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 0.5
+      },
+      "settled": {
+        "hash": 15248970,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    },
+    {
+      "id": "4K-FB-OUT-custom-p05",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "flat-custom.mp4"
+      },
+      "window": "out",
+      "type": "fadeblack",
+      "target": 15.5,
+      "playhead": 15.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0,
+      "mode": "black",
+      "mad": 12.666666666666666,
+      "le8": 0,
+      "maxDiff": 16,
+      "verdict": "LỆCH",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": 12.666666666666666,
+      "le8Resampled": 0,
+      "maxDiffResampled": 16,
+      "verdictResampled": "LỆCH",
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 15.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.16484375,
+      "appMean": [
+        10,
+        12,
+        16
+      ],
+      "expMean": [
+        0,
+        0,
+        0
+      ],
+      "ctlMean": [
+        208,
+        107,
+        49
+      ],
+      "controlVideo": {
+        "w": 2160,
+        "h": 3840,
+        "ct": 3.5
+      },
+      "settled": {
+        "hash": 1141932,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": true
+    }
+  ],
+  "perf": {
+    "sessions": {
+      "1080p": {
+        "dip": [
+          {
+            "target": 4.5,
+            "t0": 32824.19999999995,
+            "t1": 35407.5,
+            "entries": [
+              {
+                "duration": 382,
+                "start": 32945.10000000009
+              }
+            ],
+            "durations": [
+              382
+            ]
+          },
+          {
+            "target": 4.5,
+            "t0": 38026.40000000014,
+            "t1": 40550.19999999995,
+            "entries": [
+              {
+                "duration": 263,
+                "start": 38230.60000000009
+              }
+            ],
+            "durations": [
+              263
+            ]
+          }
+        ],
+        "plain": [
+          {
+            "target": 6,
+            "t0": 35410.60000000009,
+            "t1": 38018.80000000005,
+            "entries": [
+              {
+                "duration": 95,
+                "start": 35798.90000000014
+              },
+              {
+                "duration": 66,
+                "start": 36428.19999999995
+              }
+            ],
+            "durations": [
+              95,
+              66
+            ]
+          },
+          {
+            "target": 6,
+            "t0": 40552.10000000009,
+            "t1": 43094.40000000014,
+            "entries": [],
+            "durations": []
+          }
+        ]
+      },
+      "4K": {
+        "dip": [
+          {
+            "target": 4.5,
+            "t0": 30616.199999999953,
+            "t1": 33169.30000000005,
+            "entries": [
+              {
+                "duration": 479,
+                "start": 30805.300000000047
+              }
+            ],
+            "durations": [
+              479
+            ]
+          },
+          {
+            "target": 4.5,
+            "t0": 35693.19999999995,
+            "t1": 38214.40000000014,
+            "entries": [
+              {
+                "duration": 510,
+                "start": 35894.80000000005
+              }
+            ],
+            "durations": [
+              510
+            ]
+          }
+        ],
+        "plain": [
+          {
+            "target": 6,
+            "t0": 33171.5,
+            "t1": 35691.60000000009,
+            "entries": [
+              {
+                "duration": 104,
+                "start": 33871.30000000005
+              }
+            ],
+            "durations": [
+              104
+            ]
+          },
+          {
+            "target": 6,
+            "t0": 38216.60000000009,
+            "t1": 40736.30000000005,
+            "entries": [],
+            "durations": []
+          }
+        ]
+      }
+    }
+  },
+  "exceptions": [],
+  "log": [
+    "[2026-10-31T07:25:48.895Z] harness clicktest-dip-browser-round29-l6: bắt đầu (label=run1, display=:99, port=4199, skip4k=false, skipCombo=false)",
+    "[2026-10-31T07:25:48.897Z] video phẳng OK [1080p]: flat-red.mp4 (16814 byte)",
+    "[2026-10-31T07:25:48.897Z] video phẳng OK [1080p]: flat-green.mp4 (16815 byte)",
+    "[2026-10-31T07:25:48.897Z] video phẳng OK [1080p]: flat-magenta.mp4 (16814 byte)",
+    "[2026-10-31T07:25:48.897Z] video phẳng OK [1080p]: flat-custom.mp4 (16813 byte)",
+    "[2026-10-31T07:25:48.898Z] video vạch di chuyển OK [1080p]: bar-moving.mp4 (0 byte)",
+    "[2026-10-31T07:26:09.132Z] video phẳng OK [4K]: flat-red.mp4 (48020 byte)",
+    "[2026-10-31T07:26:22.041Z] video phẳng OK [4K]: flat-green.mp4 (48021 byte)",
+    "[2026-10-31T07:26:34.173Z] video phẳng OK [4K]: flat-magenta.mp4 (48018 byte)",
+    "[2026-10-31T07:26:45.038Z] video phẳng OK [4K]: flat-custom.mp4 (48017 byte)",
+    "[2026-10-31T07:26:45.050Z] Xvfb: socket /tmp/.X11-unix/X99 mồ côi, xoá và bật mới",
+    "[2026-10-31T07:26:45.304Z] Xvfb lên: DISPLAY=:99",
+    "[2026-10-31T07:26:45.753Z] dist snapshot OK: bundle index-B1assKz-.js sha256[:16]=7659cc3fb1474449 -> /home/hatch/workspace/tmp-round29-l6/dist-snapshot",
+    "[2026-10-31T07:26:45.762Z] video đã copy vào snapshot [1080p]",
+    "[2026-10-31T07:26:45.772Z] video đã copy vào snapshot [4K]",
+    "[2026-10-31T07:26:45.836Z] static server lên tại http://127.0.0.1:4199 (root /home/hatch/workspace/tmp-round29-l6/dist-snapshot)",
+    "[2026-10-31T07:26:48.175Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-31T07:26:52.152Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T07:26:53.941Z]   media vào bin: flat-red.mp4",
+    "[2026-10-31T07:26:53.942Z]   media vào bin: flat-green.mp4",
+    "[2026-10-31T07:26:53.944Z]   media vào bin: flat-magenta.mp4",
+    "[2026-10-31T07:26:53.949Z]   media vào bin: flat-custom.mp4",
+    "[2026-10-31T07:26:53.951Z]   hiệu chuẩn vạch: offset handle-ruler lúc playhead 0 = -6.50px",
+    "[2026-10-31T07:26:54.353Z] ruler rect (1080p dip): {\"x\":152,\"y\":813,\"w\":1200,\"h\":27,\"innerH\":1057,\"handleLeft\":145.5,\"ppsInput\":60}",
+    "[2026-10-31T07:26:57.156Z]   PASS S1-sanity-red-mid: playhead 1.5 p=- alpha=1.0000 MAD=0.000 <=8=100.00% appMean=[255.0,24.0,0.0] expMean=[255.0,24.0,0.0] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:27:00.033Z]   PASS S2-sanity-green-mid: playhead 6 p=- alpha=1.0000 MAD=0.000 <=8=100.00% appMean=[0.0,216.0,2.0] expMean=[0.0,216.0,2.0] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:27:03.546Z]   PASS FW-OUT-red-p01: playhead 3.1 p=0.1000 alpha=0.4491 MAD=0.245 <=8=100.00% appMean=[255.0,151.0,140.0] expMean=[255.0,151.3,140.5] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:27:07.833Z]   PASS FW-OUT-red-p05: playhead 3.5 p=0.5000 alpha=0.0000 MAD=0.000 <=8=100.00% appMean=[255.0,255.0,255.0] expMean=[255.0,255.0,255.0] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:27:10.150Z]   PASS FW-IN-green-p01: playhead 4.1 p=0.1000 alpha=0.0000 MAD=0.000 <=8=100.00% appMean=[255.0,255.0,255.0] expMean=[255.0,255.0,255.0] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:27:12.544Z]   PASS FW-IN-green-p05: playhead 4.5 p=0.5000 alpha=0.3466 MAD=0.392 <=8=100.00% appMean=[167.0,241.0,167.0] expMean=[166.6,241.5,167.3] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:27:16.149Z]   PASS FG-OUT-green-p05: playhead 7.5 p=0.5000 alpha=0.0000 MAD=0.333 <=8=100.00% appMean=[73.0,73.0,73.0] expMean=[72.7,72.7,72.7] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:27:19.241Z]   PASS FG-IN-mag-p05: playhead 8.5 p=0.5000 alpha=0.3466 MAD=0.333 <=8=100.00% appMean=[208.0,133.0,207.0] expMean=[207.5,132.7,206.8] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:27:22.659Z]   FAIL FB-OUT-custom-p05: playhead 15.5 p=0.5000 alpha=0.0000 MAD=12.667 <=8=0.00% appMean=[10.0,12.0,16.0] expMean=[0.0,0.0,0.0] resampled: MAD=12.667 (LỆCH)",
+    "[2026-10-31T07:27:25.247Z]   perf dip (target 4.5): longtask durations ms = [382]",
+    "[2026-10-31T07:27:27.858Z]   perf plain (target 6): longtask durations ms = [95, 66]",
+    "[2026-10-31T07:27:30.389Z]   perf dip (target 4.5): longtask durations ms = [263]",
+    "[2026-10-31T07:27:32.933Z]   perf plain (target 6): longtask durations ms = []",
+    "[2026-10-31T07:27:32.936Z]   perf 1080p: dip longtask = [382, 263], plain = [95/66, -]",
+    "[2026-10-31T07:27:36.460Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T07:27:37.845Z]   media vào bin: flat-green.mp4",
+    "[2026-10-31T07:27:37.847Z]   media vào bin: flat-magenta.mp4",
+    "[2026-10-31T07:27:37.853Z]   media vào bin: flat-red.mp4",
+    "[2026-10-31T07:27:37.854Z]   media vào bin: bar-moving.mp4",
+    "[2026-10-31T07:27:37.858Z]   hiệu chuẩn vạch: offset handle-ruler lúc playhead 0 = -6.50px",
+    "[2026-10-31T07:27:38.260Z] ruler rect (1080p combo): {\"x\":152,\"y\":813,\"w\":1290,\"h\":27,\"innerH\":1057,\"handleLeft\":145.5,\"ppsInput\":60}",
+    "[2026-10-31T07:27:40.044Z]   PASS MASK-FW-IN-p05: playhead 0.5 p=0.5000 alpha=0.3466 MAD=0.134 <=8=100.00% (in MAD=0.392 <=8=100.00% n=9720; out MAD=0.000 <=8=100.00% n=18630; appMeanOut=[10.0,12.0,16.0]) appMean=[] expMean=[166.6,241.5,167.3] resampled: MAD=- (null)",
+    "[2026-10-31T07:27:41.781Z]   PASS SR-FW-IN-p05: playhead 4.5 p=0.5000 alpha=0.3466 MAD=0.148 <=8=100.00% (in MAD=0.149 <=8=100.00% n=31988; out MAD=0.000 <=8=100.00% n=190; appMeanOut=[10.0,12.0,16.0]) appMean=[] expMean=[255.0,180.1,254.3] resampled: MAD=- (null)",
+    "[2026-10-31T07:27:43.688Z]   PASS TRACK-FW-IN-p05: playhead 8.5 p=0.5000 alpha=0.3466 MAD=0.118 <=8=100.00% (in MAD=0.145 <=8=100.00% n=25800; out MAD=0.000 <=8=100.00% n=5804; appMeanOut=[10.0,12.0,16.0]) appMean=[] expMean=[255.0,174.9,166.6] resampled: MAD=- (null)",
+    "[2026-10-31T07:27:45.640Z]   PASS SHORT-BOTH-pIn075-pOut025: playhead 12.766666666666667 p=0.7667 pIn=0.7667 pOut=0.2667 alpha=0.0000 MAD=0.000 <=8=100.00% appMean=[255.0,255.0,255.0] expMean=[255.0,255.0,255.0] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:27:53.647Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T07:27:55.835Z]   media vào bin: flat-red.mp4",
+    "[2026-10-31T07:27:55.837Z]   media vào bin: flat-green.mp4",
+    "[2026-10-31T07:27:55.838Z]   media vào bin: flat-magenta.mp4",
+    "[2026-10-31T07:27:55.838Z]   media vào bin: flat-custom.mp4",
+    "[2026-10-31T07:27:55.839Z]   hiệu chuẩn vạch: offset handle-ruler lúc playhead 0 = -6.50px",
+    "[2026-10-31T07:27:56.241Z] ruler rect (4K dip): {\"x\":152,\"y\":813,\"w\":1200,\"h\":27,\"innerH\":1057,\"handleLeft\":145.5,\"ppsInput\":60}",
+    "[2026-10-31T07:27:58.565Z]   PASS 4K-S1-sanity-red-mid: playhead 1.5 p=- alpha=1.0000 MAD=0.000 <=8=100.00% appMean=[255.0,24.0,0.0] expMean=[255.0,24.0,0.0] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:28:01.029Z]   PASS 4K-S2-sanity-green-mid: playhead 6 p=- alpha=1.0000 MAD=0.000 <=8=100.00% appMean=[0.0,216.0,2.0] expMean=[0.0,216.0,2.0] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:28:04.126Z]   PASS 4K-FW-OUT-red-p01: playhead 3.1 p=0.1000 alpha=0.4491 MAD=0.245 <=8=100.00% appMean=[255.0,151.0,140.0] expMean=[255.0,151.3,140.5] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:28:07.123Z]   PASS 4K-FW-OUT-red-p05: playhead 3.5 p=0.5000 alpha=0.0000 MAD=0.000 <=8=100.00% appMean=[255.0,255.0,255.0] expMean=[255.0,255.0,255.0] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:28:09.097Z]   PASS 4K-FW-IN-green-p01: playhead 4.1 p=0.1000 alpha=0.0000 MAD=0.000 <=8=100.00% appMean=[255.0,255.0,255.0] expMean=[255.0,255.0,255.0] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:28:11.193Z]   PASS 4K-FW-IN-green-p05: playhead 4.5 p=0.5000 alpha=0.3466 MAD=0.392 <=8=100.00% appMean=[167.0,241.0,167.0] expMean=[166.6,241.5,167.3] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:28:14.259Z]   PASS 4K-FG-OUT-green-p05: playhead 7.5 p=0.5000 alpha=0.0000 MAD=0.333 <=8=100.00% appMean=[73.0,73.0,73.0] expMean=[72.7,72.7,72.7] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:28:16.861Z]   PASS 4K-FG-IN-mag-p05: playhead 8.5 p=0.5000 alpha=0.3466 MAD=0.333 <=8=100.00% appMean=[208.0,133.0,207.0] expMean=[207.5,132.7,206.8] resampled: MAD=0.000 (KHỚP)",
+    "[2026-10-31T07:28:22.073Z]   FAIL 4K-FB-OUT-custom-p05: playhead 15.5 p=0.5000 alpha=0.0000 MAD=12.667 <=8=0.00% appMean=[10.0,12.0,16.0] expMean=[0.0,0.0,0.0] resampled: MAD=12.667 (LỆCH)",
+    "[2026-10-31T07:28:24.631Z]   perf dip (target 4.5): longtask durations ms = [479]",
+    "[2026-10-31T07:28:27.153Z]   perf plain (target 6): longtask durations ms = [104]",
+    "[2026-10-31T07:28:29.676Z]   perf dip (target 4.5): longtask durations ms = [510]",
+    "[2026-10-31T07:28:32.198Z]   perf plain (target 6): longtask durations ms = []",
+    "[2026-10-31T07:28:32.199Z]   perf 4K: dip longtask = [479, 510], plain = [104, -]",
+    "[2026-10-31T07:28:32.199Z] exceptions trong phiên: 0",
+    "[2026-10-31T07:28:32.199Z] DONE clicktest-dip-browser-round29-l6: 20/23 case chính KHỚP, 3 không KHỚP, exit=1"
+  ]
+}

@@ -1,0 +1,403 @@
+{
+  "mode": "short",
+  "workdir": "/tmp/vcut-l6-r29-25GAj5",
+  "rows": [
+    {
+      "kind": "flat",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "pIn": 0.6,
+      "pOut": 0.09999999999999998,
+      "alpha": 0.22526,
+      "dipMode": "white",
+      "wiring": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 2,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "pIn": 0.75,
+      "pOut": 0.25,
+      "alpha": 0,
+      "dipMode": "white",
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 6.6667,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "pIn": 0.9,
+      "pOut": 0.4,
+      "alpha": 0,
+      "dipMode": "white",
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 17.6667,
+        "le8": 0.6667,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadegrays",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "pIn": 0.6,
+      "pOut": 0.09999999999999998,
+      "alpha": 0.22526,
+      "dipMode": "gray",
+      "wiring": {
+        "mad": 2.3333,
+        "le8": 1,
+        "verdict": "XẤP XỈ"
+      },
+      "pairGap": {
+        "mad": 123,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadegrays",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "pIn": 0.75,
+      "pOut": 0.25,
+      "alpha": 0,
+      "dipMode": "gray",
+      "wiring": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 206.3333,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadegrays",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "pIn": 0.9,
+      "pOut": 0.4,
+      "alpha": 0,
+      "dipMode": "gray",
+      "wiring": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 195.3333,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadewhite",
+      "outType": "fadegrays",
+      "localT": 0.6,
+      "pIn": 0.6,
+      "pOut": 0.09999999999999998,
+      "alpha": 0.22526,
+      "dipMode": "white",
+      "wiring": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 59,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadewhite",
+      "outType": "fadegrays",
+      "localT": 0.75,
+      "pIn": 0.75,
+      "pOut": 0.25,
+      "alpha": 0,
+      "dipMode": "white",
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 143,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadewhite",
+      "outType": "fadegrays",
+      "localT": 0.9,
+      "pIn": 0.9,
+      "pOut": 0.4,
+      "alpha": 0,
+      "dipMode": "white",
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 150,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadeblack",
+      "outType": "fadeblack",
+      "localT": 0.6,
+      "pIn": 0.6,
+      "pOut": 0.09999999999999998,
+      "alpha": 0.22526,
+      "dipMode": "black",
+      "wiring": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 1,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadeblack",
+      "outType": "fadeblack",
+      "localT": 0.75,
+      "pIn": 0.75,
+      "pOut": 0.25,
+      "alpha": 0,
+      "dipMode": "black",
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 11.3333,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadeblack",
+      "outType": "fadeblack",
+      "localT": 0.9,
+      "pIn": 0.9,
+      "pOut": 0.4,
+      "alpha": 0,
+      "dipMode": "black",
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 33.3333,
+        "le8": 0.3333,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "pIn": 0.6,
+      "pOut": 0.09999999999999998,
+      "alpha": 0.22526,
+      "dipMode": "black",
+      "wiring": {
+        "mad": 0.6667,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 139.3333,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "pIn": 0.75,
+      "pOut": 0.25,
+      "alpha": 0,
+      "dipMode": "black",
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 248.3333,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "kind": "flat",
+      "inType": "fadeblack",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "pIn": 0.9,
+      "pOut": 0.4,
+      "alpha": 0,
+      "dipMode": "black",
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 237.3333,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "kind": "flat-1080p",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "alpha": 0.22526,
+      "dipMode": "white",
+      "wiring": {
+        "mad": 1.3333,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": null
+    },
+    {
+      "kind": "flat-1080p",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "alpha": 0,
+      "dipMode": "white",
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": null
+    },
+    {
+      "kind": "flat-1080p",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "alpha": 0,
+      "dipMode": "white",
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": null
+    },
+    {
+      "kind": "footage",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.6,
+      "alpha": 0.22526,
+      "dipMode": "white",
+      "wiring": {
+        "mad": 0.9893,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 1.5608,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "kind": "footage",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.75,
+      "alpha": 0,
+      "dipMode": "white",
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 8.6202,
+        "le8": 0.5806,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "kind": "footage",
+      "inType": "fadewhite",
+      "outType": "fadewhite",
+      "localT": 0.9,
+      "alpha": 0,
+      "dipMode": "white",
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 23.8888,
+        "le8": 0.0353,
+        "verdict": "LỆCH"
+      }
+    }
+  ],
+  "fits": []
+}

@@ -1,0 +1,264 @@
+{
+  "mode": "gchan",
+  "workdir": "/tmp/vcut-l6-r29-hG7N5D",
+  "rows": [
+    {
+      "kind": "flat-p05",
+      "pair": "rb",
+      "signed": [
+        -1,
+        0,
+        0
+      ],
+      "clipFracYuv": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "roundtripSigned": [
+        -1,
+        0,
+        0
+      ],
+      "inv": {
+        "dY": -0.299,
+        "dCb": 0.1687,
+        "dCr": -0.5
+      }
+    },
+    {
+      "kind": "flat-p05",
+      "pair": "gm",
+      "signed": [
+        0,
+        0,
+        0
+      ],
+      "clipFracYuv": [
+        1,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "roundtripSigned": [
+        0,
+        -1.0047,
+        0
+      ],
+      "inv": {
+        "dY": 0,
+        "dCb": 0,
+        "dCr": 0
+      }
+    },
+    {
+      "kind": "footage-p05",
+      "pair": "KL",
+      "signed": [
+        -13.6812,
+        -10.6748,
+        -14.0947
+      ],
+      "clipFracYuv": [
+        0.0488,
+        0,
+        0.0375,
+        0,
+        0.0184,
+        0
+      ],
+      "roundtripSigned": [
+        -1.0535,
+        -1.2715,
+        -1.1673
+      ],
+      "inv": {
+        "dY": -11.9636,
+        "dCb": -1.2027,
+        "dCr": -1.2251
+      },
+      "bins": [
+        {
+          "bin": "0-64",
+          "n": 831714,
+          "signed": [
+            -13.664,
+            -10.668,
+            -14.083
+          ]
+        },
+        {
+          "bin": "64-128",
+          "n": 89886,
+          "signed": [
+            -13.843,
+            -10.738,
+            -14.204
+          ]
+        },
+        {
+          "bin": "128-192",
+          "n": 0,
+          "signed": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "bin": "192-256",
+          "n": 0,
+          "signed": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "footage-p05",
+      "pair": "JL",
+      "signed": [
+        -13.6812,
+        -10.6748,
+        -14.0947
+      ],
+      "clipFracYuv": [
+        0.0488,
+        0,
+        0.0375,
+        0,
+        0.0184,
+        0
+      ],
+      "roundtripSigned": [
+        -1.0535,
+        -1.2715,
+        -1.1673
+      ],
+      "inv": {
+        "dY": -11.9636,
+        "dCb": -1.2027,
+        "dCr": -1.2251
+      },
+      "bins": [
+        {
+          "bin": "0-64",
+          "n": 831714,
+          "signed": [
+            -13.664,
+            -10.668,
+            -14.083
+          ]
+        },
+        {
+          "bin": "64-128",
+          "n": 89886,
+          "signed": [
+            -13.843,
+            -10.738,
+            -14.204
+          ]
+        },
+        {
+          "bin": "128-192",
+          "n": 0,
+          "signed": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "bin": "192-256",
+          "n": 0,
+          "signed": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "fits": [
+    {
+      "kind": "flat",
+      "pair": "rb",
+      "channel": "R",
+      "slope": -1.415
+    },
+    {
+      "kind": "flat",
+      "pair": "rb",
+      "channel": "G",
+      "slope": 0
+    },
+    {
+      "kind": "flat",
+      "pair": "rb",
+      "channel": "B",
+      "slope": 0
+    },
+    {
+      "kind": "flat",
+      "pair": "gm",
+      "channel": "R",
+      "slope": 0
+    },
+    {
+      "kind": "flat",
+      "pair": "gm",
+      "channel": "G",
+      "slope": 0
+    },
+    {
+      "kind": "flat",
+      "pair": "gm",
+      "channel": "B",
+      "slope": 0
+    },
+    {
+      "kind": "footage",
+      "pair": "KL",
+      "channel": "R",
+      "slope": -13.7674
+    },
+    {
+      "kind": "footage",
+      "pair": "KL",
+      "channel": "G",
+      "slope": -11.1949
+    },
+    {
+      "kind": "footage",
+      "pair": "KL",
+      "channel": "B",
+      "slope": -14.8741
+    },
+    {
+      "kind": "footage",
+      "pair": "JL",
+      "channel": "R",
+      "slope": -14.0628
+    },
+    {
+      "kind": "footage",
+      "pair": "JL",
+      "channel": "G",
+      "slope": -11.5876
+    },
+    {
+      "kind": "footage",
+      "pair": "JL",
+      "channel": "B",
+      "slope": -15.4336
+    }
+  ]
+}

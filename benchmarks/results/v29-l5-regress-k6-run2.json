@@ -1,0 +1,82 @@
+{
+  "runAt": "2026-10-31T07:23:22.984Z",
+  "label": "round29-k6diag-run2",
+  "emptyMode": "baseline",
+  "display": ":98",
+  "port": 4198,
+  "bundle": "index-B1assKz-.js",
+  "bundleSha256_16": "7659cc3fb1474449",
+  "distSrc": "/home/hatch/workspace/repo-1/apps/web/dist",
+  "cases": [
+    {
+      "id": "K0-seed-load",
+      "status": "PASS",
+      "detail": "panel liệt kê đủ 9 item: TOP-SPLIT-OUT, TOP-SPLIT-EDGE, TOP-SPLIT-OK, TOP-SPLIT-PH, TOP-SPLIT2, TOP-SPLIT3, TOP-DEEP, TOP-DEEP-BLOCK, TOP-LEAFCHK"
+    },
+    {
+      "id": "K1-empty-input",
+      "status": "FAIL",
+      "detail": "msg baseline phải là OutOfRange (msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\")"
+    },
+    {
+      "id": "K2-out-of-range-two-level",
+      "status": "PASS",
+      "detail": "gõ cdp-char \"99\" + click cdp-input -> msg + toast OutOfRange đúng, lá 2 tầng còn 1, spec không đổi, Ctrl+Z no-op"
+    },
+    {
+      "id": "K3-out-of-range-three-level",
+      "status": "PASS",
+      "detail": "gõ cdp-char \"99\" + click cdp-input -> msg + toast OutOfRange đúng, lá 3 tầng còn 1, spec không đổi, Ctrl+Z no-op"
+    },
+    {
+      "id": "K6-no-crash-vi",
+      "status": "PASS",
+      "detail": "0 Runtime.exceptionThrown trong phiên vi"
+    },
+    {
+      "id": "K4-en-split-out-of-range",
+      "status": "PASS",
+      "detail": "locale en: nút \"Split leaf at outer time\" + \"Use playhead\" + aria đúng, gõ cdp-char \"9.9\" -> msg + toast en OutOfRange, không key thô, không rò vi, spec không đổi, Ctrl+Z no-op"
+    },
+    {
+      "id": "K5-en-intermediate-and-leaf-check",
+      "status": "PASS",
+      "detail": "locale en: nút \"Save inner clip\" ở trung gian sâu + nút \"Set 1× curve on leaf\" ở lá sâu, msg ancestorReverse en đúng (MID-CHK), không key thô, không rò vi, autosave không curve"
+    },
+    {
+      "id": "K7-no-crash-en",
+      "status": "PASS",
+      "detail": "0 Runtime.exceptionThrown trong phiên en"
+    }
+  ],
+  "log": [
+    "[2026-10-31T07:22:00.359Z] harness clicktest-k6-round27-pipe: bắt đầu (label=round29-k6diag-run2 emptyMode=baseline out=v29-l5-regress-k6-run2.json)",
+    "[2026-10-31T07:22:00.433Z] display=:98 port=4198 binaries=/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome | /opt/meta-chromium/chrome",
+    "[2026-10-31T07:22:00.447Z] Xvfb: socket /tmp/.X11-unix/X98 mồ côi, xoá và bật mới",
+    "[2026-10-31T07:22:00.731Z] Xvfb lên: DISPLAY=:98",
+    "[2026-10-31T07:22:01.436Z] dist snapshot OK: bundle index-B1assKz-.js sha256[:16]=7659cc3fb1474449 -> /home/hatch/workspace/tmp-round29-l5-k6diag/dist-snapshot",
+    "[2026-10-31T07:22:01.453Z] static server lên tại http://127.0.0.1:4198 (root /home/hatch/workspace/tmp-round29-l5-k6diag/dist-snapshot)",
+    "[2026-10-31T07:22:03.340Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-31T07:22:06.882Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T07:22:08.189Z]   K0 item panel: [\"TOP-SPLIT-OUT\",\"TOP-SPLIT-EDGE\",\"TOP-SPLIT-OK\",\"TOP-SPLIT-PH\",\"TOP-SPLIT2\",\"TOP-SPLIT3\",\"TOP-DEEP\",\"TOP-DEEP-BLOCK\",\"TOP-LEAFCHK\"]",
+    "[2026-10-31T07:22:08.190Z] CASE K0-seed-load: PASS — panel liệt kê đủ 9 item: TOP-SPLIT-OUT, TOP-SPLIT-EDGE, TOP-SPLIT-OK, TOP-SPLIT-PH, TOP-SPLIT2, TOP-SPLIT3, TOP-DEEP, TOP-DEEP-BLOCK, TOP-LEAFCHK",
+    "[2026-10-31T07:22:11.607Z]   K1 mode=baseline typed={\"method\":\"cdp-char\",\"value\":\"11.4641\"} cleared={\"method\":\"cdp-backspace\",\"value\":\"\"} click=cdp-input msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\" toasts=[]",
+    "[2026-10-31T07:22:11.608Z] CASE K1-empty-input: FAIL — msg baseline phải là OutOfRange (msg=\"Chưa nhập mốc ngoài (ô đang trống) — không tách.\")",
+    "[2026-10-31T07:22:14.448Z]   K2 msg=\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\" toasts=[\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\"] typed={\"method\":\"cdp-char\",\"value\":\"99\"}",
+    "[2026-10-31T07:22:29.265Z] CASE K2-out-of-range-two-level: PASS — gõ cdp-char \"99\" + click cdp-input -> msg + toast OutOfRange đúng, lá 2 tầng còn 1, spec không đổi, Ctrl+Z no-op",
+    "[2026-10-31T07:22:32.837Z]   K3 msg=\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\" toasts=[\"Mốc ngoài nằm ngoài phần khả kiến của clip lá — không tách.\"] typed={\"method\":\"cdp-char\",\"value\":\"99\"}",
+    "[2026-10-31T07:22:47.658Z] CASE K3-out-of-range-three-level: PASS — gõ cdp-char \"99\" + click cdp-input -> msg + toast OutOfRange đúng, lá 3 tầng còn 1, spec không đổi, Ctrl+Z no-op",
+    "[2026-10-31T07:22:47.658Z] CASE K6-no-crash-vi: PASS — 0 Runtime.exceptionThrown trong phiên vi",
+    "[2026-10-31T07:22:49.546Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-31T07:22:53.438Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T07:22:54.958Z]   K4 item panel (en): [\"TOP-SPLIT-OUT\",\"TOP-SPLIT-EDGE\",\"TOP-SPLIT-OK\",\"TOP-SPLIT-PH\",\"TOP-SPLIT2\",\"TOP-SPLIT3\",\"TOP-DEEP\",\"TOP-DEEP-BLOCK\",\"TOP-LEAFCHK\"]",
+    "[2026-10-31T07:22:55.654Z]   K4 row (en): {\"found\":true,\"rowText\":\"out-leaf.mp4 (00:00.0–00:04.0)Start (s) Duration (s) Save inner clipSet 1× curve on leafOuter time (outer timeline, seconds): Use playheadSplit leaf at outer time\",\"inputs\":[{\"aria\":\"Start (s)\",\"value\":\"0\",\"type\":\"number\"},{\"aria\":\"Duration (s)\",\"value\":\"4\",\"type\":\"number\"},{\"aria\":\"Outer time (outer timeline, seconds):\",\"value\":\"\",\"type\":\"number\"}],\"buttons\":[\"Save inner clip\",\"Set 1× curve on leaf\",\"Use playhead\",\"Split leaf at outer time\"]}",
+    "[2026-10-31T07:22:57.259Z]   K4 msg=\"The outer time is outside the leaf clip's visible window — not split.\" toasts=[\"The outer time is outside the leaf clip's visible window — not split.\"] typed={\"method\":\"cdp-char\",\"value\":\"9.9\"}",
+    "[2026-10-31T07:23:12.075Z] CASE K4-en-split-out-of-range: PASS — locale en: nút \"Split leaf at outer time\" + \"Use playhead\" + aria đúng, gõ cdp-char \"9.9\" -> msg + toast en OutOfRange, không key thô, không rò vi, spec không đổi, Ctrl+Z no-op",
+    "[2026-10-31T07:23:14.041Z]   K5 row DEEP-TARGET (en): {\"found\":true,\"rowText\":\"📦 DEEP-TARGET (00:00.0–00:02.0)Start (s) Duration (s) Save inner clip\",\"inputs\":[{\"aria\":\"Start (s)\",\"value\":\"0\",\"type\":\"number\"},{\"aria\":\"Duration (s)\",\"value\":\"2\",\"type\":\"number\"}],\"buttons\":[\"Save inner clip\"]}",
+    "[2026-10-31T07:23:15.975Z]   K5 msg=\"Cannot place a speed curve on the leaf clip inside nested clip “TOP-LEAFCHK”: Ancestor nested clip “MID-CHK” is reversed — the render worker forbids reverse on a curve-carrying level.\" toasts=[\"Cannot place a speed curve on the leaf clip inside nested clip “TOP-LEAFCHK”: Ancestor nested clip “MID-CHK” is reversed — the render worker forbids reverse on a curve-carrying level.\"]",
+    "[2026-10-31T07:23:22.979Z] CASE K5-en-intermediate-and-leaf-check: PASS — locale en: nút \"Save inner clip\" ở trung gian sâu + nút \"Set 1× curve on leaf\" ở lá sâu, msg ancestorReverse en đúng (MID-CHK), không key thô, không rò vi, autosave không curve",
+    "[2026-10-31T07:23:22.980Z] CASE K7-no-crash-en: PASS — 0 Runtime.exceptionThrown trong phiên en",
+    "[2026-10-31T07:23:22.983Z] DONE clicktest-k6-round27: 7/8 case pass, 1 fail, exit=1"
+  ]
+}

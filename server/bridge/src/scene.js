@@ -14,6 +14,7 @@
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
+const { redactStderr } = require("./errorDetail"); // Đợt 29 L3: dòng [scene] LỖI có thể chứa đường dẫn
 
 const DEFAULT_THRESHOLD = 0.4;
 const MIN_THRESHOLD = 0.05;
@@ -170,7 +171,7 @@ function runSceneDetect({ inputPath, threshold, start, end, onPhase, config }) {
       if (code !== 0) {
         const msg = (stderr.match(/\[scene\] LỖI: ([^\n]+)/) || [])[1]
           || `scene.py thoát với mã ${code}.`;
-        finish(new Error(msg.trim()));
+        finish(new Error(redactStderr(msg).trim()));
         return;
       }
       let data;

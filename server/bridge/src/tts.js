@@ -17,6 +17,7 @@
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
+const { redactStderr } = require("./errorDetail"); // Đợt 29 L3
 
 // 25 giọng preset của VieNeu-TTS v3 Turbo (mirror từ
 // assets/voices_v3_turbo.json của package vieneu; tts.py --list-voices là nguồn thật)
@@ -150,7 +151,7 @@ function runTts({ text, voice, refAudioPath, outDir, onPhase, cfg = ttsConfigFro
     child.on("error", (e) => reject(new Error(`Không chạy được tts.py: ${e.message}`)));
     child.on("close", (code) => {
       if (code !== 0) {
-        const msg = (stderr.trim().split("\n").slice(-3).join(" ") || `tts.py exit ${code}`).slice(0, 500);
+        const msg = (redactStderr(stderr).trim().split("\n").slice(-3).join(" ") || `tts.py exit ${code}`).slice(0, 500);
         return reject(new Error(`TTS thất bại: ${msg}`));
       }
       // Dòng JSON cuối của stdout chứa kết quả

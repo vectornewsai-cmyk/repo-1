@@ -1,0 +1,3671 @@
+{
+  "run": "r29l1-run1",
+  "date": "2026-10-31T07:23:38.963Z",
+  "bundle": "index-B1assKz-.js",
+  "bundleSha256_16": "7659cc3fb1474449",
+  "display": ":99",
+  "port": 4199,
+  "origin": "http://127.0.0.1:4199",
+  "footage": [
+    {
+      "id": "FOOT-PROXY-DIAG",
+      "proxyDiag": {
+        "badge": "",
+        "badgeDisplay": "none",
+        "mediaProxy": [
+          "Proxy lỗi, thử lại"
+        ],
+        "toasts": [
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×",
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×",
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.",
+          "×"
+        ]
+      },
+      "gating": false
+    },
+    {
+      "id": "FB-IN-p01",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "in",
+      "type": "fadeblack",
+      "target": 0.1,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": false,
+      "playhead": 0.1,
+      "localT": 0.1,
+      "p": 0.1,
+      "alpha": 0,
+      "mode": "black",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 0,
+          "seekT": 0.0209,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 1,
+          "seekT": 0.0626,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 2,
+          "seekT": 0.1043,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 3,
+          "seekT": 0.146,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 4,
+          "seekT": 0.1877,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 0.1,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 2,
+      "edgeStart": 0.01658333333333334,
+      "edgeEnd": 0.02512499999999998,
+      "appMean": [
+        10,
+        12,
+        16
+      ],
+      "correctMean": [
+        10,
+        12,
+        16
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 0.10427,
+        "ctSrc": 0.1
+      },
+      "holdBefore": {
+        "draw": 0,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 1,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": true,
+      "settled": {
+        "hash": 3633420,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FB-IN-p0533",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "in",
+      "type": "fadeblack",
+      "target": 0.5333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": false,
+      "playhead": 0.5333333333333333,
+      "localT": 0.5333333333333333,
+      "p": 0.5333333333333333,
+      "alpha": 0.39740278266683365,
+      "mode": "black",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 1.8894756554307117,
+      "oldChainLe8": 0.9412921348314607,
+      "oldChainMaxDiff": 47,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 10,
+          "seekT": 0.4379,
+          "mad": 2.2906928838951313,
+          "le8": 0.9214044943820224,
+          "maxDiff": 60,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 11,
+          "seekT": 0.4796,
+          "mad": 1.276685393258427,
+          "le8": 0.9725280898876405,
+          "maxDiff": 45,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 12,
+          "seekT": 0.5214,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 13,
+          "seekT": 0.5631,
+          "mad": 1.293183520599251,
+          "le8": 0.9719662921348314,
+          "maxDiff": 44,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 14,
+          "seekT": 0.6048,
+          "mad": 2.324831460674157,
+          "le8": 0.9214606741573034,
+          "maxDiff": 56,
+          "verdict": "XẤP XỈ"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 0.5333333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 12,
+      "edgeStart": 0.03283333333333338,
+      "edgeEnd": 0.008874999999999966,
+      "appMean": [
+        69.00078651685394,
+        69.89668539325842,
+        71.65443820224719
+      ],
+      "correctMean": [
+        69.00078651685394,
+        69.89668539325842,
+        71.65443820224719
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 0.521354,
+        "ctSrc": 0.533333
+      },
+      "holdBefore": {
+        "draw": 1,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 2,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 8374666,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FB-OUT-p01",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadeblack",
+      "target": 3.1,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": false,
+      "playhead": 3.1,
+      "localT": 3.1,
+      "p": 0.10000000000000009,
+      "alpha": 0.4491075996108812,
+      "mode": "black",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 2.6771535580524346,
+      "oldChainLe8": 0.9082584269662921,
+      "oldChainMaxDiff": 56,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 72,
+          "seekT": 3.0239,
+          "mad": 2.7557677902621722,
+          "le8": 0.8956741573033707,
+          "maxDiff": 84,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 73,
+          "seekT": 3.0656,
+          "mad": 1.5037640449438203,
+          "le8": 0.9596629213483147,
+          "maxDiff": 60,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 74,
+          "seekT": 3.1073,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 75,
+          "seekT": 3.149,
+          "mad": 1.4847003745318352,
+          "le8": 0.9602808988764044,
+          "maxDiff": 43,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 76,
+          "seekT": 3.1907,
+          "mad": 2.721123595505618,
+          "le8": 0.8964044943820225,
+          "maxDiff": 77,
+          "verdict": "LỆCH"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.1,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 74,
+      "edgeStart": 0.013583333333333503,
+      "edgeEnd": 0.028124999999999734,
+      "appMean": [
+        71.30404494382023,
+        72.01691011235955,
+        73.80539325842696
+      ],
+      "correctMean": [
+        71.30404494382023,
+        72.01691011235955,
+        73.80539325842696
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.10727,
+        "ctSrc": 3.1
+      },
+      "holdBefore": {
+        "draw": 2,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 3,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 8580256,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FB-OUT-p0533",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadeblack",
+      "target": 3.5333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": false,
+      "playhead": 3.533333333333333,
+      "localT": 3.533333333333333,
+      "p": 0.5333333333333332,
+      "alpha": 0,
+      "mode": "black",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 82,
+          "seekT": 3.4409,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 83,
+          "seekT": 3.4826,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 84,
+          "seekT": 3.5244,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 85,
+          "seekT": 3.5661,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 86,
+          "seekT": 3.6078,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.533333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 84,
+      "edgeStart": 0.02983333333333338,
+      "edgeEnd": 0.011874999999999858,
+      "appMean": [
+        10,
+        12,
+        16
+      ],
+      "correctMean": [
+        10,
+        12,
+        16
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.524354,
+        "ctSrc": 3.533333
+      },
+      "holdBefore": {
+        "draw": 3,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 4,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": true,
+      "settled": {
+        "hash": 3633420,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FW-IN-p01",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.1,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": false,
+      "playhead": 4.1,
+      "localT": 0.09999999999999964,
+      "p": 0.09999999999999964,
+      "alpha": 0,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 0,
+          "seekT": 0.0209,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 1,
+          "seekT": 0.0626,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 2,
+          "seekT": 0.1043,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 3,
+          "seekT": 0.146,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 4,
+          "seekT": 0.1877,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.1,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 2,
+      "edgeStart": 0.01658333333333334,
+      "edgeEnd": 0.02512499999999998,
+      "appMean": [
+        255,
+        255,
+        255
+      ],
+      "correctMean": [
+        255,
+        255,
+        255
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 0.10427,
+        "ctSrc": 0.1
+      },
+      "holdBefore": {
+        "draw": 4,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 5,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 23798268,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FW-IN-p0533",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.5333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": false,
+      "playhead": 4.533333333333333,
+      "localT": 0.5333333333333332,
+      "p": 0.5333333333333332,
+      "alpha": 0.39740278266683327,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 1.3852059925093634,
+      "oldChainLe8": 0.9664044943820225,
+      "oldChainMaxDiff": 38,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 10,
+          "seekT": 0.4379,
+          "mad": 1.8458239700374532,
+          "le8": 0.9457865168539326,
+          "maxDiff": 47,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 11,
+          "seekT": 0.4796,
+          "mad": 0.9977902621722846,
+          "le8": 0.9858988764044944,
+          "maxDiff": 27,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 12,
+          "seekT": 0.5214,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 13,
+          "seekT": 0.5631,
+          "mad": 1.0024531835205992,
+          "le8": 0.9864606741573033,
+          "maxDiff": 39,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 14,
+          "seekT": 0.6048,
+          "mad": 1.855430711610487,
+          "le8": 0.9454494382022471,
+          "maxDiff": 48,
+          "verdict": "XẤP XỈ"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.533333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 12,
+      "edgeStart": 0.03283333333333338,
+      "edgeEnd": 0.008874999999999966,
+      "appMean": [
+        216.68044943820226,
+        216.58224719101125,
+        216.33820224719102
+      ],
+      "correctMean": [
+        216.68044943820226,
+        216.58224719101125,
+        216.33820224719102
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 0.521354,
+        "ctSrc": 0.533333
+      },
+      "holdBefore": {
+        "draw": 5,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 6,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 20561964,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FW-OUT-p01",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadewhite",
+      "target": 7.1,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": false,
+      "playhead": 7.1,
+      "localT": 3.0999999999999996,
+      "p": 0.09999999999999964,
+      "alpha": 0.4491075996108843,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 1.9543445692883896,
+      "oldChainLe8": 0.9417415730337079,
+      "oldChainMaxDiff": 45,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 72,
+          "seekT": 3.0239,
+          "mad": 2.1043445692883895,
+          "le8": 0.9285955056179775,
+          "maxDiff": 58,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 73,
+          "seekT": 3.0656,
+          "mad": 1.1160674157303372,
+          "le8": 0.9798876404494382,
+          "maxDiff": 43,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 74,
+          "seekT": 3.1073,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 75,
+          "seekT": 3.149,
+          "mad": 1.1264232209737828,
+          "le8": 0.9791011235955056,
+          "maxDiff": 40,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 76,
+          "seekT": 3.1907,
+          "mad": 2.1317228464419475,
+          "le8": 0.9258988764044944,
+          "maxDiff": 57,
+          "verdict": "XẤP XỈ"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 7.1,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 74,
+      "edgeStart": 0.013583333333333503,
+      "edgeEnd": 0.028124999999999734,
+      "appMean": [
+        206.38050561797752,
+        206.1126404494382,
+        205.89926966292134
+      ],
+      "correctMean": [
+        206.38050561797752,
+        206.1126404494382,
+        205.89926966292134
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.10727,
+        "ctSrc": 3.1
+      },
+      "holdBefore": {
+        "draw": 6,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 7,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 19709080,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FW-OUT-p0533",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadewhite",
+      "target": 7.5333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": false,
+      "playhead": 7.533333333333333,
+      "localT": 3.533333333333333,
+      "p": 0.5333333333333332,
+      "alpha": 0,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 82,
+          "seekT": 3.4409,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 83,
+          "seekT": 3.4826,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 84,
+          "seekT": 3.5244,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 85,
+          "seekT": 3.5661,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 86,
+          "seekT": 3.6078,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 7.533333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 84,
+      "edgeStart": 0.02983333333333338,
+      "edgeEnd": 0.011874999999999858,
+      "appMean": [
+        255,
+        255,
+        255
+      ],
+      "correctMean": [
+        255,
+        255,
+        255
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.524354,
+        "ctSrc": 3.533333
+      },
+      "holdBefore": {
+        "draw": 7,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 8,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 23798268,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FW-IN-p05-legacyK3",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": true,
+      "playhead": 4.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 1.1902247191011235,
+      "oldChainLe8": 0.9749438202247191,
+      "oldChainMaxDiff": 32,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 9,
+          "seekT": 0.3962,
+          "mad": 1.6085393258426965,
+          "le8": 0.9566292134831461,
+          "maxDiff": 44,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 10,
+          "seekT": 0.4379,
+          "mad": 0.8424531835205993,
+          "le8": 0.9889887640449438,
+          "maxDiff": 23,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 11,
+          "seekT": 0.4796,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 12,
+          "seekT": 0.5214,
+          "mad": 0.8671348314606742,
+          "le8": 0.9902247191011236,
+          "maxDiff": 23,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 13,
+          "seekT": 0.5631,
+          "mad": 1.6100187265917603,
+          "le8": 0.9579213483146067,
+          "maxDiff": 47,
+          "verdict": "XẤP XỈ"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 11,
+      "edgeStart": 0.04120833333333335,
+      "edgeEnd": 0.0004999999999999449,
+      "appMean": [
+        221.70337078651684,
+        221.5841011235955,
+        221.39870786516855
+      ],
+      "correctMean": [
+        221.70337078651684,
+        221.5841011235955,
+        221.39870786516855
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 0.479645,
+        "ctSrc": 0.5
+      },
+      "holdBefore": {
+        "draw": 8,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 9,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 20983964,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FG-IN-p01",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "in",
+      "type": "fadegrays",
+      "target": 8.1,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": false,
+      "playhead": 8.1,
+      "localT": 0.09999999999999964,
+      "p": 0.09999999999999964,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 3.193314606741573,
+      "oldChainLe8": 0.8797191011235955,
+      "oldChainMaxDiff": 91,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 0,
+          "seekT": 0.0209,
+          "mad": 4.562696629213483,
+          "le8": 0.8424157303370786,
+          "maxDiff": 106,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 1,
+          "seekT": 0.0626,
+          "mad": 2.3879775280898876,
+          "le8": 0.9230898876404494,
+          "maxDiff": 70,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 2,
+          "seekT": 0.1043,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 3,
+          "seekT": 0.146,
+          "mad": 2.3669101123595504,
+          "le8": 0.9226966292134832,
+          "maxDiff": 58,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 4,
+          "seekT": 0.1877,
+          "mad": 4.487134831460674,
+          "le8": 0.8402247191011236,
+          "maxDiff": 121,
+          "verdict": "LỆCH"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 8.1,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 2,
+      "edgeStart": 0.01658333333333334,
+      "edgeEnd": 0.02512499999999998,
+      "appMean": [
+        160.9632584269663,
+        160.9632584269663,
+        160.9632584269663
+      ],
+      "correctMean": [
+        160.9632584269663,
+        160.9632584269663,
+        160.9632584269663
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 0.10427,
+        "ctSrc": 0.1
+      },
+      "holdBefore": {
+        "draw": 9,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 10,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 15909540,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FG-IN-p0533",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "in",
+      "type": "fadegrays",
+      "target": 8.5333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": false,
+      "playhead": 8.533333333333333,
+      "localT": 0.5333333333333332,
+      "p": 0.5333333333333332,
+      "alpha": 0.39740278266683327,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 3.471573033707865,
+      "oldChainLe8": 0.866123595505618,
+      "oldChainMaxDiff": 94,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 10,
+          "seekT": 0.4379,
+          "mad": 4.611591760299626,
+          "le8": 0.8232584269662921,
+          "maxDiff": 117,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 11,
+          "seekT": 0.4796,
+          "mad": 2.4825280898876403,
+          "le8": 0.9192134831460674,
+          "maxDiff": 67,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 12,
+          "seekT": 0.5214,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 13,
+          "seekT": 0.5631,
+          "mad": 2.49061797752809,
+          "le8": 0.9180898876404494,
+          "maxDiff": 95,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 14,
+          "seekT": 0.6048,
+          "mad": 4.64996254681648,
+          "le8": 0.8157865168539326,
+          "maxDiff": 120,
+          "verdict": "LỆCH"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 8.533333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 12,
+      "edgeStart": 0.03283333333333338,
+      "edgeEnd": 0.008874999999999966,
+      "appMean": [
+        158.64943820224718,
+        158.56247191011235,
+        158.34516853932584
+      ],
+      "correctMean": [
+        158.64943820224718,
+        158.56247191011235,
+        158.34516853932584
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 0.521354,
+        "ctSrc": 0.533333
+      },
+      "holdBefore": {
+        "draw": 10,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 11,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 15689893,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FG-OUT-p01",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 11.1,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": false,
+      "playhead": 11.1,
+      "localT": 3.0999999999999996,
+      "p": 0.09999999999999964,
+      "alpha": 0.4491075996108843,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 4.343520599250937,
+      "oldChainLe8": 0.8421910112359551,
+      "oldChainMaxDiff": 101,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 72,
+          "seekT": 3.0239,
+          "mad": 4.663932584269663,
+          "le8": 0.8176966292134832,
+          "maxDiff": 131,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 73,
+          "seekT": 3.0656,
+          "mad": 2.4634831460674156,
+          "le8": 0.9117977528089888,
+          "maxDiff": 95,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 74,
+          "seekT": 3.1073,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 75,
+          "seekT": 3.149,
+          "mad": 2.4945131086142323,
+          "le8": 0.9120786516853933,
+          "maxDiff": 84,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 76,
+          "seekT": 3.1907,
+          "mad": 4.734082397003745,
+          "le8": 0.8185393258426966,
+          "maxDiff": 124,
+          "verdict": "LỆCH"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 11.1,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 74,
+      "edgeStart": 0.013583333333333503,
+      "edgeEnd": 0.028124999999999734,
+      "appMean": [
+        146.7873033707865,
+        146.5115168539326,
+        146.3028651685393
+      ],
+      "correctMean": [
+        146.7873033707865,
+        146.5115168539326,
+        146.3028651685393
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.10727,
+        "ctSrc": 3.1
+      },
+      "holdBefore": {
+        "draw": 11,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 12,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 14731014,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FG-OUT-p0533",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 11.5333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": false,
+      "playhead": 11.533333333333333,
+      "localT": 3.533333333333333,
+      "p": 0.5333333333333332,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 4.334101123595506,
+      "oldChainLe8": 0.8452808988764045,
+      "oldChainMaxDiff": 101,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 82,
+          "seekT": 3.4409,
+          "mad": 4.775786516853932,
+          "le8": 0.8192134831460675,
+          "maxDiff": 103,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 83,
+          "seekT": 3.4826,
+          "mad": 2.5270224719101124,
+          "le8": 0.911685393258427,
+          "maxDiff": 53,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 84,
+          "seekT": 3.5244,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 85,
+          "seekT": 3.5661,
+          "mad": 2.490955056179775,
+          "le8": 0.9170224719101123,
+          "maxDiff": 76,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 86,
+          "seekT": 3.6078,
+          "mad": 4.626685393258427,
+          "le8": 0.8275280898876405,
+          "maxDiff": 107,
+          "verdict": "LỆCH"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 11.533333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 84,
+      "edgeStart": 0.02983333333333338,
+      "edgeEnd": 0.011874999999999858,
+      "appMean": [
+        145.04707865168538,
+        145.04707865168538,
+        145.04707865168538
+      ],
+      "correctMean": [
+        145.04707865168538,
+        145.04707865168538,
+        145.04707865168538
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.524354,
+        "ctSrc": 3.533333
+      },
+      "holdBefore": {
+        "draw": 12,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 13,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 14607732,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FG-OUT-p05-legacyK3",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 11.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": true,
+      "playhead": 11.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 2.5270224719101124,
+      "le8": 0.911685393258427,
+      "maxDiff": 53,
+      "verdict": "XẤP XỈ",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 4.481179775280899,
+      "oldChainLe8": 0.8397752808988764,
+      "oldChainMaxDiff": 101,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 81,
+          "seekT": 3.3992,
+          "mad": 6.756516853932585,
+          "le8": 0.7653932584269663,
+          "maxDiff": 140,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 82,
+          "seekT": 3.4409,
+          "mad": 4.775786516853932,
+          "le8": 0.8192134831460675,
+          "maxDiff": 103,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 83,
+          "seekT": 3.4826,
+          "mad": 2.5270224719101124,
+          "le8": 0.911685393258427,
+          "maxDiff": 53,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 84,
+          "seekT": 3.5244,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 85,
+          "seekT": 3.5661,
+          "mad": 2.490955056179775,
+          "le8": 0.9170224719101123,
+          "maxDiff": 76,
+          "verdict": "XẤP XỈ"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 11.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 83,
+      "edgeStart": 0.0382083333333334,
+      "edgeEnd": 0.0034999999999998366,
+      "appMean": [
+        145.04707865168538,
+        145.04707865168538,
+        145.04707865168538
+      ],
+      "correctMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.482645,
+        "ctSrc": 3.5
+      },
+      "holdBefore": {
+        "draw": 13,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 14,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 14607732,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "SANITY-K-mid",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 14.0333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "legacy": false,
+      "playhead": 14.033333333333333,
+      "localT": 2.033333333333333,
+      "p": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 3.30249063670412,
+      "le8": 0.8717977528089887,
+      "maxDiff": 119,
+      "verdict": "LỆCH",
+      "uncertain": false,
+      "retried": true,
+      "measurementInvalid": false,
+      "oldChainMad": 5.839063670411985,
+      "oldChainLe8": 0.7794943820224719,
+      "oldChainMaxDiff": 125,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 46,
+          "seekT": 1.9394,
+          "mad": 8.020955056179774,
+          "le8": 0.7308426966292135,
+          "maxDiff": 183,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 47,
+          "seekT": 1.9811,
+          "mad": 5.9328089887640445,
+          "le8": 0.7775280898876404,
+          "maxDiff": 141,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 48,
+          "seekT": 2.0229,
+          "mad": 3.30249063670412,
+          "le8": 0.8717977528089887,
+          "maxDiff": 119,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 49,
+          "seekT": 2.0646,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 50,
+          "seekT": 2.1063,
+          "mad": 3.209737827715356,
+          "le8": 0.8734831460674157,
+          "maxDiff": 130,
+          "verdict": "LỆCH"
+        }
+      ],
+      "handleDeltaFrames": 0,
+      "handleRaw": 14.033333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 48,
+      "edgeStart": 0.031333333333333435,
+      "edgeEnd": 0.010374999999999801,
+      "appMean": [
+        150.05488764044944,
+        149.50780898876405,
+        149.0335393258427
+      ],
+      "correctMean": [
+        149.78449438202247,
+        149.34028089887641,
+        148.77893258426965
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 2.022854,
+        "ctSrc": 2.033332
+      },
+      "holdBefore": {
+        "draw": 14,
+        "hold": 0,
+        "skip": 1,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 16,
+        "hold": 0,
+        "skip": 2,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 3633420,
+        "w": 1352,
+        "h": 633
+      }
+    }
+  ],
+  "regression": [
+    {
+      "id": "S1-sanity-red-mid",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 1.5,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 1.5,
+      "localT": 1.5,
+      "p": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 1.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 45,
+      "edgeStart": 0,
+      "edgeEnd": 0.03333333333333344,
+      "appMean": [
+        255,
+        24,
+        0
+      ],
+      "correctMean": [
+        255,
+        24,
+        0
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 1.516666,
+        "ctSrc": 1.5
+      },
+      "holdBefore": {
+        "draw": 1,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 2,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 13425930,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "S2-sanity-green-mid",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 6,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 6,
+      "localT": 2,
+      "p": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 6,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 60,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333215,
+      "appMean": [
+        0,
+        216,
+        2
+      ],
+      "correctMean": [
+        0,
+        216,
+        2
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 2.016665,
+        "ctSrc": 2
+      },
+      "holdBefore": {
+        "draw": 2,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 3,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 19407780,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FW-OUT-red-p0333",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": "out",
+      "type": "fadewhite",
+      "target": 3.0333,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 3.033333333333333,
+      "localT": 3.033333333333333,
+      "p": 0.033333333333333215,
+      "alpha": 0.8858674300710606,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.033333333333333,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 91,
+      "edgeStart": 0,
+      "edgeEnd": 0.03333333333333366,
+      "appMean": [
+        255,
+        50,
+        29
+      ],
+      "correctMean": [
+        255,
+        50,
+        29
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 3.05,
+        "ctSrc": 3.033333
+      },
+      "holdBefore": {
+        "draw": 3,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 4,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 19585020,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FW-OUT-red-p01",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": "out",
+      "type": "fadewhite",
+      "target": 3.1,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 3.1,
+      "localT": 3.1,
+      "p": 0.10000000000000009,
+      "alpha": 0.4491075996108812,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.1,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 93,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333215,
+      "appMean": [
+        255,
+        151,
+        140
+      ],
+      "correctMean": [
+        255,
+        151,
+        140
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 3.116666,
+        "ctSrc": 3.1
+      },
+      "holdBefore": {
+        "draw": 4,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 5,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 43290870,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FW-OUT-red-p05",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "flat-red.mp4"
+      },
+      "window": "out",
+      "type": "fadewhite",
+      "target": 3.5,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 3.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 105,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333215,
+      "appMean": [
+        255,
+        255,
+        255
+      ],
+      "correctMean": [
+        255,
+        255,
+        255
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 3.516666,
+        "ctSrc": 3.5
+      },
+      "holdBefore": {
+        "draw": 5,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 6,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 67794300,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FW-IN-green-p01",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.1,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 4.1,
+      "localT": 0.09999999999999964,
+      "p": 0.09999999999999964,
+      "alpha": 0,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.1,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 3,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333326,
+      "appMean": [
+        255,
+        255,
+        255
+      ],
+      "correctMean": [
+        255,
+        255,
+        255
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 0.116666,
+        "ctSrc": 0.1
+      },
+      "holdBefore": {
+        "draw": 6,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 7,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 67794300,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FW-IN-green-p05",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.5,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 4.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 15,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333326,
+      "appMean": [
+        167,
+        241,
+        167
+      ],
+      "correctMean": [
+        167,
+        241,
+        167
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 0.516665,
+        "ctSrc": 0.5
+      },
+      "holdBefore": {
+        "draw": 7,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 8,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 50956500,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FW-IN-green-p0733",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.7333,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 4.733333333333333,
+      "localT": 0.7333333333333334,
+      "p": 0.7333333333333334,
+      "alpha": 0.7056320507375885,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.733333333333333,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 22,
+      "edgeStart": 0,
+      "edgeEnd": 0.03333333333333344,
+      "appMean": [
+        75,
+        227,
+        76
+      ],
+      "correctMean": [
+        75,
+        227,
+        76
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 0.75,
+        "ctSrc": 0.733333
+      },
+      "holdBefore": {
+        "draw": 8,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 9,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 33542670,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FW-IN-green-p0933",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.9333,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 4.933333333333334,
+      "localT": 0.9333333333333336,
+      "p": 0.9333333333333336,
+      "alpha": 0.9395970508111922,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.933333333333334,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 28,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333326,
+      "appMean": [
+        15,
+        218,
+        17
+      ],
+      "correctMean": [
+        15,
+        218,
+        17
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 0.95,
+        "ctSrc": 0.933333
+      },
+      "holdBefore": {
+        "draw": 9,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 10,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 22243620,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FG-OUT-green-p01",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 7.1,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 7.1,
+      "localT": 3.0999999999999996,
+      "p": 0.09999999999999964,
+      "alpha": 0.4491075996108843,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 7.1,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 93,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333215,
+      "appMean": [
+        40,
+        137,
+        41
+      ],
+      "correctMean": [
+        40,
+        137,
+        41
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 3.116666,
+        "ctSrc": 3.1
+      },
+      "holdBefore": {
+        "draw": 10,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 11,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 19363470,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FG-OUT-green-p05",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "flat-green.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 7.5,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 7.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 7.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 105,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333215,
+      "appMean": [
+        73,
+        73,
+        73
+      ],
+      "correctMean": [
+        73,
+        73,
+        73
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 3.516666,
+        "ctSrc": 3.5
+      },
+      "holdBefore": {
+        "draw": 11,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 12,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 19407780,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FG-IN-mag-p01",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "flat-magenta.mp4"
+      },
+      "window": "in",
+      "type": "fadegrays",
+      "target": 8.1,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 8.1,
+      "localT": 0.09999999999999964,
+      "p": 0.09999999999999964,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 8.1,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 3,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333326,
+      "appMean": [
+        182,
+        182,
+        182
+      ],
+      "correctMean": [
+        182,
+        182,
+        182
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 0.116666,
+        "ctSrc": 0.1
+      },
+      "holdBefore": {
+        "draw": 12,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 13,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 48386520,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FG-IN-mag-p05",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "flat-magenta.mp4"
+      },
+      "window": "in",
+      "type": "fadegrays",
+      "target": 8.5,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 8.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "alpha": 0.34657468917294143,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 8.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 15,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333326,
+      "appMean": [
+        208,
+        133,
+        207
+      ],
+      "correctMean": [
+        208,
+        133,
+        207
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 0.516665,
+        "ctSrc": 0.5
+      },
+      "holdBefore": {
+        "draw": 13,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 14,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 48519450,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FG-OUT-custom-p01",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "flat-custom.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 15.1,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 15.1,
+      "localT": 3.0999999999999996,
+      "p": 0.09999999999999964,
+      "alpha": 0.4491075996108843,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 15.1,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 93,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333215,
+      "appMean": [
+        160,
+        115,
+        89
+      ],
+      "correctMean": [
+        160,
+        115,
+        89
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 3.116666,
+        "ctSrc": 3.1
+      },
+      "holdBefore": {
+        "draw": 14,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 15,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 29111670,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "FG-OUT-custom-p05",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "flat-custom.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 15.5,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 15.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 15.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 105,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333215,
+      "appMean": [
+        121,
+        121,
+        121
+      ],
+      "correctMean": [
+        121,
+        121,
+        121
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 3.516666,
+        "ctSrc": 3.5
+      },
+      "holdBefore": {
+        "draw": 15,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 16,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 32169060,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "GRAD-FW-IN-p01",
+      "clip": {
+        "start": 16,
+        "dur": 4,
+        "file": "grad-static.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 16.1,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 16.1,
+      "localT": 0.10000000000000142,
+      "p": 0.10000000000000142,
+      "alpha": 0,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 16.1,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 3,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333326,
+      "appMean": [
+        255,
+        255,
+        255
+      ],
+      "correctMean": [
+        255,
+        255,
+        255
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 0.116666,
+        "ctSrc": 0.1
+      },
+      "holdBefore": {
+        "draw": 16,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 17,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 67794300,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "GRAD-FW-IN-p05",
+      "clip": {
+        "start": 16,
+        "dur": 4,
+        "file": "grad-static.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 16.5,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 16.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 16.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 15,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333326,
+      "appMean": [
+        210.2891156462585,
+        210.12429138321994,
+        210.21130952380952
+      ],
+      "correctMean": [
+        210.2891156462585,
+        210.12429138321994,
+        210.21130952380952
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 0.516665,
+        "ctSrc": 0.5
+      },
+      "holdBefore": {
+        "draw": 17,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 18,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 55966321,
+        "w": 1352,
+        "h": 633
+      }
+    },
+    {
+      "id": "GRAD-FG-OUT-p05",
+      "clip": {
+        "start": 16,
+        "dur": 4,
+        "file": "grad-static.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 19.5,
+      "footage": false,
+      "fpsNative": 30,
+      "playhead": 19.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "oldChainMad": 0,
+      "oldChainLe8": 1,
+      "oldChainMaxDiff": 0,
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "frameLockMaxDiff": 0,
+      "sweep": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 19.5,
+      "nSamples": 7056,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 0,
+        "dy": 0,
+        "dw": 1280,
+        "dh": 720,
+        "dxR": 0,
+        "dyR": 0,
+        "dwR": 1280,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 105,
+      "edgeStart": 0,
+      "edgeEnd": 0.033333333333333215,
+      "appMean": [
+        125.85827664399093,
+        125.85827664399093,
+        125.85827664399093
+      ],
+      "correctMean": [
+        125.85827664399093,
+        125.85827664399093,
+        125.85827664399093
+      ],
+      "controlVideo": {
+        "w": 1280,
+        "h": 720,
+        "ctMid": 3.516666,
+        "ctSrc": 3.5
+      },
+      "holdBefore": {
+        "draw": 18,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 19,
+        "hold": 0,
+        "skip": 0,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "indistinguishableFromDarkFrame": false,
+      "settled": {
+        "hash": 33687054,
+        "w": 1352,
+        "h": 633
+      }
+    }
+  ],
+  "exceptions": [],
+  "log": [
+    "[2026-10-31T07:21:12.368Z] harness clicktest-dip-footage-round29-l1: bắt đầu (label=r29l1-run1, display=:99, port=4199, skipReg=false, skipFoot=false)",
+    "[2026-10-31T07:21:12.649Z] footage K OK: SHA khớp J3, 45788099 byte",
+    "[2026-10-31T07:21:14.966Z] video phẳng OK: flat-red.mp4 (11048 byte)",
+    "[2026-10-31T07:21:17.143Z] video phẳng OK: flat-green.mp4 (11048 byte)",
+    "[2026-10-31T07:21:18.175Z] video phẳng OK: flat-magenta.mp4 (11049 byte)",
+    "[2026-10-31T07:21:19.193Z] video phẳng OK: flat-custom.mp4 (11048 byte)",
+    "[2026-10-31T07:21:23.973Z] video gradient tĩnh OK: grad-static.mp4 (41688 byte)",
+    "[2026-10-31T07:21:24.231Z] Xvfb lên: DISPLAY=:99",
+    "[2026-10-31T07:21:24.563Z] dist snapshot OK: bundle index-B1assKz-.js sha256[:16]=7659cc3fb1474449 -> /home/hatch/workspace/tmp-round29-l1/dist-snapshot",
+    "[2026-10-31T07:21:24.637Z] video đã copy vào snapshot (clip-k-dod-iwo.mp4, flat-custom.mp4, flat-green.mp4, flat-magenta.mp4, flat-red.mp4, grad-static.mp4)",
+    "[2026-10-31T07:21:24.651Z] static server lên tại http://127.0.0.1:4199 (root /home/hatch/workspace/tmp-round29-l1/dist-snapshot)",
+    "[2026-10-31T07:21:27.171Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-31T07:21:31.738Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T07:21:33.049Z]   media vào bin: flat-red.mp4",
+    "[2026-10-31T07:21:33.049Z]   media vào bin: flat-green.mp4",
+    "[2026-10-31T07:21:33.051Z]   media vào bin: flat-magenta.mp4",
+    "[2026-10-31T07:21:33.052Z]   media vào bin: flat-custom.mp4",
+    "[2026-10-31T07:21:33.060Z]   media vào bin: grad-static.mp4",
+    "[2026-10-31T07:21:33.080Z]   hiệu chuẩn vạch: offset handle-ruler lúc playhead 0 = -6.50px",
+    "[2026-10-31T07:21:33.486Z] ruler hồi quy: {\"x\":152,\"y\":813,\"w\":1440,\"h\":27,\"innerH\":1057,\"handleLeft\":145.5,\"ppsInput\":60}",
+    "[2026-10-31T07:21:35.274Z]   KHỚP S1-sanity-red-mid: playhead 1.5 p=- alpha=1.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:21:36.936Z]   KHỚP S2-sanity-green-mid: playhead 6 p=- alpha=1.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:21:38.717Z]   KHỚP FW-OUT-red-p0333: playhead 3.033333333333333 p=0.0333 alpha=0.8859 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:21:40.609Z]   KHỚP FW-OUT-red-p01: playhead 3.1 p=0.1000 alpha=0.4491 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:21:43.507Z]   KHỚP FW-OUT-red-p05: playhead 3.5 p=0.5000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:21:45.377Z]   KHỚP FW-IN-green-p01: playhead 4.1 p=0.1000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:21:47.031Z]   KHỚP FW-IN-green-p05: playhead 4.5 p=0.5000 alpha=0.3466 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:21:48.938Z]   KHỚP FW-IN-green-p0733: playhead 4.733333333333333 p=0.7333 alpha=0.7056 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:21:50.647Z]   KHỚP FW-IN-green-p0933: playhead 4.933333333333334 p=0.9333 alpha=0.9396 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:21:52.436Z]   KHỚP FG-OUT-green-p01: playhead 7.1 p=0.1000 alpha=0.4491 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:21:54.733Z]   KHỚP FG-OUT-green-p05: playhead 7.5 p=0.5000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:21:56.969Z]   KHỚP FG-IN-mag-p01: playhead 8.1 p=0.1000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:21:58.789Z]   KHỚP FG-IN-mag-p05: playhead 8.5 p=0.5000 alpha=0.3466 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:22:01.054Z]   KHỚP FG-OUT-custom-p01: playhead 15.1 p=0.1000 alpha=0.4491 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:22:04.154Z]   KHỚP FG-OUT-custom-p05: playhead 15.5 p=0.5000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:22:05.834Z]   KHỚP GRAD-FW-IN-p01: playhead 16.1 p=0.1000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:22:07.506Z]   KHỚP GRAD-FW-IN-p05: playhead 16.5 p=0.5000 alpha=0.3466 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:22:09.349Z]   KHỚP GRAD-FG-OUT-p05: playhead 19.5 p=0.5000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000",
+    "[2026-10-31T07:22:12.061Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T07:22:13.190Z]   media vào bin: clip-k-dod-iwo.mp4",
+    "[2026-10-31T07:22:13.192Z]   footage proxy diag: {\"badge\":\"\",\"badgeDisplay\":\"none\",\"mediaProxy\":[\"Proxy lỗi, thử lại\"],\"toasts\":[\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×\",\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×\",\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.\",\"×\"]}",
+    "[2026-10-31T07:22:13.194Z]   hiệu chuẩn vạch: offset handle-ruler lúc playhead 0 = -6.50px",
+    "[2026-10-31T07:22:13.595Z] ruler footage: {\"x\":152,\"y\":813,\"w\":1200,\"h\":27,\"innerH\":1057,\"handleLeft\":145.5,\"ppsInput\":60}",
+    "[2026-10-31T07:22:16.140Z]   KHỚP FB-IN-p01: playhead 0.1 p=0.1000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000 sweep=dk-2:0.000 dk-1:0.000 dk+0:0.000 dk+1:0.000 dk+2:0.000",
+    "[2026-10-31T07:22:19.152Z]   KHỚP FB-IN-p0533: playhead 0.5333333333333333 p=0.5333 alpha=0.3974 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=1.889 | lock MAD=0.0000 sweep=dk-2:2.291 dk-1:1.277 dk+0:0.000 dk+1:1.293 dk+2:2.325",
+    "[2026-10-31T07:22:25.992Z]   KHỚP FB-OUT-p01: playhead 3.1 p=0.1000 alpha=0.4491 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=2.677 | lock MAD=0.0000 sweep=dk-2:2.756 dk-1:1.504 dk+0:0.000 dk+1:1.485 dk+2:2.721",
+    "[2026-10-31T07:22:33.053Z]   KHỚP FB-OUT-p0533: playhead 3.533333333333333 p=0.5333 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000 sweep=dk-2:0.000 dk-1:0.000 dk+0:0.000 dk+1:0.000 dk+2:0.000",
+    "[2026-10-31T07:22:35.590Z]   KHỚP FW-IN-p01: playhead 4.1 p=0.1000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000 sweep=dk-2:0.000 dk-1:0.000 dk+0:0.000 dk+1:0.000 dk+2:0.000",
+    "[2026-10-31T07:22:38.666Z]   KHỚP FW-IN-p0533: playhead 4.533333333333333 p=0.5333 alpha=0.3974 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=1.385 | lock MAD=0.0000 sweep=dk-2:1.846 dk-1:0.998 dk+0:0.000 dk+1:1.002 dk+2:1.855",
+    "[2026-10-31T07:22:44.893Z]   KHỚP FW-OUT-p01: playhead 7.1 p=0.1000 alpha=0.4491 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=1.954 | lock MAD=0.0000 sweep=dk-2:2.104 dk-1:1.116 dk+0:0.000 dk+1:1.126 dk+2:2.132",
+    "[2026-10-31T07:22:54.959Z]   KHỚP FW-OUT-p0533: playhead 7.533333333333333 p=0.5333 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=0.000 | lock MAD=0.0000 sweep=dk-2:0.000 dk-1:0.000 dk+0:0.000 dk+1:0.000 dk+2:0.000",
+    "[2026-10-31T07:22:57.998Z]   KHỚP FW-IN-p05-legacyK3: playhead 4.5 p=0.5000 alpha=0.3466 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=1.190 | lock MAD=0.0000 sweep=dk-2:1.609 dk-1:0.842 dk+0:0.000 dk+1:0.867 dk+2:1.610",
+    "[2026-10-31T07:23:00.583Z]   KHỚP FG-IN-p01: playhead 8.1 p=0.1000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=3.193 | lock MAD=0.0000 sweep=dk-2:4.563 dk-1:2.388 dk+0:0.000 dk+1:2.367 dk+2:4.487",
+    "[2026-10-31T07:23:03.672Z]   KHỚP FG-IN-p0533: playhead 8.533333333333333 p=0.5333 alpha=0.3974 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=3.472 | lock MAD=0.0000 sweep=dk-2:4.612 dk-1:2.483 dk+0:0.000 dk+1:2.491 dk+2:4.650",
+    "[2026-10-31T07:23:09.985Z]   KHỚP FG-OUT-p01: playhead 11.1 p=0.1000 alpha=0.4491 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=4.344 | lock MAD=0.0000 sweep=dk-2:4.664 dk-1:2.463 dk+0:0.000 dk+1:2.495 dk+2:4.734",
+    "[2026-10-31T07:23:17.285Z]   KHỚP FG-OUT-p0533: playhead 11.533333333333333 p=0.5333 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 | oldK3 MAD=4.334 | lock MAD=0.0000 sweep=dk-2:4.776 dk-1:2.527 dk+0:0.000 dk+1:2.491 dk+2:4.627",
+    "[2026-10-31T07:23:25.074Z]   XẤP XỈ FG-OUT-p05-legacyK3: playhead 11.5 p=0.5000 alpha=0.0000 MAD=2.5270 <=8=91.17% max=53 | oldK3 MAD=4.481 | lock MAD=0.0000 sweep=dk-2:6.757 dk-1:4.776 dk+0:2.527 dk+1:0.000 dk+2:2.491",
+    "[2026-10-31T07:23:32.354Z]   guard khung tối SANITY-K-mid: appMean ~ nền khung, scrub lệch 1 frame rồi quay lại để ép seek mới",
+    "[2026-10-31T07:23:38.963Z]   LỆCH SANITY-K-mid: playhead 14.033333333333333 p=- alpha=1.0000 MAD=3.3025 <=8=87.18% max=119 | oldK3 MAD=5.839 | lock MAD=0.0000 sweep=dk-2:8.021 dk-1:5.933 dk+0:3.302 dk+1:0.000 dk+2:3.210",
+    "[2026-10-31T07:23:38.963Z] exceptions trong phiên: 0",
+    "[2026-10-31T07:23:38.963Z] TỔNG: hồi quy 18/18 KHỚP; footage 13/15 KHỚP — KHÔNG KHỚP: FG-OUT-p05-legacyK3(XẤP XỈ), SANITY-K-mid(LỆCH)",
+    "[2026-10-31T07:23:38.963Z] DONE r29l1: exit=1"
+  ]
+}

@@ -15,6 +15,17 @@ info:
 
     - Mọi lỗi đều trả JSON `{"error": "<thông điệp tiếng Việt>"}` với mã HTTP
       tương ứng; KHÔNG bao giờ trả HTML hay leak stack trace.
+    - Lỗi có cấu trúc (đợt 28–29, luồng L3): mọi payload lỗi (kể cả event
+      NDJSON `{"type":"error",...}` của caption/scene/translate) đều kèm
+      `errorCode` (enum an toàn) và `errorDetail` đã redact (xem schema
+      `ErrorDetail`: `code`, `summary`, `details` tối đa 5 dòng,
+      `detailsOmitted`, `redactedTail`). `errorDetail` không bao giờ chứa
+      đường dẫn tuyệt đối, tên user/home dir, token/secret hay stack trace.
+      Riêng job render: `errorCode` luôn kèm, còn `errorDetail` chỉ trả
+      khi poll kèm `?detail=1` (mặc định KHÔNG kèm để client cũ không đổi);
+      các route tác vụ đồng bộ (caption, silence, reframe, beats, scene,
+      bgremove, tts) trả luôn `errorCode` + `errorDetail` trong cùng
+      payload lỗi vì là one-shot, không poll lặp.
     - Các endpoint AI chạy đồng bộ trên server; giới hạn rate riêng cho tác vụ
       nặng (render/caption/reframe/bgremove/scene/translate: 20 req/phút/IP;
       API chung: 120 req/phút/IP).
@@ -201,6 +212,16 @@ paths:
       operationId: getRenderJob
       parameters:
         - $ref: "#/components/parameters/JobId"
+        - name: detail
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ["1"]
+          description: |
+            Khi `detail=1` (hoặc `error_detail=1`), job lỗi kèm thêm
+            `errorDetail` đã redact (xem schema ErrorDetail). Mặc định
+            không kèm; danh sách job (`GET /api/render`) không bao giờ kèm.
       responses:
         "200":
           description: Thông tin job
@@ -712,8 +733,69 @@ components:
       properties:
         error:
           type: string
-          description: Thông điệp lỗi (tiếng Việt)
+          description: Thông điệp lỗi (tiếng Việt, đã redact — không chứa đường dẫn tuyệt đối hay secret)
           example: "Không tìm thấy job."
+        errorCode:
+          $ref: "#/components/schemas/ErrorCode"
+        errorDetail:
+          $ref: "#/components/schemas/ErrorDetail"
+
+    ErrorCode:
+      type: string
+      enum: [SPEED_CURVE_VIOLATION, MISSING_ASSET, SPEC_VALIDATION, OUTPUT_QA, WORKER_START, FFMPEG_ERROR, WORKER_EXIT, UNKNOWN]
+      description: |
+        Mã lỗi có cấu trúc, an toàn luôn kèm theo payload lỗi (đợt 28–29 L3).
+        Render job: luôn kèm. Route tác vụ đồng bộ: luôn kèm trong payload
+        lỗi. Job render chỉ kèm `errorDetail` khi xin `?detail=1`.
+
+    ErrorDetail:
+      type: object
+      description: |
+        Chi tiết lỗi đã redact (đợt 28–29 L3). Không bao giờ chứa đường
+        dẫn tuyệt đối, home dir, token/secret hay dòng stack trace; đường
+        dẫn chỉ còn dạng `<path>/<basename>`.
+        Đợt 34 Q4 (ADDITIVE, không vỡ consumer cũ): kèm thêm `summaryKey`
+        + `summaryParams` để web dịch khung tóm tắt qua i18n key
+        `errorDetail.summary.<summaryKey>`; consumer cũ bỏ qua 2 field
+        này, payload bridge cũ thiếu chúng thì web fallback về `summary`.
+      properties:
+        code:
+          $ref: "#/components/schemas/ErrorCode"
+        summary:
+          type: string
+          description: Tóm tắt 1 dòng, đã redact
+          example: "Vi phạm speed-curve: 1. [tracks[0].clips[0]] speedKeyframes.keyframes[0].v phải trong 0.25..4 (nhận được: 5)"
+        summaryKey:
+          type: string
+          description: |
+            Key mẫu tóm tắt (đợt 34 Q4). Web dịch qua
+            `errorDetail.summary.<summaryKey>` với `summaryParams`; các
+            key: speedCurveViolation, speedCurveViolationRaw,
+            missingAsset, missingAssetRaw, specValidation, outputQa,
+            workerStart, workerExitNoOutput, workerExitSignal,
+            workerExitCode, ffmpegError, unknownDetail, unknown.
+          example: "speedCurveViolation"
+        summaryParams:
+          type: object
+          additionalProperties:
+            type: string
+          description: |
+            Tham số đã redact cho mẫu `summaryKey` (toàn string; ví dụ
+            clip/field/range/value của vi phạm curve, asset, exitCode,
+            signal; các mẫu dữ liệu dùng `detail` là dòng lỗi thô).
+          example: { clip: "tracks[0].clips[0]", field: "speedKeyframes.keyframes[0].v", range: "0.25..4", value: "5" }
+        details:
+          type: array
+          items:
+            type: string
+          description: Tối đa 5 dòng lỗi có ích, đã redact
+        detailsOmitted:
+          type: integer
+          description: Số dòng lỗi đã lược bớt (ngoài 5 dòng trên)
+          example: 0
+        redactedTail:
+          type: string
+          description: Tail stderr đã redact (tối đa 20 dòng / 1500 ký tự); rỗng khi lỗi không có stderr
 
     JobStatus:
       type: string
@@ -750,6 +832,12 @@ components:
           type: string
           nullable: true
           description: Lỗi (khi status=error)
+        errorCode:
+          $ref: "#/components/schemas/ErrorCode"
+          description: Mã lỗi có cấu trúc — luôn kèm (kể cả khi không xin detail)
+        errorDetail:
+          $ref: "#/components/schemas/ErrorDetail"
+          description: Chi tiết đã redact — CHỈ kèm khi GET kèm ?detail=1 (hoặc ?error_detail=1); mặc định vắng
         outputName:
           type: string
           nullable: true

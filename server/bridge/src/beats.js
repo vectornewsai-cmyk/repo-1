@@ -13,6 +13,7 @@
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
+const { redactStderr } = require("./errorDetail"); // Đợt 29 L3
 
 const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
 
@@ -59,7 +60,7 @@ function analyzeBeats(opts, cfg = beatsConfigFromEnv()) {
     child.on("close", (code) => {
       clearTimeout(timer);
       if (code !== 0) {
-        reject(new Error(`beat.py thất bại (exit ${code}): ${stderr.slice(-500)}`));
+        reject(new Error(`beat.py thất bại (exit ${code}): ${redactStderr(stderr).slice(-500)}`));
         return;
       }
       try {

@@ -28,6 +28,7 @@ import {
   validateRenderVideoInput,
   validateVideoSpec,
 } from "./validate.js";
+import { formatRenderFailure, redactProbeStderr } from "./tools/renderErrors.js";
 import {
   DEFAULT_MEDIA_DIR,
   RENDER_WORKER_JS,
@@ -190,7 +191,7 @@ function probeVideo(mp4Path: string): Record<string, unknown> {
     ],
     { encoding: "utf8", timeout: 30000 }
   );
-  if (r.status !== 0) throw new Error(`ffprobe thất bại: ${(r.stderr as string).slice(0, 500)}`);
+  if (r.status !== 0) throw new Error(`ffprobe thất bại: ${redactProbeStderr(r.stderr as string) || "không rõ lỗi"}`);
   const info = JSON.parse(r.stdout as string) as {
     format?: { duration?: string; size?: string };
     streams?: Array<Record<string, unknown>>;
@@ -452,8 +453,14 @@ server.tool(
           { encoding: "utf8", timeout: 10 * 60 * 1000, maxBuffer: 16 * 1024 * 1024 }
         );
         if (r.status !== 0) {
-          const errTail = String(r.stderr ?? r.stdout ?? r.error ?? "unknown error").slice(-2000);
-          throw new ValidationError(`render thất bại (exit ${r.status}): ${errTail}`);
+          // Đợt 29 L3: KHÔNG trả tail stderr thô (lộ đường dẫn) như trước;
+          // dùng cùng lỗi có cấu trúc đã redact như export_video (đợt 28).
+          const captured = String(r.stderr ?? r.stdout ?? r.error ?? "");
+          throw new ValidationError(
+            captured.trim()
+              ? formatRenderFailure(captured, r.status, r.signal)
+              : `Render thất bại [WORKER_EXIT]: Render worker thoát với mã ${r.status} (không thu được stderr).`
+          );
         }
       } finally {
         await fs.rm(tmpDir, { recursive: true, force: true });

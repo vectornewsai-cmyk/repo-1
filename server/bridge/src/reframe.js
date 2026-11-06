@@ -15,6 +15,7 @@ const path = require("path");
 const fs = require("fs");
 const os = require("os");
 const { spawn } = require("child_process");
+const { redactStderr } = require("./errorDetail"); // Đợt 29 L3
 
 /** Whitelist aspect đích — reframe.py cũng validate lại phía Python. */
 const REFRAME_ASPECTS = ["9:16", "1:1", "4:5"];
@@ -153,7 +154,7 @@ function runReframe({ inputPath, outputPath, aspect, onProgress, config } = {}) 
       finish(() => {
         if (code !== 0) {
           reject(new Error(
-            `reframe.py thoát mã ${code}: ${(stderrTail || "").slice(-300) || "không rõ lỗi"}`
+            `reframe.py thoát mã ${code}: ${redactStderr(stderrTail).slice(-300) || "không rõ lỗi"}`
           ));
           return;
         }
@@ -231,7 +232,7 @@ function analyzeReframe({ inputPath, aspect, config } = {}) {
       if (code !== 0) {
         try { fs.unlinkSync(jsonOut); } catch { /* bỏ qua */ }
         reject(new Error(
-          `reframe.py thoát mã ${code}: ${(stderrTail || "").slice(-300) || "không rõ lỗi"}`
+          `reframe.py thoát mã ${code}: ${redactStderr(stderrTail).slice(-300) || "không rõ lỗi"}`
         ));
         return;
       }
