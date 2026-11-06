@@ -2734,3 +2734,255 @@ export function buildPreviewSpec(spec: VideoSpec): VideoSpec {
   void _dropped;
   return { ...rest, tracks: outTracks } as VideoSpec;
 }
+
+
+// ---------------------------------------------------------------------------
+// J1 (Phase 9 đợt 26): fail-soft cho preview hot path.
+//
+// Vấn đề (đợt 25 I6 §5a): project chứa nested curve vi phạm (ví dụ
+// keyframe v=5, ngoài [0.25, 4]) làm `buildPreviewSpec` →
+// `resolveNestedRampCurve` ném uncaught đúng 1 lần lúc load. Flatten
+// fail-fast là CÓ CHỦ Ý (parity test assert throw, khớp render) nên
+// KHÔNG đổi ngữ nghĩa throw của `flattenForPreview` /
+// `resolveNestedRampCurve` / `buildPreviewSpec` — ba hàm thuần đó vẫn
+// throw y như cũ. Thay vào đó, preview hot path (`preview.tsx`) dùng
+// wrapper `buildPreviewSpecFailsoft` dưới đây, chỉ bắt lỗi ở tầng
+// preview, từng nested riêng lẻ:
+//
+// - Đường nhanh: `buildPreviewSpec` toàn spec thành công → trả nguyên
+//   spec đó, warnings rỗng (hành vi cũ, không tốn thêm lần flatten).
+// - Đường chậm (chỉ khi đường nhanh throw): cô lập từng nested tầng
+//   ngoài, flatten riêng từng cái. Nested lành giữ nguyên ramp đúng.
+//   Nested lỗi được thử lại sau khi sanitize curve trong cây con của
+//   nó về tuyến tính 1× (xem `sanitizeNestedCurves`); vẫn throw thì
+//   nested đó bị bỏ khỏi preview, các nested khác vẫn hiện. Mỗi lần
+//   fallback/dropped đều sinh một warning có cấu trúc để UI hiển thị
+//   (badge + toast ở `preview.tsx`), KHÔNG chỉ log console.
+// - Fail-soft CHỈ bao lỗi của nested: lỗi layer chuẩn cấp project hoặc
+//   spec không có nested nào mà vẫn throw thì wrapper ném lại lỗi gốc
+//   (caller vẫn có guard cuối — xem `preview.tsx`); không lặng lẽ nuốt
+//   lỗi ngoài phạm vi curve của nested.
+// - Spec gốc không bị sửa: mọi sanitize đều chạy trên bản clone của
+//   nested lỗi; nested lành đi qua đường flatten gốc, không qua clone.
+// - LƯU Ý RENDER: fallback 1× chỉ cứu PREVIEW. Render vẫn fail-fast
+//   theo luật render (đợt 18 §5, đợt 20 R1) — project vi phạm vẫn
+//   không export được cho tới khi user sửa curve thật. Xem
+//   docs/PHASE9_ROUND26_J1_PREVIEW_FAILSOFT_LIMITS.md.
+/** Cách preview đã xử lý một nested lỗi (để UI hiển thị đúng). */
+export type PreviewFailsoftFallback = "linear-1x" | "dropped";
+
+/** Một warning có cấu trúc cho một nested lỗi (đủ để UI hiển thị). */
+export interface PreviewFailsoftWarning {
+  /** id của nested tầng ngoài chứa lỗi (lỗi ở tầng sâu vẫn quy về tầng ngoài này). */
+  nestedId: string;
+  /** Thông điệp lỗi gốc của lần flatten đầu tiên (nêu đúng tên nested vi phạm + luật, ví dụ `v phải trong 0.25..4 (nhận được: 5)`). */
+  reason: string;
+  /** Cách preview đã xử lý: về tuyến tính 1×, hoặc bỏ khỏi preview. */
+  fallback: PreviewFailsoftFallback;
+}
+
+export interface BuildPreviewSpecFailsoftResult {
+  spec: VideoSpec;
+  warnings: PreviewFailsoftWarning[];
+}
+
+/** Curve tuyến tính 1× hằng trên toàn bộ duration của clip mang nó. */
+function linear1xCurve(duration: number): SpeedCurve {
+  return {
+    keyframes: [
+      { t: 0, v: 1, easing: "linear" },
+      { t: duration, v: 1, easing: "linear" },
+    ],
+  } as SpeedCurve;
+}
+
+/** Clone sâu cho dữ liệu JSON thuần (spec clip) — không giữ reference gốc. */
+function clonePlainValue(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(clonePlainValue);
+  if (isRecord(v)) {
+    const out: Record<string, unknown> = {};
+    for (const [k, val] of Object.entries(v)) out[k] = clonePlainValue(val);
+    return out;
+  }
+  return v;
+}
+
+function failsoftErrorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
+/**
+ * Sanitize curve trong cây con của một nested clip (đã clone).
+ * - "invalid-only": chỉ thay curve nào `resolveNestedRampCurve` từ chối
+ *   (v ngoài [0.25, 4], easing lạ, bezier sai, mảng rỗng...) bằng 1×.
+ * - "force-all": thay MỌI curve trong cây con bằng 1× — dùng khi lỗi
+ *   không nằm ở một curve đơn lẻ mà ở tích hợp hai tầng (ví dụ trong
+ *   4× × ngoài 4× = 16×, vượt [0.25, 4] ở `rescaleConstantCurve` /
+ *   `composeTwoLevelCurve` dù từng curve riêng đều hợp lệ).
+ * Khi thay curve mà node có `trim`, chuyển `trim.in` thành `in` rồi bỏ
+ * `trim`: nếu giữ `trim.out` cũ thì `normalizeNestedClip` sẽ throw vì
+ * out cũ (= in + ∫curve cũ) không còn khớp in + duration × 1. Bỏ trim
+ * giữ nguyên clip (chỉ mất điểm cắt out cũ, đúng tinh thần fallback:
+ * giữ clip, bỏ ramp).
+ */
+function sanitizeNestedCurves(node: unknown, mode: "invalid-only" | "force-all"): void {
+  if (Array.isArray(node)) {
+    for (const item of node) sanitizeNestedCurves(item, mode);
+    return;
+  }
+  if (!isRecord(node)) return;
+  if (
+    node["speedKeyframes"] !== undefined &&
+    typeof node["duration"] === "number" &&
+    Number.isFinite(node["duration"])
+  ) {
+    const duration = node["duration"] as number;
+    const label = `nested "${typeof node["id"] === "string" ? (node["id"] as string) : "?"}"`;
+    let invalid = mode === "force-all";
+    if (!invalid) {
+      try {
+        resolveNestedRampCurve(node["speedKeyframes"], duration, label);
+      } catch {
+        invalid = true;
+      }
+    }
+    if (invalid) {
+      node["speedKeyframes"] = linear1xCurve(duration);
+      if (isRecord(node["trim"]) && typeof node["trim"]["in"] === "number") {
+        node["in"] = node["trim"]["in"];
+        delete node["trim"];
+      }
+    }
+  }
+  for (const val of Object.values(node)) sanitizeNestedCurves(val, mode);
+}
+
+/**
+ * Spec cô lập: giữ mọi clip phẳng + CHỈ nested `target` (các nested
+ * tầng ngoài khác bị lược). Giữ clip phẳng để `resolvePreviewBoundaries`
+ * của track chứa nested tính đúng cặp biên như spec đầy đủ. `substitute`
+ * (nếu có) thay `target` bằng bản clone đã sanitize.
+ */
+function isolateNestedSpec(
+  input: FlattenSpecInput,
+  target: unknown,
+  substitute?: unknown,
+): FlattenSpecInput {
+  return {
+    ...input,
+    tracks: (input.tracks ?? []).map((t) => ({
+      ...t,
+      clips: (t.clips as unknown[])
+        .map((c) => (c === target ? (substitute ?? c) : c))
+        .filter((c) => !isNestedClip(c) || c === target || c === substitute),
+    })),
+  };
+}
+
+/** Spec đã lược mọi nested tầng ngoài (chỉ còn clip phẳng + layer). */
+function stripNestedSpec(input: FlattenSpecInput): FlattenSpecInput {
+  return {
+    ...input,
+    tracks: (input.tracks ?? []).map((t) => ({
+      ...t,
+      clips: (t.clips as unknown[]).filter((c) => !isNestedClip(c)),
+    })),
+  };
+}
+
+export function buildPreviewSpecFailsoft(spec: VideoSpec): BuildPreviewSpecFailsoftResult {
+  const input = spec as unknown as FlattenSpecInput;
+  if (!hasNestedOrAdjustment(input)) return { spec, warnings: [] };
+  try {
+    return { spec: buildPreviewSpec(spec), warnings: [] };
+  } catch (firstError) {
+    // Không phải lỗi nested-curve thì ném lại lỗi gốc, không nuốt:
+    // (a) layer chuẩn cấp project không hợp lệ (flatten validate layer
+    // trước cả nested), (b) spec không có nested tầng ngoài nào.
+    try {
+      if (Array.isArray(input.adjustmentLayers)) {
+        for (const layer of input.adjustmentLayers) convertCanonicalLayer(layer, "spec");
+      }
+    } catch {
+      throw firstError;
+    }
+    const targets: unknown[] = [];
+    for (const track of input.tracks ?? []) {
+      if (!isRecord(track) || !Array.isArray(track["clips"])) continue;
+      for (const raw of track["clips"] as unknown[]) {
+        if (isNestedClip(raw)) targets.push(raw);
+      }
+    }
+    if (targets.length === 0) throw firstError;
+    // Track phẳng của spec cuối: lấy từ spec đã lược nested. Nếu chính
+    // spec lược nested còn throw thì lỗi không còn là lỗi từng nested
+    // nữa → ném lại lỗi gốc (caller guard cuối sẽ hiện spec gốc).
+    let base: VideoSpec;
+    try {
+      base = buildPreviewSpec(stripNestedSpec(input) as unknown as VideoSpec);
+    } catch {
+      throw firstError;
+    }
+    const warnings: PreviewFailsoftWarning[] = [];
+    const byKind = new Map<string, Clip[]>();
+    for (const target of targets) {
+      const nestedId =
+        typeof (target as Record<string, unknown>)["id"] === "string"
+          ? ((target as Record<string, unknown>)["id"] as string)
+          : "?";
+      let flat: FlattenResult;
+      try {
+        flat = flattenForPreview(isolateNestedSpec(input, target));
+      } catch (e) {
+        const reason = failsoftErrorMessage(e);
+        const pass1 = clonePlainValue(target);
+        sanitizeNestedCurves(pass1, "invalid-only");
+        try {
+          flat = flattenForPreview(isolateNestedSpec(input, target, pass1));
+        } catch {
+          const pass2 = clonePlainValue(target);
+          sanitizeNestedCurves(pass2, "force-all");
+          try {
+            flat = flattenForPreview(isolateNestedSpec(input, target, pass2));
+          } catch (e3) {
+            warnings.push({
+              nestedId,
+              reason: failsoftErrorMessage(e3),
+              fallback: "dropped",
+            });
+            continue;
+          }
+        }
+        warnings.push({ nestedId, reason, fallback: "linear-1x" });
+      }
+      // Lá của nested này, split theo adjustments của chính lần flatten
+      // này (layer ngoài + layer trong nested này; scope lọc trong hàm).
+      // Clip phẳng tầng ngoài trong spec cô lập bị bỏ (nestedPath []).
+      for (const f of flat.clips) {
+        if (f.nestedPath.length === 0) continue;
+        const scope: ClipScope = {
+          nestedPath: f.nestedPath,
+          trackStack: f.trackStack,
+        };
+        const arr = byKind.get(f.trackKind) ?? [];
+        for (const seg of splitClipByAdjustments(f.clip, flat.adjustments, scope)) {
+          arr.push(seg as unknown as Clip);
+        }
+        byKind.set(f.trackKind, arr);
+      }
+    }
+    const outTracks: Track[] = [...(base as unknown as { tracks: Track[] }).tracks];
+    for (const [kind, segs] of byKind) {
+      segs.sort((a, b) => a.start - b.start);
+      outTracks.push({
+        id: `__nested-${kind}`,
+        kind: kind as Track["kind"],
+        label: "Nested (flattened)",
+        clips: segs,
+      } as Track);
+    }
+    const { adjustmentLayers: _dropped, ...rest } = spec as unknown as Record<string, unknown>;
+    void _dropped;
+    return { spec: { ...rest, tracks: outTracks } as VideoSpec, warnings };
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "mode": "footage",
+  "types": [
+    "fadewhite",
+    "fadegrays"
+  ],
+  "workdir": "/home/hatch/workspace/tmp-round26-j3/foot-kl",
+  "rows": [
+    {
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.5,
+      "path": "rgb",
+      "pairGap": {
+        "mad": 46.1364,
+        "le8": 0.0082,
+        "verdict": "LỆCH"
+      },
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "oldBlack": {
+        "mad": 208.8636,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.5,
+      "path": "rgb",
+      "pairGap": {
+        "mad": 0.2541,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "wiring": {
+        "mad": 1.0185,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "oldBlack": {
+        "mad": 166.7583,
+        "le8": 0,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.5,
+      "path": "yuv",
+      "pairGap": {
+        "mad": 31.6327,
+        "le8": 0.1118,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.5,
+      "path": "yuv",
+      "pairGap": {
+        "mad": 14.3665,
+        "le8": 0.0091,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fadewhite",
+      "window": "out",
+      "p": 0.1,
+      "path": "rgb",
+      "wiring": {
+        "mad": 0.6255,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 1.1728,
+        "le8": 1,
+        "verdict": "KHỚP"
+      }
+    },
+    {
+      "type": "fadewhite",
+      "window": "in",
+      "p": 0.1,
+      "path": "rgb",
+      "wiring": {
+        "mad": 0,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 69.8864,
+        "le8": 0.0016,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.5,
+      "path": "rgb",
+      "pairGap": {
+        "mad": 51.1291,
+        "le8": 0.0323,
+        "verdict": "LỆCH"
+      },
+      "wiring": {
+        "mad": 0.9115,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "oldBlack": {
+        "mad": 74.6256,
+        "le8": 0.0011,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.5,
+      "path": "rgb",
+      "pairGap": {
+        "mad": 52.1709,
+        "le8": 0.0146,
+        "verdict": "LỆCH"
+      },
+      "wiring": {
+        "mad": 1.401,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "oldBlack": {
+        "mad": 32.5203,
+        "le8": 0.0044,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.5,
+      "path": "yuv",
+      "pairGap": {
+        "mad": 51.8649,
+        "le8": 0.0382,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.5,
+      "path": "yuv",
+      "pairGap": {
+        "mad": 51.4638,
+        "le8": 0.0145,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fadegrays",
+      "window": "out",
+      "p": 0.1,
+      "path": "rgb",
+      "wiring": {
+        "mad": 0.6658,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 8.4795,
+        "le8": 0.4827,
+        "verdict": "LỆCH"
+      }
+    },
+    {
+      "type": "fadegrays",
+      "window": "in",
+      "p": 0.1,
+      "path": "rgb",
+      "wiring": {
+        "mad": 0.8227,
+        "le8": 1,
+        "verdict": "KHỚP"
+      },
+      "pairGap": {
+        "mad": 77.4584,
+        "le8": 0.0231,
+        "verdict": "LỆCH"
+      }
+    }
+  ],
+  "windows": {
+    "winA": 28,
+    "winB": 24,
+    "size": "720x1280"
+  }
+}

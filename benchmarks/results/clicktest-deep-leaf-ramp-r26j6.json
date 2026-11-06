@@ -1,0 +1,136 @@
+{
+  "runAt": "2026-10-30T13:34:37.882Z",
+  "label": "j6-regression2",
+  "display": ":97",
+  "port": 4197,
+  "cases": [
+    {
+      "id": "D0-seed-load",
+      "status": "PASS",
+      "detail": "panel liệt kê đủ 6 item: TOP-REV, TOP-NONMEDIA, TOP-CURVINV, TOP-HAS, TOP-CHAIN1, TOP-CHAIN2"
+    },
+    {
+      "id": "D3-block-ancestorReverse-chain1",
+      "status": "PASS",
+      "detail": "click cdp-input -> msg + toast đúng nhánh ancestorReverse (MID-REV), nút còn nguyên, autosave không đổi"
+    },
+    {
+      "id": "D4-block-leafNonMedia-chain1",
+      "status": "PASS",
+      "detail": "click cdp-input -> msg đúng nhánh leafNonMedia, nút còn nguyên, autosave không đổi"
+    },
+    {
+      "id": "D5-block-ancestorCurveInvalid-chain1",
+      "status": "PASS",
+      "detail": "click cdp-input -> msg đúng nhánh ancestorCurveInvalid (MID-CURVINV v=5), nút còn nguyên"
+    },
+    {
+      "id": "D6-leaf-already-has-curve",
+      "status": "PASS",
+      "detail": "lá đã có curve: nút ẩn, note 'Lá đã có speed curve.' hiện (không có gì để bấm — hành vi đúng thiết kế)"
+    },
+    {
+      "id": "D1-success-chain1-undo1",
+      "status": "PASS",
+      "detail": "click cdp-input -> msg thành công, nút -> note, autosave nhận preset, Ctrl+Z -> nút trở lại + autosave mất curve (đúng 1 bước)"
+    },
+    {
+      "id": "D2-success-chain2-undo1",
+      "status": "PASS",
+      "detail": "click cdp-input -> drill 2 tầng + msg thành công, nút -> note, autosave nhận preset, Ctrl+Z hoàn tác"
+    },
+    {
+      "id": "D8-extra-undo-noop",
+      "status": "PASS",
+      "detail": "2 Ctrl+Z thừa cuối phiên là no-op: panel vẫn đủ 6 item"
+    },
+    {
+      "id": "D7-no-crash-deep",
+      "status": "FAIL",
+      "detail": "5 exception: {\"at\":\"2026-10-30T13:32:57.946Z\",\"text\":\"\\\"TypeError: Cannot read properties of undefined (reading 'animation')\\\\n    at pT (http://127.0.0.1:4197/assets/index-TbcVja5_.js:123:53978)\\\\n    at m0 (http://127.0.0.1:4197/assets/index-TbcVja5_.js:123:66392)\\\\n    at http://127.0.0.1:4197/assets/index-TbcVja5_.js:124:3012\\\"\"}"
+    },
+    {
+      "id": "R0-ramp-seed-media",
+      "status": "PASS",
+      "detail": "seed TOP-RAMP lên panel; import ramp12.mp4 vào MediaBin qua file input thật (CDP DOM.setFileInputFiles)"
+    },
+    {
+      "id": "R1-nested-ramp-anchor-t2",
+      "status": "PASS",
+      "detail": "scrub -> playhead 2; canvas khớp control@3.0208 (neo 3.0208333): diff 11.36% pixel, meanAbs 4.993, maxDiff 255 (1352x633)"
+    },
+    {
+      "id": "R2-nested-ramp-anchor-t3",
+      "status": "PASS",
+      "detail": "scrub -> playhead 3; canvas khớp control@5.5430 (neo 5.54296875): diff 7.39% pixel, meanAbs 0.825"
+    },
+    {
+      "id": "R3-playback-ramp-to-t3",
+      "status": "FAIL",
+      "detail": "canvas vẫn tối sau khi đợi (mean=10.492883671078541) — video app chưa sẵn sàng sau khi phát-dừng"
+    },
+    {
+      "id": "R4-no-crash-ramp",
+      "status": "PASS",
+      "detail": "0 Runtime.exceptionThrown trong phiên ramp"
+    }
+  ],
+  "log": [
+    "[2026-10-30T13:32:53.607Z] harness clicktest-deep-leaf-ramp-pipe: bắt đầu (label=j6-regression2, probe=false)",
+    "[2026-10-30T13:32:53.609Z] display=:97 port=4197 binaries=/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome | /opt/meta-chromium/chrome",
+    "[2026-10-30T13:32:53.617Z] Xvfb: socket /tmp/.X11-unix/X97 mồ côi, xoá và bật mới",
+    "[2026-10-30T13:32:53.870Z] Xvfb lên: DISPLAY=:97",
+    "[2026-10-30T13:32:54.108Z] dist snapshot OK: bundle index-TbcVja5_.js sha256[:16]=6c9ad08801479ce4 -> /home/hatch/workspace/tmp-round26-j6/i6-rerun/dist-snapshot",
+    "[2026-10-30T13:32:54.117Z] static server lên tại http://127.0.0.1:4197 (root /home/hatch/workspace/tmp-round26-j6/i6-rerun/dist-snapshot)",
+    "[2026-10-30T13:32:55.724Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-30T13:32:59.361Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-30T13:33:00.979Z]   D0 item panel: [\"TOP-REV\",\"TOP-NONMEDIA\",\"TOP-CURVINV\",\"TOP-HAS\",\"TOP-CHAIN1\",\"TOP-CHAIN2\"]",
+    "[2026-10-30T13:33:00.979Z] CASE D0-seed-load: PASS — panel liệt kê đủ 6 item: TOP-REV, TOP-NONMEDIA, TOP-CURVINV, TOP-HAS, TOP-CHAIN1, TOP-CHAIN2",
+    "[2026-10-30T13:33:02.856Z]   D3 msg=\"Không đặt được speed curve lên clip lá trong nested clip “TOP-REV”: Nested clip tổ tiên \\\"MID-REV\\\" đang reverse — render cấm reverse ở tầng mang curve.\" toasts=[\"Khôi phục autosave, có lưu ý: tracks[2].clips[0].subSpec.tracks[0].clips[0] (clip \\\"MID-CURVINV\\\"): tracks[2].clips[0].subSpec.tracks[0].clips[0].speedKeyframes.keyframes[0].v phải trong [0.25, 4] (nhận được: 5).; tracks[2].clips[0].subSpec.tracks[0].clips[0] (clip \\\"MID-CURVINV\\\"): tracks[2].clips[0].subSpec.tracks[0].clips[0].speedKeyframes.keyframes[1].v phải trong [0.25, 4] (nhận được: 5).\",\"Preview: nested \\\"TOP-CURVINV\\\" có speed curve không hợp lệ (nested clip \\\"MID-CURVINV\\\": speedKeyframes.keyframes[0].v phải trong 0.25..4 (nhận được: 5)) — đã tạm về 1× để preview không dừng. Export vẫn fail-fast theo luật render, cần sửa curve thật.\",\"Không đặt được speed curve lên clip lá trong nested clip “TOP-REV”: Nested clip tổ tiên \\\"MID-REV\\\" đang reverse — render cấm reverse ở tầng mang curve.\"]",
+    "[2026-10-30T13:33:09.364Z] CASE D3-block-ancestorReverse-chain1: PASS — click cdp-input -> msg + toast đúng nhánh ancestorReverse (MID-REV), nút còn nguyên, autosave không đổi",
+    "[2026-10-30T13:33:11.275Z]   D4 msg=\"Không đặt được speed curve lên clip lá trong nested clip “TOP-NONMEDIA”: Chỉ lá video/audio mới mang speed curve dưới nested có curve (lá khác không có trục nguồn).\" toasts=[\"Không đặt được speed curve lên clip lá trong nested clip “TOP-NONMEDIA”: Chỉ lá video/audio mới mang speed curve dưới nested có curve (lá khác không có trục nguồn).\"]",
+    "[2026-10-30T13:33:17.784Z] CASE D4-block-leafNonMedia-chain1: PASS — click cdp-input -> msg đúng nhánh leafNonMedia, nút còn nguyên, autosave không đổi",
+    "[2026-10-30T13:33:19.637Z]   D5 msg=\"Không đặt được speed curve lên clip lá trong nested clip “TOP-CURVINV”: Speed curve của nested clip tổ tiên \\\"MID-CURVINV\\\" không hợp lệ theo luật render R1.\"",
+    "[2026-10-30T13:33:19.639Z] CASE D5-block-ancestorCurveInvalid-chain1: PASS — click cdp-input -> msg đúng nhánh ancestorCurveInvalid (MID-CURVINV v=5), nút còn nguyên",
+    "[2026-10-30T13:33:20.885Z]   D6 state={\"found\":true,\"hasButton\":false,\"hasNote\":true,\"rowText\":\"leaf-has.mp4 (00:00.0–00:04.0)Bắt đầu (s) Độ dài (s) Lưu clip conLá đã có speed curve.Mốc ngoài (timeline ngoài, giây): Lấy từ playheadTách lá tại mốc ngoài\"}",
+    "[2026-10-30T13:33:20.885Z] CASE D6-leaf-already-has-curve: PASS — lá đã có curve: nút ẩn, note 'Lá đã có speed curve.' hiện (không có gì để bấm — hành vi đúng thiết kế)",
+    "[2026-10-30T13:33:22.758Z]   D1 msg=\"Đã đặt curve 1× cho lá (1 bước undo).\"",
+    "[2026-10-30T13:33:37.592Z] CASE D1-success-chain1-undo1: PASS — click cdp-input -> msg thành công, nút -> note, autosave nhận preset, Ctrl+Z -> nút trở lại + autosave mất curve (đúng 1 bước)",
+    "[2026-10-30T13:33:40.076Z]   D2 msg=\"Đã đặt curve 1× cho lá (1 bước undo).\"",
+    "[2026-10-30T13:33:47.894Z] CASE D2-success-chain2-undo1: PASS — click cdp-input -> drill 2 tầng + msg thành công, nút -> note, autosave nhận preset, Ctrl+Z hoàn tác",
+    "[2026-10-30T13:33:49.502Z] CASE D8-extra-undo-noop: PASS — 2 Ctrl+Z thừa cuối phiên là no-op: panel vẫn đủ 6 item",
+    "[2026-10-30T13:33:49.502Z] CASE D7-no-crash-deep: FAIL — 5 exception: {\"at\":\"2026-10-30T13:32:57.946Z\",\"text\":\"\\\"TypeError: Cannot read properties of undefined (reading 'animation')\\\\n    at pT (http://127.0.0.1:4197/assets/index-TbcVja5_.js:123:53978)\\\\n    at m0 (http://127.0.0.1:4197/assets/index-TbcVja5_.js:123:66392)\\\\n    at http://127.0.0.1:4197/assets/index-TbcVja5_.js:124:3012\\\"\"}",
+    "[2026-10-30T13:33:49.513Z] video ramp đã có: /home/hatch/workspace/tmp-round26-j6/i6-rerun/ramp12.mp4",
+    "[2026-10-30T13:33:49.513Z] video ramp đã copy vào snapshot (phục vụ control qua /ramp12.mp4)",
+    "[2026-10-30T13:33:51.646Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-30T13:33:54.952Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-30T13:33:56.264Z]   R0 item panel: [\"TOP-RAMP\"]",
+    "[2026-10-30T13:33:56.265Z]   R0: MediaBin desktop đã sẵn (không cần FAB mobile)",
+    "[2026-10-30T13:33:56.890Z]   R0: đã tắt auto-proxy trong MediaBin",
+    "[2026-10-30T13:33:57.415Z]   R0: media ramp12.mp4 đã vào MediaBin",
+    "[2026-10-30T13:33:57.416Z] CASE R0-ramp-seed-media: PASS — seed TOP-RAMP lên panel; import ramp12.mp4 vào MediaBin qua file input thật (CDP DOM.setFileInputFiles)",
+    "[2026-10-30T13:33:58.050Z]   ruler: đã đóng panel nested trước khi scrub",
+    "[2026-10-30T13:33:58.452Z]   ruler rect: {\"x\":152,\"y\":813,\"w\":840,\"h\":27,\"innerH\":1057,\"scrollY\":0}",
+    "[2026-10-30T13:34:00.477Z]   hiệu chuẩn ruler: click x+40 -> playhead 0.7, click x+240 -> playhead 4",
+    "[2026-10-30T13:34:00.477Z]   ánh xạ ruler: pxPerSec=60.606, left=152.0, tA=0.7",
+    "[2026-10-30T13:34:03.653Z]   R1 scrub->2: playhead=2 settled={\"hash\":33688866,\"w\":1352,\"h\":633} canvasMean=104.74637952092525",
+    "[2026-10-30T13:34:05.141Z]   R1 candidate@2.8208: diffPct=14.03% meanAbs=6.623 maxDiff=255 controlCt=2.820833",
+    "[2026-10-30T13:34:05.141Z]   R1 candidate@2.9208: diffPct=13.55% meanAbs=6.367 maxDiff=255 controlCt=2.920833",
+    "[2026-10-30T13:34:05.141Z]   R1 candidate@3.0208: diffPct=11.36% meanAbs=4.993 maxDiff=255 controlCt=3.020833",
+    "[2026-10-30T13:34:05.141Z]   R1 candidate@3.1208: diffPct=13.06% meanAbs=6.643 maxDiff=255 controlCt=3.120833",
+    "[2026-10-30T13:34:05.141Z]   R1 candidate@3.2208: diffPct=14.97% meanAbs=8.326 maxDiff=255 controlCt=3.220833",
+    "[2026-10-30T13:34:05.141Z] CASE R1-nested-ramp-anchor-t2: PASS — scrub -> playhead 2; canvas khớp control@3.0208 (neo 3.0208333): diff 11.36% pixel, meanAbs 4.993, maxDiff 255 (1352x633)",
+    "[2026-10-30T13:34:08.299Z]   R2 scrub->3: playhead=3 canvasMean=105.00169495750143",
+    "[2026-10-30T13:34:11.575Z]   R2 candidate@5.3430: diffPct=12.30% meanAbs=6.924 maxDiff=255 controlCt=5.342968",
+    "[2026-10-30T13:34:11.575Z]   R2 candidate@5.4430: diffPct=12.11% meanAbs=6.778 maxDiff=255 controlCt=5.442968",
+    "[2026-10-30T13:34:11.575Z]   R2 candidate@5.5430: diffPct=7.39% meanAbs=0.825 maxDiff=255 controlCt=5.542968",
+    "[2026-10-30T13:34:11.575Z]   R2 candidate@5.6430: diffPct=11.73% meanAbs=6.681 maxDiff=255 controlCt=5.642968",
+    "[2026-10-30T13:34:11.576Z]   R2 candidate@5.7430: diffPct=11.90% meanAbs=6.858 maxDiff=255 controlCt=5.742968",
+    "[2026-10-30T13:34:11.576Z] CASE R2-nested-ramp-anchor-t3: PASS — scrub -> playhead 3; canvas khớp control@5.5430 (neo 5.54296875): diff 7.39% pixel, meanAbs 0.825",
+    "[2026-10-30T13:34:37.874Z]   R3 phát 2->~3: playhead dừng=3.2 settled={\"hash\":3633420,\"w\":1352,\"h\":633} canvasMean=10.492883671078541",
+    "[2026-10-30T13:34:37.875Z]   R3 vạch playhead: center=344, rulerX=152 -> playhead thực 3.2000 (text hiển thị 3.2)",
+    "[2026-10-30T13:34:37.876Z] CASE R3-playback-ramp-to-t3: FAIL — canvas vẫn tối sau khi đợi (mean=10.492883671078541) — video app chưa sẵn sàng sau khi phát-dừng",
+    "[2026-10-30T13:34:37.876Z] CASE R4-no-crash-ramp: PASS — 0 Runtime.exceptionThrown trong phiên ramp",
+    "[2026-10-30T13:34:37.882Z] DONE clicktest-deep-leaf-ramp: 12/14 case pass, 2 fail, 0 seed-rejected, exit=1"
+  ]
+}

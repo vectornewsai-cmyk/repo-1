@@ -19,8 +19,38 @@ import { PerfOverlay } from "./components/PerfOverlay";
 import { pushToast } from "./lib/toast";
 import { useIsMobile } from "./lib/useIsMobile";
 import { togglePreviewFullscreen } from "./preview";
-import { autosave, loadAutosave, markSaved } from "./lib/projectRepo";
-import { saveCurrentProject } from "./components/project/ProjectMenu";
+import { autosave, autosaveNow, collectSpeedCurveWarnings, loadAutosave, markSaved, persistSessionPlayhead } from "./lib/projectRepo";
+// Đợt 36 S5: nạp lại media bin từ AssetStore sau reload (trước checkMissingMedia).
+import { AssetStore } from "./lib/assetStore";
+import { rehydrateMediaItems } from "./lib/rehydrate36S5";
+import { saveCurrentProject, saveNotesLines } from "./components/project/ProjectMenu";
+// Phase 9 đợt 27 K5 (load report): chỉ vùng này thuộc K5 — panel xem lại
+// warnings J5 sau khi toast đóng, strip mở lại + badge. Không đụng logic khác.
+import { LoadReportPanel } from "./components/project/LoadReportPanel";
+import {
+  buildLoadReport,
+  clearLastLoadReport,
+  formatFixEntryChanges,
+  formatStructuredNote,
+  formatWarningTranslated,
+  getLastLoadReport,
+  refreshLoadReportAfterFix,
+  resolveUnsalvageableReason,
+  setLastLoadReport,
+  subscribeLoadReport,
+  type LoadReport,
+  type LoadReportFixHandler,
+} from "./lib/loadReport";
+// Phase 9 đợt 29 L4 (sửa riêng từng dòng của load report): xác nhận +
+// tóm tắt dùng hàm thuần của luồng K2 đợt 27 + bản dịch theo locale
+// hiện tại (changeItems / summary đã dịch); store action per-line mới
+// fixOneSpeedCurveViolation chỉ sửa đúng clip ở dòng vừa bấm.
+import {
+  formatSanitizeSummaryLocalized,
+  sanitizeOneKeyframe,
+  sanitizeOneSpeedCurve,
+  sanitizeSpecSpeedCurves,
+} from "./lib/curveFix";
 
 export default function App() {
   useLang(); // re-render khi đổi ngôn ngữ (splash + modal)
@@ -39,9 +69,125 @@ export default function App() {
   const isMobile = useIsMobile();
   const [mediaOpen, setMediaOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  // Đợt 27 K5: báo cáo lần load gần nhất + trạng thái mở panel.
+  // Đợt 28 L4: đã nối onFixWarning thật (handleFixWarning dưới đây).
+  const [loadReport, setLoadReportState] = useState<LoadReport | null>(() => getLastLoadReport());
+  const [loadReportOpen, setLoadReportOpen] = useState(false);
+
+  // Đợt 29 L4: hai nút sửa của LoadReportPanel, đều có confirm liệt kê
+  // thay đổi + 1 bước undo + quét lại báo cáo sau sửa (warning đã sửa
+  // biến mất, còn lại ở lại — kể cả curve không cứu được / track
+  // khóa) + autosave ngay (đóng cửa sổ debounce 5s của autosave
+  // thường). Tóm tắt sau sửa và từng dòng thay đổi trong confirm đều
+  // dịch theo locale HIỆN TẠI (changeItems / summary đã dịch); chuỗi
+  // tiếng Việt gốc trong curveFix giữ nguyên để fallback + test cũ.
+  const lookup = (k: string, vars?: Record<string, string>): string => t(k, vars);
+  const afterFix = (): void => {
+    const after = useStore.getState();
+    const remaining = collectSpeedCurveWarnings(after.spec);
+    const current = getLastLoadReport();
+    if (current) setLastLoadReport(refreshLoadReportAfterFix(current, remaining));
+    // Đợt 36 S5: giữ session playhead khi ghi autosave ngay sau sửa.
+    autosaveNow(after.spec, after.spec.meta.name, { playhead: after.playhead });
+  };
+  // Nút "Sửa dòng này": CHỈ sửa curve của đúng clip ở dòng vừa bấm
+  // (store fixOneSpeedCurveViolation + sanitizeOneSpeedCurve). Clip
+  // có nhiều warning thì sửa một lần hết các vi phạm của clip đó;
+  // clip khác không đụng tới dù cùng nằm trong báo cáo.
+  const handleFixWarning: LoadReportFixHandler = (w) => {
+    const st = useStore.getState();
+    const preview = sanitizeOneSpeedCurve(st.spec, w.path);
+    if (preview.fixed.length === 0) {
+      pushToast(formatSanitizeSummaryLocalized(preview, lookup), "info");
+      return;
+    }
+    const lines: string[] = [
+      t("loadReport.fixLineConfirmTitle", { clip: w.clipId, path: w.path }),
+    ];
+    for (const f of preview.fixed) {
+      lines.push(`• "${f.clipId}" (${f.path}):`);
+      for (const c of formatFixEntryChanges(f, lookup)) lines.push(`    - ${c}`);
+    }
+    for (const u of preview.unsalvageable) {
+      lines.push(`• "${u.clipId}" (${u.path}): ${t("loadReport.fixConfirmUnsalvageable", { reason: resolveUnsalvageableReason(u, lookup) })}`);
+    }
+    for (const s of preview.skippedLocked) {
+      lines.push(`• "${s.clipId}" (${s.path}): ${t("loadReport.fixConfirmLocked")}`);
+    }
+    lines.push(t("loadReport.fixConfirmTiming"));
+    if (!window.confirm(lines.join("\n"))) return;
+    st.fixOneSpeedCurveViolation(w.path, formatSanitizeSummaryLocalized(preview, lookup));
+    afterFix();
+  };
+  // Đợt 30 M4 — nút "Sửa keyframe này": CHỈ sửa keyframe có chỉ số
+  // của dòng vừa bấm (store fixOneKeyframeViolation + sanitizeOneKeyframe).
+  // Dòng không có keyframeIndex không có nút này (panel tự ẩn). Không
+  // sửa được gì (keyframe đã hợp lệ / không cứu được / track khóa) thì
+  // chỉ toast tóm tắt đã dịch, không confirm thừa, không push undo —
+  // cùng mẫu handleFixWarning. Confirm liệt kê ĐÚNG MỘT thay đổi của
+  // keyframe đó (không nhắc keyframe khác của cùng clip).
+  const handleFixKeyframe: LoadReportFixHandler = (w) => {
+    if (w.keyframeIndex === null) return;
+    const st = useStore.getState();
+    const preview = sanitizeOneKeyframe(st.spec, w.path, w.keyframeIndex);
+    if (preview.fixed.length === 0) {
+      pushToast(formatSanitizeSummaryLocalized(preview, lookup), "info");
+      return;
+    }
+    const lines: string[] = [
+      t("loadReport.fixKeyframeConfirmTitle", { index: String(w.keyframeIndex), clip: w.clipId, path: w.path }),
+    ];
+    for (const f of preview.fixed) {
+      lines.push(`• "${f.clipId}" (${f.path}):`);
+      for (const c of formatFixEntryChanges(f, lookup)) lines.push(`    - ${c}`);
+    }
+    for (const u of preview.unsalvageable) {
+      lines.push(`• "${u.clipId}" (${u.path}): ${t("loadReport.fixConfirmUnsalvageable", { reason: resolveUnsalvageableReason(u, lookup) })}`);
+    }
+    for (const s of preview.skippedLocked) {
+      lines.push(`• "${s.clipId}" (${s.path}): ${t("loadReport.fixConfirmLocked")}`);
+    }
+    lines.push(t("loadReport.fixConfirmTiming"));
+    if (!window.confirm(lines.join("\n"))) return;
+    st.fixOneKeyframeViolation(w.path, w.keyframeIndex, formatSanitizeSummaryLocalized(preview, lookup));
+    afterFix();
+  };
+  // Nút "Sửa tất cả curve vi phạm": giữ hành vi đợt 28 (sửa toàn spec
+  // qua store K2), nay nhãn nói rõ là "tất cả" và confirm/tóm tắt đã
+  // dịch theo locale hiện tại.
+  const handleFixAllWarnings = (): void => {
+    const st = useStore.getState();
+    const preview = sanitizeSpecSpeedCurves(st.spec);
+    if (!preview.changed && preview.fixed.length === 0) {
+      pushToast(formatSanitizeSummaryLocalized(preview, lookup), "info");
+      return;
+    }
+    const lines: string[] = [t("loadReport.fixConfirmTitle")];
+    for (const f of preview.fixed) {
+      lines.push(`• "${f.clipId}" (${f.path}):`);
+      for (const c of formatFixEntryChanges(f, lookup)) lines.push(`    - ${c}`);
+    }
+    for (const u of preview.unsalvageable) {
+      lines.push(`• "${u.clipId}" (${u.path}): ${t("loadReport.fixConfirmUnsalvageable", { reason: resolveUnsalvageableReason(u, lookup) })}`);
+    }
+    for (const s of preview.skippedLocked) {
+      lines.push(`• "${s.clipId}" (${s.path}): ${t("loadReport.fixConfirmLocked")}`);
+    }
+    lines.push(t("loadReport.fixConfirmTiming"));
+    if (!window.confirm(lines.join("\n"))) return;
+    st.fixSpeedCurveViolations(formatSanitizeSummaryLocalized(preview, lookup));
+    afterFix();
+  };
 
   // Khởi tạo: ưu tiên khôi phục autosave; chỉ tải project mẫu khi chưa có autosave.
   // (Không tự ghi đè project đang làm bằng sample khi reload.)
+  // Đợt 36 S5: sau replaceProject (media bin rỗng), khôi phục playhead từ
+  // session autosave (paused — playing/reverse luôn reset, xem LIMITS S5),
+  // rồi nạp lại media bin từ AssetStore TRƯỚC khi checkMissingMedia()
+  // chạy — thứ tự này là điểm sửa chính: trước đây checkMissingMedia
+  // chạy khi bin còn rỗng nên mọi clip đều hiện panel Relink oan.
+  // IndexedDB bị chặn thì rehydrate fail-soft (catch → bin rỗng) và
+  // panel Relink hiện như hành vi cũ, không làm hỏng khởi động.
   useEffect(() => {
     const st = useStore.getState();
     const auto = loadAutosave();
@@ -49,18 +195,84 @@ export default function App() {
       st.replaceProject(auto.spec);
       st.setProjectName(auto.name);
       markSaved(auto.spec);
-      st.checkMissingMedia(); // R1-033: hiện panel relink nếu media thiếu
+      if (auto.session !== null) st.setPlayhead(auto.session.playhead); // clamp + snap frame trong setPlayhead
+      void (async () => {
+        try {
+          const store = new AssetStore();
+          const res = await rehydrateMediaItems(
+            {
+              listManifests: () => store.list(),
+              loadBlob: (id) => store.getBlob(id),
+              makeObjectURL: (blob) => URL.createObjectURL(blob),
+            },
+            auto.spec,
+          );
+          if (res.items.length > 0) st.restoreMediaBin(res.items);
+        } catch {
+          // IndexedDB không khả dụng → giữ bin rỗng, Relink báo như cũ.
+        }
+        st.checkMissingMedia(); // R1-033: hiện panel relink nếu media thiếu
+        // Đợt 26 J5: autosave khôi phục trước đây nuốt warnings; nay hiện
+        // toast như đường mở file (ProjectMenu.warnList), kể cả cảnh báo
+        // speedKeyframes fail-soft từ cổng load.
+        // Đợt 29 L4: toast này dịch message J5 theo locale HIỆN TẠI qua
+        // formatWarningTranslated (thay cho chuỗi tiếng Việt đóng băng
+        // lúc load); các lưu ý chuỗi khác giữ nguyên như trước.
+        // Đợt 27 K5: giữ báo cáo lần khôi phục này để panel xem lại được
+        // sau khi toast đóng (kể cả khi 0 warning — strip chỉ hiện khi >0).
+        const autoReport = buildLoadReport(auto, "autosave", auto.name);
+        if (auto.warnings.length > 0) {
+          // Đợt 31 N4: thêm structuredNotes đã dịch (blob/migration/format/
+          // style); otherWarnings nay chỉ còn chuỗi lẻ chưa có dạng cấu trúc.
+          const toastLines = [
+            ...autoReport.warnings.map((w) => formatWarningTranslated(w, lookup)),
+            ...autoReport.structuredNotes.map((n) => formatStructuredNote(n, lookup)),
+            ...autoReport.otherWarnings,
+          ];
+          if (autoReport.atCap) toastLines.push(t("loadReport.atCap"));
+          pushToast(`${t("loadReport.autosaveRestoredNote")}: ${toastLines.join("; ")}`, "info");
+        }
+        setLastLoadReport(autoReport);
+      })();
     } else {
       void st.loadSample();
     }
   }, []);
 
+  // Đợt 27 K5: đồng bộ báo cáo lần load gần nhất từ module store
+  // (ProjectMenu ghi sau mỗi lần mở file / nhập bản nén).
+  useEffect(() => subscribeLoadReport(setLoadReportState), []);
+
   // Autosave (debounce 5s) mỗi khi spec thay đổi.
+  // Đợt 36 S5: kèm playhead tại thời điểm spec đổi để autosave mang
+  // session (chỉ playhead; playing/reverse không bền — xem LIMITS S5).
   useEffect(() => {
     const unsub = useStore.subscribe((s, prev) => {
-      if (s.spec !== prev.spec) autosave(s.spec, s.spec.meta.name);
+      if (s.spec !== prev.spec) autosave(s.spec, s.spec.meta.name, { playhead: s.playhead });
     });
     return unsub;
+  }, []);
+
+  // Đợt 36 S5: ghi playhead cuối trước khi trang ẩn/kết thúc — bắt trường
+  // hợp spec không đổi sau lần seek cuối (debounce spec không kích hoạt)
+  // để reload vẫn khôi phục đúng vị trí. Chỉ cập nhật field session
+  // (persistSessionPlayhead), KHÔNG viết lại envelope: viết lại sẽ ghi
+  // đè spec mới hơn của tab khác và xóa seed kiểm chứng (lỗi phát hiện
+  // ở probe pha B — xem LIMITS S5 §4). Ghi localStorage đồng bộ nên
+  // kịp chạy trong pagehide; lỗi storage tự nuốt như cũ.
+  useEffect(() => {
+    const flushSession = () => {
+      persistSessionPlayhead(useStore.getState().playhead);
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flushSession();
+    };
+    window.addEventListener("pagehide", flushSession);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", flushSession);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   // phím tắt toàn cục
@@ -82,17 +294,20 @@ export default function App() {
         setExportOpen(false);
         setCaptionOpen(false);
         setSilenceOpen(false);
+        setLoadReportOpen(false); // Đợt 27 K5: Esc cũng đóng panel load report.
         return;
       }
       // Ctrl/Cmd+S: lưu project (chặn hành vi lưu trang của trình duyệt)
       if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) {
         e.preventDefault();
-        const warnings = saveCurrentProject();
-        if (warnings.length > 0) {
+        // Đợt 31 N4: lưu ý đã dịch qua structuredNotes (cùng helper với
+        // nút Lưu trong menu); câu chữ giữ nguyên như trước, chỉ qua key.
+        const lines = saveNotesLines(saveCurrentProject());
+        if (lines.length > 0) {
           // K5: toast thay window.alert (không chặn luồng làm việc).
-          pushToast("Đã lưu, nhưng có lưu ý: " + warnings.join("; "), "info");
+          pushToast(t("projectMenu.saveNotes", { notes: lines.join("; ") }), "info");
         } else {
-          pushToast("Đã lưu project.", "success");
+          pushToast(t("projectMenu.saveDone"), "success");
         }
         return;
       }
@@ -144,11 +359,16 @@ export default function App() {
       } else if (e.key === "Delete" || e.key === "Backspace") {
         st.deleteSelection();
       } else if (e.key === "k" || e.key === "K") {
-        // K5: J/K/L kiểu shuttle (J/L tua ±5s, K phát/dừng — không phát ngược
-        // vì preview chưa hỗ trợ reverse, xem SEEK_LIMITS).
+        // K5: K phát/dừng theo hướng hiện tại (Space cũng vậy). J/L kiểu
+        // shuttle từ đợt 27 K4: J = phát ngược toàn cục (playhead lùi
+        // từng frame, không audio đồng bộ — xem
+        // PHASE9_ROUND27_K4_REVERSE_HOLD_LIMITS.md), L = tua +5s như cũ.
+        // Đổi hành vi J: trước đây J tua -5s; tua lùi nay dùng ArrowLeft
+        // (từng frame) hoặc kéo playhead — shuttle J chuẩn NLE quan trọng
+        // hơn nút tua -5s.
         st.togglePlay();
       } else if (e.key === "j" || e.key === "J") {
-        st.setPlayhead(Math.max(0, st.playhead - 5));
+        st.toggleReversePlayback();
       } else if (e.key === "l" || e.key === "L") {
         st.setPlayhead(Math.min(st.duration(), st.playhead + 5));
       } else if (e.key === "Home") {
@@ -183,6 +403,32 @@ export default function App() {
   return (
     <div className="app">
       <TopBar onExport={() => setExportOpen(true)} onCaption={() => setCaptionOpen(true)} onSilence={() => setSilenceOpen(true)} onTemplate={() => setTemplateOpen(true)} onWelcome={() => setWelcomeOpen(true)} />
+      {/* Đợt 27 K5: strip báo cáo tải — chỉ hiện khi lần load gần nhất
+          có warning cấu trúc và panel đang đóng; đóng panel thì strip
+          quay lại nên mở lại được, "Bỏ qua" mới xoá hẳn báo cáo.
+          Dùng inline style để không đụng styles.css của luồng khác. */}
+      {loadReport && loadReport.warnings.length > 0 && !loadReportOpen && (
+        <div
+          role="status"
+          style={{
+            display: "flex",
+            gap: 12,
+            alignItems: "center",
+            padding: "6px 14px",
+            fontSize: 13,
+            background: "rgba(255, 193, 7, 0.12)",
+            borderBottom: "1px solid var(--border-soft)",
+          }}
+        >
+          <span>{t("loadReport.strip", { n: String(loadReport.warnings.length) })}</span>
+          <button type="button" onClick={() => setLoadReportOpen(true)}>
+            {t("loadReport.view")}
+          </button>
+          <button type="button" onClick={() => clearLastLoadReport()}>
+            {t("loadReport.dismiss")}
+          </button>
+        </div>
+      )}
       <div className="editor-main">
         {!isMobile && <MediaBin />}
         <div className="preview-col">
@@ -266,10 +512,17 @@ export default function App() {
       {templateOpen && <TemplatePicker onClose={() => setTemplateOpen(false)} />}
       {/* K5: chồng toast toàn cục */}
       <Toasts />
+      {/* Đợt 27 K5: panel báo cáo tải; đợt 28 L4 nối nút "Sửa" thật; đợt 29 L4 tách thành "Sửa dòng này" (riêng từng clip) + "Sửa tất cả". */}
+      {loadReportOpen && loadReport && (
+        <LoadReportPanel report={loadReport} onClose={() => setLoadReportOpen(false)} onFixWarning={handleFixWarning} onFixAllWarnings={handleFixAllWarnings} onFixKeyframe={handleFixKeyframe} />
+      )}
       {missingAssets && missingAssets.length > 0 && (
         <RelinkPanel
           missing={missingAssets}
-          onPick={(pick) => useStore.getState().relinkMedia(pick.oldSrc, pick.file)}
+          onPick={(pick, onProgress) =>
+            useStore.getState().relinkMedia(pick.oldSrc, pick.file, onProgress)
+          }
+          onCleanupAliases={() => useStore.getState().cleanupStaleAliases()}
           onClose={() => useStore.getState().dismissRelink()}
         />
       )}
