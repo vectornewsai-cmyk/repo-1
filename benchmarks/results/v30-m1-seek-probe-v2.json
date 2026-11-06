@@ -1,0 +1,2061 @@
+{
+  "run": "round30-m1-probe-v2",
+  "date": "2026-10-31T13:30:48.021Z",
+  "bundle": "index-C0HfodWe.js",
+  "bundleSha256_16": "fda3c753e1dccec1",
+  "display": ":93",
+  "port": 4193,
+  "origin": "http://127.0.0.1:4193",
+  "footage": {
+    "file": "clip-k-dod-iwo.mp4",
+    "sha256": "49f33b83f0e7694e560557e08379b4bef628fed4f89662898764d5c12db6d69c",
+    "ffprobe": "h264 1080x1920 24000/1001 bt709"
+  },
+  "probes": [
+    {
+      "id": "PROXY-DIAG",
+      "proxyDiag": {
+        "badge": "",
+        "badgeDisplay": "none",
+        "mediaProxy": [
+          "Proxy lỗi, thử lại"
+        ],
+        "toasts": [
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×",
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×",
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.",
+          "×"
+        ]
+      },
+      "gating": false
+    },
+    {
+      "id": "M1-FGOUT-legacy-back1f",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 11.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 11.5333,
+      "playhead": 11.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 2.5270224719101124,
+      "le8": 0.911685393258427,
+      "maxDiff": 53,
+      "verdict": "XẤP XỈ",
+      "uncertain": false,
+      "darkFirst": false,
+      "secondMeasure": null,
+      "preScrub": {
+        "snapped": 11.533333333333333,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 81,
+          "seekT": 3.3992,
+          "mad": 6.756516853932585,
+          "le8": 0.7653932584269663,
+          "maxDiff": 140,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 82,
+          "seekT": 3.4409,
+          "mad": 4.775786516853932,
+          "le8": 0.8192134831460675,
+          "maxDiff": 103,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 83,
+          "seekT": 3.4826,
+          "mad": 2.5270224719101124,
+          "le8": 0.911685393258427,
+          "maxDiff": 53,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 84,
+          "seekT": 3.5244,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 85,
+          "seekT": 3.5661,
+          "mad": 2.490955056179775,
+          "le8": 0.9170224719101123,
+          "maxDiff": 76,
+          "verdict": "XẤP XỈ"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 11.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 83,
+      "edgeStart": 0.0382083333333334,
+      "edgeEnd": 0.0034999999999998366,
+      "appMean": [
+        145.04707865168538,
+        145.04707865168538,
+        145.04707865168538
+      ],
+      "correctMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.482645,
+        "ctSrc": 3.5
+      },
+      "holdBefore": {
+        "draw": 1,
+        "hold": 0,
+        "skip": 2,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 2,
+        "hold": 0,
+        "skip": 2,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 6,
+        "pollWallMs": 970,
+        "hashStableFrom": 1,
+        "seekingAtStable": false,
+        "ctAtStable": 3.533333,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 3.533333,
+        "expectedCt": 3.5,
+        "ctMatches": false,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 18,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 321,
+            "hash": 3647616,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 483,
+            "hash": 3647616,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 644,
+            "hash": 3647616,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 805,
+            "hash": 3647616,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 970,
+            "hash": 3647616,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [],
+      "poolEvents": [],
+      "afterIdle": {
+        "canvasHash": 3647616,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 3.533333,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FGOUT-legacy-fwd1f",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 11.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 11.4667,
+      "playhead": 11.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 133.02964419475654,
+      "le8": 0.0074719101123595505,
+      "maxDiff": 243,
+      "verdict": "DARK-FIRST",
+      "uncertain": false,
+      "darkFirst": true,
+      "secondMeasure": {
+        "mad": 133.02964419475654,
+        "le8": 0.0074719101123595505,
+        "maxDiff": 243,
+        "verdict": "LỆCH",
+        "sweep": [
+          {
+            "dk": -2,
+            "frameIndex": 81,
+            "seekT": 3.3992,
+            "mad": 133.17936329588014,
+            "le8": 0.007584269662921348,
+            "maxDiff": 243,
+            "verdict": "LỆCH"
+          },
+          {
+            "dk": -1,
+            "frameIndex": 82,
+            "seekT": 3.4409,
+            "mad": 133.0611797752809,
+            "le8": 0.007865168539325843,
+            "maxDiff": 242,
+            "verdict": "LỆCH"
+          },
+          {
+            "dk": 0,
+            "frameIndex": 83,
+            "seekT": 3.4826,
+            "mad": 133.02964419475654,
+            "le8": 0.0074719101123595505,
+            "maxDiff": 243,
+            "verdict": "LỆCH"
+          },
+          {
+            "dk": 1,
+            "frameIndex": 84,
+            "seekT": 3.5244,
+            "mad": 132.62003745318353,
+            "le8": 0.008202247191011236,
+            "maxDiff": 243,
+            "verdict": "LỆCH"
+          },
+          {
+            "dk": 2,
+            "frameIndex": 85,
+            "seekT": 3.5661,
+            "mad": 132.90810861423222,
+            "le8": 0.00797752808988764,
+            "maxDiff": 243,
+            "verdict": "LỆCH"
+          }
+        ],
+        "appMean": [
+          10,
+          12,
+          16
+        ],
+        "repollHashes": [
+          908396,
+          908396,
+          908396
+        ]
+      },
+      "preScrub": {
+        "snapped": 11.466666666666667,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 81,
+          "seekT": 3.3992,
+          "mad": 133.17936329588014,
+          "le8": 0.007584269662921348,
+          "maxDiff": 243,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 82,
+          "seekT": 3.4409,
+          "mad": 133.0611797752809,
+          "le8": 0.007865168539325843,
+          "maxDiff": 242,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 83,
+          "seekT": 3.4826,
+          "mad": 133.02964419475654,
+          "le8": 0.0074719101123595505,
+          "maxDiff": 243,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 84,
+          "seekT": 3.5244,
+          "mad": 132.62003745318353,
+          "le8": 0.008202247191011236,
+          "maxDiff": 243,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 85,
+          "seekT": 3.5661,
+          "mad": 132.90810861423222,
+          "le8": 0.00797752808988764,
+          "maxDiff": 243,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 11.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 83,
+      "edgeStart": 0.0382083333333334,
+      "edgeEnd": 0.0034999999999998366,
+      "appMean": [
+        10,
+        12,
+        16
+      ],
+      "correctMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.482645,
+        "ctSrc": 3.5
+      },
+      "holdBefore": {
+        "draw": 2,
+        "hold": 0,
+        "skip": 3,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 2,
+        "hold": 0,
+        "skip": 4,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 11,
+        "pollWallMs": 2049,
+        "hashStableFrom": 0,
+        "seekingAtStable": false,
+        "ctAtStable": 3.466666,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 3.5,
+        "expectedCt": 3.5,
+        "ctMatches": true,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 10,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.4667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 176,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 354,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 596,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 763,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 953,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 1162,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 7,
+            "wallMs": 1453,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 8,
+            "wallMs": 1656,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 9,
+            "wallMs": 1872,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 10,
+            "wallMs": 2049,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 26124,
+          "id": 3,
+          "value": 3.5,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 26124,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 3.5,
+          "src": "blob:http://"
+        },
+        {
+          "t": 28008,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 3.5,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 908396,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 3.5,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FGOUT-legacy-fwd0",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 11.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 0,
+      "playhead": 11.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 133.02964419475654,
+      "le8": 0.0074719101123595505,
+      "maxDiff": 243,
+      "verdict": "DARK-FIRST",
+      "uncertain": false,
+      "darkFirst": true,
+      "secondMeasure": {
+        "mad": 133.02964419475654,
+        "le8": 0.0074719101123595505,
+        "maxDiff": 243,
+        "verdict": "LỆCH",
+        "sweep": [
+          {
+            "dk": -2,
+            "frameIndex": 81,
+            "seekT": 3.3992,
+            "mad": 133.17936329588014,
+            "le8": 0.007584269662921348,
+            "maxDiff": 243,
+            "verdict": "LỆCH"
+          },
+          {
+            "dk": -1,
+            "frameIndex": 82,
+            "seekT": 3.4409,
+            "mad": 133.0611797752809,
+            "le8": 0.007865168539325843,
+            "maxDiff": 242,
+            "verdict": "LỆCH"
+          },
+          {
+            "dk": 0,
+            "frameIndex": 83,
+            "seekT": 3.4826,
+            "mad": 133.02964419475654,
+            "le8": 0.0074719101123595505,
+            "maxDiff": 243,
+            "verdict": "LỆCH"
+          },
+          {
+            "dk": 1,
+            "frameIndex": 84,
+            "seekT": 3.5244,
+            "mad": 132.62003745318353,
+            "le8": 0.008202247191011236,
+            "maxDiff": 243,
+            "verdict": "LỆCH"
+          },
+          {
+            "dk": 2,
+            "frameIndex": 85,
+            "seekT": 3.5661,
+            "mad": 132.90810861423222,
+            "le8": 0.00797752808988764,
+            "maxDiff": 243,
+            "verdict": "LỆCH"
+          }
+        ],
+        "appMean": [
+          10,
+          12,
+          16
+        ],
+        "repollHashes": [
+          908396,
+          908396,
+          908396
+        ]
+      },
+      "preScrub": {
+        "snapped": 0,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 81,
+          "seekT": 3.3992,
+          "mad": 133.17936329588014,
+          "le8": 0.007584269662921348,
+          "maxDiff": 243,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 82,
+          "seekT": 3.4409,
+          "mad": 133.0611797752809,
+          "le8": 0.007865168539325843,
+          "maxDiff": 242,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 83,
+          "seekT": 3.4826,
+          "mad": 133.02964419475654,
+          "le8": 0.0074719101123595505,
+          "maxDiff": 243,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 84,
+          "seekT": 3.5244,
+          "mad": 132.62003745318353,
+          "le8": 0.008202247191011236,
+          "maxDiff": 243,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 85,
+          "seekT": 3.5661,
+          "mad": 132.90810861423222,
+          "le8": 0.00797752808988764,
+          "maxDiff": 243,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 11.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 83,
+      "edgeStart": 0.0382083333333334,
+      "edgeEnd": 0.0034999999999998366,
+      "appMean": [
+        10,
+        12,
+        16
+      ],
+      "correctMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.482645,
+        "ctSrc": 3.5
+      },
+      "holdBefore": {
+        "draw": 3,
+        "hold": 0,
+        "skip": 4,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 3,
+        "hold": 0,
+        "skip": 5,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 10,
+        "pollWallMs": 1638,
+        "hashStableFrom": 0,
+        "seekingAtStable": false,
+        "ctAtStable": 0,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 3.5,
+        "expectedCt": 3.5,
+        "ctMatches": true,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 10,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 181,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 342,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 545,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 738,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 898,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 1061,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 7,
+            "wallMs": 1264,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 8,
+            "wallMs": 1438,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 9,
+            "wallMs": 1638,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 55438,
+          "id": 3,
+          "value": 3.5,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 55438,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 3.5,
+          "src": "blob:http://"
+        },
+        {
+          "t": 56924,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 3.5,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 908396,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 3.5,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FBOUT-p01-fwd1f",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadeblack",
+      "target": 3.1,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 3.0667,
+      "playhead": 3.1,
+      "localT": 3.1,
+      "p": 0.10000000000000009,
+      "alpha": 0.4491075996108812,
+      "mode": "black",
+      "mad": 59.8899063670412,
+      "le8": 0.1346067415730337,
+      "maxDiff": 110,
+      "verdict": "DARK-FIRST",
+      "uncertain": false,
+      "darkFirst": true,
+      "secondMeasure": {
+        "mad": 59.8899063670412,
+        "le8": 0.1346067415730337,
+        "maxDiff": 110,
+        "verdict": "LỆCH",
+        "sweep": [
+          {
+            "dk": -2,
+            "frameIndex": 72,
+            "seekT": 3.0239,
+            "mad": 59.92698501872659,
+            "le8": 0.13646067415730337,
+            "maxDiff": 110,
+            "verdict": "LỆCH"
+          },
+          {
+            "dk": -1,
+            "frameIndex": 73,
+            "seekT": 3.0656,
+            "mad": 59.9985393258427,
+            "le8": 0.1341011235955056,
+            "maxDiff": 110,
+            "verdict": "LỆCH"
+          },
+          {
+            "dk": 0,
+            "frameIndex": 74,
+            "seekT": 3.1073,
+            "mad": 59.8899063670412,
+            "le8": 0.1346067415730337,
+            "maxDiff": 110,
+            "verdict": "LỆCH"
+          },
+          {
+            "dk": 1,
+            "frameIndex": 75,
+            "seekT": 3.149,
+            "mad": 59.87224719101123,
+            "le8": 0.13359550561797753,
+            "maxDiff": 110,
+            "verdict": "LỆCH"
+          },
+          {
+            "dk": 2,
+            "frameIndex": 76,
+            "seekT": 3.1907,
+            "mad": 59.66267790262172,
+            "le8": 0.13466292134831462,
+            "maxDiff": 110,
+            "verdict": "LỆCH"
+          }
+        ],
+        "appMean": [
+          10,
+          12,
+          16
+        ],
+        "repollHashes": [
+          908396,
+          908396,
+          908396
+        ]
+      },
+      "preScrub": {
+        "snapped": 3.066666666666667,
+        "handleDeltaFrames": 0
+      },
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 72,
+          "seekT": 3.0239,
+          "mad": 59.92698501872659,
+          "le8": 0.13646067415730337,
+          "maxDiff": 110,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 73,
+          "seekT": 3.0656,
+          "mad": 59.9985393258427,
+          "le8": 0.1341011235955056,
+          "maxDiff": 110,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 74,
+          "seekT": 3.1073,
+          "mad": 59.8899063670412,
+          "le8": 0.1346067415730337,
+          "maxDiff": 110,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 75,
+          "seekT": 3.149,
+          "mad": 59.87224719101123,
+          "le8": 0.13359550561797753,
+          "maxDiff": 110,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 76,
+          "seekT": 3.1907,
+          "mad": 59.66267790262172,
+          "le8": 0.13466292134831462,
+          "maxDiff": 110,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.1,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 74,
+      "edgeStart": 0.013583333333333503,
+      "edgeEnd": 0.028124999999999734,
+      "appMean": [
+        10,
+        12,
+        16
+      ],
+      "correctMean": [
+        71.30404494382023,
+        72.01691011235955,
+        73.80539325842696
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.10727,
+        "ctSrc": 3.1
+      },
+      "holdBefore": {
+        "draw": 3,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 3,
+        "hold": 0,
+        "skip": 7,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 10,
+        "pollWallMs": 1627,
+        "hashStableFrom": 0,
+        "seekingAtStable": false,
+        "ctAtStable": 3.066666,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 3.1,
+        "expectedCt": 3.1,
+        "ctMatches": true,
+        "activeIdAtCapture": 3,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 32,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 194,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 371,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 566,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 759,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 922,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 1090,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 7,
+            "wallMs": 1263,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 8,
+            "wallMs": 1467,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 9,
+            "wallMs": 1627,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 84802,
+          "id": 3,
+          "value": 3.1,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 84802,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 3.1,
+          "src": "blob:http://"
+        },
+        {
+          "t": 86200,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 3.1,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 908396,
+        "hashDriftedAfterIdle": false,
+        "activeId": 3,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 3.1,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    }
+  ],
+  "exceptions": [],
+  "log": [
+    "[2026-10-31T13:28:51.342Z] harness clicktest-dip-seek-round30-m1: bắt đầu (label=round30-m1-probe-v2, display=:93, port=4193)",
+    "[2026-10-31T13:28:52.012Z] footage K OK: SHA khớp J3, 45788099 byte",
+    "[2026-10-31T13:28:52.791Z] Xvfb lên: DISPLAY=:93",
+    "[2026-10-31T13:28:53.140Z] dist snapshot OK: bundle index-C0HfodWe.js sha256[:16]=fda3c753e1dccec1 -> /home/hatch/workspace/tmp-round30-m1/dist-snapshot",
+    "[2026-10-31T13:28:53.141Z] video K đã copy vào snapshot",
+    "[2026-10-31T13:28:53.185Z] static server lên tại http://127.0.0.1:4193 (root /home/hatch/workspace/tmp-round30-m1/dist-snapshot)",
+    "[2026-10-31T13:28:55.998Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-31T13:29:00.433Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T13:29:01.510Z]   hook element probe: {\"installed\":true,\"setterError\":null}",
+    "[2026-10-31T13:29:03.209Z]   media vào bin: clip-k-dod-iwo.mp4",
+    "[2026-10-31T13:29:03.226Z]   footage proxy diag: {\"badge\":\"\",\"badgeDisplay\":\"none\",\"mediaProxy\":[\"Proxy lỗi, thử lại\"],\"toasts\":[\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×\",\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×\",\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.\",\"×\"]}",
+    "[2026-10-31T13:29:03.247Z]   hiệu chuẩn vạch: offset handle-ruler lúc playhead 0 = -6.50px",
+    "[2026-10-31T13:29:03.697Z] ruler: {\"x\":152,\"y\":813,\"w\":1200,\"h\":27,\"innerH\":1057,\"handleLeft\":145.5,\"ppsInput\":60}",
+    "[2026-10-31T13:29:05.285Z]   warm-up: pool blob elements = 3 (ids 1,2,3), tổng video tracked = 3",
+    "[2026-10-31T13:29:05.285Z]   CẢNH BÁO: warm-up thấy 3 pool element (kỳ vọng đúng 1) — v2 dùng activePoolElement (blob rs cao nhất), không lấy blob đầu tiên",
+    "[2026-10-31T13:29:05.286Z]   chạy 4 probe (lọc R30M1_ONLY=FGOUT-legacy-back1f,FGOUT-legacy-fwd1f,FGOUT-legacy-fwd0,FBOUT-p01-fwd1f)",
+    "[2026-10-31T13:29:21.648Z]   XẤP XỈ M1-FGOUT-legacy-back1f: playhead 11.5 p=0.5000 alpha=0.0000 MAD=2.5270 <=8=91.17% max=53 sweep=dk-2:6.757 dk-1:4.776 dk+0:2.527 dk+1:0.000 dk+2:2.491 | poll: 6 lần, hash ổn định từ #1, active pool #3 lúc ổn định: seeking=false ct=3.533333 (khớp kỳ vọng 3.5: false), lúc đo: ct=3.533333 khớp=false, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=3.533333,rs=4,seek=false], sets pool=0 events pool=0, idle2s: hash đổi=false",
+    "[2026-10-31T13:29:36.829Z]   khung tối lần đo đầu M1-FGOUT-legacy-fwd1f: appMean ~ nền khung — KHÔNG scrub detour (v2), chờ idle 2s rồi đo lại không scrub",
+    "[2026-10-31T13:29:49.599Z]   đo lại sau idle M1-FGOUT-legacy-fwd1f: LỆCH MAD=133.0296 sweep=dk-2:133.179 dk-1:133.061 dk+0:133.030 dk+1:132.620 dk+2:132.908",
+    "[2026-10-31T13:29:51.615Z]   DARK-FIRST M1-FGOUT-legacy-fwd1f: playhead 11.5 p=0.5000 alpha=0.0000 MAD=133.0296 <=8=0.75% max=243 sweep=dk-2:133.179 dk-1:133.061 dk+0:133.030 dk+1:132.620 dk+2:132.908 | poll: 11 lần, hash ổn định từ #0, active pool #3 lúc ổn định: seeking=false ct=3.466666 (khớp kỳ vọng 3.5: false), lúc đo: ct=3.5 khớp=true, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=3.5,rs=4,seek=false], sets pool=1 events pool=2, idle2s: hash đổi=false (DARK-FIRST, xem secondMeasure)",
+    "[2026-10-31T13:30:05.701Z]   khung tối lần đo đầu M1-FGOUT-legacy-fwd0: appMean ~ nền khung — KHÔNG scrub detour (v2), chờ idle 2s rồi đo lại không scrub",
+    "[2026-10-31T13:30:18.903Z]   đo lại sau idle M1-FGOUT-legacy-fwd0: LỆCH MAD=133.0296 sweep=dk-2:133.179 dk-1:133.061 dk+0:133.030 dk+1:132.620 dk+2:132.908",
+    "[2026-10-31T13:30:20.923Z]   DARK-FIRST M1-FGOUT-legacy-fwd0: playhead 11.5 p=0.5000 alpha=0.0000 MAD=133.0296 <=8=0.75% max=243 sweep=dk-2:133.179 dk-1:133.061 dk+0:133.030 dk+1:132.620 dk+2:132.908 | poll: 10 lần, hash ổn định từ #0, active pool #3 lúc ổn định: seeking=false ct=0 (khớp kỳ vọng 3.5: false), lúc đo: ct=3.5 khớp=true, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=3.5,rs=4,seek=false], sets pool=1 events pool=2, idle2s: hash đổi=false (DARK-FIRST, xem secondMeasure)",
+    "[2026-10-31T13:30:33.669Z]   khung tối lần đo đầu M1-FBOUT-p01-fwd1f: appMean ~ nền khung — KHÔNG scrub detour (v2), chờ idle 2s rồi đo lại không scrub",
+    "[2026-10-31T13:30:45.972Z]   đo lại sau idle M1-FBOUT-p01-fwd1f: LỆCH MAD=59.8899 sweep=dk-2:59.927 dk-1:59.999 dk+0:59.890 dk+1:59.872 dk+2:59.663",
+    "[2026-10-31T13:30:47.999Z]   DARK-FIRST M1-FBOUT-p01-fwd1f: playhead 3.1 p=0.1000 alpha=0.4491 MAD=59.8899 <=8=13.46% max=110 sweep=dk-2:59.927 dk-1:59.999 dk+0:59.890 dk+1:59.872 dk+2:59.663 | poll: 10 lần, hash ổn định từ #0, active pool #3 lúc ổn định: seeking=false ct=3.066666 (khớp kỳ vọng 3.1: false), lúc đo: ct=3.1 khớp=true, mọi blob lúc đo: [#1:ct=0,rs=0,seek=false #2:ct=0,rs=0,seek=false #3:ct=3.1,rs=4,seek=false], sets pool=1 events pool=2, idle2s: hash đổi=false (DARK-FIRST, xem secondMeasure)",
+    "[2026-10-31T13:30:47.999Z] exceptions trong phiên: 0",
+    "[2026-10-31T13:30:48.020Z] TỔNG PROBE: 4 có verdict, KHỚP 0, KHÔNG KHỚP: M1-FGOUT-legacy-back1f(XẤP XỈ, dk0=2.527, dk+1=0.000); M1-FGOUT-legacy-fwd1f(DARK-FIRST, dk0=133.030, dk+1=132.620); M1-FGOUT-legacy-fwd0(DARK-FIRST, dk0=133.030, dk+1=132.620); M1-FBOUT-p01-fwd1f(DARK-FIRST, dk0=59.890, dk+1=59.872), ERROR: 0",
+    "[2026-10-31T13:30:48.021Z] DONE r30m1-probe: exit=0 (diagnostic, không gating verdict)"
+  ]
+}

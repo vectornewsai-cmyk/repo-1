@@ -1,0 +1,35 @@
+{
+  "runAt": "2026-10-31T13:09:39.323Z",
+  "label": "m5-round30-d7",
+  "bundle": "index-B1assKz-.js",
+  "bundleSha256_16": "7659cc3fb1474449",
+  "exceptionTotalAfterLoad": 0,
+  "animationStyleExceptions": 0,
+  "exceptions": [],
+  "domText": {
+    "hasNested": false,
+    "hasTop": true
+  },
+  "autosaveStyle": {
+    "topHasStyle": false,
+    "topStyleKeys": [],
+    "nestedLeafPresent": true,
+    "nestedLeafHasStyle": false,
+    "nestedLeafKind": "text",
+    "previewCanvas": {
+      "w": 1352,
+      "h": 633
+    }
+  },
+  "pass": true,
+  "log": [
+    "[2026-10-31T13:09:22.605Z] Xvfb lên: DISPLAY=:93",
+    "[2026-10-31T13:09:23.332Z] dist snapshot OK: bundle index-B1assKz-.js sha256[:16]=7659cc3fb1474449",
+    "[2026-10-31T13:09:23.343Z] static server lên tại http://127.0.0.1:4193",
+    "[2026-10-31T13:09:25.714Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome) pid=11711",
+    "[2026-10-31T13:09:39.295Z] exceptions sau load: tổng 0, dạng animation/style: 0",
+    "[2026-10-31T13:09:39.312Z] DOM text: {\"hasNested\":false,\"hasTop\":true}",
+    "[2026-10-31T13:09:39.323Z] autosave sau load: {\"topHasStyle\":false,\"topStyleKeys\":[],\"nestedLeafPresent\":true,\"nestedLeafHasStyle\":false,\"nestedLeafKind\":\"text\",\"previewCanvas\":{\"w\":1352,\"h\":633}}",
+    "[2026-10-31T13:09:39.323Z] D7 PASS: seed nested leaf có trong spec sau load + 0 exception dạng animation/style (D7 đã hết trên bundle này)"
+  ]
+}

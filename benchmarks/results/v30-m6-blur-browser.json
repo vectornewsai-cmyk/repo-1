@@ -1,0 +1,363 @@
+{
+  "run": "m6",
+  "date": "2026-10-31T13:23:29.897Z",
+  "bundle": "index-C0HfodWe.js",
+  "bundleSha256_16": "fda3c753e1dccec1",
+  "display": ":95",
+  "port": 4195,
+  "origin": "http://127.0.0.1:4195",
+  "cases": [
+    {
+      "id": "BLUR-REAL-K19-FW-IN-p05",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "clip-k-trim19.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 0.5,
+      "blur": true,
+      "playhead": 0.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0.6235695399962062,
+      "le8": 1,
+      "maxDiff": 6.685062165411722,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": null,
+      "le8Resampled": null,
+      "maxDiffResampled": null,
+      "verdictResampled": null,
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 0.5,
+      "nSamples": 15960,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": [
+        217.2642230576441,
+        218.89097744360902,
+        209.60231829573934
+      ],
+      "expMean": [
+        217.70896155710437,
+        219.3326147547455,
+        210.07123136442863
+      ],
+      "ctlMean": null,
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ct": 0.433333
+      },
+      "settled": {
+        "hash": 17534948,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": false
+    },
+    {
+      "id": "BLUR-REAL-K11-FW-IN-p05",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "clip-k-trim11.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.5,
+      "blur": true,
+      "playhead": 4.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0.48680418687793364,
+      "le8": 1,
+      "maxDiff": 5.259435641502705,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": null,
+      "le8Resampled": null,
+      "maxDiffResampled": null,
+      "verdictResampled": null,
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.5,
+      "nSamples": 15960,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": [
+        190.22236842105264,
+        193.20676691729324,
+        193.49605263157895
+      ],
+      "expMean": [
+        190.59288693987222,
+        193.59390670609935,
+        193.87820942261692
+      ],
+      "ctlMean": null,
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ct": 0.433333
+      },
+      "settled": {
+        "hash": 16622346,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": false
+    },
+    {
+      "id": "BLUR-SYNTH-FW-IN-p05",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "complex-synth.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 8.5,
+      "blur": true,
+      "playhead": 8.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "pIn": null,
+      "pOut": null,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 1.4709768541500836,
+      "le8": 0.9351503759398496,
+      "maxDiff": 88,
+      "verdict": "XẤP XỈ",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "madResampled": null,
+      "le8Resampled": null,
+      "maxDiffResampled": null,
+      "verdictResampled": null,
+      "madIn": null,
+      "le8In": null,
+      "madOut": null,
+      "le8Out": null,
+      "nIn": null,
+      "nOut": null,
+      "nSkip": null,
+      "appMeanOut": null,
+      "appMeanIn": null,
+      "expMeanIn": null,
+      "handleDeltaFrames": 0,
+      "handleRaw": 8.5,
+      "nSamples": 15960,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.3296875,
+      "appMean": [
+        209.54868421052632,
+        212.39486215538847,
+        209.28195488721803
+      ],
+      "expMean": [
+        210.43213085124577,
+        212.0478073298247,
+        209.58567935626408
+      ],
+      "ctlMean": null,
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ct": 0.433333
+      },
+      "settled": {
+        "hash": 17587666,
+        "w": 1352,
+        "h": 633
+      },
+      "gating": false
+    }
+  ],
+  "pureLoop": {
+    "results": [
+      {
+        "size": "1080p",
+        "W": 1080,
+        "H": 1920,
+        "npix": 2073600,
+        "mode": "white",
+        "reps": 5,
+        "getMs": 16.100000000093132,
+        "loopMs": 250.29999999993015,
+        "putMs": 2.199999999953434,
+        "allGet": [
+          16.100000000093132,
+          16.70000000006985,
+          19.699999999953434,
+          16,
+          15.800000000046566
+        ],
+        "allLoop": [
+          250.29999999993015,
+          253.39999999990687,
+          280.70000000006985,
+          223,
+          234.69999999995343
+        ],
+        "allPut": [
+          2.1000000000931323,
+          2.300000000046566,
+          2.199999999953434,
+          2.199999999953434,
+          2.200000000069849
+        ]
+      },
+      {
+        "size": "1080p",
+        "W": 1080,
+        "H": 1920,
+        "npix": 2073600,
+        "mode": "gray",
+        "reps": 5,
+        "getMs": 16.899999999906868,
+        "loopMs": 297.60000000009313,
+        "putMs": 2.199999999953434,
+        "allGet": [
+          20.099999999976717,
+          16.899999999906868,
+          16.399999999906868,
+          16,
+          17.70000000006985
+        ],
+        "allLoop": [
+          301.9000000000233,
+          297.60000000009313,
+          325.5,
+          270.80000000004657,
+          276.5
+        ],
+        "allPut": [
+          2.199999999953434,
+          2.199999999953434,
+          2.299999999930151,
+          2.599999999976717,
+          2.099999999976717
+        ]
+      },
+      {
+        "size": "4K",
+        "W": 2160,
+        "H": 3840,
+        "npix": 8294400,
+        "mode": "white",
+        "reps": 3,
+        "getMs": 71.80000000004657,
+        "loopMs": 961.3999999999069,
+        "putMs": 8.100000000093132,
+        "allGet": [
+          71.80000000004657,
+          67.60000000009313,
+          135.09999999997672
+        ],
+        "allLoop": [
+          931.3999999999069,
+          961.3999999999069,
+          1079.9000000000233
+        ],
+        "allPut": [
+          9,
+          8.100000000093132,
+          7.900000000023283
+        ]
+      },
+      {
+        "size": "4K",
+        "W": 2160,
+        "H": 3840,
+        "npix": 8294400,
+        "mode": "gray",
+        "reps": 3,
+        "getMs": 72.5,
+        "loopMs": 1143.3000000000466,
+        "putMs": 8.5,
+        "allGet": [
+          68.79999999993015,
+          115.79999999993015,
+          72.5
+        ],
+        "allLoop": [
+          1143.3000000000466,
+          1164.9000000000233,
+          1138.6999999999534
+        ],
+        "allPut": [
+          8.699999999953434,
+          8.5,
+          8.300000000046566
+        ]
+      }
+    ]
+  },
+  "exceptions": [],
+  "log": [
+    "[2026-10-31T13:20:40.120Z] harness clicktest-dip-blur-complex-round30-m6: bắt đầu (label=m6, display=:95, port=4195)",
+    "[2026-10-31T13:21:25.795Z] video footage thật OK: clip-k-trim19.mp4 (2745480 byte)",
+    "[2026-10-31T13:22:23.298Z] video footage thật OK: clip-k-trim11.mp4 (2591774 byte)",
+    "[2026-10-31T13:22:42.921Z] video tổng hợp phức tạp OK: complex-synth.mp4 (5050776 byte)",
+    "[2026-10-31T13:22:43.184Z] Xvfb lên: DISPLAY=:95",
+    "[2026-10-31T13:22:43.559Z] dist snapshot OK: bundle index-C0HfodWe.js sha256[:16]=fda3c753e1dccec1 -> /home/hatch/workspace/tmp-round30-m6/dist-snapshot",
+    "[2026-10-31T13:22:43.678Z] video blur đã copy vào snapshot",
+    "[2026-10-31T13:22:43.695Z] static server lên tại http://127.0.0.1:4195 (root /home/hatch/workspace/tmp-round30-m6/dist-snapshot)",
+    "[2026-10-31T13:22:46.341Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-31T13:22:51.099Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T13:22:54.003Z]   media vào bin: clip-k-trim19.mp4",
+    "[2026-10-31T13:22:54.004Z]   media vào bin: clip-k-trim11.mp4",
+    "[2026-10-31T13:22:54.005Z]   media vào bin: complex-synth.mp4",
+    "[2026-10-31T13:22:54.007Z]   hiệu chuẩn vạch: offset handle-ruler lúc playhead 0 = -6.50px",
+    "[2026-10-31T13:22:54.410Z] ruler rect: {\"x\":152,\"y\":813,\"w\":960,\"h\":27,\"innerH\":1057,\"handleLeft\":145.5,\"ppsInput\":60}",
+    "[2026-10-31T13:23:00.445Z]   INFO BLUR-REAL-K19-FW-IN-p05 [KHỚP]: playhead 0.5 p=0.5000 alpha=0.3466 MAD=0.624 <=8=100.00% appMean=[217.3,218.9,209.6] expMean=[217.7,219.3,210.1] resampled: MAD=- (null)",
+    "[2026-10-31T13:23:06.252Z]   INFO BLUR-REAL-K11-FW-IN-p05 [KHỚP]: playhead 4.5 p=0.5000 alpha=0.3466 MAD=0.487 <=8=100.00% appMean=[190.2,193.2,193.5] expMean=[190.6,193.6,193.9] resampled: MAD=- (null)",
+    "[2026-10-31T13:23:11.922Z]   INFO BLUR-SYNTH-FW-IN-p05 [XẤP XỈ]: playhead 8.5 p=0.5000 alpha=0.3466 MAD=1.471 <=8=93.52% appMean=[209.5,212.4,209.3] expMean=[210.4,212.0,209.6] resampled: MAD=- (null)",
+    "[2026-10-31T13:23:19.056Z] singleClipDipPixel trích verbatim: 512 ký tự",
+    "[2026-10-31T13:23:29.895Z]   pure-loop browser 1080p mode=white: get=16.1ms loop=250.3ms put=2.2ms (median, reps 5)",
+    "[2026-10-31T13:23:29.897Z]   pure-loop browser 1080p mode=gray: get=16.9ms loop=297.6ms put=2.2ms (median, reps 5)",
+    "[2026-10-31T13:23:29.897Z]   pure-loop browser 4K mode=white: get=71.8ms loop=961.4ms put=8.1ms (median, reps 3)",
+    "[2026-10-31T13:23:29.897Z]   pure-loop browser 4K mode=gray: get=72.5ms loop=1143.3ms put=8.5ms (median, reps 3)",
+    "[2026-10-31T13:23:29.897Z] exceptions trong phiên: 0",
+    "[2026-10-31T13:23:29.897Z] DONE m6-blur-browser: 3 case blur INFO, 0 FAIL, exit=0"
+  ]
+}

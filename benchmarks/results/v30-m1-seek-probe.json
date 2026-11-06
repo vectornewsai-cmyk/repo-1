@@ -1,0 +1,4840 @@
+{
+  "run": "round30-m1-probe",
+  "date": "2026-10-31T13:19:47.824Z",
+  "bundle": "index-B1assKz-.js",
+  "bundleSha256_16": "7659cc3fb1474449",
+  "display": ":94",
+  "port": 4194,
+  "origin": "http://127.0.0.1:4194",
+  "footage": {
+    "file": "clip-k-dod-iwo.mp4",
+    "sha256": "49f33b83f0e7694e560557e08379b4bef628fed4f89662898764d5c12db6d69c",
+    "ffprobe": "h264 1080x1920 24000/1001 bt709"
+  },
+  "probes": [
+    {
+      "id": "PROXY-DIAG",
+      "proxyDiag": {
+        "badge": "",
+        "badgeDisplay": "none",
+        "mediaProxy": [
+          "Proxy lỗi, thử lại"
+        ],
+        "toasts": [
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×",
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×",
+          "Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.",
+          "×"
+        ]
+      },
+      "gating": false
+    },
+    {
+      "id": "M1-FGOUT-legacy-back1f",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 11.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 11.5333,
+      "playhead": 11.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 2.5270224719101124,
+      "le8": 0.911685393258427,
+      "maxDiff": 53,
+      "verdict": "XẤP XỈ",
+      "uncertain": false,
+      "retried": true,
+      "measurementInvalid": false,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 81,
+          "seekT": 3.3992,
+          "mad": 6.756516853932585,
+          "le8": 0.7653932584269663,
+          "maxDiff": 140,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 82,
+          "seekT": 3.4409,
+          "mad": 4.775786516853932,
+          "le8": 0.8192134831460675,
+          "maxDiff": 103,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 83,
+          "seekT": 3.4826,
+          "mad": 2.5270224719101124,
+          "le8": 0.911685393258427,
+          "maxDiff": 53,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 84,
+          "seekT": 3.5244,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 85,
+          "seekT": 3.5661,
+          "mad": 2.490955056179775,
+          "le8": 0.9170224719101123,
+          "maxDiff": 76,
+          "verdict": "XẤP XỈ"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 11.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 83,
+      "edgeStart": 0.0382083333333334,
+      "edgeEnd": 0.0034999999999998366,
+      "appMean": [
+        145.04707865168538,
+        145.04707865168538,
+        145.04707865168538
+      ],
+      "correctMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.482645,
+        "ctSrc": 3.5
+      },
+      "holdBefore": {
+        "draw": 1,
+        "hold": 0,
+        "skip": 2,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 3,
+        "hold": 0,
+        "skip": 3,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 6,
+        "pollWallMs": 972,
+        "hashStableFrom": 0,
+        "seekingAtStable": false,
+        "ctAtStable": 0,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 0,
+        "expectedCt": 3.5,
+        "ctMatches": false,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 85,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 300,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 481,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 643,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 806,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 972,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [],
+      "poolEvents": [
+        {
+          "t": 11207,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 3.533333,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 3647616,
+        "hashDriftedAfterIdle": true,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 3.533333,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FGOUT-legacy-fwd1f",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 11.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 11.4667,
+      "playhead": 11.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": true,
+      "measurementInvalid": false,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 81,
+          "seekT": 3.3992,
+          "mad": 4.80376404494382,
+          "le8": 0.8224157303370786,
+          "maxDiff": 118,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 82,
+          "seekT": 3.4409,
+          "mad": 2.5446067415730336,
+          "le8": 0.9124719101123595,
+          "maxDiff": 75,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 83,
+          "seekT": 3.4826,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 84,
+          "seekT": 3.5244,
+          "mad": 2.5270224719101124,
+          "le8": 0.911685393258427,
+          "maxDiff": 53,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 85,
+          "seekT": 3.5661,
+          "mad": 4.641460674157304,
+          "le8": 0.8279213483146067,
+          "maxDiff": 117,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 11.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 83,
+      "edgeStart": 0.0382083333333334,
+      "edgeEnd": 0.0034999999999998366,
+      "appMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "correctMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.482645,
+        "ctSrc": 3.5
+      },
+      "holdBefore": {
+        "draw": 3,
+        "hold": 0,
+        "skip": 4,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 5,
+        "hold": 0,
+        "skip": 5,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 21,
+        "pollWallMs": 5028,
+        "hashStableFrom": 0,
+        "seekingAtStable": false,
+        "ctAtStable": 0,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 0,
+        "expectedCt": 3.5,
+        "ctMatches": false,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 18,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.4667,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 207,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 507,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 807,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 1014,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 1283,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 1502,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 7,
+            "wallMs": 1724,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 8,
+            "wallMs": 1909,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 9,
+            "wallMs": 2121,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 10,
+            "wallMs": 2317,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 11,
+            "wallMs": 2516,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 12,
+            "wallMs": 2894,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 13,
+            "wallMs": 3185,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 14,
+            "wallMs": 3413,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 15,
+            "wallMs": 3615,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 16,
+            "wallMs": 3885,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 17,
+            "wallMs": 4117,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 18,
+            "wallMs": 4498,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 19,
+            "wallMs": 4784,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 20,
+            "wallMs": 5028,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 69179,
+          "id": 3,
+          "value": 3.5,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 69179,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 3.5,
+          "src": "blob:http://"
+        },
+        {
+          "t": 73990,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 3.5,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 3657936,
+        "hashDriftedAfterIdle": true,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 3.5,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FGOUT-legacy-fwd0",
+      "clip": {
+        "start": 8,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadegrays",
+      "target": 11.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 0,
+      "playhead": 11.5,
+      "localT": 3.5,
+      "p": 0.5,
+      "alpha": 0,
+      "mode": "gray",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": true,
+      "measurementInvalid": false,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 81,
+          "seekT": 3.3992,
+          "mad": 4.80376404494382,
+          "le8": 0.8224157303370786,
+          "maxDiff": 118,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 82,
+          "seekT": 3.4409,
+          "mad": 2.5446067415730336,
+          "le8": 0.9124719101123595,
+          "maxDiff": 75,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 83,
+          "seekT": 3.4826,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 84,
+          "seekT": 3.5244,
+          "mad": 2.5270224719101124,
+          "le8": 0.911685393258427,
+          "maxDiff": 53,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 85,
+          "seekT": 3.5661,
+          "mad": 4.641460674157304,
+          "le8": 0.8279213483146067,
+          "maxDiff": 117,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 11.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 83,
+      "edgeStart": 0.0382083333333334,
+      "edgeEnd": 0.0034999999999998366,
+      "appMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "correctMean": [
+        145.45612359550563,
+        145.45612359550563,
+        145.45612359550563
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.482645,
+        "ctSrc": 3.5
+      },
+      "holdBefore": {
+        "draw": 6,
+        "hold": 0,
+        "skip": 5,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 8,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 19,
+        "pollWallMs": 4996,
+        "hashStableFrom": 0,
+        "seekingAtStable": false,
+        "ctAtStable": 0,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 0,
+        "expectedCt": 3.5,
+        "ctMatches": false,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 17,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 288,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 598,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 897,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 1180,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 1694,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 1896,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 7,
+            "wallMs": 2184,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 8,
+            "wallMs": 2399,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 9,
+            "wallMs": 2693,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 10,
+            "wallMs": 2981,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 11,
+            "wallMs": 3295,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 12,
+            "wallMs": 3607,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 13,
+            "wallMs": 3898,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 14,
+            "wallMs": 4095,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 15,
+            "wallMs": 4296,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 16,
+            "wallMs": 4498,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 17,
+            "wallMs": 4790,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 18,
+            "wallMs": 4996,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 159781,
+          "id": 3,
+          "value": 3.5,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 159781,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 3.5,
+          "src": "blob:http://"
+        },
+        {
+          "t": 164499,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 3.5,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 3657936,
+        "hashDriftedAfterIdle": true,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 3.5,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-SANITY-back1f",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 14.0333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 14.0667,
+      "playhead": 14.033333333333333,
+      "localT": 2.033333333333333,
+      "p": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 3.30249063670412,
+      "le8": 0.8717977528089887,
+      "maxDiff": 119,
+      "verdict": "LỆCH",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 46,
+          "seekT": 1.9394,
+          "mad": 8.020955056179774,
+          "le8": 0.7308426966292135,
+          "maxDiff": 183,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 47,
+          "seekT": 1.9811,
+          "mad": 5.9328089887640445,
+          "le8": 0.7775280898876404,
+          "maxDiff": 141,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 48,
+          "seekT": 2.0229,
+          "mad": 3.30249063670412,
+          "le8": 0.8717977528089887,
+          "maxDiff": 119,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 49,
+          "seekT": 2.0646,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 50,
+          "seekT": 2.1063,
+          "mad": 3.209737827715356,
+          "le8": 0.8734831460674157,
+          "maxDiff": 130,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 14.033333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 48,
+      "edgeStart": 0.031333333333333435,
+      "edgeEnd": 0.010374999999999801,
+      "appMean": [
+        150.05488764044944,
+        149.50780898876405,
+        149.0335393258427
+      ],
+      "correctMean": [
+        149.78449438202247,
+        149.34028089887641,
+        148.77893258426965
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 2.022854,
+        "ctSrc": 2.033332
+      },
+      "holdBefore": {
+        "draw": 9,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 10,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 6,
+        "pollWallMs": 817,
+        "hashStableFrom": 0,
+        "seekingAtStable": false,
+        "ctAtStable": 0,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 0,
+        "expectedCt": 2.033333333333333,
+        "ctMatches": false,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 10,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 171,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 332,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 496,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 657,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 817,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [],
+      "poolEvents": [],
+      "afterIdle": {
+        "canvasHash": 3733790,
+        "hashDriftedAfterIdle": false,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 2.066666,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-SANITY-fwd1f",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 14.0333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 14,
+      "playhead": 14.033333333333333,
+      "localT": 2.033333333333333,
+      "p": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 3.2832771535580525,
+      "le8": 0.8701123595505618,
+      "maxDiff": 90,
+      "verdict": "LỆCH",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 46,
+          "seekT": 1.9394,
+          "mad": 3.152191011235955,
+          "le8": 0.8757865168539326,
+          "maxDiff": 95,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 47,
+          "seekT": 1.9811,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 48,
+          "seekT": 2.0229,
+          "mad": 3.2832771535580525,
+          "le8": 0.8701123595505618,
+          "maxDiff": 90,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 49,
+          "seekT": 2.0646,
+          "mad": 5.9328089887640445,
+          "le8": 0.7775280898876404,
+          "maxDiff": 141,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 50,
+          "seekT": 2.1063,
+          "mad": 8.089737827715355,
+          "le8": 0.7297191011235955,
+          "maxDiff": 192,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 14.033333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 48,
+      "edgeStart": 0.031333333333333435,
+      "edgeEnd": 0.010374999999999801,
+      "appMean": [
+        150.393202247191,
+        149.715,
+        149.40724719101124
+      ],
+      "correctMean": [
+        149.78449438202247,
+        149.34028089887641,
+        148.77893258426965
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 2.022854,
+        "ctSrc": 2.033332
+      },
+      "holdBefore": {
+        "draw": 11,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 12,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 6,
+        "pollWallMs": 811,
+        "hashStableFrom": 0,
+        "seekingAtStable": false,
+        "ctAtStable": 0,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 0,
+        "expectedCt": 2.033333333333333,
+        "ctMatches": false,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 9,
+            "hash": 3748867,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 170,
+            "hash": 3748867,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 330,
+            "hash": 3748867,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 490,
+            "hash": 3748867,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 650,
+            "hash": 3748867,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 811,
+            "hash": 3748867,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [],
+      "poolEvents": [],
+      "afterIdle": {
+        "canvasHash": 3748867,
+        "hashDriftedAfterIdle": false,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 2,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-SANITY-fwd0",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 14.0333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 0,
+      "playhead": 14.033333333333333,
+      "localT": 2.033333333333333,
+      "p": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 46,
+          "seekT": 1.9394,
+          "mad": 5.863782771535581,
+          "le8": 0.7791573033707865,
+          "maxDiff": 163,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 47,
+          "seekT": 1.9811,
+          "mad": 3.2832771535580525,
+          "le8": 0.8701123595505618,
+          "maxDiff": 90,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 48,
+          "seekT": 2.0229,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 49,
+          "seekT": 2.0646,
+          "mad": 3.30249063670412,
+          "le8": 0.8717977528089887,
+          "maxDiff": 119,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 50,
+          "seekT": 2.1063,
+          "mad": 5.961666666666667,
+          "le8": 0.7785393258426966,
+          "maxDiff": 170,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 14.033333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 48,
+      "edgeStart": 0.031333333333333435,
+      "edgeEnd": 0.010374999999999801,
+      "appMean": [
+        149.78449438202247,
+        149.34028089887641,
+        148.77893258426965
+      ],
+      "correctMean": [
+        149.78449438202247,
+        149.34028089887641,
+        148.77893258426965
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 2.022854,
+        "ctSrc": 2.033332
+      },
+      "holdBefore": {
+        "draw": 13,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 14,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 8,
+        "pollWallMs": 1283,
+        "hashStableFrom": 5,
+        "seekingAtStable": false,
+        "ctAtStable": 0,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 0,
+        "expectedCt": 2.033333333333333,
+        "ctMatches": false,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 9,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 172,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 343,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 554,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 743,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 2.0333,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 962,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 1123,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 7,
+            "wallMs": 1283,
+            "hash": 3732790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 249237,
+          "id": 3,
+          "value": 2.033333333333333,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 249237,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 2.033333,
+          "src": "blob:http://"
+        },
+        {
+          "t": 250024,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 2.033332,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 3732790,
+        "hashDriftedAfterIdle": false,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 2.033332,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-SANITY-back1f-repeat",
+      "clip": {
+        "start": 12,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": null,
+      "type": null,
+      "target": 14.0333,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 14.0667,
+      "playhead": 14.033333333333333,
+      "localT": 2.033333333333333,
+      "p": null,
+      "alpha": 1,
+      "mode": null,
+      "mad": 3.30249063670412,
+      "le8": 0.8717977528089887,
+      "maxDiff": 119,
+      "verdict": "LỆCH",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 46,
+          "seekT": 1.9394,
+          "mad": 8.020955056179774,
+          "le8": 0.7308426966292135,
+          "maxDiff": 183,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 47,
+          "seekT": 1.9811,
+          "mad": 5.9328089887640445,
+          "le8": 0.7775280898876404,
+          "maxDiff": 141,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 48,
+          "seekT": 2.0229,
+          "mad": 3.30249063670412,
+          "le8": 0.8717977528089887,
+          "maxDiff": 119,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 49,
+          "seekT": 2.0646,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 50,
+          "seekT": 2.1063,
+          "mad": 3.209737827715356,
+          "le8": 0.8734831460674157,
+          "maxDiff": 130,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 14.033333333333333,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 48,
+      "edgeStart": 0.031333333333333435,
+      "edgeEnd": 0.010374999999999801,
+      "appMean": [
+        150.05488764044944,
+        149.50780898876405,
+        149.0335393258427
+      ],
+      "correctMean": [
+        149.78449438202247,
+        149.34028089887641,
+        148.77893258426965
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 2.022854,
+        "ctSrc": 2.033332
+      },
+      "holdBefore": {
+        "draw": 15,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 16,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 6,
+        "pollWallMs": 821,
+        "hashStableFrom": 0,
+        "seekingAtStable": false,
+        "ctAtStable": 0,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 0,
+        "expectedCt": 2.033333333333333,
+        "ctMatches": false,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 10,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 179,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 340,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 500,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 660,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 821,
+            "hash": 3733790,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 2.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [],
+      "poolEvents": [],
+      "afterIdle": {
+        "canvasHash": 3733790,
+        "hashDriftedAfterIdle": false,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 2.066666,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FWIN-legacy-back1f",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 4.5333,
+      "playhead": 4.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0.8671348314606742,
+      "le8": 0.9902247191011236,
+      "maxDiff": 23,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 9,
+          "seekT": 0.3962,
+          "mad": 2.280056179775281,
+          "le8": 0.9248876404494382,
+          "maxDiff": 53,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 10,
+          "seekT": 0.4379,
+          "mad": 1.6033707865168538,
+          "le8": 0.957808988764045,
+          "maxDiff": 41,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 11,
+          "seekT": 0.4796,
+          "mad": 0.8671348314606742,
+          "le8": 0.9902247191011236,
+          "maxDiff": 23,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 12,
+          "seekT": 0.5214,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 13,
+          "seekT": 0.5631,
+          "mad": 0.8723220973782772,
+          "le8": 0.9907865168539326,
+          "maxDiff": 33,
+          "verdict": "KHỚP"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 11,
+      "edgeStart": 0.04120833333333335,
+      "edgeEnd": 0.0004999999999999449,
+      "appMean": [
+        221.4867415730337,
+        221.39196629213484,
+        221.17550561797754
+      ],
+      "correctMean": [
+        221.70337078651684,
+        221.5841011235955,
+        221.39870786516855
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 0.479645,
+        "ctSrc": 0.5
+      },
+      "holdBefore": {
+        "draw": 17,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 18,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 6,
+        "pollWallMs": 821,
+        "hashStableFrom": 1,
+        "seekingAtStable": false,
+        "ctAtStable": 0,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 0,
+        "expectedCt": 0.5,
+        "ctMatches": false,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 9,
+            "hash": 5140622,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 178,
+            "hash": 5241915,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 338,
+            "hash": 5241915,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 500,
+            "hash": 5241915,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 661,
+            "hash": 5241915,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 821,
+            "hash": 5241915,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [],
+      "poolEvents": [],
+      "afterIdle": {
+        "canvasHash": 5241915,
+        "hashDriftedAfterIdle": false,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 0.533333,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FWIN-legacy-fwd1f",
+      "clip": {
+        "start": 4,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "in",
+      "type": "fadewhite",
+      "target": 4.5,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 4.4667,
+      "playhead": 4.5,
+      "localT": 0.5,
+      "p": 0.5,
+      "alpha": 0.34657468917294143,
+      "mode": "white",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 9,
+          "seekT": 0.3962,
+          "mad": 1.6085393258426965,
+          "le8": 0.9566292134831461,
+          "maxDiff": 44,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 10,
+          "seekT": 0.4379,
+          "mad": 0.8424531835205993,
+          "le8": 0.9889887640449438,
+          "maxDiff": 23,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 11,
+          "seekT": 0.4796,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 12,
+          "seekT": 0.5214,
+          "mad": 0.8671348314606742,
+          "le8": 0.9902247191011236,
+          "maxDiff": 23,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 13,
+          "seekT": 0.5631,
+          "mad": 1.6100187265917603,
+          "le8": 0.9579213483146067,
+          "maxDiff": 47,
+          "verdict": "XẤP XỈ"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 4.5,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 11,
+      "edgeStart": 0.04120833333333335,
+      "edgeEnd": 0.0004999999999999449,
+      "appMean": [
+        221.70337078651684,
+        221.5841011235955,
+        221.39870786516855
+      ],
+      "correctMean": [
+        221.70337078651684,
+        221.5841011235955,
+        221.39870786516855
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 0.479645,
+        "ctSrc": 0.5
+      },
+      "holdBefore": {
+        "draw": 19,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 20,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 6,
+        "pollWallMs": 909,
+        "hashStableFrom": 3,
+        "seekingAtStable": false,
+        "ctAtStable": 0,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 0,
+        "expectedCt": 0.5,
+        "ctMatches": false,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 10,
+            "hash": 5346519,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.4667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 170,
+            "hash": 5346519,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 0.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 340,
+            "hash": 5346519,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 0.5,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 585,
+            "hash": 5245805,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 748,
+            "hash": 5245805,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 909,
+            "hash": 5245805,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 0.5,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 278150,
+          "id": 3,
+          "value": 0.5,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 278150,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 0.5,
+          "src": "blob:http://"
+        },
+        {
+          "t": 278505,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 0.5,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 5245805,
+        "hashDriftedAfterIdle": false,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 0.5,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FBOUT-p01-back1f",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadeblack",
+      "target": 3.1,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 3.1333,
+      "playhead": 3.1,
+      "localT": 3.1,
+      "p": 0.10000000000000009,
+      "alpha": 0.4491075996108812,
+      "mode": "black",
+      "mad": 1.4847003745318352,
+      "le8": 0.9602808988764044,
+      "maxDiff": 43,
+      "verdict": "XẤP XỈ",
+      "uncertain": false,
+      "retried": false,
+      "measurementInvalid": false,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 72,
+          "seekT": 3.0239,
+          "mad": 3.7292322097378277,
+          "le8": 0.8501123595505617,
+          "maxDiff": 98,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 73,
+          "seekT": 3.0656,
+          "mad": 2.7249063670411986,
+          "le8": 0.8950561797752808,
+          "maxDiff": 100,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 74,
+          "seekT": 3.1073,
+          "mad": 1.4847003745318352,
+          "le8": 0.9602808988764044,
+          "maxDiff": 43,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 75,
+          "seekT": 3.149,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 76,
+          "seekT": 3.1907,
+          "mad": 1.5265355805243446,
+          "le8": 0.9593820224719101,
+          "maxDiff": 54,
+          "verdict": "XẤP XỈ"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.1,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 74,
+      "edgeStart": 0.013583333333333503,
+      "edgeEnd": 0.028124999999999734,
+      "appMean": [
+        71.28629213483146,
+        71.99561797752808,
+        73.79280898876405
+      ],
+      "correctMean": [
+        71.30404494382023,
+        72.01691011235955,
+        73.80539325842696
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.10727,
+        "ctSrc": 3.1
+      },
+      "holdBefore": {
+        "draw": 21,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 22,
+        "hold": 0,
+        "skip": 6,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 6,
+        "pollWallMs": 813,
+        "hashStableFrom": 1,
+        "seekingAtStable": false,
+        "ctAtStable": 0,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 0,
+        "expectedCt": 3.1,
+        "ctMatches": false,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 10,
+            "hash": 1507049,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 170,
+            "hash": 2143171,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 331,
+            "hash": 2143171,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 492,
+            "hash": 2143171,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 652,
+            "hash": 2143171,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 813,
+            "hash": 2143171,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1333,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [],
+      "poolEvents": [],
+      "afterIdle": {
+        "canvasHash": 2143171,
+        "hashDriftedAfterIdle": false,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 3.133333,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "M1-FBOUT-p01-fwd1f",
+      "clip": {
+        "start": 0,
+        "dur": 4,
+        "file": "clip-k-dod-iwo.mp4"
+      },
+      "window": "out",
+      "type": "fadeblack",
+      "target": 3.1,
+      "footage": true,
+      "fpsNative": 23.976023976023978,
+      "preTarget": 3.0667,
+      "playhead": 3.1,
+      "localT": 3.1,
+      "p": 0.10000000000000009,
+      "alpha": 0.4491075996108812,
+      "mode": "black",
+      "mad": 0,
+      "le8": 1,
+      "maxDiff": 0,
+      "verdict": "KHỚP",
+      "uncertain": false,
+      "retried": true,
+      "measurementInvalid": false,
+      "sweep": [
+        {
+          "dk": -2,
+          "frameIndex": 72,
+          "seekT": 3.0239,
+          "mad": 2.7557677902621722,
+          "le8": 0.8956741573033707,
+          "maxDiff": 84,
+          "verdict": "LỆCH"
+        },
+        {
+          "dk": -1,
+          "frameIndex": 73,
+          "seekT": 3.0656,
+          "mad": 1.5037640449438203,
+          "le8": 0.9596629213483147,
+          "maxDiff": 60,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 0,
+          "frameIndex": 74,
+          "seekT": 3.1073,
+          "mad": 0,
+          "le8": 1,
+          "maxDiff": 0,
+          "verdict": "KHỚP"
+        },
+        {
+          "dk": 1,
+          "frameIndex": 75,
+          "seekT": 3.149,
+          "mad": 1.4847003745318352,
+          "le8": 0.9602808988764044,
+          "maxDiff": 43,
+          "verdict": "XẤP XỈ"
+        },
+        {
+          "dk": 2,
+          "frameIndex": 76,
+          "seekT": 3.1907,
+          "mad": 2.721123595505618,
+          "le8": 0.8964044943820225,
+          "maxDiff": 77,
+          "verdict": "LỆCH"
+        }
+      ],
+      "frameLockMad": 0,
+      "frameLockLe8": 1,
+      "handleDeltaFrames": 0,
+      "handleRaw": 3.1,
+      "nSamples": 17800,
+      "canvasW": 1352,
+      "canvasH": 633,
+      "scale": 0.8791666666666667,
+      "letterbox": {
+        "dx": 437.5,
+        "dy": 0,
+        "dw": 405,
+        "dh": 720,
+        "dxR": 438,
+        "dyR": 0,
+        "dwR": 405,
+        "dhR": 720
+      },
+      "sourceFrameIndex": 74,
+      "edgeStart": 0.013583333333333503,
+      "edgeEnd": 0.028124999999999734,
+      "appMean": [
+        71.30404494382023,
+        72.01691011235955,
+        73.80539325842696
+      ],
+      "correctMean": [
+        71.30404494382023,
+        72.01691011235955,
+        73.80539325842696
+      ],
+      "controlVideo": {
+        "w": 1080,
+        "h": 1920,
+        "ctMid": 3.10727,
+        "ctSrc": 3.1
+      },
+      "holdBefore": {
+        "draw": 22,
+        "hold": 0,
+        "skip": 7,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "holdAfter": {
+        "draw": 24,
+        "hold": 0,
+        "skip": 8,
+        "maxHoldAgeSec": 0,
+        "stale": false
+      },
+      "poll": {
+        "nPolls": 9,
+        "pollWallMs": 1482,
+        "hashStableFrom": 0,
+        "seekingAtStable": false,
+        "ctAtStable": 0,
+        "ctMatchesAtStable": false,
+        "ctAtCapture": 0,
+        "expectedCt": 3.1,
+        "ctMatches": false,
+        "poolIdsAtCapture": [
+          1,
+          2,
+          3
+        ],
+        "series": [
+          {
+            "i": 0,
+            "wallMs": 12,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.0667,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 1,
+            "wallMs": 173,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 2,
+            "wallMs": 335,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 3,
+            "wallMs": 507,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 4,
+            "wallMs": 712,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 5,
+            "wallMs": 915,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 6,
+            "wallMs": 1111,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 7,
+            "wallMs": 1309,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": true,
+                "ct": 3.1,
+                "rs": 1,
+                "paused": true
+              }
+            ]
+          },
+          {
+            "i": 8,
+            "wallMs": 1482,
+            "hash": 908396,
+            "pool": [
+              {
+                "id": 1,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 2,
+                "seeking": false,
+                "ct": 0,
+                "rs": 0,
+                "paused": true
+              },
+              {
+                "id": 3,
+                "seeking": false,
+                "ct": 3.1,
+                "rs": 4,
+                "paused": true
+              }
+            ]
+          }
+        ]
+      },
+      "poolSets": [
+        {
+          "t": 300263,
+          "id": 3,
+          "value": 3.1,
+          "src": "blob:http://"
+        }
+      ],
+      "poolEvents": [
+        {
+          "t": 300263,
+          "kind": "seeking",
+          "id": 3,
+          "ct": 3.1,
+          "src": "blob:http://"
+        },
+        {
+          "t": 301513,
+          "kind": "seeked",
+          "id": 3,
+          "ct": 3.1,
+          "src": "blob:http://"
+        }
+      ],
+      "afterIdle": {
+        "canvasHash": 2144067,
+        "hashDriftedAfterIdle": true,
+        "pool": [
+          {
+            "id": 1,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 2,
+            "seeking": false,
+            "ct": 0,
+            "rs": 0,
+            "paused": true
+          },
+          {
+            "id": 3,
+            "seeking": false,
+            "ct": 3.1,
+            "rs": 4,
+            "paused": true
+          }
+        ]
+      }
+    }
+  ],
+  "exceptions": [],
+  "log": [
+    "[2026-10-31T13:14:14.813Z] harness clicktest-dip-seek-round30-m1: bắt đầu (label=round30-m1-probe, display=:94, port=4194)",
+    "[2026-10-31T13:14:15.377Z] footage K OK: SHA khớp J3, 45788099 byte",
+    "[2026-10-31T13:14:15.648Z] Xvfb lên: DISPLAY=:94",
+    "[2026-10-31T13:14:16.315Z] dist snapshot OK: bundle index-B1assKz-.js sha256[:16]=7659cc3fb1474449 -> /home/hatch/workspace/tmp-round30-m1/dist-snapshot",
+    "[2026-10-31T13:14:16.318Z] video K đã copy vào snapshot",
+    "[2026-10-31T13:14:16.336Z] static server lên tại http://127.0.0.1:4194 (root /home/hatch/workspace/tmp-round30-m1/dist-snapshot)",
+    "[2026-10-31T13:14:20.154Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome)",
+    "[2026-10-31T13:14:25.900Z]   setup: RelinkPanel hiện (media seed thiếu) -> đóng bằng click thật",
+    "[2026-10-31T13:14:27.501Z]   hook element probe: {\"installed\":true,\"setterError\":null}",
+    "[2026-10-31T13:14:29.711Z]   media vào bin: clip-k-dod-iwo.mp4",
+    "[2026-10-31T13:14:29.715Z]   footage proxy diag: {\"badge\":\"\",\"badgeDisplay\":\"none\",\"mediaProxy\":[\"Proxy lỗi, thử lại\"],\"toasts\":[\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×\",\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.×\",\"Bridge không chạy (http://127.0.0.1:8787) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.\",\"×\"]}",
+    "[2026-10-31T13:14:29.719Z]   hiệu chuẩn vạch: offset handle-ruler lúc playhead 0 = -6.50px",
+    "[2026-10-31T13:14:30.123Z] ruler: {\"x\":152,\"y\":813,\"w\":1200,\"h\":27,\"innerH\":1057,\"handleLeft\":145.5,\"ppsInput\":60}",
+    "[2026-10-31T13:14:31.739Z]   warm-up: pool blob elements = 3 (ids 1,2,3), tổng video tracked = 3",
+    "[2026-10-31T13:14:31.739Z]   CẢNH BÁO: warm-up thấy 3 pool element (kỳ vọng đúng 1) — các probe vẫn chạy, phân tích phải lọc theo src blob",
+    "[2026-10-31T13:14:57.515Z]   guard khung tối M1-FGOUT-legacy-back1f: appMean ~ nền khung, scrub lệch 1 frame rồi quay lại (LƯU Ý: retry này làm nhiễu hướng scrub gốc của probe)",
+    "[2026-10-31T13:15:29.705Z]   XẤP XỈ M1-FGOUT-legacy-back1f: playhead 11.5 p=0.5000 alpha=0.0000 MAD=2.5270 <=8=91.17% max=53 sweep=dk-2:6.757 dk-1:4.776 dk+0:2.527 dk+1:0.000 dk+2:2.491 | poll: 6 lần, hash ổn định từ #0, pool lúc ổn định: seeking=false ct=0 (khớp kỳ vọng 3.5: false), pool lúc đo: ct=0 khớp=false, sets pool=0 events pool=1, idle2s: hash đổi=true (GUARD-RETRY)",
+    "[2026-10-31T13:16:20.730Z]   guard khung tối M1-FGOUT-legacy-fwd1f: appMean ~ nền khung, scrub lệch 1 frame rồi quay lại (LƯU Ý: retry này làm nhiễu hướng scrub gốc của probe)",
+    "[2026-10-31T13:17:01.098Z]   KHỚP M1-FGOUT-legacy-fwd1f: playhead 11.5 p=0.5000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:4.804 dk-1:2.545 dk+0:0.000 dk+1:2.527 dk+2:4.641 | poll: 21 lần, hash ổn định từ #0, pool lúc ổn định: seeking=false ct=0 (khớp kỳ vọng 3.5: false), pool lúc đo: ct=0 khớp=false, sets pool=1 events pool=2, idle2s: hash đổi=true (GUARD-RETRY)",
+    "[2026-10-31T13:17:41.523Z]   guard khung tối M1-FGOUT-legacy-fwd0: appMean ~ nền khung, scrub lệch 1 frame rồi quay lại (LƯU Ý: retry này làm nhiễu hướng scrub gốc của probe)",
+    "[2026-10-31T13:18:08.044Z]   KHỚP M1-FGOUT-legacy-fwd0: playhead 11.5 p=0.5000 alpha=0.0000 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:4.804 dk-1:2.545 dk+0:0.000 dk+1:2.527 dk+2:4.641 | poll: 19 lần, hash ổn định từ #0, pool lúc ổn định: seeking=false ct=0 (khớp kỳ vọng 3.5: false), pool lúc đo: ct=0 khớp=false, sets pool=1 events pool=2, idle2s: hash đổi=true (GUARD-RETRY)",
+    "[2026-10-31T13:18:19.351Z]   LỆCH M1-SANITY-back1f: playhead 14.033333333333333 p=- alpha=1.0000 MAD=3.3025 <=8=87.18% max=119 sweep=dk-2:8.021 dk-1:5.933 dk+0:3.302 dk+1:0.000 dk+2:3.210 | poll: 6 lần, hash ổn định từ #0, pool lúc ổn định: seeking=false ct=0 (khớp kỳ vọng 2.033333333333333: false), pool lúc đo: ct=0 khớp=false, sets pool=0 events pool=0, idle2s: hash đổi=false",
+    "[2026-10-31T13:18:30.813Z]   LỆCH M1-SANITY-fwd1f: playhead 14.033333333333333 p=- alpha=1.0000 MAD=3.2833 <=8=87.01% max=90 sweep=dk-2:3.152 dk-1:0.000 dk+0:3.283 dk+1:5.933 dk+2:8.090 | poll: 6 lần, hash ổn định từ #0, pool lúc ổn định: seeking=false ct=0 (khớp kỳ vọng 2.033333333333333: false), pool lúc đo: ct=0 khớp=false, sets pool=0 events pool=0, idle2s: hash đổi=false",
+    "[2026-10-31T13:18:41.842Z]   KHỚP M1-SANITY-fwd0: playhead 14.033333333333333 p=- alpha=1.0000 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:5.864 dk-1:3.283 dk+0:0.000 dk+1:3.302 dk+2:5.962 | poll: 8 lần, hash ổn định từ #5, pool lúc ổn định: seeking=false ct=0 (khớp kỳ vọng 2.033333333333333: false), pool lúc đo: ct=0 khớp=false, sets pool=1 events pool=2, idle2s: hash đổi=false",
+    "[2026-10-31T13:18:52.550Z]   LỆCH M1-SANITY-back1f-repeat: playhead 14.033333333333333 p=- alpha=1.0000 MAD=3.3025 <=8=87.18% max=119 sweep=dk-2:8.021 dk-1:5.933 dk+0:3.302 dk+1:0.000 dk+2:3.210 | poll: 6 lần, hash ổn định từ #0, pool lúc ổn định: seeking=false ct=0 (khớp kỳ vọng 2.033333333333333: false), pool lúc đo: ct=0 khớp=false, sets pool=0 events pool=0, idle2s: hash đổi=false",
+    "[2026-10-31T13:18:59.725Z]   KHỚP M1-FWIN-legacy-back1f: playhead 4.5 p=0.5000 alpha=0.3466 MAD=0.8671 <=8=99.02% max=23 sweep=dk-2:2.280 dk-1:1.603 dk+0:0.867 dk+1:0.000 dk+2:0.872 | poll: 6 lần, hash ổn định từ #1, pool lúc ổn định: seeking=false ct=0 (khớp kỳ vọng 0.5: false), pool lúc đo: ct=0 khớp=false, sets pool=0 events pool=0, idle2s: hash đổi=false",
+    "[2026-10-31T13:19:06.774Z]   KHỚP M1-FWIN-legacy-fwd1f: playhead 4.5 p=0.5000 alpha=0.3466 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:1.609 dk-1:0.842 dk+0:0.000 dk+1:0.867 dk+2:1.610 | poll: 6 lần, hash ổn định từ #3, pool lúc ổn định: seeking=false ct=0 (khớp kỳ vọng 0.5: false), pool lúc đo: ct=0 khớp=false, sets pool=1 events pool=2, idle2s: hash đổi=false",
+    "[2026-10-31T13:19:21.233Z]   XẤP XỈ M1-FBOUT-p01-back1f: playhead 3.1 p=0.1000 alpha=0.4491 MAD=1.4847 <=8=96.03% max=43 sweep=dk-2:3.729 dk-1:2.725 dk+0:1.485 dk+1:0.000 dk+2:1.527 | poll: 6 lần, hash ổn định từ #1, pool lúc ổn định: seeking=false ct=0 (khớp kỳ vọng 3.1: false), pool lúc đo: ct=0 khớp=false, sets pool=0 events pool=0, idle2s: hash đổi=false",
+    "[2026-10-31T13:19:33.235Z]   guard khung tối M1-FBOUT-p01-fwd1f: appMean ~ nền khung, scrub lệch 1 frame rồi quay lại (LƯU Ý: retry này làm nhiễu hướng scrub gốc của probe)",
+    "[2026-10-31T13:19:47.823Z]   KHỚP M1-FBOUT-p01-fwd1f: playhead 3.1 p=0.1000 alpha=0.4491 MAD=0.0000 <=8=100.00% max=0 sweep=dk-2:2.756 dk-1:1.504 dk+0:0.000 dk+1:1.485 dk+2:2.721 | poll: 9 lần, hash ổn định từ #0, pool lúc ổn định: seeking=false ct=0 (khớp kỳ vọng 3.1: false), pool lúc đo: ct=0 khớp=false, sets pool=1 events pool=2, idle2s: hash đổi=true (GUARD-RETRY)",
+    "[2026-10-31T13:19:47.823Z] exceptions trong phiên: 0",
+    "[2026-10-31T13:19:47.823Z] TỔNG PROBE: 11 có verdict, KHỚP 6, KHÔNG KHỚP: M1-FGOUT-legacy-back1f(XẤP XỈ, dk0=2.527, dk+1=0.000); M1-SANITY-back1f(LỆCH, dk0=3.302, dk+1=0.000); M1-SANITY-fwd1f(LỆCH, dk0=3.283, dk+1=5.933); M1-SANITY-back1f-repeat(LỆCH, dk0=3.302, dk+1=0.000); M1-FBOUT-p01-back1f(XẤP XỈ, dk0=1.485, dk+1=0.000), ERROR: 0",
+    "[2026-10-31T13:19:47.823Z] DONE r30m1-probe: exit=0 (diagnostic, không gating verdict)"
+  ]
+}

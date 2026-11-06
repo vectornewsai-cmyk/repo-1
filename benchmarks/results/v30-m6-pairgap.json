@@ -1,0 +1,575 @@
+{
+  "pairgap": {
+    "mode": "pairgap",
+    "chain": "xfade kép FFmpeg 8.1.2, đường rgb (format=rgb24), A=red/K@28s, B=green/L@24s, C=magenta/J@28s",
+    "rows": [
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadewhite",
+        "outType": "fadewhite",
+        "localT": 0.6,
+        "p1": 0.6,
+        "p2": 0.09999999999999998,
+        "alpha": 0.22526,
+        "dipMode": "white",
+        "current": {
+          "mad": 2,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "m1": {
+          "mad": 46,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m2": {
+          "mad": 2,
+          "le8": 1,
+          "verdict": "KHỚP"
+        }
+      },
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadewhite",
+        "outType": "fadewhite",
+        "localT": 0.75,
+        "p1": 0.75,
+        "p2": 0.25,
+        "alpha": 0,
+        "dipMode": "white",
+        "current": {
+          "mad": 6.6667,
+          "le8": 0.6667,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 2.3333,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        },
+        "m2": {
+          "mad": 2.3333,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        }
+      },
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadewhite",
+        "outType": "fadewhite",
+        "localT": 0.9,
+        "p1": 0.9,
+        "p2": 0.4,
+        "alpha": 0,
+        "dipMode": "white",
+        "current": {
+          "mad": 17.6667,
+          "le8": 0.6667,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 1,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "m2": {
+          "mad": 1,
+          "le8": 1,
+          "verdict": "KHỚP"
+        }
+      },
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadegrays",
+        "outType": "fadewhite",
+        "localT": 0.6,
+        "p1": 0.6,
+        "p2": 0.09999999999999998,
+        "alpha": 0.22526,
+        "dipMode": "gray",
+        "current": {
+          "mad": 123,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 15.3333,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m2": {
+          "mad": 2,
+          "le8": 1,
+          "verdict": "KHỚP"
+        }
+      },
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadegrays",
+        "outType": "fadewhite",
+        "localT": 0.75,
+        "p1": 0.75,
+        "p2": 0.25,
+        "alpha": 0,
+        "dipMode": "gray",
+        "current": {
+          "mad": 206.3333,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 2.3333,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        },
+        "m2": {
+          "mad": 2.3333,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        }
+      },
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadegrays",
+        "outType": "fadewhite",
+        "localT": 0.9,
+        "p1": 0.9,
+        "p2": 0.4,
+        "alpha": 0,
+        "dipMode": "gray",
+        "current": {
+          "mad": 195.3333,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 1,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "m2": {
+          "mad": 1,
+          "le8": 1,
+          "verdict": "KHỚP"
+        }
+      },
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadewhite",
+        "outType": "fadegrays",
+        "localT": 0.6,
+        "p1": 0.6,
+        "p2": 0.09999999999999998,
+        "alpha": 0.22526,
+        "dipMode": "white",
+        "current": {
+          "mad": 59,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 93.3333,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m2": {
+          "mad": 2.3333,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        }
+      },
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadewhite",
+        "outType": "fadegrays",
+        "localT": 0.75,
+        "p1": 0.75,
+        "p2": 0.25,
+        "alpha": 0,
+        "dipMode": "white",
+        "current": {
+          "mad": 143,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 38,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m2": {
+          "mad": 5,
+          "le8": 0.6667,
+          "verdict": "LỆCH"
+        }
+      },
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadewhite",
+        "outType": "fadegrays",
+        "localT": 0.9,
+        "p1": 0.9,
+        "p2": 0.4,
+        "alpha": 0,
+        "dipMode": "white",
+        "current": {
+          "mad": 150,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 12.3333,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m2": {
+          "mad": 0.3333,
+          "le8": 1,
+          "verdict": "KHỚP"
+        }
+      },
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadeblack",
+        "outType": "fadeblack",
+        "localT": 0.6,
+        "p1": 0.6,
+        "p2": 0.09999999999999998,
+        "alpha": 0.22526,
+        "dipMode": "black",
+        "current": {
+          "mad": 1,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "m1": {
+          "mad": 10.3333,
+          "le8": 0.6667,
+          "verdict": "LỆCH"
+        },
+        "m2": {
+          "mad": 1,
+          "le8": 1,
+          "verdict": "KHỚP"
+        }
+      },
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadeblack",
+        "outType": "fadeblack",
+        "localT": 0.75,
+        "p1": 0.75,
+        "p2": 0.25,
+        "alpha": 0,
+        "dipMode": "black",
+        "current": {
+          "mad": 11.3333,
+          "le8": 0.3333,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 3.3333,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        },
+        "m2": {
+          "mad": 3.3333,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        }
+      },
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadeblack",
+        "outType": "fadeblack",
+        "localT": 0.9,
+        "p1": 0.9,
+        "p2": 0.4,
+        "alpha": 0,
+        "dipMode": "black",
+        "current": {
+          "mad": 33.3333,
+          "le8": 0.3333,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 1.3333,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "m2": {
+          "mad": 1.3333,
+          "le8": 1,
+          "verdict": "KHỚP"
+        }
+      },
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadeblack",
+        "outType": "fadewhite",
+        "localT": 0.6,
+        "p1": 0.6,
+        "p2": 0.09999999999999998,
+        "alpha": 0.22526,
+        "dipMode": "black",
+        "current": {
+          "mad": 139.3333,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 10.3333,
+          "le8": 0.6667,
+          "verdict": "LỆCH"
+        },
+        "m2": {
+          "mad": 0.6667,
+          "le8": 1,
+          "verdict": "KHỚP"
+        }
+      },
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadeblack",
+        "outType": "fadewhite",
+        "localT": 0.75,
+        "p1": 0.75,
+        "p2": 0.25,
+        "alpha": 0,
+        "dipMode": "black",
+        "current": {
+          "mad": 248.3333,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 2.3333,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        },
+        "m2": {
+          "mad": 2.3333,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        }
+      },
+      {
+        "kind": "flat",
+        "W": 320,
+        "H": 180,
+        "inType": "fadeblack",
+        "outType": "fadewhite",
+        "localT": 0.9,
+        "p1": 0.9,
+        "p2": 0.4,
+        "alpha": 0,
+        "dipMode": "black",
+        "current": {
+          "mad": 237.3333,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 1,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "m2": {
+          "mad": 1,
+          "le8": 1,
+          "verdict": "KHỚP"
+        }
+      },
+      {
+        "kind": "footage",
+        "W": 360,
+        "H": 640,
+        "inType": "fadewhite",
+        "outType": "fadewhite",
+        "localT": 0.6,
+        "p1": 0.6,
+        "p2": 0.09999999999999998,
+        "alpha": 0.22526,
+        "dipMode": "white",
+        "current": {
+          "mad": 1.5604,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "m1": {
+          "mad": 28.079,
+          "le8": 0.0286,
+          "verdict": "LỆCH"
+        },
+        "m2": {
+          "mad": 1.5414,
+          "le8": 1,
+          "verdict": "KHỚP"
+        }
+      },
+      {
+        "kind": "footage",
+        "W": 360,
+        "H": 640,
+        "inType": "fadewhite",
+        "outType": "fadewhite",
+        "localT": 0.75,
+        "p1": 0.75,
+        "p2": 0.25,
+        "alpha": 0,
+        "dipMode": "white",
+        "current": {
+          "mad": 8.6175,
+          "le8": 0.5813,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 2.8338,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        },
+        "m2": {
+          "mad": 2.8338,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        }
+      },
+      {
+        "kind": "footage",
+        "W": 360,
+        "H": 640,
+        "inType": "fadewhite",
+        "outType": "fadewhite",
+        "localT": 0.9,
+        "p1": 0.9,
+        "p2": 0.4,
+        "alpha": 0,
+        "dipMode": "white",
+        "current": {
+          "mad": 23.8794,
+          "le8": 0.031,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 0.2482,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "m2": {
+          "mad": 0.2482,
+          "le8": 1,
+          "verdict": "KHỚP"
+        }
+      },
+      {
+        "kind": "footage",
+        "W": 360,
+        "H": 640,
+        "inType": "fadeblack",
+        "outType": "fadewhite",
+        "localT": 0.6,
+        "p1": 0.6,
+        "p2": 0.09999999999999998,
+        "alpha": 0.22526,
+        "dipMode": "black",
+        "current": {
+          "mad": 139.3424,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 28.588,
+          "le8": 0.0187,
+          "verdict": "LỆCH"
+        },
+        "m2": {
+          "mad": 1.1566,
+          "le8": 1,
+          "verdict": "KHỚP"
+        }
+      },
+      {
+        "kind": "footage",
+        "W": 360,
+        "H": 640,
+        "inType": "fadeblack",
+        "outType": "fadewhite",
+        "localT": 0.75,
+        "p1": 0.75,
+        "p2": 0.25,
+        "alpha": 0,
+        "dipMode": "black",
+        "current": {
+          "mad": 246.3825,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 2.8338,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        },
+        "m2": {
+          "mad": 2.8338,
+          "le8": 1,
+          "verdict": "XẤP XỈ"
+        }
+      },
+      {
+        "kind": "footage",
+        "W": 360,
+        "H": 640,
+        "inType": "fadeblack",
+        "outType": "fadewhite",
+        "localT": 0.9,
+        "p1": 0.9,
+        "p2": 0.4,
+        "alpha": 0,
+        "dipMode": "black",
+        "current": {
+          "mad": 231.1206,
+          "le8": 0,
+          "verdict": "LỆCH"
+        },
+        "m1": {
+          "mad": 0.2482,
+          "le8": 1,
+          "verdict": "KHỚP"
+        },
+        "m2": {
+          "mad": 0.2482,
+          "le8": 1,
+          "verdict": "KHỚP"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "runAt": "2026-10-31T13:08:32.698Z",
+  "label": "m5-round30-snapshot-probe",
+  "deliberateTimeout": true,
+  "bundle": {
+    "bundle": "index-B1assKz-.js",
+    "sha": "7659cc3fb1474449"
+  },
+  "checks": {
+    "rejectIsOriginalTimeoutError": true,
+    "snapshotFileCount": 1,
+    "snapshotMethod": "Target.getTargets",
+    "snapshotTimeoutMs": 1,
+    "snapshotProcPidMatchesChrome": true,
+    "snapshotProcAlive": true,
+    "snapshotPsContainsChrome": true,
+    "snapshotBundleMatches": true,
+    "snapshotHasTimestamp": true,
+    "pipeAliveAfterTimeout": true
+  },
+  "pass": true,
+  "log": [
+    "[2026-10-31T13:08:30.350Z] Xvfb lên: DISPLAY=:95",
+    "[2026-10-31T13:08:30.389Z] dist bundle: index-B1assKz-.js sha256[:16]=7659cc3fb1474449",
+    "[2026-10-31T13:08:32.048Z] pipe OK (/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome) pid=10940",
+    "[2026-10-31T13:08:32.149Z] CDP-DIAG snapshot đã ghi: /home/hatch/workspace/tmp-round30-m5-probe/cdp-hang-snapshots/cdp-hang-20261031_130832050-Target.getTargets-10940.json",
+    "[2026-10-31T13:08:32.150Z] treo giả lập: reject=\"CDP timeout Target.getTargets sau 1ms\" -> ĐÚNG lỗi gốc",
+    "[2026-10-31T13:08:32.652Z] snapshot files: [\"cdp-hang-20261031_130832050-Target.getTargets-10940.json\"]",
+    "[2026-10-31T13:08:32.652Z] snapshot fields: method=Target.getTargets timeoutMs=1 pidMatch=true alive=true psChrome=true bundleMatch=true ts=true",
+    "[2026-10-31T13:08:32.697Z] pipe sau treo giả lập: alive=true",
+    "[2026-10-31T13:08:32.698Z] PROBE PASS: snapshot treo kích hoạt đúng + đủ trường + pipe sống"
+  ]
+}
