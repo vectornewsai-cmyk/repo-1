@@ -197,6 +197,69 @@ const ERROR_SUMMARY_KEYS = [
 ];
 
 /**
+ * Đợt 63 R5 — dòng JSON validation có cấu trúc trong stderr worker.
+ * render worker (server/render/src/render.js) in một dòng
+ * `VCUT_VALIDATION_JSON {"errors":[...],"warnings":[...],"omitted":n}`
+ * CUỐI stderr khi validateSpec/validateMedia fail; chuỗi người đọc ở
+ * trên KHÔNG ĐỔI. Marker ở đây và ở server/render/src/validateCodes.js
+ * là 2 literal trùng nhau có chủ đích (tránh require chéo vào file mà
+ * CLI/MCP cũng load) — test round-trip trong
+ * test-error-detail-structured.cjs khóa chúng phải khớp.
+ * extractValidationPayload: bóc dòng marker ra khỏi text (kể cả khi
+ * JSON hỏng — không để JSON thô lọt vào details/redactedTail/UI),
+ * kiểm tra hình dạng entries, redact where + params (đường dẫn tuyệt
+ * đối → <path>/basename, giống redactStderr) rồi trả
+ * { details, omitted, cleaned }.
+ */
+const VALIDATION_JSON_MARKER = "VCUT_VALIDATION_JSON ";
+const MAX_VALIDATION_DETAILS = 20;
+function extractValidationPayload(text) {
+  const lines = String(text === null || text === undefined ? "" : text).split("\n");
+  const kept = [];
+  let details = [];
+  let omitted = 0;
+  let found = false;
+  for (const line of lines) {
+    if (line.startsWith(VALIDATION_JSON_MARKER)) {
+      if (!found) {
+        found = true;
+        try {
+          const parsed = JSON.parse(line.slice(VALIDATION_JSON_MARKER.length));
+          const rawList = [
+            ...(Array.isArray(parsed.errors) ? parsed.errors : []),
+            ...(Array.isArray(parsed.warnings) ? parsed.warnings : []),
+          ];
+          omitted = Number.isFinite(parsed.omitted) && parsed.omitted > 0
+            ? Math.floor(parsed.omitted) : 0;
+          for (const e of rawList) {
+            if (!e || typeof e !== "object") { omitted++; continue; }
+            const code = typeof e.code === "string" ? e.code : "";
+            const where = typeof e.where === "string" ? e.where : "";
+            if (!/^[A-Z][A-Z0-9_]*$/.test(code)) { omitted++; continue; }
+            const params = {};
+            if (e.params && typeof e.params === "object") {
+              for (const [k, v] of Object.entries(e.params)) {
+                if (v === undefined || v === null) continue;
+                const str = String(v);
+                params[k] = redactStderr(k === "detail" ? str.slice(0, 500) : str.slice(0, 300));
+              }
+            }
+            details.push({ where: redactStderr(where.slice(0, 300)), code, params });
+          }
+        } catch { /* JSON hỏng → không có details, dòng vẫn bị lược khỏi text */ }
+      }
+      continue; // lược dòng marker khỏi text (dù parse được hay không)
+    }
+    kept.push(line);
+  }
+  if (details.length > MAX_VALIDATION_DETAILS) {
+    omitted += details.length - MAX_VALIDATION_DETAILS;
+    details = details.slice(0, MAX_VALIDATION_DETAILS);
+  }
+  return { details, omitted, cleaned: kept.join("\n") };
+}
+
+/**
  * Phân loại stderr/message đã redact thành mã có cấu trúc.
  * Thứ tự quan trọng: curve → asset thiếu → spec chung → QA → spawn →
  * ffmpeg → worker exit. "No such file" của ffmpeg cũng là MISSING_ASSET
@@ -204,7 +267,17 @@ const ERROR_SUMMARY_KEYS = [
  */
 function classifyRenderError(input, opts) {
   const options = opts || {};
-  const raw = String(input === null || input === undefined ? "" : input);
+  const rawIn = String(input === null || input === undefined ? "" : input);
+  // Đợt 63 R5: bóc dòng JSON validation TRƯỚC khi phân loại — nếu không,
+  // chuỗi JSON (chứa cả câu "không tìm thấy file" trong params) sẽ bị
+  // has() bắt nhầm thành MISSING_ASSET và lọt vào details/UI.
+  const validation = extractValidationPayload(rawIn);
+  const raw = validation.cleaned;
+  const withValidation = (r) => ({
+    ...r,
+    validationDetails: validation.details,
+    validationDetailsOmitted: validation.omitted,
+  });
   const redacted = redactStderr(raw);
   const lines = redacted.split("\n").map((l) => l.trim()).filter(Boolean);
   const clean = lines.map((l) =>
@@ -221,7 +294,7 @@ function classifyRenderError(input, opts) {
     );
     const first = picked.details.find((l) => /speedKeyframes/.test(l)) || picked.details[0];
     const parsed = first ? parseCurveViolationLine(first) : null;
-    return {
+    return withValidation({
       code: "SPEED_CURVE_VIOLATION",
       summary: first
         ? `Vi phạm speed-curve: ${first}`
@@ -232,7 +305,7 @@ function classifyRenderError(input, opts) {
       details: picked.details,
       detailsOmitted: picked.omitted,
       redactedTail: redacted,
-    };
+    });
   }
 
   if (has(/không tìm thấy asset|không tìm thấy file|No such file or directory/)) {
@@ -243,7 +316,7 @@ function classifyRenderError(input, opts) {
     );
     const first = picked.details[0];
     const asset = first ? quotedName(first) : null;
-    return {
+    return withValidation({
       code: "MISSING_ASSET",
       summary: first
         ? `Thiếu asset/file đầu vào: ${first}`
@@ -254,7 +327,7 @@ function classifyRenderError(input, opts) {
       details: picked.details.length > 0 ? picked.details : lastLines(clean, 1).details,
       detailsOmitted: picked.omitted,
       redactedTail: redacted,
-    };
+    });
   }
 
   if (has(/Spec không hợp lệ/)) {
@@ -264,7 +337,7 @@ function classifyRenderError(input, opts) {
       MAX_DETAIL_LINES
     );
     const first = picked.details.find((l) => /^\d+\./.test(l)) || picked.details[0];
-    return {
+    return withValidation({
       code: "SPEC_VALIDATION",
       summary: first ? `Spec không hợp lệ: ${first}` : "Spec không hợp lệ.",
       // Đợt 34 Q4: dòng validator là dữ liệu (đa dạng, không parse hết
@@ -274,7 +347,7 @@ function classifyRenderError(input, opts) {
       details: picked.details,
       detailsOmitted: picked.omitted,
       redactedTail: redacted,
-    };
+    });
   }
 
   if (has(/Kiểm tra chất lượng output thất bại/)) {
@@ -286,7 +359,7 @@ function classifyRenderError(input, opts) {
     // Đợt 34 Q4: tách tiền tố QA khỏi dòng để template en không lặp tiền tố.
     const qaLine = picked.details[0] || "";
     const qaDetail = qaLine.replace(/^Kiểm tra chất lượng output thất bại:?\s*/, "");
-    return {
+    return withValidation({
       code: "OUTPUT_QA",
       summary: picked.details[0] || "Kiểm tra chất lượng output thất bại.",
       summaryKey: "outputQa",
@@ -294,11 +367,11 @@ function classifyRenderError(input, opts) {
       details: picked.details,
       detailsOmitted: picked.omitted,
       redactedTail: redacted,
-    };
+    });
   }
 
   if (has(/Không khởi động được render worker|Lỗi spawn render worker|spawnJob phải trả về/)) {
-    return {
+    return withValidation({
       code: "WORKER_START",
       summary: clean[0] || "Không khởi động được render worker.",
       // Đợt 34 Q4: thông điệp spawn đa dạng → template passthrough {detail}.
@@ -307,11 +380,11 @@ function classifyRenderError(input, opts) {
       details: clean.slice(0, MAX_DETAIL_LINES),
       detailsOmitted: Math.max(0, clean.length - MAX_DETAIL_LINES),
       redactedTail: redacted,
-    };
+    });
   }
 
   if (has(/thoát mã 0 nhưng không tạo được file output/)) {
-    return {
+    return withValidation({
       code: "WORKER_EXIT",
       summary: "Render worker thoát mã 0 nhưng không tạo được file output.",
       // Đợt 34 Q4: câu đóng khung, dịch trọn vẹn, không tham số.
@@ -320,7 +393,7 @@ function classifyRenderError(input, opts) {
       details: [],
       detailsOmitted: 0,
       redactedTail: redacted,
-    };
+    });
   }
 
   if (has(/ffmpeg|Invalid argument|Invalid data|Unknown encoder|Error opening|Failed to|Permission denied|Conversion failed|is not supported|not found/i)) {
@@ -331,7 +404,7 @@ function classifyRenderError(input, opts) {
     );
     const chosen = picked.details.length > 0 ? picked : lastLines(clean, MAX_DETAIL_LINES);
     const first = chosen.details[chosen.details.length - 1];
-    return {
+    return withValidation({
       code: "FFMPEG_ERROR",
       summary: first ? `Lỗi ffmpeg: ${first}` : "Lỗi ffmpeg (xem chi tiết).",
       // Đợt 34 Q4: dòng ffmpeg là dữ liệu (thường đã là tiếng Anh) → template dịch khung.
@@ -340,11 +413,11 @@ function classifyRenderError(input, opts) {
       details: chosen.details,
       detailsOmitted: chosen.omitted,
       redactedTail: redacted,
-    };
+    });
   }
 
   if (options.signal) {
-    return {
+    return withValidation({
       code: "WORKER_EXIT",
       summary: `Render worker bị kill bởi signal ${options.signal}.`,
       // Đợt 34 Q4: câu đóng khung, dịch trọn vẹn.
@@ -353,10 +426,10 @@ function classifyRenderError(input, opts) {
       details: [],
       detailsOmitted: 0,
       redactedTail: redacted,
-    };
+    });
   }
   if (options.exitCode !== null && options.exitCode !== undefined) {
-    return {
+    return withValidation({
       code: "WORKER_EXIT",
       summary: `Render worker thoát với mã ${options.exitCode}.`,
       // Đợt 34 Q4: câu đóng khung, dịch trọn vẹn.
@@ -365,9 +438,9 @@ function classifyRenderError(input, opts) {
       details: clean.slice(0, MAX_DETAIL_LINES),
       detailsOmitted: Math.max(0, clean.length - MAX_DETAIL_LINES),
       redactedTail: redacted,
-    };
+    });
   }
-  return {
+  return withValidation({
     code: "UNKNOWN",
     summary: clean[0] || "Render thất bại (không rõ lý do).",
     // Đợt 34 Q4: có dòng lỗi → passthrough; không có → câu đóng khung.
@@ -376,7 +449,7 @@ function classifyRenderError(input, opts) {
     details: clean.slice(0, MAX_DETAIL_LINES),
     detailsOmitted: Math.max(0, clean.length - MAX_DETAIL_LINES),
     redactedTail: redacted,
-  };
+  });
 }
 
 /**
@@ -401,7 +474,9 @@ function buildErrorDetail(input) {
   });
   // Khi chỉ có message tóm tắt (spawn/QA, không có stderr), redactedTail
   // không lặp lại message — detail lúc đó nằm ở summary/details.
-  const redactedTail = stderr ? redactStderr(stderr) : "";
+  // Đợt 63 R5: lược dòng VCUT_VALIDATION_JSON khỏi tail (nó đã thành
+  // validationDetails có cấu trúc; không để JSON thô lọt ra API).
+  const redactedTail = stderr ? redactStderr(extractValidationPayload(stderr).cleaned) : "";
   return {
     code: classified.code,
     summary: classified.summary,
@@ -411,6 +486,9 @@ function buildErrorDetail(input) {
     details: classified.details,
     detailsOmitted: classified.detailsOmitted,
     redactedTail,
+    // Đợt 63 R5: dòng validator đã dịch được (additive; payload cũ không có).
+    validationDetails: classified.validationDetails,
+    validationDetailsOmitted: classified.validationDetailsOmitted,
   };
 }
 

@@ -24,7 +24,7 @@
  *   nên RỚT ~1 khoảng frame input ở đuôi (testsrc2 15fps + speed 0.5:
  *   113 frame thay vì 120, thiếu 0.23s) — đuôi unit sẽ ngắn hơn slot
  *   timeline và để lộ nền đen. fps=<targetFps> sau minterpolate chỉ việc
- *   lấp đầy lưới CFR bằng cách giữ lại frame cuối (không hủy nội suy ở
+ *   lấp đầy lưới CFR bằng cách giữ lại frame cuối (không huỷ nội suy ở
  *   giữa chuỗi vì các frame đã nằm đúng lưới 1/targetFps) — kết quả đo
  *   lại: đúng 120 frame / 4s. Tác dụng phụ: ~0.23s cuối clip bị "đóng
  *   băng" frame cuối thay vì đen — xem MOTION_LIMITS.md.

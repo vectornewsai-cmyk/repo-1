@@ -63,6 +63,7 @@ chmod +x "$STUB"
 log "== [1] Khởi động bridge (port $PORT, TRANSLATE_PY=stub) =="
 cd "$BRIDGE_DIR"
 TRANSLATE_PY="$STUB" CAPTION_PY="$CAPTION_STUB" BRIDGE_PORT="$PORT" BRIDGE_RATE_GENERAL=1000 BRIDGE_RATE_RENDER=1000 \
+  BRIDGE_RATE_PERSIST_PATH="$WORKDIR/rate-limit.json" \
   node src/index.js > "$WORKDIR/bridge.log" 2>&1 &
 BRIDGE_PID=$!
 for i in $(seq 1 40); do
@@ -126,6 +127,7 @@ log "== [7] Stub fail → event error trong stream =="
 kill "$BRIDGE_PID" 2>/dev/null || true
 wait "$BRIDGE_PID" 2>/dev/null || true
 TRANSLATE_PY="$STUB" TRANSLATE_STUB_FAIL=1 CAPTION_PY="$CAPTION_STUB" BRIDGE_PORT="$PORT" BRIDGE_RATE_GENERAL=1000 BRIDGE_RATE_RENDER=1000 \
+  BRIDGE_RATE_PERSIST_PATH="$WORKDIR/rate-limit.json" \
   node src/index.js > "$WORKDIR/bridge-fail.log" 2>&1 &
 BRIDGE_PID=$!
 for i in $(seq 1 40); do

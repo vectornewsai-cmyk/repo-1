@@ -16,9 +16,15 @@ ok()   { PASS=$((PASS+1)); echo "  ✅ $1"; }
 fail() { FAIL=$((FAIL+1)); echo "  ❌ $1 — $2"; }
 
 echo "== [0] Khởi động bridge (port $PORT) =="
-BRIDGE_PORT=$PORT BRIDGE_WORK_DIR="${TMPDIR:-/tmp}/vcut-bridge-cors-test" node src/index.js > /tmp/bridge-cors-test.log 2>&1 &
+BRIDGE_PORT=$PORT BRIDGE_WORK_DIR="${TMPDIR:-/tmp}/vcut-bridge-cors-test" BRIDGE_RATE_PERSIST_PATH="${TMPDIR:-/tmp}/vcut-bridge-cors-test/rate-limit-$$.json" node src/index.js > /tmp/bridge-cors-test.log 2>&1 &
 SRV=$!
-sleep 2
+# Đợt 66 T9 — chờ bridge listen thật (thay sleep 2 cố định): dưới tải nặng
+# node khởi động >2s (đo thật ~4,2s lúc load ~16) nên các check [1] đầu
+# race-fail khi bridge chưa bind xong (không phải lỗi CORS).
+for _ in $(seq 1 60); do
+  curl -sf --max-time 2 "$BASE/api/health" >/dev/null 2>&1 && break
+  sleep 0.5
+done
 if ! kill -0 $SRV 2>/dev/null; then echo "❌ server không khởi động được:"; cat /tmp/bridge-cors-test.log; exit 1; fi
 trap 'kill $SRV 2>/dev/null; wait $SRV 2>/dev/null; true' EXIT
 

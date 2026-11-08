@@ -34,7 +34,7 @@ format, color, LUT, effects, enhPost, plugin, adj ...`
   slot timeline, lộ nền đen.
 - Cách vá đã áp trong `buildMotionFpsFilter`: thêm `fps=<targetFps>` ngay
   sau minterpolate — fps này chỉ lấp đầy lưới CFR bằng frame cuối (các
-  frame giữa đã nằm đúng lưới nên nội suy không bị hủy). Đo lại: đúng
+  frame giữa đã nằm đúng lưới nên nội suy không bị huỷ). Đo lại: đúng
   120 frame / 4s.
 - Tác dụng phụ còn lại: ~0.23s cuối clip bị "đóng băng" frame cuối thay vì
   chuyển động tiếp. Chấp nhận được cho slow-mo (đuôi clip thường là

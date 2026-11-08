@@ -51,15 +51,15 @@ export async function resolveMediaDir(input: string | undefined): Promise<string
   if (!path.isAbsolute(raw)) {
     const rel = path.relative(REPO_ROOT, resolved);
     if (rel.startsWith("..") || path.isAbsolute(rel))
-      throw new ValidationError(`media_dir không được trỏ ra ngoài repo: ${JSON.stringify(input)}`);
+      throw new ValidationError("UNSAFE_PATH", `media_dir không được trỏ ra ngoài repo: ${JSON.stringify(input)}`, { field: "media_dir", value: JSON.stringify(input) });
   }
   let st;
   try {
     st = await fs.stat(resolved);
   } catch {
-    throw new ValidationError(`media_dir không tồn tại: ${resolved}`);
+    throw new ValidationError("NOT_FOUND", `media_dir không tồn tại: ${resolved}`, { field: "media_dir", value: resolved });
   }
-  if (!st.isDirectory()) throw new ValidationError(`media_dir không phải thư mục: ${resolved}`);
+  if (!st.isDirectory()) throw new ValidationError("NOT_A_DIRECTORY", `media_dir không phải thư mục: ${resolved}`, { field: "media_dir", value: resolved });
   return resolved;
 }
 
@@ -68,7 +68,7 @@ export function resolveOutPath(outPath: string): string {
   const resolved = path.resolve(RENDERS_DIR, outPath);
   const rel = path.relative(RENDERS_DIR, resolved);
   if (rel.startsWith("..") || path.isAbsolute(rel))
-    throw new ValidationError(`out_path không hợp lệ (đã bị chặn): ${JSON.stringify(outPath)}`);
+    throw new ValidationError("INVALID_OUTPUT_PATH", `out_path không hợp lệ (đã bị chặn): ${JSON.stringify(outPath)}`, { field: "out_path", value: JSON.stringify(outPath) });
   return resolved;
 }
 
@@ -88,13 +88,13 @@ export async function loadProject(projectId: string): Promise<{ spec: VideoSpec;
   try {
     raw = await fs.readFile(projectFile(projectId), "utf8");
   } catch {
-    throw new ValidationError(`không tìm thấy project_id "${projectId}"`);
+    throw new ValidationError("NOT_FOUND", `không tìm thấy project_id "${projectId}"`, { field: "project_id", value: projectId });
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new ValidationError(`file project "${projectId}" bị hỏng (JSON không parse được)`);
+    throw new ValidationError("PROJECT_CORRUPT", `file project "${projectId}" bị hỏng (JSON không parse được)`, { field: "project_id", value: projectId });
   }
   // Phase 9 đợt 13 C4: migrate motion cũ xảy ra trong validateVideoSpec
   // (validateVideoClip migrate rồi mới validate) nên mọi cổng MCP dùng

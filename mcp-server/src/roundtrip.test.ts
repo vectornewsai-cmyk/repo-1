@@ -3,14 +3,14 @@
  * roundtrip.test.ts — Round-trip test cho MCP schema parity (R1-020, P0-10).
  *
  * Kiểm tra: spec đầy đủ field mới (speed, reverse, keyframes, chromaKey,
- * filter/LUT, effects, sticker, image, 13 transitions, 8 text animations)
+ * filter/LUT, effects, sticker, image, 81 transitions, 8 text animations)
  * đi qua MCP validate → serialize JSON → parse → KHÔNG mất field nào.
  *
  * Chạy: node --experimental-strip-types src/roundtrip.test.ts
  * (hoặc: npx tsc rồi node dist test)
  */
 import { validateVideoSpec, validateClipForTrack, ValidationError } from "./validate.js";
-import { SPEC_VERSION } from "../../packages/video-spec/src/index.js";
+import { SPEC_VERSION, TRANSITION_TYPES } from "../../packages/video-spec/src/index.js";
 
 let passed = 0;
 let failed = 0;
@@ -201,14 +201,11 @@ try {
 }
 
 // ---------------------------------------------------------------------------
-// Test 2: Tất cả 13 transition types
+// Test 2: Tất cả 81 transition types (đợt 62 R8: trước đây chỉ 13 —
+// TRANSITION_TYPES đã có 81 từ đợt 10 nhưng test vẫn khóa 13)
 // ---------------------------------------------------------------------------
-console.log("\n[Test 2] 13 transition types đều validate được");
-const allTransitions = [
-  "none", "fade", "fadeblack", "fadewhite",
-  "wipeleft", "wiperight", "wipeup", "wipedown",
-  "slideleft", "slideright", "dissolve", "circleopen", "radial",
-];
+console.log("\n[Test 2] 81 transition types đều validate được");
+const allTransitions = [...TRANSITION_TYPES];
 for (const t of allTransitions) {
   try {
     validateClipForTrack({
@@ -290,7 +287,10 @@ assertThrows(() => validateClipForTrack({
 
 assertThrows(() => validateClipForTrack({
   kind: "video", id: "c1", src: "x.mp4", start: 0, duration: 2,
-  in: 0, out: 2, effects: [{ type: "glitch" }],
+  // Đợt 62 R8: "glitch" từng là probe "không hỗ trợ" ở đây, nhưng đã thành
+  // effect hợp lệ từ Phase 8 Q4 (EFFECT_TYPES) nên test này fail sẵn trước
+  // đợt 62 — không liên quan transition. Đổi probe sang type thật sự lạ.
+  in: 0, out: 2, effects: [{ type: "warp-speed" }],
 }, "video"), "effect không hỗ trợ bị từ chối");
 
 assertThrows(() => validateClipForTrack({

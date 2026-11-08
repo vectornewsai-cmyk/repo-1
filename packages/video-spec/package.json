@@ -9,6 +9,12 @@
   },
   "license": "MIT",
   "name": "@repo-1/video-spec",
+  "scripts": {
+    "check:catalog": "node scripts/sync-catalog-mirror.mjs --check",
+    "check:mirror": "node scripts/check-video-spec-mirror.mjs",
+    "sync:catalog": "node scripts/sync-catalog-mirror.mjs",
+    "sync:transitions": "node scripts/gen-transitions-mirror.mjs"
+  },
   "type": "module",
   "version": "0.1.0"
 }

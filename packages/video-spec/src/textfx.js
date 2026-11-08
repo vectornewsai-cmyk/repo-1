@@ -70,8 +70,8 @@ export const TEXT_ANIMATION_META = {
     // Phase 9 đợt 10 V4 (ASS — xem TEXT_ANIM_PARITY_LIMITS.md)
     tiltIn: { label: "Nghiêng vào", description: "Xoay -12° + trồi lên + mờ vào trong 0.7s (ASS)" },
     skewIn: { label: "Nghiêng xiên vào", description: "SkewX -25° → +8° → 0° + trượt từ trái trong 0.6s (ASS)" },
-    slideReveal: { label: "Lộ dần từ trái", description: "Mặt nạ cắt quét từ trái sang phải trong 1.0s (ASS, quét khung hình)" },
-    curtainIn: { label: "Màn kéo mở", description: "Mặt nạ cắt mở từ giữa ra hai bên + mờ vào trong 0.8s (ASS)" },
+    slideReveal: { label: "Lộ dần từ trái", description: "Mặt nạ cắt quét theo hộp chữ từ trái sang phải trong 1.0s (ASS)" },
+    curtainIn: { label: "Màn kéo mở", description: "Mặt nạ cắt mở từ tâm hộp chữ ra hai bên + mờ vào trong 0.8s (ASS)" },
 };
 /** Kiểm tra một giá trị có phải TextAnimation hợp lệ không. */
 export function isTextAnimation(v) {

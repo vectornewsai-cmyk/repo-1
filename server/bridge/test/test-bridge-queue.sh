@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # Integration test cho RenderJobService qua HTTP API thật (R1-041).
 #  - Khởi động bridge thật với BRIDGE_MAX_JOBS=1 trên port test
-#  - Submit 2 job render thật (video 2s, 320x240) cùng lúc
+#  - Submit 2 job render thật (video 10s, 320x240) cùng lúc
 #  - Verify: job1 running, job2 queued (KHÔNG còn 429); job2 chạy sau khi job1 xong
 #  - Verify: GET /api/render (list), cancel job queued, retry job lỗi
+#  Đợt 66 T9 — fixture 10s (trước đây 2s): render 2s xong trước khi các
+#  check trạng thái (mỗi lần curl + node -e ~0,5–1s dưới tải) đọc tới job2,
+#  nên job2 đã running và check "queued" fail oan. 10s cho cửa sổ kiểm tra
+#  đủ rộng; các vòng chờ poll 60s vẫn dư.
 set -uo pipefail
 
 BRIDGE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -13,18 +17,18 @@ WORK="/tmp/vcut-bridge-itest"
 rm -rf "$WORK"; mkdir -p "$WORK"
 
 echo "== Chuẩn bị media test =="
-ffmpeg -y -v error -f lavfi -i testsrc=duration=2:size=320x240:rate=15 \
+ffmpeg -y -v error -f lavfi -i testsrc=duration=10:size=320x240:rate=15 \
   -pix_fmt yuv420p "$WORK/tiny.mp4"
 
 cat > "$WORK/spec.json" <<'EOF'
 {
   "version": "0.2.0",
-  "meta": { "name": "queue-itest", "width": 320, "height": 240, "fps": 15, "duration": 2 },
+  "meta": { "name": "queue-itest", "width": 320, "height": 240, "fps": 15, "duration": 10 },
   "tracks": [
     { "kind": "video", "id": "v1",
       "clips": [
         { "kind": "video", "id": "c1", "src": "tiny.mp4",
-          "start": 0, "duration": 2, "in": 0, "out": 2, "sourceAudioMode": "mute" }
+          "start": 0, "duration": 10, "in": 0, "out": 10, "sourceAudioMode": "mute" }
       ] }
   ]
 }
@@ -32,6 +36,7 @@ EOF
 
 echo "== Khởi động bridge (MAX_JOBS=1) =="
 BRIDGE_PORT=$PORT BRIDGE_MAX_JOBS=1 BRIDGE_WORK_DIR="$WORK/jobs" \
+  BRIDGE_RATE_PERSIST_PATH="$WORK/rate-limit-$$.json" \
   node "$BRIDGE_DIR/src/index.js" > "$WORK/bridge.log" 2>&1 &
 BRIDGE_PID=$!
 cleanup() {
@@ -67,10 +72,15 @@ ID2=$(echo "$R2" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',(
 [ -n "$ID1" ] && [ -n "$ID2" ] && [ "$ID1" != "$ID2" ]; ok $? "2 job được tạo với id khác nhau"
 
 S1=$(curl -s "http://127.0.0.1:$PORT/api/render/$ID1" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>console.log(JSON.parse(d).status))")
-S2=$(curl -s "http://127.0.0.1:$PORT/api/render/$ID2" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>console.log(JSON.parse(d).status))")
+# Đợt 66 T9 — đọc status + queuePosition của job2 trong CÙNG một response:
+# trước đây 2 curl riêng, dưới tải nặng job1 render 2s xong giữa 2 lần
+# đọc nên job2 đã chuyển queued → running (queuePosition=null) và check
+# fail oan (không phải lỗi FIFO — FIFO vẫn đúng ở các check sau).
+R2S=$(curl -s "http://127.0.0.1:$PORT/api/render/$ID2")
+S2=$(echo "$R2S" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>console.log(JSON.parse(d).status))")
+QP=$(echo "$R2S" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>console.log(JSON.parse(d).queuePosition))")
 [ "$S1" = "running" ]; ok $? "job1 running (status=$S1)"
 [ "$S2" = "queued" ]; ok $? "job2 queued — KHÔNG bị 429 (status=$S2)"
-QP=$(curl -s "http://127.0.0.1:$PORT/api/render/$ID2" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>console.log(JSON.parse(d).queuePosition))")
 [ "$QP" = "1" ]; ok $? "job2 queuePosition=1"
 
 echo "== Chờ job1 xong → job2 phải chạy (FIFO) =="

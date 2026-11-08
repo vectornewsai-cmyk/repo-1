@@ -16,6 +16,7 @@ const fs = require("fs");
 const os = require("os");
 const { spawn } = require("child_process");
 const { redactStderr } = require("./errorDetail"); // Đợt 29 L3
+const { codedError } = require("./errorCodes"); // Đợt 62 R5: mã lỗi bridge→web
 
 const NOISE_DB_MIN = -80;
 const NOISE_DB_MAX = 0;
@@ -42,8 +43,10 @@ function validateNoiseDb(raw) {
   const v = raw === undefined || raw === null || raw === ""
     ? DEFAULT_NOISE_DB : Number(raw);
   if (!Number.isFinite(v) || v < NOISE_DB_MIN || v > NOISE_DB_MAX) {
-    throw new Error(
-      `Ngưỡng noise phải trong [${NOISE_DB_MIN}, ${NOISE_DB_MAX}] dB (nhận "${raw}").`
+    throw codedError(
+      "SILENCE_NOISE_INVALID",
+      `Ngưỡng noise phải trong [${NOISE_DB_MIN}, ${NOISE_DB_MAX}] dB (nhận "${raw}").`,
+      { min: NOISE_DB_MIN, max: NOISE_DB_MAX, value: raw },
     );
   }
   return v;
@@ -54,8 +57,10 @@ function validateMinDur(raw) {
   const v = raw === undefined || raw === null || raw === ""
     ? DEFAULT_MIN_DUR : Number(raw);
   if (!Number.isFinite(v) || v < MIN_DUR_MIN || v > MIN_DUR_MAX) {
-    throw new Error(
-      `Độ dài tối thiểu phải trong [${MIN_DUR_MIN}, ${MIN_DUR_MAX}] giây (nhận "${raw}").`
+    throw codedError(
+      "SILENCE_MINDUR_INVALID",
+      `Độ dài tối thiểu phải trong [${MIN_DUR_MIN}, ${MIN_DUR_MAX}] giây (nhận "${raw}").`,
+      { min: MIN_DUR_MIN, max: MIN_DUR_MAX, value: raw },
     );
   }
   return v;

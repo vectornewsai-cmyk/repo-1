@@ -52,8 +52,8 @@ export function registerClipTools(server: McpServer): void {
         let track: Track | undefined;
         if (args.track_id) {
           track = spec.tracks.find((t) => t.id === args.track_id);
-          if (!track) return fail(`không tìm thấy track_id "${args.track_id}"`);
-          if (track.kind !== "audio") return fail(`track "${args.track_id}" không phải loại audio`);
+          if (!track) return fail(`không tìm thấy track_id "${args.track_id}"`, "NOT_FOUND");
+          if (track.kind !== "audio") return fail(`track "${args.track_id}" không phải loại audio`, "KIND_MISMATCH");
         } else {
           track = spec.tracks.find((t) => t.kind === "audio");
         }
@@ -107,8 +107,8 @@ export function registerClipTools(server: McpServer): void {
         let track: Track | undefined;
         if (args.track_id) {
           track = spec.tracks.find((t) => t.id === args.track_id);
-          if (!track) return fail(`không tìm thấy track_id "${args.track_id}"`);
-          if (track.kind !== "sticker") return fail(`track "${args.track_id}" không phải loại sticker`);
+          if (!track) return fail(`không tìm thấy track_id "${args.track_id}"`, "NOT_FOUND");
+          if (track.kind !== "sticker") return fail(`track "${args.track_id}" không phải loại sticker`, "KIND_MISMATCH");
         } else {
           track = spec.tracks.find((t) => t.kind === "sticker");
         }
@@ -156,8 +156,8 @@ export function registerClipTools(server: McpServer): void {
         let track: Track | undefined;
         if (args.track_id) {
           track = spec.tracks.find((t) => t.id === args.track_id);
-          if (!track) return fail(`không tìm thấy track_id "${args.track_id}"`);
-          if (track.kind !== "image") return fail(`track "${args.track_id}" không phải loại image`);
+          if (!track) return fail(`không tìm thấy track_id "${args.track_id}"`, "NOT_FOUND");
+          if (track.kind !== "image") return fail(`track "${args.track_id}" không phải loại image`, "KIND_MISMATCH");
         } else {
           track = spec.tracks.find((t) => t.kind === "image");
         }
@@ -198,7 +198,7 @@ export function registerClipTools(server: McpServer): void {
     async (args) => {
       try {
         const found = findClip((await loadProject(args.project_id)).spec, args.clip_id);
-        if (!found) return fail(`không tìm thấy clip id "${args.clip_id}"`);
+        if (!found) return fail(`không tìm thấy clip id "${args.clip_id}"`, "NOT_FOUND");
         const result = await mutateProject(args.project_id, "trim", (spec) => {
           const f = findClip(spec, args.clip_id)!;
           const c = f.clip as { in?: number; out?: number; start: number; duration: number };
@@ -209,7 +209,7 @@ export function registerClipTools(server: McpServer): void {
           // Validate out > in cho clip có in/out
           if ("in" in c && "out" in c) {
             const ci = c as { in: number; out: number };
-            if (ci.out <= ci.in) throw new ValidationError(`out (${ci.out}) phải > in (${ci.in})`);
+            if (ci.out <= ci.in) throw new ValidationError("OUT_NOT_AFTER_IN", `out (${ci.out}) phải > in (${ci.in})`, { field: "clip.out", value: ci.out });
           }
         });
         return ok({ ...result, clip_id: args.clip_id });
@@ -232,12 +232,12 @@ export function registerClipTools(server: McpServer): void {
       try {
         const { spec: checkSpec } = await loadProject(args.project_id);
         const found = findClip(checkSpec, args.clip_id);
-        if (!found) return fail(`không tìm thấy clip id "${args.clip_id}"`);
+        if (!found) return fail(`không tìm thấy clip id "${args.clip_id}"`, "NOT_FOUND");
         const c = found.clip;
         if (args.at <= c.start || args.at >= c.start + c.duration)
-          return fail(`at (${args.at}) phải nằm trong clip [${c.start}, ${c.start + c.duration}]`);
+          return fail(`at (${args.at}) phải nằm trong clip [${c.start}, ${c.start + c.duration}]`, "NUMBER_OUT_OF_RANGE");
         if (!("in" in c) || !("out" in c))
-          return fail(`clip "${args.clip_id}" loại "${c.kind}" không hỗ trợ tách (chỉ video/audio)`);
+          return fail(`clip "${args.clip_id}" loại "${c.kind}" không hỗ trợ tách (chỉ video/audio)`, "KIND_MISMATCH");
         const result = await mutateProject(args.project_id, "split", (spec) => {
           const f = findClip(spec, args.clip_id)!;
           const orig = f.clip as unknown as Record<string, unknown>;
@@ -278,7 +278,7 @@ export function registerClipTools(server: McpServer): void {
     async (args) => {
       try {
         const { spec: checkSpec } = await loadProject(args.project_id);
-        if (!findClip(checkSpec, args.clip_id)) return fail(`không tìm thấy clip id "${args.clip_id}"`);
+        if (!findClip(checkSpec, args.clip_id)) return fail(`không tìm thấy clip id "${args.clip_id}"`, "NOT_FOUND");
         const result = await mutateProject(args.project_id, "delete", (spec) => {
           const f = findClip(spec, args.clip_id)!;
           f.track.clips.splice(f.clipIndex, 1);

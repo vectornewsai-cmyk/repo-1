@@ -51,16 +51,16 @@ async function resolveMediaFile(mediaDir: string, src: string): Promise<string> 
     src.startsWith("/") || src.startsWith("\\") ||
     src.includes("..") || /[<>:"|?*\x00-\x1f]/.test(src)
   )
-    throw new ValidationError(`src không hợp lệ (đã bị chặn): ${JSON.stringify(src)}`);
+    throw new ValidationError("UNSAFE_PATH", `src không hợp lệ (đã bị chặn): ${JSON.stringify(src)}`, { field: "src", value: JSON.stringify(src) });
   const abs = path.resolve(mediaDir, src);
   const rel = path.relative(mediaDir, abs);
   if (rel.startsWith("..") || path.isAbsolute(rel))
-    throw new ValidationError(`src không hợp lệ (đã bị chặn): ${JSON.stringify(src)}`);
+    throw new ValidationError("UNSAFE_PATH", `src không hợp lệ (đã bị chặn): ${JSON.stringify(src)}`, { field: "src", value: JSON.stringify(src) });
   try {
     const st = await fs.stat(abs);
-    if (!st.isFile()) throw new ValidationError(`src không phải file: ${src}`);
+    if (!st.isFile()) throw new ValidationError("NOT_A_FILE", `src không phải file: ${src}`, { field: "src", value: src });
   } catch {
-    throw new ValidationError(`không tìm thấy file media "${src}" trong ${mediaDir}`);
+    throw new ValidationError("NOT_FOUND", `không tìm thấy file media "${src}" trong ${mediaDir}`, { field: "src", value: src });
   }
   return abs;
 }
@@ -102,7 +102,7 @@ function runPython(
   const r = runPythonFull(scriptKey, argv, timeoutMs);
   if (r.status !== 0) {
     const err = String(r.stderr || r.stdout || "unknown").slice(-1500);
-    throw new ValidationError(`${scriptKey} thất bại (exit ${r.status}): ${err}`);
+    throw new ValidationError("SCRIPT_FAILED", `${scriptKey} thất bại (exit ${r.status}): ${err}`, { field: "script", value: scriptKey });
   }
   return r.stdout;
 }
@@ -212,11 +212,11 @@ export function registerAiTools(server: McpServer): void {
         const { meta } = await loadProject(args.project_id);
         const outName = args.out_name ?? `tts_${Date.now().toString(36)}.wav`;
         if (!/^[\w\-.]{1,100}\.wav$/i.test(outName))
-          throw new ValidationError(`out_name không hợp lệ: ${JSON.stringify(outName)}`);
+          throw new ValidationError("INVALID_OUTPUT_NAME", `out_name không hợp lệ: ${JSON.stringify(outName)}`, { field: "out_name", value: JSON.stringify(outName) });
         const outAbs = path.resolve(meta.mediaDir, outName);
         const rel = path.relative(meta.mediaDir, outAbs);
         if (rel.startsWith("..") || path.isAbsolute(rel))
-          throw new ValidationError(`out_name không hợp lệ (đã bị chặn)`);
+          throw new ValidationError("INVALID_OUTPUT_NAME", `out_name không hợp lệ (đã bị chặn)`, { field: "out_name" });
         const argv = ["--text", args.text, "--out", outAbs];
         if (args.voice) argv.push("--voice", args.voice);
         runPython("tts", argv, 10 * 60 * 1000);
@@ -253,11 +253,11 @@ export function registerAiTools(server: McpServer): void {
         const base = path.basename(args.src, path.extname(args.src));
         const outName = args.out_name ?? `${base}_no_bg.mov`;
         if (!/^[\w\-.]{1,120}\.mov$/i.test(outName))
-          throw new ValidationError(`out_name không hợp lệ`);
+          throw new ValidationError("INVALID_OUTPUT_NAME", `out_name không hợp lệ`, { field: "out_name" });
         const outAbs = path.resolve(meta.mediaDir, outName);
         const rel = path.relative(meta.mediaDir, outAbs);
         if (rel.startsWith("..") || path.isAbsolute(rel))
-          throw new ValidationError(`out_name không hợp lệ (đã bị chặn)`);
+          throw new ValidationError("INVALID_OUTPUT_NAME", `out_name không hợp lệ (đã bị chặn)`, { field: "out_name" });
         // Phase 7 P6: fallback u2net cho birefnet. Lưu ý: bgremove.py đã tự
         // fallback trong tiến trình khi lỗi Python; còn OOM-kill (SIGKILL)
         // thì tiến trình chết hẳn nên MCP retry 1 lần ở đây (spawnSync báo
@@ -285,14 +285,13 @@ export function registerAiTools(server: McpServer): void {
             fallbackReason = reason;
           } else {
             const tail = String(second.stderr || second.stdout || "").slice(-800);
-            throw new ValidationError(
-              `remove_background thất bại cả 2 session (${reason}; u2net lỗi: ${tail})`
-            );
+            throw new ValidationError("SCRIPT_FAILED", 
+              `remove_background thất bại cả 2 session (${reason}; u2net lỗi: ${tail})`, { field: "remove_background" });
           }
         }
         if (run.status !== 0) {
           const tail = String(run.stderr || run.stdout || "unknown").slice(-1500);
-          throw new ValidationError(`bgremove thất bại (exit ${run.status}): ${tail}`);
+          throw new ValidationError("SCRIPT_FAILED", `bgremove thất bại (exit ${run.status}): ${tail}`, { field: "bgremove" });
         }
         const sessionUsed = markers.sessionUsed ?? firstSession;
         const fallbackFrom = markers.fallbackFrom ?? (fallbackReason ? firstSession : null);
@@ -334,11 +333,11 @@ export function registerAiTools(server: McpServer): void {
         const aspect = args.aspect ?? "9:16";
         const outName = args.out_name ?? `${base}_reframe_${aspect.replace(":", "x")}.mp4`;
         if (!/^[\w\-.]{1,120}\.mp4$/i.test(outName))
-          throw new ValidationError(`out_name không hợp lệ`);
+          throw new ValidationError("INVALID_OUTPUT_NAME", `out_name không hợp lệ`, { field: "out_name" });
         const outAbs = path.resolve(meta.mediaDir, outName);
         const rel = path.relative(meta.mediaDir, outAbs);
         if (rel.startsWith("..") || path.isAbsolute(rel))
-          throw new ValidationError(`out_name không hợp lệ (đã bị chặn)`);
+          throw new ValidationError("INVALID_OUTPUT_NAME", `out_name không hợp lệ (đã bị chặn)`, { field: "out_name" });
         // Phase 7 P6: kèm trajectory JSON để agent biết vùng cắt di chuyển
         // ra sao (lưu cạnh output để không phình MCP response).
         const trajName = `${base}_reframe_${aspect.replace(":", "x")}_trajectory.json`;

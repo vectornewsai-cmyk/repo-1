@@ -7,6 +7,17 @@
  * - "mute": bỏ qua audio của video (video câm).
  * - "detach": (chưa hỗ trợ) tách audio thành clip riêng để chỉnh độc lập.
  */
+/**
+ * Phase 7 P3 — Đường cong fade (áp cho fadeIn/fadeOut của AudioClip).
+ * - "linear": tuyến tính (khớp afade cũ).
+ * - "ease-in": p^2 (mở đầu chậm, về cuối nhanh).
+ * - "ease-out": 1-(1-p)^2 (mở đầu nhanh, về cuối chậm).
+ * - "sine": sin(p·π/2) cho fade-in, sin(q·π/2) cho fade-out (mượt kiểu equal-power).
+ * Mặc định khi không khai: "linear".
+ * Đợt 52 I7: bổ sung mirror của FADE_CURVES bên audio.ts (tiền sẵn từ
+ * đợt 51 §4.5 — checker Tier A từng ghi KNOWN thiếu trong .js).
+ */
+export const FADE_CURVES = ["linear", "ease-in", "ease-out", "sine"];
 export const SOURCE_AUDIO_MODES = ["inherit", "mute", "detach"];
 /** Mặc định: giữ tiếng gốc. */
 export const DEFAULT_SOURCE_AUDIO_MODE = "inherit";

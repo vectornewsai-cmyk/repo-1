@@ -18,6 +18,7 @@ const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
 const { redactStderr } = require("./errorDetail"); // Đợt 29 L3
+const { codedError } = require("./errorCodes"); // Đợt 62 R5: mã lỗi bridge→web
 
 // 25 giọng preset của VieNeu-TTS v3 Turbo (mirror từ
 // assets/voices_v3_turbo.json của package vieneu; tts.py --list-voices là nguồn thật)
@@ -73,9 +74,9 @@ function ttsConfigFromEnv(env = process.env) {
 /** Validate text; throw → endpoint trả 400. */
 function validateText(raw) {
   const s = String(raw ?? "").trim();
-  if (!s) throw new Error("Text rỗng — nhập nội dung cần đọc.");
+  if (!s) throw codedError("TTS_TEXT_EMPTY", "Text rỗng — nhập nội dung cần đọc.");
   if (s.length > MAX_TEXT_LEN) {
-    throw new Error(`Text quá dài (${s.length} > ${MAX_TEXT_LEN} ký tự).`);
+    throw codedError("TTS_TEXT_TOO_LONG", `Text quá dài (${s.length} > ${MAX_TEXT_LEN} ký tự).`, { length: s.length, max: MAX_TEXT_LEN });
   }
   return s;
 }
@@ -83,14 +84,14 @@ function validateText(raw) {
 /** Validate file giọng mẫu clone; throw → endpoint trả 400. */
 function validateRefAudio(file) {
   if (!file || !file.path) {
-    throw new Error("Thiếu file giọng mẫu (field 'refAudio').");
+    throw codedError("TTS_REF_AUDIO_MISSING", "Thiếu file giọng mẫu (field 'refAudio').");
   }
   if (file.size > MAX_REF_AUDIO_BYTES) {
-    throw new Error(`File giọng mẫu quá lớn (${(file.size / 1048576).toFixed(1)}MB > 20MB).`);
+    throw codedError("TTS_REF_AUDIO_TOO_LARGE", `File giọng mẫu quá lớn (${(file.size / 1048576).toFixed(1)}MB > 20MB).`, { sizeMb: (file.size / 1048576).toFixed(1) });
   }
   const ext = path.extname(file.originalname || "").toLowerCase();
   if (!REF_AUDIO_EXTS.includes(ext)) {
-    throw new Error(`File giọng mẫu phải là audio (${REF_AUDIO_EXTS.join(", ")}).`);
+    throw codedError("TTS_REF_AUDIO_TYPE", `File giọng mẫu phải là audio (${REF_AUDIO_EXTS.join(", ")}).`, { exts: REF_AUDIO_EXTS.join(", ") });
   }
   return file.path;
 }
@@ -99,7 +100,7 @@ function validateRefAudio(file) {
 function validateVoice(raw) {
   const v = String(raw ?? "").trim() || DEFAULT_VOICE;
   if (!VOICE_NAMES.includes(v)) {
-    throw new Error(`Giọng không hỗ trợ: "${raw}". Chọn một trong: ${VOICE_NAMES.join(", ")}.`);
+    throw codedError("UNSUPPORTED_VOICE", `Giọng không hỗ trợ: "${raw}". Chọn một trong: ${VOICE_NAMES.join(", ")}.`, { voice: raw, voices: VOICE_NAMES.join(", ") });
   }
   return v;
 }

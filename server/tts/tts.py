@@ -246,6 +246,11 @@ def main(argv=None):
 
     model_dir = args.model_dir
     if not model_dir:
+        # ROUND52-I5: app đóng gói đặt VCUT_MODELS_DIR=userData/models —
+        # model tải riêng lần đầu về đó (resources của AppImage chỉ đọc,
+        # không tải vào server/tts/models được). --model-dir vẫn thắng env.
+        model_dir = os.environ.get("VCUT_MODELS_DIR")
+    if not model_dir:
         here = os.path.dirname(os.path.abspath(__file__))
         model_dir = os.path.join(here, "models")
     os.makedirs(model_dir, exist_ok=True)

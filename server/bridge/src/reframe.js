@@ -16,6 +16,7 @@ const fs = require("fs");
 const os = require("os");
 const { spawn } = require("child_process");
 const { redactStderr } = require("./errorDetail"); // Đợt 29 L3
+const { codedError } = require("./errorCodes"); // Đợt 62 R5: mã lỗi bridge→web
 
 /** Whitelist aspect đích — reframe.py cũng validate lại phía Python. */
 const REFRAME_ASPECTS = ["9:16", "1:1", "4:5"];
@@ -41,8 +42,10 @@ function reframeConfigFromEnv(env = process.env) {
 function validateAspect(raw) {
   const aspect = String(raw ?? DEFAULT_ASPECT).trim();
   if (!REFRAME_ASPECTS.includes(aspect)) {
-    throw new Error(
-      `Tỉ lệ không hỗ trợ: "${raw}". Chọn một trong: ${REFRAME_ASPECTS.join(", ")}.`
+    throw codedError(
+      "UNSUPPORTED_ASPECT",
+      `Tỉ lệ không hỗ trợ: "${raw}". Chọn một trong: ${REFRAME_ASPECTS.join(", ")}.`,
+      { aspect: raw, aspects: REFRAME_ASPECTS.join(", ") },
     );
   }
   return aspect;

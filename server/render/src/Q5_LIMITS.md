@@ -38,7 +38,7 @@ mục nào dưới đây được "làm tròn" thành tính năng hoàn chỉnh.
   bị giới hạn bởi khoảng lag của autocorrelation).
 - **Độ phân giải thời gian ~23ms** (hop 512 @ 22050 Hz). Beat lệch dưới
   ngưỡng này là không đo được, không phải "khớp tuyệt đối".
-- **Cắt clip là thao tác phá hủy có undo** (1 bước undo cho toàn bộ điểm
+- **Cắt clip là thao tác phá huỷ có undo** (1 bước undo cho toàn bộ điểm
   cắt), nhưng điểm cắt sai vẫn phải review thủ công — modal cho bỏ điểm
   trước khi áp dụng, không cắt mù.
 - **Không tách beat theo nhạc cụ, không downbeat detection.** Chỉ có 1

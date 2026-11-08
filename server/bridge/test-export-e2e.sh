@@ -96,6 +96,7 @@ fi
 # Rate limit nới rộng cho test (poll mỗi giây)
 BRIDGE_PORT="$PORT" BRIDGE_WORK_DIR="$WORKDIR/jobs" BRIDGE_MIN_DISK_FREE=52428800 \
   BRIDGE_RATE_GENERAL=1000 BRIDGE_RATE_RENDER=100 \
+  BRIDGE_RATE_PERSIST_PATH="$WORKDIR/rate-limit.json" \
   node "$BRIDGE_DIR/src/index.js" >"$WORKDIR/bridge.log" 2>&1 &
 BRIDGE_PID=$!
 log "   pid=$BRIDGE_PID, log=$WORKDIR/bridge.log"

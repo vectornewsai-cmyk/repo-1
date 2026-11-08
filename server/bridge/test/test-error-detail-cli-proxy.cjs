@@ -56,7 +56,10 @@ function main() {
     ok(adapter.includes("export function redactWorkerLine"),
       "renderErrors.ts export redactWorkerLine");
     const idx = read("server/bridge/src/index.js");
-    ok(idx.includes('taskErrorPayload(e, "Tạo proxy thất bại.")'),
+    // Đợt 66 T9 — literal cũ 2 đối số đã lệch từ đợt 63 R5 (taskError tách
+    // module, call nay có thêm mã TASK_PROXY_FAILED); hành vi vẫn đúng
+    // (proxy dùng taskErrorPayload), chỉ cập nhật literal cho khớp code.
+    ok(idx.includes('taskErrorPayload(e, "Tạo proxy thất bại.", "TASK_PROXY_FAILED")'),
       "index.js: /api/proxy dùng taskErrorPayload");
     ok(!idx.includes('return res.status(500).json({ error: e.message || "Tạo proxy thất bại." })'),
       "index.js: /api/proxy không còn trả e.message thô");
@@ -139,8 +142,10 @@ function main() {
   console.log("== [d] Bridge thật qua HTTP: /api/proxy ==");
   const bwork = fs.mkdtempSync(path.join(os.tmpdir(), "m3-bridge-"));
   const port = 8931;
+  // Đợt 66 T9 — persist riêng (bwork): không dùng file mặc định ~/.cache/vcut/rate-limit.json,
+  // tránh rò mốc limiter sang test khác (bài học đợt 65 §3b).
   const server = spawn("node", [path.join(root, "server", "bridge", "src", "index.js")], {
-    env: { ...process.env, BRIDGE_PORT: String(port), BRIDGE_WORK_DIR: bwork },
+    env: { ...process.env, BRIDGE_PORT: String(port), BRIDGE_WORK_DIR: bwork, BRIDGE_RATE_PERSIST_PATH: path.join(bwork, "rate-limit.json") },
     stdio: "ignore",
   });
   try {

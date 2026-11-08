@@ -11,7 +11,7 @@ Script: `server/bridge/test-export-e2e.sh` — chạy bằng `bash test-export-e
 | 3 | Video có audio (sourceAudioMode=inherit) | Audio AAC được giữ, `mean_volume: -24.1 dB` (tiếng thật, không phải track câm) |
 | 4 | Spec sai định dạng | POST → 400 |
 | 5 | Tên file nguy hiểm (`.hidden.mp4`, `evil$.mp4`) | POST → 400 (sanitizeFilename) |
-| 6 | Hủy job (DELETE) | Trả về `ok:true` |
+| 6 | Huỷ job (DELETE) | Trả về `ok:true` |
 
 ## Giới hạn (trung thực)
 

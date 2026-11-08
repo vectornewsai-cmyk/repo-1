@@ -39,6 +39,14 @@ const { buildErrorDetail } = require("./errorDetail"); // L3 (đợt 28): lỗi 
 
 const TERMINAL = new Set(["done", "error", "cancelled", "interrupted"]);
 
+/**
+ * Đợt 63 R5: chuỗi note khi phục hồi job sau restart — DÙNG CHUNG 1 hằng
+ * số (trước đây literal lặp ở 4 chỗ recover; sửa 1 chỗ mà lệch chỗ khác
+ * thì noteCode JOB_RECOVERED_RESTART không còn khớp note nữa). Đi kèm
+ * noteCode "JOB_RECOVERED_RESTART" để web dịch (fragment round63-r5).
+ */
+const RECOVER_NOTE = "Phục hồi sau khi server restart — render lại từ đầu.";
+
 /** P7: các trạng thái job.json hợp lệ khi khôi phục. */
 const KNOWN_STATUSES = new Set([
   "queued", "running", "done", "error", "cancelled", "interrupted",
@@ -68,6 +76,7 @@ function serializeJobState(job) {
     startedAt: job.startedAt,
     finishedAt: job.finishedAt,
     note: job.note,
+    noteCode: job.noteCode || null,
     preset: job.preset,
     qaReport: job.qaReport || null,
   };
@@ -305,12 +314,13 @@ class RenderJobService {
    * Xếp job mới vào hàng đợi. Ném lỗi QueueFullError khi hàng đợi đầy.
    * @returns job record (status: "queued")
    */
-  enqueue({ id, dir, mediaDir, specPath, outPath, totalDuration, note, preset, createdAt, attempts, recovered }) {
+  enqueue({ id, dir, mediaDir, specPath, outPath, totalDuration, note, noteCode, preset, createdAt, attempts, recovered }) {
     if (this.fifo.length >= this.maxQueueLength) {
       const err = new Error(
         `Hàng đợi đầy (${this.maxQueueLength} job đang chờ) — thử lại sau.`
       );
       err.code = "QUEUE_FULL";
+      err.params = { maxQueue: this.maxQueueLength }; // Đợt 62 R5: mã lỗi bridge→web
       throw err;
     }
     // Cho phép caller cấp id trước (để đặt tên thư mục job cuối cùng ngay từ
@@ -356,6 +366,9 @@ class RenderJobService {
       finishedAt: null,
       totalDuration: totalDuration > 0 ? totalDuration : 0,
       note: note || null,
+      // Đợt 63 R5: mã ổn định cho note (vd JOB_RECOVERED_RESTART) —
+      // publicJob lộ ra API để client dịch; chuỗi note cũ giữ nguyên.
+      noteCode: noteCode || null,
       preset: preset || null, // R1-042: quality params đã sanitize (crf/x264Preset/audioBitrate)
       recovered: !!recovered, // P7: recover() truyền true để job.json ghi đúng 1 lần
       proc: null,       // ChildProcess khi running (không serialize)
@@ -394,9 +407,9 @@ class RenderJobService {
   }
 
   /**
-   * Hủy job. Job queued → gỡ khỏi hàng đợi + xóa thư mục.
+   * Huỷ job. Job queued → gỡ khỏi hàng đợi + xóa thư mục.
    * Job running → SIGTERM cả process group, SIGKILL sau grace period.
-   * @returns true nếu đã hủy, false nếu job đã ở trạng thái terminal / không tồn tại.
+   * @returns true nếu đã huỷ, false nếu job đã ở trạng thái terminal / không tồn tại.
    */
   cancel(id) {
     const job = this.jobs.get(id);
@@ -445,15 +458,17 @@ class RenderJobService {
       const err = new Error(
         `Chỉ retry được job ở trạng thái "error" hoặc "interrupted" (hiện tại: "${job.status}").` +
         (job.status === "cancelled"
-          ? " Job đã hủy thì thư mục tạm đã bị xóa — hãy tạo job mới."
+          ? " Job đã huỷ thì thư mục tạm đã bị xóa — hãy tạo job mới."
           : "")
       );
       err.code = "BAD_STATE";
+      err.params = { status: job.status }; // Đợt 62 R5: bridge map sang JOB_RETRY_BAD_STATE / JOB_RETRY_CANCELLED
       throw err;
     }
     if (!fs.existsSync(job.specPath)) {
       const err = new Error("Thư mục job đã bị dọn — không retry được, hãy tạo job mới.");
       err.code = "GONE";
+      err.params = { status: job.status }; // Đợt 62 R5
       throw err;
     }
     job.status = "queued";
@@ -466,6 +481,7 @@ class RenderJobService {
     job.startedAt = null;
     job.finishedAt = null;
     job.note = null;
+    job.noteCode = null;
     job._stderrTail = "";
     this.fifo.push(job.id);
     this._refreshQueuePositions();
@@ -536,6 +552,7 @@ class RenderJobService {
         finishedAt: saved.finishedAt || Date.now(),
         totalDuration: saved.totalDuration || 0,
         note: saved.note || null,
+        noteCode: saved.noteCode || null,
         preset: saved.preset || null,
         qaReport: saved.qaReport || null,
         recovered: true,
@@ -562,8 +579,14 @@ class RenderJobService {
         if (saved.status === "queued") {
           // Cần spec.json mới render lại được; thiếu spec → lỗi rõ ràng.
           if (!fs.existsSync(saved.specPath || path.join(dir, "spec.json"))) {
+            // Đợt 63 R5: gắn note + noteCode như nhánh queued có spec
+            // (dòng ~589) — nếu không web không biết job lỗi này là do
+            // restart (trước đây note/noteCode đều null ở nhánh này).
             const job = restoreRecord({ ...saved, status: "error",
-              error: "spec.json bị thiếu sau khi server restart — không render lại được, hãy tạo job mới." }, dir);
+              error: "spec.json bị thiếu sau khi server restart — không render lại được, hãy tạo job mới.",
+              errorCode: "JOB_SPEC_MISSING_AFTER_RESTART",
+              note: saved.note || RECOVER_NOTE,
+              noteCode: saved.noteCode || (!saved.note ? "JOB_RECOVERED_RESTART" : null) }, dir); // Đợt 62 R5: mã lỗi bridge→web
             job.finishedAt = Date.now();
             stats.restored++;
             continue;
@@ -576,7 +599,8 @@ class RenderJobService {
               specPath: saved.specPath || path.join(dir, "spec.json"),
               outPath: saved.outPath || path.join(dir, "output.mp4"),
               totalDuration: saved.totalDuration || 0,
-              note: saved.note || "Phục hồi sau khi server restart — render lại từ đầu.",
+              note: saved.note || RECOVER_NOTE,
+              noteCode: saved.noteCode || (!saved.note ? "JOB_RECOVERED_RESTART" : null),
               preset: saved.preset || null,
               createdAt: saved.createdAt,
               attempts: saved.attempts || 0,
@@ -591,8 +615,12 @@ class RenderJobService {
         } else if (saved.status === "running") {
           // Process cũ đã chết theo server: đánh dấu gián đoạn, không tự chạy lại.
           dropPartialOutput(dir);
+          // Đợt 63 R5: như nhánh A (note/noteCode trước đây null).
           const job = restoreRecord({ ...saved, status: "interrupted",
-            error: "Bị gián đoạn do bridge restart — dùng retry để render lại từ đầu." }, dir);
+            error: "Bị gián đoạn do bridge restart — dùng retry để render lại từ đầu.",
+            errorCode: "JOB_INTERRUPTED_BY_RESTART",
+            note: saved.note || RECOVER_NOTE,
+            noteCode: saved.noteCode || (!saved.note ? "JOB_RECOVERED_RESTART" : null) }, dir); // Đợt 62 R5: mã lỗi bridge→web
           job.finishedAt = Date.now();
           saveJobState(job); // ghi đè "running" cũ → "interrupted" bền vững
           stats.interrupted++;
@@ -633,7 +661,8 @@ class RenderJobService {
           specPath,
           outPath,
           totalDuration,
-          note: "Phục hồi sau khi server restart — render lại từ đầu.",
+          note: RECOVER_NOTE,
+          noteCode: "JOB_RECOVERED_RESTART",
           recovered: true,
         });
         stats.legacy++;
@@ -676,7 +705,7 @@ class RenderJobService {
     this._janitor = null;
   }
 
-  /** Hủy toàn bộ job (queued + running) — dùng khi shutdown. */
+  /** Huỷ toàn bộ job (queued + running) — dùng khi shutdown. */
   shutdown() {
     this.stopJanitor();
     for (const id of [...this.jobs.keys()]) {

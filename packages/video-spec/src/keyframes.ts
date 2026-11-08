@@ -76,7 +76,10 @@ export interface ClipAnimations {
 // Nội suy
 // ---------------------------------------------------------------------------
 
-/** Áp easing cho tiến trình p (đã clamp về [0,1] bên trong). */
+/** Áp easing cho tiến trình p (đã clamp về [0,1] bên trong).
+ * @throws nếu easing không hỗ trợ (đợt 52 I7: thống nhất mirror — trước
+ * đây bản TS trả undefined → NaN, bản render ném; nay cả 4 bản
+ * TS/JS/render đều ném cùng message, caller preview đã guard). */
 export function applyEasing(easing: Easing, p: number): number {
   const c = Math.min(1, Math.max(0, p));
   switch (easing) {
@@ -86,6 +89,8 @@ export function applyEasing(easing: Easing, p: number): number {
       return c * c;
     case "ease-out":
       return 1 - (1 - c) * (1 - c);
+    default:
+      throw new Error(`easing không hỗ trợ: ${easing}`);
   }
 }
 

@@ -17,7 +17,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import type { Track, VideoSpec } from "../../packages/video-spec/src/index.js";
-import { projectDuration, SPEC_VERSION } from "../../packages/video-spec/src/index.js";
+import { projectDuration, SPEC_VERSION, TRANSITION_TYPES } from "../../packages/video-spec/src/index.js";
 import {
   ValidationError,
   validateAddClipInput,
@@ -52,11 +52,11 @@ import { registerExportTools } from "./tools/export.js";
 // ---------------------------------------------------------------------------
 
 const transitionSchema = z.object({
-  type: z.enum([
-    "none", "fade", "fadeblack", "fadewhite",
-    "wipeleft", "wiperight", "wipeup", "wipedown",
-    "slideleft", "slideright", "dissolve", "circleopen", "radial",
-  ]).describe("Loại transition (13 loại)"),
+  // Đợt 62 R8: đủ 81 type trong TRANSITION_TYPES (58 xfade native + 23
+  // custom-expr) — trước đây chỉ khai 13 type nên 68 type hợp lệ còn lại
+  // bị zod chặn ngay ở schema tool, không tới được validate.ts (vốn đã
+  // chấp nhận đủ 81). Dùng chung 1 nguồn thật duy nhất.
+  type: z.enum(TRANSITION_TYPES).describe("Loại transition (81 loại)"),
   duration: z.number().nonnegative().describe("Độ dài transition, tính bằng giây"),
 });
 
@@ -165,12 +165,18 @@ function ok(data: unknown): ToolResult {
   return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
 }
 
-function fail(message: string): ToolResult {
-  return { content: [{ type: "text", text: `LỖI: ${message}` }], isError: true };
+/**
+ * Đợt 63 R9: `fail` nhận thêm mã ổn định (tùy chọn) — text lỗi MCP
+ * thành `LỖI: [MÃ] message` để agent khớp bằng máy; không có mã thì
+ * giữ nguyên `LỖI: message` như trước (zod / lỗi lạ).
+ */
+function fail(message: string, code?: string): ToolResult {
+  const text = code ? `LỖI: [${code}] ${message}` : `LỖI: ${message}`;
+  return { content: [{ type: "text", text }], isError: true };
 }
 
 function handleError(e: unknown): ToolResult {
-  if (e instanceof ValidationError) return fail(e.message);
+  if (e instanceof ValidationError) return fail(e.message, e.code);
   if (e instanceof z.ZodError)
     return fail(
       `input không đúng định dạng: ${e.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ")}`
@@ -270,24 +276,23 @@ server.tool(
       let track: Track | undefined;
       if (input.track_id) {
         track = spec.tracks.find((t) => t.id === input.track_id);
-        if (!track) throw new ValidationError(`không tìm thấy track_id "${input.track_id}"`);
+        if (!track) throw new ValidationError("NOT_FOUND", `không tìm thấy track_id "${input.track_id}"`, { field: "track_id", value: input.track_id });
         if (track.kind !== input.track_kind)
-          throw new ValidationError(
-            `track "${input.track_id}" là loại "${track.kind}", không khớp track_kind "${input.track_kind}"`
-          );
+          throw new ValidationError("KIND_MISMATCH", 
+            `track "${input.track_id}" là loại "${track.kind}", không khớp track_kind "${input.track_kind}"`, { field: "track_id", expected: input.track_kind, value: track.kind });
       } else {
         track = spec.tracks.find((t) => t.kind === input.track_kind);
       }
       if (!track) {
         const newId = input.track_id ?? `${input.track_kind[0]}${spec.tracks.length + 1}`;
         if (spec.tracks.some((t) => t.id === newId))
-          throw new ValidationError(`trùng track id "${newId}"`);
+          throw new ValidationError("DUPLICATE_ID", `trùng track id "${newId}"`, { field: "track_id", value: newId });
         track = { id: newId, kind: input.track_kind, clips: [] };
         if (input.track_label) track.label = input.track_label;
         spec.tracks.push(track);
       }
       if (track.clips.some((c) => c.id === input.clip.id))
-        throw new ValidationError(`trùng clip id "${input.clip.id}" trong track "${track.id}"`);
+        throw new ValidationError("DUPLICATE_ID", `trùng clip id "${input.clip.id}" trong track "${track.id}"`, { field: "clip.id", value: input.clip.id });
       track.clips.push(input.clip);
       await saveProject(input.project_id, spec);
       return ok({
@@ -321,9 +326,9 @@ server.tool(
         ? spec.tracks.find((t) => t.id === input.track_id)
         : spec.tracks.find((t) => t.kind === "text");
       if (input.track_id && !track)
-        throw new ValidationError(`không tìm thấy track_id "${input.track_id}"`);
+        throw new ValidationError("NOT_FOUND", `không tìm thấy track_id "${input.track_id}"`, { field: "track_id", value: input.track_id });
       if (track && track.kind !== "text")
-        throw new ValidationError(`track "${track.id}" không phải loại text`);
+        throw new ValidationError("KIND_MISMATCH", `track "${track.id}" không phải loại text`, { field: "track_id", expected: "text", value: track.kind });
       if (!track) {
         track = { id: `t${spec.tracks.length + 1}`, kind: "text", clips: [] };
         spec.tracks.push(track);
@@ -364,11 +369,9 @@ server.tool(
     project_id: z.string(),
     clip_id: z.string().describe("ID clip video cần gắn transition"),
     direction: z.enum(["in", "out"]).describe('"in" = đầu clip, "out" = cuối clip'),
-    type: z.enum([
-      "none", "fade", "fadeblack", "fadewhite",
-      "wipeleft", "wiperight", "wipeup", "wipedown",
-      "slideleft", "slideright", "dissolve", "circleopen", "radial",
-    ]).default("fade"),
+    // Đợt 62 R8: đủ 81 type (xem ghi chú ở transitionSchema) — trước đây
+    // chỉ 13 type nên apply_transition từ chối 68 type hợp lệ còn lại.
+    type: z.enum(TRANSITION_TYPES).default("fade"),
     duration: z.number().nonnegative().describe("Độ dài transition (giây)"),
   },
   async (args) => {
@@ -376,9 +379,9 @@ server.tool(
       const input = validateApplyTransitionInput(args);
       const { spec } = await loadProject(input.project_id);
       const found = findVideoClip(spec, input.clip_id);
-      if (!found) throw new ValidationError(`không tìm thấy clip video id "${input.clip_id}"`);
+      if (!found) throw new ValidationError("NOT_FOUND", `không tìm thấy clip video id "${input.clip_id}"`, { field: "clip_id", value: input.clip_id });
       const clip = spec.tracks[found.trackIndex].clips[found.clipIndex];
-      if (clip.kind !== "video") throw new ValidationError(`clip "${input.clip_id}" không phải video`);
+      if (clip.kind !== "video") throw new ValidationError("KIND_MISMATCH", `clip "${input.clip_id}" không phải video`, { field: "clip_id", expected: "video", value: clip.kind });
       const transition = { type: input.type, duration: input.duration } as const;
       if (input.direction === "in") clip.transitionIn = { ...transition };
       else clip.transitionOut = { ...transition };
@@ -428,15 +431,14 @@ server.tool(
       try {
         await fs.access(RENDER_WORKER_JS);
       } catch {
-        throw new ValidationError(`render worker không tồn tại: ${RENDER_WORKER_JS}`);
+        throw new ValidationError("RENDER_WORKER_MISSING", `render worker không tồn tại: ${RENDER_WORKER_JS}`, { field: "render worker" });
       }
       const { spec, meta } = await loadProject(input.project_id);
       // Validate chặt lần cuối trước khi render
       validateVideoSpec(spec);
       if (spec.tracks.length === 0 || projectDuration(spec) <= 0)
-        throw new ValidationError(
-          `project "${input.project_id}" đang trống (chưa có clip nào) — thêm clip bằng add_clip/add_text trước khi render`
-        );
+        throw new ValidationError("PROJECT_EMPTY", 
+          `project "${input.project_id}" đang trống (chưa có clip nào) — thêm clip bằng add_clip/add_text trước khi render`, { field: "project_id", value: input.project_id });
       const outAbs = resolveOutPath(input.out_path);
       await fs.mkdir(path.dirname(outAbs), { recursive: true });
       const mediaDir = input.media_dir ? await resolveMediaDir(input.media_dir) : meta.mediaDir;
@@ -456,11 +458,10 @@ server.tool(
           // Đợt 29 L3: KHÔNG trả tail stderr thô (lộ đường dẫn) như trước;
           // dùng cùng lỗi có cấu trúc đã redact như export_video (đợt 28).
           const captured = String(r.stderr ?? r.stdout ?? r.error ?? "");
-          throw new ValidationError(
+          throw new ValidationError("RENDER_FAILED", 
             captured.trim()
               ? formatRenderFailure(captured, r.status, r.signal)
-              : `Render thất bại [WORKER_EXIT]: Render worker thoát với mã ${r.status} (không thu được stderr).`
-          );
+              : `Render thất bại [WORKER_EXIT]: Render worker thoát với mã ${r.status} (không thu được stderr).`, { field: "project_id", value: input.project_id });
         }
       } finally {
         await fs.rm(tmpDir, { recursive: true, force: true });

@@ -81,6 +81,55 @@ paths:
                 scene: true
                 bgremove: true
 
+  /api/gpu-probe:
+    get:
+      tags: [render]
+      summary: Trạng thái probe GPU encoder
+      operationId: getGpuProbe
+      description: |
+        Chỉ ĐỌC cache đĩa probe GPU (~/.cache/vcut/gpu-probe.json, TTL 30 ngày),
+        không probe lại. Dùng cho nút "Probe lại GPU" trong ExportPanel: hiển thị
+        encoder GPU đã probe được (hoặc null = đang dùng libx264) và thời điểm
+        probe lần cuối. Chưa từng probe → probed=false.
+      responses:
+        "200":
+          description: Trạng thái probe GPU
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GpuProbeStatus"
+              example:
+                probed: true
+                encoder: h264_nvenc
+                detail: "h264_nvenc encode thử 1 frame thành công"
+                cached: true
+                source: disk
+                probedAtMs: 1793123456789
+                cacheEnabled: true
+    post:
+      tags: [render]
+      summary: Ép probe lại GPU encoder
+      operationId: reprobeGpu
+      description: |
+        Xoá cache probe GPU cũ (kể cả cache lỗi do tháo GPU trong TTL) rồi probe
+        lại thật bằng cách encode thử 1 frame từng encoder (nvenc → qsv →
+        vaapi). Đồng bộ, tối đa ~15s/encoder — chỉ gọi từ nút bấm thủ công.
+      responses:
+        "200":
+          description: Kết quả probe mới
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GpuProbeResult"
+              example:
+                encoder: null
+                tried: [h264_nvenc, h264_qsv, h264_vaapi]
+                detail: "không GPU encoder nào encode thử thành công → fallback libx264"
+                cached: false
+                source: probe
+                cacheCleared: true
+                probedAtMs: 1793123456789
+
   /api/openapi.json:
     get:
       tags: [health]
@@ -988,6 +1037,64 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/KeepSegment"
+
+    GpuProbeStatus:
+      type: object
+      required: [probed, encoder, detail, cached, source, probedAtMs, cacheEnabled]
+      properties:
+        probed:
+          type: boolean
+          description: Đã từng probe GPU (cache còn hiệu lực) hay chưa
+        encoder:
+          type: string
+          nullable: true
+          description: Encoder GPU đã probe được, null = không có GPU (dùng libx264)
+          example: h264_nvenc
+        detail:
+          type: string
+          description: Chi tiết kết quả probe (hoặc lý do chưa probe)
+        cached:
+          type: boolean
+          description: Kết quả lấy từ cache đĩa (GET không bao giờ probe lại)
+        source:
+          type: string
+          nullable: true
+          enum: [disk]
+        probedAtMs:
+          type: integer
+          nullable: true
+          description: Thời điểm probe (epoch ms), null khi chưa probe
+        cacheEnabled:
+          type: boolean
+          description: Cache đĩa probe có bật không
+
+    GpuProbeResult:
+      type: object
+      required: [encoder, tried, detail, cached, source, cacheCleared, probedAtMs]
+      properties:
+        encoder:
+          type: string
+          nullable: true
+          description: Encoder GPU probe được lần này, null = không có GPU
+        tried:
+          type: array
+          items:
+            type: string
+          description: Các encoder đã thử theo thứ tự (nvenc → qsv → vaapi)
+        detail:
+          type: string
+        cached:
+          type: boolean
+          example: false
+        source:
+          type: string
+          enum: [probe]
+        cacheCleared:
+          type: boolean
+          description: Đã xoá file cache probe cũ trước khi probe lại
+        probedAtMs:
+          type: integer
+          description: Thời điểm probe xong (epoch ms)
 
   responses:
     BadRequest:

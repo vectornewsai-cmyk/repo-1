@@ -12,6 +12,13 @@
  *   tất cả fail → fallback libx264. Người dùng ép encoder (--encoder) mà
  *   probe fail → cảnh báo + fallback libx264 (không fail job).
  * - Probe 1 lần / process, cache kết quả (mỗi lần probe ~0.1–0.5s).
+ * - Đợt 64 R1: cache kết quả probe XUỐNG ĐĨA (~/.cache/vcut/gpu-probe.json,
+ *   TTL 30 ngày) vì mỗi lần render là 1 process node mới → cache trong
+ *   process cũ không bao giờ sống qua 2 lần render. Lần đầu probe thật,
+ *   các lần sau đọc file cache (~ms). File vắng = "chưa probe"; file có
+ *   encoder=null = "đã probe: không có GPU" — hai trạng thái phân biệt rõ.
+ *   Ép probe lại: CLI render.js --reprobe-gpu (hoặc xoá file cache).
+ *   Tắt cache đĩa: env VCUT_GPU_PROBE_CACHE=0 hoặc --no-gpu-probe-cache.
  *
  * GIỚI HẠN TRUNG THỰC (xem ENHANCE_LIMITS.md): trên VM test (2vCPU, không
  * GPU) probe luôn trả về null → chỉ kiểm chứng được logic detect +
@@ -20,6 +27,9 @@
 "use strict";
 
 const assert = require("assert");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
 const { spawnSync } = require("child_process");
 
 /** Map x264 preset → nvenc preset p1..p7 (p4 ≈ medium). */
@@ -81,6 +91,194 @@ function probeGpuEncoder(ffmpeg, tryFn) {
   const res = { encoder: null, tried, detail: "không GPU encoder nào encode thử thành công → fallback libx264" };
   if (!tryFn) probeCache = res;
   return res;
+}
+
+// ---------------------------------------------------------------------------
+// Đợt 64 R1 — Cache đĩa cho kết quả probe GPU.
+//
+// Vấn đề (đợt 63 R2 §2.1/§5.1): probe GPU là overhead wall lớn nhất của
+// một lần render (CPU chỉ 0,23s nhưng wall 0,31–2,50s) mà trên máy không
+// GPU luôn trả null. Cache trong process (probeCache) vô dụng vì bridge
+// spawn `node render.js` mới cho mỗi job → probe chạy lại mỗi lần render.
+// Cache đĩa khắc phục đúng chỗ đó: lần đầu probe thật + ghi file, các
+// lần sau đọc file (~ms, chỉ stat + đọc JSON nhỏ).
+//
+// Phân biệt rõ 3 trạng thái:
+//   - chưa probe: file cache không tồn tại (hoặc không đọc/validate được)
+//   - đã probe, không có GPU: file tồn tại, encoder === null
+//   - đã probe, có GPU: file tồn tại, encoder là 1 trong GPU_CANDIDATES
+// Cache hết hạn (TTL) hoặc ffmpeg đổi (fingerprint sai) → coi như chưa
+// probe → probe lại thật. Xoá file cache không đổi kết quả render, chỉ
+// làm render sau chậm lại (probe lại) — cache chỉ là tối ưu tốc độ.
+// ---------------------------------------------------------------------------
+
+/** TTL mặc định 30 ngày (đổi bằng env VCUT_GPU_PROBE_TTL_MS, chỉ để test). */
+const GPU_PROBE_CACHE_TTL_MS_DEFAULT = 30 * 24 * 3600 * 1000;
+const GPU_PROBE_CACHE_VERSION = 1;
+
+/** TTL hiệu lực (ms). */
+function gpuProbeCacheTtlMs() {
+  const raw = Number(process.env.VCUT_GPU_PROBE_TTL_MS);
+  if (Number.isFinite(raw) && raw > 0) return raw;
+  return GPU_PROBE_CACHE_TTL_MS_DEFAULT;
+}
+
+/**
+ * Đường dẫn file cache: env VCUT_GPU_PROBE_CACHE (đường dẫn đầy đủ) hoặc
+ * mặc định ~/.cache/vcut/gpu-probe.json; không có home → tmpdir.
+ * Lưu ý: VCUT_GPU_PROBE_CACHE=0 có nghĩa TẮT cache (xem gpuProbeCacheEnabled),
+ * không phải đường dẫn — hàm này không được gọi khi cache đã tắt.
+ */
+function getGpuProbeCachePath() {
+  if (process.env.VCUT_GPU_PROBE_CACHE && process.env.VCUT_GPU_PROBE_CACHE !== "0") {
+    return process.env.VCUT_GPU_PROBE_CACHE;
+  }
+  const home = typeof os.homedir === "function" ? os.homedir() : "";
+  if (home) return path.join(home, ".cache", "vcut", "gpu-probe.json");
+  return path.join(os.tmpdir(), "vcut-gpu-probe.json");
+}
+
+/** Cache đĩa có bật không: tắt hẳn bằng env VCUT_GPU_PROBE_CACHE=0. */
+function gpuProbeCacheEnabled() {
+  return process.env.VCUT_GPU_PROBE_CACHE !== "0";
+}
+
+/**
+ * Fingerprint rẻ của binary ffmpeg (không spawn process — chỉ stat file):
+ * đường dẫn đã resolve + size + mtime. Đổi ffmpeg (cài lại/nâng cấp) thì
+ * size/mtime đổi → cache coi như hết hạn → probe lại. Bare name "ffmpeg"
+ * được resolve bằng cách quét PATH bằng fs (không spawn `which`).
+ * Trả null khi không stat được (ffmpeg không tồn tại) → cache MISS.
+ */
+function ffmpegFingerprint(ffmpeg) {
+  try {
+    let resolved = ffmpeg;
+    if (!ffmpeg.includes(path.sep)) {
+      const dirs = (process.env.PATH || "").split(path.delimiter);
+      let found = null;
+      for (const d of dirs) {
+        if (!d) continue;
+        const cand = path.join(d, ffmpeg);
+        try {
+          const st = fs.statSync(cand);
+          if (st.isFile()) { found = cand; break; }
+        } catch { /* không phải ứng viên */ }
+      }
+      if (!found) return null;
+      resolved = found;
+    }
+    const st = fs.statSync(resolved);
+    if (!st.isFile()) return null;
+    return { resolved, size: st.size, mtimeMs: st.mtimeMs };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Đọc + validate cache đĩa.
+ * @returns {object|null} kết quả probe đã cache ({encoder, tried, detail, probedAtMs, ...})
+ *   hoặc null khi MISS (chưa probe / hết TTL / sai fingerprint / file hỏng).
+ *   Không bao giờ throw — mọi lỗi đọc đều là MISS.
+ */
+function readGpuProbeCache(cachePath, ffmpeg, ttlMs) {
+  try {
+    const raw = fs.readFileSync(cachePath, "utf8");
+    const data = JSON.parse(raw);
+    if (!data || data.version !== GPU_PROBE_CACHE_VERSION) return null;
+    if (!(data.encoder === null || GPU_CANDIDATES.includes(data.encoder))) return null;
+    if (!Array.isArray(data.tried) || typeof data.detail !== "string") return null;
+    if (typeof data.probedAtMs !== "number" || !Number.isFinite(data.probedAtMs)) return null;
+    const ttl = ttlMs !== undefined ? ttlMs : gpuProbeCacheTtlMs();
+    if (Date.now() - data.probedAtMs >= ttl) return null; // hết TTL → probe lại
+    const fp = ffmpegFingerprint(ffmpeg);
+    if (!fp) return null; // không stat được ffmpeg → không tin cache
+    if (data.ffmpegResolved !== fp.resolved || data.ffmpegSize !== fp.size
+      || data.ffmpegMtimeMs !== fp.mtimeMs) return null; // ffmpeg đã đổi
+    return {
+      encoder: data.encoder, tried: data.tried, detail: data.detail,
+      probedAtMs: data.probedAtMs,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Ghi kết quả probe xuống đĩa (ghi file tạm + rename, như trfCache.js —
+ * không để file nửa chừng trong cache). Best-effort: lỗi ghi (không có
+ * quyền, đĩa đầy...) chỉ bỏ qua, không bao giờ fail render vì cache.
+ */
+function writeGpuProbeCache(cachePath, result, ffmpeg) {
+  try {
+    const fp = ffmpegFingerprint(ffmpeg);
+    const data = {
+      version: GPU_PROBE_CACHE_VERSION,
+      probedAt: new Date().toISOString(),
+      probedAtMs: Date.now(),
+      ffmpeg: String(ffmpeg),
+      ffmpegResolved: fp ? fp.resolved : null,
+      ffmpegSize: fp ? fp.size : null,
+      ffmpegMtimeMs: fp ? fp.mtimeMs : null,
+      encoder: result.encoder,
+      tried: result.tried,
+      detail: result.detail,
+    };
+    fs.mkdirSync(path.dirname(cachePath), { recursive: true });
+    const tmp = `${cachePath}.tmp-${process.pid}`;
+    fs.writeFileSync(tmp, JSON.stringify(data, null, 2), "utf8");
+    fs.renameSync(tmp, cachePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Xoá file cache (ép probe lại lần sau). Best-effort, trả true nếu đã xoá. */
+function clearGpuProbeCache(cachePath) {
+  try {
+    fs.unlinkSync(cachePath || getGpuProbeCachePath());
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Probe GPU encoder có cache đĩa (hàm render.js gọi — đường auto).
+ * Thứ tự: cache trong process → cache đĩa → probe thật (+ ghi cache đĩa).
+ * @param {string} ffmpeg đường dẫn ffmpeg
+ * @param {object} [opts]
+ * @param {Function} [opts.tryFn] inject để test (chỉ test dùng)
+ * @param {boolean} [opts.forceReprobe] bỏ qua cả 2 lớp cache, probe lại thật
+ * @param {boolean} [opts.cacheEnabled] false = tắt cache đĩa (mặc định true;
+ *   env VCUT_GPU_PROBE_CACHE=0 cũng tắt)
+ * @param {string} [opts.cachePath] đường dẫn file cache (mặc định getGpuProbeCachePath())
+ * @param {number} [opts.ttlMs] TTL cache (mặc định 30 ngày)
+ * @returns {{encoder: string|null, tried: string[], detail: string,
+ *   cached: boolean, source: "memory"|"disk"|"probe"}}
+ *   cached=true + source="disk"|"memory" nghĩa là KHÔNG probe lại.
+ */
+function probeGpuEncoderCached(ffmpeg, opts) {
+  const o = opts || {};
+  const tryFn = o.tryFn || undefined;
+  const cacheEnabled = o.cacheEnabled !== false && gpuProbeCacheEnabled();
+  const cachePath = o.cachePath || getGpuProbeCachePath();
+  const ttlMs = o.ttlMs !== undefined ? o.ttlMs : gpuProbeCacheTtlMs();
+
+  if (probeCache && !tryFn && !o.forceReprobe) {
+    return { ...probeCache, cached: true, source: "memory" };
+  }
+  if (cacheEnabled && !o.forceReprobe) {
+    const hit = readGpuProbeCache(cachePath, ffmpeg, ttlMs);
+    if (hit) {
+      if (!tryFn) probeCache = hit;
+      return { ...hit, cached: true, source: "disk" };
+    }
+  }
+  const res = probeGpuEncoder(ffmpeg, tryFn);
+  if (cacheEnabled) writeGpuProbeCache(cachePath, res, ffmpeg);
+  return { ...res, cached: false, source: "probe" };
 }
 
 /**
@@ -161,6 +359,58 @@ function selfTest() {
   const real = probeGpuEncoder("ffmpeg");
   assert.ok(real.encoder === null || GPU_CANDIDATES.includes(real.encoder));
   console.log(`   probe thật trên máy này: ${real.encoder || "null (fallback libx264)"} — ${real.detail}`);
+
+  // --- Đợt 64 R1: cache đĩa (dùng thư mục tạm, không đụng cache thật) ---
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "vcut-gpu-probe-test-"));
+  const cachePath = path.join(tmpDir, "gpu-probe.json");
+  const fakeTryQsv = (ff, enc) => enc === "h264_qsv";
+  // MISS lần đầu (chưa có file) → probe thật bằng tryFn giả → ghi cache.
+  const c1 = probeGpuEncoderCached("ffmpeg", { tryFn: fakeTryQsv, cachePath });
+  assert.strictEqual(c1.encoder, "h264_qsv");
+  assert.strictEqual(c1.cached, false);
+  assert.strictEqual(c1.source, "probe");
+  assert.ok(fs.existsSync(cachePath), "probe xong phải ghi file cache");
+  // HIT lần 2: tryFn cố tình trả khác (null) nhưng cache phải thắng.
+  const c2 = probeGpuEncoderCached("ffmpeg", { tryFn: () => false, cachePath });
+  assert.strictEqual(c2.encoder, "h264_qsv", "cache HIT phải trả kết quả cũ, không probe lại");
+  assert.strictEqual(c2.cached, true);
+  assert.strictEqual(c2.source, "disk");
+  // Phân biệt "đã probe: không có GPU" vs "chưa probe": cache encoder=null.
+  const nullPath = path.join(tmpDir, "gpu-probe-null.json");
+  const n1 = probeGpuEncoderCached("ffmpeg", { tryFn: () => false, cachePath: nullPath });
+  assert.strictEqual(n1.encoder, null);
+  assert.strictEqual(n1.cached, false);
+  const n2 = probeGpuEncoderCached("ffmpeg", { tryFn: fakeTryQsv, cachePath: nullPath });
+  assert.strictEqual(n2.encoder, null, "cache null HIT: đã probe không GPU, không probe lại");
+  assert.strictEqual(n2.cached, true);
+  assert.strictEqual(n2.source, "disk");
+  // Ép probe lại: forceReprobe bỏ qua cache, tryFn mới thắng.
+  const c3 = probeGpuEncoderCached("ffmpeg", { tryFn: () => false, cachePath, forceReprobe: true });
+  assert.strictEqual(c3.encoder, null);
+  assert.strictEqual(c3.cached, false);
+  assert.strictEqual(c3.source, "probe");
+  // Hết TTL → MISS (ttlMs=0 ép hết hạn ngay).
+  const c4 = probeGpuEncoderCached("ffmpeg", { tryFn: fakeTryQsv, cachePath, ttlMs: 0 });
+  assert.strictEqual(c4.cached, false, "hết TTL phải probe lại");
+  assert.strictEqual(c4.encoder, "h264_qsv");
+  // File hỏng → MISS, không throw.
+  fs.writeFileSync(cachePath, "{json hỏng", "utf8");
+  const c5 = probeGpuEncoderCached("ffmpeg", { tryFn: fakeTryQsv, cachePath });
+  assert.strictEqual(c5.cached, false);
+  assert.strictEqual(c5.encoder, "h264_qsv");
+  // Tắt cache đĩa → luôn probe, không ghi file.
+  const offPath = path.join(tmpDir, "gpu-probe-off.json");
+  const c6 = probeGpuEncoderCached("ffmpeg", { tryFn: fakeTryQsv, cachePath: offPath, cacheEnabled: false });
+  assert.strictEqual(c6.cached, false);
+  assert.ok(!fs.existsSync(offPath), "tắt cache thì không được ghi file");
+  // clearGpuProbeCache: xoá xong lần sau MISS.
+  assert.strictEqual(clearGpuProbeCache(cachePath), true);
+  assert.ok(!fs.existsSync(cachePath));
+  const c7 = probeGpuEncoderCached("ffmpeg", { tryFn: () => false, cachePath });
+  assert.strictEqual(c7.cached, false);
+  assert.strictEqual(c7.encoder, null);
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+  console.log("   cache đĩa: MISS/HIT/null/force/TTL/file hỏng/tắt/xoá đều đúng");
   console.log("✅ gpuencode.js self-test: tất cả assertion pass");
 }
 
@@ -175,6 +425,14 @@ if (require.main === module) {
 module.exports = {
   GPU_CANDIDATES,
   probeGpuEncoder,
+  probeGpuEncoderCached,
+  getGpuProbeCachePath,
+  gpuProbeCacheEnabled,
+  gpuProbeCacheTtlMs,
+  readGpuProbeCache,
+  writeGpuProbeCache,
+  clearGpuProbeCache,
+  ffmpegFingerprint,
   buildVideoEncodeArgs,
   tryEncode,
 };

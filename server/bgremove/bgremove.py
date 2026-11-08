@@ -158,6 +158,11 @@ def run_once(args, session_name):
 
     if args.model_dir:
         os.environ["U2NET_HOME"] = args.model_dir
+    elif os.environ.get("VCUT_MODELS_DIR"):
+        # ROUND52-I5: app đóng gói đặt VCUT_MODELS_DIR=userData/models —
+        # model BiRefNet tải riêng về <đó>/bgremove (resources AppImage chỉ
+        # đọc). --model-dir / BGREMOVE_MODEL_DIR (bridge) vẫn thắng env.
+        os.environ["U2NET_HOME"] = os.path.join(os.environ["VCUT_MODELS_DIR"], "bgremove")
 
     try:
         from rembg import new_session

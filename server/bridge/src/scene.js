@@ -15,6 +15,7 @@ const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
 const { redactStderr } = require("./errorDetail"); // Đợt 29 L3: dòng [scene] LỖI có thể chứa đường dẫn
+const { codedError } = require("./errorCodes"); // Đợt 62 R5: mã lỗi bridge→web
 
 const DEFAULT_THRESHOLD = 0.4;
 const MIN_THRESHOLD = 0.05;
@@ -39,8 +40,10 @@ function validateThreshold(raw) {
     ? DEFAULT_THRESHOLD
     : Number(raw);
   if (!Number.isFinite(t) || t < MIN_THRESHOLD || t > MAX_THRESHOLD) {
-    throw new Error(
-      `Ngưỡng không hợp lệ: "${raw}". Chọn số trong khoảng ${MIN_THRESHOLD}..${MAX_THRESHOLD} (mặc định ${DEFAULT_THRESHOLD}).`
+    throw codedError(
+      "SCENE_THRESHOLD_INVALID",
+      `Ngưỡng không hợp lệ: "${raw}". Chọn số trong khoảng ${MIN_THRESHOLD}..${MAX_THRESHOLD} (mặc định ${DEFAULT_THRESHOLD}).`,
+      { value: raw, min: MIN_THRESHOLD, max: MAX_THRESHOLD, def: DEFAULT_THRESHOLD },
     );
   }
   return t;
@@ -53,17 +56,17 @@ function validateRange(rawStart, rawEnd) {
   if (rawStart !== undefined && rawStart !== null && rawStart !== "") {
     start = Number(rawStart);
     if (!Number.isFinite(start) || start < 0) {
-      throw new Error(`start không hợp lệ: "${rawStart}".`);
+      throw codedError("SCENE_START_INVALID", `start không hợp lệ: "${rawStart}".`, { value: rawStart });
     }
   }
   if (rawEnd !== undefined && rawEnd !== null && rawEnd !== "") {
     end = Number(rawEnd);
     if (!Number.isFinite(end) || end <= 0) {
-      throw new Error(`end không hợp lệ: "${rawEnd}".`);
+      throw codedError("SCENE_END_INVALID", `end không hợp lệ: "${rawEnd}".`, { value: rawEnd });
     }
   }
   if (start !== null && end !== null && end <= start) {
-    throw new Error("end phải lớn hơn start.");
+    throw codedError("SCENE_RANGE_INVALID", "end phải lớn hơn start.");
   }
   return { start, end };
 }

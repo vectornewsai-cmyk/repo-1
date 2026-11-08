@@ -20,12 +20,18 @@ export function ok(data: unknown): ToolResult {
   return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
 }
 
-export function fail(message: string): ToolResult {
-  return { content: [{ type: "text", text: `LỖI: ${message}` }], isError: true };
+/**
+ * Đợt 63 R9: `fail` nhận thêm mã ổn định (tùy chọn) — text lỗi MCP
+ * thành `LỖI: [MÃ] message` để agent khớp bằng máy; không có mã thì
+ * giữ nguyên `LỖI: message` như trước (zod / lỗi lạ).
+ */
+export function fail(message: string, code?: string): ToolResult {
+  const text = code ? `LỖI: [${code}] ${message}` : `LỖI: ${message}`;
+  return { content: [{ type: "text", text }], isError: true };
 }
 
 export function handleError(e: unknown): ToolResult {
-  if (e instanceof ValidationError) return fail(e.message);
+  if (e instanceof ValidationError) return fail(e.message, e.code);
   if (e instanceof z.ZodError)
     return fail(
       `input không đúng định dạng: ${e.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ")}`
@@ -85,7 +91,7 @@ export function pushHistory(projectId: string, spec: VideoSpec): void {
 export async function doUndo(projectId: string): Promise<{ spec: VideoSpec; remaining: number }> {
   const pid = validateProjectId(projectId);
   const stack = undoStacks.get(pid) ?? [];
-  if (stack.length === 0) throw new ValidationError("không còn bước nào để undo");
+  if (stack.length === 0) throw new ValidationError("NOTHING_TO_UNDO", "không còn bước nào để undo", { field: "project_id", value: projectId });
   const { spec: current } = await loadProject(pid);
   let redo = redoStacks.get(pid);
   if (!redo) {
@@ -102,7 +108,7 @@ export async function doUndo(projectId: string): Promise<{ spec: VideoSpec; rema
 export async function doRedo(projectId: string): Promise<{ spec: VideoSpec; remaining: number }> {
   const pid = validateProjectId(projectId);
   const stack = redoStacks.get(pid) ?? [];
-  if (stack.length === 0) throw new ValidationError("không còn bước nào để redo");
+  if (stack.length === 0) throw new ValidationError("NOTHING_TO_REDO", "không còn bước nào để redo", { field: "project_id", value: projectId });
   const { spec: current } = await loadProject(pid);
   let undo = undoStacks.get(pid);
   if (!undo) {

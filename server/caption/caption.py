@@ -209,7 +209,10 @@ def main():
                     help="mã ngôn ngữ (vi, en, ... hoặc 'auto' để tự phát hiện)")
     ap.add_argument("--out", required=True, help="file JSON output")
     ap.add_argument("--model", default=DEFAULT_MODEL, help="model faster-whisper")
-    ap.add_argument("--model-dir", default=os.path.join(os.path.dirname(
+    # ROUND52-I5: app đóng gói đặt VCUT_MODELS_DIR=userData/models (model tải
+    # riêng lần đầu về đó); --model-dir vẫn thắng env. Mặc định cũ giữ nguyên
+    # khi không có env (dev: server/caption/models).
+    ap.add_argument("--model-dir", default=os.environ.get("VCUT_MODELS_DIR") or os.path.join(os.path.dirname(
         os.path.abspath(__file__)), "models"), help="thư mục chứa model")
     ap.add_argument("--track-out", default=None,
                     help="file JSON chỉ chứa video-spec track (tuỳ chọn)")

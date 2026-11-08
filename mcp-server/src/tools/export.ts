@@ -83,16 +83,16 @@ export function registerExportTools(server: McpServer): void {
           outPath.startsWith("/") || outPath.startsWith("\\") ||
           outPath.includes("..") || !outPath.toLowerCase().endsWith(".mp4")
         )
-          throw new ValidationError(`out_path không hợp lệ: ${JSON.stringify(outPath)}`);
+          throw new ValidationError("INVALID_OUTPUT_PATH", `out_path không hợp lệ: ${JSON.stringify(outPath)}`, { field: "out_path", value: JSON.stringify(outPath) });
         try {
           await fs.access(RENDER_WORKER_JS);
         } catch {
-          throw new ValidationError(`render worker không tồn tại: ${RENDER_WORKER_JS}`);
+          throw new ValidationError("RENDER_WORKER_MISSING", `render worker không tồn tại: ${RENDER_WORKER_JS}`, { field: "render worker" });
         }
         const { spec, meta } = await loadProject(args.project_id);
         validateVideoSpec(spec);
         if (spec.tracks.length === 0 || projectDuration(spec) <= 0)
-          throw new ValidationError(`project "${args.project_id}" đang trống — thêm clip trước khi export`);
+          throw new ValidationError("PROJECT_EMPTY", `project "${args.project_id}" đang trống — thêm clip trước khi export`, { field: "project_id", value: args.project_id });
         const outAbs = resolveOutPath(outPath);
         await fs.mkdir(path.dirname(outAbs), { recursive: true });
         const mediaDir = args.media_dir ? await resolveMediaDir(args.media_dir) : meta.mediaDir;
@@ -124,11 +124,10 @@ export function registerExportTools(server: McpServer): void {
             // đối qua slice(-2000)). Dùng lỗi có cấu trúc đã redact từ
             // bridge; handleError in nguyên văn qua fail().
             const captured = String(r.stderr ?? r.stdout ?? r.error ?? "");
-            throw new ValidationError(
+            throw new ValidationError("RENDER_FAILED", 
               captured.trim()
                 ? formatRenderFailure(captured, r.status, r.signal)
-                : `Render thất bại [WORKER_EXIT]: Render worker thoát với mã ${r.status} (không thu được stderr).`
-            );
+                : `Render thất bại [WORKER_EXIT]: Render worker thoát với mã ${r.status} (không thu được stderr).`, { field: "project_id", value: args.project_id });
           }
         } finally {
           await fs.rm(tmpDir, { recursive: true, force: true });

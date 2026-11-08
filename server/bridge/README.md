@@ -67,7 +67,7 @@ Danh sách job, mới nhất trước. `?limit=` (mặc định 50, tối đa 20
 Tải file MP4 (chỉ khi `status=done`). → `409` nếu chưa xong.
 
 ### `DELETE /api/render/:id`
-Hủy job: gỡ khỏi hàng đợi nếu đang `queued`; kill cả process group
+Huỷ job: gỡ khỏi hàng đợi nếu đang `queued`; kill cả process group
 (SIGTERM → SIGKILL sau 5s) nếu đang `running`, để ffmpeg con cũng chết theo.
 Xóa thư mục tạm ngay. → `{ ok: true, id, status: "cancelled" }` |
 `404` | `409` (job đã ở trạng thái cuối).

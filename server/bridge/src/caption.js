@@ -16,6 +16,7 @@ const fs = require("fs");
 const os = require("os");
 const { spawn } = require("child_process");
 const { redactStderr } = require("./errorDetail"); // Đợt 29 L3: tail lỗi phải redact trước khi ra API
+const { codedError } = require("./errorCodes"); // Đợt 62 R5: mã lỗi bridge→web
 
 /**
  * Whitelist ngôn ngữ — caption.py chỉ nhận mã ISO ngắn; whitelist chặn
@@ -52,8 +53,10 @@ function validateLang(raw) {
   const s = String(raw ?? "").trim();
   const lang = (s || DEFAULT_LANG).toLowerCase();
   if (!CAPTION_LANGS.includes(lang)) {
-    throw new Error(
-      `Ngôn ngữ không hỗ trợ: "${raw}". Chọn một trong: ${CAPTION_LANGS.join(", ")}.`
+    throw codedError(
+      "UNSUPPORTED_LANG",
+      `Ngôn ngữ không hỗ trợ: "${raw}". Chọn một trong: ${CAPTION_LANGS.join(", ")}.`,
+      { lang: raw, langs: CAPTION_LANGS.join(", ") },
     );
   }
   return lang;
@@ -106,9 +109,11 @@ function validateTranslateTarget(raw) {
   const s = String(raw ?? "").trim();
   const target = (s || DEFAULT_TRANSLATE_TARGET).toLowerCase();
   if (!TRANSLATE_TARGET_LANGS.includes(target)) {
-    throw new Error(
+    throw codedError(
+      "UNSUPPORTED_TARGET_LANG",
       `Ngôn ngữ đích chưa hỗ trợ: "${raw}". Hiện chỉ hỗ trợ: ${TRANSLATE_TARGET_LANGS.join(", ")} ` +
-      `(giới hạn của faster-whisper translate task).`
+      `(giới hạn của faster-whisper translate task).`,
+      { lang: raw, langs: TRANSLATE_TARGET_LANGS.join(", ") },
     );
   }
   return target;

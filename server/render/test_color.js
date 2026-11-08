@@ -79,7 +79,10 @@ const lut = require("./src/lut");
   eq(lut.validateVideoFilter({ color: { brightness: 20 } }).length, 0, "filter.color hợp lệ");
   ok("filter.color sai → lỗi", lut.validateVideoFilter({ color: { brightness: 999 } }).length > 0);
   ok("isColorNoop", lut.isColorNoop({}) && lut.isColorNoop(undefined) && !lut.isColorNoop({ brightness: 1 }));
-  eq(lut.LUT_IDS.length, 154, "catalog 154 LUT");
+  // Đợt 52 I7: catalog đã lên 174 LUT từ Phase 8 Q4 (154→174); kỳ vọng cũ
+  // 154 là số lỗi thời — test từng fail "nhận 174, muốn 154" dù catalog
+  // đúng (khớp lut.ts và video-spec lut.js, checker mirror khóa lại).
+  eq(lut.LUT_IDS.length, 174, "catalog 174 LUT");
 }
 
 // ---- B. Parity JS vs TS ----

@@ -61,6 +61,7 @@ chmod +x "$STUB"
 log "== [1] Khởi động bridge (port $PORT, CAPTION_PY=stub) =="
 cd "$BRIDGE_DIR"
 CAPTION_PY="$STUB" BRIDGE_PORT="$PORT" BRIDGE_RATE_GENERAL=1000 BRIDGE_RATE_RENDER=1000 \
+  BRIDGE_RATE_PERSIST_PATH="$WORKDIR/rate-limit.json" \
   node src/index.js > "$WORKDIR/bridge.log" 2>&1 &
 BRIDGE_PID=$!
 for i in $(seq 1 40); do
@@ -122,6 +123,7 @@ log "   (restart bridge với CAPTION_STUB_FAIL=1 — stub kế thừa env từ 
 kill "$BRIDGE_PID" 2>/dev/null || true
 wait "$BRIDGE_PID" 2>/dev/null || true
 CAPTION_PY="$STUB" CAPTION_STUB_FAIL=1 BRIDGE_PORT="$PORT" BRIDGE_RATE_GENERAL=1000 BRIDGE_RATE_RENDER=1000 \
+  BRIDGE_RATE_PERSIST_PATH="$WORKDIR/rate-limit.json" \
   node src/index.js > "$WORKDIR/bridge-fail.log" 2>&1 &
 BRIDGE_PID=$!
 for i in $(seq 1 40); do

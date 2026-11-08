@@ -278,6 +278,7 @@ if (require.main === module) {
 
 module.exports = {
   STABILIZE_DEFAULTS,
+  normStabParam, // đợt 62 R2: trfCache dùng để chuẩn hoá tham số detect trong key
   validateEnhance,
   hasStabilize,
   hasEnhance,

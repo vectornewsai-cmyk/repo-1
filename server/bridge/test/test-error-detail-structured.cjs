@@ -27,6 +27,9 @@
  *    stderr vẫn [FFMPEG_ERROR] như cũ, không nhắc summaryKey.
  *  - [g] MCP thật (dist đã build): buildRenderErrorDetail qua dist
  *    trả summaryKey/params như CLI.
+ *  - [h] Đợt 63 R5: dòng VCUT_VALIDATION_JSON cuối stderr → tách ra
+ *    thành validationDetails + validationDetailsOmitted (đã redact),
+ *    không làm lệch phân loại cũ, không lọt JSON vào details/tail.
  *
  * Test chỉ in nhãn pass/fail, KHÔNG in lại giá trị secret mẫu hay
  * đường dẫn tuyệt đối của máy test.
@@ -242,8 +245,13 @@ function main() {
     const en = JSON.parse(fs.readFileSync(path.join(root, "apps/web/src/i18n/en.json"), "utf8"));
     const viMap = flatten(vi);
     const enMap = flatten(en);
-    eq(viMap.size, 931, "vi có 931 key lá (918 + 13 mới)");
-    eq(enMap.size, 931, "en có 931 key lá (918 + 13 mới)");
+    // Đợt 63 R5: dict đã lên 2283 key lá (2146 + 131 key fragment đợt 63 − 1 key chết speed.warnTooShort − 1 key jobNote chưa có UI + 7 key fragment đợt 64 + 1 key parent; 2044 + 91 mã bridge đợt 62 R5
+    // + 11 key khác do các luồng đợt 63 gộp trước). Khóa P7 ở
+    // i18nAudit59P7 mới là khóa chính; số này có thể dịch nếu luồng
+    // khác gộp key vào dict trong lúc test chạy — cập nhật theo số
+    // thực tế lúc chạy, không sửa khóa P7.
+    eq(viMap.size, 2326, "vi có 2326 key lá (khóa P7 + 102 mã bridge)");
+    eq(enMap.size, 2326, "en có 2326 key lá (khóa P7 + 102 mã bridge)");
     const onlyVi = [...viMap.keys()].filter((k) => !enMap.has(k));
     const onlyEn = [...enMap.keys()].filter((k) => !viMap.has(k));
     eq(onlyVi, [], "0 key chỉ có ở vi");
@@ -335,8 +343,10 @@ function main() {
   {
     const bwork = fs.mkdtempSync(path.join(os.tmpdir(), "q4-bridge-"));
     const port = 8934;
+    // Đợt 66 T9 — persist riêng (bwork): không dùng file mặc định ~/.cache/vcut/rate-limit.json,
+    // tránh rò mốc limiter sang test khác (bài học đợt 65 §3b).
     const server = spawn("node", [path.join(root, "server/bridge/src/index.js")], {
-      env: { ...process.env, BRIDGE_PORT: String(port), BRIDGE_WORK_DIR: bwork },
+      env: { ...process.env, BRIDGE_PORT: String(port), BRIDGE_WORK_DIR: bwork, BRIDGE_RATE_PERSIST_PATH: path.join(bwork, "rate-limit.json") },
       stdio: "ignore",
     });
     try {
@@ -435,6 +445,71 @@ function main() {
       eq(out && out.key, "speedCurveViolation", "MCP dist: buildRenderErrorDetail trả summaryKey");
       eq(out && out.params, FIXTURES[0].params, "MCP dist: buildRenderErrorDetail trả summaryParams");
     }
+  }
+
+  console.log("== [h] Đợt 63 R5: validationDetails qua buildErrorDetail ==");
+  {
+    // Dòng JSON validation do render.js in cuối stderr khi spec/media
+    // fail — buildErrorDetail phải tách ra, parse, redact, đếm omitted,
+    // và KHÔNG để JSON lọt vào details/redactedTail hay làm lệch
+    // phân loại cũ.
+    // Định dạng human lines THẬT của render.js khi spec fail (khóa ở
+    // fixture "spec chung" mục [a]): "❌ Spec không hợp lệ (N lỗi):"
+    // + "  1. [where] detail" — không có tiền tố [FFMPEG_ERROR].
+    const mkStderr = (entries, omitted = 0, extra = "") => {
+      const human = [
+        "❌ Spec không hợp lệ (2 lỗi):",
+        '  1. [tracks[0].clips[0]] "start" phải là số >= 0, nhận được: -1',
+      ].join("\n");
+      const payload = JSON.stringify({ errors: entries, warnings: [], omitted });
+      return `${extra ? extra + "\n" : ""}${human}\nVCUT_VALIDATION_JSON ${payload}`;
+    };
+    const entries = [
+      { where: "tracks[0].clips[0]", code: "NUMBER_MIN_0", params: { detail: '"start" phải là số >= 0, nhận được: -1', field: "start", got: "-1" } },
+      { where: "tracks[0].clips[0]", code: "VALIDATION_DETAIL", params: { detail: 'mask "m" không hợp lệ' } },
+    ];
+    const d = buildErrorDetail({ stderr: mkStderr(entries), exitCode: 1 });
+    eq(d.summaryKey, "specValidation", "[h] JSON validation không làm lệch phân loại SPEC_VALIDATION");
+    eq(d.validationDetails.length, 2, "[h] validationDetails đủ 2 entries");
+    eq(d.validationDetails[0].code, "NUMBER_MIN_0", "[h] entry 0 giữ code");
+    eq(d.validationDetails[0].params.field, "start", "[h] entry 0 giữ param rời");
+    eq(d.validationDetailsOmitted, 0, "[h] omitted 0 khi đủ entries");
+    ok(!d.details.join(" ").includes("VCUT_VALIDATION_JSON"), "[h] details không lọt JSON");
+    ok(!d.redactedTail.includes("VCUT_VALIDATION_JSON"), "[h] redactedTail không lọt JSON");
+    // omitted: payload báo 3 lược nhưng chỉ gửi 2 entries.
+    const d2 = buildErrorDetail({ stderr: mkStderr(entries, 3), exitCode: 1 });
+    eq(d2.validationDetailsOmitted, 3, "[h] omitted đếm đúng số lược");
+    // Redact: đường dẫn tuyệt đối trong params → basename.
+    const d3 = buildErrorDetail({ stderr: mkStderr([
+      { where: "clip \"c1\" (src: /home/u/x/clip.mp4)", code: "MEDIA_FILE_NOT_FOUND", params: { detail: 'không tìm thấy file "/home/u/x/clip.mp4"', file: "/home/u/x/clip.mp4" } },
+    ]), exitCode: 1 });
+    eq(d3.validationDetails[0].params.file, "<path>/clip.mp4", "[h] param file redact thành basename");
+    ok(JSON.stringify(d3).indexOf("/home/u") === -1, "[h] không lọt home dir vào validationDetails");
+    // Entry hỏng hình dạng → bỏ, không vỡ phân loại.
+    const d4 = buildErrorDetail({ stderr: mkStderr([
+      { where: "tracks[0]", code: "bad-code!", params: { detail: "x" } },
+      { where: "tracks[0]", code: "NUMBER_MIN_0", params: { detail: "y", field: "start" } },
+      "không phải object",
+    ]), exitCode: 1 });
+    eq(d4.validationDetails.length, 1, "[h] entry hỏng hình dạng bị bỏ, entry tốt còn lại");
+    eq(d4.validationDetails[0].code, "NUMBER_MIN_0", "[h] entry tốt còn nguyên code");
+    // JSON hỏng: phân loại cũ vẫn chạy, validationDetails rỗng.
+    const d5 = buildErrorDetail({ stderr: "[FFMPEG_ERROR] không tìm thấy file\nVCUT_VALIDATION_JSON {không phải json", exitCode: 1 });
+    // "không tìm thấy file" không kèm tên asset → missingAssetRaw
+    // (missingAsset chỉ khi có tên asset — xem fixture mục [a]).
+    eq(d5.summaryKey, "missingAssetRaw", "[h] JSON hỏng: phân loại cũ vẫn chạy");
+    eq(d5.validationDetails, [], "[h] JSON hỏng: validationDetails rỗng");
+    eq(d5.validationDetailsOmitted, 0, "[h] JSON hỏng: omitted 0");
+    ok(!d5.redactedTail.includes("VCUT_VALIDATION_JSON"), "[h] JSON hỏng: tail không lọt JSON");
+    // Không có JSON: field mới luôn có mặt, rỗng.
+    const d6 = buildErrorDetail({ stderr: "lỗi thường, không có JSON", exitCode: 1 });
+    eq(d6.validationDetails, [], "[h] không JSON → validationDetails []");
+    eq(d6.validationDetailsOmitted, 0, "[h] không JSON → omitted 0");
+    // JSON-only (không có dòng human): không bị phân loại sai thành
+    // MISSING_ASSET vì chuỗi JSON chứa "không tìm thấy file".
+    const d7 = buildErrorDetail({ stderr: "VCUT_VALIDATION_JSON " + JSON.stringify({ errors: entries, warnings: [], omitted: 0 }), exitCode: 1 });
+    ok(d7.summaryKey !== "missingAsset", "[h] JSON-only không phân loại sai missingAsset");
+    eq(d7.validationDetails.length, 2, "[h] JSON-only vẫn parse đủ entries");
   }
 
   console.log(`\n== KẾT QUẢ: ${pass} pass, ${fail} fail ==`);

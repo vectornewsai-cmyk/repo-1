@@ -32,6 +32,7 @@ function publicJob(j, includeDetail) {
     finishedAt: j.finishedAt,
     recovered: !!j.recovered,
     note: j.note,
+    noteCode: j.noteCode || null, // Đợt 63 R5: mã ổn định cho note phục hồi
     qaReport: j.qaReport || null, // R1-043: chi tiết kiểm tra output
   };
   // L3: detail đã redact chỉ đi ra khi caller xin tường minh.

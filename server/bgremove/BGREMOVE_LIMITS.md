@@ -121,7 +121,7 @@ các frame, không giật.
       fallback tự động, xem 2.1)
 - [ ] Progress bar thời gian thực ở UI (endpoint hiện đồng bộ, UI chỉ hiện
       "đang chạy")
-- [ ] Hủy job giữa chừng từ UI (AbortController có ở client nhưng bridge
-      không nhận signal hủy — job vẫn chạy nền tới timeout)
+- [ ] Huỷ job giữa chừng từ UI (AbortController có ở client nhưng bridge
+      không nhận signal huỷ — job vẫn chạy nền tới timeout)
 - [ ] Cache model trong bridge (mỗi request spawn process mới, load lại model)
 - [ ] Hỗ trợ GPU (onnxruntime-gpu) — code hiện CPU-only

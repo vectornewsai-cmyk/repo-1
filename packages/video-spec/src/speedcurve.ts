@@ -54,9 +54,29 @@ export interface SpeedCurve {
   keyframes: SpeedKeyframe[];
 }
 
-/** Sắp xếp theo t tăng dần; trùng t thì keyframe đứng sau thắng. */
+function isFiniteNumber(x: unknown): x is number {
+  return typeof x === "number" && Number.isFinite(x);
+}
+
+/**
+ * Sắp xếp theo t tăng dần; trùng t thì keyframe đứng sau thắng.
+ *
+ * Đợt 51 H5 (nợ F1 §7.2): loại entry lỗi (null / không phải object /
+ * t hoặc v không phải số hữu hạn) TRƯỚC khi sort — cùng mẫu
+ * `normalizeKeyframes` ở đợt 50 F1. Sort comparator `a.t` ném TypeError
+ * khó hiểu với `[null]`; sau lọc, mảng rỗng vẫn bị `speedAt` /
+ * `integrateSpeed` ném lỗi rõ "mảng keyframes rỗng" như contract cũ.
+ * Mirror y hệt trong `speedcurve.js` và `server/render/src/speedramp.js`.
+ */
 export function normalizeSpeedKeyframes(kfs: SpeedKeyframe[]): SpeedKeyframe[] {
-  const sorted = [...kfs].sort((a, b) => a.t - b.t);
+  const clean = (Array.isArray(kfs) ? kfs : []).filter(
+    (k): k is SpeedKeyframe =>
+      !!k &&
+      typeof k === "object" &&
+      isFiniteNumber((k as SpeedKeyframe).t) &&
+      isFiniteNumber((k as SpeedKeyframe).v),
+  );
+  const sorted = [...clean].sort((a, b) => a.t - b.t);
   const out: SpeedKeyframe[] = [];
   for (const k of sorted) {
     const last = out[out.length - 1];
@@ -105,7 +125,10 @@ export function cubicBezierY(
   return sampleY(t);
 }
 
-/** Áp easing cho tiến trình p (đã clamp về [0, 1] bên trong). */
+/** Áp easing cho tiến trình p (đã clamp về [0, 1] bên trong).
+ * @throws nếu easing không hỗ trợ (đợt 52 I7: thống nhất mirror — trước
+ * đây bản TS trả undefined → NaN, hai bản JS ném; nay cả 3 mirror đều
+ * ném cùng message, caller preview đã guard). */
 export function applySpeedEasing(
   easing: SpeedEasing,
   p: number,
@@ -123,6 +146,8 @@ export function applySpeedEasing(
       const b = bezier ?? DEFAULT_SPEED_BEZIER;
       return cubicBezierY(b[0], b[1], b[2], b[3], c);
     }
+    default:
+      throw new Error(`easing không hỗ trợ: ${easing}`);
   }
 }
 
@@ -317,6 +342,19 @@ export function trimSpeedKeyframes(
   let changed = false;
   const kept: SpeedKeyframe[] = [];
   for (const k of kfs) {
+    // Đợt 51 H5: bỏ entry lỗi (null / t hoặc v không hữu hạn) ngay ở đây
+    // thay vì ném TypeError ở `k.t` — cùng predicate với
+    // normalizeSpeedKeyframes; entry lỗi đếm vào `dropped`.
+    if (
+      !k ||
+      typeof k !== "object" ||
+      !isFiniteNumber(k.t) ||
+      !isFiniteNumber(k.v)
+    ) {
+      dropped++;
+      changed = true;
+      continue;
+    }
     let t = k.t - shift;
     if (t < -EPS || t > newDuration + EPS) {
       dropped++;

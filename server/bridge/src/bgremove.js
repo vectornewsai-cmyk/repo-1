@@ -18,6 +18,7 @@
  */
 
 const path = require("path");
+const { codedError } = require("./errorCodes"); // Đợt 62 R5: mã lỗi bridge→web
 const fs = require("fs");
 const { spawn } = require("child_process");
 const { redactStderr } = require("./errorDetail"); // Đợt 29 L3
@@ -52,13 +53,15 @@ function validateSession(raw) {
   const s = String(raw ?? DEFAULT_SESSION).trim().toLowerCase() || DEFAULT_SESSION;
   if (s === "auto") return "auto";
   if (FORBIDDEN_SESSIONS.has(s)) {
-    throw new Error(
+    throw codedError(
+      "BGREMOVE_SESSION_FORBIDDEN",
       `Session "${raw}" BỊ CẤM: weights non-commercial, không được dùng. ` +
-      `Dùng "${DEFAULT_SESSION}" (MIT).`
+      `Dùng "${DEFAULT_SESSION}" (MIT).`,
+      { session: raw, fallback: DEFAULT_SESSION },
     );
   }
   if (!/^[a-z0-9_-]+$/.test(s)) {
-    throw new Error(`Tên session không hợp lệ: "${raw}".`);
+    throw codedError("BGREMOVE_SESSION_INVALID", `Tên session không hợp lệ: "${raw}".`, { value: raw });
   }
   return s;
 }
@@ -70,7 +73,7 @@ function validateTemporal(raw) {
   if (raw === undefined || raw === null || raw === "") return 0.4;
   const v = Number(raw);
   if (!Number.isFinite(v) || v < 0 || v > 0.9) {
-    throw new Error(`Tham số temporal không hợp lệ: "${raw}" (phải trong [0, 0.9]).`);
+    throw codedError("BGREMOVE_TEMPORAL_INVALID", `Tham số temporal không hợp lệ: "${raw}" (phải trong [0, 0.9]).`, { value: raw });
   }
   return v;
 }
@@ -79,7 +82,7 @@ function validateFeather(raw) {
   if (raw === undefined || raw === null || raw === "") return 1;
   const v = Number(raw);
   if (!Number.isInteger(v) || v < 0 || v > 8) {
-    throw new Error(`Tham số feather không hợp lệ: "${raw}" (phải là số nguyên trong [0, 8]).`);
+    throw codedError("BGREMOVE_FEATHER_INVALID", `Tham số feather không hợp lệ: "${raw}" (phải là số nguyên trong [0, 8]).`, { value: raw });
   }
   return v;
 }

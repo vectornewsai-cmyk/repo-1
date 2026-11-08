@@ -143,13 +143,16 @@ function main() {
       ["tts/clone", "TTS clone thất bại."],
     ];
     for (const [name, fallback] of routes) {
-      ok(idx.includes(`taskErrorPayload(e, "${fallback}")`), `${name} dùng taskErrorPayload`);
+      // Đợt 63 R5: call site giờ có tham số thứ 3 là mã TASK_* (vd
+      // "TASK_CAPTION_FAILED") — kiểm tra dạng 3 tham số; mã cụ thể
+      // được khóa ở test-bridge-error-protocol.cjs mục [4] (F).
+      ok(idx.includes(`taskErrorPayload(e, "${fallback}", "TASK_`), `${name} dùng taskErrorPayload (3 tham số, mã TASK_*)`);
     }
     // Đợt 30 M3: /api/proxy đã bọc taskErrorPayload — không còn catch
     // 500 nào trả e.message thô (trước đây proxy là ngoại lệ duy nhất).
     const rawTaskErrors = (idx.match(/res\.status\(500\)\.json\(\{ error: e\.message/g) || []).length;
     ok(rawTaskErrors === 0, `không còn catch 500 e.message thô, đếm được ${rawTaskErrors}`);
-    ok(idx.includes('taskErrorPayload(e, "Tạo proxy thất bại.")'), "/api/proxy dùng taskErrorPayload");
+    ok(idx.includes('taskErrorPayload(e, "Tạo proxy thất bại.", "TASK_'), "/api/proxy dùng taskErrorPayload (3 tham số, mã TASK_*)");
     ok(idx.includes('req.query.detail === "1"') && idx.includes("/api/proxy"),
       "/api/proxy chỉ kèm errorDetail khi ?detail=1");
   }
@@ -177,8 +180,14 @@ function main() {
     ok(panel.includes('t("exportPanel.errorDetailTitle"') && panel.includes("renderErrorDetail.code") && panel.includes("localizedErrorSummary(renderErrorDetail"),
       "UI hiển thị mã + summary detail (qua localizedErrorSummary)");
     ok(panel.includes("detailsOmitted"), "UI hiển thị số dòng đã lược");
-    // error cũ vẫn là mặc định: setRenderError vẫn lấy data.error trước.
-    ok(panel.includes('setRenderError(data.error || "Render thất bại (không rõ lý do).")'),
+    // error cũ vẫn là mặc định: poll lấy data.error trước.
+    // Đợt 62 R5: poll nay đi qua resolveBridgeApiError(data, t,
+    // t("errorDetail.summary.unknown"), { useErrorDetailSummary: false })
+    // — mã bridgeErrors (vd job phục hồi sau restart) thì dịch, còn lại
+    // vẫn trả data.error (detail panel đã hiển thị summary nên dòng chính
+    // không dịch summary lần nữa). Fallback giữ nguyên.
+    ok(panel.includes('resolveBridgeApiError(data, t, t("errorDetail.summary.unknown")') &&
+      panel.includes("useErrorDetailSummary: false"),
       "error cũ vẫn làm mặc định");
     ok(/from "\.\/.*i18n/.test(panel) || panel.includes("exportPanel.errorDetailTitle"),
       "chuỗi errorDetail đã qua i18n (đợt 30 M4, thay chuỗi cứng tạm của L3)");

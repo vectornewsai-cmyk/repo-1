@@ -51,7 +51,7 @@ curl -OJ http://127.0.0.1:8787/api/render/a1b2c3d4e5f6/download
 # Liệt kê job (mới nhất trước)
 curl "http://127.0.0.1:8787/api/render?limit=10"
 
-# Hủy job đang chạy/chờ
+# Huỷ job đang chạy/chờ
 curl -X DELETE http://127.0.0.1:8787/api/render/a1b2c3d4e5f6
 # → {"ok":true,"id":"...","status":"cancelled"}
 
@@ -179,7 +179,7 @@ curl -X POST http://127.0.0.1:8787/api/scene \
 |-----|---------|
 | 400 | Tham số sai (thiếu file, sai định dạng, ngưỡng ngoài khoảng, session bị cấm…) |
 | 404 | Không tìm thấy (job id sai, API không tồn tại) |
-| 409 | Xung đột trạng thái (tải file khi job chưa xong, hủy job đã kết thúc) |
+| 409 | Xung đột trạng thái (tải file khi job chưa xong, huỷ job đã kết thúc) |
 | 413 | Spec render > 10MB |
 | 429 | Hàng đợi render đầy / vượt rate limit |
 | 500 | Lỗi máy chủ (chi tiết trong log server, không leak ra client) |

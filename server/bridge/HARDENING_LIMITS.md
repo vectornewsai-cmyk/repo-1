@@ -4,11 +4,21 @@
 
 ## Đã làm
 
-### 1. Rate limiting (in-memory, theo IP)
+### 1. Rate limiting (sliding-window theo IP + global cap + persist)
 - `RATE_MAX_GENERAL` (mặc định 120 req/phút/IP) cho mọi `/api/`
 - `RATE_MAX_RENDER` (mặc định 20 req/phút/IP) riêng cho `POST /api/render`
-- Fixed window 60s; trả `429` + header `Retry-After`, `X-RateLimit-Limit/Remaining`
-- Điều chỉnh qua `BRIDGE_RATE_GENERAL`, `BRIDGE_RATE_RENDER`
+- Sliding window 60s (đợt 64 R7 — thay fixed window, hết burst 2×max quanh biên);
+  trả `429` + header `Retry-After`, `X-RateLimit-Limit/Remaining`
+- **Global cap (đợt 65 S5):** tổng mọi scope + mọi IP ≤ `BRIDGE_RATE_GLOBAL`
+  (mặc định 600 req/phút); header mới `X-RateLimit-Global-Remaining`
+- **Persist (đợt 65 S5):** trạng thái limiter lưu đĩa
+  `~/.cache/vcut/rate-limit.json`, nạp lại khi khởi động, lưu định kỳ 5s +
+  lúc tắt graceful (SIGINT/SIGTERM); mốc hết hạn không hồi sinh
+- Điều chỉnh qua `BRIDGE_RATE_GENERAL`, `BRIDGE_RATE_RENDER`,
+  `BRIDGE_RATE_WINDOW_MS` (mặc định 60000), `BRIDGE_RATE_GLOBAL` (600),
+  `BRIDGE_RATE_PERSIST_PATH`, `BRIDGE_RATE_PERSIST_MS` (5000),
+  `BRIDGE_RATE_SWEEP_MS` (mặc định = cửa sổ); env sai (NaN/0/âm) rơi về
+  mặc định + cảnh báo lúc khởi động (đợt 64 R7)
 
 ### 2. Dọn file tạm
 - Job hết hạn (TTL 1h, quét mỗi 5 phút): kill process + xoá thư mục — đã có từ trước
@@ -56,8 +66,12 @@ chạy các case tấn công/lỗi cơ bản, tắt server.
 
 ## Giới hạn còn lại (trung thực)
 
-1. **Rate limit in-memory**: restart server là mất; không chia sẻ giữa nhiều instance
-   (bridge chạy local 1 instance nên chấp nhận được).
+1. **Rate limit không chia sẻ giữa nhiều instance** (bridge chạy local 1
+   instance nên chấp nhận được); persist chỉ cứu restart cùng máy, không
+   đồng bộ giữa 2 bridge cùng chạy (mỗi instance ghi đè file của nhau).
+   `kill -9`/crash mất tối đa 5s mốc chưa kịp lưu định kỳ (chỉ flush khi tắt
+   graceful); IPv4 ↔ IPv6-mapped (`::ffff:127.0.0.1`) vẫn tính 2 bucket khác
+   nhau (quirk cũ từ trước, xem LIMITS đợt 64 R7 §6.2).
 2. **Không có auth**: bridge bind `0.0.0.0`? — hiện `app.listen(PORT)` bind mọi interface.
    Trên máy cá nhân OK, nhưng nếu mở firewall thì ai trong LAN cũng gọi được.
    Khuyến nghị: bind `127.0.0.1` khi production hoá (chưa đổi để không phá UI hiện tại).

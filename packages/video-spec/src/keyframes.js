@@ -42,7 +42,10 @@ export const ANIMATABLE_PROPS = [
 // ---------------------------------------------------------------------------
 // Nội suy
 // ---------------------------------------------------------------------------
-/** Áp easing cho tiến trình p (đã clamp về [0,1] bên trong). */
+/** Áp easing cho tiến trình p (đã clamp về [0,1] bên trong).
+ * Đợt 52 I7: thống nhất mirror — trước đây bản này (như bản TS) trả
+ * undefined với easing lạ, nay ném như render keyframes.js và
+ * speedcurve.js, cùng message. */
 export function applyEasing(easing, p) {
     const c = Math.min(1, Math.max(0, p));
     switch (easing) {
@@ -52,6 +55,8 @@ export function applyEasing(easing, p) {
             return c * c;
         case "ease-out":
             return 1 - (1 - c) * (1 - c);
+        default:
+            throw new Error(`easing không hỗ trợ: ${easing}`);
     }
 }
 /**

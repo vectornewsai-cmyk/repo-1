@@ -15,7 +15,7 @@ bad()  { FAIL=$((FAIL+1)); echo "  FAIL: $1"; }
 ffmpeg -v error -f lavfi -i testsrc2=duration=1:size=320x180:rate=10 -c:v libx264 -pix_fmt yuv420p "$WORK/sample.mp4"
 [ -s "$WORK/sample.mp4" ] || { echo "không tạo được sample.mp4"; exit 1; }
 
-BRIDGE_WORK_DIR="$WORK/jobs" BRIDGE_MAX_TOTAL_UPLOAD=104857600 BRIDGE_PORT=$PORT node src/index.js >/tmp/k4-bridge.log 2>&1 &
+BRIDGE_WORK_DIR="$WORK/jobs" BRIDGE_MAX_TOTAL_UPLOAD=104857600 BRIDGE_PORT=$PORT BRIDGE_RATE_PERSIST_PATH="$WORK/jobs/rate-limit-$$.json" node src/index.js >/tmp/k4-bridge.log 2>&1 &
 BPID=$!
 trap 'kill $BPID 2>/dev/null; rm -rf "$WORK"' EXIT
 for i in $(seq 1 30); do curl -s "http://127.0.0.1:$PORT/api/health" | grep -q '"ok":true' && break; sleep 1; done
@@ -42,7 +42,7 @@ TMPLEFT2=$(find "$WORK/jobs/uploads-tmp" -type f 2>/dev/null | wc -l)
 
 # 3. Cap tổng: restart bridge với cap 100KB, upload sample (~vài chục KB? kiểm tra) + 2 file lớn hơn cap
 kill $BPID 2>/dev/null; sleep 1
-BRIDGE_WORK_DIR="$WORK/jobs2" BRIDGE_MAX_TOTAL_UPLOAD=102400 BRIDGE_PORT=$PORT node src/index.js >/tmp/k4-bridge2.log 2>&1 &
+BRIDGE_WORK_DIR="$WORK/jobs2" BRIDGE_MAX_TOTAL_UPLOAD=102400 BRIDGE_PORT=$PORT BRIDGE_RATE_PERSIST_PATH="$WORK/jobs2/rate-limit-$$.json" node src/index.js >/tmp/k4-bridge2.log 2>&1 &
 BPID=$!
 for i in $(seq 1 30); do curl -s "http://127.0.0.1:$PORT/api/health" | grep -q '"ok":true' && break; sleep 1; done
 SZ=$(stat -c%s "$WORK/sample.mp4")

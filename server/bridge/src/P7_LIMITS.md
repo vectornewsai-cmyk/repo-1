@@ -18,7 +18,7 @@
     `interrupted` (trạng thái terminal mới, retry được). Partial `output.mp4`
     bị xóa để tránh phục vụ file dở dang (download chỉ cho status `done`).
   - Job cancelled vẫn bị xóa thư mục (như cũ) → không khôi phục được, đúng
-    với ý nghĩa "hủy".
+    với ý nghĩa "huỷ".
 
 ## Khôi phục sau restart (`recover()`)
 

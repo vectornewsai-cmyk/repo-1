@@ -1,12 +1,37 @@
 # server/bgremove — xoá nền local (rembg MIT + birefnet-general MIT)
-# K4 (Phase 6): pin == theo version đã biết tương thích.
-# LƯU Ý TRUNG THỰC: bgremove hiện KHÔNG còn venv để freeze (venv cũ đã bị
-# dọn). Các pin dưới là version đã verify chạy được ở Batch H (rembg 2.0.38)
-# và version đang chạy tốt ở service reframe trên cùng máy này
-# (opencv 5.0.0.93, numpy 2.5.4) + Pillow 10.2.0 có sẵn trong môi trường.
-# Trước khi dùng cho release, chạy: pip install -r requirements.txt trong
-# venv mới và chạy test_bgremove.py để xác nhận lại.
-rembg[cpu]==2.0.38
+# Venv này chạy bằng Python 3.10 (xem dưới) — KHÔNG dùng system Python 3.12.
+#
+# ROUND53-J8 (07/11/2026) — bộ pin đã verify chạy thật trên VM này
+# (venv server/bgremove/.venv, Python 3.10.22 qua `uv python install 3.10`):
+#   uv venv --python 3.10 server/bgremove/.venv
+#   uv pip install --python server/bgremove/.venv/bin/python -r requirements.txt
+#   (đặt TMPDIR sang đĩa lớn — /tmp trên VM chỉ là tmpfs 512M, uv giải
+#   nén wheel llvmlite 57M sẽ chết vì hết chỗ.)
+#
+# rembg 2.0.38 → 2.0.60 (LÝ DO, có bằng chứng — xem LIMITS J8):
+#   * rembg 2.0.38 KHÔNG có session BiRefNet nào (wheel không chứa
+#     sessions/birefnet*.py); new_session('birefnet-general') lặng lẽ trả
+#     về U2netSession — tức "birefnet-general" trên pin K4 thực chất
+#     chạy u2net. Kiểm chứng bằng source đã cài + wheel trên PyPI.
+#   * rembg 2.0.60 là bản ĐẦU TIÊN có sessions/birefnet_general.py
+#     (BiRefNetSessionGeneral, tải BiRefNet-general-epoch_244.onnx,
+#     md5 7a35a0141cbbc80de11d9c9a28f52697) và vẫn cho Python 3.10
+#     (requires_python '>=3.8, <3.13').
+#   * Extra `[cpu]` BẮT BUỘC ở 2.0.60 (đính chính): ở 2.0.38 onnxruntime
+#     là dep lõi, nhưng 2.0.60 dời onnxruntime sang extra `cpu`
+#     (Requires-Dist: onnxruntime; extra == "cpu"); cài plain `rembg`
+#     bằng pip sẽ THIẾU onnxruntime → `import rembg` lỗi ngay (đã gặp
+#     thật ở --fresh của build-slim-venv.mjs, xem LIMITS J8). Pin thêm
+#     onnxruntime==1.23.2 tường minh để khóa version (extra kéo bản mới
+#     nhất, có thể đổi).
+# numpy 2.5.4 → 2.2.6: numpy 2.5.4 yêu cầu Python >=3.12 nên uv từ chối
+#   giải trên Python 3.10; 2.2.6 là bản uv resolve được cho 3.10.
+# opencv 5.0.0.93 + Pillow 10.2.0 giữ nguyên pin cũ (resolve được trên 3.10).
+# Các dep kéo theo (đã freeze trong venv, xem LIMITS J8): pooch 1.9.0,
+# pymatting 1.1.16, numba 0.68.1, scikit-image 0.25.2, scipy 1.15.3.
+# Venv ~706M (cây pymatting/numba/llvmlite nặng).
+rembg[cpu]==2.0.60
+onnxruntime==1.23.2
 opencv-python-headless==5.0.0.93
-numpy==2.5.4
+numpy==2.2.6
 Pillow==10.2.0

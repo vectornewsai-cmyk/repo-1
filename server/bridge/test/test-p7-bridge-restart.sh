@@ -47,6 +47,7 @@ EOF
 
 start_bridge() {
   BRIDGE_PORT=$PORT BRIDGE_MAX_JOBS=1 BRIDGE_WORK_DIR="$WORK/jobs" \
+    BRIDGE_RATE_PERSIST_PATH="$WORK/jobs/rate-limit-$$.json" \
     node "$BRIDGE_DIR/src/index.js" > "$WORK/bridge-$1.log" 2>&1 &
   BRIDGE_PID=$!
   for _ in $(seq 1 30); do

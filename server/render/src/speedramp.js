@@ -102,8 +102,28 @@ function ffNum(x) {
   return String(Math.round(x * 1e6) / 1e6);
 }
 
+function isFiniteNumber(x) {
+  return typeof x === "number" && Number.isFinite(x);
+}
+
+/**
+ * Sắp xếp speed keyframe theo t tăng dần; trùng t thì keyframe đứng sau thắng.
+ * Không mutate mảng gốc.
+ *
+ * Đợt 51 H5 (nợ F1 §7.2): loại entry lỗi (null / không phải object /
+ * t hoặc v không phải số hữu hạn) TRƯỚC khi sort — cùng mẫu
+ * `normalizeKeyframes` ở đợt 50 F1 (server/render/src/keyframes.js).
+ * Sort comparator `a.t` ném TypeError khó hiểu với `[null]`; sau lọc,
+ * mảng rỗng vẫn bị `speedAt` / `integrateSpeed` ném lỗi rõ
+ * "mảng keyframes rỗng" như contract cũ. Mirror y hệt
+ * `normalizeSpeedKeyframes` trong packages/video-spec/src/speedcurve.ts
+ * và speedcurve.js.
+ */
 function normalizeSpeedKeyframes(kfs) {
-  const sorted = [...kfs].sort((a, b) => a.t - b.t);
+  const clean = (Array.isArray(kfs) ? kfs : []).filter(
+    (k) => !!k && typeof k === "object" && isFiniteNumber(k.t) && isFiniteNumber(k.v),
+  );
+  const sorted = [...clean].sort((a, b) => a.t - b.t);
   const out = [];
   for (const k of sorted) {
     const last = out[out.length - 1];
@@ -401,7 +421,7 @@ function buildSpeedRampVideo(streamRef, clip, opts) {
   // 1/1000000) → xfade từ chối vì 2 đầu vào lệch timebase. fps sau concat
   // khôi phục CFR 1/fps.
   // Có interpolation: KHÔNG thêm fps sau concat — minterpolate (đầu post)
-  // chính là bước quyết CFR ở fps project; thêm fps nữa sẽ hủy tác dụng
+  // chính là bước quyết CFR ở fps project; thêm fps nữa sẽ huỷ tác dụng
   // nội suy (và gây đen frame cuối như đã đo ở vị trí cuối chain).
   let cfrLabel;
   if (hasInterp) {

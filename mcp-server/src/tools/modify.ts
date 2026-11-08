@@ -9,6 +9,29 @@ import { ValidationError } from "../validate.js";
 import { loadProject } from "../store.js";
 import { fail, findClip, handleError, mutateProject, ok, projectIdSchema } from "./common.js";
 
+/**
+ * Input của tool add_keyframe, tách riêng để test được trực tiếp
+ * (mcp-server/src/tools/modifyRound51H5.test.ts).
+ *
+ * Đợt 51 H5 (nợ F1 §7.5): `time`/`value` thêm `.finite()` — `z.number()`
+ * cho qua Infinity (và NaN ở `value`; NaN ở `time` đã bị `.nonnegative()`
+ * chặn). Infinity vào keyframes sẽ bị `normalizeKeyframes` lọc ở panel
+ * nhưng `validateVideoSpec` từ chối ở lần save sau, nên chặn ngay ở
+ * schema cho sạch. Không đổi gì khác của tool.
+ */
+export const addKeyframeInputSchema = {
+  project_id: projectIdSchema,
+  clip_id: z.string().describe("ID clip"),
+  property: z.enum(["x", "y", "opacity", "scale", "rotation"]).describe("Thuộc tính animate"),
+  time: z
+    .number()
+    .finite()
+    .nonnegative()
+    .describe("Thời điểm keyframe, tính từ ĐẦU CLIP (giây)"),
+  value: z.number().finite().describe("Giá trị tại keyframe"),
+  easing: z.enum(["linear", "ease-in", "ease-out"]).optional().describe("Easing (mặc định linear)"),
+};
+
 export function registerModifyTools(server: McpServer): void {
   // -------------------------------------------------------------------------
   server.tool(
@@ -23,8 +46,8 @@ export function registerModifyTools(server: McpServer): void {
       try {
         const { spec: check } = await loadProject(args.project_id);
         const f = findClip(check, args.clip_id);
-        if (!f) return fail(`không tìm thấy clip id "${args.clip_id}"`);
-        if (f.clip.kind !== "video") return fail(`clip "${args.clip_id}" không phải video`);
+        if (!f) return fail(`không tìm thấy clip id "${args.clip_id}"`, "NOT_FOUND");
+        if (f.clip.kind !== "video") return fail(`clip "${args.clip_id}" không phải video`, "KIND_MISMATCH");
         const r = await mutateProject(args.project_id, "filter", (spec) => {
           const ff = findClip(spec, args.clip_id)!;
           const c = ff.clip as { filter?: { lut?: string } };
@@ -51,8 +74,8 @@ export function registerModifyTools(server: McpServer): void {
       try {
         const { spec: check } = await loadProject(args.project_id);
         const f = findClip(check, args.clip_id);
-        if (!f) return fail(`không tìm thấy clip id "${args.clip_id}"`);
-        if (f.clip.kind !== "video") return fail(`clip "${args.clip_id}" không phải video`);
+        if (!f) return fail(`không tìm thấy clip id "${args.clip_id}"`, "NOT_FOUND");
+        if (f.clip.kind !== "video") return fail(`clip "${args.clip_id}" không phải video`, "KIND_MISMATCH");
         const r = await mutateProject(args.project_id, "effect", (spec) => {
           const ff = findClip(spec, args.clip_id)!;
           const c = ff.clip as { effects?: Array<{ type: string; intensity?: number }> };
@@ -83,8 +106,8 @@ export function registerModifyTools(server: McpServer): void {
       try {
         const { spec: check } = await loadProject(args.project_id);
         const f = findClip(check, args.clip_id);
-        if (!f) return fail(`không tìm thấy clip id "${args.clip_id}"`);
-        if (f.clip.kind !== "text") return fail(`clip "${args.clip_id}" không phải text`);
+        if (!f) return fail(`không tìm thấy clip id "${args.clip_id}"`, "NOT_FOUND");
+        if (f.clip.kind !== "text") return fail(`clip "${args.clip_id}" không phải text`, "KIND_MISMATCH");
         const r = await mutateProject(args.project_id, "text-anim", (spec) => {
           const ff = findClip(spec, args.clip_id)!;
           const c = ff.clip as { style: { animation?: string } };
@@ -110,12 +133,12 @@ export function registerModifyTools(server: McpServer): void {
     async (args) => {
       try {
         if (args.speed === undefined && args.reverse === undefined)
-          return fail("cần ít nhất speed hoặc reverse");
+          return fail("cần ít nhất speed hoặc reverse", "MISSING_INPUT");
         const { spec: check } = await loadProject(args.project_id);
         const f = findClip(check, args.clip_id);
-        if (!f) return fail(`không tìm thấy clip id "${args.clip_id}"`);
+        if (!f) return fail(`không tìm thấy clip id "${args.clip_id}"`, "NOT_FOUND");
         if (f.clip.kind !== "video" && f.clip.kind !== "audio")
-          return fail(`clip "${args.clip_id}" loại "${f.clip.kind}" không hỗ trợ speed`);
+          return fail(`clip "${args.clip_id}" loại "${f.clip.kind}" không hỗ trợ speed`, "KIND_MISMATCH");
         const r = await mutateProject(args.project_id, "speed", (spec) => {
           const ff = findClip(spec, args.clip_id)!;
           const c = ff.clip as { speed?: number; reverse?: boolean };
@@ -145,9 +168,9 @@ export function registerModifyTools(server: McpServer): void {
       try {
         const { spec: check } = await loadProject(args.project_id);
         const f = findClip(check, args.clip_id);
-        if (!f) return fail(`không tìm thấy clip id "${args.clip_id}"`);
+        if (!f) return fail(`không tìm thấy clip id "${args.clip_id}"`, "NOT_FOUND");
         if (f.clip.kind !== "audio" && f.clip.kind !== "video")
-          return fail(`clip "${args.clip_id}" loại "${f.clip.kind}" không hỗ trợ volume`);
+          return fail(`clip "${args.clip_id}" loại "${f.clip.kind}" không hỗ trợ volume`, "KIND_MISMATCH");
         const r = await mutateProject(args.project_id, "volume", (spec) => {
           const ff = findClip(spec, args.clip_id)!;
           const c = ff.clip as {
@@ -155,22 +178,22 @@ export function registerModifyTools(server: McpServer): void {
           };
           if (args.volume !== undefined) {
             if (ff.clip.kind !== "audio")
-              throw new ValidationError("volume chỉ áp dụng cho clip audio");
+              throw new ValidationError("WRONG_CLIP_KIND", "volume chỉ áp dụng cho clip audio", { field: "volume", expected: "audio" });
             c.volume = args.volume;
           }
           if (args.fadeIn !== undefined) {
             if (ff.clip.kind !== "audio")
-              throw new ValidationError("fadeIn chỉ áp dụng cho clip audio");
+              throw new ValidationError("WRONG_CLIP_KIND", "fadeIn chỉ áp dụng cho clip audio", { field: "fadeIn", expected: "audio" });
             c.fadeIn = args.fadeIn;
           }
           if (args.fadeOut !== undefined) {
             if (ff.clip.kind !== "audio")
-              throw new ValidationError("fadeOut chỉ áp dụng cho clip audio");
+              throw new ValidationError("WRONG_CLIP_KIND", "fadeOut chỉ áp dụng cho clip audio", { field: "fadeOut", expected: "audio" });
             c.fadeOut = args.fadeOut;
           }
           if (args.mute_source !== undefined) {
             if (ff.clip.kind !== "video")
-              throw new ValidationError("mute_source chỉ áp dụng cho clip video");
+              throw new ValidationError("WRONG_CLIP_KIND", "mute_source chỉ áp dụng cho clip video", { field: "mute_source", expected: "video" });
             c.sourceAudioMode = args.mute_source ? "mute" : "inherit";
           }
         });
@@ -185,21 +208,14 @@ export function registerModifyTools(server: McpServer): void {
   server.tool(
     "add_keyframe",
     "Thêm keyframe animation (x, y, opacity, scale, rotation) vào clip.",
-    {
-      project_id: projectIdSchema,
-      clip_id: z.string().describe("ID clip"),
-      property: z.enum(["x", "y", "opacity", "scale", "rotation"]).describe("Thuộc tính animate"),
-      time: z.number().nonnegative().describe("Thời điểm keyframe, tính từ ĐẦU CLIP (giây)"),
-      value: z.number().describe("Giá trị tại keyframe"),
-      easing: z.enum(["linear", "ease-in", "ease-out"]).optional().describe("Easing (mặc định linear)"),
-    },
+    addKeyframeInputSchema,
     async (args) => {
       try {
         const { spec: check } = await loadProject(args.project_id);
         const f = findClip(check, args.clip_id);
-        if (!f) return fail(`không tìm thấy clip id "${args.clip_id}"`);
+        if (!f) return fail(`không tìm thấy clip id "${args.clip_id}"`, "NOT_FOUND");
         if (args.time > f.clip.duration)
-          return fail(`time (${args.time}) vượt quá duration clip (${f.clip.duration})`);
+          return fail(`time (${args.time}) vượt quá duration clip (${f.clip.duration})`, "NUMBER_OUT_OF_RANGE");
         const r = await mutateProject(args.project_id, "keyframe", (spec) => {
           const ff = findClip(spec, args.clip_id)!;
           const c = ff.clip as {
@@ -217,7 +233,7 @@ export function registerModifyTools(server: McpServer): void {
             kfs.sort((a, b) => a.t - b.t);
           }
           if (kfs.length > 32)
-            throw new ValidationError("quá 32 keyframe cho một thuộc tính");
+            throw new ValidationError("TOO_MANY_KEYFRAMES", "quá 32 keyframe cho một thuộc tính", { field: "keyframes", max: 32 });
         });
         return ok({ ...r, clip_id: args.clip_id, property: args.property });
       } catch (e) {

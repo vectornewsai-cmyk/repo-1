@@ -13,8 +13,13 @@ ok() { if [ "$1" = "0" ]; then PASS=$((PASS+1)); else FAIL=$((FAIL+1)); echo "  
 ffmpeg -y -v error -f lavfi -i testsrc2=size=1920x1080:rate=30:duration=5 \
   -c:v libx264 -preset veryfast -crf 23 -pix_fmt yuv420p "$WORK/src.mp4"
 
-(BRIDGE_WORK_DIR="$WORK/wd" BRIDGE_PORT=$PORT node "$ROOT/src/index.js" > "$WORK/bridge.log" 2>&1 & echo $! > "$WORK/pid")
-sleep 3
+(BRIDGE_WORK_DIR="$WORK/wd" BRIDGE_PORT=$PORT BRIDGE_RATE_PERSIST_PATH="$WORK/rate-limit.json" node "$ROOT/src/index.js" > "$WORK/bridge.log" 2>&1 & echo $! > "$WORK/pid")
+# Đợt 66 T9 — chờ bridge listen thật (thay sleep 3 cố định): dưới tải nặng
+# node khởi động >3s (đo thật ~4,2s lúc load ~16) nên các check race-fail.
+for _ in $(seq 1 60); do
+  curl -sf --max-time 2 "http://127.0.0.1:$PORT/api/health" >/dev/null 2>&1 && break
+  sleep 0.5
+done
 
 RESP=$(curl -s -F "file=@$WORK/src.mp4" -F "height=720" "http://127.0.0.1:$PORT/api/proxy")
 echo "$RESP" | grep -q '"proxyWidth":1280' && echo "$RESP" | grep -q '"proxyHeight":720'

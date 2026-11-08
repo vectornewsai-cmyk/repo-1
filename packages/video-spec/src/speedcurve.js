@@ -10,8 +10,21 @@ export const SPEED_EASINGS = ["linear", "ease-in", "ease-out", "bezier"];
  * (trùng CSS `ease`). Mirror của DEFAULT_SPEED_BEZIER trong speedcurve.ts. */
 export const DEFAULT_SPEED_BEZIER = [0.25, 0.1, 0.25, 1];
 
+function isFiniteNumber(x) {
+  return typeof x === "number" && Number.isFinite(x);
+}
+
+/**
+ * Đợt 51 H5 (nợ F1 §7.2): loại entry lỗi (null / không phải object /
+ * t hoặc v không phải số hữu hạn) TRƯỚC khi sort — cùng mẫu
+ * `normalizeKeyframes` ở đợt 50 F1. Mirror y hệt `normalizeSpeedKeyframes`
+ * trong speedcurve.ts và server/render/src/speedramp.js.
+ */
 export function normalizeSpeedKeyframes(kfs) {
-  const sorted = [...kfs].sort((a, b) => a.t - b.t);
+  const clean = (Array.isArray(kfs) ? kfs : []).filter(
+    (k) => !!k && typeof k === "object" && isFiniteNumber(k.t) && isFiniteNumber(k.v),
+  );
+  const sorted = [...clean].sort((a, b) => a.t - b.t);
   const out = [];
   for (const k of sorted) {
     const last = out[out.length - 1];
@@ -189,6 +202,19 @@ export function trimSpeedKeyframes(kfs, shift, newDuration) {
   let changed = false;
   const kept = [];
   for (const k of kfs) {
+    // Đợt 51 H5: bỏ entry lỗi (null / t hoặc v không hữu hạn) ngay ở đây
+    // thay vì ném TypeError ở `k.t` — cùng predicate với
+    // normalizeSpeedKeyframes; entry lỗi đếm vào `dropped`.
+    if (
+      !k ||
+      typeof k !== "object" ||
+      !isFiniteNumber(k.t) ||
+      !isFiniteNumber(k.v)
+    ) {
+      dropped++;
+      changed = true;
+      continue;
+    }
     let t = k.t - shift;
     if (t < -EPS || t > newDuration + EPS) {
       dropped++;

@@ -13,9 +13,14 @@ ok()   { PASS=$((PASS+1)); echo "  ✅ $1"; }
 fail() { FAIL=$((FAIL+1)); echo "  ❌ $1 — $2"; }
 
 echo "== [0] Khởi động bridge (port $PORT) =="
-BRIDGE_PORT=$PORT node src/index.js > /tmp/bridge-test.log 2>&1 &
+BRIDGE_PORT=$PORT BRIDGE_RATE_PERSIST_PATH="/tmp/vcut-hardening-rate-limit-$$.json" node src/index.js > /tmp/bridge-test.log 2>&1 &
 SRV=$!
-sleep 2
+# Đợt 66 T9 — chờ bridge listen thật (thay sleep 2 cố định): dưới tải nặng
+# node khởi động >2s (đo thật ~4,2s lúc load ~16) nên các check race-fail.
+for _ in $(seq 1 60); do
+  curl -sf --max-time 2 "$BASE/api/health" >/dev/null 2>&1 && break
+  sleep 0.5
+done
 if ! kill -0 $SRV 2>/dev/null; then echo "❌ server không khởi động được:"; cat /tmp/bridge-test.log; exit 1; fi
 trap 'kill $SRV 2>/dev/null; wait $SRV 2>/dev/null; true' EXIT
 
