@@ -9,7 +9,7 @@
  *
  * Không có browser test — logic thuần nằm ở lib/captions.ts (đã có test Node).
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useStore } from "../store";
 import type { MediaItem } from "../media";
 import {
@@ -30,10 +30,12 @@ import {
   formatVtt,
   parseSubtitleFile,
 } from "../lib/subtitles";
+import { BRIDGE_URL } from "../lib/bridgeUrl";
+import { t, getLang, useLang } from "../i18n";
+import { resolveBridgeApiError, type BridgeApiErrorBody } from "../lib/bridgeErrors"; // Đợt 62 R5: dịch mã lỗi bridge→web
+import { resolveCaptionPhaseLabel } from "../lib/captionPhase63R1"; // Đợt 63 R1: localize phase caption theo locale (nợ R10 §10.4)
+import type { StructuredErrorDetail } from "../lib/errorDetailSummary"; // Đợt 62 R5: errorDetail trong SSE error
 
-const BRIDGE_URL =
-  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_BRIDGE_URL ||
-  "http://127.0.0.1:8787";
 
 type Step = "config" | "running" | "review";
 
@@ -52,6 +54,9 @@ interface NdjsonEvent {
   segments?: unknown;
   words?: unknown;
   error?: string;
+  errorCode?: string;
+  errorParams?: Record<string, string>;
+  errorDetail?: StructuredErrorDetail | null;
 }
 
 function fmtElapsed(ms: number): string {
@@ -59,7 +64,24 @@ function fmtElapsed(ms: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
 
+/**
+ * Phase 9 R56 M2 — giữ <b>faster-whisper</b> khi câu đã qua key i18n:
+ * key chứa {engine} = "faster-whisper", tách ra để bọc lại bằng <b>.
+ */
+function boldEngine(text: string): ReactNode {
+  const [a, b] = text.split("faster-whisper");
+  if (b === undefined) return text;
+  return (
+    <>
+      {a}
+      <b>faster-whisper</b>
+      {b}
+    </>
+  );
+}
+
 export function CaptionModal({ onClose }: Props) {
+  const uiLang = useLang(); // re-render khi đổi ngôn ngữ
   const media = useStore((s) => s.media);
   const selection = useStore((s) => s.selection);
   const spec = useStore((s) => s.spec);
@@ -117,8 +139,8 @@ export function CaptionModal({ onClose }: Props) {
   // Phase 9 D6: toàn bộ phụ đề của project (mọi track phụ đề) để xuất ở
   // cấp project — khác với nút xuất ở bước review (chỉ segment đang giữ).
   const projectCaptions = useMemo(
-    () => collectProjectCaptions(spec.tracks),
-    [spec.tracks]
+    () => collectProjectCaptions(spec.tracks, t),
+    [spec.tracks, uiLang]
   );
 
   // Dọn timer/abort khi đóng modal giữa chừng.
@@ -140,7 +162,7 @@ export function CaptionModal({ onClose }: Props) {
     ctrl: AbortController
   ): Promise<CaptionSegment[]> => {
     const form = new FormData();
-    if (!item.file) throw new Error("File media không còn tồn tại.");
+    if (!item.file) throw new Error(t("caption.mediaGone"));
     form.append("media", item.file, item.file.name);
     for (const [k, v] of Object.entries(fields)) form.append(k, v);
     const res = await fetch(`${BRIDGE_URL}${endpoint}`, {
@@ -151,12 +173,12 @@ export function CaptionModal({ onClose }: Props) {
     // Lỗi validate (4xx/503): bridge trả JSON thường, chưa stream.
     const ct = res.headers.get("content-type") || "";
     if (!res.ok && ct.includes("application/json")) {
-      const j = (await res.json()) as { error?: string };
-      throw new Error(j.error || `Bridge lỗi HTTP ${res.status}.`);
+      const j = (await res.json()) as BridgeApiErrorBody;
+      throw new Error(resolveBridgeApiError(j, t, t("bgremove.bridgeHttp", { status: String(res.status) })));
     }
     if (!res.ok || !res.body) {
       throw new Error(
-        `Không kết nối được bridge (${BRIDGE_URL}). Hãy chạy: cd server/bridge && npm start`
+        t("common.bridgeConn", { url: BRIDGE_URL })
       );
     }
     const reader = res.body.getReader();
@@ -179,7 +201,11 @@ export function CaptionModal({ onClose }: Props) {
           continue; // dòng rác — bỏ qua, không fail cả luồng
         }
         if (evt.type === "phase") {
-          setPhaseMsg(evt.message || evt.phase || "Đang xử lý…");
+          // Đợt 63 R1: localize phase theo locale qua phase KEY (bridge gửi
+          // kèm message vi — hiển thị message nguyên vẹn làm locale en vẫn
+          // thấy tiếng Việt, nợ R10 §10.4). Fallback message bridge →
+          // processing khi phase lạ; không bao giờ hiện key thô.
+          setPhaseMsg(resolveCaptionPhaseLabel(evt.phase, evt.message, getLang(), t("caption.processing")));
         } else if (evt.type === "done") {
           got = validateCaptionSegments(evt.segments);
           // R4: chỉ job caption gốc mới có words (job dịch thì không).
@@ -187,18 +213,18 @@ export function CaptionModal({ onClose }: Props) {
             setWords(validateCaptionWords(evt.words));
           }
         } else if (evt.type === "error") {
-          throw new Error(evt.error || "Caption thất bại.");
+          throw new Error(resolveBridgeApiError(evt, t, t("caption.failed")));
         }
       }
     }
-    if (!got) throw new Error("Bridge ngắt kết nối giữa chừng — thử lại.");
+    if (!got) throw new Error(t("caption.bridgeDropped"));
     return got;
   };
 
   const start = async () => {
     const item = candidates.find((m) => m.id === mediaId);
     if (!item?.file) {
-      setError("Chưa chọn file video/audio để tạo phụ đề.");
+      setError(t("caption.noMedia"));
       return;
     }
     setError(null);
@@ -208,7 +234,7 @@ export function CaptionModal({ onClose }: Props) {
     setWords([]);
     setSegmentsEn(null);
     setDroppedEn(new Set());
-    setPhaseMsg("Đang gửi file lên bridge…");
+    setPhaseMsg(t("caption.uploading"));
     const t0 = Date.now();
     setElapsed(0);
     timerRef.current = window.setInterval(() => setElapsed(Date.now() - t0), 500);
@@ -220,7 +246,7 @@ export function CaptionModal({ onClose }: Props) {
       setSegments(got);
       // R1-080: dịch sang ngôn ngữ đích trên cùng file → track thứ 2.
       if (targetLang) {
-        setPhaseMsg("Xong phụ đề gốc — bắt đầu dịch…");
+        setPhaseMsg(t("caption.translating"));
         const gotEn = await runJob(
           "/api/caption/translate",
           item,
@@ -232,9 +258,9 @@ export function CaptionModal({ onClose }: Props) {
       setStep("review");
     } catch (e) {
       if ((e as Error).name === "AbortError") {
-        setError("Đã hủy tạo phụ đề.");
+        setError(t("caption.cancelled"));
       } else {
-        setError((e as Error).message || "Caption thất bại.");
+        setError((e as Error).message || t("caption.failed"));
       }
       setStep("config");
     } finally {
@@ -255,16 +281,37 @@ export function CaptionModal({ onClose }: Props) {
     const a = document.createElement("a");
     a.href = url;
     a.download = filename;
+    // Đợt 59 P5: gắn anchor vào body trước khi click — như mọi helper tải
+    // file khác trong app (ExportPanel/projectRepo/archive/sharePage/
+    // HistoryPanel). Probe đã chứng minh gắn/không gắn KHÔNG quyết định
+    // tên file (V3 rời DOM vẫn giữ tên ASCII); tên file được giữ nhờ
+    // exportProject chuẩn hoá base về ASCII (xem dưới).
+    document.body.appendChild(a);
     a.click();
+    a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   /** Phase 9 D6: xuất toàn bộ phụ đề project (không chỉ segment review). */
   const exportProject = (fmt: "srt" | "vtt") => {
     if (projectCaptions.cues.length === 0) return;
+    // Đợt 59 P5: tên file phải ASCII-safe — Chrome trên VM này bỏ qua
+    // a.download khi tên chứa dấu tiếng Việt nên "Dự án mẫu.srt" tải về
+    // thành tên chung "download" (headed P5 lần chạy 1–3: 6 file
+    // "download*" liên tiếp, nội dung đúng). Probe /tmp/round59-p5/
+    // probe-download.mjs đã phân biệt: chỉ tên không-ASCII mất tên
+    // (V1), tên ASCII giữ đúng dù anchor rời DOM (V3). NFD + bỏ dấu kết
+    // hợp + đ→d để "Dự án mẫu" → "Du an mau" (giữ khoảng trắng như các
+    // helper tải file khác trong app).
     const base =
-      (spec.meta.name || "phu-de").trim().replace(/[\\/\\?%*:|"<>]/g, "") ||
-      "phu-de";
+      (spec.meta.name || "phu-de")
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D")
+        .replace(/[\\/\\?%*:|"<>]/g, "")
+        .trim() || "phu-de";
     downloadText(
       `${base}.${fmt}`,
       fmt === "srt"
@@ -279,14 +326,18 @@ export function CaptionModal({ onClose }: Props) {
     setImportNote(null);
     try {
       const text = await file.text();
-      const { cues, errors } = parseSubtitleFile(text);
+      const { cues, errors } = parseSubtitleFile(text, t);
       if (cues.length === 0) {
         setError(
           errors.length > 0
-            ? `Không đọc được cue nào: ${errors
-                .map((e) => `khối ${e.block}: ${e.reason}`)
-                .join("; ")}`
-            : "File không có cue phụ đề nào."
+            ? t("caption.noCues", {
+                details: errors
+                  .map((e) =>
+                    t("caption.cueError", { block: String(e.block), reason: e.reason }),
+                  )
+                  .join("; "),
+              })
+            : t("caption.noCuesInFile")
         );
         return;
       }
@@ -299,14 +350,20 @@ export function CaptionModal({ onClose }: Props) {
       setDroppedEn(new Set());
       setImportNote(
         errors.length > 0
-          ? `Đã nhập ${cues.length} câu, bỏ ${errors.length} cue hỏng: ${errors
-              .map((e) => `khối ${e.block}: ${e.reason}`)
-              .join("; ")}`
-          : `Đã nhập ${cues.length} câu từ ${file.name}.`
+          ? t("caption.importedWithErrors", {
+              n: String(cues.length),
+              bad: String(errors.length),
+              details: errors
+                .map((e) =>
+                  t("caption.cueError", { block: String(e.block), reason: e.reason }),
+                )
+                .join("; "),
+            })
+          : t("caption.imported", { n: String(cues.length), file: file.name })
       );
       setStep("review");
     } catch (e) {
-      setError(`Không đọc được file: ${(e as Error).message}`);
+      setError(t("caption.readFileFailed", { error: (e as Error).message }));
     }
   };
 
@@ -358,7 +415,7 @@ export function CaptionModal({ onClose }: Props) {
       if (targetLang && keptEn.length > 0) {
         useStore.getState().addCaptionTrack(keptEn, {
           label: translatedTrackLabel(targetLang),
-          historyLabel: `Dịch phụ đề sang ${targetLang.toUpperCase()}`,
+          historyLabel: t("caption.translateTo", { lang: targetLang.toUpperCase() }),
           ...(source ? { source } : {}),
         });
       }
@@ -373,15 +430,15 @@ export function CaptionModal({ onClose }: Props) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
-        className="modal caption-modal"
+        className="modal"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Tạo phụ đề tự động"
+        aria-label={t("caption.title")}
       >
         <div className="modal-head">
-          <span>💬 Tạo phụ đề tự động</span>
-          <button className="icon-btn" onClick={onClose} title="Đóng" aria-label="Đóng">
+          <span>{t("caption.titleIcon")}</span>
+          <button className="icon-btn" onClick={onClose} title={t("common.close")} aria-label={t("common.close")}>
             ✕
           </button>
         </div>
@@ -390,8 +447,7 @@ export function CaptionModal({ onClose }: Props) {
           {step === "config" && (
             <>
               <p className="muted">
-                Nhận diện giọng nói bằng <b>faster-whisper</b> chạy 100% trên máy
-                của bạn — không gửi audio lên cloud.
+                {boldEngine(t("caption.recognizeWith", { engine: "faster-whisper" }))}
               </p>
               <label className="field">
                 <span>File video / audio</span>
@@ -408,13 +464,10 @@ export function CaptionModal({ onClose }: Props) {
                 </select>
               </label>
               {candidates.length === 0 && (
-                <p className="warn">
-                  Chưa có file video/audio nào trong kho media. Hãy import file
-                  trước.
-                </p>
+                <p className="warn">{t("caption.noMediaInLibrary")}</p>
               )}
               <label className="field">
-                <span>Ngôn ngữ nói trong video</span>
+                <span>{t("caption.spokenLang")}</span>
                 <select
                   value={lang}
                   onChange={(e) => setLang(e.target.value as CaptionLangCode)}
@@ -427,14 +480,14 @@ export function CaptionModal({ onClose }: Props) {
                 </select>
               </label>
               <label className="field">
-                <span>🌐 Dịch sang</span>
+                <span>{t("caption.translateToLabel")}</span>
                 <select
                   value={targetLang}
                   onChange={(e) =>
                     setTargetLang(e.target.value as "" | TranslateTargetCode)
                   }
                 >
-                  <option value="">Không dịch</option>
+                  <option value="">{t("caption.noTranslate")}</option>
                   {TRANSLATE_TARGET_LANGS.map((l) => (
                     <option key={l.code} value={l.code}>
                       {l.label}
@@ -444,23 +497,17 @@ export function CaptionModal({ onClose }: Props) {
               </label>
               {targetLang && (
                 <p className="muted small">
-                  Dịch bằng <b>faster-whisper</b> chạy local (không cloud) —
-                  hiện chỉ hỗ trợ sang tiếng Anh. Bản dịch được tạo thành
-                  track phụ đề thứ 2, giữ nguyên track gốc.
+                  {boldEngine(t("caption.translateWith", { engine: "faster-whisper" }))}
                 </p>
               )}
-              <p className="muted small">
-                Phụ đề được căn theo thời gian gốc của file (giây 0 = đầu file).
-                Nếu clip đã bị cắt/dời trên timeline, bạn có thể chọn các câu phụ
-                đề rồi kéo cho khớp.
-              </p>
+              <p className="muted small">{t("caption.alignNote")}</p>
               {/* Phase 9 R4: nhập SRT/VTT có sẵn, không cần chạy caption. */}
               <p>
-                <span className="muted">Hoặc nhập file phụ đề có sẵn: </span>
+                <span className="muted">{t("caption.orImport")}{" "}</span>
                 <input
                   type="file"
                   accept=".srt,.vtt,text/plain"
-                  aria-label="Nhập file SRT hoặc VTT"
+                  aria-label={t("caption.importFile")}
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) void importSubtitleFile(f);
@@ -473,16 +520,14 @@ export function CaptionModal({ onClose }: Props) {
                   track phụ đề (kể cả câu đã lên timeline từ trước), khác
                   với nút xuất ở bước review (chỉ segment đang giữ). */}
               <p>
-                <span className="muted">Xuất phụ đề của project: </span>
+                <span className="muted">{t("caption.exportProject")}{" "}</span>
                 <button
-                  className="tbtn"
                   onClick={() => exportProject("srt")}
                   disabled={projectCaptions.cues.length === 0}
                 >
                   ⬇ SRT project
                 </button>{" "}
                 <button
-                  className="tbtn"
                   onClick={() => exportProject("vtt")}
                   disabled={projectCaptions.cues.length === 0}
                 >
@@ -491,15 +536,13 @@ export function CaptionModal({ onClose }: Props) {
               </p>
               {projectCaptions.cues.length > 0 ? (
                 <p className="muted small">
-                  Gồm {projectCaptions.cues.length} câu từ track:{" "}
-                  {projectCaptions.trackLabels.join(", ")}. Title/chữ tự do
-                  trên track khác không được xuất.
+                  {t("caption.exportIncludes", {
+                    n: String(projectCaptions.cues.length),
+                    tracks: projectCaptions.trackLabels.join(", "),
+                  })}
                 </p>
               ) : (
-                <p className="muted small">
-                  Project chưa có phụ đề nào (tạo phụ đề hoặc nhập SRT/VTT
-                  trước).
-                </p>
+                <p className="muted small">{t("caption.exportEmpty")}</p>
               )}
               {error && <p className="error">{error}</p>}
             </>
@@ -511,9 +554,9 @@ export function CaptionModal({ onClose }: Props) {
               <p>
                 <b>{phaseMsg}</b>
               </p>
-              <p className="muted">Đã chạy {fmtElapsed(elapsed)} — cứ để cửa sổ mở.</p>
-              <button className="tbtn" onClick={cancel}>
-                Hủy
+              <p className="muted">{t("caption.running", { elapsed: fmtElapsed(elapsed) })}</p>
+              <button onClick={cancel}>
+                {t("bgremove.cancel")}
               </button>
             </div>
           )}
@@ -521,11 +564,12 @@ export function CaptionModal({ onClose }: Props) {
           {step === "review" && (
             <>
               <p>
-                Tìm được <b>{segments.length}</b> câu phụ đề
-                {dropped.size > 0 && (
-                  <span className="muted"> (bỏ {dropped.size} câu)</span>
-                )}
-                . Kiểm tra lại rồi bấm Áp dụng:
+                {dropped.size > 0
+                  ? t("caption.found", {
+                      n: String(segments.length),
+                      dropped: String(dropped.size),
+                    })
+                  : t("caption.foundPlain", { n: String(segments.length) })}
               </p>
               {/* Phase 9 R4: karaoke — chỉ có khi bridge trả word timestamps. */}
               {words.length > 0 ? (
@@ -536,11 +580,10 @@ export function CaptionModal({ onClose }: Props) {
                       checked={karaokeEnabled}
                       onChange={(e) => setKaraokeEnabled(e.target.checked)}
                     />{" "}
-                    🎤 Tô sáng từng từ theo giọng nói (karaoke, {words.length}{" "}
-                    từ)
+                    {t("caption.karaokeHint", { words: String(words.length) })}
                   </label>{" "}
                   <label>
-                    Màu tô sáng:{" "}
+                    {t("caption.highlightColor")}{" "}
                     <input
                       type="color"
                       value={highlightColor}
@@ -550,10 +593,7 @@ export function CaptionModal({ onClose }: Props) {
                   </label>
                 </p>
               ) : (
-                <p className="muted">
-                  Lần caption này không có word timestamps nên không gắn được
-                  karaoke (chữ vẫn tạo bình thường).
-                </p>
+                <p className="muted">{t("caption.noWordTimestamps")}</p>
               )}
               <div className="caption-list">
                 {segments.map((s, i) => (
@@ -567,7 +607,7 @@ export function CaptionModal({ onClose }: Props) {
                     <span className="caption-text">{s.text}</span>
                     <button
                       className="icon-btn sm"
-                      title={dropped.has(i) ? "Giữ lại câu này" : "Bỏ câu này"}
+                      title={dropped.has(i) ? t("caption.keepSentence") : t("caption.dropSentence")}
                       onClick={() =>
                         setDropped((prev) => {
                           const next = new Set(prev);
@@ -585,30 +625,34 @@ export function CaptionModal({ onClose }: Props) {
               {/* Phase 9 R4: xuất các câu đang giữ ra SRT/VTT chuẩn. */}
               <p>
                 <button
-                  className="tbtn"
                   onClick={() => downloadText("phu-de.srt", formatSrt(kept))}
                   disabled={kept.length === 0}
                 >
-                  ⬇ Xuất SRT
+                  {t("caption.exportSrt")}
                 </button>{" "}
                 <button
-                  className="tbtn"
                   onClick={() => downloadText("phu-de.vtt", formatVtt(kept))}
                   disabled={kept.length === 0}
                 >
-                  ⬇ Xuất VTT
+                  {t("caption.exportVtt")}
                 </button>
               </p>
               {importNote && <p className="muted">{importNote}</p>}
               {segmentsEn && (
                 <>
                   <p style={{ marginTop: 12 }}>
-                    🌐 <b>{segmentsEn.length}</b> câu dịch
-                    ({targetLang.toUpperCase()})
-                    {droppedEn.size > 0 && (
-                      <span className="muted"> (bỏ {droppedEn.size} câu)</span>
-                    )}
-                    — sẽ tạo track {translatedTrackLabel(targetLang)}:
+                    {droppedEn.size > 0
+                      ? t("caption.translated", {
+                          n: String(segmentsEn.length),
+                          lang: targetLang.toUpperCase(),
+                          dropped: String(droppedEn.size),
+                          track: translatedTrackLabel(targetLang),
+                        })
+                      : t("caption.translatedPlain", {
+                          n: String(segmentsEn.length),
+                          lang: targetLang.toUpperCase(),
+                          track: translatedTrackLabel(targetLang),
+                        })}
                   </p>
                   <div className="caption-list">
                     {segmentsEn.map((s, i) => (
@@ -626,7 +670,7 @@ export function CaptionModal({ onClose }: Props) {
                         <button
                           className="icon-btn sm"
                           title={
-                            droppedEn.has(i) ? "Giữ lại câu này" : "Bỏ câu này"
+                            droppedEn.has(i) ? t("caption.keepSentence") : t("caption.dropSentence")
                           }
                           onClick={() =>
                             setDroppedEn((prev) => {
@@ -648,34 +692,42 @@ export function CaptionModal({ onClose }: Props) {
           )}
         </div>
 
+        {/* Phase 9 R60 Q3: nút text trong modal này dùng <button> trần +
+            className="primary" (mẫu footer SilenceModal/BeatSyncModal).
+            KHÔNG dùng .tbtn — đó là nút tròn icon 36×36 (padding 0), chữ
+            dài tràn ra ngoài, chồng lên nhau và bị .modal cắt ở mép phải
+            (nợ đợt 59 P4 §6 / P5 §4.5). */}
         <div className="modal-actions">
           {step === "config" && (
             <>
-              <button className="tbtn" onClick={onClose}>
-                Đóng
+              <button onClick={onClose}>
+                {t("common.close")}
               </button>
               <button
-                className="tbtn primary"
+                className="primary"
                 onClick={start}
                 disabled={candidates.length === 0}
               >
-                🎙 Bắt đầu tạo phụ đề
+                {t("caption.start")}
               </button>
             </>
           )}
           {step === "review" && (
             <>
-              <button className="tbtn" onClick={() => setStep("config")}>
-                ← Làm lại
+              <button onClick={() => setStep("config")}>
+                {t("caption.redo")}
               </button>
               <button
-                className="tbtn primary"
+                className="primary"
                 onClick={apply}
                 disabled={kept.length === 0 || applying}
               >
-                ✓ Áp dụng {kept.length} câu phụ đề
+                {t("caption.apply", { n: String(kept.length) })}
                 {targetLang && keptEn.length > 0 &&
-                  ` + ${keptEn.length} câu ${targetLang.toUpperCase()}`}
+                  t("caption.applyExtra", {
+                    m: String(keptEn.length),
+                    lang: targetLang.toUpperCase(),
+                  })}
               </button>
             </>
           )}

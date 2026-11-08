@@ -19,18 +19,40 @@ import { PerfOverlay } from "./components/PerfOverlay";
 import { pushToast } from "./lib/toast";
 import { useIsMobile } from "./lib/useIsMobile";
 import { togglePreviewFullscreen } from "./preview";
-import { autosave, autosaveNow, collectSpeedCurveWarnings, loadAutosave, markSaved, persistSessionPlayhead } from "./lib/projectRepo";
+import { autosave, autosaveNow, binMediaFromMedia, collectSpeedCurveWarnings, loadAutosave, markSaved, persistSessionPlayhead } from "./lib/projectRepo";
 // Đợt 36 S5: nạp lại media bin từ AssetStore sau reload (trước checkMissingMedia).
 import { AssetStore } from "./lib/assetStore";
 import { rehydrateMediaItems } from "./lib/rehydrate36S5";
+// Đợt 61 R9 — duy trì refCount thật của AssetStore (đóng nợ 60 Q7 §5.5):
+// đồng bộ debounce mỗi khi spec/media đổi để lưới `remove()` từ chối
+// khi còn tham chiếu có tác dụng thật.
+import { syncAssetRefCounts, recordCurrentProjectRefs } from "./lib/idbCleanup61R9";
+import { notifyProjectRefsChanged } from "./lib/projectAssetRefs62R7";
+// Đợt 63 R7 — khóa sổ tham chiếu theo projectId ổn định thay cho tên.
+import { projectKeyForId } from "./lib/projectId63R7";
+// Đợt 53 J5 — origin bridge hiện tại để rehydrate ghép proxyUrl đầy đủ
+// từ proxyPath trong manifest (cổng bridge có thể đổi giữa các phiên).
+import { BRIDGE_URL } from "./lib/bridgeUrl";
+// Đợt 54 K7 — kiểm tra proxy còn sống khi rehydrate (file proxy mất
+// trên bridge → gỡ URL chết + đánh dấu stale thay vì giữ).
+import { checkProxyAlive } from "./lib/proxy";
 import { saveCurrentProject, saveNotesLines } from "./components/project/ProjectMenu";
+// Phase 10 G5 — cầu nối menu Electron (chỉ có tác dụng trong app desktop).
+import { initDesktopMenuBridge, isDesktopMenuShortcut } from "./desktop";
+// Phase 10 G4 — kéo-thả file từ file manager (chỉ có tác dụng trong app desktop).
+import { initNativeDrop } from "./lib/nativeFiles";
 // Phase 9 đợt 27 K5 (load report): chỉ vùng này thuộc K5 — panel xem lại
 // warnings J5 sau khi toast đóng, strip mở lại + badge. Không đụng logic khác.
 import { LoadReportPanel } from "./components/project/LoadReportPanel";
+// Đợt 66 T7 — UI nhận mảnh legacy mơ hồ thủ công + adopt chuỗi legacy lúc khôi phục autosave.
+import { LegacyHistoryAdoptModal } from "./components/project/LegacyHistoryAdoptModal";
+import { adoptLegacyHistoryChain } from "./lib/projectHistory";
+import { queueAmbiguousFromAdoptResult } from "./lib/legacyAdoptUi";
 import {
   buildLoadReport,
   clearLastLoadReport,
   formatFixEntryChanges,
+  formatOverflowLine,
   formatStructuredNote,
   formatWarningTranslated,
   getLastLoadReport,
@@ -88,7 +110,12 @@ export default function App() {
     const current = getLastLoadReport();
     if (current) setLastLoadReport(refreshLoadReportAfterFix(current, remaining));
     // Đợt 36 S5: giữ session playhead khi ghi autosave ngay sau sửa.
-    autosaveNow(after.spec, after.spec.meta.name, { playhead: after.playhead });
+    // Đợt 59 P1: ghi ngay cũng phải mang theo manifest bin hiện tại —
+    // nếu không, lần ghi này sẽ ghi đè mất binMedia trong envelope và
+    // reload sau đó mất bin (đúng nợ đang đóng).
+    // Đợt 63 R7: ghi ngay cũng phải mang theo projectId — nếu không
+    // envelope autosave mất id và reload sau migration sinh id khác.
+    autosaveNow(after.spec, after.spec.meta.name, { playhead: after.playhead }, binMediaFromMedia(after.media), after.projectId);
   };
   // Nút "Sửa dòng này": CHỈ sửa curve của đúng clip ở dòng vừa bấm
   // (store fixOneSpeedCurveViolation + sanitizeOneSpeedCurve). Clip
@@ -190,11 +217,26 @@ export default function App() {
   // panel Relink hiện như hành vi cũ, không làm hỏng khởi động.
   useEffect(() => {
     const st = useStore.getState();
-    const auto = loadAutosave();
+    const auto = loadAutosave(t);
     if (auto) {
-      st.replaceProject(auto.spec);
+      // Đợt 63 R7 — khôi phục cả projectId từ autosave (file cũ thì
+      // loadAutosave đã migration sinh mới); không truyền thì
+      // replaceProject sinh id mới mỗi lần reload và sổ tham chiếu
+      // phình thêm bản ghi.
+      st.replaceProject(auto.spec, auto.projectId);
       st.setProjectName(auto.name);
       markSaved(auto.spec);
+      // Đợt 66 T7 — khôi phục autosave cũng nhận chuỗi legacy (nợ đợt 65
+      // S9 §5.2): autosave envelope CÓ spec làm bằng chứng nội dung nên
+      // chỉ cần nối `opts.spec`. Tên truyền là tên project vì autosave
+      // không lưu tên file .vcut gốc — nhận chắc chắn theo hash không
+      // ảnh hưởng, chỉ phân loại mơ hồ theo tên là best-effort. Chạy
+      // nền (không chặn rehydrate): chuỗi/mảnh mơ hồ → hàng đợi UI
+      // nhận thủ công (LegacyHistoryAdoptModal). adopt không bao giờ
+      // throw; catch để khỏi unhandled rejection nếu kho lỗi bất ngờ.
+      void adoptLegacyHistoryChain(auto.projectId, auto.name, undefined, { spec: auto.spec })
+        .then(queueAmbiguousFromAdoptResult)
+        .catch(() => { /* lịch sử lỗi không được làm hỏng khởi động */ });
       if (auto.session !== null) st.setPlayhead(auto.session.playhead); // clamp + snap frame trong setPlayhead
       void (async () => {
         try {
@@ -204,10 +246,41 @@ export default function App() {
               listManifests: () => store.list(),
               loadBlob: (id) => store.getBlob(id),
               makeObjectURL: (blob) => URL.createObjectURL(blob),
+              // Đợt 53 J5 — ghép proxyUrl từ proxyPath trong manifest với
+              // origin bridge HIỆN TẠI (live binding, đúng cả khi desktop
+              // đổi cổng bridge 8787 → 8788).
+              proxyBaseUrl: BRIDGE_URL,
+              // Đợt 54 K7 — HEAD kiểm tra file proxy còn trên bridge không;
+              // chỉ 404 chắc chắn mới bị coi là chết (bridge tắt/mất mạng
+              // thì giữ proxy như cũ, xem checkProxyAlive).
+              checkProxyUrl: checkProxyAlive,
             },
             auto.spec,
+            // Đợt 59 P1 — manifest bin từ envelope autosave (null =
+            // envelope cũ → rehydrate chỉ theo spec như hành vi cũ):
+            // media đã import nhưng không còn clip nào tham chiếu vẫn
+            // về lại bin sau reload.
+            auto.binMedia ?? undefined,
           );
           if (res.items.length > 0) st.restoreMediaBin(res.items);
+          // Đợt 54 K7 — proxy chết (file mất trên bridge): xóa proxyPath
+          // khỏi manifest để lần sau khỏi kiểm tra lại đường dẫn chết;
+          // item đã mang proxyStale nên MediaBin hiện nút tạo lại.
+          if (res.staleProxies.length > 0) {
+            for (const s of res.staleProxies) {
+              try {
+                await store.setProxy(s.assetId, null);
+              } catch {
+                // best-effort: chỉ mất dọn manifest, item vẫn báo stale
+              }
+            }
+            pushToast(
+              t("app.proxyStaleToast", {
+                names: res.staleProxies.map((s) => `"${s.name}"`).join(", "),
+              }),
+              "info",
+            );
+          }
         } catch {
           // IndexedDB không khả dụng → giữ bin rỗng, Relink báo như cũ.
         }
@@ -229,7 +302,12 @@ export default function App() {
             ...autoReport.structuredNotes.map((n) => formatStructuredNote(n, lookup)),
             ...autoReport.otherWarnings,
           ];
-          if (autoReport.atCap) toastLines.push(t("loadReport.atCap"));
+          if (autoReport.atCap)
+            toastLines.push(
+              autoReport.overflowCount != null
+                ? formatOverflowLine(autoReport.overflowCount, lookup)
+                : t("loadReport.atCap"),
+            );
           pushToast(`${t("loadReport.autosaveRestoredNote")}: ${toastLines.join("; ")}`, "info");
         }
         setLastLoadReport(autoReport);
@@ -246,11 +324,84 @@ export default function App() {
   // Autosave (debounce 5s) mỗi khi spec thay đổi.
   // Đợt 36 S5: kèm playhead tại thời điểm spec đổi để autosave mang
   // session (chỉ playhead; playing/reverse không bền — xem LIMITS S5).
+  // Đợt 59 P1: media bin đổi (import / xóa khỏi bin / rehydrate khôi
+  // phục) cũng phải autosave — KHÔNG thì manifest binMedia trong
+  // envelope kẹt ở trạng thái cũ và reload mất đúng media vừa đổi.
+  // Bin thay đổi nhưng spec không đổi vẫn ghi (vd: import media rồi
+  // chưa thêm clip nào vào timeline).
   useEffect(() => {
     const unsub = useStore.subscribe((s, prev) => {
-      if (s.spec !== prev.spec) autosave(s.spec, s.spec.meta.name, { playhead: s.playhead });
+      if (s.spec !== prev.spec || s.media !== prev.media)
+        // Đợt 63 R7 — autosave mang theo projectId (không thì reload
+        // migration sinh id mới mỗi lần).
+        autosave(s.spec, s.spec.meta.name, { playhead: s.playhead }, binMediaFromMedia(s.media), s.projectId);
     });
     return unsub;
+  }, []);
+
+  // Đợt 61 R9 — duy trì refCount thật của AssetStore (đóng nợ 60 Q7
+  // §5.5): đồng bộ debounce 1s mỗi khi spec/media đổi. Đây là đường
+  // phủ MỌI cách đổi spec/bin (thêm/xóa clip, undo/redo, mở file, load
+  // sample, relink) mà không cần móc vào từng action của store — sync
+  // tái tính toàn bộ từ trạng thái hiện tại nên không lệch dần. Chỉ
+  // ghi IndexedDB (không chạm zustand) nên không tạo vòng lặp; lỗi kho
+  // (IDB bị chặn) tự nuốt — refCount chỉ phục vụ lưới an toàn khi xóa
+  // bytes, không ảnh hưởng thao tác đang làm. Đồng bộ lần đầu sau mount
+  // để refCount cũ từ phiên trước được tính lại (effect đăng ký sau
+  // effect khởi tạo nên lần restore autosave đầu có thể đã qua).
+  // Đợt 62 R7 — cùng lượt này ghi luôn sổ tham chiếu liên project
+  // (recordCurrentProjectRefs: tập asset project hiện tại dùng) để UI
+  // dọn kho ở project KHÁC chặn xóa bytes project này còn dùng; chỉ
+  // broadcast cho tab khác khi tập asset đổi (tránh quét lại vô ích).
+  // Đợt 63 R7 — khóa sổ theo projectId ổn định (`id:<uuid>`, xem
+  // projectKeyForId) thay cho tên: hai file trùng tên không còn chung
+  // một khóa; ghi kèm expectedGeneration nên lượt sync cũ (đọc gen
+  // cũ) bị từ chối stale thay vì ghi đè dữ liệu mới (xem
+  // recordCurrentProjectRefs). Sync refCount chạy dưới lock liên tab
+  // `vcut-refcount-sync` (navigator.locks, xem syncAssetRefCounts) —
+  // hai tab cùng origin không xen kẽ đọc-ghi refCount của nhau.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const runSync = () => {
+      timer = null;
+      try {
+        const st = useStore.getState();
+        const store = new AssetStore();
+        const locks =
+          typeof navigator !== "undefined" && navigator.locks ? navigator.locks : null;
+        void syncAssetRefCounts(store, st.spec, st.media, { locks }).catch(() => {
+          // bỏ qua lặng lẽ — chỉ mất cập nhật refCount lần này
+        });
+        void recordCurrentProjectRefs(
+          store,
+          st.spec,
+          st.media,
+          projectKeyForId(st.projectId),
+          st.spec.meta.name,
+          st.projectId,
+        )
+          .then((rep) => {
+            if (rep.recorded && rep.changed) notifyProjectRefsChanged();
+          })
+          .catch(() => {
+            // bỏ qua lặng lẽ — chỉ mất cập nhật sổ lần này
+          });
+      } catch {
+        // IndexedDB không khả dụng — bỏ qua lặng lẽ như trên
+      }
+    };
+    const schedule = () => {
+      if (timer !== null) clearTimeout(timer);
+      timer = setTimeout(runSync, 1000);
+    };
+    const unsub = useStore.subscribe((s, prev) => {
+      if (s.spec !== prev.spec || s.media !== prev.media) schedule();
+    });
+    timer = setTimeout(runSync, 1500);
+    return () => {
+      unsub();
+      if (timer !== null) clearTimeout(timer);
+    };
   }, []);
 
   // Đợt 36 S5: ghi playhead cuối trước khi trang ẩn/kết thúc — bắt trường
@@ -275,6 +426,19 @@ export default function App() {
     };
   }, []);
 
+  // Phase 10 G5 — cầu nối menu Electron (menu, mở file, đồng bộ ngôn
+  // ngữ). Trên trình duyệt thường, initDesktopMenuBridge trả về no-op.
+  // Phase 10 G4 — kéo-thả file từ file manager (chỉ chặn drop có File;
+  // kéo nội bộ Timeline/MediaBin đi qua như cũ).
+  useEffect(() => {
+    const cleanBridge = initDesktopMenuBridge({ openExport: () => setExportOpen(true) });
+    const cleanDrop = initNativeDrop();
+    return () => {
+      cleanBridge();
+      cleanDrop();
+    };
+  }, []);
+
   // phím tắt toàn cục
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -286,6 +450,13 @@ export default function App() {
           el.tagName === "SELECT" ||
           el.isContentEditable)
       ) {
+        return;
+      }
+      // Phase 10 G5 — chạy trong app desktop: các tổ hợp menu đã nhận
+      // (Ctrl+S/Z/A/C/V/D) do menu xử lý qua IPC; bỏ qua ở đây để
+      // không chạy trùng hai lần. Ctrl+Y không có trong menu nên App
+      // vẫn xử lý làm redo như bản web. Ngoài desktop, hàm này luôn false.
+      if (isDesktopMenuShortcut(e)) {
         return;
       }
       // R1-107: Esc đóng modal đang mở (setter idempotent — gọi cả 3 an toàn
@@ -442,8 +613,8 @@ export default function App() {
           <button
             type="button"
             className={`m-fab${mediaOpen ? " active" : ""}`}
-            title="Thư viện media"
-            aria-label="Mở thư viện media"
+            title={t("app.mediaLibrary")}
+            aria-label={t("app.openMediaLibrary")}
             aria-expanded={mediaOpen}
             onClick={() => {
               setMediaOpen(!mediaOpen);
@@ -455,8 +626,8 @@ export default function App() {
           <button
             type="button"
             className={`m-fab${inspectorOpen ? " active" : ""}`}
-            title="Thuộc tính clip"
-            aria-label="Mở panel thuộc tính"
+            title={t("app.clipProps")}
+            aria-label={t("app.openInspector")}
             aria-expanded={inspectorOpen}
             onClick={() => {
               setInspectorOpen(!inspectorOpen);
@@ -469,11 +640,11 @@ export default function App() {
       )}
       {isMobile && mediaOpen && (
         <div className="m-sheet-backdrop" onClick={() => setMediaOpen(false)}>
-          <div className="m-sheet" role="dialog" aria-modal="true" aria-label="Thư viện media" onClick={(e) => e.stopPropagation()}>
+          <div className="m-sheet" role="dialog" aria-modal="true" aria-label={t("app.mediaLibrary")} onClick={(e) => e.stopPropagation()}>
             <div className="m-sheet-grabber" aria-hidden="true" />
             <div className="m-sheet-head">
-              <span className="m-sheet-title">📁 Thư viện</span>
-              <button type="button" className="m-sheet-close" aria-label="Đóng thư viện" onClick={() => setMediaOpen(false)}>✕</button>
+              <span className="m-sheet-title">{t("app.mediaLibraryShort")}</span>
+              <button type="button" className="m-sheet-close" aria-label={t("app.closeMediaLibrary")} onClick={() => setMediaOpen(false)}>✕</button>
             </div>
             <MediaBin />
           </div>
@@ -481,11 +652,11 @@ export default function App() {
       )}
       {isMobile && inspectorOpen && (
         <div className="m-sheet-backdrop" onClick={() => setInspectorOpen(false)}>
-          <div className="m-sheet" role="dialog" aria-modal="true" aria-label="Thuộc tính clip" onClick={(e) => e.stopPropagation()}>
+          <div className="m-sheet" role="dialog" aria-modal="true" aria-label={t("app.clipProps")} onClick={(e) => e.stopPropagation()}>
             <div className="m-sheet-grabber" aria-hidden="true" />
             <div className="m-sheet-head">
-              <span className="m-sheet-title">⚙️ Thuộc tính</span>
-              <button type="button" className="m-sheet-close" aria-label="Đóng panel thuộc tính" onClick={() => setInspectorOpen(false)}>✕</button>
+              <span className="m-sheet-title">{t("app.propsShort")}</span>
+              <button type="button" className="m-sheet-close" aria-label={t("app.closeInspector")} onClick={() => setInspectorOpen(false)}>✕</button>
             </div>
             <Inspector />
           </div>
@@ -512,6 +683,10 @@ export default function App() {
       {templateOpen && <TemplatePicker onClose={() => setTemplateOpen(false)} />}
       {/* K5: chồng toast toàn cục */}
       <Toasts />
+      {/* Đợt 66 T7: modal nhận mảnh legacy mơ hồ thủ công — hiện khi
+          adopt ở đường mở file / nhập archive / khôi phục autosave gặp
+          chuỗi mơ hồ (tên khớp nhưng hash lệch). */}
+      <LegacyHistoryAdoptModal />
       {/* Đợt 27 K5: panel báo cáo tải; đợt 28 L4 nối nút "Sửa" thật; đợt 29 L4 tách thành "Sửa dòng này" (riêng từng clip) + "Sửa tất cả". */}
       {loadReportOpen && loadReport && (
         <LoadReportPanel report={loadReport} onClose={() => setLoadReportOpen(false)} onFixWarning={handleFixWarning} onFixAllWarnings={handleFixAllWarnings} onFixKeyframe={handleFixKeyframe} />

@@ -149,7 +149,9 @@ class Cdp {
 async function main() {
   if (!fs.existsSync(VIDEO)) { console.error(`Thiếu video test: ${VIDEO}`); process.exit(2); }
   if (!fs.existsSync(CHROME)) { console.error(`Thiếu Chromium: ${CHROME}`); process.exit(2); }
-  const bridge = spawn("node", ["src/index.js"], { cwd: path.join(ROOT, "server/bridge"), stdio: "ignore", env: { ...process.env, BRIDGE_PORT: "8787" } });
+  // Đợt 66 T9 — persist riêng theo PID (không dùng file mặc định chung ~/.cache/vcut/rate-limit.json).
+  const bridgePersistPath = path.join(os.tmpdir(), `vcut-check-proxy-auto-${process.pid}-rate-limit.json`);
+  const bridge = spawn("node", ["src/index.js"], { cwd: path.join(ROOT, "server/bridge"), stdio: "ignore", env: { ...process.env, BRIDGE_PORT: "8787", BRIDGE_RATE_PERSIST_PATH: bridgePersistPath } });
   const viteBin = path.join(ROOT, "node_modules/.bin/vite");
   // Đợt 37 T4: preview-dist → serve dist đóng băng thay vì vite dev.
   const viteArgs = CHECK_PROXY_PREVIEW_DIST
@@ -217,6 +219,7 @@ async function main() {
     try { chrome?.kill("SIGTERM"); } catch { /* noop */ }
     try { vite?.kill("SIGTERM"); } catch { /* noop */ }
     try { bridge?.kill("SIGTERM"); } catch { /* noop */ }
+    try { fs.rmSync(bridgePersistPath, { force: true }); } catch { /* noop */ }
   }
 }
 

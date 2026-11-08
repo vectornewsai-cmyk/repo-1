@@ -4,10 +4,12 @@
  */
 import { useEffect, useState } from "react";
 import { dismissToast, subscribeToasts, type ToastItem } from "../lib/toast";
+import { t as i18nT, useLang } from "../i18n";
 
 const AUTO_CLOSE_MS = 4500;
 
 export function Toasts() {
+  useLang(); // re-render khi đổi ngôn ngữ
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   useEffect(() => subscribeToasts(setToasts), []);
@@ -32,7 +34,7 @@ export function Toasts() {
           <span className="toast-msg">{t.message}</span>
           <button
             className="toast-close"
-            aria-label="Đóng thông báo"
+            aria-label={i18nT("toasts.closeAria")}
             onClick={() => dismissToast(t.id)}
           >
             ×

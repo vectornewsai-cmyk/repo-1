@@ -1,0 +1,40 @@
+/**
+ * TtsButton.css — Style riêng của TtsButton (dark theme, đồng nhất với styles.css).
+ * Import trong TtsButton.tsx. Dùng biến CSS có sẵn: --muted.
+ *
+ * Phase 9 đợt 60 Q2: TtsButton trước đây không có file CSS riêng nên 2 class
+ * .tts-box / .tts-msg chưa định nghĩa ở đâu (đợt 59 P4 §5.1), và hint clone
+ * .muted.small cũng không có màu (chỉ có rule .modal-body .muted.small).
+ * Định nghĩa đủ tại đây — không đổi key i18n / literal.
+ */
+
+/* Hộp TTS là 1 .field: xếp dọc các hàng (label, checkbox clone, field-row
+   chọn giọng/nút đọc, hint, thông báo) với khoảng cách đều.
+   Dùng .field.tts-box (không phải .tts-box trần): .field đặt display:block
+   với cùng specificity (0,1,0) nên .tts-box trần thua/thắng tùy thứ tự
+   import — đã bắt được bằng đo headed (computed ra block, không phải flex). */
+.field.tts-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Hint clone giọng + thông báo trạng thái: chữ nhỏ màu muted, khớp .tips. */
+.tts-box .muted {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.tts-box .muted.small {
+  font-size: 11px;
+}
+
+/* Thông báo busy / lỗi / tiến trình import: trung tính (lỗi đã có tiền tố
+   ❌ trong chuỗi), cho phép ngắt dòng dài như tên file / URL bridge. */
+.tts-msg {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+  word-break: break-word;
+}

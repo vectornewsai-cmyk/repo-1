@@ -2,8 +2,14 @@
  * speedcurveTrim.test.ts — Test thật cho Phase 9 đợt 13 (luồng C5):
  * bezier 4 số + cắt keyframe thừa sau trim.
  *
- * Chạy trực tiếp (Node ≥ 22.18, type-stripping):
- *   node apps/web/src/components/speed/speedcurveTrim.test.ts
+ * Chạy chuẩn bằng runner (đợt 62 R9 — xem scripts/run-node-test.mjs):
+ *   node scripts/run-node-test.mjs apps/web/src/components/speed/speedcurveTrim.test.ts
+ * Runner chọn --format=cjs (mặc định). Sau đợt 62 R9 file này chạy xanh
+ * cả 3 cách (trực tiếp Node ≥ 22.18 type-stripping, bundle cjs, bundle esm)
+ * vì validate.js được load bằng đường dẫn tuyệt đối resolve từ
+ * process.cwd() — KHÔNG dùng import.meta.url (xem ghi chú ở khối
+ * findValidateJs bên dưới; đợt 61 §5.11: createRequire(import.meta.url)
+ * trong bundle CJS gãy sau 14/14 check).
  *
  * Chỉ test logic thuần (không DOM/store):
  *  (1) bezier 4 số đánh giá đúng — kể cả y ngoài [0, 1] (overshoot chuẩn
@@ -35,9 +41,11 @@ import {
   trimSpeedKeyframes as trimSpeedKeyframesTs,
 } from "../../../../../packages/video-spec/src/speedcurve.ts";
 import { createRequire } from "node:module";
+import path from "node:path";
+import { existsSync } from "node:fs";
 
 /** Khai báo tối thiểu để không cần @types/node. */
-declare const process: { exitCode: number | undefined };
+declare const process: { exitCode: number | undefined; cwd(): string };
 
 let pass = 0;
 let fail = 0;
@@ -194,11 +202,37 @@ test("speedAt sau trim phải: curve còn 1 điểm thì clamp về v điểm đ
 });
 
 // --- (3) Validator render ---
-
-const requireCjs = createRequire(import.meta.url);
-const { validateSpec } = requireCjs(
-  "../../../../../server/render/src/validate.js",
-) as { validateSpec: (spec: unknown) => { ok: boolean; errors: string[] } };
+//
+// Đợt 62 R9: KHÔNG dùng createRequire(import.meta.url) — esbuild
+// --format=cjs để trống import.meta (cảnh báo empty-import-meta) nên
+// import.meta.url là undefined và createRequire(undefined) ném
+// ERR_INVALID_ARG_VALUE giữa chừng (đợt 61 §5.11: 14/14 check pass rồi
+// crash, 4 test validator + legacy không bao giờ chạy). Bundle ESM cũng
+// không cứu được: require tương đối "../../../../../server/..." lúc đó
+// resolve từ bundle ở /tmp nên MODULE_NOT_FOUND (tiền lệ O7 §2c).
+// Cách sửa theo đúng mẫu O7 (webglLut.test.ts): bỏ import.meta.url,
+// resolve validate.js từ process.cwd() (gốc repo hoặc apps/web) rồi
+// createRequire + require bằng ĐƯỜNG DẪN TUYỆT ĐỐI. Vì đường dẫn tuyệt
+// đối nên cả 3 cách chạy đều đúng: node trực tiếp, bundle cjs, bundle
+// esm. Không đổi gì ở các assert — 3 test validator vẫn gọi validateSpec
+// thật của server/render.
+function findValidateJs(): string {
+  const candidates = [
+    path.resolve(process.cwd(), "server/render/src/validate.js"),
+    path.resolve(process.cwd(), "../../server/render/src/validate.js"),
+  ];
+  for (const c of candidates) {
+    if (existsSync(c)) return c;
+  }
+  throw new Error(
+    `không tìm thấy server/render/src/validate.js (chạy từ gốc repo; đã thử: ${candidates.join(", ")})`,
+  );
+}
+const VALIDATE_JS = findValidateJs();
+const requireCjs = createRequire(VALIDATE_JS);
+const { validateSpec } = requireCjs(VALIDATE_JS) as {
+  validateSpec: (spec: unknown) => { ok: boolean; errors: string[] };
+};
 
 const videoTrack = (clips: unknown[]) => ({ id: "v1", kind: "video", clips });
 const baseSpec = (tracks: unknown[]) => ({

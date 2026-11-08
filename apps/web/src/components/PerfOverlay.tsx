@@ -15,6 +15,8 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "../store";
+import { getLang, t, useLang } from "../i18n";
+import { presentedLabel, presentedNote, presentedRate, readPlayingPresentedTotal } from "../lib/perfPresented65R8";
 
 /** Một khoảng giữa 2 frame > 50ms được tính là 1 frame giật (drop). */
 const DROP_MS = 50;
@@ -56,6 +58,7 @@ const btnStyle: React.CSSProperties = {
 };
 
 export function PerfOverlay() {
+  useLang(); // re-render khi đổi ngôn ngữ
   const playing = useStore((s) => s.playing);
   const [open, setOpen] = useState(false);
   const [cur, setCur] = useState<WindowStat | null>(null);
@@ -64,6 +67,11 @@ export function PerfOverlay() {
   const [drops, setDrops] = useState(0);
   const [frames, setFrames] = useState(0);
   const [seconds, setSeconds] = useState(0);
+  // Đợt 65 S8 — presented-frame rate qua getVideoPlaybackQuality (xem
+  // lib/perfPresented65R8.ts): null = chưa có mẫu / không có clip video
+  // đang phát (hiện "…", KHÔNG phải 0 fps).
+  const [presented, setPresented] = useState<number | null>(null);
+  const prevPresentedRef = useRef<number | null>(null);
   const statsRef = useRef({ winStart: 0, winFrames: 0, total: 0, totalMs: 0, minFps: Infinity, dropCount: 0, last: 0, startedAt: 0 });
 
   useEffect(() => {
@@ -77,6 +85,8 @@ export function PerfOverlay() {
     st.dropCount = 0;
     st.last = performance.now();
     st.startedAt = performance.now();
+    prevPresentedRef.current = null;
+    setPresented(null);
     let raf = 0;
     let timer = 0;
     const tick = (now: number) => {
@@ -100,6 +110,12 @@ export function PerfOverlay() {
       setCur({ fps, frames: st.total, drops: st.dropCount });
       setAvg(st.totalMs > 0 ? (st.total * 1000) / st.totalMs : null);
       setMin(st.minFps === Infinity ? null : st.minFps);
+      // Đợt 65 S8 — presented: tổng totalVideoFrames của các element
+      // video đang phát trong cửa sổ 1s này; tổng đi lùi (element bị
+      // thay) thì hủy cửa sổ, hiện "…" và lấy lại mốc mới.
+      const tot = readPlayingPresentedTotal();
+      setPresented(presentedRate(prevPresentedRef.current, tot, winMs / 1000));
+      prevPresentedRef.current = tot;
       setDrops(st.dropCount);
       setFrames(st.total);
       setSeconds(Math.floor(st.totalMs / 1000));
@@ -112,30 +128,34 @@ export function PerfOverlay() {
 
   if (!open) {
     return (
-      <button type="button" style={btnStyle} onClick={() => setOpen(true)} title="Mở đồng hồ đo FPS preview">
+      <button type="button" style={btnStyle} onClick={() => setOpen(true)} title={t("perf.openFps")}>
         📈 FPS
       </button>
     );
   }
 
   return (
-    <div style={panelStyle} role="status" aria-label="Đồng hồ đo FPS preview">
+    <div style={panelStyle} role="status" aria-label={t("perf.title")}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
         <strong>📈 FPS preview</strong>
-        <button type="button" onClick={() => setOpen(false)} aria-label="Đóng đồng hồ FPS" style={{ background: "none", border: "none", color: "#eee", cursor: "pointer" }}>
+        <button type="button" onClick={() => setOpen(false)} aria-label={t("perf.closeFps")} style={{ background: "none", border: "none", color: "#eee", cursor: "pointer" }}>
           ✕
         </button>
       </div>
-      <div>Trạng thái: {playing ? "▶ Đang phát" : "⏸ Đứng yên (số này không phải FPS phát)"}</div>
-      <div>FPS (1s gần nhất): {cur ? cur.fps.toFixed(1) : "…"}</div>
-      <div>FPS trung bình: {avg !== null ? avg.toFixed(1) : "…"}</div>
-      <div>FPS thấp nhất (cửa sổ 1s): {min !== null ? min.toFixed(1) : "…"}</div>
-      <div>Frame giật (&gt;{DROP_MS}ms): {drops}</div>
+      <div>{t("perf.status")} {playing ? t("perf.playing") : t("perf.paused")}</div>
+      <div>{t("perf.fpsRecent")} {cur ? cur.fps.toFixed(1) : "…"}</div>
+      <div>{t("perf.fpsAvg")} {avg !== null ? avg.toFixed(1) : "…"}</div>
+      <div>{t("perf.fpsMin")} {min !== null ? min.toFixed(1) : "…"}</div>
+      <div>{presentedLabel(getLang())} {presented !== null ? presented.toFixed(1) : "…"}</div>
+      <div>{t("perf.dropped", { ms: String(DROP_MS) })} {drops}</div>
       <div>
-        Tổng frame: {frames} / {seconds}s
+        {t("perf.totalFrames")} {frames} / {seconds}s
       </div>
       <div style={{ fontSize: "12px", opacity: 0.75 }}>
-        Đo bằng rAF của app, không phải draw call trực tiếp của canvas preview.
+        {t("perf.note")}
+      </div>
+      <div style={{ fontSize: "12px", opacity: 0.75 }}>
+        {presentedNote(getLang())}
       </div>
     </div>
   );

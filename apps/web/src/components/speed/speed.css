@@ -71,3 +71,58 @@
   width: 100%;
   min-width: 0;
 }
+
+/* Phase 9 đợt 60 Q2: 12 class của speed-curve editor trước đây chưa có
+   rule nào (đợt 59 P4 §5.1) — nay định nghĩa đủ, khớp dark theme của file.
+   Các class này còn là hook cho harness click-test t5-round12 (query
+   .speed-curve / .curve-enable-btn / .curve-kf-t / .curve-kf-v / ...) nên
+   GIỮ NGUYÊN tên class trong JSX, chỉ thêm CSS — không đổi tên, không xoá.
+   Nút bấm đã có class .toggle nên chỉ thêm phần riêng của từng hook. */
+.speed-panel .speed-curve {
+  border-top: 1px solid var(--border-soft, #2e2e38);
+  padding-top: 4px;
+}
+
+.speed-panel .curve-enable-btn,
+.speed-panel .curve-disable-btn,
+.speed-panel .curve-add-btn,
+.speed-panel .curve-preset {
+  white-space: nowrap;
+}
+
+.speed-panel .curve-kf {
+  border: 1px solid var(--border-soft, #2e2e38);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.speed-panel .curve-kf-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+/* Nút xoá điểm là .toggle (flex: 1 mặc định) — trong hàng label flex mà
+   để flex: 1 thì nó giãn hết hàng, nên khoá lại. */
+.speed-panel .curve-kf-remove {
+  flex: none;
+}
+
+/* 2 slider t/v + select easing: rule toàn cục input[type="range"] /
+   select đã cho width: 100% — ở đây chỉ khoá display block để mỗi
+   control là 1 hàng riêng trong label .field, khỏi lệch hàng inline. */
+.speed-panel .curve-kf-t,
+.speed-panel .curve-kf-v,
+.speed-panel .curve-kf-easing {
+  display: block;
+}
+
+/* 4 ô số bezier: căn phải + số tabular cho dễ đọc khi sửa từng số. */
+.speed-panel .curve-bezier-input {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

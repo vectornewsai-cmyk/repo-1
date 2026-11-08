@@ -71,7 +71,14 @@ for (const k of literalKeys) {
 
 // Key mới R6 phải được dùng.
 const used = new Set([...literalKeys, ...stringLiterals]);
-const dynamicPrefixes = ["transition.opt.", "textanim.opt."];
+const dynamicPrefixes = ["transition.opt.", "textanim.opt.",
+  // Parent gộp đợt 65: scene.phase.* đọc bảng fragment trực tiếp
+  // (scenePhase63R5.ts, key trần upload/scan — tiền tố scene.phase. chỉ
+  // có trong fragment/dict, không xuất hiện literal trong src). P7 và
+  // orphans đã coi "scene.phase." là prefix động từ trước; r6-check
+  // chưa có nên báo thừa 2 key này — không phải hồi quy đợt 65 (không
+  // luồng đợt 65 nào đụng code scene phase).
+  "scene.phase."];
 const r6Keys = Object.keys(fv).filter(
   (k) => R6_SECTIONS.includes(k.split(".")[0]) || R6_COMMON_KEYS.includes(k),
 );

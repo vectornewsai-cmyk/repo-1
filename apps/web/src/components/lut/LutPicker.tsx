@@ -261,7 +261,7 @@ export function LutPicker({ value, onChange }: LutPickerProps) {
         throw new Error(i18nT("lut.errCube"));
       }
       const text = await f.text();
-      const parsed = parseCube(text, f.size);
+      const parsed = parseCube(text, f.size, i18nT);
       // Tránh đè id đã có: thêm hậu tố -2, -3...
       let id = userLutIdFromName(f.name);
       let n = 2;

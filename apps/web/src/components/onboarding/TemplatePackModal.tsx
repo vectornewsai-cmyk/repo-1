@@ -8,12 +8,14 @@
  * - “Tạo giọng đọc mẫu”: gọi /api/tts thật qua bridge local (giọng mặc định
  *   của server). Bridge chưa chạy → báo lỗi rõ, KHÔNG có audio giả.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "../../store";
-import { t as i18nT } from "../../i18n";
+import { t as i18nT, useLang } from "../../i18n";
+import { resolveBridgeApiError } from "../../lib/bridgeErrors"; // Đợt 62 R5: dịch mã lỗi bridge→web
 import { formatImportProgressText } from "../../lib/importProgressText41W3";
 import type { ImportFileProgressEvent } from "../../lib/ingestProgress39T5";
 import { ot } from "../../lib/onboardingCopy";
+import { localizeTemplateMeta } from "../../lib/templateContentLocale";
 import {
   PackError,
   firstTextOf,
@@ -23,15 +25,13 @@ import {
 } from "../../lib/templatePack";
 import type { TemplateDef } from "../../lib/templateEngine";
 import type { VideoSpec } from "@repo-1/video-spec";
+import { BRIDGE_URL } from "../../lib/bridgeUrl";
 
-const BRIDGE_URL =
-  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_BRIDGE_URL ||
-  "http://127.0.0.1:8787";
 
 function aspectLabel(aspect: string): string {
-  if (aspect === "1920:1080") return "16:9 ngang";
-  if (aspect === "1080:1920") return "9:16 dọc";
-  if (aspect === "1080:1080") return "1:1 vuông";
+  if (aspect === "1920:1080") return i18nT("templatePicker.aspect169");
+  if (aspect === "1080:1920") return i18nT("templatePicker.aspect916");
+  if (aspect === "1080:1080") return i18nT("templatePicker.aspect11");
   return aspect;
 }
 
@@ -42,14 +42,48 @@ interface DoneInfo {
 }
 
 export function TemplatePackModal({ onClose }: { onClose: () => void }) {
+  useLang(); // re-render khi đổi ngôn ngữ
   const packs = getPacks();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Đợt 63 R1: lỗi (vd timeout ghi media mẫu, nợ R10 §2) render ở cuối
+  // .modal-body, dưới danh sách 6 pack — ở mobile user phải cuộn mới thấy.
+  // Tự cuộn tới lỗi khi nó xuất hiện để lỗi vào vùng nhìn thấy ngay.
+  const errorRef = useRef<HTMLParagraphElement | null>(null);
+  useEffect(() => {
+    if (error) errorRef.current?.scrollIntoView({ block: "nearest" });
+  }, [error]);
   const [done, setDone] = useState<DoneInfo | null>(null);
   const [ttsMsg, setTtsMsg] = useState<string | null>(null);
   const [ttsBusy, setTtsBusy] = useState(false);
   // Đợt 41 W3 — tiến trình importFiles (create + makeTts dùng chung, như MediaBin V5).
   const [importProgress, setImportProgress] = useState<ImportFileProgressEvent | null>(null);
+
+  // Đợt 60 Q10 — Escape đóng modal như nút ✕ / backdrop (pattern O1 đợt 58:
+  // guard INPUT/TEXTAREA/SELECT, không chặn BUTTON), NHƯNG bị chặn khi
+  // đang tạo pack (busy) hoặc đang tạo giọng đọc mẫu (ttsBusy). Đổi
+  // quyết định đợt 59 P2 (parity "✕ cũng không chặn"): create()/makeTts()
+  // KHÔNG hủy được an toàn — generatePackFiles / recordPackMedia /
+  // importFiles không nhận AbortSignal — nên đóng modal giữa chừng thì
+  // job vẫn chạy nền, replaceProject + import media sau lưng user (user
+  // tưởng đã hủy). Chặn đóng lúc busy là pattern modal chuẩn; nút ✕
+  // disabled và backdrop vô hiệu cùng lúc để chuột không lách qua cùng
+  // lỗ hổng. finally{} của create()/makeTts() luôn reset busy/ttsBusy
+  // nên modal không kẹt: job luôn kết thúc rồi Escape lại hoạt động.
+  // Handler toàn cục của App không có nhánh pack nên listener tự chứa
+  // trong modal là đường Escape duy nhất.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT")) return;
+      if (e.key === "Escape") {
+        if (busy || ttsBusy) return;
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose, busy, ttsBusy]);
 
   const create = async (tpl: TemplateDef) => {
     setBusy(true);
@@ -59,7 +93,7 @@ export function TemplatePackModal({ onClose }: { onClose: () => void }) {
     try {
       const suffix = String(Date.now());
       const { files, fileNames } = await generatePackFiles(tpl, suffix);
-      const res = resolvePackSpec(tpl, fileNames);
+      const res = resolvePackSpec(tpl, fileNames, i18nT);
       if (!res.ok) throw new Error(res.error);
       const st = useStore.getState();
       st.replaceProject(res.spec);
@@ -71,6 +105,11 @@ export function TemplatePackModal({ onClose }: { onClose: () => void }) {
     } catch (e) {
       if (e instanceof PackError && e.message === "NO_RECORDER") {
         setError(ot("pack.noVideoRecorder"));
+      } else if (e instanceof PackError && e.message === "RECORD_TIMEOUT") {
+        // Đợt 61 R5: ghi media mẫu quá hạn (MediaRecorder onstop không
+        // fire) — báo rõ, finally{} dưới vẫn reset busy nên modal mở khóa
+        // (Escape/✕/backdrop lại hoạt động), user bấm "Tạo ngay" lại được.
+        setError(ot("pack.recordTimeout"));
       } else {
         setError(e instanceof Error ? e.message : String(e));
       }
@@ -110,24 +149,24 @@ export function TemplatePackModal({ onClose }: { onClose: () => void }) {
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        throw new Error(j?.error || `Bridge trả lỗi HTTP ${res.status}`);
+        throw new Error(resolveBridgeApiError(j, i18nT, i18nT("templatePack.bridgeErrorHttp", { status: String(res.status) })));
       }
       const blob = await res.blob();
-      if (!blob || blob.size === 0) throw new Error("Bridge trả về file rỗng.");
+      if (!blob || blob.size === 0) throw new Error(i18nT("tts.bridgeEmpty"));
       const dur = Number(res.headers.get("X-TTS-Duration") || 0);
       const file = new File([blob], `tts-pack-${Date.now()}.wav`, { type: "audio/wav" });
       const st = useStore.getState();
       await st.importFiles([file], (ev) => setImportProgress(ev));
       setImportProgress(null);
       const item = useStore.getState().media.find((m) => m.name === file.name);
-      if (!item) throw new Error("Không đưa được file vào kho media.");
+      if (!item) throw new Error(i18nT("templatePack.mediaAddFailed"));
       st.addMediaAtPlayhead(item.id);
-      setTtsMsg(`✅ Đã thêm giọng đọc${dur > 0 ? ` (${dur.toFixed(1)}s)` : ""} vào timeline.`);
+      setTtsMsg(i18nT("templatePack.ttsAdded", { suffix: dur > 0 ? ` (${dur.toFixed(1)}s)` : "" }));
     } catch (e) {
       const m = e instanceof Error ? e.message : String(e);
       setTtsMsg(
         m.includes("Failed to fetch")
-          ? `Không kết nối được bridge (${BRIDGE_URL}). Hãy chạy: cd server/bridge && npm start`
+          ? i18nT("common.bridgeConn", { url: BRIDGE_URL })
           : `❌ ${m}`,
       );
     } finally {
@@ -136,7 +175,7 @@ export function TemplatePackModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop" onClick={busy || ttsBusy ? undefined : onClose}>
       <div
         className="modal template-modal"
         role="dialog"
@@ -146,33 +185,38 @@ export function TemplatePackModal({ onClose }: { onClose: () => void }) {
       >
         <div className="modal-head">
           <h3>{ot("pack.title")}</h3>
-          <button type="button" className="icon-btn" onClick={onClose} aria-label={ot("pack.close")}>
+          <button type="button" className="icon-btn" onClick={onClose} aria-label={ot("pack.close")} disabled={busy || ttsBusy}>
             ✕
           </button>
         </div>
         <div className="modal-body">
           {!done && <p className="muted">{ot("pack.lead")}</p>}
           {!done &&
-            packs.map((tpl) => (
-              <div key={tpl.template.id} className="pack-row">
-                <div>
-                  <b>🎬 {tpl.template.name}</b>
-                  <p className="muted small">
-                    {tpl.template.description} · {aspectLabel(tpl.template.aspect)} · {tpl.template.durationSec}s
-                  </p>
+            packs.map((tpl) => {
+              // M7: chỉ tên/mô tả HIỂN THỊ được localize; create(tpl) vẫn
+              // nhận tpl GỐC (tên project sinh ra bắt nguồn từ tên gốc).
+              const meta = localizeTemplateMeta(tpl);
+              return (
+                <div key={tpl.template.id} className="pack-row">
+                  <div>
+                    <b>🎬 {meta.name}</b>
+                    <p className="muted small">
+                      {meta.description} · {aspectLabel(tpl.template.aspect)} · {tpl.template.durationSec}s
+                    </p>
+                  </div>
+                  <button type="button" className="primary" disabled={busy} onClick={() => void create(tpl)}>
+                    {busy ? ot("pack.creating") : ot("pack.create")}
+                  </button>
                 </div>
-                <button type="button" className="primary" disabled={busy} onClick={() => void create(tpl)}>
-                  {busy ? ot("pack.creating") : ot("pack.create")}
-                </button>
-              </div>
-            ))}
+              );
+            })}
           {busy && <p className="muted">{ot("pack.creating")}</p>}
           {importProgress && (
             <p className="muted" role="status" data-import-progress={importProgress.phase}>
               ⏳ {formatImportProgressText(importProgress, (k, vars) => i18nT(k, vars))}
             </p>
           )}
-          {error && <p className="error">{error}</p>}
+          {error && <p className="error" ref={errorRef}>{error}</p>}
           {done && (
             <div>
               <p>

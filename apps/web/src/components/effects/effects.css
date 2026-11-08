@@ -42,6 +42,14 @@
   color: #fff;
 }
 
+/* R61 R4: nút effect đang bật phải đổi màu tên như khi hover — trước đây
+   <button class="fx-toggle on"> mang class `on` nhưng không có rule nào
+   khớp nó (chỉ .fx-item.on đổi viền/nền và .fx-item.on .fx-check đổi màu
+   dấu check), nên `on` trên nút là class chết. Mirror rule hover. */
+.fx-toggle.on .fx-name {
+  color: #fff;
+}
+
 .fx-check {
   font-size: 15px;
   color: #6b6b80;

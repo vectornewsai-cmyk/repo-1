@@ -1,0 +1,198 @@
+{
+  "vi": {
+    "app": {
+      "proxyStaleToast": "Proxy của {names} đã mất trên bridge — bấm nút Proxy trên thẻ media để tạo lại.",
+      "mediaLibrary": "Thư viện media",
+      "openMediaLibrary": "Mở thư viện media",
+      "clipProps": "Thuộc tính clip",
+      "openInspector": "Mở panel thuộc tính",
+      "mediaLibraryShort": "📁 Thư viện",
+      "closeMediaLibrary": "Đóng thư viện",
+      "propsShort": "⚙️ Thuộc tính",
+      "closeInspector": "Đóng panel thuộc tính"
+    },
+    "mediabin": {
+      "bridgeStatus": "Bridge trả {status}",
+      "noProxyUrl": "Bridge không trả proxyUrl.",
+      "smallEnough": "“{name}” đã đủ nhỏ, không cần proxy.",
+      "proxyAttached": "Đã gắn proxy {height}p cho “{name}” — preview sẽ mượt hơn.",
+      "proxyFailed": "Không tạo được proxy: {error} (bridge: {url})",
+      "proxyStaleTitle": "File proxy đã mất trên bridge — bấm để tạo lại bản proxy 720p (export vẫn dùng file gốc)",
+      "proxyOnTitle": "Đang dùng proxy {height}p cho preview",
+      "proxyCreateTitle": "Tạo bản proxy 720p qua bridge để preview mượt hơn (export vẫn dùng file gốc)",
+      "recreateProxyFor": "Tạo lại proxy cho {name}",
+      "createProxyFor": "Tạo proxy cho {name}",
+      "proxyStaleBtn": "Proxy mất, tạo lại",
+      "proxyCreating": "Đang tạo…",
+      "proxyFailedBtn": "Proxy lỗi, thử lại",
+      "proxyNotNeeded": "Không cần proxy",
+      "bridgeDown": "Bridge không chạy ({url}) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.",
+      "autoProxyHint": "Tự tạo proxy 720p khi import video (preview mượt hơn, export vẫn dùng gốc)",
+      "emptyStep1": "Nhấn “＋ Nhập file” để thêm video, audio hoặc ảnh.",
+      "emptyStep2": "Kéo thả file vào track timeline (hoặc bấm “＋ Thêm”).",
+      "emptyStep3": "Bấm “⬇ Xuất bản” để xuất video.",
+      "reloadSample": "Tải lại dự án mẫu",
+      "sampleProject": "↺ Dự án mẫu",
+      "unknownError": "lỗi không rõ"
+    },
+    "motionTrack": {
+      "invalid": "Quỹ đạo không hợp lệ: {error}",
+      "readFailed": "Không đọc được file quỹ đạo: {error}",
+      "attached": "Đã gắn quỹ đạo: {n} điểm",
+      "lost": " — ⚠️ track bị mất giữa chừng, clip đứng yên từ điểm cuối.",
+      "followNote": "Clip sẽ bám theo vật thể trong preview và render thật.",
+      "loadOther": "Nạp quỹ đạo khác",
+      "detach": "Gỡ quỹ đạo",
+      "intro": "Chạy {script} trên video gốc để tạo trajectory JSON, rồi nạp file đó vào đây để clip bám theo vật thể.",
+      "loadJson": "Nạp trajectory JSON…"
+    },
+    "tts": {
+      "noRefFile": "Chưa chọn file giọng mẫu để clone.",
+      "bridgeErrorHttp": "Bridge trả lỗi HTTP {status}",
+      "cloneFromSample": "🎭 Clone giọng từ file mẫu (local)",
+      "refFileLabel": "File giọng mẫu để clone",
+      "cloneHint": "Mẫu tốt nhất: 3–30s, một giọng nói rõ, ít nhiễu. Giọng clone chỉ dùng trên máy của bạn, không gửi đi đâu."
+    },
+    "preview": {
+      "missingMedia": "Thiếu media: {names}",
+      "curveWarnHidden": "⚠ Curve: {n} nested lỗi ({dropped} bị ẩn)",
+      "curveWarnFallback": "⚠ Curve: {n} nested về 1×",
+      "curveFallbackLinear": "preview tạm về 1× (export vẫn fail-fast, cần sửa curve thật)",
+      "curveFallbackHidden": "tạm ẩn khỏi preview",
+      "curveFallbackLinearShort": "tạm về 1×",
+      "curveToast": "Preview: nested “{id}” có speed curve không hợp lệ ({reason}) — đã {fallback} để preview không dừng. Export vẫn fail-fast theo luật render, cần sửa curve thật.",
+      "flattenWarn": "⚠ Preview lỗi làm phẳng",
+      "flattenWarnDetail": "{msg} — đang hiện spec gốc, nested có thể không hiển thị.",
+      "flattenToast": "Preview không làm phẳng được project ({msg}) — đang hiện spec gốc, nested có thể không hiển thị.",
+      "holdStale": "⏸ FRAME GIỮ (cũ)",
+      "hold": "⏸ FRAME GIỮ",
+      "volumeTitle": "Mức âm thanh preview",
+      "proxyBadge": "Đang preview bằng bản proxy nhẹ — export cuối vẫn dùng file gốc đủ phân giải",
+      "lutBadge": "Chế độ LUT của preview: WebGL = LUT 3D thật (khớp render); CSS ≈ = xấp xỉ bằng CSS filter",
+      "motionBadge": "Motion của clip đang xem: NỘI SUY = bản render sẽ nội suy frame mới (preview giữ fps project, không nội suy); BLUR≈ = preview chỉ vẽ vệt mờ xấp xỉ, render dùng motion blur thật",
+      "reverseBadge": "Đang ở chế độ phát ngược: playhead chạy lùi theo từng frame, mọi video seek từng frame, audio bị tắt vì không phát ngược đồng bộ được. Bấm nút ◀ hoặc phím J để dừng, nút ▶ để về phát xuôi.",
+      "reverseLabel": "◀ PHÁT NGƯỢC — không audio",
+      "holdBadge": "Decoder chưa kịp giao frame mới nên preview đang vẽ lại frame tốt cuối cùng thay vì để đen. Nếu hiện (cũ) nghĩa là frame đã giữ quá 3 giây timeline — hình đứng yên trong khi playhead vẫn chạy.",
+      "fsExitTitle": "Thoát toàn màn hình (F)",
+      "fsEnterTitle": "Xem toàn màn hình (F)",
+      "fsExit": "Thoát toàn màn hình",
+      "fsEnter": "Xem toàn màn hình",
+      "emptyTitle": "Chưa có clip nào",
+      "emptyHint": "Nhập file vào thư viện, rồi kéo thả vào timeline để bắt đầu."
+    },
+    "toasts": {
+      "closeAria": "Đóng thông báo"
+    },
+    "inspector": {
+      "beatAnalyzeHint": "Phân tích beat & cắt clip",
+      "beatSectionTitle": "🎵 Cắt theo beat"
+    },
+    "desktop": {
+      "saveError": "Không ghi được file"
+    },
+    "media": {
+      "videoMetaFailed": "Không đọc được metadata video",
+      "audioMetaFailed": "Không đọc được metadata audio",
+      "imageReadFailed": "Không đọc được ảnh",
+      "unsupported": "Định dạng không hỗ trợ: {detail}"
+    }
+  },
+  "en": {
+    "app": {
+      "proxyStaleToast": "Proxies for {names} are missing on the bridge — tap the Proxy button on the media card to recreate them.",
+      "mediaLibrary": "Media library",
+      "openMediaLibrary": "Open the media library",
+      "clipProps": "Clip properties",
+      "openInspector": "Open the properties panel",
+      "mediaLibraryShort": "📁 Library",
+      "closeMediaLibrary": "Close the library",
+      "propsShort": "⚙️ Properties",
+      "closeInspector": "Close the properties panel"
+    },
+    "mediabin": {
+      "bridgeStatus": "Bridge returned {status}",
+      "noProxyUrl": "The bridge did not return a proxyUrl.",
+      "smallEnough": "“{name}” is already small enough — no proxy needed.",
+      "proxyAttached": "Attached a {height}p proxy for “{name}” — preview will be smoother.",
+      "proxyFailed": "Could not create a proxy: {error} (bridge: {url})",
+      "proxyStaleTitle": "The proxy file is missing on the bridge — tap to recreate the 720p proxy (export still uses the original file).",
+      "proxyOnTitle": "Using a {height}p proxy for preview",
+      "proxyCreateTitle": "Create a 720p proxy via the bridge for smoother preview (export still uses the original file).",
+      "recreateProxyFor": "Recreate the proxy for {name}",
+      "createProxyFor": "Create a proxy for {name}",
+      "proxyStaleBtn": "Proxy missing, recreate",
+      "proxyCreating": "Creating…",
+      "proxyFailedBtn": "Proxy failed, retry",
+      "proxyNotNeeded": "No proxy needed",
+      "bridgeDown": "The bridge is not running ({url}) — automatic proxy creation failed; tap the Proxy button to retry once the bridge is running.",
+      "autoProxyHint": "Auto-create a 720p proxy when importing video (smoother preview; export still uses the original).",
+      "emptyStep1": "Tap “＋ Import files” to add video, audio, or images.",
+      "emptyStep2": "Drag files onto a timeline track (or tap “＋ Add”).",
+      "emptyStep3": "Tap “⬇ Publish” to export the video.",
+      "reloadSample": "Reload the sample project",
+      "sampleProject": "↺ Sample project",
+      "unknownError": "unknown error"
+    },
+    "motionTrack": {
+      "invalid": "Invalid trajectory: {error}",
+      "readFailed": "Could not read the trajectory file: {error}",
+      "attached": "Trajectory attached: {n} points",
+      "lost": " — ⚠️ tracking was lost mid-way; the clip stays still from the last point.",
+      "followNote": "The clip will follow the object in preview and in the real render.",
+      "loadOther": "Load another trajectory",
+      "detach": "Detach trajectory",
+      "intro": "Run {script} on the original video to create a trajectory JSON, then load that file here so the clip follows the object.",
+      "loadJson": "Load trajectory JSON…"
+    },
+    "tts": {
+      "noRefFile": "No sample voice file selected for cloning.",
+      "bridgeErrorHttp": "Bridge returned HTTP error {status}",
+      "cloneFromSample": "🎭 Clone voice from a sample file (local)",
+      "refFileLabel": "Sample voice file for cloning",
+      "cloneHint": "Best sample: 3–30s, one clear voice, little noise. The cloned voice is only used on your machine and is never sent anywhere."
+    },
+    "preview": {
+      "missingMedia": "Missing media: {names}",
+      "curveWarnHidden": "⚠ Curve: {n} nested clips have errors ({dropped} hidden)",
+      "curveWarnFallback": "⚠ Curve: {n} nested clips fell back to 1×",
+      "curveFallbackLinear": "preview temporarily at 1× (export still fails fast — please fix the real curve)",
+      "curveFallbackHidden": "temporarily hidden from preview",
+      "curveFallbackLinearShort": "temporarily at 1×",
+      "curveToast": "Preview: nested “{id}” has an invalid speed curve ({reason}) — {fallback} so preview keeps going. Export still fails fast per render rules; please fix the real curve.",
+      "flattenWarn": "⚠ Preview failed to flatten",
+      "flattenWarnDetail": "{msg} — showing the original spec; nested clips may not display.",
+      "flattenToast": "Preview could not flatten the project ({msg}) — showing the original spec; nested clips may not display.",
+      "holdStale": "⏸ HELD FRAME (stale)",
+      "hold": "⏸ HELD FRAME",
+      "volumeTitle": "Preview audio level",
+      "proxyBadge": "Previewing with a lightweight proxy — the final export still uses the full-resolution original.",
+      "lutBadge": "Preview LUT mode: WebGL = real 3D LUT (matches render); CSS ≈ = approximated with a CSS filter",
+      "motionBadge": "Motion of the clip being previewed: INTERPOLATE = the render will interpolate new frames (preview keeps the project fps and does not interpolate); BLUR≈ = preview only draws an approximate blur trail, the render uses real motion blur",
+      "reverseBadge": "Reverse playback mode: the playhead moves backwards frame by frame, every video seeks per frame, and audio is off because it cannot play in sync backwards. Tap the ◀ button or press J to stop, or ▶ to play forwards again.",
+      "reverseLabel": "◀ REVERSE — no audio",
+      "holdBadge": "The decoder hasn't delivered a new frame yet, so preview is redrawing the last good frame instead of showing black. If it says (stale), the frame has been held for over 3 timeline seconds — the picture is frozen while the playhead keeps moving.",
+      "fsExitTitle": "Exit fullscreen (F)",
+      "fsEnterTitle": "View fullscreen (F)",
+      "fsExit": "Exit fullscreen",
+      "fsEnter": "View fullscreen",
+      "emptyTitle": "No clips yet",
+      "emptyHint": "Import files into the library, then drag them onto the timeline to start."
+    },
+    "toasts": {
+      "closeAria": "Dismiss notification"
+    },
+    "inspector": {
+      "beatAnalyzeHint": "Analyze beats & cut clips",
+      "beatSectionTitle": "🎵 Cut to the beat"
+    },
+    "desktop": {
+      "saveError": "Could not write the file"
+    },
+    "media": {
+      "videoMetaFailed": "Could not read the video metadata",
+      "audioMetaFailed": "Could not read the audio metadata",
+      "imageReadFailed": "Could not read the image",
+      "unsupported": "Unsupported format: {detail}"
+    }
+  }
+}

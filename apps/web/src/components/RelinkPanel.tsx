@@ -83,7 +83,7 @@ export function RelinkPanel({ missing, onPick, onCleanupAliases, onClose }: Prop
       const res = await onPick({ oldSrc: activeSrc, file: f }, (ev) => setProgress(ev));
       if (!res.ok) setError(res.message);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Lỗi không xác định khi relink.");
+      setError(err instanceof Error ? err.message : i18nT("relink.unknownError"));
     } finally {
       setBusy(false);
       setActiveSrc(null);
@@ -112,7 +112,7 @@ export function RelinkPanel({ missing, onPick, onCleanupAliases, onClose }: Prop
     } catch (err) {
       setError(
         i18nT("relink.cleanupError", {
-          detail: err instanceof Error ? err.message : "lỗi không xác định",
+          detail: err instanceof Error ? err.message : i18nT("relink.unknownErrorShort"),
         }),
       );
     } finally {
@@ -143,16 +143,15 @@ export function RelinkPanel({ missing, onPick, onCleanupAliases, onClose }: Prop
 
   return (
     <div className="modal-backdrop">
-      <div className="modal" role="dialog" aria-label="Media thiếu">
+      <div className="modal" role="dialog" aria-label={i18nT("relink.title")}>
         <div className="modal-head">
-          <span>🔗 Media thiếu ({missing.length})</span>
-          <button className="icon-btn" onClick={onClose} title="Đóng (bỏ qua)">
+          <span>{i18nT("relink.titleCount", { n: String(missing.length) })}</span>
+          <button className="icon-btn" onClick={onClose} title={i18nT("relink.closeSkip")}>
             ✕
           </button>
         </div>
         <div style={{ padding: "12px 18px", fontSize: 13, color: "var(--muted)" }}>
-          Project này dùng {missing.length} file media chưa có trong phiên làm việc. Chọn lại từng
-          file để tiếp tục dựng — clip thiếu sẽ hiện placeholder cho tới khi được relink.
+          {i18nT("relink.intro", { n: String(missing.length) })}
         </div>
         {error && (
           <div className="valid-banner" style={{ color: "var(--danger)" }}>
@@ -225,9 +224,9 @@ export function RelinkPanel({ missing, onPick, onCleanupAliases, onClose }: Prop
                     {m.src}
                   </div>
                   <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                    {meta.label} · dùng trong {m.clipCount} clip
-                    {nestedN > 0 && topN > 0 && ` (${topN} ở cấp cao, ${nestedN} trong nested)`}
-                    {nestedN > 0 && topN === 0 && ` (chỉ trong nested)`}
+                    {i18nT("relink.usedIn", { label: meta.label, n: String(m.clipCount) })}
+                    {nestedN > 0 && topN > 0 && i18nT("relink.usedTopAndNested", { top: String(topN), nested: String(nestedN) })}
+                    {nestedN > 0 && topN === 0 && i18nT("relink.usedNestedOnly")}
                     {m.trackLabels.length > 0 && ` (${m.trackLabels.join(", ")})`}
                   </div>
                   {nestedChains.length > 0 && (
@@ -242,9 +241,9 @@ export function RelinkPanel({ missing, onPick, onCleanupAliases, onClose }: Prop
                 <button
                   disabled={busy}
                   onClick={() => startPick(m.src)}
-                  title={`Chọn file thay thế cho ${m.src}`}
+                  title={i18nT("relink.pickFile", { src: m.src })}
                 >
-                  {busy && activeSrc === m.src ? "⏳ Đang đọc…" : "🔗 Chọn lại"}
+                  {busy && activeSrc === m.src ? i18nT("relink.readingBtn") : i18nT("relink.repick")}
                 </button>
               </div>
             );
@@ -252,11 +251,11 @@ export function RelinkPanel({ missing, onPick, onCleanupAliases, onClose }: Prop
         </div>
         <div className="modal-actions" style={{ padding: "12px 18px", gap: 8 }}>
           {onCleanupAliases && (
-            <button disabled={busy || cleaning} onClick={() => void onCleanup()} title="Xoá alias trùng tên thật của asset khác (tạo trước guard đợt 38)">
-              {cleaning ? "⏳ Đang dọn…" : `🧹 ${i18nT("relink.cleanup")}`}
+            <button disabled={busy || cleaning} onClick={() => void onCleanup()} title={i18nT("relink.cleanupAlias")}>
+              {cleaning ? i18nT("relink.cleaning") : `🧹 ${i18nT("relink.cleanup")}`}
             </button>
           )}
-          <button onClick={onClose}>Bỏ qua — dựng tiếp với placeholder</button>
+          <button onClick={onClose}>{i18nT("relink.skipPlaceholder")}</button>
         </div>
         <input
           ref={fileRef}

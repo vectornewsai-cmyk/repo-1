@@ -10,7 +10,6 @@ import { useEffect, useState } from "react";
 import { useStore } from "../../store";
 import {
   HISTORY_KEEP_DEFAULT,
-  getCurrentProjectId,
   getHistoryStore,
   type ProjectVersion,
 } from "../../lib/projectHistory";
@@ -23,43 +22,60 @@ import {
   setLastLoadReport,
 } from "../../lib/loadReport";
 import { pushToast } from "../../lib/toast";
+import { getLang, t, useLang } from "../../i18n";
 
-function fmtTime(ms: number): string {
+/**
+ * Ngày/giờ của version theo ngôn ngữ đang chọn — cùng pattern ProjectMenu
+ * (autosave): vi → vi-VN, en → en-US. Tháng viết tắt ("7 thg 11, 2026" /
+ * "Nov 7, 2026") để ngày/tháng không nhầm được: dạng số "7/11/2026" ở
+ * vi-VN và "11/7/2026" ở en-US chỉ cùng một ngày nhưng đọc ngược nhau.
+ * Dùng chung cho cả row trong bảng, dialog confirm xoá và toast khôi phục.
+ */
+export function fmtTime(ms: number): string {
   const d = new Date(ms);
-  return `${d.toLocaleDateString("vi-VN")} ${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`;
+  const locale = getLang() === "vi" ? "vi-VN" : "en-US";
+  const date = d.toLocaleDateString(locale, { year: "numeric", month: "short", day: "numeric" });
+  const time = d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+  return `${date} ${time}`;
 }
 
 export function HistoryPanel({ onClose }: { onClose: () => void }) {
+  useLang(); // re-render khi đổi ngôn ngữ
   const [versions, setVersions] = useState<ProjectVersion[]>([]);
   const [label, setLabel] = useState("");
   const [busy, setBusy] = useState(false);
-  const projectId = getCurrentProjectId();
+  // Đợt 64 R6 — lịch sử khóa theo projectId ổn định của envelope
+  // (store.projectId), không còn khóa theo id legacy gắn với tên file
+  // (getCurrentProjectId): đổi tên project không đứt chuỗi; hai file
+  // trùng tên có hai chuỗi riêng. Đăng ký store để mở project khác thì
+  // panel liệt kê lại đúng chuỗi mới.
+  const projectId = useStore((s) => s.projectId);
 
   const refresh = async () => {
     try {
-      setVersions(await getHistoryStore().listVersions(projectId));
+      setVersions(await getHistoryStore(t).listVersions(projectId));
     } catch (e) {
-      pushToast("Không đọc được lịch sử: " + (e as Error).message, "error");
+      pushToast(t("history.readFailed", { error: (e as Error).message }), "error");
     }
   };
 
-  useEffect(() => { void refresh(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void refresh(); }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const doSnapshot = async () => {
     setBusy(true);
     try {
       const st = useStore.getState();
-      const v = await getHistoryStore().saveVersion(projectId, st.spec, label.trim());
+      const v = await getHistoryStore().saveVersion(projectId, st.spec, label.trim(), t);
       if (!v) {
-        pushToast("Spec trùng version mới nhất — không tạo snapshot trùng.", "info");
+        pushToast(t("history.duplicate"), "info");
       } else {
-        pushToast(`Đã lưu phiên bản (${v.summary.join("; ")})`, "success");
+        pushToast(t("history.saved", { summary: v.summary.join("; ") }), "success");
         setLabel("");
       }
       await getHistoryStore().prune(projectId, HISTORY_KEEP_DEFAULT);
       await refresh();
     } catch (e) {
-      pushToast("Không lưu được phiên bản: " + (e as Error).message, "error");
+      pushToast(t("history.saveFailed", { error: (e as Error).message }), "error");
     } finally {
       setBusy(false);
     }
@@ -67,14 +83,17 @@ export function HistoryPanel({ onClose }: { onClose: () => void }) {
 
   const doRestore = async (v: ProjectVersion) => {
     const st = useStore.getState();
-    if (isDirty(st.spec) && !window.confirm("Có thay đổi chưa lưu. Khôi phục version này sẽ thay toàn bộ project hiện tại. Tiếp tục?")) return;
+    if (isDirty(st.spec) && !window.confirm(t("history.restoreConfirm"))) return;
     setBusy(true);
     try {
       // Snapshot trạng thái hiện tại trước khi ghi đè — khôi phục không mất dữ liệu.
-      await getHistoryStore().saveVersion(projectId, st.spec, "trước khi khôi phục");
+      await getHistoryStore().saveVersion(projectId, st.spec, t("history.beforeRestore"), t);
       const spec = await getHistoryStore().restoreVersion(v.id);
-      if (!spec) { pushToast("Không tìm thấy version này nữa.", "error"); return; }
-      st.replaceProject(spec);
+      if (!spec) { pushToast(t("history.notFound"), "error"); return; }
+      // Đợt 63 R7 — khôi phục version là cùng một project nên GIỮ
+      // projectId hiện tại (không sinh id mới: version cũ vẫn thuộc
+      // project này, sổ tham chiếu của nó phải ở lại cùng khóa).
+      st.replaceProject(spec, useStore.getState().projectId);
       st.setProjectName(spec.meta.name);
       markSaved(spec);
       // Đợt 28 L4: đồng bộ báo cáo tải với spec vừa khôi phục — có vi
@@ -87,17 +106,17 @@ export function HistoryPanel({ onClose }: { onClose: () => void }) {
       } else {
         clearLastLoadReport();
       }
-      pushToast(`Đã khôi phục phiên bản ${fmtTime(v.createdAt)}${v.label ? ` (${v.label})` : ""}`, "success");
+      pushToast(t("history.restored", { time: fmtTime(v.createdAt), label: v.label ? ` (${v.label})` : "" }), "success");
       await refresh();
     } catch (e) {
-      pushToast("Không khôi phục được: " + (e as Error).message, "error");
+      pushToast(t("history.restoreFailed", { error: (e as Error).message }), "error");
     } finally {
       setBusy(false);
     }
   };
 
   const doDelete = async (v: ProjectVersion) => {
-    if (!window.confirm(`Xoá phiên bản ${fmtTime(v.createdAt)}? Không khôi phục được.`)) return;
+    if (!window.confirm(t("history.deleteConfirm", { time: fmtTime(v.createdAt) }))) return;
     await getHistoryStore().deleteVersion(v.id);
     await refresh();
   };
@@ -123,43 +142,42 @@ export function HistoryPanel({ onClose }: { onClose: () => void }) {
     if (!f) return;
     try {
       const data = JSON.parse(await f.text()) as unknown;
-      const n = await getHistoryStore().importHistory(data);
-      pushToast(`Đã nhập ${n} version mới (bỏ qua version đã có).`, "success");
+      const n = await getHistoryStore(t).importHistory(data, t);
+      pushToast(t("history.imported", { n: String(n) }), "success");
       await refresh();
     } catch (err) {
-      pushToast("Không nhập được: " + (err as Error).message, "error");
+      pushToast(t("history.importFailed", { error: (err as Error).message }), "error");
     }
   };
 
   return (
-    <div className="history-panel" style={{ border: "1px solid #444", padding: 12, marginTop: 8 }}>
+    <div className="history-panel">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <strong>🕘 Lịch sử phiên bản (lưu local, chưa đồng bộ cloud)</strong>
+        <strong>{t("history.title")}</strong>
         <button onClick={onClose}>✕</button>
       </div>
       <p style={{ color: "#aaa", fontSize: 13 }}>
-        Snapshot lưu toàn bộ spec vào IndexedDB trên máy này. Tối đa {HISTORY_KEEP_DEFAULT} version/project;
-        muốn mang đi máy khác thì Xuất file lịch sử.
+        {t("history.note", { max: String(HISTORY_KEEP_DEFAULT) })}
       </p>
       <div style={{ display: "flex", gap: 8 }}>
         <input
-          placeholder="Nhãn cho snapshot (không bắt buộc)"
+          placeholder={t("history.labelPlaceholder")}
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           style={{ flex: 1 }}
         />
-        <button className="primary" onClick={() => void doSnapshot()} disabled={busy}>📸 Lưu phiên bản</button>
-        <button onClick={() => void doExport()}>⬇ Xuất lịch sử</button>
+        <button className="primary" onClick={() => void doSnapshot()} disabled={busy}>{t("history.snapshot")}</button>
+        <button onClick={() => void doExport()}>{t("history.export")}</button>
         <label style={{ border: "1px solid #666", padding: "4px 10px", cursor: "pointer" }}>
-          ⬆ Nhập lịch sử
+          {t("history.import")}
           <input type="file" accept=".json,application/json" style={{ display: "none" }} onChange={(e) => void onImportFile(e)} />
         </label>
       </div>
       {versions.length === 0 ? (
-        <p style={{ color: "#aaa" }}>Chưa có phiên bản nào. Bấm “Lưu phiên bản” để tạo snapshot đầu tiên.</p>
+        <p style={{ color: "#aaa" }}>{t("history.empty")}</p>
       ) : (
         <table style={{ width: "100%", marginTop: 12, borderCollapse: "collapse" }}>
-          <thead><tr><th style={{ textAlign: "left" }}>Thời gian</th><th style={{ textAlign: "left" }}>Nhãn</th><th style={{ textAlign: "left" }}>Thay đổi</th><th /></tr></thead>
+          <thead><tr><th style={{ textAlign: "left" }}>{t("history.colTime")}</th><th style={{ textAlign: "left" }}>{t("history.colLabel")}</th><th style={{ textAlign: "left" }}>{t("history.colChanges")}</th><th /></tr></thead>
           <tbody>
             {[...versions].reverse().map((v) => (
               <tr key={v.id}>
@@ -167,8 +185,8 @@ export function HistoryPanel({ onClose }: { onClose: () => void }) {
                 <td>{v.label || "—"}</td>
                 <td>{v.summary.join("; ")}</td>
                 <td style={{ whiteSpace: "nowrap" }}>
-                  <button onClick={() => void doRestore(v)} disabled={busy}>↩ Khôi phục</button>{" "}
-                  <button onClick={() => void doDelete(v)} disabled={busy}>🗑 Xoá</button>
+                  <button onClick={() => void doRestore(v)} disabled={busy}>{t("history.restore")}</button>{" "}
+                  <button onClick={() => void doDelete(v)} disabled={busy}>{t("topbar.deleteShort")}</button>
                 </td>
               </tr>
             ))}

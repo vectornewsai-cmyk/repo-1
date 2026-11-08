@@ -12,6 +12,12 @@
  *
  * Beat chỉ là xấp xỉ trên nhạc thật (xem Q5_LIMITS.md) — modal cho review
  * và bỏ điểm cắt trước khi áp dụng, không cắt mù.
+ *
+ * Đợt 58 O4: sửa nợ LIMITS đợt 57 §6.3 — modal dùng class `modal-backdrop`
+ * + `modal` đã định nghĩa trong styles.css thay cho `modal-card` chưa từng
+ * được định nghĩa (theo đúng mẫu N1 SilenceModal); footer `.modal-actions`
+ * nằm ngoài `.modal-body` (nút luôn thấy, body cuộn nội bộ khi dài).
+ * Đo headed thật: xem docs/PHASE9_ROUND58_O4_MODAL_CARD_LIMITS.md.
  */
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "../store";
@@ -19,10 +25,10 @@ import {
   beatsToTimelineTimes,
   formatBeatTime,
 } from "../lib/beatSync";
+import { BRIDGE_URL } from "../lib/bridgeUrl";
+import { t, useLang } from "../i18n";
+import { resolveBridgeApiError } from "../lib/bridgeErrors"; // Đợt 62 R5: dịch mã lỗi bridge→web
 
-const BRIDGE_URL =
-  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_BRIDGE_URL ||
-  "http://127.0.0.1:8787";
 
 type Step = "config" | "running" | "review";
 
@@ -56,6 +62,7 @@ interface BeatResult {
 }
 
 export function BeatSyncModal({ trackId, clipId, onClose }: Props) {
+  useLang(); // re-render khi đổi ngôn ngữ
   const [step, setStep] = useState<Step>("config");
   const [minBpm, setMinBpm] = useState(40);
   const [maxBpm, setMaxBpm] = useState(240);
@@ -98,15 +105,19 @@ export function BeatSyncModal({ trackId, clipId, onClose }: Props) {
     return (
       <div className="modal-backdrop" onClick={onClose}>
         <div
-          className="modal-card"
+          className="modal"
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
-          aria-label="Cắt theo beat"
+          aria-label={t("beatsync.title")}
         >
-          <div className="panel-head">Cắt theo beat</div>
-          <p>Không tìm thấy clip audio/video đã chọn.</p>
-          <button onClick={onClose}>Đóng</button>
+          <div className="panel-head">{t("beatsync.title")}</div>
+          <div className="modal-body">
+            <p>{t("beatsync.noClip")}</p>
+          </div>
+          <div className="modal-actions">
+            <button onClick={onClose}>{t("common.close")}</button>
+          </div>
         </div>
       </div>
     );
@@ -126,7 +137,7 @@ export function BeatSyncModal({ trackId, clipId, onClose }: Props) {
 
   const startDetect = async () => {
     if (!mediaItem?.file) {
-      setError("Không có file gốc của clip (media đã bị xóa hoặc relink).");
+      setError(t("beatsync.noSource"));
       return;
     }
     setError(null);
@@ -144,7 +155,7 @@ export function BeatSyncModal({ trackId, clipId, onClose }: Props) {
         signal: ctl.signal,
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `Lỗi ${res.status}`);
+      if (!res.ok) throw new Error(resolveBridgeApiError(data, t, t("beatsync.bridgeError", { status: String(res.status) })));
       const beats = Array.isArray(data.beats) ? data.beats : [];
       setResult({ bpm: data.bpm, beats, duration: data.duration, structure: data.structure ?? null });
       setTimes(beatsToTimelineTimes(beats, clip));
@@ -153,7 +164,7 @@ export function BeatSyncModal({ trackId, clipId, onClose }: Props) {
       setStep("review");
     } catch (e) {
       if ((e as Error).name === "AbortError") return;
-      setError((e as Error).message || "Phân tích beat thất bại.");
+      setError((e as Error).message || t("beatsync.analyzeFailed"));
       setStep("config");
     }
   };
@@ -161,12 +172,12 @@ export function BeatSyncModal({ trackId, clipId, onClose }: Props) {
   const apply = () => {
     const keep = visibleTimes.filter((t) => !dropped.has(t));
     if (keep.length === 0) {
-      setError("Không còn điểm cắt nào — chọn lại ít nhất 1 điểm.");
+      setError(t("beatsync.noCutPoints"));
       return;
     }
     const n = useStore.getState().splitClipAtTimes(trackId, clipId, keep);
     if (n === 0) {
-      setError("Không tách được điểm nào (clip có thể đã bị khóa hoặc điểm nằm ngoài clip).");
+      setError(t("beatsync.applyFailed"));
       return;
     }
     onClose();
@@ -175,125 +186,136 @@ export function BeatSyncModal({ trackId, clipId, onClose }: Props) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
-        className="modal-card"
+        className="modal"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Cắt theo beat"
+        aria-label={t("beatsync.title")}
       >
-        <div className="panel-head">🎵 Cắt clip theo beat</div>
-        {error && <p className="error">{error}</p>}
+        <div className="panel-head">{t("beatsync.cutTitle")}</div>
 
         {step === "config" && (
           <>
-            <p className="tips">
-              Phát hiện beat bằng thuật toán local (spectral flux + DP, không API).
-              Hiệu quả nhất với nhạc có beat rõ; nhạc rubato/phức tạp có thể lệch —
-              hãy xem lại danh sách điểm cắt trước khi áp dụng.
-            </p>
-            <div className="field-row">
-              <label className="field">
-                <span>BPM tối thiểu</span>
-                <input
-                  type="number"
-                  min={30}
-                  max={240}
-                  value={minBpm}
-                  onChange={(e) => setMinBpm(Number(e.target.value))}
-                />
-              </label>
-              <label className="field">
-                <span>BPM tối đa</span>
-                <input
-                  type="number"
-                  min={30}
-                  max={300}
-                  value={maxBpm}
-                  onChange={(e) => setMaxBpm(Number(e.target.value))}
-                />
-              </label>
+            <div className="modal-body">
+              {error && <p className="error">{error}</p>}
+              <p className="tips">{t("beatsync.intro")}</p>
+              <div className="field-row">
+                <label className="field">
+                  <span>{t("beatsync.minBpm")}</span>
+                  <input
+                    type="number"
+                    min={30}
+                    max={240}
+                    value={minBpm}
+                    onChange={(e) => setMinBpm(Number(e.target.value))}
+                  />
+                </label>
+                <label className="field">
+                  <span>{t("beatsync.maxBpm")}</span>
+                  <input
+                    type="number"
+                    min={30}
+                    max={300}
+                    value={maxBpm}
+                    onChange={(e) => setMaxBpm(Number(e.target.value))}
+                  />
+                </label>
+              </div>
             </div>
-            <div className="field-row">
-              <button onClick={startDetect}>Phân tích beat</button>
-              <button onClick={onClose}>Hủy</button>
+            <div className="modal-actions">
+              <button onClick={startDetect}>{t("beatsync.analyze")}</button>
+              <button onClick={onClose}>{t("bgremove.cancel")}</button>
             </div>
           </>
         )}
 
         {step === "running" && (
-          <p>Đang phân tích beat… (nhạc dài có thể mất vài chục giây)</p>
+          <div className="modal-body">
+            {error && <p className="error">{error}</p>}
+            <p>{t("beatsync.analyzing")}</p>
+          </div>
         )}
 
         {step === "review" && result && (
           <>
-            <p>
-              Phát hiện <strong>{result.bpm.toFixed(1)} BPM</strong> — {result.beats.length} beat
-              trong {result.duration.toFixed(1)}s → {visibleTimes.length} điểm cắt trong clip.
-              Bỏ tick điểm nào không muốn cắt:
-            </p>
-            {result.structure && !result.structure.error && (
-              <div>
-                <p>
-                  🎼 Cấu trúc (ước lượng heuristic, không phải hiểu nhạc thật):{" "}
-                  {result.structure.meter
-                    ? `nhịp ${result.structure.meter}/4 (tin cậy ${(result.structure.meter_confidence ?? 0).toFixed(2)})`
-                    : "không xác định được nhịp"}
-                  {downbeatTimes.length > 0 && ` — ${downbeatTimes.length} downbeat trong clip`}
+            <div className="modal-body">
+              {error && <p className="error">{error}</p>}
+              <p>
+                {t("beatsync.found", {
+                  bpm: result.bpm.toFixed(1),
+                  beats: String(result.beats.length),
+                  duration: result.duration.toFixed(1),
+                  points: String(visibleTimes.length),
+                })}
+              </p>
+              {result.structure && !result.structure.error && (
+                <div>
+                  <p>
+                    {t("beatsync.structure")}{" "}
+                    {result.structure.meter
+                      ? t("beatsync.meter", {
+                          meter: String(result.structure.meter),
+                          confidence: (result.structure.meter_confidence ?? 0).toFixed(2),
+                        })
+                      : t("beatsync.meterUnknown")}
+                    {downbeatTimes.length > 0 && ` — ${downbeatTimes.length} downbeat trong clip`}
+                  </p>
+                  {result.structure.sections && result.structure.sections.length > 1 && (
+                    <div style={{ maxHeight: 120, overflowY: "auto" }}>
+                      {result.structure.sections.map((s, i) => (
+                        <p key={i} style={{ margin: "2px 0" }}>
+                          {t("beatsync.section", {
+                            label: s.label,
+                            start: formatBeatTime(toTimeline(s.start)),
+                            end: formatBeatTime(toTimeline(s.end)),
+                          })}
+                          {(s.repeats ?? 1) > 1
+                            ? t("beatsync.sectionRepeat", { n: String(s.repeats) })
+                            : ""}
+                          {s.highest_energy ? t("beatsync.sectionPeak") : ""}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  {downbeatTimes.length > 0 && (
+                    <label className="field" style={{ display: "block" }}>
+                      <input
+                        type="checkbox"
+                        checked={downbeatOnly}
+                        onChange={(e) => setDownbeatOnly(e.target.checked)}
+                      />{" "}
+                      {t("beatsync.downbeatOnly")}
+                    </label>
+                  )}
+                  <p className="tips">{t("beatsync.sectionNote")}</p>
+                </div>
+              )}
+              {result.structure?.error && (
+                <p className="tips">
+                  {t("beatsync.structureError", { error: result.structure.error })}
                 </p>
-                {result.structure.sections && result.structure.sections.length > 1 && (
-                  <div style={{ maxHeight: 120, overflowY: "auto" }}>
-                    {result.structure.sections.map((s, i) => (
-                      <p key={i} style={{ margin: "2px 0" }}>
-                        Đoạn {s.label}: {formatBeatTime(toTimeline(s.start))} →{" "}
-                        {formatBeatTime(toTimeline(s.end))}
-                        {(s.repeats ?? 1) > 1 ? ` (lặp ×${s.repeats})` : ""}
-                        {s.highest_energy ? " (năng lượng cao nhất)" : ""}
-                      </p>
-                    ))}
-                  </div>
-                )}
-                {downbeatTimes.length > 0 && (
-                  <label className="field" style={{ display: "block" }}>
+              )}
+              <div style={{ maxHeight: 240, overflowY: "auto" }}>
+                {visibleTimes.map((t) => (
+                  <label key={t} className="field" style={{ display: "block" }}>
                     <input
                       type="checkbox"
-                      checked={downbeatOnly}
-                      onChange={(e) => setDownbeatOnly(e.target.checked)}
+                      checked={!dropped.has(t)}
+                      onChange={() => {
+                        const next = new Set(dropped);
+                        if (next.has(t)) next.delete(t);
+                        else next.add(t);
+                        setDropped(next);
+                      }}
                     />{" "}
-                    Chỉ giữ điểm cắt ở downbeat (cắt theo ô nhịp, ít điểm hơn)
+                    {formatBeatTime(t)}
                   </label>
-                )}
-                <p className="tips">
-                  Nhãn đoạn (A/B/C, “lặp lại”, “năng lượng cao”) chỉ là gợi ý từ độ giống
-                  hòa âm và năng lượng — nhạc không theo cấu trúc pop có thể phân đoạn sai.
-                </p>
+                ))}
               </div>
-            )}
-            {result.structure?.error && (
-              <p className="tips">
-                Không phân tích được cấu trúc ({result.structure.error}) — vẫn cắt theo beat
-                bình thường.
-              </p>
-            )}
-            <div style={{ maxHeight: 240, overflowY: "auto" }}>
-              {visibleTimes.map((t) => (
-                <label key={t} className="field" style={{ display: "block" }}>
-                  <input
-                    type="checkbox"
-                    checked={!dropped.has(t)}
-                    onChange={() => {
-                      const next = new Set(dropped);
-                      if (next.has(t)) next.delete(t);
-                      else next.add(t);
-                      setDropped(next);
-                    }}
-                  />{" "}
-                  {formatBeatTime(t)}
-                </label>
-              ))}
             </div>
-            <div className="field-row">
-              <button onClick={apply}>Cắt clip theo beat đã chọn</button>
-              <button onClick={onClose}>Hủy</button>
+            <div className="modal-actions">
+              <button onClick={apply}>{t("beatsync.apply")}</button>
+              <button onClick={onClose}>{t("bgremove.cancel")}</button>
             </div>
           </>
         )}

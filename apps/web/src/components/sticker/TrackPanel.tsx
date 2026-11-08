@@ -17,12 +17,17 @@
  */
 import { useRef, useState } from "react";
 import { useStore } from "../../store";
+import { t, useLang } from "../../i18n";
+// Phase 9 đợt 60 Q2: TrackPanel dùng rule .track-panel / .track-panel .error
+// trong sticker.css (chung thư mục sticker).
+import "./sticker.css";
 import {
   validateTrackAttachment,
   type TrackAttachment,
 } from "../../../../../packages/video-spec/src/tracking";
 
 export function TrackPanel() {
+  useLang(); // re-render khi đổi ngôn ngữ
   const selection = useStore((s) => s.selection);
   const spec = useStore((s) => s.spec);
   const [err, setErr] = useState<string | null>(null);
@@ -56,14 +61,14 @@ export function TrackPanel() {
       };
       const errs = validateTrackAttachment(candidate);
       if (errs.length > 0) {
-        setErr(`Quỹ đạo không hợp lệ: ${errs[0]}`);
+        setErr(t("motionTrack.invalid", { error: errs[0] }));
         return;
       }
       useStore.getState().patchClip(track.id, primary.clipId, {
         track: candidate,
       } as never);
     } catch (e) {
-      setErr(`Không đọc được file quỹ đạo: ${(e as Error).message}`);
+      setErr(t("motionTrack.readFailed", { error: (e as Error).message }));
     }
   };
 
@@ -80,24 +85,35 @@ export function TrackPanel() {
       {attached ? (
         <>
           <p className="tips">
-            Đã gắn quỹ đạo: {attached.points.length} điểm
-            {attached.lost
-              ? " — ⚠️ track bị mất giữa chừng, clip đứng yên từ điểm cuối."
-              : "."}{" "}
-            Clip sẽ bám theo vật thể trong preview và render thật.
+            {t("motionTrack.attached", { n: String(attached.points.length) })}
+            {attached.lost ? t("motionTrack.lost") : "."}{" "}
+            {t("motionTrack.followNote")}
           </p>
           <div className="field-row">
-            <button onClick={() => fileRef.current?.click()}>Nạp quỹ đạo khác</button>
-            <button onClick={clear}>Gỡ quỹ đạo</button>
+            <button onClick={() => fileRef.current?.click()}>{t("motionTrack.loadOther")}</button>
+            <button onClick={clear}>{t("motionTrack.detach")}</button>
           </div>
         </>
       ) : (
         <>
           <p className="tips">
-            Chạy <code>server/tracking/track.py</code> trên video gốc để tạo
-            trajectory JSON, rồi nạp file đó vào đây để clip bám theo vật thể.
+            {(() => {
+              // Giữ <code> cho đường dẫn script khi dịch: tách chuỗi đã
+              // dịch theo đúng literal path (bất biến giữa 2 ngôn ngữ).
+              const intro = t("motionTrack.intro", { script: "server/tracking/track.py" });
+              const parts = intro.split("server/tracking/track.py");
+              return parts.length === 2 ? (
+                <>
+                  {parts[0]}
+                  <code>server/tracking/track.py</code>
+                  {parts[1]}
+                </>
+              ) : (
+                intro
+              );
+            })()}
           </p>
-          <button onClick={() => fileRef.current?.click()}>Nạp trajectory JSON…</button>
+          <button onClick={() => fileRef.current?.click()}>{t("motionTrack.loadJson")}</button>
         </>
       )}
       {err && <p className="error">{err}</p>}

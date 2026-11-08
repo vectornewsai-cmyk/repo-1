@@ -83,3 +83,32 @@
   color: #8a8a94;
   font-size: 11px;
 }
+
+/* Phase 9 đợt 60 Q2: 4 class chưa định nghĩa (đợt 59 P4 §5.1–§5.2). */
+/* TrackPanel (cùng thư mục sticker, import file này): root kế thừa layout
+   .inspector như .speed-panel nên không cần style khung riêng — rule trống
+   có chủ đích, chỉ làm hook; lỗi validate thì đỏ như .modal-body .error. */
+.track-panel {
+  /* kế thừa layout .inspector, không cần style khung riêng */
+}
+
+.track-panel .error {
+  color: #ff7b7b;
+  font-size: 13px;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* Lỗi của StickerPanel nằm trong .sticker-panel nhưng chưa có rule màu. */
+.sticker-panel .warn {
+  color: #f5b453;
+  font-size: 12px;
+  margin: 8px 0 0;
+}
+
+/* Nhánh editor của StickerPanel trả về root .sticker-editor (không nằm
+   trong .sticker-panel) nên .muted ở đó chưa có màu — mirror rule trên. */
+.sticker-editor .muted {
+  color: #8a8a94;
+  font-size: 11px;
+}

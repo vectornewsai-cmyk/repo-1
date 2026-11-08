@@ -173,7 +173,8 @@ if (SHARED) {
 }
 const bridge = SHARED ? null : spawn("node", [path.join(REPO, "server/bridge/src/index.js")], {
   stdio: "pipe",
-  env: { ...process.env, BRIDGE_PORT: String(BRIDGE_PORT), BRIDGE_WORK_DIR: BRIDGE_WORK, BRIDGE_RATE_GENERAL: "5000" },
+  // Đợt 66 T9 — persist riêng theo PID (BRIDGE_WORK cố định giữa các lần chạy): tránh rò mốc limiter sang test khác (đợt 65 §3b).
+  env: { ...process.env, BRIDGE_PORT: String(BRIDGE_PORT), BRIDGE_WORK_DIR: BRIDGE_WORK, BRIDGE_RATE_GENERAL: "5000", BRIDGE_RATE_PERSIST_PATH: path.join(BRIDGE_WORK, `rate-limit-${process.pid}.json`) },
 });
 let bridgeLog = "";
 if (bridge) {

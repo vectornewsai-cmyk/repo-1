@@ -1,0 +1,33 @@
+#!/bin/sh
+# vcut-node — "Node" của app đóng gói: chạy bridge bằng chính binary
+# Electron ở chế độ Node thuần (ROUND51-H8).
+#
+# Vì sao cần script này thay vì đặt ELECTRON_RUN_AS_NODE=1 vào env của
+# main process: biến đó mà nằm trong env của main process thì MỌI tiến
+# trình con Chromium (zygote, GPU, renderer, network service) cũng kế
+# thừa — chúng khởi động bằng cùng binary Electron và sẽ chạy dạng Node,
+# báo "/proc/self/exe: bad option: --type=utility" rồi chết, khiến cửa
+# sổ không bao giờ load (gặp thật 06/11, smoke AppImage timeout 120s).
+# Script này giới hạn biến CHỈ trong cây bridge: main process env sạch,
+# bridge (do script exec) có biến, render worker do bridge spawn kế thừa
+# env của bridge nên cũng chạy dạng Node — cả chuỗi đúng, Chromium an toàn.
+#
+# Cách tìm binary Electron (theo thứ tự):
+#   1. $VCUT_ELECTRON_BIN (nếu user/tooling chỉ định rõ)
+#   2. Đường tương đối từ script: <gốc-extract>/vcut-studio
+#      (script nằm ở <gốc>/resources/vcut-server/bin/vcut-node nên cần
+#      3 cấp .. : bin → vcut-server → resources → gốc)
+# exec thay thế shell bằng Electron nên pid/process-group giữ nguyên —
+# ServiceManager kill cả group vẫn đúng, pidfile vẫn trỏ đúng pid.
+set -eu
+if [ -n "${VCUT_ELECTRON_BIN:-}" ]; then
+  BIN="$VCUT_ELECTRON_BIN"
+else
+  HERE="$(dirname "$0")"
+  BIN="$HERE/../../../vcut-studio"
+fi
+if [ ! -x "$BIN" ]; then
+  echo "vcut-node: không tìm thấy binary Electron chạy được: $BIN" >&2
+  exit 127
+fi
+exec env ELECTRON_RUN_AS_NODE=1 "$BIN" "$@"

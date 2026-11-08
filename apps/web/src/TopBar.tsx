@@ -189,14 +189,14 @@ export function TopBar({ onExport, onCaption, onSilence, onTemplate, onWelcome }
         </button>
         <button
           type="button"
-          title="Mở lại màn chào / tour / template pack 1 chạm"
-          aria-label="Mở lại màn chào"
+          title={t("topbar.welcomeHint")}
+          aria-label={t("topbar.welcomeLabel")}
           onClick={onWelcome}
         >
-          👋 Bắt đầu
+          {t("topbar.welcome")}
         </button>
         <button
-          className="tbtn"
+          className="tbtn topbar-lang-btn"
           title={t("common.language")}
           aria-label={t("common.language")}
           onClick={() => setLang(getLang() === "vi" ? "en" : "vi")}

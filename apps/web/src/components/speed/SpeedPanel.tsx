@@ -9,7 +9,10 @@
  * - Đổi speed → giữ nguyên đoạn nguồn [in, out), cập nhật
  *   duration = (out - in) / speed. Timeline tự co/giãn theo duration.
  * - Đổi speed bị từ chối (kèm cảnh báo) nếu duration mới đè lên clip khác
- *   trên cùng track, hoặc làm duration < 0.2s.
+ *   trên cùng track. Duration < 0.2s KHÔNG tới được qua UI: slider và
+ *   preset đều kẹp về sliderMax = srcLen / 0.2 trước khi tính duration
+ *   (nhánh cảnh báo "clip quá ngắn" đã XÓA ở đợt 63 R10 — xem
+ *   docs/PHASE9_ROUND63_R10_DOCS_DEAD_BRANCH_LIMITS.md §1).
  * - Toggle reverse: chỉ đảo chiều phát, không đổi duration.
  *
  * Phase 9 đợt 12 (luồng T5) — SPEED-CURVE EDITOR (đóng nợ đợt 11 P5):
@@ -70,6 +73,9 @@ import {
   type SpeedEasing,
   type SpeedKeyframe,
 } from "@repo-1/video-spec";
+// Đợt 62 R2: chặn bật speed curve khi clip đang có stabilize (thống nhất
+// với chặn preset stabilize ở EnhancePanel từ đợt 61 R2).
+import { isSpeedCurveEnableBlocked, speedT } from "./speedCurveBlock";
 import { fmtTime } from "../../lib";
 
 const MIN_CLIP_DURATION = 0.2; // quy ước chung của editor
@@ -105,14 +111,17 @@ export function SpeedPanel() {
     );
 
   const applySpeed = (raw: number) => {
+    // Đợt 63 R10 — QUYẾT ĐỊNH XÓA nhánh cảnh báo "clip quá ngắn" (xem
+    // docs/PHASE9_ROUND63_R10_DOCS_DEAD_BRANCH_LIMITS.md §1): nhánh này
+    // chết qua UI — `Math.min(raw, sliderMax)` kẹp trước khi tính
+    // duration nên newDur không bao giờ < 0.2s (đợt 62 R10 đo thật:
+    // srcLen 0.5s → slider max 2.5, preset 4× disabled, kéo max →
+    // speed 2.5, duration đúng 0.2, không warn). Key i18n tương ứng
+    // chờ parent xóa khỏi vi.json/en.json lúc gộp (không sửa dict
+    // trực tiếp); test hồi quy speedWarnTooShortDead63R10.test.ts
+    // khóa việc không còn tham chiếu + bất biến newDur >= 0.2.
     const s = clampSpeed(Math.min(raw, sliderMax));
     const newDur = durationForSpeed(clip, s);
-    if (newDur < MIN_CLIP_DURATION - 1e-9) {
-      setWarn(
-        i18nT("speed.warnTooShort", { s: String(s), min: String(MIN_CLIP_DURATION) }),
-      );
-      return;
-    }
     if (wouldOverlap(newDur)) {
       setWarn(i18nT("speed.warnOverlap", { dur: fmtTime(newDur) }));
       return;
@@ -307,10 +316,35 @@ export function SpeedPanel() {
         {!hasCurve && (
           <>
             <div className="btn-row">
-              <button className="toggle curve-enable-btn" onClick={enableCurve}>
+              <button
+                className="toggle curve-enable-btn"
+                data-testid="speed-curve-enable-btn"
+                // Đợt 62 R2: clip đang bật chống rung thì không bật curve mới
+                // được (sẽ tạo trạng thái lỗi mà render chặn) — đối xứng với
+                // chặn preset stabilize ở EnhancePanel (đợt 61 R2). Đường sửa
+                // vẫn mở: tắt stabilize trong panel Tăng cường rồi bật lại.
+                disabled={isSpeedCurveEnableBlocked(hasStabilize)}
+                title={
+                  hasStabilize
+                    ? speedT(
+                        "speed.curveStabTitle",
+                        "Không bật được speed curve vì clip đang bật chống rung — chống rung không dùng chung được với speedKeyframes",
+                      )
+                    : undefined
+                }
+                onClick={enableCurve}
+              >
                 {i18nT("speed.curveEnable")}
               </button>
             </div>
+            {hasStabilize && (
+              <p className="warn" data-testid="speed-curve-stab-blocked">
+                {speedT(
+                  "speed.curveStabBlocked",
+                  "⚠️ Clip đang bật chống rung nên không bật được speed curve — chống rung không dùng chung được với speedKeyframes. Tắt chống rung trong panel Tăng cường rồi bật lại.",
+                )}
+              </p>
+            )}
             <p className="tips">{i18nT("speed.curveTip")}</p>
           </>
         )}

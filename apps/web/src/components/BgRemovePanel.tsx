@@ -14,12 +14,11 @@ import { useRef, useState } from "react";
 import { useStore } from "../store";
 import type { MediaItem } from "../media";
 import { t as i18nT, useLang } from "../i18n";
+import { resolveBridgeApiError, type BridgeApiErrorBody } from "../lib/bridgeErrors"; // Đợt 62 R5: dịch mã lỗi bridge→web
 import { formatImportProgressText } from "../lib/importProgressText41W3";
 import type { ImportFileProgressEvent } from "../lib/ingestProgress39T5";
+import { BRIDGE_URL } from "../lib/bridgeUrl";
 
-const BRIDGE_URL =
-  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_BRIDGE_URL ||
-  "http://127.0.0.1:8787";
 
 type Status = "idle" | "running" | "error";
 
@@ -69,9 +68,9 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
       const ct = res.headers.get("content-type") || "";
       if (!res.ok) {
         const j = ct.includes("application/json")
-          ? ((await res.json()) as { error?: string })
+          ? ((await res.json()) as BridgeApiErrorBody)
           : null;
-        throw new Error(j?.error || i18nT("bgremove.bridgeHttp", { status: String(res.status) }));
+        throw new Error(resolveBridgeApiError(j, i18nT, i18nT("bgremove.bridgeHttp", { status: String(res.status) })));
       }
       // Phase 7 P6: bridge báo session thực sự đã dùng qua header — hiển
       // thị rõ nếu đã fallback (đừng để user tưởng vẫn là birefnet).

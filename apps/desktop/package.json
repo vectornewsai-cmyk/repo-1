@@ -1,0 +1,95 @@
+{
+  "author": "VCut Studio",
+  "build": {
+    "appId": "studio.vcut.app",
+    "appImage": {
+      "artifactName": "vcut-studio-${version}-${arch}.${ext}"
+    },
+    "deb": {
+      "artifactName": "vcut-studio_${version}_${arch}.${ext}",
+      "depends": [
+        "ffmpeg",
+        "libgtk-3-0",
+        "libnotify4",
+        "libnss3",
+        "libxss1",
+        "libxtst6",
+        "xdg-utils",
+        "libatspi2.0-0",
+        "libuuid1",
+        "libsecret-1-0"
+      ]
+    },
+    "directories": {
+      "output": "release"
+    },
+    "extraResources": [
+      {
+        "filter": [
+          "**/*"
+        ],
+        "from": "build/bundled-server",
+        "to": "vcut-server"
+      }
+    ],
+    "fileAssociations": [
+      {
+        "description": "VCut Studio project file",
+        "ext": "vcut",
+        "mimeType": "application/x-vcut-project",
+        "name": "VCut Studio Project",
+        "role": "Editor"
+      }
+    ],
+    "files": [
+      "dist/**/*",
+      "dist-web/**/*",
+      "package.json"
+    ],
+    "linux": {
+      "category": "AudioVideo",
+      "desktop": {
+        "entry": {
+          "Comment[vi]": "Trình dựng video — chỉnh sửa video trên máy của bạn, dữ liệu không rời máy",
+          "Keywords": "video;editor;edit;vcut;",
+          "Name": "VCut Studio",
+          "StartupWMClass": "studio.vcut.app"
+        }
+      },
+      "executableName": "vcut-studio",
+      "icon": "build/icon.png",
+      "maintainer": "VCut Studio",
+      "syncDesktopName": true,
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    },
+    "productName": "VCut Studio"
+  },
+  "description": "VCut Studio — Electron shell: app desktop thật cho trình dựng video (load apps/web/dist, bridge local :8787)",
+  "desktopName": "studio.vcut.app",
+  "homepage": "https://github.com/vectornewsai-cmyk/repo-1",
+  "devDependencies": {
+    "@types/node": "~26.6.5",
+    "electron": "45.2.3",
+    "electron-builder": "26.18.0",
+    "typescript": "~5.6.3"
+  },
+  "license": "MIT",
+  "main": "dist/main.js",
+  "name": "@repo-1/desktop",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/copy-services-js.mjs",
+    "build:desktop": "npm run build --workspace=@repo-1/web && npm run build && npm run package",
+    "build:slim-venv": "node scripts/build-slim-venv.mjs",
+    "package": "electron-builder --linux",
+    "prepackage": "node scripts/prepackage.mjs",
+    "dev:desktop": "npm run build && node scripts/dev-desktop.mjs",
+    "smoke:desktop": "npm run build && node scripts/copy-web-dist.mjs && VCUT_DESKTOP_SMOKE=1 xvfb-run -a electron --no-sandbox .",
+    "start:desktop": "electron ."
+  },
+  "type": "commonjs",
+  "version": "0.1.0"
+}

@@ -4,10 +4,17 @@ import { useStore } from "./store";
 import type { MediaItem } from "./media";
 import { fmtTime } from "./lib";
 import { t, useLang } from "./i18n";
+import { resolveBridgeApiError } from "./lib/bridgeErrors"; // Đợt 62 R5: dịch mã lỗi bridge→web
 import { pushToast } from "./lib/toast";
 import { shouldAutoProxy } from "./lib/proxy";
+// Phase 10 G4 — nút Thêm media dùng dialog hệ thống trong Electron.
+import { importMediaNative, isNativeDesktop } from "./lib/nativeFiles";
 import type { ImportFileProgressEvent } from "./lib/ingestProgress39T5";
 import { formatBytes, ingestPercent } from "./lib/ingestProgress39T5";
+import { BRIDGE_URL } from "./lib/bridgeUrl";
+// Đợt 61 R9 — UI dọn kho lưu trữ (đóng nợ 60 Q7 §5.9: bytes mồ côi từ
+// trước đợt 60 vẫn ở lại kho, chưa có UI dọn).
+import { StorageCleanupPanel } from "./components/StorageCleanupPanel";
 
 /** Trạng thái proxy tự động của 1 item (R3 Phase 9) — giữ ở MediaBin, không đụng store. */
 export type AutoStatus = "creating" | "done" | "failed" | "skipped";
@@ -21,10 +28,6 @@ function readAutoProxy(): boolean {
   }
 }
 
-/** Địa chỉ bridge server (cùng mẫu ExportPanel/BgRemovePanel). */
-const BRIDGE_URL =
-  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_BRIDGE_URL ||
-  "http://127.0.0.1:8787";
 
 const KIND_ICON: Record<MediaItem["kind"], string> = {
   video: "🎬",
@@ -35,6 +38,16 @@ const KIND_ICON: Record<MediaItem["kind"], string> = {
 function MediaCard({ item, autoStatus }: { item: MediaItem; autoStatus?: AutoStatus }) {
   const st = useStore.getState();
   const [proxyBusy, setProxyBusy] = useState(false);
+  // Đợt 59 P1 — xóa media khỏi bin (chỉ khi user bấm ✕ + xác nhận):
+  // xóa hết clip khỏi timeline KHÔNG xóa media khỏi bin nữa, nên bin
+  // cần đường xóa chủ đích riêng. Store chặn khi còn clip dùng media
+  // này (trả message) — khi đó chỉ toast lỗi, không xóa.
+  const removeFromBin = () => {
+    if (!window.confirm(t("mediabin.removeConfirm", { name: item.name }))) return;
+    const r = st.removeMediaFromBin(item.id);
+    if (r.ok) pushToast(t("mediabin.removed", { name: item.name }), "success");
+    else if (r.message) pushToast(r.message, "error");
+  };
   // Q8: tạo proxy 720p qua bridge rồi gắn vào item — preview dùng proxy,
   // export cuối vẫn dùng file gốc. Chỉ video có File gốc mới tạo được.
   const makeProxy = async () => {
@@ -46,12 +59,12 @@ function MediaCard({ item, autoStatus }: { item: MediaItem; autoStatus?: AutoSta
       form.append("height", "720");
       const res = await fetch(`${BRIDGE_URL}/api/proxy`, { method: "POST", body: form });
       const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : `Bridge trả ${res.status}`);
+      if (!res.ok) throw new Error(resolveBridgeApiError(data, t, t("mediabin.bridgeStatus", { status: String(res.status) })));
       if (data.skipped) {
-        pushToast(`"${item.name}" đã đủ nhỏ, không cần proxy.`, "info");
+        pushToast(t("mediabin.smallEnough", { name: item.name }), "info");
         return;
       }
-      if (typeof data.proxyUrl !== "string") throw new Error("Bridge không trả proxyUrl.");
+      if (typeof data.proxyUrl !== "string") throw new Error(t("mediabin.noProxyUrl"));
       // Đợt 38 U2: truyền proxySizeBytes khi bridge trả (kích thước
       // của chính file proxy) để preview đưa qua cổng S4; bridge cũ
       // không trả thì undefined và cổng HEAD/GET của R3 vẫn làm việc.
@@ -61,9 +74,9 @@ function MediaCard({ item, autoStatus }: { item: MediaItem; autoStatus?: AutoSta
         Number(data.proxyHeight) || 720,
         typeof data.proxySizeBytes === "number" ? data.proxySizeBytes : undefined,
       );
-      pushToast(`Đã gắn proxy ${data.proxyHeight ?? 720}p cho "${item.name}" — preview sẽ mượt hơn.`, "success");
+      pushToast(t("mediabin.proxyAttached", { height: String(data.proxyHeight ?? 720), name: item.name }), "success");
     } catch (e) {
-      pushToast(`Không tạo được proxy: ${e instanceof Error ? e.message : "lỗi không rõ"} (bridge: ${BRIDGE_URL})`, "error");
+      pushToast(t("mediabin.proxyFailed", { error: e instanceof Error ? e.message : t("mediabin.unknownError"), url: BRIDGE_URL }), "error");
     } finally {
       setProxyBusy(false);
     }
@@ -90,6 +103,14 @@ function MediaCard({ item, autoStatus }: { item: MediaItem; autoStatus?: AutoSta
       </div>
       <div className="media-name">{item.name}</div>
       <button
+        className="media-remove"
+        title={t("mediabin.removeTitle", { name: item.name })}
+        aria-label={t("mediabin.removeTitle", { name: item.name })}
+        onClick={removeFromBin}
+      >
+        ✕
+      </button>
+      <button
         className="media-add"
         title={t("mediabin.addAtPlayhead")}
         aria-label={`${t("mediabin.addAtPlayhead")}: ${item.name}`}
@@ -100,22 +121,30 @@ function MediaCard({ item, autoStatus }: { item: MediaItem; autoStatus?: AutoSta
       {item.kind === "video" && item.file && (
         <button
           className="media-proxy"
-          title={item.proxyUrl ? `Đang dùng proxy ${item.proxyHeight ?? 720}p cho preview` : "Tạo bản proxy 720p qua bridge để preview mượt hơn (export vẫn dùng file gốc)"}
-          aria-label={`Tạo proxy cho ${item.name}`}
+          title={
+            item.proxyStale
+              ? t("mediabin.proxyStaleTitle")
+              : item.proxyUrl
+                ? t("mediabin.proxyOnTitle", { height: String(item.proxyHeight ?? 720) })
+                : t("mediabin.proxyCreateTitle")
+          }
+          aria-label={item.proxyStale ? t("mediabin.recreateProxyFor", { name: item.name }) : t("mediabin.createProxyFor", { name: item.name })}
           onClick={() => void makeProxy()}
           disabled={proxyBusy || autoStatus === "creating"}
         >
           {proxyBusy
             ? "…"
-            : item.proxyUrl
-              ? `✓ PROXY ${item.proxyHeight ?? 720}p`
-              : autoStatus === "creating"
-                ? "Đang tạo…"
-                : autoStatus === "failed"
-                  ? "Proxy lỗi, thử lại"
-                  : autoStatus === "skipped"
-                    ? "Không cần proxy"
-                    : "Proxy 720p"}
+            : item.proxyStale
+              ? t("mediabin.proxyStaleBtn")
+              : item.proxyUrl
+                ? `✓ PROXY ${item.proxyHeight ?? 720}p`
+                : autoStatus === "creating"
+                  ? t("mediabin.proxyCreating")
+                  : autoStatus === "failed"
+                    ? t("mediabin.proxyFailedBtn")
+                    : autoStatus === "skipped"
+                      ? t("mediabin.proxyNotNeeded")
+                      : "Proxy 720p"}
         </button>
       )}
     </div>
@@ -135,16 +164,11 @@ export function MediaBin() {
   // Chỉ hiện trong lúc importFiles chạy; xong thì xoá để khỏi lẫn với
   // vòng proxy tự động chạy sau đó.
   const [importProgress, setImportProgress] = useState<ImportFileProgressEvent | null>(null);
+  // Đợt 61 R9 — mở panel dọn kho lưu trữ (IndexedDB).
+  const [cleanupOpen, setCleanupOpen] = useState(false);
 
-  const onFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    const before = new Set(useStore.getState().media.map((m) => m.id));
-    try {
-      await st.importFiles([...files], (ev) => setImportProgress(ev));
-    } finally {
-      setImportProgress(null);
-    }
-    if (fileRef.current) fileRef.current.value = "";
+  /** Proxy tự động cho item vừa import (dùng chung đường web + native). */
+  const autoProxyFresh = async (before: Set<string>) => {
     if (!autoProxy) return;
     // Chỉ tạo cho item vừa import, tuần tự để khỏi đè CPU bridge.
     const fresh = useStore.getState().media.filter((m) => !before.has(m.id));
@@ -158,12 +182,12 @@ export function MediaBin() {
         form.append("height", "720");
         const res = await fetch(`${BRIDGE_URL}/api/proxy`, { method: "POST", body: form });
         const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-        if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : `Bridge trả ${res.status}`);
+        if (!res.ok) throw new Error(resolveBridgeApiError(data, t, t("mediabin.bridgeStatus", { status: String(res.status) })));
         if (data.skipped) {
           setAutoStatus((s) => ({ ...s, [item.id]: "skipped" }));
           continue;
         }
-        if (typeof data.proxyUrl !== "string") throw new Error("Bridge không trả proxyUrl.");
+        if (typeof data.proxyUrl !== "string") throw new Error(t("mediabin.noProxyUrl"));
         // Đợt 38 U2: như đường bấm tay ở trên — truyền proxySizeBytes
         // khi bridge trả, để cổng S4 áp dụng được cho nguồn proxy.
         useStore.getState().setMediaProxy(
@@ -177,19 +201,53 @@ export function MediaBin() {
         setAutoStatus((s) => ({ ...s, [item.id]: "failed" }));
         if (!bridgeDownToasted) {
           bridgeDownToasted = true;
-          pushToast(`Bridge không chạy (${BRIDGE_URL}) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.`, "error");
+          pushToast(t("mediabin.bridgeDown", { url: BRIDGE_URL }), "error");
         }
       }
     }
+  };
+
+  const onFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const before = new Set(useStore.getState().media.map((m) => m.id));
+    try {
+      await st.importFiles([...files], (ev) => setImportProgress(ev));
+    } finally {
+      setImportProgress(null);
+    }
+    if (fileRef.current) fileRef.current.value = "";
+    await autoProxyFresh(before);
+  };
+
+  // Phase 10 G4 — trong Electron, nút Thêm media dùng dialog hệ thống
+  // chọn nhiều file (đọc bytes ở main); ngoài Electron giữ input ẩn.
+  const doImport = async () => {
+    if (!isNativeDesktop()) {
+      fileRef.current?.click();
+      return;
+    }
+    const before = new Set(useStore.getState().media.map((m) => m.id));
+    const ok = await importMediaNative();
+    if (ok) await autoProxyFresh(before);
   };
 
   return (
     <aside className="mediabin" aria-label={t("mediabin.title")} data-tour="media">
       <div className="panel-head">
         <span>📁 {t("mediabin.title")}</span>
-        <button className="mini-btn" onClick={() => fileRef.current?.click()} title={t("mediabin.import")}>
-          {t("mediabin.import")}
-        </button>
+        <span style={{ display: "flex", gap: 6 }}>
+          <button
+            className="mini-btn"
+            onClick={() => setCleanupOpen(true)}
+            title={t("storageCleanup.openTitle")}
+            data-testid="storage-cleanup-open"
+          >
+            {t("storageCleanup.openBtn")}
+          </button>
+          <button className="mini-btn" onClick={() => void doImport()} title={t("mediabin.import")}>
+            {t("mediabin.import")}
+          </button>
+        </span>
       </div>
       {importProgress && (
         <div
@@ -257,7 +315,7 @@ export function MediaBin() {
             }
           }}
         />
-        Tự tạo proxy 720p khi import video (preview mượt hơn, export vẫn dùng gốc)
+        {t("mediabin.autoProxyHint")}
       </label>
       <input
         ref={fileRef}
@@ -277,19 +335,20 @@ export function MediaBin() {
             <p>{t("mediabin.empty")}</p>
             {/* K5: hướng dẫn 3 bước cho người mới — thay cho một dòng trống trơn. */}
             <ol className="media-empty-steps">
-              <li>Nhấn “＋ Nhập file” để thêm video, audio hoặc ảnh.</li>
-              <li>Kéo thả file vào track timeline (hoặc bấm “＋ Thêm”).</li>
-              <li>Bấm “⬇ Xuất bản” để xuất video.</li>
+              <li>{t("mediabin.emptyStep1")}</li>
+              <li>{t("mediabin.emptyStep2")}</li>
+              <li>{t("mediabin.emptyStep3")}</li>
             </ol>
-            <button className="mini-btn" onClick={() => fileRef.current?.click()}>
+            <button className="mini-btn" onClick={() => void doImport()}>
               {t("mediabin.import")}
             </button>
           </div>
         )}
       </div>
-      <button className="ghost-btn" onClick={() => void st.loadSample()} title="Tải lại dự án mẫu">
-        ↺ Dự án mẫu
+      <button className="ghost-btn" onClick={() => void st.loadSample()} title={t("mediabin.reloadSample")}>
+        {t("mediabin.sampleProject")}
       </button>
+      {cleanupOpen && <StorageCleanupPanel onClose={() => setCleanupOpen(false)} />}
     </aside>
   );
 }

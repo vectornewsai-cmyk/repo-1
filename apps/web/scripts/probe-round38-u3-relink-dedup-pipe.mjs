@@ -329,6 +329,9 @@ async function runBrowser(serverProc) {
         bridgeProc = spawn("node", ["src/index.js", "--port", "8787"], {
           cwd: path.join(ROOT, "server", "bridge"),
           stdio: "ignore",
+          // Đợt 66 T9 — trước đây không có env (kế thừa env cha) nên dùng file persist mặc định chung;
+          // nay đặt persist riêng theo PID để tránh rò mốc limiter sang test khác (đợt 65 §3b).
+          env: { ...process.env, BRIDGE_PORT: "8787", BRIDGE_RATE_PERSIST_PATH: path.join(os.tmpdir(), `vcut-u3-bridge-${process.pid}-rate-limit.json`) },
         });
         const bridgeUp = await waitFor(async () => {
           try {

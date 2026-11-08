@@ -31,6 +31,7 @@ import { useEffect } from "react";
 import { useStore } from "../../store";
 import { t } from "../../i18n";
 import {
+  formatOverflowLine,
   formatStructuredNote,
   formatWarningValue,
   resolveTopLevelClip,
@@ -124,7 +125,11 @@ export function LoadReportPanel({ report, onClose, onFixWarning, onFixAllWarning
           </div>
           <div style={{ marginTop: 6 }}>{t("loadReport.note")}</div>
           {report.atCap && (
-            <div style={{ marginTop: 6 }}>{t("loadReport.atCap")}</div>
+            <div style={{ marginTop: 6 }}>
+              {report.overflowCount != null
+                ? formatOverflowLine(report.overflowCount, t)
+                : t("loadReport.atCap")}
+            </div>
           )}
           {onFixAllWarnings && report.warnings.length > 0 && (
             <div style={{ marginTop: 10 }}>

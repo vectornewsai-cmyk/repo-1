@@ -79,11 +79,15 @@ Xem chi tiết tại `docs/LICENSES.md`. Tóm tắt:
   module. **RVM bị loại vì GPL-3.0**; bẫy `bria-rmbg`/`RMBG-2.0` (non-commercial)
   bị chặn bằng code.
 
-⚠️ **Lưu ý**: `npm audit` và OSV API bị chặn trong môi trường build hiện tại
-(policy registry nội bộ), nên **chưa chạy được quét CVE tự động**. Các phiên bản
-đã cài (express 4.22.3, multer 2.4.0, js-yaml 4.3.2, jszip 3.10.2, react 18.3.1…)
-không có CVE nghiêm trọng nào được biết tới tại thời điểm audit theo kiến thức
-hiện có. **Khuyến nghị**: bật `npm audit` / osv-scanner trong CI (xem §4).
+⚠️ **Lưu ý**: `npm audit` vẫn bị chặn trong môi trường build hiện tại
+(verify lại 08/11, đợt 66 T10: 403 `policy_denied` ở endpoint
+`/-/npm/v1/security/audits/quick` — policy registry nội bộ), nên quét CVE
+npm chưa chạy được local. **OSV API thì KHÔNG bị chặn**: `pip-audit` 2.10.1
+chạy local được 08/11 và đã quét cả 5 requirements (xem §3.5 — tts 39 +
+bgremove 66 lỗ hổng mới phát hiện). Các phiên bản đã cài (express 4.22.3,
+multer 2.4.0, js-yaml 4.3.2, jszip 3.10.2, react 18.3.1…) không có CVE
+nghiêm trọng nào được biết tới tại thời điểm audit theo kiến thức hiện có.
+**Khuyến nghị**: bật `npm audit` / osv-scanner trong CI (xem §4).
 
 ### 2.7. Asset attribution — ✅ ĐẦY ĐỦ 1:1
 
@@ -168,17 +172,24 @@ bản release độc hại được đẩy lên PyPI, `pip install -r` lần sau
 **Khuyến nghị**: pin version chính xác + hash (`pip hash-checking mode`) cho
 release pipeline.
 
-**✅ ĐÃ SỬA (2026-10-21)**: cả 4 file chuyển sang `==`:
+**✅ ĐÃ SỬA (2026-10-21)**: cả 5 file chuyển sang `==` (4 file gốc K4 +
+`server/tracking/requirements.txt` thêm sau, xem §4.1):
 - caption: `faster-whisper==1.2.1` (freeze từ venv đang chạy; kèm
   ctranslate2 4.8.3, onnxruntime 1.31.0, tokenizers 0.23.3, av 19.0.1).
 - tts: `vieneu==3.8.3`, `numpy==2.5.4` (freeze từ venv đang chạy).
 - reframe: `opencv-python-headless==5.0.0.93`, `numpy==2.5.4` (freeze từ
   venv đang chạy).
-- bgremove: `rembg[cpu]==2.0.38` (đã verify ở Batch H), `opencv==5.0.0.93`,
-  `numpy==2.5.4`, `Pillow==10.2.0` — LƯU Ý: bgremove không còn venv để
-  freeze nên các pin này là "đã biết tương thích", chưa phải freeze;
-  ghi rõ trong chính file requirements và cần chạy lại test_bgremove.py
-  sau khi cài venv mới trước khi dùng cho release.
+- bgremove: `rembg[cpu]==2.0.60`, `onnxruntime==1.23.2`,
+  `opencv-python-headless==5.0.0.93`, `numpy==2.2.6`, `Pillow==10.2.0` —
+  ĐÍNH CHÍNH 07/11 (ROUND53-J8, xem header file requirements): rembg
+  2.0.38 → 2.0.60 vì 2.0.38 không có session BiRefNet thật (gọi
+  `birefnet-general` lặng lẽ trả về U2netSession); 2.0.60 là bản đầu tiên
+  có BiRefNetSessionGeneral; extra `[cpu]` bắt buộc ở 2.0.60 + pin
+  `onnxruntime` tường minh; numpy 2.5.4 → 2.2.6 vì numpy 2.5.4 yêu cầu
+  Python ≥3.12 trong khi venv bgremove chạy Python 3.10. Bộ pin này đã
+  verify chạy thật trên VM (venv Python 3.10.22, ~706M).
+- tracking: `numpy==2.5.4`, `opencv-python-headless==5.0.0.93` (cho
+  `track.py`, thêm ở đợt 63 R10).
 - Hash-checking mode (`--require-hashes`) chưa bật: cần hashes cho cả cây
   transitive, làm ở bước release pipeline (R1-102) thay vì ở đây — ghi
   nhận để không ai tưởng pin `==` đã là hash-checking.
@@ -190,16 +201,47 @@ release pipeline.
 rembg như library qua `bgremove.py` CLI riêng, không bao giờ bật server tích
 hợp. Ghi nhận để không ai expose server này trong tương lai.
 
+### 3.5. 🟡 pip-audit local 08/11/2026: Pillow + rembg có CVE mới — chưa vá
+
+Quét local bằng `pip-audit` 2.10.1 (venv tạm `/tmp`, OSV API — xem
+`docs/PHASE9_ROUND66_T10_DOCS_CI_LIMITS.md` §2):
+
+| Requirements | Kết quả |
+|---|---|
+| caption (`faster-whisper==1.2.1`) | ✅ Sạch — 0 lỗ hổng |
+| tts (`vieneu==3.8.3`, `numpy==2.5.4`) | 🔴 **39 lỗ hổng, toàn bộ ở Pillow 12.3.0** (dep transitive qua cây vieneu — không phải pin trực tiếp), fix 13.0.0 |
+| reframe (`opencv==5.0.0.93`, `numpy==2.5.4`) | ✅ Sạch — 0 lỗ hổng |
+| bgremove (`rembg[cpu]==2.0.60`, `onnxruntime==1.23.2`, `opencv==5.0.0.93`, `numpy==2.2.6`, `Pillow==10.2.0`) | 🔴 **66 lỗ hổng**: rembg 2.0.60 — 4 (PYSEC-2026-2274 ×2, GHSA-55v6-g8pm-pw4c, CVE-2026-115924; fix 2.0.75/2.0.82); Pillow 10.2.0 (pin trực tiếp) — 62, fix 10.3.0/12.2.0/12.3.0/13.0.0 |
+| tracking (`numpy==2.5.4`, `opencv==5.0.0.93`) | ✅ Sạch — 0 lỗ hổng |
+
+Mức độ: VCut là app local, Pillow chỉ đọc/ghi ảnh do user tự mở (không
+parse ảnh từ mạng), rembg chạy như library — rủi ro thực tế thấp hơn con
+số 105 gợi ý, nhưng KHÔNG được coi là "không sao": các CVE Pillow 2026
+chủ yếu là lỗi parse ảnh (đọc file ảnh độc hại có thể crash/lộ bộ nhớ).
+**Chưa vá trong đợt này** — bump Pillow 10.2.0 → 13.0.0 / rembg 2.0.60 →
+2.0.75+ cần đợt riêng verify lại pipeline bgremove (BiRefNet session ở
+2.0.60 là lý do pin này tồn tại — xem §3.3) và cây vieneu/TTS. Hệ quả
+trước mắt: job `pip-audit` trong `ci-security.yml` (fail khi có BẤT KỲ
+lỗ hổng nào) sẽ ĐỎ ở lần chạy CI đầu tiên. `npm audit` local vẫn chưa
+chạy được (403 policy registry nội bộ, verify 08/11) nên CVE npm chưa
+có số mới.
+
 ## 4. Khuyến nghị cho CI/Release
 
 1. ~~Bật quét CVE tự động trong GitHub Actions~~ ✅ đã bật 2026-10-21 (K4):
    `.github/workflows/ci-security.yml` — `npm audit --audit-level=high` cho
    root workspaces + mcp-server + cli (fail ở high/critical), `pip-audit`
-   cho cả 4 requirements đã pin (pip-audit CLI không có cổng severity nên
-   job này fail khi có bất kỳ lỗ hổng nào — chặt hơn high/critical, ghi
-   rõ trong workflow), cộng quét định kỳ thứ 2 hàng tuần. YAML đã parse
-   kiểm chứng. LƯU Ý: workflow chưa chạy thật trên GitHub (chưa có push
-   nào sau khi thêm file) — lần push đầu cần theo dõi log.
+   cho cả 5 requirements đã pin (caption, tts, reframe, bgremove,
+   tracking — tracking thêm vào workflow ở đợt 63 R10, xem LIMITS R10 §5).
+   pip-audit CLI không có cổng severity nên job này fail khi có bất kỳ lỗ
+   hổng nào — chặt hơn high/critical, ghi rõ trong workflow. Cộng quét
+   định kỳ thứ 2 hàng tuần. YAML đã parse kiểm chứng. LƯU Ý: workflow
+   chưa chạy thật trên GitHub (chưa có push nào sau khi thêm file) — lần
+   push đầu cần theo dõi log. Rà lại 08/11 (đợt 66 T10, xem
+   `docs/PHASE9_ROUND66_T10_DOCS_CI_LIMITS.md`): YAML đúng, 3 lockfile +
+   5 requirements khớp, không lệch; quét `pip-audit` local: caption/
+   reframe/tracking sạch, tts 39 + bgremove 66 lỗ hổng (xem §3.5) — job
+   pip-audit sẽ ĐỎ ở lần chạy CI đầu tiên cho tới khi bump pin.
 2. ~~Sửa §3.1 (CORS)~~ ✅ đã sửa 2026-10-20; ~~§3.2 (diskStorage)~~ ✅ đã
    sửa 2026-10-21 — cả hai đều xong trước bản release public đầu tiên.
 3. Pin Python dependencies kèm hash cho release pipeline (R1-102) — pin

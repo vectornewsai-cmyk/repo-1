@@ -144,7 +144,18 @@ export function KeyframePanel() {
 
   const addKeyframeAt = (t: number) => {
     const tc = clamp(t, 0, clip.duration);
-    const v = kfs.length > 0 ? interpolateKeyframes(kfs, tc) : meta.def;
+    // Đợt 52 I7: easing lạ (sửa tay in-memory) làm interpolateKeyframes ném
+    // "easing không hỗ trợ" (TS nay ném như JS/render) — thêm keyframe mới
+    // ở giá trị mặc định thay vì để click handler ném (cùng fallback với
+    // trường hợp mảng rỗng ở trên).
+    let v = meta.def;
+    if (kfs.length > 0) {
+      try {
+        v = interpolateKeyframes(kfs, tc);
+      } catch {
+        v = meta.def;
+      }
+    }
     const nk: Keyframe = { t: tc, v: clamp(v, meta.min, meta.max), easing: "linear" };
     const arr = normalizeKeyframes([...kfs, nk]);
     writeProp(activeProp, arr);
@@ -228,7 +239,10 @@ export function KeyframePanel() {
 
       <div className="kf-tabs">
         {ANIMATABLE_PROPS.map((p) => {
-          const n = anims[p]?.keyframes.length ?? 0;
+          // Đợt 52 I2 — badge đếm keyframe USABLE (sau normalize), khớp
+          // panel count: keyframes thô `[null]` có length 1 nhưng sau
+          // lọc còn 0 → badge phải là 0 (không hiện số), như panel count.
+          const n = normalizeKeyframes(anims[p]?.keyframes ?? []).length;
           return (
             <button
               key={p}
@@ -319,10 +333,12 @@ export function KeyframePanel() {
           <span>{i18nT("keyframe.liveLabel", { label: meta.label.toLowerCase(), t: localT.toFixed(2) })}</span>
           <b>{liveValue ?? "—"}</b>
         </div>
-        {ANIMATABLE_PROPS.filter((p) => p !== activeProp && (anims[p]?.keyframes.length ?? 0) > 0).map((p) => {
+        {/* Đợt 52 I2 — cùng mẫu badge: hàng live chỉ hiện cho prop còn
+            keyframe usable sau lọc; `[null]` trước đây hiện hàng "—". */}
+        {ANIMATABLE_PROPS.filter((p) => p !== activeProp && normalizeKeyframes(anims[p]?.keyframes ?? []).length > 0).map((p) => {
           let v: string | null = null;
           try {
-            v = formatPropValue(p, interpolateKeyframes(anims[p]!.keyframes, localT));
+            v = formatPropValue(p, interpolateKeyframes(normalizeKeyframes(anims[p]!.keyframes), localT));
           } catch {
             v = null;
           }

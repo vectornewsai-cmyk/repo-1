@@ -40,6 +40,23 @@ export function TourCard({ onClose }: { onClose: () => void }) {
     };
   }, [step]);
 
+  // Đợt 59 P2 — Escape đóng tour như nút ✕ / "Bỏ qua" (pattern O1 đợt 58:
+  // guard INPUT/TEXTAREA/SELECT, không chặn BUTTON). KHÔNG gọi finish()
+  // vì ✕ cũng không đánh dấu tour xong — chỉ "Hoàn thành" mới ghi
+  // vcut-tour-done. Handler toàn cục của App không có nhánh tour nên
+  // listener tự chứa trong modal là đường Escape duy nhất.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT")) return;
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   const finish = () => {
     try {
       localStorage.setItem(TOUR_DONE_KEY, "1");

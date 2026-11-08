@@ -9,6 +9,14 @@
  *      (store.splitClipAtTimes)
  *
  * Không có browser test — logic thuần nằm ở lib/scene.ts (đã có test Node).
+ *
+ * Đợt 58 O4: sửa nợ LIMITS đợt 57 §6.3 — modal dùng class `modal-backdrop`
+ * + `modal` đã định nghĩa trong styles.css thay cho `modal-card` chưa từng
+ * được định nghĩa (theo đúng mẫu N1 SilenceModal); giữ modifier
+ * `scene-modal` (đã định nghĩa: min-width 420px, max-width 520px);
+ * footer `.modal-actions` nằm ngoài `.modal-body` (nút luôn thấy, body
+ * cuộn nội bộ khi dài). Đo headed thật: xem
+ * docs/PHASE9_ROUND58_O4_MODAL_CARD_LIMITS.md.
  */
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "../store";
@@ -17,11 +25,12 @@ import {
   formatCutTime,
   type SceneDetectResult,
 } from "../lib/scene";
-import { t as i18nT, useLang } from "../i18n";
+import { t as i18nT, getLang, useLang } from "../i18n";
+import { resolveBridgeApiError } from "../lib/bridgeErrors"; // Đợt 62 R5: dịch mã lỗi bridge→web
+import { resolveScenePhaseLabel } from "../lib/scenePhase63R5"; // Đợt 63 R5: localize phase scene theo locale (nợ R1)
+import type { StructuredErrorDetail } from "../lib/errorDetailSummary"; // Đợt 62 R5: errorDetail trong SSE error
+import { BRIDGE_URL } from "../lib/bridgeUrl";
 
-const BRIDGE_URL =
-  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_BRIDGE_URL ||
-  "http://127.0.0.1:8787";
 
 type Step = "config" | "running" | "review";
 
@@ -40,6 +49,9 @@ interface NdjsonEvent {
   threshold?: number;
   count?: number;
   error?: string;
+  errorCode?: string;
+  errorParams?: Record<string, string>;
+  errorDetail?: StructuredErrorDetail | null;
 }
 
 function fmtElapsed(ms: number): string {
@@ -89,15 +101,19 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
     return (
       <div className="modal-backdrop" onClick={onClose}>
         <div
-          className="modal-card"
+          className="modal"
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
           aria-label={i18nT("scene.aria")}
         >
           <div className="panel-head">{i18nT("scene.aria")}</div>
-          <p>{i18nT("scene.notFound")}</p>
-          <button onClick={onClose}>{i18nT("common.close")}</button>
+          <div className="modal-body">
+            <p>{i18nT("scene.notFound")}</p>
+          </div>
+          <div className="modal-actions">
+            <button onClick={onClose}>{i18nT("common.close")}</button>
+          </div>
         </div>
       </div>
     );
@@ -129,7 +145,7 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
       });
       if (!res.ok && res.headers.get("content-type")?.includes("application/json")) {
         const j = await res.json().catch(() => ({}));
-        throw new Error(j.error || i18nT("scene.bridgeErr", { status: String(res.status) }));
+        throw new Error(resolveBridgeApiError(j, i18nT, i18nT("scene.bridgeErr", { status: String(res.status) })));
       }
       if (!res.body) throw new Error(i18nT("scene.noStream"));
       const reader = res.body.getReader();
@@ -147,7 +163,11 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
           if (!line) continue;
           const ev = JSON.parse(line) as NdjsonEvent;
           if (ev.type === "phase") {
-            setPhase(ev.message || ev.phase || "");
+            // Đợt 63 R5: localize phase theo locale qua phase KEY (đúng mẫu
+            // captionPhase63R1 đợt 63 R1 — bridge gửi kèm message vi, hiển
+            // thị nguyên vẹn làm locale en vẫn thấy tiếng Việt). Fallback
+            // message bridge → "" khi phase lạ; không bao giờ hiện key thô.
+            setPhase(resolveScenePhaseLabel(ev.phase, ev.message, getLang()));
           } else if (ev.type === "done") {
             const cuts = Array.isArray(ev.cuts)
               ? ev.cuts.filter((c): c is number => typeof c === "number" && Number.isFinite(c))
@@ -165,7 +185,7 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
             done = true;
             break;
           } else if (ev.type === "error") {
-            throw new Error(ev.error || i18nT("scene.failed"));
+            throw new Error(resolveBridgeApiError(ev, i18nT, i18nT("scene.failed")));
           }
         }
       }
@@ -208,7 +228,7 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
-        className="modal-card scene-modal"
+        className="modal scene-modal"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -218,24 +238,26 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
 
         {step === "config" && (
           <>
-            <p className="muted">
-              {i18nT("scene.desc")}
-            </p>
-            <label className="field">
-              <span>{i18nT("scene.sensLabel")}: {threshold.toFixed(2)} {threshold < 0.3 ? i18nT("scene.sensLow") : threshold > 0.6 ? i18nT("scene.sensHigh") : i18nT("scene.sensMid")}</span>
-              <input
-                type="range" min={0.1} max={0.9} step={0.05}
-                value={threshold}
-                onChange={(e) => setThreshold(Number(e.target.value))}
-              />
-            </label>
-            <p className="muted small">
-              {i18nT("scene.clipInfo", { dur: clip.duration.toFixed(1), from: clip.in.toFixed(1), to: clip.out.toFixed(1) })}
-              {clip.speed && clip.speed !== 1 ? i18nT("scene.speedNote", { s: String(clip.speed) }) : ""}
-              {clip.reverse ? i18nT("scene.reverseNote") : ""}
-            </p>
-            {error && <p className="error">{error}</p>}
-            <div className="row">
+            <div className="modal-body">
+              <p className="muted">
+                {i18nT("scene.desc")}
+              </p>
+              <label className="field">
+                <span>{i18nT("scene.sensLabel")}: {threshold.toFixed(2)} {threshold < 0.3 ? i18nT("scene.sensLow") : threshold > 0.6 ? i18nT("scene.sensHigh") : i18nT("scene.sensMid")}</span>
+                <input
+                  type="range" min={0.1} max={0.9} step={0.05}
+                  value={threshold}
+                  onChange={(e) => setThreshold(Number(e.target.value))}
+                />
+              </label>
+              <p className="muted small">
+                {i18nT("scene.clipInfo", { dur: clip.duration.toFixed(1), from: clip.in.toFixed(1), to: clip.out.toFixed(1) })}
+                {clip.speed && clip.speed !== 1 ? i18nT("scene.speedNote", { s: String(clip.speed) }) : ""}
+                {clip.reverse ? i18nT("scene.reverseNote") : ""}
+              </p>
+              {error && <p className="error">{error}</p>}
+            </div>
+            <div className="modal-actions">
               <button className="primary" onClick={startDetect}>{i18nT("scene.scan")}</button>
               <button onClick={onClose}>{i18nT("common.cancel")}</button>
             </div>
@@ -244,41 +266,47 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
 
         {step === "running" && (
           <>
-            <div className="spinner" />
-            <p>{phase}</p>
-            <p className="muted">{i18nT("scene.elapsed", { t: fmtElapsed(elapsed) })}</p>
-            <button onClick={() => { abortRef.current?.abort(); setStep("config"); }}>{i18nT("common.cancel")}</button>
+            <div className="modal-body">
+              <div className="spinner" />
+              <p>{phase}</p>
+              <p className="muted">{i18nT("scene.elapsed", { t: fmtElapsed(elapsed) })}</p>
+            </div>
+            <div className="modal-actions">
+              <button onClick={() => { abortRef.current?.abort(); setStep("config"); }}>{i18nT("common.cancel")}</button>
+            </div>
           </>
         )}
 
         {step === "review" && result && (
           <>
-            <p>
-              {i18nT("scene.found", { cuts: String(result.cuts.length), th: String(result.threshold), valid: String(times.length) })}
-            </p>
-            {times.length === 0 ? (
-              <p className="muted">{i18nT("scene.noValidCuts")}</p>
-            ) : (
-              <ul className="scene-cut-list">
-                {times.map((t) => (
-                  <li key={t} className={dropped.has(t) ? "dropped" : ""}>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={!dropped.has(t)}
-                        onChange={() => toggleDrop(t)}
-                      />
-                      <span className="mono">{formatCutTime(t)}</span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="muted small">
-              {i18nT("scene.keepNote", { n: String(times.filter((t) => !dropped.has(t)).length + 1) })}
-            </p>
-            {error && <p className="error">{error}</p>}
-            <div className="row">
+            <div className="modal-body">
+              <p>
+                {i18nT("scene.found", { cuts: String(result.cuts.length), th: String(result.threshold), valid: String(times.length) })}
+              </p>
+              {times.length === 0 ? (
+                <p className="muted">{i18nT("scene.noValidCuts")}</p>
+              ) : (
+                <ul className="scene-cut-list">
+                  {times.map((t) => (
+                    <li key={t} className={dropped.has(t) ? "dropped" : ""}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={!dropped.has(t)}
+                          onChange={() => toggleDrop(t)}
+                        />
+                        <span className="mono">{formatCutTime(t)}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="muted small">
+                {i18nT("scene.keepNote", { n: String(times.filter((t) => !dropped.has(t)).length + 1) })}
+              </p>
+              {error && <p className="error">{error}</p>}
+            </div>
+            <div className="modal-actions">
               <button className="primary" onClick={apply} disabled={times.length === 0}>
                 {i18nT("scene.applyBtn", { n: String(times.filter((t) => !dropped.has(t)).length + 1) })}
               </button>

@@ -36,9 +36,41 @@ function arg(name, def) {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : def;
 }
 const PAGE_URL = arg("--url", "http://127.0.0.1:5173");
+const WINDOW_SIZE = arg("--window-size", "1440,900");
 const DURATION = Number(arg("--duration", "10"));
 const OUT = path.resolve(ROOT, arg("--out", "benchmarks/results/preview-fps.json"));
 const SERVE = process.argv.includes("--serve");
+// Đợt 52 I9 — đo preview FPS thật trên browser headed + project mẫu
+// nhẹ/vừa/nặng (nợ P3 gap analysis §2.4):
+// --headed: bỏ --headless=new (chạy dưới xvfb-run để có màn hình X;
+//   headed thật trên VM này vẫn là Xvfb, không phải màn hình vật lý —
+//   ghi rõ headed=xvfb trong JSON, đừng claim "màn hình thật").
+// --profile <dir>: tái dùng Chrome user-data-dir (giữ IndexedDB media
+//   mẫu + localStorage giữa các lần chạy; mặc định profile tạm mới).
+// --seed-autosave <file>: ghi JSON autosave (serializeProject) vào
+//   localStorage TRƯỚC khi app khôi phục, rồi reload — app sẽ restore
+//   đúng project đó thay vì loadSample. File seed phải là autosave hợp
+//   lệ (parseProjectText pass), nếu không app fallback loadSample và
+//   result.seedLoaded=false (bench KHÔNG tự sửa seed).
+// --dump-autosave <file>: sau khi editor sẵn sàng, đọc localStorage
+//   autosave hiện tại ghi ra file (để làm gốc sinh seed vừa/nặng).
+const HEADED = process.argv.includes("--headed");
+const NO_PLAY = process.argv.includes("--no-play");
+// Đợt 52 I9 — --hide-canvas: ẩn canvas preview (display:none) trước khi
+// phát — đối chứng xem lớp raster/present của canvas có phải là điểm nghẽn
+// không (ẩn canvas thì compositor bỏ qua raster lớp đó; vòng lặp vẫn vẽ
+// lên canvas như thường, chỉ không hiện). FPS tăng vọt khi ẩn → nghẽn ở
+// raster/present canvas; FPS không đổi → nghẽn ở chỗ khác.
+const HIDE_CANVAS = process.argv.includes("--hide-canvas");
+// Đợt 52 I9 — --warmup <giây>: chờ N giây sau khi bấm Phát mới bắt đầu
+// đếm rAF. Tick ĐẦU sau khi bấm Phát có chi phí khởi động lớn (AudioContext
+// + forceSeek + draw đầu — trace text-only đo được 1 tick 3,9s) nên đo
+// ngay sau 1,5s sẽ lẫn chi phí khởi động vào FPS ổn định; warmup tách
+// hai số này ra. Dùng kèm --duration ngắn để không chạy quá cuối project.
+const WARMUP = Number(arg("--warmup", "0"));
+const PROFILE = arg("--profile", "");
+const SEED_AUTOSAVE = arg("--seed-autosave", "");
+const DUMP_AUTOSAVE = arg("--dump-autosave", "");
 // Đợt 37 T4 — --cdp-hang-probe (BENCH_CDP_HANG_PROBE=1): kích hoạt LIVE
 // đường timeout snapshot của CHÍNH bench (nợ §3.6 đợt 36: trước đây
 // bench chỉ ghi snapshot khi CDP timeout trong lúc đo thật, chưa từng
@@ -123,6 +155,33 @@ function finishFrozenDist(result) {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Đợt 52 I9 — đo tải CPU của cây tiến trình Chrome trong lúc đo FPS:
+// cộng %CPU của mọi tiến trình có command chứa chrome-linux64/chrome
+// (main + renderer + GPU + utility). Lấy mẫu mỗi 500ms; %CPU tính theo
+// 1 core (100% = 1 core đầy), VM này có 4 core nên trần ~400%.
+function sampleChromeCpuPct() {
+  try {
+    const out = spawnSync("ps", ["-eo", "%cpu=,args="], { encoding: "utf8" });
+    if (out.status !== 0) return null;
+    let sum = 0;
+    for (const line of out.stdout.split("\n")) {
+      if (line.includes("chrome-linux64/chrome")) {
+        const v = parseFloat(line.trim());
+        if (Number.isFinite(v)) sum += v;
+      }
+    }
+    return Number(sum.toFixed(1));
+  } catch { return null; }
+}
+
+// Đợt 52 I9 — load average 1 phút từ /proc/loadavg (null nếu đọc lỗi).
+function loadAvg1() {
+  try {
+    const v = parseFloat(fs.readFileSync("/proc/loadavg", "utf8").trim().split(/\s+/)[0]);
+    return Number.isFinite(v) ? v : null;
+  } catch { return null; }
+}
 
 // Đợt 37 T4: liệt kê snapshot treo của chính bench (thư mục bền ngoài repo).
 function listBenchSnapFiles() {
@@ -218,18 +277,31 @@ async function main() {
       cwd: path.join(ROOT, "apps/web"), stdio: "ignore",
     });
   }
-  const result = { url: PAGE_URL, durationSec: DURATION, chromium: CHROME, timestamp: new Date().toISOString() };
+  const result = { url: PAGE_URL, durationSec: DURATION, warmupSec: WARMUP, windowSize: WINDOW_SIZE, chromium: CHROME, timestamp: new Date().toISOString(),
+    headed: HEADED, headlessNote: HEADED ? "headed dưới Xvfb (không phải màn hình vật lý)" : "headless=new",
+    profileReused: PROFILE || null, seedAutosave: SEED_AUTOSAVE || null,
+    loadAvg1Before: loadAvg1(), cpuSamples: [] };
   let chrome = null;
   try {
     if (!(await waitUrlOk(PAGE_URL, SERVE ? 60000 : 5000))) {
       throw new Error(`Không tới được ${PAGE_URL} — hãy chạy vite dev server trước hoặc thêm --serve.`);
     }
     const dbgPort = 19000 + (process.pid % 1000);
-    const userData = fs.mkdtempSync(path.join(os.tmpdir(), "vcut-fps-"));
+    // Đợt 52 I9: --profile tái dùng user-data-dir (giữ IndexedDB +
+    // localStorage); mặc định profile tạm mới như trước.
+    const userData = PROFILE ? path.resolve(PROFILE) : fs.mkdtempSync(path.join(os.tmpdir(), "vcut-fps-"));
+    if (PROFILE) fs.mkdirSync(userData, { recursive: true });
     chrome = spawn(CHROME, [
-      "--headless=new", "--no-sandbox", "--disable-dev-shm-usage",
+      ...(HEADED ? [] : ["--headless=new"]),
+      "--no-sandbox", "--disable-dev-shm-usage",
       "--mute-audio", "--autoplay-policy=no-user-gesture-required",
-      "--window-size=1440,900", `--remote-debugging-port=${dbgPort}`,
+      // Đợt 52 I9 — bộ cờ headed đã kiểm chứng chạy được dưới Xvfb trên VM
+      // này: --disable-gpu (không dùng — làm Chrome headed không mở cổng
+      // debug) mà dùng --disable-gpu-compositing + --no-first-run +
+      // --remote-debugging-address (mẫu từ harness clicktest headed đợt 52).
+      ...(HEADED ? ["--disable-gpu-compositing", "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--window-position=0,0"] : []),
+      "--window-size=" + WINDOW_SIZE, `--remote-debugging-port=${dbgPort}`,
+      ...(HEADED ? ["--remote-debugging-address=127.0.0.1"] : []),
       `--user-data-dir=${userData}`,
     ], { stdio: "ignore" });
     let targets = [];
@@ -245,6 +317,24 @@ async function main() {
     await cdp.send("Page.enable");
     await cdp.send("Runtime.enable");
     await cdp.send("Page.navigate", { url: PAGE_URL });
+    // Đợt 52 I9 — seed autosave: ghi JSON vào localStorage rồi reload để
+    // app khôi phục đúng project seed (thay vì loadSample). Ghi ngay sau
+    // navigate đầu (bundle chưa kịp mount xong nên chưa đọc autosave);
+    // reload lần 2 đảm bảo app đọc đúng seed dù lần 1 đã kịp mount.
+    if (SEED_AUTOSAVE) {
+      const seedRaw = fs.readFileSync(path.resolve(SEED_AUTOSAVE), "utf8");
+      // JSON.parse ở Node trước để fail sớm nếu seed hỏng (exit 2).
+      const seedParsed = JSON.parse(seedRaw);
+      if (!seedParsed || typeof seedParsed !== "object" || !seedParsed.spec) {
+        console.error(`[bench] --seed-autosave thiếu field spec, từ chối chạy (exit 2): ${SEED_AUTOSAVE}`);
+        process.exit(2);
+      }
+      await sleep(800);
+      await cdp.evaluate(`localStorage.setItem('vcut-studio:autosave:v1', ${JSON.stringify(seedRaw)}); 'seeded'`);
+      await cdp.send("Page.navigate", { url: PAGE_URL });
+      result.seedProjectName = seedParsed.spec.meta?.name ?? null;
+      console.log(`[bench] đã seed autosave: ${SEED_AUTOSAVE} (project=${result.seedProjectName}, tracks=${(seedParsed.spec.tracks ?? []).length})`);
+    }
     // Chờ splash biến mất + nút Phát xuất hiện (project mẫu load ~11s).
     let ready = false;
     for (let i = 0; i < 90 && !ready; i++) {
@@ -252,6 +342,31 @@ async function main() {
       ready = await cdp.evaluate(`!!document.querySelector('.tbtn.play') && !document.querySelector('.splash')`);
     }
     if (!ready) throw new Error("Hết 90s vẫn chưa thấy editor sẵn sàng (splash còn hoặc thiếu nút Phát).");
+    // Đợt 52 I9 — dump autosave + kiểm tra project đã load đúng chưa
+    // (tên project trong TopBar + số clip .tl-clip/.tl-adj-clip trên timeline).
+    // Seed load đúng khi tên project khớp tên trong file seed; sai → số FPS
+    // đo được là của project khác, phải loại (result.seedLoaded=false).
+    if (DUMP_AUTOSAVE) {
+      // Autosave ghi debounce 5s sau khi spec đổi nên có thể chưa có ngay
+      // khi editor vừa sẵn sàng — chờ tối đa 15s.
+      let autoRaw = "";
+      for (let i = 0; i < 15 && !autoRaw; i++) {
+        autoRaw = await cdp.evaluate(`localStorage.getItem('vcut-studio:autosave:v1') || ''`);
+        if (!autoRaw) await sleep(1000);
+      }
+      if (!autoRaw) throw new Error("--dump-autosave: localStorage chưa có autosave sau khi editor sẵn sàng + chờ 15s.");
+      fs.mkdirSync(path.dirname(path.resolve(DUMP_AUTOSAVE)), { recursive: true });
+      fs.writeFileSync(path.resolve(DUMP_AUTOSAVE), autoRaw + "\n");
+      console.log(`[bench] autosave đã dump: ${DUMP_AUTOSAVE}`);
+    }
+    result.projectCheck = await cdp.evaluate(`(() => { const nameEl = document.querySelector('.project-name'); return { projectName: nameEl ? nameEl.value : null, clips: document.querySelectorAll('.tl-clip, .tl-adj-clip').length }; })()`);
+    if (SEED_AUTOSAVE) {
+      result.seedLoaded = result.projectCheck.projectName === result.seedProjectName;
+      console.log(`[bench] seed check: projectName='${result.projectCheck.projectName}' (seed='${result.seedProjectName}') clips=${result.projectCheck.clips} -> seedLoaded=${result.seedLoaded}`);
+      if (!result.seedLoaded) throw new Error(`Seed KHÔNG load đúng project (tên '${result.projectCheck.projectName}' ≠ seed '${result.seedProjectName}') — dừng để khỏi đo nhầm project.`);
+    } else {
+      console.log(`[bench] project đang mở: '${result.projectCheck.projectName}' clips=${result.projectCheck.clips}`);
+    }
     // Đợt 37 T4 — kích hoạt live đường timeout snapshot của chính bench.
     if (CDP_HANG_PROBE) {
       const snapBefore = listBenchSnapFiles();
@@ -298,27 +413,96 @@ async function main() {
       process.exitCode = probeOk ? (frozenInvalid ? 3 : 0) : 1;
       return;
     }
+    const diagExpr = `(() => {
+      const cv = document.querySelector('.preview-canvas');
+      const wrap = document.getElementById('vcut-preview-wrap');
+      const wr = wrap ? wrap.getBoundingClientRect() : null;
+      const hold = window.__vcutHoldStats || null;
+      const idle = window.__vcutPreviewIdle ? { ticks: window.__vcutPreviewIdle.ticks, sleeping: window.__vcutPreviewIdle.sleeping, pauseRetrySkipped: window.__vcutPreviewIdle.pauseRetrySkipped, seekFailureCount: window.__vcutPreviewIdle.seekFailureCount, tickErrors: window.__vcutPreviewIdle.tickErrors } : null;
+      const raf = window.__vcutPreviewRaf ? { samples: window.__vcutPreviewRaf.samples.length } : null;
+      // Longtask: nhiệm vụ main-thread >50ms — phân biệt "vẽ đắt" (nhiều
+      // longtask, tổng thời gian lớn) với "thread bị đói CPU" (ít longtask
+      // mà tick vẫn thưa).
+      let longtasks = null;
+      try { const es = performance.getEntriesByType('longtask'); longtasks = { count: es.length, totalMs: Math.round(es.reduce((a, e) => a + e.duration, 0)) }; } catch { longtasks = null; }
+      return { canvas: cv ? { w: cv.width, h: cv.height } : null, wrapCss: wr ? { w: Math.round(wr.width), h: Math.round(wr.height) } : null, dpr: window.devicePixelRatio || 1, visibilityState: document.visibilityState, hold, idle, raf, longtasks };
+    })()`;
+    const diagBefore = await cdp.evaluate(diagExpr);
+    result.diagBefore = diagBefore;
+    if (HIDE_CANVAS) {
+      await cdp.evaluate(`(function(){ const cv = document.querySelector('.preview-canvas'); if (cv) cv.style.display = 'none'; return !!cv; })()`);
+      result.canvasHidden = true;
+      console.log(`[bench] đã ẩn .preview-canvas (đối chứng raster)`);
+    }
+    // Đợt 66 T5: bỏ rafFrom (chỉ số tuyệt đối samples.length) — xem
+    // previewRaf dưới: cắt theo timestamp, sửa bug n=0 (ring buffer
+    // 5000 mẫu đẩy mẫu cũ, slice(from) rỗng khi buffer đã đầy).
+    result.cpuChromePctBefore = sampleChromeCpuPct();
     const timeBefore = await cdp.evaluate(`(document.querySelector('.time-display')||{}).textContent || ''`);
-    await cdp.evaluate(`document.querySelector('.tbtn.play').click()`);
-    await sleep(1500);
+    // Đợt 52 I9 — --no-play: đo rAF khi TẠM DỪNG (đối chứng: rAF thưa là do
+    // đường phát hay do trang). Không bấm Phát thì bỏ qua kiểm tra playing.
+    if (!NO_PLAY) {
+      await cdp.evaluate(`document.querySelector('.tbtn.play').click()`);
+      await sleep(1500 + WARMUP * 1000);
+    }
     const pressed = await cdp.evaluate(`document.querySelector('.tbtn.play').getAttribute('aria-pressed')`);
     const timeAfter = await cdp.evaluate(`(document.querySelector('.time-display')||{}).textContent || ''`);
     const overlayBtn = await cdp.evaluate(`!![...document.querySelectorAll('button')].find(b => b.textContent.trim() === '📈 FPS')`);
     result.perfOverlayButton = overlayBtn;
-    if (pressed !== "true" && timeBefore === timeAfter) {
+    if (!NO_PLAY && pressed !== "true" && timeBefore === timeAfter) {
       throw new Error(`Bấm Phát không có tác dụng (aria-pressed=${pressed}, time-display không đổi).`);
     }
     result.playing = pressed === "true";
+    result.noPlay = NO_PLAY;
     result.timeDisplay = { before: timeBefore.trim(), after: timeAfter.trim() };
     // Đo rAF trong MỘT evaluate duy nhất (awaitPromise): tránh mất trạng thái
     // nếu execution context đổi giữa 2 lần evaluate (lỗi gặp ở lần chạy trước).
-    const ts = await cdp.evaluate(
-      `new Promise((resolve) => { const ts = []; const start = performance.now(); const dur = ${DURATION * 1000}; (function loop(){ ts.push(performance.now()); if (performance.now() - start < dur) requestAnimationFrame(loop); else resolve(ts); })(); })`,
-      true,
-      (DURATION + 60) * 1000,
-    );
+    // Đợt 52 I9: đếm song song cả setInterval(16ms) — phân biệt "rAF bị bóp
+    // riêng" (timer vẫn ~60Hz) với "renderer bị đói chung" (timer cũng bò).
+    // Đợt 52 I9: lấy mẫu %CPU cây Chrome mỗi 500ms TRONG lúc đo.
+    const cpuTimer = setInterval(() => { const v = sampleChromeCpuPct(); if (v !== null) result.cpuSamples.push(v); }, 500);
+    let ts;
+    try {
+      ts = await cdp.evaluate(
+        `new Promise((resolve) => { const ts = []; let timerN = 0; const timer = setInterval(() => { timerN++; }, 16); const start = performance.now(); const dur = ${DURATION * 1000}; (function loop(){ ts.push(performance.now()); if (performance.now() - start < dur) requestAnimationFrame(loop); else { clearInterval(timer); resolve({ ts, timerN }); } })(); })`,
+        true,
+        (DURATION + 60) * 1000,
+      );
+    } finally {
+      clearInterval(cpuTimer);
+    }
+    // Đợt 52 I9: tách timerN khỏi mảng ts (tương thích file kết quả cũ chỉ có mảng).
+    if (ts && typeof ts === "object" && Array.isArray(ts.ts)) {
+      result.timer16HzCount = ts.timerN;
+      result.timer16HzRate = Number((ts.timerN / DURATION).toFixed(1));
+      ts = ts.ts;
+    }
     const timeEnd = await cdp.evaluate(`(document.querySelector('.time-display')||{}).textContent || ''`);
     const hw = await cdp.evaluate(`navigator.hardwareConcurrency`).catch(() => null);
+    result.diagAfter = await cdp.evaluate(diagExpr);
+    // Đợt 52 I9 — phân tích gap/lost RIÊNG vòng preview từ hook __vcutPreviewRaf
+    // (loại tick justWoke; lostMs = phần playhead mất do clamp dt 0.1s).
+    // Đợt 66 T5 — BUG n=0 (nợ R64 §8.3, R65 §8 mục 4; cùng bug với
+    // clicktest-64r3-fps-long.mjs): bản cũ cắt theo CHỈ SỐ TUYỆT ĐỐI
+    // rafFrom = samples.length lúc diagBefore — nhưng samples là ring
+    // buffer tối đa 5000 mẫu, buffer đã đầy từ lúc app chạy thì
+    // slice(rafFrom) rỗng → { count: 0 } dù vòng preview vẫn tick.
+    // Nay cắt theo TIMESTAMP: cửa sổ đo là [ts[0], ts[cuối]] — mảng ts
+    // của vòng rAF riêng của bench, cùng đồng hồ performance.now() với
+    // sample.t. Nếu ts chưa đủ mẫu thì trả count 0 kèm note (không
+    // bịa số); kiểm tra ts.length < 10 ở dưới vẫn ném lỗi như cũ.
+    const rafT0 = Array.isArray(ts) && ts.length ? ts[0] : null;
+    const rafT1 = Array.isArray(ts) && ts.length ? ts[ts.length - 1] : null;
+    result.previewRaf = await cdp.evaluate(`((t0, t1) => {
+      const h = window.__vcutPreviewRaf; if (!h) return null;
+      if (t0 === null || t1 === null) return { count: 0, note: "không có cửa sổ ts để cắt theo timestamp" };
+      const s = h.samples.filter((x) => x.t >= t0 && x.t <= t1 && !x.justWoke);
+      if (!s.length) return { count: 0 };
+      const gaps = s.map((x) => x.gapMs).sort((a, b) => a - b);
+      const pct = (p) => Number(gaps[Math.min(gaps.length - 1, Math.floor(p * gaps.length))].toFixed(1));
+      const lost = s.reduce((a, x) => a + x.lostMs, 0);
+      return { count: s.length, gapP50ms: pct(0.5), gapP95ms: pct(0.95), gapP99ms: pct(0.99), over100ms: s.filter((x) => x.gapMs > 100).length, lostMs: Math.round(lost), playheadStart: s[0].playhead, playheadEnd: s[s.length - 1].playhead };
+    })(${rafT0}, ${rafT1})`);
     cdp.close();
     if (!Array.isArray(ts) || ts.length < 10) throw new Error(`Bộ đếm rAF chỉ thu được ${Array.isArray(ts) ? ts.length : 0} mẫu.`);
     const intervals = [];
@@ -337,13 +521,22 @@ async function main() {
     result.fpsMax1s = bucketFps.length ? Math.max(...bucketFps) : null;
     result.dropsOver50ms = intervals.filter((d) => d > 50).length;
     result.maxIntervalMs = Number(Math.max(...intervals).toFixed(1));
+    // Đợt 52 I9 — phân vị frame time + CPU/loadavg trong lúc đo.
+    const sortedIntervals = [...intervals].sort((a, b) => a - b);
+    const ipct = (p) => sortedIntervals.length ? Number(sortedIntervals[Math.min(sortedIntervals.length - 1, Math.floor(p * sortedIntervals.length))].toFixed(1)) : null;
+    result.frameTimeMs = { p5: ipct(0.05), p50: ipct(0.5), p95: ipct(0.95) };
+    result.loadAvg1After = loadAvg1();
+    const cpus = result.cpuSamples.filter((v) => Number.isFinite(v));
+    result.cpuChromePct = cpus.length
+      ? { samples: cpus.length, avg: Number((cpus.reduce((a, b) => a + b, 0) / cpus.length).toFixed(1)), max: Math.max(...cpus), note: "%CPU theo 1 core (100% = 1 core đầy); VM 4 core nên trần ~400%." }
+      : null;
     result.hardwareConcurrency = hw;
     // S6: đóng băng dist — INVALID thì fps bị loại, exit 3 (như R2).
     const frozenInvalid = finishFrozenDist(result);
     if (frozenInvalid) console.log(`[bench] FROZEN INVALID: ${result.frozenDist.problems.join("; ")} — fps bị loại, exit 3`);
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
     fs.writeFileSync(OUT, JSON.stringify(result, null, 2) + "\n");
-    console.log(`[bench] frames=${result.frames} fpsAvg=${result.fpsAvg} fpsMin1s=${result.fpsMin1s} fpsMax1s=${result.fpsMax1s} drops>50ms=${result.dropsOver50ms} maxInterval=${result.maxIntervalMs}ms`);
+    console.log(`[bench] frames=${result.frames} fpsAvg=${result.fpsAvg} fpsMin1s=${result.fpsMin1s} fpsMax1s=${result.fpsMax1s} drops>50ms=${result.dropsOver50ms} maxInterval=${result.maxIntervalMs}ms frameTime p5/p50/p95=${result.frameTimeMs.p5}/${result.frameTimeMs.p50}/${result.frameTimeMs.p95}ms cpuChrome avg/max=${result.cpuChromePct ? `${result.cpuChromePct.avg}/${result.cpuChromePct.max}%` : "n/a"} loadAvg ${result.loadAvg1Before}->${result.loadAvg1After} canvas=${result.diagAfter?.canvas ? `${result.diagAfter.canvas.w}x${result.diagAfter.canvas.h}` : "?"} wrap=${result.diagAfter?.wrapCss ? `${result.diagAfter.wrapCss.w}x${result.diagAfter.wrapCss.h}` : "?"} dpr=${result.diagAfter?.dpr ?? "?"}`);
     console.log(`[bench] overlay FPS button: ${overlayBtn ? "có" : "KHÔNG thấy"}; playing=${result.playing}; time ${result.timeDisplay.before} -> ${result.timeDisplay.after}`);
     console.log(`[bench] kết quả ghi ra ${OUT}`);
     if (frozenInvalid) process.exitCode = 3;

@@ -5,6 +5,7 @@
  * nào cũng đánh dấu đã chào (mở lại bằng nút “👋 Bắt đầu” trên TopBar).
  * Chuỗi lấy từ lib/onboardingCopy (không động vào i18n/vi.json, en.json).
  */
+import { useEffect } from "react";
 import { useStore } from "../../store";
 import { ot } from "../../lib/onboardingCopy";
 
@@ -38,6 +39,26 @@ export function WelcomeModal({ onClose, onOpenTour, onOpenPack }: Props) {
     markWelcomed();
     onClose();
   };
+  // Đợt 58 O1 (nợ đợt 57 §6.1(a)): Esc đóng modal — cùng pattern tự chứa
+  // của SceneModal/BeatSyncModal. Trước đây chỉ App onKey xử lý Escape
+  // mà không có nhánh welcome nên Escape kẹt ở modal này (N9 đợt 57).
+  // Guard bỏ qua INPUT/TEXTAREA/SELECT nhưng KHÔNG chặn BUTTON nên
+  // Escape vẫn hoạt động khi focus đang ở nút trong modal. Không có
+  // focus trap trong modal này nên không có gì để phá. Escape đi đúng
+  // đường đóng của nút: markWelcomed() + onClose() (không thì modal
+  // mở lại ở lần mount sau).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT")) return;
+      if (e.key === "Escape") {
+        markWelcomed();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
   return (
     <div className="modal-backdrop" onClick={close}>
       <div

@@ -1,0 +1,56 @@
+{
+  "vi": {
+    "preview": {
+      "motionInterp": "NỘI SUY"
+    },
+    "projectHistory": {
+      "addedClips": "Thêm {n} clip",
+      "firstVersion": "Phiên bản đầu tiên của project.",
+      "movedClips": "Di chuyển {n} clip",
+      "noContentChange": "Không thay đổi nội dung (chỉ cập nhật metadata).",
+      "removedClips": "Xoá {n} clip",
+      "renamed": "Đổi tên: \"{old}\" → \"{new}\"",
+      "totalDuration": "Tổng thời lượng: {old} → {new}",
+      "trackCount": "Số track: {old} → {new}",
+      "trimmedClips": "Cắt/xén {n} clip"
+    },
+    "subtitles": {
+      "untitledTrack": "(không tên)"
+    },
+    "templateEngine": {
+      "invalidSpec": "Spec sau khi áp template không hợp lệ.",
+      "missingValues": "Template thiếu giá trị cho: {names}"
+    },
+    "templatePack": {
+      "audioPlaceholderUnsupported": "Pack chưa hỗ trợ placeholder audio: {id}",
+      "missingSampleMedia": "Thiếu media mẫu cho placeholder: {id}"
+    }
+  },
+  "en": {
+    "preview": {
+      "motionInterp": "INTERP"
+    },
+    "projectHistory": {
+      "addedClips": "Added {n} clip(s)",
+      "firstVersion": "First version of the project.",
+      "movedClips": "Moved {n} clip(s)",
+      "noContentChange": "No content change (metadata only).",
+      "removedClips": "Removed {n} clip(s)",
+      "renamed": "Renamed: \"{old}\" → \"{new}\"",
+      "totalDuration": "Total duration: {old} → {new}",
+      "trackCount": "Track count: {old} → {new}",
+      "trimmedClips": "Trimmed {n} clip(s)"
+    },
+    "subtitles": {
+      "untitledTrack": "(unnamed)"
+    },
+    "templateEngine": {
+      "invalidSpec": "Spec is invalid after applying the template.",
+      "missingValues": "Template is missing values for: {names}"
+    },
+    "templatePack": {
+      "audioPlaceholderUnsupported": "Pack does not support audio placeholders yet: {id}",
+      "missingSampleMedia": "Missing sample media for placeholder: {id}"
+    }
+  }
+}

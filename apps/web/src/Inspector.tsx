@@ -193,7 +193,28 @@ export function Inspector() {
   const primary = selection[0];
   const track = spec.tracks.find((t) => t.id === primary.trackId);
   const clip = track?.clips.find((c) => c.id === primary.clipId);
-  if (!track || !clip) return <ProjectInfo />;
+  if (!track || !clip) {
+    // Phase 9 R57 N3 (dev-probe): nhánh tipGone của EnhancePanel là nhánh
+    // chết qua UI thật — gate này chặn trước khi EnhancePanel render (đợt 56
+    // M9 đo headed: ghost selection → ProjectInfo, không có tipGone trong
+    // DOM). Để nhánh đo được mà không đổi hành vi sản phẩm, chỉ khi URL có
+    // ?vcut-probe=enhance-tipgone thì render EnhancePanel trực tiếp tại đây;
+    // EnhancePanel tự rơi vào nhánh !track || !clip → t("keyframe.tipGone").
+    // Không có param → hành vi cũ (ProjectInfo). Param chỉ có tác dụng khi
+    // selection trỏ clip không tồn tại; clip thật không bị ảnh hưởng.
+    // Xem docs/PHASE9_ROUND57_N3_TIPGONE_LIMITS.md.
+    if (
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("vcut-probe") === "enhance-tipgone"
+    ) {
+      return (
+        <div className="inspector" data-tour="inspector" data-probe="enhance-tipgone">
+          <EnhancePanel />
+        </div>
+      );
+    }
+    return <ProjectInfo />;
+  }
 
   const patch = (p: Parameters<typeof st.patchClip>[2]) =>
     st.patchClip(track.id, clip.id, p);
@@ -441,9 +462,9 @@ export function Inspector() {
             <AudioFxPanel />
           </Section>
           {/* Phase 8 Q5: cắt clip nhạc theo beat */}
-          <Section title="🎵 Cắt theo beat">
+          <Section title={t("inspector.beatSectionTitle")}>
             <button onClick={() => setBeatOpen(true)}>
-              Phân tích beat &amp; cắt clip
+              {t("inspector.beatAnalyzeHint")}
             </button>
             {beatOpen && (
               <BeatSyncModal

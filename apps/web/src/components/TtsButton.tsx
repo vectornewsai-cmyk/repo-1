@@ -12,21 +12,24 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../store";
 import { t as i18nT, useLang } from "../i18n";
+import { resolveBridgeApiError } from "../lib/bridgeErrors"; // Đợt 62 R5: dịch mã lỗi bridge→web
+import "./TtsButton.css";
 import { formatImportProgressText } from "../lib/importProgressText41W3";
 import { pushToast } from "../lib/toast";
-// ROUND50-F3: hậu tố giây cho toast done — header thật nếu đọc được,
-// khoảng theo GIỌNG đang chọn nếu header thiếu (xem
-// ttsEstimate50F3.ts). Chuyển từ helper E1 sang helper F3 ở đợt 50 F3
-// (1 import + 1 lời gọi + thêm voice); helper E1 vẫn tồn tại làm bản
-// ghi lịch sử, helper C4 vẫn là fallback cho giọng chưa đo (clone mode
-// → voice undefined → hệ số gộp chung). Component KHÔNG hardcode hệ
-// số nào: mọi số đều lấy từ lib F3 (chồng lên E1/C4).
-import { ttsDoneSuffixRange50F3 } from "../lib/ttsEstimate50F3";
+// ROUND51-H1: hậu tố giây cho toast done — header thật nếu đọc được,
+// khoảng ĐƯỜNG CONG theo GIỌNG đang chọn nếu header thiếu (xem
+// ttsEstimate51H1.ts). Chuyển từ helper F3 sang helper H1 ở đợt 51 H1
+// (1 import + 1 lời gọi + thêm voice); helper F3 vẫn tồn tại làm
+// fallback cho giọng lạ / clone mode và làm bản ghi lịch sử. Component
+// KHÔNG hardcode hệ số nào: mọi số đều lấy từ lib H1 (chồng lên F3).
+import { ttsDoneSuffixRange51H1 } from "../lib/ttsEstimate51H1";
+// ROUND51-H2 (parent gộp): bảng hệ số H2 (25 giọng, tính lại từ pool gộp
+// C4/D1/E1/F3 + H2) truyền vào helper H1 — H1 nhận qua tham số
+// `coefficients`, không đổi code helper (xem LIMITS H1 §4).
+import { TTS_VOICE_COEFFICIENTS_51H2 } from "../lib/ttsEstimate51H2";
 import type { ImportFileProgressEvent } from "../lib/ingestProgress39T5";
+import { BRIDGE_URL } from "../lib/bridgeUrl";
 
-const BRIDGE_URL =
-  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_BRIDGE_URL ||
-  "http://127.0.0.1:8787";
 
 interface TtsVoice {
   name: string;
@@ -66,7 +69,7 @@ export function TtsButton({ text }: { text: string }) {
     const t = (text || "").trim();
     if (!t) { setMsg(i18nT("tts.emptyText")); return; }
     if (cloneMode && !refFile) {
-      setMsg("Chưa chọn file giọng mẫu để clone.");
+      setMsg(i18nT("tts.noRefFile"));
       return;
     }
     setBusy(true);
@@ -93,22 +96,21 @@ export function TtsButton({ text }: { text: string }) {
       }
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        throw new Error(j?.error || `Bridge trả lỗi HTTP ${res.status}`);
+        throw new Error(resolveBridgeApiError(j, i18nT, i18nT("tts.bridgeErrorHttp", { status: String(res.status) })));
       }
       const blob = await res.blob();
       if (!blob || blob.size === 0) throw new Error(i18nT("tts.bridgeEmpty"));
-      // ROUND50-F3: đừng tự suy dur = 0 là "không có số giây" rồi bỏ
-      // hậu tố im lặng như trước — ttsDoneSuffixRange50F3 trả số thật khi
-      // header đọc được, và khoảng " (≈…–…s)" theo GIỌNG đang chọn
-      // (hệ số riêng khi giọng đã đo, fallback hệ số gộp C4 khi giọng
-      // lạ hoặc clone) khi header thiếu (nợ đợt 43 Y3 §6, nối lib
-      // F3 ở đợt 50 F3; trước đó dùng helper E1 nên toast cho 11 giọng
-      // chưa đo M4 và 19 giọng chưa đo M3 vẫn lệch có hệ thống — vd
-      // Trúc Ly M3 thực 13,6 s nhưng khoảng dense gộp bắt đầu từ
-      // 15,4 s (dự báo chậm hơn thực tế); xem LIMITS F3 §4).
+      // ROUND51-H1: đừng tự suy dur = 0 là "không có số giây" rồi bỏ
+      // hậu tố im lặng như trước — ttsDoneSuffixRange51H1 trả số thật khi
+      // header đọc được, và khoảng đường cong " (≈…–…s)" theo GIỌNG đang
+      // chọn (nội suy tốc độ theo tỉ lệ chữ số; fallback helper F3 khi
+      // giọng lạ hoặc clone) khi header thiếu (nợ đợt 50 F3 §8.1: ngưỡng
+      // nhị phân 13% dự báo nhanh hơn thực tế với text 10–12% — vd Kim
+      // Thanh P10 thực 21,77 s nhưng khoảng normal F3 chỉ tới ~17,3 s;
+      // xem LIMITS H1 §4).
       // Header có thể thiếu vì CORS bridge chưa expose X-TTS-* (sửa gốc
       // ở bridge, xem LIMITS B3 §4) hoặc proxy lột header.
-      const durSuffix = ttsDoneSuffixRange50F3({ headerValue: res.headers.get("X-TTS-Duration"), text: t, voice: cloneMode ? undefined : voice });
+      const durSuffix = ttsDoneSuffixRange51H1({ headerValue: res.headers.get("X-TTS-Duration"), text: t, voice: cloneMode ? undefined : voice, coefficients: TTS_VOICE_COEFFICIENTS_51H2 });
       const file = new File([blob], fileName, { type: "audio/wav" });
       const st = useStore.getState();
       await st.importFiles([file], (ev) => setImportProgress(ev));
@@ -146,7 +148,7 @@ export function TtsButton({ text }: { text: string }) {
           disabled={busy}
           onChange={(e) => setCloneMode(e.target.checked)}
         />{" "}
-        🎭 Clone giọng từ file mẫu (local)
+        {i18nT("tts.cloneFromSample")}
       </label>
       {cloneMode ? (
         <div className="field-row">
@@ -154,7 +156,7 @@ export function TtsButton({ text }: { text: string }) {
             type="file"
             accept="audio/*,.wav,.mp3,.m4a,.ogg,.flac,.webm"
             disabled={busy}
-            aria-label="File giọng mẫu để clone"
+            aria-label={i18nT("tts.refFileLabel")}
             onChange={(e) => setRefFile(e.target.files?.[0] ?? null)}
             style={{ flex: 1 }}
           />
@@ -184,8 +186,7 @@ export function TtsButton({ text }: { text: string }) {
       )}
       {cloneMode && (
         <div className="muted small">
-          Mẫu tốt nhất: 3–30s, một giọng nói rõ, ít nhiễu. Giọng clone chỉ
-          dùng trên máy của bạn, không gửi đi đâu.
+          {i18nT("tts.cloneHint")}
         </div>
       )}
       {msg && <div className="tts-msg">{msg}</div>}
