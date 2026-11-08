@@ -739,7 +739,7 @@ export function nestedLeafVisibleSpeedCurve(
  *     tới out − visibleStart × speed;
  *   - reverse + speedKeyframes: validator cấm tổ hợp này nên KHÔNG đoán —
  *     2 field vắng (caller không được dùng in/out cũ cho trường hợp này).
- *   Chú ý: đây là map "phần khả kiến", không phải edit phá hủy — trim
+ *   Chú ý: đây là map "phần khả kiến", không phải edit phá huỷ — trim
  *   ngoài vẫn chỉ là cửa sổ, thu hẹp rồi mở lại không mất keyframe.
  */
 export interface DeepLeafMedia {
@@ -1225,7 +1225,7 @@ export function nestedSplitOffset(
 // NGỮ NGHĨA (cố tình chỉ đụng trim của tầng NGOÀI CÙNG):
 // - Split/trim một nested clip KHÔNG viết lại clip lá bên trong: lá giữ
 //   nguyên, chỉ cửa sổ trim ngoài thay đổi. Đó chính là ngữ nghĩa "cửa
-//   sổ, không phải edit phá hủy" của R5/T3 — cửa sổ lá sâu sau edit được
+//   sổ, không phải edit phá huỷ" của R5/T3 — cửa sổ lá sâu sau edit được
 //   SUY RA bằng composeNestedLeafWindow / deepNestedLeafVisibleSpeedCurve,
 //   không cần (và không được) ghi đè lên lá. Test đợt này khóa đúng điều
 //   đó: sau split/trim qua store, cửa sổ lá 2–3 cấp tính bằng helper đệ

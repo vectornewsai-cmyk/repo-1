@@ -1,14 +1,21 @@
 {
   "app": {
     "loading": "Đang mở dự án…",
-    "name": "VCut Studio"
+    "name": "VCut Studio",
+    "proxyStaleToast": "Proxy của {names} đã mất trên bridge — bấm nút Proxy trên thẻ media để tạo lại.",
+    "mediaLibrary": "Thư viện media",
+    "openMediaLibrary": "Mở thư viện media",
+    "clipProps": "Thuộc tính clip",
+    "openInspector": "Mở panel thuộc tính",
+    "mediaLibraryShort": "📁 Thư viện",
+    "closeMediaLibrary": "Đóng thư viện",
+    "propsShort": "⚙️ Thuộc tính",
+    "closeInspector": "Đóng panel thuộc tính"
   },
   "common": {
-    "apply": "Áp dụng",
     "cancel": "Huỷ",
     "close": "Đóng",
     "language": "Ngôn ngữ",
-    "loading": "Đang tải…",
     "bridgeConn": "Không kết nối được bridge ({url}). Hãy chạy: cd server/bridge && npm start"
   },
   "mediabin": {
@@ -17,7 +24,32 @@
     "dragHint": "kéo thả vào track timeline",
     "empty": "Chưa có file nào. Nhấn “Nhập file” để thêm video, audio hoặc ảnh.",
     "import": "＋ Nhập file",
-    "title": "Thư viện"
+    "title": "Thư viện",
+    "bridgeStatus": "Bridge trả {status}",
+    "noProxyUrl": "Bridge không trả proxyUrl.",
+    "smallEnough": "“{name}” đã đủ nhỏ, không cần proxy.",
+    "proxyAttached": "Đã gắn proxy {height}p cho “{name}” — preview sẽ mượt hơn.",
+    "proxyFailed": "Không tạo được proxy: {error} (bridge: {url})",
+    "proxyStaleTitle": "File proxy đã mất trên bridge — bấm để tạo lại bản proxy 720p (export vẫn dùng file gốc)",
+    "proxyOnTitle": "Đang dùng proxy {height}p cho preview",
+    "proxyCreateTitle": "Tạo bản proxy 720p qua bridge để preview mượt hơn (export vẫn dùng file gốc)",
+    "recreateProxyFor": "Tạo lại proxy cho {name}",
+    "createProxyFor": "Tạo proxy cho {name}",
+    "proxyStaleBtn": "Proxy mất, tạo lại",
+    "proxyCreating": "Đang tạo…",
+    "proxyFailedBtn": "Proxy lỗi, thử lại",
+    "proxyNotNeeded": "Không cần proxy",
+    "bridgeDown": "Bridge không chạy ({url}) — proxy tự động thất bại, bấm nút Proxy để thử lại khi bridge đã chạy.",
+    "autoProxyHint": "Tự tạo proxy 720p khi import video (preview mượt hơn, export vẫn dùng gốc)",
+    "emptyStep1": "Nhấn “＋ Nhập file” để thêm video, audio hoặc ảnh.",
+    "emptyStep2": "Kéo thả file vào track timeline (hoặc bấm “＋ Thêm”).",
+    "emptyStep3": "Bấm “⬇ Xuất bản” để xuất video.",
+    "reloadSample": "Tải lại dự án mẫu",
+    "sampleProject": "↺ Dự án mẫu",
+    "unknownError": "lỗi không rõ",
+    "removeConfirm": "Xóa “{name}” khỏi thư viện? File gốc trên máy không bị xóa.",
+    "removeTitle": "Xóa “{name}” khỏi thư viện",
+    "removed": "Đã xóa “{name}” khỏi thư viện."
   },
   "importProgress": {
     "hashing": "Đang nhập {index}/{count}: {name} — đang tính mã băm: {done} / {total} ({percent}%)",
@@ -58,7 +90,10 @@
     "paste": "Dán clip đã sao chép tại playhead (Ctrl+V)",
     "pasteShort": "📥 Dán",
     "duplicate": "Nhân bản clip đang chọn ngay sau clip gốc (Ctrl+D)",
-    "duplicateShort": "⧉ Nhân bản"
+    "duplicateShort": "⧉ Nhân bản",
+    "welcome": "👋 Bắt đầu",
+    "welcomeHint": "Mở lại màn chào / tour / template pack 1 chạm",
+    "welcomeLabel": "Mở lại màn chào"
   },
   "inspector": {
     "projectTitle": "ℹ️ Dự án",
@@ -147,7 +182,9 @@
     "length": "Độ dài (s)",
     "inPoint": "In (s)",
     "outPoint": "Out (s)",
-    "deleteClip": "🗑 Xoá clip này"
+    "deleteClip": "🗑 Xoá clip này",
+    "beatAnalyzeHint": "Phân tích beat & cắt clip",
+    "beatSectionTitle": "🎵 Cắt theo beat"
   },
   "timeline": {
     "emptyLabel": "(trống)",
@@ -194,7 +231,69 @@
     "fxGutter": "🎛 FX",
     "fxTitle": "FX: {filter} · {from} → {to}",
     "fxMove": "Di chuyển adjustment layer",
-    "fxTrim": "Cắt adjustment layer"
+    "fxTrim": "Cắt adjustment layer",
+    "field": {
+      "duration": "độ dài",
+      "fallback": "thuộc tính",
+      "opacity": "độ trong suốt",
+      "speed": "tốc độ",
+      "src": "nguồn media",
+      "start": "vị trí",
+      "text": "nội dung chữ",
+      "volume": "âm lượng"
+    },
+    "histAddAudio": "Thêm âm thanh \"{name}\"",
+    "histAddClip": "Thêm clip \"{name}\"",
+    "histAddFx": "Thêm adjustment layer ({kind})",
+    "histAddMarker": "Thêm marker",
+    "histAddMediaToTimeline": "Thêm media vào timeline",
+    "histAddStdFx": "Thêm adjustment layer chuẩn ({kind})",
+    "histAddText": "Thêm chữ",
+    "histAddTrack": "Thêm track {kind}",
+    "histConvertFx": "Chuyển adjustment layer sang chuẩn spec",
+    "histDelete": "Xoá clip",
+    "histDeleteFx": "Xoá adjustment layer",
+    "histDeleteMarker": "Xoá marker",
+    "histDeleteMulti": "Xoá {n} clip",
+    "histDeleteRipple": "Xoá clip (ripple)",
+    "histDeleteRippleMulti": "Xoá {n} clip (ripple)",
+    "histDeleteStdFx": "Xoá adjustment layer chuẩn",
+    "histDeleteTrack": "Xoá track {name}",
+    "histDuplicate": "Nhân bản clip",
+    "histDuplicateMulti": "Nhân bản {n} clip",
+    "histEditDeepChild": "Sửa clip con sâu trong compound clip",
+    "histEditFx": "Sửa adjustment layer",
+    "histEditMarker": "Sửa marker",
+    "histEditMidNested": "Sửa nested trung gian sâu trong compound clip",
+    "histEditNestedChild": "Sửa clip con trong compound clip",
+    "histEditStdFx": "Sửa adjustment layer chuẩn",
+    "histEditText": "Chỉnh chữ",
+    "histFixClipSpeedCurve": "Sửa curve tốc độ của 1 clip (báo cáo tải)",
+    "histFixSpeedCurve": "Sửa curve tốc độ vi phạm",
+    "histFixSpeedKeyframe": "Sửa 1 keyframe tốc độ (báo cáo tải)",
+    "histMoveMulti": "Di chuyển {n} clip",
+    "histNest": "Gộp thành {name}",
+    "histPaste": "Dán clip",
+    "histPasteMulti": "Dán {n} clip",
+    "histPatch": "Chỉnh {field}",
+    "histPatchMulti": "Chỉnh thuộc tính clip",
+    "histPatchTrack": "Chỉnh thuộc tính track",
+    "histPatchTrackVolume": "Chỉnh âm lượng track",
+    "histSetNestedCurve": "Đặt speed curve cho nested clip (giữ trim)",
+    "histSetNestedFx": "Đặt transition/opacity cho nested clip",
+    "histSplit": "Tách clip",
+    "histSplitDeepChild": "Tách clip con sâu trong compound clip",
+    "histSplitDeepOuter": "Tách clip con sâu theo mốc ngoài (đảo τ)",
+    "histSplitScene": "Tách cảnh ({n} điểm)",
+    "histToggleTrack": "Đổi trạng thái track",
+    "histTrimRipple": "Cắt clip (ripple)",
+    "histTypeText": "Nhập chữ…",
+    "histUnnest": "Rã compound clip",
+    "kind": {
+      "audio": "Âm thanh",
+      "image": "Ảnh",
+      "text": "Chữ"
+    }
   },
   "mixer": {
     "label": "MIX",
@@ -421,7 +520,6 @@
     "reset": "↺ Đặt lại",
     "srcLabel": "Đoạn nguồn",
     "effLabel": "Thời lượng hiệu dụng",
-    "warnTooShort": "Không thể đặt {s}× — clip sẽ ngắn hơn {min}s. Cắt đoạn nguồn dài hơn trước.",
     "warnOverlap": "Không đủ chỗ trên timeline — clip sẽ dài {dur} và đè lên clip bên cạnh. Hãy dịch clip khác ra trước.",
     "warnResetOverlap": "Không đủ chỗ để trả về 1× — hãy dịch clip khác ra trước.",
     "tip": "💡 Tốc độ đổi tempo nhưng giữ nguyên cao độ giọng. Đảo ngược phát từ cuối đoạn nguồn về đầu.",
@@ -447,7 +545,9 @@
     "bezierXRange": "x1, x2 của bezier phải trong [0, 1] — giữ nguyên giá trị cũ.",
     "bezierInvalid": "Giá trị bezier phải là số — giữ nguyên giá trị cũ.",
     "trimCurveDropped": "✂️ Đã cắt {n} điểm speed curve vượt khỏi clip sau khi trim — các điểm còn lại giữ nguyên. Dùng Undo để khôi phục nếu không muốn mất chúng.",
-    "patchCurveDropped": "✂️ Đã cắt {n} điểm speed curve vượt khỏi clip sau khi đổi duration — các điểm còn lại giữ nguyên. Dùng Undo để khôi phục nếu không muốn mất chúng."
+    "patchCurveDropped": "✂️ Đã cắt {n} điểm speed curve vượt khỏi clip sau khi đổi duration — các điểm còn lại giữ nguyên. Dùng Undo để khôi phục nếu không muốn mất chúng.",
+    "curveStabBlocked": "⚠️ Clip đang bật chống rung nên không bật được speed curve — chống rung không dùng chung được với speedKeyframes. Tắt chống rung trong panel Tăng cường rồi bật lại.",
+    "curveStabTitle": "Không bật được speed curve vì clip đang bật chống rung — chống rung không dùng chung được với speedKeyframes"
   },
   "keyframe": {
     "head": "🔑 Keyframe",
@@ -505,11 +605,11 @@
     "noFile": "Không tìm thấy file video gốc.",
     "confirm": "Xoá nền video bằng AI (chạy local, có thể mất vài phút)?\nKết quả là video có nền trong suốt, thay thế clip hiện tại.",
     "running": "Đang xoá nền bằng AI local… (có thể mất vài phút)",
-    "cancel": "Hủy",
+    "cancel": "Huỷ",
     "run": "🤖 Xoá nền AI",
     "done": "Xong! Clip đã dùng video \"{name}\" (nền trong suốt, session {session}).",
     "fallbackNote": " Lưu ý: {from} thất bại trên máy này nên đã tự chuyển sang {to} — chất lượng tách nền có thể kém hơn một chút.",
-    "aborted": "Đã hủy.",
+    "aborted": "Đã huỷ.",
     "failed": "Xoá nền thất bại.",
     "bridgeHttp": "Bridge lỗi HTTP {status}."
   },
@@ -729,7 +829,11 @@
     "noValidCuts": "Không có điểm cắt nào nằm hẳn trong clip.",
     "keepNote": "Bỏ tick để giữ nguyên đoạn đó. Áp dụng sẽ tách clip thành {n} đoạn trong 1 bước hoàn tác.",
     "applyBtn": "Tách thành {n} cảnh",
-    "rescan": "Quét lại"
+    "rescan": "Quét lại",
+    "phase": {
+      "upload": "Đã nhận file, chuẩn bị…",
+      "scan": "Đang quét chuyển cảnh (video dài có thể mất vài phút)…"
+    }
   },
   "tts": {
     "emptyText": "Chữ đang trống — nhập nội dung trước.",
@@ -742,7 +846,12 @@
     "voiceTitle": "Chọn giọng đọc",
     "speakTitle": "Tạo file WAV giọng đọc và đặt lên timeline",
     "busyBtn": "⏳ Đang tạo...",
-    "speakBtn": "🔊 Đọc thành tiếng"
+    "speakBtn": "🔊 Đọc thành tiếng",
+    "noRefFile": "Chưa chọn file giọng mẫu để clone.",
+    "bridgeErrorHttp": "Bridge trả lỗi HTTP {status}",
+    "cloneFromSample": "🎭 Clone giọng từ file mẫu (local)",
+    "refFileLabel": "File giọng mẫu để clone",
+    "cloneHint": "Mẫu tốt nhất: 3–30s, một giọng nói rõ, ít nhiễu. Giọng clone chỉ dùng trên máy của bạn, không gửi đi đâu."
   },
   "drop": {
     "kindVideo": "video",
@@ -860,7 +969,72 @@
     "curveCreateOk": "Đã tạo speed curve (tốc độ hằng 1×) — 1 bước undo để gỡ.",
     "curveCreateAlreadyHas": "Nested clip này đã có speed curve — dùng block chế độ bên dưới để sửa.",
     "curveCreateReverse": "Không tạo được speed curve cho nested clip đang reverse (validator cấm kết hợp reverse + curve — tắt reverse rồi thử lại).",
-    "curveCreateFail": "Không tạo được speed curve — clip có thể đã bị xóa hoặc store đã từ chối; không có gì thay đổi."
+    "curveCreateFail": "Không tạo được speed curve — clip có thể đã bị xóa hoặc store đã từ chối; không có gì thay đổi.",
+    "scopeTracksNotArray": "{path}: scope tracks phải là một mảng các chỉ số track (nhận được: {value})",
+    "scopeTracksBadIndex": "{path}: scope tracks chứa chỉ số không hợp lệ: {value} (phải là số nguyên >= 0)",
+    "adjNotObject": "{path}: adjustment layer phải là một object",
+    "adjIdEmpty": "{path}: adjustment layer.id phải là chuỗi khác rỗng",
+    "adjStart": "{path}: adjustment layer \"{id}\".start phải là số >= 0",
+    "adjDuration": "{path}: adjustment layer \"{id}\".duration phải là số > 0",
+    "adjEffectsNotArray": "{path}: adjustment layer \"{id}\".effects phải là một mảng",
+    "adjEffectInvalid": "{path}: adjustment layer \"{id}\" có effect không hợp lệ (thiếu type chuỗi)",
+    "adjFiltersNotArray": "{path}: adjustment layer \"{id}\".filters phải là một mảng",
+    "adjFilterNotObject": "{path}: adjustment layer \"{id}\" có filter entry không phải object",
+    "adjFilterLut": "{path}: adjustment layer \"{id}\" có filter.lut không phải chuỗi",
+    "adjEmpty": "{path}: adjustment layer \"{id}\" rỗng (không có lut/color/effects) — layer vô tác dụng",
+    "notNestedClip": "normalizeNestedClip: clip phải là nested clip (kind \"nested\")",
+    "subSpecTracks": "{path}: subSpec.tracks phải là một mảng",
+    "subSpecConflict": "{path}: vừa có tracks trực tiếp vừa có subSpec.tracks nhưng nội dung khác nhau — chỉ giữ một nguồn duy nhất (xóa tracks cũ hoặc sửa subSpec cho khớp)",
+    "subSpecAdjLayers": "{path}: subSpec.adjustmentLayers phải là một mảng",
+    "noContent": "{path}: không có tracks trực tiếp cũng không có subSpec — không có nội dung gì để phẳng",
+    "trimIn": "{path}: trim.in phải là số >= 0",
+    "trimOut": "{path}: trim.out phải là số > trim.in",
+    "trimInConflict": "{path}: trim.in ({a}) mâu thuẫn với in cũ ({b}) — chỉ giữ một trong hai, hoặc đặt bằng nhau",
+    "trimOutMismatchConst": "{path}: trim.out ({value}) không khớp in + duration × {c} = {expected} — sửa duration hoặc trim cho khớp (ngữ nghĩa render đợt 18 §2)",
+    "trimOutMismatchCurve": "{path}: trim.out ({value}) không khớp in + ∫speedKeyframes trên duration = {expected} — sửa duration hoặc trim cho khớp (ngữ nghĩa render đợt 18 §2)",
+    "durationMismatch": "{path}: duration ({value}) không khớp (trim.out − trim.in) / speed = {expected} — sửa duration hoặc trim cho khớp",
+    "reverseSpeed": "{path}: reverse ở clip lồng nhau có speedKeyframes chưa được hỗ trợ (render đợt 18 §5)",
+    "multiEnd": "{path}: nhiều clip kết thúc đúng lúc clip \"{id}\" bắt đầu — không xác định được đầu trái của transition (clip chồng lấn nhau)",
+    "transitionNoPrev": "{path}: clip \"{id}\" có transition nhưng clip kề trước không kết thúc đúng lúc {start}s — transition yêu cầu 2 clip nối tiếp nhau",
+    "transitionOutDuration": "{path}: transitionOut ({a}s) của clip \"{id}\" và transitionIn ({b}s) của clip \"{other}\" không khớp nhau — chỉ đặt một trong hai, hoặc đặt bằng nhau",
+    "transitionOutType": "{path}: transitionOut ({a}) của clip \"{id}\" và transitionIn ({b}) của clip \"{other}\" không khớp type — transition qua biên yêu cầu cùng type",
+    "transitionCrossBorder": "{path}: transition qua biên clip lồng nhau (\"{a}\" → \"{b}\") chỉ hỗ trợ type \"fade\", nhận được: \"{value}\" — dùng \"fade\" hoặc bỏ transition",
+    "transitionLonger": "{path}: transition ({a}s) dài hơn clip \"{id}\" ({b}s)",
+    "transitionBothSides": "{path}: clip lồng nhau \"{id}\" vừa có transition qua biên ở cả hai đầu (in + out) — chưa hỗ trợ 2 transition qua biên trên cùng một clip lồng nhau",
+    "transitionEarly": "{path}: clip \"{id}\" bị dịch sớm {n}s bởi transition qua biên nên không giữ được transition khác — chưa hỗ trợ 2 transition liên tiếp qua biên",
+    "transitionFlatExists": "{path}: clip \"{id}\" đã có transition phẳng với clip kề trước nên transition qua biên của nó luôn dính đoạn đen cuối (gap của xfade phẳng) — bỏ transition phẳng hoặc transition qua biên",
+    "leafAtTransitionEdge": "clip lá \"{id}\" (kind {kind}) nằm ở biên transition qua biên nhưng preview không áp opacity keyframes cho kind này — transition qua biên chỉ hỗ trợ clip lá video/text ở biên",
+    "leafOpacityAndTransition": "clip lá \"{id}\" vừa có keyframes opacity vừa dính transition qua biên — chưa hỗ trợ gộp fade biên với keyframes opacity sẵn có",
+    "leafShorterThanTransition": "clip lá \"{id}\" dài {n}s, ngắn hơn transition qua biên {t}s — transition phải <= độ dài clip lá ở biên",
+    "leafInnerAndOuterTransition": "clip lá \"{id}\" vừa có transition trong project con vừa dính transition qua biên — chưa hỗ trợ gộp 2 transition trên cùng clip lá",
+    "leafCutLeft": "clip lá \"{id}\" bị cửa sổ clip lồng nhau cắt trái nên không giữ được transition qua biên — dời clip lá về đúng đầu cửa sổ hoặc bỏ transition",
+    "rescaleEmpty": "{path}: không rescale được curve rỗng qua tốc độ hằng",
+    "combinedSpeedOutOfRange": "{path}: tốc độ hợp hai tầng = {v} vượt khoảng 0.25..4 (tốc độ trong × tốc độ ngoài hằng {outer}) — render đợt 20 R1 từ chối",
+    "opacityRange": "nested \"{id}\": opacity phải là số trong khoảng 0..1, nhận được: {value}",
+    "leafUnderNestedRefusal": "clip lá \"{id}\" ({kind}) dưới clip lồng nhau có speedKeyframes mà mang {refusal} — hợp thành thời gian phi tuyến chưa được hỗ trợ (render đợt 18 §5), không phẳng lệch",
+    "leafUnderNestedNonMedia": "clip lá \"{id}\" ({kind}) dưới clip lồng nhau có speedKeyframes mà mang speedKeyframes — hợp curve chỉ hỗ trợ lá video/audio có trục nguồn (render đợt 20 R1)",
+    "leafUnderNestedNoIn": "clip lá \"{id}\" ({kind}) dưới clip lồng nhau có speedKeyframes mà mang speedKeyframes nhưng thiếu in hữu hạn — không neo được trục nguồn để hợp (render đợt 20 R1)",
+    "leafSpeedKeyframesComposed": "clip lá \"{id}\" dưới clip lồng nhau có speedKeyframes: không slice được curve hợp hai tầng cho đoạn khả kiến của lá — đoạn suy biến, không đoán",
+    "leafSpeedKeyframesSlice": "clip lá \"{id}\" dưới clip lồng nhau có speedKeyframes: không slice được curve cho đoạn output của lá — đoạn suy biến, không đoán",
+    "leafSpeedProduct": "clip lá \"{id}\": tốc độ lá ({a}) × curve lồng nhau vượt khoảng 0.25..4 (keyframe v = {v}) — render đợt 18 §5 từ chối",
+    "leafNoOwnCurve": "clip lá \"{id}\": không resolve được speedKeyframes riêng dưới clip lồng nhau tốc độ hằng — không đoán",
+    "leafConstSpeed": "clip lá \"{id}\" dưới clip lồng nhau tốc độ hằng: không slice được curve riêng cho đoạn khả kiến — đoạn suy biến, không đoán",
+    "flattenAdjLayers": "flattenForPreview: spec.adjustmentLayers phải là một mảng (nếu có)",
+    "adjScopeNotArray": "adjustmentAppliesToClip: scopeTracks phải là một mảng các chỉ số track",
+    "adjScopeBadIndex": "adjustmentAppliesToClip: scopeTracks chứa chỉ số không hợp lệ: {value}",
+    "failsoft": {
+      "cycle": "nested \"{id}\" tạo chu trình (id đã có trong {path}), bỏ qua",
+      "firstClipTransition": "{path}: clip \"{id}\" có transitionIn nhưng là clip đầu track — transition bị bỏ qua",
+      "invalidNested": "nested \"{id}\" có start/duration/in/speed không hợp lệ, bỏ qua",
+      "invalidNestedAdjustment": "adjustment trong nested \"{id}\" không hợp lệ, bỏ qua",
+      "invalidOuterAdjustment": "adjustment tầng ngoài không hợp lệ, bỏ qua",
+      "maxDepth": "nested \"{id}\" vượt quá độ sâu {max}, bỏ qua",
+      "nonVideoBoundary": "{path}: clip lồng nhau \"{id}\" có transition qua biên nhưng track không phải video — bỏ qua transition qua biên (chỉ hỗ trợ track video)",
+      "speedOutOfRange": "nested \"{id}\" có speed ({speed}) ngoài 0.25..4 dù mang speedKeyframes, bỏ qua",
+      "unknownEffectType": "type \"{type}\" chưa biết, không có đường vẽ trong preview",
+      "unknownNestedClip": "clip trong nested \"{id}\" không nhận dạng được, bỏ qua",
+      "unknownOuterClip": "clip tầng ngoài không nhận dạng được, bỏ qua"
+    }
   },
   "adjustment": {
     "title": "🎛 Adjustment layer",
@@ -877,8 +1051,6 @@
     "durationAria": "Độ dài layer",
     "addButton": "Thêm layer",
     "addOk": "Đã thêm adjustment layer (1 bước undo).",
-    "addFail": "Không thêm được — kiểm tra: cần track video, duration >= 0.2s, không đè layer khác.",
-    "listTitle": "Danh sách layer ({n})",
     "emptyList": "Chưa có adjustment layer nào.",
     "selectOnTimeline": "Chọn trên timeline",
     "deleteButton": "Xoá layer",
@@ -886,13 +1058,10 @@
     "editStart": "Bắt đầu (s)",
     "editDuration": "Độ dài (s)",
     "save": "Lưu layer",
-    "saveOk": "Đã lưu adjustment layer (1 bước undo).",
-    "saveFail": "Không lưu được layer — kiểm tra thời gian có đè layer khác.",
     "specNote": "Layer chuẩn ghi vào spec.adjustmentLayers (cấp project): áp cho mọi clip video giao nhau về thời gian, các layer được phép chồng nhau (nối filter tuần tự). Layer cũ vẫn hiển thị riêng bên dưới với nhãn legacy.",
     "scopeLabel": "Phạm vi",
     "scopeAll": "Tất cả track",
     "scopeSingle": "Một track",
-    "scopeSingleBlocked": "Scope một track chưa tạo được: video-spec hiện chưa có field scope cho adjustment layer nên panel không ghi scope giả vào spec. Chọn “Tất cả track” để tạo layer, hoặc đợi luồng spec bổ sung field scope (xem R7_UI_LIMITS.md).",
     "specAddFail": "Không thêm được layer chuẩn — kiểm tra filter, cường độ 0..1, độ dài >= 0.2s.",
     "specListTitle": "Layer chuẩn spec ({n})",
     "legacyListTitle": "Layer cũ legacy ({n})",
@@ -907,7 +1076,6 @@
   },
   "nestedBoundary": {
     "button": "Transition & opacity",
-    "title": "Transition qua biên + opacity",
     "note": "Chỉ type fade được nối qua biên nested (R3): type khác sẽ bị từ chối, không ghi. Cần clip kề chạm đúng biên (không gap); không đặt cả transition vào và ra cùng lúc. Opacity 0..1 nhân vào từng clip lá.",
     "opacity": "Opacity",
     "opacityAria": "Opacity của nested clip (để trống = xoá)",
@@ -943,7 +1111,6 @@
     "locate": "Định vị trên timeline",
     "locateNested": "Clip nằm trong nested — sẽ chọn clip ngoài cùng trên timeline.",
     "locateUnavailable": "Không định vị được clip này trên timeline (đường dẫn không khớp project hiện tại).",
-    "fix": "Sửa",
     "fixV": "Đưa v về số trong [0.25, 4].",
     "fixT": "Sắp xếp lại t tăng dần nghiêm ngặt và giữ trong [0, thời lượng clip].",
     "fixEasing": "Đổi easing về linear, ease-in, ease-out hoặc bezier.",
@@ -962,7 +1129,8 @@
     "fixLineConfirmTitle": "Sửa curve tốc độ của clip “{clip}” ({path})? (hoàn tác được bằng Undo)",
     "autosaveRestoredNote": "Khôi phục autosave, có lưu ý",
     "fixKeyframe": "Sửa keyframe này",
-    "fixKeyframeConfirmTitle": "Sửa keyframe #{index} của clip “{clip}” ({path})? (hoàn tác được bằng Undo)"
+    "fixKeyframeConfirmTitle": "Sửa keyframe #{index} của clip “{clip}” ({path})? (hoàn tác được bằng Undo)",
+    "badCase": "case xấu"
   },
   "speedCurve": {
     "shape": "speedKeyframes phải là object { keyframes: [...] }.",
@@ -994,7 +1162,10 @@
     "reasonShape": "speedKeyframes phải là object { keyframes: [...] } — không sửa tự động được, sửa tay trong Speed panel.",
     "reasonEmpty": "speedKeyframes.keyframes đang rỗng — cần ít nhất 1 keyframe, thêm tay trong Speed panel.",
     "reasonAllDropped": "mọi keyframe đều bị loại khi sửa — không còn keyframe nào, thêm tay trong Speed panel.",
-    "changeDropBeyondCap": "keyframes[{index}]: nằm ngoài {max} keyframe đầu (tổng {count}) — đã loại."
+    "changeDropBeyondCap": "keyframes[{index}]: nằm ngoài {max} keyframe đầu (tổng {count}) — đã loại.",
+    "moreViolations": "\n• … và {n} vi phạm khác.",
+    "exportBlockedHead": "Không xuất được: curve tốc độ vi phạm, render sẽ từ chối project này:",
+    "exportBlockedTail": "Bấm “Sửa curve vi phạm” để tự động sửa (có xác nhận trước, hoàn tác được), hoặc sửa tay trong Speed panel rồi xuất lại."
   },
   "exportPanel": {
     "curveWarningsTitle": "Curve tốc độ vi phạm ({count}):",
@@ -1003,7 +1174,75 @@
     "fixCurves": "Sửa curve vi phạm",
     "fixConfirmTitle": "Sửa các curve tốc độ vi phạm sau? (hoàn tác được bằng Undo)",
     "errorDetailTitle": "Chi tiết lỗi [{code}]:",
-    "errorDetailMore": "… và {count} dòng lỗi khác đã lược bớt."
+    "errorDetailMore": "… và {count} dòng lỗi khác đã lược bớt.",
+    "bridgeError": "Bridge trả lỗi {status}",
+    "bridgeServerDown": "Không kết nối được bridge server ({url}).",
+    "reframeAnalyzing": "Đang phân tích chủ thể và crop… (video dài có thể mất vài phút)",
+    "reframeAdded": "✅ Đã thêm \"{name}\" vào kho media — xuất bằng preset TikTok 9:16 để đăng.",
+    "reframeTitle": "📱 Auto-reframe theo chủ thể",
+    "reframeIntro": "Crop video ngang sang dọc/vuông, tự động bám theo khuôn mặt hoặc chuyển động (OpenCV local, không cloud). Kết quả được thêm vào kho media.",
+    "aspect": "Tỉ lệ:",
+    "reframeWorking": "⏳ Đang phân tích…",
+    "reframePreview": "👁 Xem trước quỹ đạo",
+    "reframeWorking2": "⏳ Đang reframe…",
+    "trajSummary": "Khung nguồn {sw}×{sh} — window crop {cw}×{ch} ({aspect}), {points} điểm / {duration}s. Đường xanh lá là tâm vùng cắt theo thời gian (● bắt đầu → ● kết thúc); các khung mờ là vùng cắt tại các thời điểm mẫu. Phát hiện: mặt {face}, chuyển động {motion}, không thấy {none} mẫu.",
+    "sourceNarrow": "Nguồn đã hẹp hơn tỉ lệ đích nên window là toàn khung hình — không có quỹ đạo di chuyển để xem.",
+    "specIssueMetaName": "meta.name đang trống.",
+    "specIssueMetaSize": "meta.width/height phải > 0.",
+    "specIssueMetaFps": "meta.fps phải > 0.",
+    "specIssueTrackNoId": "Có track thiếu id.",
+    "specIssueTrackKind": "Track {id}: kind không hợp lệ.",
+    "specIssueTrackClips": "Track {id}: clips phải là mảng.",
+    "specIssueClipStart": "{clip}: start phải >= 0.",
+    "specIssueClipDuration": "{clip}: duration phải > 0.",
+    "specIssueClipSrc": "{clip}: thiếu src.",
+    "specIssueClipIn": "{clip}: in phải >= 0.",
+    "specIssueClipOut": "{clip}: out phải > in.",
+    "specIssueFontSize": "{clip}: style.fontSize phải > 0.",
+    "specBadFormat": "Spec không đúng định dạng video-spec (sai version hoặc thiếu meta/tracks).",
+    "userLutMissing": "LUT user \"{name}\" (file .cube chưa lưu trong trình duyệt — nhập lại)",
+    "missingMedia": "Thiếu file media gốc (cần import lại): {files}",
+    "bridgeBusy": "Bridge đang bận (đủ job đồng thời) — thử lại sau.",
+    "bridgeConnHint": "Không kết nối được bridge server. Hãy chạy: cd server/bridge && npm start (mặc định {url})",
+    "sharePacking": "Đang tải video đã render để đóng gói trang chia sẻ…",
+    "shareDownloadFailed": "Không tải được video (bridge trả {status}).",
+    "shareLinked": "Video {size}MB nên trang dùng chế độ linked: hãy bấm \"Tải xuống MP4\", đổi tên thành video.mp4 và đặt cùng thư mục với file HTML. {warnings}",
+    "shareDone": "Đã xuất trang chia sẻ 1 file ({size}MB video nhúng trong HTML). {warnings}",
+    "shareFailed": "Không xuất được trang chia sẻ: {error}",
+    "title": "Xuất video",
+    "titleIcon": "⬇ Xuất video",
+    "specValid": "✅ Spec hợp lệ (video-spec v{version}) — render worker đọc được.",
+    "specInvalid": "❌ Spec chưa hợp lệ — sửa các lỗi dưới rồi xuất lại.",
+    "mp4Title": "🎬 Xuất MP4",
+    "quality": "Chất lượng:",
+    "crfLabel": "CRF (0=tốt nhất)",
+    "willExport": "Sẽ xuất:",
+    "presetNote": "— project gốc không đổi, preset chỉ áp lúc render.",
+    "sizeEstimate": "📦 Dung lượng ước tính:",
+    "sizeEstimateHint": "Ước tính theo công thức bitrate × thời lượng, file thật có thể chênh lệch theo nội dung video",
+    "sizeEstimateShort": "(ước tính)",
+    "normalize": "Chuẩn hoá âm thanh:",
+    "normalizeOff": "Tắt (giữ nguyên âm lượng)",
+    "normalizeLoudnorm": "Loudnorm — về target LUFS",
+    "normalizeDynaudnorm": "Dynaudnorm — cân bằng động",
+    "ebruNote": "Chuẩn EBU R128: -14 LUFS, true peak -1.5 dB. Chỉ áp khi có audio; project câm thì bỏ qua.",
+    "renderIntro": "Xuất video MP4 thật qua bridge server local ({url}). Media gốc sẽ được tải lên bridge để render.",
+    "uploading": "Đang tải media lên...",
+    "queued": "Đang xếp hàng (vị trí #{pos})…",
+    "rendering": "Đang render... {pct}%",
+    "renderEta": " — còn ~{eta}",
+    "downloadMp4": "⬇ Tải xuống MP4",
+    "exportShare": "🌐 Xuất trang chia sẻ",
+    "renderCancelled": "Đã huỷ render.",
+    "presetInvalid": "Preset chưa hợp lệ",
+    "exportMp4": "Xuất MP4",
+    "exportMp4Size": "🎬 Xuất MP4 ({w}×{h})",
+    "jsonNote": "File JSON này là \"ngôn ngữ chung\": render worker (Phase 1B) đọc nó để xuất MP4, AI agent (Phase 4) cũng sinh đúng định dạng này. Trường src là tên file gốc trong thư mục media của dự án.",
+    "copied": "✓ Đã sao chép",
+    "copyJson": "⧉ Sao chép JSON",
+    "downloadJson": "⬇ Tải xuống .json",
+    "resumedJob": "Đã nối lại tiến trình xuất đang chạy.",
+    "retryRender": "Render lại từ đầu"
   },
   "errorDetail": {
     "summary": {
@@ -1030,7 +1269,41 @@
     "exportArchiveDone": "Đã xuất bản nén ({media} media, {size} MB).",
     "exportArchiveNotes": "Lưu ý: {notes}",
     "saveNotes": "Đã lưu, nhưng có lưu ý: {notes}",
-    "saveDone": "Đã lưu project."
+    "saveDone": "Đã lưu project.",
+    "renameTitle": "Đổi tên dự án",
+    "renameLabel": "Tên dự án",
+    "renameHint": "Tên mới sẽ dùng làm tên file mặc định khi chọn nơi lưu.",
+    "renameSave": "Lưu",
+    "renameCancel": "Huỷ",
+    "new": "🆕 Mới",
+    "newHint": "Tạo dự án mới",
+    "open": "📂 Mở",
+    "openHint": "Mở file dự án (.vcut.json)",
+    "save": "💾 Lưu",
+    "saveHint": "Lưu thành file (Ctrl+S)",
+    "saveAs": "💾 Lưu thành…",
+    "saveAsHint": "Lưu thành tên khác",
+    "exportArchive": "📦 Xuất bản nén",
+    "exportArchiveHint": "Xuất project + media thành 1 file nén (.vcut.zip) — mang đi máy khác",
+    "importArchive": "📥 Nhập bản nén",
+    "importArchiveHint": "Nhập file bản nén (.vcut.zip) — khôi phục project + media",
+    "history": "🕘 Lịch sử",
+    "historyHint": "Lịch sử phiên bản project (lưu local, chưa đồng bộ cloud)",
+    "unsavedChangesHint": "Có thay đổi chưa được lưu thành file (.vcut.json)",
+    "allSavedHint": "Mọi thay đổi đã được lưu",
+    "unsaved": "● Chưa lưu",
+    "autosaveAt": "✓ Autosave {time}",
+    "saved": "✓ Đã lưu",
+    "saveAsPrompt": "Tên dự án",
+    "untitledProject": "Dự án không tên"
+  },
+  "nativeFiles": {
+    "importDone": "Đã thêm {count} media vào dự án.",
+    "importError": "Không nhập được một số media: {errors}",
+    "importTooBig": "Tổng dung lượng media vượt quá 4 GB — hãy chia nhỏ trước khi thêm.",
+    "exportDone": "Đã xuất video ra {path}.",
+    "exportError": "Không xuất được video: {error}",
+    "exportCancelled": "Đã huỷ xuất video (chưa chọn thư mục đích)."
   },
   "structuredNotes": {
     "blobUrl": "Clip \"{clipId}\" trên track \"{trackId}\" đang trỏ tới blob: URL — media này sẽ mất khi tải lại trang (xem P2.2 asset store).",
@@ -1044,7 +1317,8 @@
     "archiveMissingImport": "Archive thiếu {count} media có trong project (cần relink thủ công): {shown}{extra}",
     "motionNoteEmpty": "motion.motionBlur rỗng (thiếu cả frames lẫn weights) → frames = {frames} (mặc định resolveMotionBlur)",
     "motionNoteFrames": "motion.motionBlur.frames ({frames}) lệch/thiếu so với weights.length ({weightsLength}) → frames = {newFrames} (giữ nguyên weights)",
-    "motionNoteWeights": "motion.motionBlur.weights chứa số <= 0 ({weights}) → weights đều ({frames} frame, render S2 yêu cầu số dương)"
+    "motionNoteWeights": "motion.motionBlur.weights chứa số <= 0 ({weights}) → weights đều ({frames} frame, render S2 yêu cầu số dương)",
+    "projectIdMigrated": "File chưa có mã project ổn định — đã tạo mã mới, lưu lại file để giữ mã này."
   },
   "relink": {
     "reading": "Đang đọc {name} ({size})…",
@@ -1054,6 +1328,1747 @@
     "cleanup": "Dọn alias thừa",
     "cleanupDone": "Đã dọn {removed} alias thừa khỏi {cleaned} asset (đã quét {scanned} asset).",
     "cleanupNone": "Không có alias thừa (đã quét {scanned} asset).",
-    "cleanupError": "Không dọn được alias thừa: {detail}"
+    "cleanupError": "Không dọn được alias thừa: {detail}",
+    "unknownError": "Lỗi không xác định khi relink.",
+    "unknownErrorShort": "lỗi không xác định",
+    "title": "Media thiếu",
+    "titleCount": "🔗 Media thiếu ({n})",
+    "closeSkip": "Đóng (bỏ qua)",
+    "intro": "Project này dùng {n} file media chưa có trong phiên làm việc. Chọn lại từng file để tiếp tục dựng — clip thiếu sẽ hiện placeholder cho tới khi được relink.",
+    "usedIn": "{label} · dùng trong {n} clip",
+    "usedTopAndNested": " ({top} ở cấp cao, {nested} trong nested)",
+    "usedNestedOnly": " (chỉ trong nested)",
+    "pickFile": "Chọn file thay thế cho {src}",
+    "readingBtn": "⏳ Đang đọc…",
+    "repick": "🔗 Chọn lại",
+    "cleanupAlias": "Xoá alias trùng tên thật của asset khác (tạo trước guard đợt 38)",
+    "cleaning": "⏳ Đang dọn…",
+    "skipPlaceholder": "Bỏ qua — dựng tiếp với placeholder",
+    "kindAudio": "Âm thanh",
+    "kindImage": "Ảnh"
+  },
+  "motionTrack": {
+    "invalid": "Quỹ đạo không hợp lệ: {error}",
+    "readFailed": "Không đọc được file quỹ đạo: {error}",
+    "attached": "Đã gắn quỹ đạo: {n} điểm",
+    "lost": " — ⚠️ track bị mất giữa chừng, clip đứng yên từ điểm cuối.",
+    "followNote": "Clip sẽ bám theo vật thể trong preview và render thật.",
+    "loadOther": "Nạp quỹ đạo khác",
+    "detach": "Gỡ quỹ đạo",
+    "intro": "Chạy {script} trên video gốc để tạo trajectory JSON, rồi nạp file đó vào đây để clip bám theo vật thể.",
+    "loadJson": "Nạp trajectory JSON…"
+  },
+  "preview": {
+    "missingMedia": "Thiếu media: {names}",
+    "curveWarnHidden": "⚠ Curve: {n} nested lỗi ({dropped} bị ẩn)",
+    "curveWarnFallback": "⚠ Curve: {n} nested về 1×",
+    "curveFallbackLinear": "preview tạm về 1× (export vẫn fail-fast, cần sửa curve thật)",
+    "curveFallbackHidden": "tạm ẩn khỏi preview",
+    "curveFallbackLinearShort": "tạm về 1×",
+    "curveToast": "Preview: nested “{id}” có speed curve không hợp lệ ({reason}) — đã {fallback} để preview không dừng. Export vẫn fail-fast theo luật render, cần sửa curve thật.",
+    "flattenWarn": "⚠ Preview lỗi làm phẳng",
+    "flattenWarnDetail": "{msg} — đang hiện spec gốc, nested có thể không hiển thị.",
+    "flattenToast": "Preview không làm phẳng được project ({msg}) — đang hiện spec gốc, nested có thể không hiển thị.",
+    "holdStale": "⏸ FRAME GIỮ (cũ)",
+    "hold": "⏸ FRAME GIỮ",
+    "volumeTitle": "Mức âm thanh preview",
+    "proxyBadge": "Đang preview bằng bản proxy nhẹ — export cuối vẫn dùng file gốc đủ phân giải",
+    "lutBadge": "Chế độ LUT của preview: WebGL = LUT 3D thật (khớp render); CSS ≈ = xấp xỉ bằng CSS filter",
+    "motionBadge": "Motion của clip đang xem: NỘI SUY = bản render sẽ nội suy frame mới (preview giữ fps project, không nội suy); BLUR≈ = preview chỉ vẽ vệt mờ xấp xỉ, render dùng motion blur thật",
+    "reverseBadge": "Đang ở chế độ phát ngược: playhead chạy lùi theo từng frame, mọi video seek từng frame, audio bị tắt vì không phát ngược đồng bộ được. Bấm nút ◀ hoặc phím J để dừng, nút ▶ để về phát xuôi.",
+    "reverseLabel": "◀ PHÁT NGƯỢC — không audio",
+    "holdBadge": "Decoder chưa kịp giao frame mới nên preview đang vẽ lại frame tốt cuối cùng thay vì để đen. Nếu hiện (cũ) nghĩa là frame đã giữ quá 3 giây timeline — hình đứng yên trong khi playhead vẫn chạy.",
+    "fsExitTitle": "Thoát toàn màn hình (F)",
+    "fsEnterTitle": "Xem toàn màn hình (F)",
+    "fsExit": "Thoát toàn màn hình",
+    "fsEnter": "Xem toàn màn hình",
+    "emptyTitle": "Chưa có clip nào",
+    "emptyHint": "Nhập file vào thư viện, rồi kéo thả vào timeline để bắt đầu.",
+    "motionInterp": "NỘI SUY",
+    "effectSkippedBadge": "⚠ {n} hiệu ứng không vẽ được trong preview",
+    "effectSkippedToast": "Preview không vẽ được {n} hiệu ứng (ví dụ: {first}). Bản render vẫn có hiệu ứng.",
+    "nestedSkippedBadge": "⚠ Bỏ qua {n} mục lồng nhau",
+    "nestedSkippedToast": "Preview đã bỏ qua {n} mục lồng nhau (đầu tiên: {first}). Xem chi tiết ở badge cảnh báo dưới khung preview."
+  },
+  "toasts": {
+    "closeAria": "Đóng thông báo"
+  },
+  "desktop": {
+    "saveError": "Không ghi được file",
+    "preloadIpcNotBytes": "Dữ liệu file qua IPC không phải bytes."
+  },
+  "media": {
+    "videoMetaFailed": "Không đọc được metadata video",
+    "audioMetaFailed": "Không đọc được metadata audio",
+    "imageReadFailed": "Không đọc được ảnh",
+    "unsupported": "Định dạng không hỗ trợ: {detail}"
+  },
+  "beatsync": {
+    "title": "Cắt theo beat",
+    "noClip": "Không tìm thấy clip audio/video đã chọn.",
+    "noSource": "Không có file gốc của clip (media đã bị xóa hoặc relink).",
+    "bridgeError": "Lỗi {status}",
+    "analyzeFailed": "Phân tích beat thất bại.",
+    "noCutPoints": "Không còn điểm cắt nào — chọn lại ít nhất 1 điểm.",
+    "applyFailed": "Không tách được điểm nào (clip có thể đã bị khóa hoặc điểm nằm ngoài clip).",
+    "cutTitle": "🎵 Cắt clip theo beat",
+    "intro": "Phát hiện beat bằng thuật toán local (spectral flux + DP, không API). Hiệu quả nhất với nhạc có beat rõ; nhạc rubato/phức tạp có thể lệch — hãy xem lại danh sách điểm cắt trước khi áp dụng.",
+    "minBpm": "BPM tối thiểu",
+    "maxBpm": "BPM tối đa",
+    "analyze": "Phân tích beat",
+    "analyzing": "Đang phân tích beat… (nhạc dài có thể mất vài chục giây)",
+    "found": "Phát hiện {bpm} BPM — {beats} beat trong {duration}s → {points} điểm cắt trong clip. Bỏ tick điểm nào không muốn cắt:",
+    "structure": "🎼 Cấu trúc (ước lượng heuristic, không phải hiểu nhạc thật):",
+    "meter": "nhịp {meter}/4 (tin cậy {confidence})",
+    "meterUnknown": "không xác định được nhịp",
+    "section": "Đoạn {label}: {start} → {end}",
+    "sectionRepeat": " (lặp ×{n})",
+    "sectionPeak": " (năng lượng cao nhất)",
+    "downbeatOnly": "Chỉ giữ điểm cắt ở downbeat (cắt theo ô nhịp, ít điểm hơn)",
+    "sectionNote": "Nhãn đoạn (A/B/C, “lặp lại”, “năng lượng cao”) chỉ là gợi ý từ độ giống hòa âm và năng lượng — nhạc không theo cấu trúc pop có thể phân đoạn sai.",
+    "structureError": "Không phân tích được cấu trúc ({error}) — vẫn cắt theo beat bình thường.",
+    "apply": "Cắt clip theo beat đã chọn"
+  },
+  "caption": {
+    "mediaGone": "File media không còn tồn tại.",
+    "processing": "Đang xử lý…",
+    "failed": "Caption thất bại.",
+    "bridgeDropped": "Bridge ngắt kết nối giữa chừng — thử lại.",
+    "noMedia": "Chưa chọn file video/audio để tạo phụ đề.",
+    "uploading": "Đang gửi file lên bridge…",
+    "translating": "Xong phụ đề gốc — bắt đầu dịch…",
+    "cancelled": "Đã huỷ tạo phụ đề.",
+    "noCues": "Không đọc được cue nào: {details}",
+    "cueError": "khối {block}: {reason}",
+    "noCuesInFile": "File không có cue phụ đề nào.",
+    "importedWithErrors": "Đã nhập {n} câu, bỏ {bad} cue hỏng: {details}",
+    "imported": "Đã nhập {n} câu từ {file}.",
+    "readFileFailed": "Không đọc được file: {error}",
+    "translateTo": "Dịch phụ đề sang {lang}",
+    "title": "Tạo phụ đề tự động",
+    "titleIcon": "💬 Tạo phụ đề tự động",
+    "recognizeWith": "Nhận diện giọng nói bằng {engine} chạy 100% trên máy của bạn — không gửi audio lên cloud.",
+    "noMediaInLibrary": "Chưa có file video/audio nào trong kho media. Hãy import file trước.",
+    "spokenLang": "Ngôn ngữ nói trong video",
+    "translateToLabel": "🌐 Dịch sang",
+    "noTranslate": "Không dịch",
+    "translateWith": "Dịch bằng {engine} chạy local (không cloud) — hiện chỉ hỗ trợ sang tiếng Anh. Bản dịch được tạo thành track phụ đề thứ 2, giữ nguyên track gốc.",
+    "alignNote": "Phụ đề được căn theo thời gian gốc của file (giây 0 = đầu file). Nếu clip đã bị cắt/dời trên timeline, bạn có thể chọn các câu phụ đề rồi kéo cho khớp.",
+    "orImport": "Hoặc nhập file phụ đề có sẵn:",
+    "importFile": "Nhập file SRT hoặc VTT",
+    "exportProject": "Xuất phụ đề của project:",
+    "exportIncludes": "Gồm {n} câu từ track: {tracks}. Title/chữ tự do trên track khác không được xuất.",
+    "exportEmpty": "Project chưa có phụ đề nào (tạo phụ đề hoặc nhập SRT/VTT trước).",
+    "running": "Đã chạy {elapsed} — cứ để cửa sổ mở.",
+    "found": "Tìm được {n} câu phụ đề (bỏ {dropped} câu). Kiểm tra lại rồi bấm Áp dụng:",
+    "karaokeHint": "🎤 Tô sáng từng từ theo giọng nói (karaoke, {words} từ)",
+    "highlightColor": "Màu tô sáng:",
+    "noWordTimestamps": "Lần caption này không có word timestamps nên không gắn được karaoke (chữ vẫn tạo bình thường).",
+    "keepSentence": "Giữ lại câu này",
+    "dropSentence": "Bỏ câu này",
+    "exportSrt": "⬇ Xuất SRT",
+    "exportVtt": "⬇ Xuất VTT",
+    "translated": "🌐 {n} câu dịch ({lang}) (bỏ {dropped} câu) — sẽ tạo track {track}:",
+    "start": "🎙 Bắt đầu tạo phụ đề",
+    "redo": "← Làm lại",
+    "apply": "✓ Áp dụng {n} câu phụ đề",
+    "applyExtra": " + {m} câu {lang}",
+    "foundPlain": "Tìm được {n} câu phụ đề. Kiểm tra lại rồi bấm Áp dụng:",
+    "translatedPlain": "🌐 {n} câu dịch ({lang}) — sẽ tạo track {track}:",
+    "phase": {
+      "extract": "Đang trích xuất audio…",
+      "group": "Đang gộp câu phụ đề…",
+      "transcribe": "Đang nhận diện giọng nói (video dài có thể mất vài phút)…",
+      "translating": "Đang dịch sang tiếng Anh (video dài có thể mất vài phút)…",
+      "upload": "Đã nhận file, chuẩn bị…"
+    }
+  },
+  "silence": {
+    "noClip": "Chưa chọn clip video/audio để cắt khoảng lặng.",
+    "noSource": "Không tìm thấy file gốc của clip (media đã bị xóa hoặc chưa relink). Hãy relink media trước.",
+    "cancelled": "Đã huỷ phân tích khoảng lặng.",
+    "noSilenceInRange": "Không có khoảng lặng nào nằm trong đoạn clip (sau khi bỏ chọn).",
+    "applyFailed": "Không cắt được (clip đã bị xóa/khóa, hoặc toàn bộ clip là khoảng lặng).",
+    "cutDone": "Đã cắt {n} khoảng lặng, rút ngắn {seconds}s (Ctrl+Z để hoàn tác).",
+    "title": "Cắt khoảng lặng",
+    "titleIcon": "🔇 Cắt khoảng lặng",
+    "intro": "Tự động phát hiện đoạn im lặng trong clip rồi cắt bỏ, dồn timeline lại (chạy FFmpeg silencedetect trên máy bạn, không cloud).",
+    "clipLabel": "Clip cần cắt",
+    "noClipInTimeline": "Timeline chưa có clip video/audio nào.",
+    "threshold": "Ngưỡng im lặng:",
+    "thresholdHint": "(càng gần 0 càng \"khó tính\")",
+    "minDuration": "Chỉ cắt khoảng lặng dài hơn:",
+    "analyze": "🔍 Phân tích khoảng lặng",
+    "analyzing": "⏳ Đang phân tích audio bằng FFmpeg…",
+    "noSilenceFound": "Không phát hiện khoảng lặng nào với ngưỡng hiện tại. Thử hạ ngưỡng dB (ví dụ -40) hoặc giảm độ dài tối thiểu.",
+    "backToParams": "← Sửa tham số",
+    "cut": "✂ Cắt {n} khoảng lặng",
+    "foundPartial": "Tìm thấy {n} khoảng lặng (sẽ cắt {kept}, bỏ chọn {skipped}), tổng {total}s. Bỏ tick để giữ lại đoạn không muốn cắt:",
+    "foundAll": "Tìm thấy {n} khoảng lặng — sẽ cắt tất cả, tổng {total}s. Bỏ tick để giữ lại đoạn không muốn cắt:"
+  },
+  "history": {
+    "readFailed": "Không đọc được lịch sử: {error}",
+    "duplicate": "Spec trùng version mới nhất — không tạo snapshot trùng.",
+    "saved": "Đã lưu phiên bản ({summary})",
+    "saveFailed": "Không lưu được phiên bản: {error}",
+    "restoreConfirm": "Có thay đổi chưa lưu. Khôi phục version này sẽ thay toàn bộ project hiện tại. Tiếp tục?",
+    "beforeRestore": "trước khi khôi phục",
+    "notFound": "Không tìm thấy version này nữa.",
+    "restored": "Đã khôi phục phiên bản {time}{label}",
+    "restoreFailed": "Không khôi phục được: {error}",
+    "deleteConfirm": "Xoá phiên bản {time}? Không khôi phục được.",
+    "imported": "Đã nhập {n} version mới (bỏ qua version đã có).",
+    "importFailed": "Không nhập được: {error}",
+    "title": "🕘 Lịch sử phiên bản (lưu local, chưa đồng bộ cloud)",
+    "note": "Snapshot lưu toàn bộ spec vào IndexedDB trên máy này. Tối đa {max} version/project; muốn mang đi máy khác thì Xuất file lịch sử.",
+    "labelPlaceholder": "Nhãn cho snapshot (không bắt buộc)",
+    "snapshot": "📸 Lưu phiên bản",
+    "export": "⬇ Xuất lịch sử",
+    "import": "⬆ Nhập lịch sử",
+    "empty": "Chưa có phiên bản nào. Bấm “Lưu phiên bản” để tạo snapshot đầu tiên.",
+    "colTime": "Thời gian",
+    "colLabel": "Nhãn",
+    "colChanges": "Thay đổi",
+    "restore": "↩ Khôi phục"
+  },
+  "templatePicker": {
+    "kindImage": "🖼 Ảnh",
+    "kindText": "✏️ Chữ",
+    "aspect916": "9:16 dọc",
+    "aspect11": "1:1 vuông",
+    "backToList": "Quay lại danh sách",
+    "meta": "{aspect} · {duration}s · {count} mục cần điền",
+    "metaShort": "{duration}s · {count} mục điền",
+    "defaultValue": "(mặc định: {value})",
+    "createFromTemplate": "Tạo project từ mẫu",
+    "confirmNew": "Tạo project mới từ mẫu {name}? Project hiện tại sẽ bị thay thế (không undo được).",
+    "back": "Quay lại",
+    "confirmCreate": "Xác nhận tạo",
+    "title": "🎬 Mẫu video ({n} mẫu)",
+    "credit": "Mẫu do VCut Studio thiết kế (MIT). File gốc:",
+    "aspect169": "16:9 ngang"
+  },
+  "enhance": {
+    "selectClip": "Chọn một clip video trên timeline để tăng cường hình ảnh.",
+    "videoOnly": "Tăng cường chỉ dùng cho clip video (ảnh, chữ, sticker, âm thanh chưa hỗ trợ) — xem {doc}.",
+    "deinterlace": "Khử răng cưa (yadif) — video interlaced về progressive",
+    "yadifMode": "Chế độ yadif",
+    "yadif0": "0 — giữ fps (an toàn)",
+    "yadif1": "1 — mỗi field 1 frame (tăng gấp đôi fps)",
+    "stabilize": "Chống rung (vidstab 2-pass) — làm mượt rung tay",
+    "smoothing": "Làm mượt (smoothing): {n} frame",
+    "stabTwoPass": "Chống rung chạy 2 pass: render sẽ phân tích toàn clip trước rồi mới render chính, nên chậm hơn bình thường.",
+    "stabSpeedConflict": "⚠️ Clip này có speed curve — chống rung KHÔNG dùng chung được với speedKeyframes, render sẽ bị chặn. Tắt một trong hai.",
+    "denoise": "Khử nhiễu (hqdn3d) — giảm nhiễu hạt",
+    "denoiseStrength": "Cường độ khử nhiễu: {pct}%",
+    "heavyWarning": "⚠️ Clip này vừa có mask vừa có tăng cường nặng (chống rung / khử nhiễu) và dài {duration}s — render sẽ chậm trên máy yếu. Số đo thật trên VM 2 vCPU (không GPU): 720p mask + khử nhiễu đạt ~17.6 fps, tức clip 60s mất ~100s chỉ riêng bước render; 1080p chậm thêm ~3×. Chống rung còn cộng thêm 1 pass phân tích toàn clip. Gợi ý: render thử đoạn ngắn trước, hoặc tắt bớt một trong hai.",
+    "quickDenoise": "✨ Bật khử nhiễu nhanh",
+    "disableAll": "Tắt tất cả tăng cường",
+    "activeSummary": "Đang bật: {list}",
+    "badgeTitle": "Clip có tăng cường — xem mục Tăng cường video trong Inspector",
+    "presetBalanced": "Cân bằng — chống rung + khử nhiễu",
+    "presetCustom": "Tùy chỉnh",
+    "presetLabel": "Preset tăng cường",
+    "presetLight": "Nhẹ — khử nhiễu nhẹ",
+    "presetOff": "Tắt",
+    "presetStrong": "Mạnh — chống rung mạnh + khử nhiễu mạnh",
+    "sumDeinterlace": "Khử răng cưa",
+    "sumDenoise": "Khử nhiễu",
+    "sumStabilize": "Chống rung",
+    "previewApprox": "Bản xem trước chỉ là xấp xỉ — khử nhiễu là mờ nhẹ, chống rung là crop/scale gợi ý, khử răng cưa không hiện; bản render mới chính xác.",
+    "previewOffNote": "Đã tắt xem trước enhance — bản xem trước hiện khung gốc, bản render vẫn áp enhance.",
+    "previewToggle": "Xem trước enhance (xấp xỉ)",
+    "presetSpeedBlocked": "⚠️ Clip có speed curve nên preset Cân bằng/Mạnh bị tắt — chống rung không dùng chung được với speedKeyframes. Dùng preset Nhẹ (chỉ khử nhiễu) hoặc bỏ speed curve rồi bật lại.",
+    "presetSpeedTitle": "Preset Cân bằng/Mạnh bị tắt vì clip có speed curve — chống rung không dùng chung được với speedKeyframes",
+    "stabilizeSpeedTitle": "Chống rung không dùng chung được với speed curve của clip này",
+    "fastMotionLevelFast": "nhanh",
+    "fastMotionLevelMedium": "vừa",
+    "fastMotionLevelSlow": "chậm",
+    "fastMotionMeasuring": "Đang đo chuyển động của clip…",
+    "fastMotionUnknown": "⚠️ Không đo được chuyển động của clip này — khử nhiễu {pct}% có thể để lại vệt mờ trên clip chuyển động nhanh. Render thử đoạn ngắn để kiểm tra trước khi xuất.",
+    "fastMotionWarning": "⚠️ Clip chuyển động nhanh (độ chuyển động {score} — mức {level}) — khử nhiễu {pct}% có thể để lại vệt mờ (ghosting) trên vùng chuyển động. Giảm xuống dưới 70% nếu thấy vệt mờ theo vật thể.",
+    "fastMotionWarningSlow": "⚠️ Khử nhiễu {pct}% có thể để lại vệt mờ (ghosting) — đo trên footage thật cho thấy vệt mờ tăng rõ từ 50% lên 70% ngay cả trên clip chuyển động {level} (độ chuyển động {score}). Giảm xuống dưới 70% nếu thấy vệt mờ theo vật thể."
+  },
+  "perf": {
+    "openFps": "Mở đồng hồ đo FPS preview",
+    "title": "Đồng hồ đo FPS preview",
+    "closeFps": "Đóng đồng hồ FPS",
+    "status": "Trạng thái:",
+    "playing": "▶ Đang phát",
+    "paused": "⏸ Đứng yên (số này không phải FPS phát)",
+    "fpsRecent": "FPS (1s gần nhất):",
+    "fpsAvg": "FPS trung bình:",
+    "fpsMin": "FPS thấp nhất (cửa sổ 1s):",
+    "dropped": "Frame giật (>{ms}ms):",
+    "totalFrames": "Tổng frame:",
+    "note": "Đo bằng rAF của app, không phải draw call trực tiếp của canvas preview.",
+    "presentedFps": "Frame trình chiếu (element):",
+    "presentedNote": "Frame thật element video trình chiếu (getVideoPlaybackQuality), khác FPS vẽ canvas ở trên; hiện … khi đứng yên hoặc không có clip video đang phát."
+  },
+  "templatePack": {
+    "bridgeErrorHttp": "Bridge trả lỗi HTTP {status}",
+    "mediaAddFailed": "Không đưa được file vào kho media.",
+    "ttsAdded": "✅ Đã thêm giọng đọc{suffix} vào timeline.",
+    "audioPlaceholderUnsupported": "Pack chưa hỗ trợ placeholder audio: {id}",
+    "missingSampleMedia": "Thiếu media mẫu cho placeholder: {id}",
+    "album-cover": {
+      "name": "Bìa album",
+      "description": "Video vuông giới thiệu album: ảnh bìa + tên album + tên nghệ sĩ.",
+      "placeholder": {
+        "album": {
+          "label": "Tên album"
+        },
+        "artist": {
+          "label": "Tên nghệ sĩ"
+        },
+        "cover": {
+          "label": "Ảnh bìa album"
+        }
+      }
+    },
+    "album-teaser": {
+      "name": "Teaser album",
+      "description": "Ảnh bìa vuông + tên album + ngày phát hành.",
+      "placeholder": {
+        "album": {
+          "label": "Tên album"
+        },
+        "cover": {
+          "label": "Ảnh bìa"
+        },
+        "release": {
+          "label": "Ngày phát hành"
+        }
+      }
+    },
+    "app-launch": {
+      "name": "Ra mắt ứng dụng",
+      "description": "Video dọc ra mắt app: màn hình app + tên app + tagline.",
+      "placeholder": {
+        "name": {
+          "label": "Tên ứng dụng"
+        },
+        "screen": {
+          "label": "Video màn hình app"
+        },
+        "tagline": {
+          "label": "Tagline"
+        }
+      }
+    },
+    "audiobook-promo": {
+      "name": "Quảng cáo sách nói",
+      "description": "Ảnh bìa vuông + tên sách + giọng đọc.",
+      "placeholder": {
+        "book": {
+          "label": "Tên sách"
+        },
+        "cover": {
+          "label": "Ảnh bìa sách"
+        },
+        "narrator": {
+          "label": "Giọng đọc"
+        }
+      }
+    },
+    "birthday-card": {
+      "name": "Thiệp sinh nhật",
+      "description": "Ảnh vuông sinh nhật: tên + lời chúc + sticker.",
+      "placeholder": {
+        "bg": {
+          "label": "Ảnh nền"
+        },
+        "name": {
+          "label": "Tên người nhận"
+        },
+        "wish": {
+          "label": "Lời chúc"
+        }
+      }
+    },
+    "book-trailer": {
+      "name": "Trailer sách",
+      "description": "Video ngang trailer sách: ảnh bìa + trích đoạn + tên sách.",
+      "placeholder": {
+        "cover": {
+          "label": "Ảnh bìa sách"
+        },
+        "quote": {
+          "label": "Trích đoạn"
+        },
+        "title": {
+          "label": "Tên sách"
+        }
+      }
+    },
+    "breaking-news": {
+      "name": "Tin nóng",
+      "description": "Khung tin truyền hình: video nền + headline + dòng chạy.",
+      "placeholder": {
+        "footage": {
+          "label": "Video hiện trường"
+        },
+        "headline": {
+          "label": "Tiêu đề tin"
+        },
+        "ticker": {
+          "label": "Dòng chạy dưới"
+        }
+      }
+    },
+    "charity-appeal": {
+      "name": "Kêu gọi từ thiện",
+      "description": "Video ngang kêu gọi: cảnh thực địa + thông điệp + số tài khoản.",
+      "placeholder": {
+        "cta": {
+          "label": "Lời kêu gọi"
+        },
+        "field": {
+          "label": "Video thực địa"
+        },
+        "message": {
+          "label": "Thông điệp"
+        }
+      }
+    },
+    "concert-teaser": {
+      "name": "Teaser concert",
+      "description": "Video dọc teaser đêm nhạc: 2 cảnh sân khấu + tên nghệ sĩ + ngày diễn.",
+      "placeholder": {
+        "artist": {
+          "label": "Tên nghệ sĩ"
+        },
+        "date": {
+          "label": "Ngày diễn"
+        },
+        "stage1": {
+          "label": "Cảnh sân khấu 1"
+        },
+        "stage2": {
+          "label": "Cảnh sân khấu 2"
+        }
+      }
+    },
+    "cooking-show": {
+      "name": "Show nấu ăn dọc",
+      "description": "Video dọc nấu ăn: 3 bước + tên món + tip nhanh.",
+      "placeholder": {
+        "dish": {
+          "label": "Tên món"
+        },
+        "step1": {
+          "label": "Bước 1"
+        },
+        "step2": {
+          "label": "Bước 2"
+        },
+        "step3": {
+          "label": "Bước 3 (thành phẩm)"
+        },
+        "tip": {
+          "label": "Mẹo nhanh"
+        }
+      }
+    },
+    "desk-setup": {
+      "name": "Góc làm việc",
+      "description": "Video dọc khoe góc setup: 2 cảnh bàn làm việc + tên chủ góc.",
+      "placeholder": {
+        "desk1": {
+          "label": "Cảnh bàn 1"
+        },
+        "desk2": {
+          "label": "Cảnh bàn 2"
+        },
+        "owner": {
+          "label": "Tên chủ góc"
+        }
+      }
+    },
+    "documentary-title": {
+      "name": "Tiêu đề phim tài liệu",
+      "description": "Mở đầu tài liệu: cảnh quay + tên phim + số tập.",
+      "placeholder": {
+        "episode": {
+          "label": "Số tập"
+        },
+        "footage": {
+          "label": "Cảnh quay"
+        },
+        "title": {
+          "label": "Tên phim"
+        }
+      }
+    },
+    "event-invite": {
+      "name": "Thiệp mời sự kiện",
+      "description": "Video dọc mời tham dự: ảnh + tên + ngày/địa điểm.",
+      "placeholder": {
+        "bg": {
+          "label": "Ảnh sự kiện"
+        },
+        "event": {
+          "label": "Tên sự kiện"
+        },
+        "when": {
+          "label": "Thời gian & địa điểm"
+        }
+      }
+    },
+    "family-slideshow": {
+      "name": "Slideshow gia đình",
+      "description": "Video ngang slideshow: 3 ảnh kỷ niệm + lời nhắn.",
+      "placeholder": {
+        "message": {
+          "label": "Lời nhắn"
+        },
+        "photo1": {
+          "label": "Ảnh 1"
+        },
+        "photo2": {
+          "label": "Ảnh 2"
+        },
+        "photo3": {
+          "label": "Ảnh 3"
+        }
+      }
+    },
+    "fashion-lookbook": {
+      "name": "Lookbook thời trang",
+      "description": "Video dọc lookbook: 3 set đồ + tên bộ sưu tập.",
+      "placeholder": {
+        "collection": {
+          "label": "Tên bộ sưu tập"
+        },
+        "look1": {
+          "label": "Set 1"
+        },
+        "look2": {
+          "label": "Set 2"
+        },
+        "look3": {
+          "label": "Set 3"
+        }
+      }
+    },
+    "fitness-promo": {
+      "name": "Quảng cáo gym",
+      "description": "Video ngang tập luyện: khẩu hiệu + kêu gọi đăng ký.",
+      "placeholder": {
+        "cta": {
+          "label": "Kêu gọi"
+        },
+        "footage": {
+          "label": "Video tập luyện"
+        },
+        "slogan": {
+          "label": "Khẩu hiệu"
+        }
+      }
+    },
+    "food-reel": {
+      "name": "Reel món ăn",
+      "description": "Video dọc review món: 3 cảnh cắt nhanh + hook + tên món.",
+      "placeholder": {
+        "clip1": {
+          "label": "Cảnh 1 (mở đầu)"
+        },
+        "clip2": {
+          "label": "Cảnh 2"
+        },
+        "clip3": {
+          "label": "Cảnh 3 (chốt)"
+        },
+        "dish": {
+          "label": "Tên món"
+        },
+        "hook": {
+          "label": "Câu hook"
+        }
+      }
+    },
+    "gaming-highlight": {
+      "name": "Highlight game",
+      "description": "Video dọc highlight: 2 pha xử lý + tỉ số nổi bật.",
+      "placeholder": {
+        "clip1": {
+          "label": "Pha 1"
+        },
+        "clip2": {
+          "label": "Pha 2 (cao trào)"
+        },
+        "score": {
+          "label": "Tỉ số / kết quả"
+        }
+      }
+    },
+    "graduation-celebration": {
+      "name": "Mừng tốt nghiệp",
+      "description": "Video dọc mừng tốt nghiệp: cảnh lễ + tên + niên khóa.",
+      "placeholder": {
+        "ceremony": {
+          "label": "Video buổi lễ"
+        },
+        "name": {
+          "label": "Tên người tốt nghiệp"
+        },
+        "year": {
+          "label": "Niên khóa"
+        }
+      }
+    },
+    "gym-transformation": {
+      "name": "Hành trình gym",
+      "description": "Video dọc before/after: 2 cảnh tập + số kg + slogan.",
+      "placeholder": {
+        "after": {
+          "label": "Cảnh sau"
+        },
+        "before": {
+          "label": "Cảnh trước"
+        },
+        "result": {
+          "label": "Kết quả"
+        },
+        "slogan": {
+          "label": "Slogan"
+        }
+      }
+    },
+    "interview-cut": {
+      "name": "Cắt phỏng vấn",
+      "description": "Video ngang 2 góc máy xen kẽ + tên người nói.",
+      "placeholder": {
+        "guest": {
+          "label": "Góc máy khách"
+        },
+        "host": {
+          "label": "Góc máy host"
+        },
+        "name1": {
+          "label": "Tên host"
+        },
+        "name2": {
+          "label": "Tên khách"
+        }
+      }
+    },
+    "intro-logo": {
+      "name": "Mở đầu logo",
+      "description": "Video ngang mở đầu: logo + tên kênh + slogan.",
+      "placeholder": {
+        "channel": {
+          "label": "Tên kênh"
+        },
+        "logo": {
+          "label": "Ảnh logo"
+        },
+        "slogan": {
+          "label": "Slogan"
+        }
+      }
+    },
+    "lofi-visual": {
+      "name": "Nhạc lofi thư giãn",
+      "description": "Ảnh nền tĩnh + tên bài + nhạc nền (audio placeholder).",
+      "placeholder": {
+        "artist": {
+          "label": "Nghệ sĩ"
+        },
+        "bg": {
+          "label": "Ảnh nền"
+        },
+        "song": {
+          "label": "Tên bài"
+        },
+        "track": {
+          "label": "File nhạc"
+        }
+      }
+    },
+    "lower-third": {
+      "name": "Bảng tên (Lower Third)",
+      "description": "Dải tên người nói ở góc dưới — dùng cho phỏng vấn, tin tức.",
+      "placeholder": {
+        "footage": {
+          "label": "Video nền"
+        },
+        "name": {
+          "label": "Tên người nói"
+        },
+        "role": {
+          "label": "Chức danh"
+        }
+      }
+    },
+    "lyric-video": {
+      "name": "Lyric video",
+      "description": "Video lời bài hát: 4 câu lyric hiện dần trên nền ảnh.",
+      "placeholder": {
+        "bg": {
+          "label": "Ảnh nền"
+        },
+        "line1": {
+          "label": "Câu hát 1"
+        },
+        "line2": {
+          "label": "Câu hát 2"
+        },
+        "line3": {
+          "label": "Câu hát 3"
+        },
+        "line4": {
+          "label": "Câu hát 4"
+        },
+        "music": {
+          "label": "File nhạc"
+        }
+      }
+    },
+    "morning-news": {
+      "name": "Bản tin sáng",
+      "description": "Mở đầu bản tin: video thành phố + tên chương trình + ngày.",
+      "placeholder": {
+        "city": {
+          "label": "Video thành phố sáng"
+        },
+        "date": {
+          "label": "Ngày phát sóng"
+        },
+        "show": {
+          "label": "Tên chương trình"
+        }
+      }
+    },
+    "outro-creator": {
+      "name": "Kết video creator",
+      "description": "Kết video: cảm ơn + đăng ký + tên kênh.",
+      "placeholder": {
+        "channel": {
+          "label": "Tên kênh"
+        },
+        "footage": {
+          "label": "Video nền"
+        },
+        "subscribe": {
+          "label": "Kêu gọi đăng ký"
+        },
+        "thanks": {
+          "label": "Lời cảm ơn"
+        }
+      }
+    },
+    "outro-subscribe": {
+      "name": "Kết video kêu gọi đăng ký",
+      "description": "Video ngang kết: cảm ơn + nút đăng ký + video tiếp theo.",
+      "placeholder": {
+        "next": {
+          "label": "Video tiếp theo"
+        },
+        "subscribe": {
+          "label": "Kêu gọi đăng ký"
+        },
+        "thanks": {
+          "label": "Lời cảm ơn"
+        }
+      }
+    },
+    "podcast-audiogram": {
+      "name": "Audiogram Podcast",
+      "description": "Video vuông cho podcast: ảnh bìa + tên tập + khách mời.",
+      "placeholder": {
+        "audio": {
+          "label": "File audio podcast"
+        },
+        "cover": {
+          "label": "Ảnh bìa tập"
+        },
+        "episode": {
+          "label": "Tên tập"
+        },
+        "guest": {
+          "label": "Khách mời"
+        }
+      }
+    },
+    "podcast-highlight": {
+      "name": "Highlight podcast dọc",
+      "description": "Video dọc cắt highlight: 1 đoạn nói + câu quote nổi bật.",
+      "placeholder": {
+        "clip": {
+          "label": "Đoạn highlight"
+        },
+        "quote": {
+          "label": "Câu quote"
+        },
+        "show": {
+          "label": "Tên show"
+        }
+      }
+    },
+    "podcast-studio": {
+      "name": "Studio podcast",
+      "description": "Tập podcast ngang: 2 góc máy + tên tập + tên khách mời.",
+      "placeholder": {
+        "cam1": {
+          "label": "Góc máy 1 (host)"
+        },
+        "cam2": {
+          "label": "Góc máy 2 (khách)"
+        },
+        "episode": {
+          "label": "Tên tập"
+        },
+        "guest": {
+          "label": "Tên khách mời"
+        }
+      }
+    },
+    "product-showcase": {
+      "name": "Giới thiệu sản phẩm",
+      "description": "Quảng cáo vuông 1:1: ảnh sản phẩm + tên + giá + kêu gọi.",
+      "placeholder": {
+        "cta": {
+          "label": "Kêu gọi hành động"
+        },
+        "name": {
+          "label": "Tên sản phẩm"
+        },
+        "price": {
+          "label": "Giá bán"
+        },
+        "product": {
+          "label": "Ảnh sản phẩm"
+        }
+      }
+    },
+    "quote-card": {
+      "name": "Thẻ trích dẫn",
+      "description": "Ảnh vuông trích dẫn: câu nói + tên tác giả.",
+      "placeholder": {
+        "author": {
+          "label": "Tác giả"
+        },
+        "bg": {
+          "label": "Ảnh nền"
+        },
+        "quote": {
+          "label": "Câu trích dẫn"
+        }
+      }
+    },
+    "real-estate-tour": {
+      "name": "Tour bất động sản",
+      "description": "Video ngang 3 không gian + địa chỉ + giá.",
+      "placeholder": {
+        "address": {
+          "label": "Địa chỉ"
+        },
+        "price": {
+          "label": "Giá"
+        },
+        "room1": {
+          "label": "Phòng khách"
+        },
+        "room2": {
+          "label": "Phòng ngủ"
+        },
+        "room3": {
+          "label": "Bếp & sân"
+        }
+      }
+    },
+    "recipe-card": {
+      "name": "Công thức nấu ăn",
+      "description": "Video dọc nấu ăn: cảnh nấu + tên món + nguyên liệu.",
+      "placeholder": {
+        "dish": {
+          "label": "Tên món"
+        },
+        "footage": {
+          "label": "Video nấu ăn"
+        },
+        "ingredients": {
+          "label": "Nguyên liệu chính"
+        }
+      }
+    },
+    "sale-banner": {
+      "name": "Banner giảm giá",
+      "description": "Video ngang sale: nền + chữ giảm giá lớn + điều kiện.",
+      "placeholder": {
+        "footage": {
+          "label": "Video nền"
+        },
+        "sale": {
+          "label": "Mức giảm"
+        },
+        "terms": {
+          "label": "Điều kiện"
+        }
+      }
+    },
+    "sale-countdown": {
+      "name": "Đếm ngược sale",
+      "description": "Video dọc đếm ngược: sản phẩm + mức giảm + thời gian.",
+      "placeholder": {
+        "deadline": {
+          "label": "Thời hạn"
+        },
+        "discount": {
+          "label": "Mức giảm"
+        },
+        "product": {
+          "label": "Video sản phẩm"
+        }
+      }
+    },
+    "slideshow": {
+      "name": "Slideshow ảnh",
+      "description": "Trình chiếu 4 ảnh với hiệu ứng chuyển cảnh mượt.",
+      "placeholder": {
+        "photo1": {
+          "label": "Ảnh 1"
+        },
+        "photo2": {
+          "label": "Ảnh 2"
+        },
+        "photo3": {
+          "label": "Ảnh 3"
+        },
+        "photo4": {
+          "label": "Ảnh 4"
+        },
+        "title": {
+          "label": "Tiêu đề album"
+        }
+      }
+    },
+    "tiktok-viral": {
+      "name": "TikTok dọc",
+      "description": "Video dọc 9:16: 3 cảnh cắt nhanh + chữ hook nổi bật.",
+      "placeholder": {
+        "caption": {
+          "label": "Chú thích chạy suốt"
+        },
+        "clip1": {
+          "label": "Cảnh 1 (mở đầu)"
+        },
+        "clip2": {
+          "label": "Cảnh 2"
+        },
+        "clip3": {
+          "label": "Cảnh 3 (kết)"
+        },
+        "hook": {
+          "label": "Câu hook 3 giây đầu"
+        }
+      }
+    },
+    "title-card": {
+      "name": "Thẻ tiêu đề",
+      "description": "Màn hình tiêu đề điện ảnh: chữ lớn mờ dần trên nền tối.",
+      "placeholder": {
+        "bg": {
+          "label": "Ảnh nền"
+        },
+        "title": {
+          "label": "Tiêu đề"
+        }
+      }
+    },
+    "travel-diary": {
+      "name": "Nhật ký du lịch",
+      "description": "Slideshow ngang 4 ảnh + chú thích từng điểm đến.",
+      "placeholder": {
+        "cap1": {
+          "label": "Chú thích 1"
+        },
+        "cap2": {
+          "label": "Chú thích 2"
+        },
+        "photo1": {
+          "label": "Ảnh 1"
+        },
+        "photo2": {
+          "label": "Ảnh 2"
+        },
+        "photo3": {
+          "label": "Ảnh 3"
+        },
+        "photo4": {
+          "label": "Ảnh 4"
+        }
+      }
+    },
+    "travel-montage": {
+      "name": "Montage du lịch",
+      "description": "Video ngang montage: 3 điểm đến + tên chuyến đi.",
+      "placeholder": {
+        "place1": {
+          "label": "Điểm 1"
+        },
+        "place2": {
+          "label": "Điểm 2"
+        },
+        "place3": {
+          "label": "Điểm 3"
+        },
+        "trip": {
+          "label": "Tên chuyến đi"
+        }
+      }
+    },
+    "travel-vlog-intro": {
+      "name": "Mở đầu Vlog du lịch",
+      "description": "Intro du lịch: tên địa điểm bay vào trên cảnh quay.",
+      "placeholder": {
+        "date": {
+          "label": "Thời gian"
+        },
+        "footage": {
+          "label": "Cảnh quay địa điểm"
+        },
+        "location": {
+          "label": "Tên địa điểm"
+        }
+      }
+    },
+    "tutorial-vertical": {
+      "name": "Hướng dẫn dọc",
+      "description": "Video dọc 3 bước: mỗi bước 1 cảnh + chữ bước.",
+      "placeholder": {
+        "label1": {
+          "label": "Nhãn bước 1"
+        },
+        "label2": {
+          "label": "Nhãn bước 2"
+        },
+        "label3": {
+          "label": "Nhãn bước 3"
+        },
+        "step1": {
+          "label": "Bước 1"
+        },
+        "step2": {
+          "label": "Bước 2"
+        },
+        "step3": {
+          "label": "Bước 3"
+        }
+      }
+    },
+    "unboxing": {
+      "name": "Mở hộp sản phẩm",
+      "description": "Video vuông unbox: cảnh mở hộp + tên + giá.",
+      "placeholder": {
+        "footage": {
+          "label": "Video mở hộp"
+        },
+        "price": {
+          "label": "Giá"
+        },
+        "product": {
+          "label": "Tên sản phẩm"
+        }
+      }
+    },
+    "webinar-invite": {
+      "name": "Mời webinar",
+      "description": "Video ngang mời hội thảo trực tuyến: diễn giả + chủ đề + giờ.",
+      "placeholder": {
+        "speaker": {
+          "label": "Ảnh diễn giả"
+        },
+        "time": {
+          "label": "Thời gian"
+        },
+        "topic": {
+          "label": "Chủ đề"
+        }
+      }
+    },
+    "wedding-teaser": {
+      "name": "Teaser đám cưới",
+      "description": "Mở đầu video cưới: khoảnh khắc + tên cô dâu chú rể.",
+      "placeholder": {
+        "couple": {
+          "label": "Tên cô dâu & chú rể"
+        },
+        "date": {
+          "label": "Ngày cưới"
+        },
+        "footage": {
+          "label": "Video khoảnh khắc"
+        }
+      }
+    },
+    "wedding-vows": {
+      "name": "Lời thề đám cưới",
+      "description": "Video ngang khoảnh khắc lễ cưới: video lễ + lời thề + tên đôi.",
+      "placeholder": {
+        "ceremony": {
+          "label": "Video buổi lễ"
+        },
+        "couple": {
+          "label": "Tên đôi"
+        },
+        "vow": {
+          "label": "Lời thề"
+        }
+      }
+    },
+    "youtube-intro": {
+      "name": "Intro YouTube",
+      "description": "Mở đầu kênh: tiêu đề kênh bay lên trên nền video điện ảnh.",
+      "placeholder": {
+        "footage": {
+          "label": "Video nền"
+        },
+        "subtitle": {
+          "label": "Dòng phụ (slogan)"
+        },
+        "title": {
+          "label": "Tên kênh / tiêu đề"
+        }
+      }
+    },
+    "youtube-outro": {
+      "name": "Outro YouTube",
+      "description": "Kết thúc video: cảm ơn + kêu gọi đăng ký, kèm huy hiệu.",
+      "placeholder": {
+        "channel": {
+          "label": "Tên kênh"
+        },
+        "cta": {
+          "label": "Lời kêu gọi"
+        },
+        "footage": {
+          "label": "Video nền"
+        },
+        "thanks": {
+          "label": "Lời cảm ơn"
+        }
+      }
+    }
+  },
+  "archive": {
+    "manifestBadFormat": "manifest.json không đúng định dạng vcut-archive.",
+    "manifestInvalid": "manifest.json không hợp lệ.",
+    "manifestNoFiles": "manifest.json thiếu danh sách files.",
+    "manifestNotJson": "manifest.json không phải JSON hợp lệ.",
+    "manifestVersion": "manifest formatVersion={version} không được hỗ trợ.",
+    "mediaTooBig": "Tổng dung lượng media vượt giới hạn {limit} byte.",
+    "missingEntry": "Archive thiếu {name}.",
+    "missingMedia": "Thiếu file media trong archive: {name} (có trong manifest).",
+    "noManifest": "Archive thiếu manifest.json.",
+    "projectJsonInvalid": "project.json không hợp lệ:",
+    "shaMismatch": "{name}: SHA-256 không khớp manifest — file có thể bị hỏng hoặc giả mạo.",
+    "sizeMismatch": "{name}: kích thước {actual} khác manifest ({expected}).",
+    "tooManyFiles": "Archive có {n} file, vượt giới hạn {limit}.",
+    "unknownEntry": "Entry lạ trong archive: {name} — chỉ chấp nhận project.json, manifest.json, media/*.",
+    "unsafeEntry": "Entry không an toàn (path traversal?): {name}.",
+    "unsafeName": "Tên media không an toàn để đóng gói: {name}.",
+    "zipFailed": "Tạo file zip thất bại: {error}",
+    "zipUnreadable": "Không đọc được file zip: {error}"
+  },
+  "captions": {
+    "invalidData": "Dữ liệu phụ đề không hợp lệ.",
+    "langAuto": "Tự động phát hiện",
+    "langEn": "Tiếng Anh",
+    "langVi": "Tiếng Việt",
+    "noValidSentences": "Không có câu phụ đề hợp lệ nào.",
+    "tooManySentences": "Quá nhiều câu phụ đề.",
+    "translatedTrack": "Phụ đề ({code})"
+  },
+  "exportPreset": {
+    "1080pDesc": "1920×1080 @30fps — chất lượng tốt, dung lượng vừa phải",
+    "1080pLabel": "1080p · Cân bằng",
+    "4kDesc": "3840×2160 @30fps — chi tiết tối đa, render chậm, file lớn",
+    "4kLabel": "4K · Chất lượng cao",
+    "720pDesc": "1280×720 @30fps — file nhẹ, render nhanh, hợp xem trên điện thoại",
+    "720pLabel": "720p · Nhanh",
+    "customDesc": "Tự chỉnh độ phân giải, fps và chất lượng nén",
+    "customLabel": "Tùy chỉnh…",
+    "customLabelPlain": "Tùy chỉnh",
+    "errAudioBitrate": "audioBitrateKbps phải là số nguyên {min}..{max}.",
+    "errCrf": "crf phải là số nguyên {min}..{max} (0 = tốt nhất).",
+    "errFps": "fps phải là số nguyên {min}..{max}.",
+    "errHeight": "height phải là số nguyên {min}..{max}.",
+    "errNotObject": "Preset phải là object.",
+    "errWidth": "width phải là số nguyên {min}..{max}.",
+    "errX264": "x264Preset phải thuộc: {list}.",
+    "instaDesc": "1080×1080 @30fps — khổ vuông cho feed Instagram",
+    "instaLabel": "Instagram vuông 1:1",
+    "sizeEstimateNote": "≈ {size} · ước tính, file thật có thể chênh lệch",
+    "sizeSummary": "{w}×{h} @{fps}fps · CRF {crf} · {x264} · audio {akbps}k",
+    "tiktokDesc": "1080×1920 dọc @30fps — khổ chuẩn TikTok, Reels, Shorts",
+    "youtubeDesc": "1920×1080 @30fps — bitrate cao hơn, hợp upload YouTube"
+  },
+  "openProject": {
+    "proxyStaleToast": "Proxy của {names} đã mất trên bridge — bấm nút Proxy trên thẻ media để tạo lại.",
+    "unsavedConfirm": "Có thay đổi chưa lưu thành file. Bỏ thay đổi và tiếp tục?"
+  },
+  "sharePage": {
+    "bigVideoWarn": "Video lớn (~{size}MB) — file HTML sẽ nặng, gửi qua chat/email có thể bị chặn.",
+    "durationLine": "Thời lượng: {dur} — Trang xem tĩnh xuất từ VCut Studio (chỉ phát video, không chỉnh sửa).",
+    "emptyProject": "(Project trống, chưa có clip)",
+    "linkedNote": "Chế độ linked: phải gửi kèm file video đặt cùng thư mục với file HTML thì trang mới phát được.",
+    "linkedWarn": "Video ~{size}MB, vượt ngưỡng nhúng 1 file ({limit}MB) — hãy dùng chế độ linked (HTML + file video.mp4 đặt cạnh nhau).",
+    "noVideo": "Cần videoBase64 (embedded) hoặc videoFileName (linked) để tạo trang chia sẻ.",
+    "openHint": "Mở file này bằng trình duyệt là xem được, không cần cài VCut hay chạy server.",
+    "timeHeader": "Thời gian"
+  },
+  "store": {
+    "toastAliasClean": "Không có alias thừa (đã quét {n} asset).",
+    "toastAliasCleaned": "Đã dọn {n} alias thừa khỏi {m} asset.",
+    "toastDedupNote": " (Nội dung trùng với file \"{name}\" đã lưu — dùng chung bản đó, lần mở sau không cần relink lại.)",
+    "toastEmptyMeta": "File \"{name}\" đọc được nhưng metadata rỗng (có thể file hỏng).",
+    "toastRelinked": "Đã relink → \"{name}\".",
+    "toastRelinkedMulti": "Đã relink {n} clip → \"{name}\".",
+    "toastUnsupported": "Không đọc được file \"{name}\" — định dạng không hỗ trợ.",
+    "toastUnusedMedia": "Không còn clip nào dùng \"{name}\".",
+    "toastMediaInUse": "Không xóa được “{name}” — còn {count} clip đang dùng media này. Xóa các clip đó khỏi timeline trước."
+  },
+  "curveErr": {
+    "speedNotObject": "{path}: speedKeyframes phải là object { keyframes: [...] }",
+    "speedEmpty": "{path}: speedKeyframes.keyframes: mảng rỗng — cần ít nhất 1 keyframe",
+    "speedTooMany": "{path}: speedKeyframes.keyframes: quá 128 keyframe",
+    "kfNotObject": "{path} phải là object { t, v, easing }",
+    "kfTOutOfRange": "{path}.t phải trong [0, {duration}] (nhận được: {value})",
+    "kfVRangeDots": "{path}.v phải trong {min}..{max} (nhận được: {value})",
+    "kfEasing": "{path}.easing phải là linear | ease-in | ease-out | bezier (nhận được: {value})",
+    "kfBezier": "{path}.bezier phải là [x1, y1, x2, y2]: x1, x2 trong [0, 1], y1, y2 tự do (nhận được: {value})",
+    "kfBezierNoValue": "{path}.bezier phải là [x1, y1, x2, y2]: x1, x2 trong [0, 1], y1, y2 tự do",
+    "kfNotObjectDot": "{path} phải là object { t, v, easing }.",
+    "kfTOutOfRangeDot": "{path}.t phải trong [0, {duration}] (nhận được: {value}).",
+    "kfEasingDot": "{path}.easing phải là linear | ease-in | ease-out | bezier (nhận được: {value}).",
+    "kfVRangeBrackets": "{path}.v phải trong [{min}, {max}] (nhận được: {value}).",
+    "kfBezierNoValueDot": "{path}.bezier phải là [x1, y1, x2, y2]: x1, x2 trong [0, 1], y1, y2 tự do."
+  },
+  "twoLevel": {
+    "mergeDuration": "{path}: hợp curve hai tầng: duration của lá sau ánh xạ phải > 0",
+    "mergeBreakpoints": "{path}: hợp curve hai tầng cần {n} điểm gãy, vượt giới hạn 128 keyframe của clip ramp — giảm số keyframe của curve ngoài/trong",
+    "speedOutOfRangeHermite": "{path}: tốc độ hợp hai tầng = {v} vượt khoảng {min}..{max} tại t'={t} — tích tốc độ ngoài × tốc độ trong vượt khoảng dù mỗi tầng đều hợp lệ; giảm biên độ một trong hai curve",
+    "speedOutOfRangeInnerConst": "{path}: tốc độ hợp hai tầng = {v} vượt khoảng {min}..{max} (tốc độ trong hằng {inner} × tốc độ ngoài)",
+    "speedOutOfRangeOuterConst": "{path}: tốc độ hợp hai tầng = {v} vượt khoảng {min}..{max} (tốc độ ngoài hằng {outer} × tốc độ trong)",
+    "outerDuration": "{path}: outerDuration phải > 0 (nhận được: {value})",
+    "leafDuration": "{path}: leafDuration phải > 0 (nhận được: {value})",
+    "leafOutside": "{path}: lá nằm ngoài cửa sổ clip lồng nhau hoàn toàn — không có đoạn khả kiến để hợp",
+    "sliceOuter": "{path}: không slice được curve ngoài cho đoạn output của lá — đoạn suy biến",
+    "sliceInner": "{path}: không slice được curve trong cho đoạn khả kiến — đoạn suy biến"
+  },
+  "projectRepo": {
+    "openFailed": "Không mở được file: {error}",
+    "keyframeDropped": "Đã loại keyframe lỗi khỏi {count} field ({fields}) — lưu lại file để hoàn tất.",
+    "validateNotObject": "phải là object.",
+    "validateMissingId": "thiếu id.",
+    "validateStartRange": "start phải là số ≥ 0.",
+    "validateDurationPositive": "duration phải là số > 0.",
+    "validateMissingSrc": "thiếu src.",
+    "validateMissingIn": "thiếu in (điểm vào nguồn).",
+    "validateMissingOut": "thiếu out (điểm ra nguồn).",
+    "validateMissingText": "thiếu text.",
+    "validateSpeedRange": "speed phải trong [0.25, 4].",
+    "validateTrimInvalid": "trim không hợp lệ (cần in < out).",
+    "validateMissingSubSpec": "thiếu subSpec.",
+    "validateKindUnsupported": "kind không hỗ trợ: {kind}.",
+    "validateNotVideoSpec": "Không phải video-spec hợp lệ (version={version}, app hỗ trợ {supported}). File có thể bị hỏng hoặc dùng schema version không được hỗ trợ.",
+    "validateSubSpecCycle": "subSpec tạo vòng lặp (spec con trỏ lại spec tổ tiên).",
+    "validateMetaName": "meta.name phải là chuỗi khác rỗng.",
+    "validateMetaWidth": "meta.width phải là số > 0.",
+    "validateMetaHeight": "meta.height phải là số > 0.",
+    "validateMetaFps": "meta.fps phải là số > 0.",
+    "validateTracksArray": "tracks phải là mảng.",
+    "validateClipsArray": "clips phải là mảng.",
+    "keyframeFixNotObject": "{where}: keyframes không phải object { keyframes: [...] } — đã xóa field.",
+    "keyframeFixNotArray": "{where}.keyframes không phải mảng — đã xóa field.",
+    "keyframeFixEmptyAfterDrop": "{where}.keyframes rỗng sau khi loại {dropped} entry lỗi — đã xóa field.",
+    "keyframeFixDroppedEntries": "đã loại {dropped} entry lỗi (null/không hợp lệ)",
+    "keyframeFixEasingNormalized": "đã chuẩn hóa {n} easing lạ về linear",
+    "keyframeFixKept": "{where}.keyframes: {parts} — giữ {kept}/{total} entry.",
+    "invalidJson": "File không phải JSON hợp lệ.",
+    "untitledProject": "Dự án không tên",
+    "moreWarnings": "Còn {n} cảnh báo speedKeyframes khác (đã giới hạn hiển thị 100).",
+    "projectIdMigrated": "File chưa có mã project ổn định — đã tạo mã mới, lưu lại file để giữ mã này."
+  },
+  "projectHistory": {
+    "addedClips": "Thêm {n} clip",
+    "firstVersion": "Phiên bản đầu tiên của project.",
+    "movedClips": "Di chuyển {n} clip",
+    "noContentChange": "Không thay đổi nội dung (chỉ cập nhật metadata).",
+    "removedClips": "Xoá {n} clip",
+    "renamed": "Đổi tên: \"{old}\" → \"{new}\"",
+    "totalDuration": "Tổng thời lượng: {old} → {new}",
+    "trackCount": "Số track: {old} → {new}",
+    "trimmedClips": "Cắt/xén {n} clip",
+    "historyBadFormat": "File không phải định dạng lịch sử VCut (vcut-history v1).",
+    "historyBadHash": "Version {id} sai hash spec — file có thể đã bị sửa.",
+    "historyBadVersion": "File lịch sử có version hỏng (thiếu id/projectId/spec).",
+    "historyMissingFields": "File lịch sử thiếu projectId hoặc danh sách version.",
+    "historyNotJsonObject": "File lịch sử không phải JSON object.",
+    "indexedDbOpenFailed": "Không mở được IndexedDB.",
+    "noIndexedDb": "Trình duyệt không có IndexedDB.",
+    "migrateVersionsNeedsProjectId": "migrateVersions cần projectId đích hợp lệ (UUID hoặc proj-<time>-<rand>)."
+  },
+  "subtitles": {
+    "untitledTrack": "(không tên)",
+    "errBadTimestamp": "Timestamp sai định dạng: \"{line}\".",
+    "errEmptyCue": "Cue không có text.",
+    "errEndNotAfterStart": "Thời gian kết thúc ({end}s) không sau bắt đầu ({start}s).",
+    "errMissingTimestamp": "Thiếu dòng timestamp (-->).",
+    "errMissingWebvtt": "Thiếu dòng đầu WEBVTT."
+  },
+  "templateEngine": {
+    "invalidSpec": "Spec sau khi áp template không hợp lệ.",
+    "missingValues": "Template thiếu giá trị cho: {names}"
+  },
+  "welcome": {
+    "title": "👋 Chào mừng tới VCut Studio",
+    "lead": "Trình dựng video chạy 100% trên máy của bạn: không tải video lên server, không cần tài khoản, không phí AI.",
+    "step1Title": "1 · Mở là có video xem ngay",
+    "step1Body": "Project mẫu đã nạp sẵn: bấm ▶ là phát, kéo thả clip trên timeline để thử cắt, kéo, tách.",
+    "step2Title": "2 · Tạo video từ template 1 chạm",
+    "step2Body": "Chọn 1 pack mẫu — media, chữ và caption mẫu tự sinh ngay trên máy, không cần chuẩn bị file gì.",
+    "step3Title": "3 · Xuất MP4 khi ưng ý",
+    "step3Body": "Nút Xuất bản ở góc phải TopBar: render bằng FFmpeg local, file về máy bạn.",
+    "sample": "▶ Xem project mẫu",
+    "pack": "⚡ Tạo video 1 chạm",
+    "tour": "🧭 Xem tour 5 bước",
+    "blank": "＋ Project trống",
+    "later": "Để sau",
+    "reopen": "Mở lại màn này bằng nút “👋 Bắt đầu” trên TopBar."
+  },
+  "tour": {
+    "title": "🧭 Tour 5 bước",
+    "prev": "← Trước",
+    "next": "Tiếp →",
+    "skip": "Bỏ qua",
+    "done": "Xong, bắt đầu làm!",
+    "step1Title": "Bước 1 — Thêm media",
+    "step1Body": "Kéo thả file video/ảnh/nhạc vào Thư viện media (panel trái), hoặc bấm nút thêm file trong đó. Media chỉ nằm trên máy bạn.",
+    "step2Title": "Bước 2 — Cắt clip",
+    "step2Body": "Trên timeline: bấm chọn clip, kéo mép clip để trim, bấm phím S tại vị trí playhead để tách clip làm đôi.",
+    "step3Title": "Bước 3 — Thêm chữ",
+    "step3Body": "Bấm nút “＋ Chữ” trên TopBar để thêm clip chữ tại playhead, rồi sửa nội dung, cỡ chữ, màu sắc ở panel Thuộc tính.",
+    "step4Title": "Bước 4 — Hiệu ứng & màu",
+    "step4Body": "Chọn 1 clip rồi mở panel Thuộc tính: hiệu ứng video, LUT màu, mask, keyframe đều nằm ở đó.",
+    "step5Title": "Bước 5 — Xuất video",
+    "step5Body": "Bấm nút “Xuất bản” trên TopBar, chọn preset rồi bấm Xuất: FFmpeg local render ra file MP4 về máy bạn.",
+    "targetMissing": "Không tìm thấy khu vực này trên màn hình (có thể panel đang đóng) — cứ đọc hướng dẫn rồi bấm Tiếp."
+  },
+  "pack": {
+    "title": "⚡ Template pack 1 chạm",
+    "lead": "Chọn 1 pack: media mẫu tự sinh ngay trên máy bạn, chữ và caption lấy đúng mẫu của template. Bấm “Tạo ngay” là có project xem được liền, không cần chuẩn bị file.",
+    "create": "Tạo ngay",
+    "creating": "Đang tạo media mẫu, chờ vài giây...",
+    "created": "Đã tạo project từ pack!",
+    "clips": "clip",
+    "watch": "▶ Xem ngay",
+    "again": "🔁 Tạo pack khác",
+    "tts": "🎙 Tạo giọng đọc mẫu",
+    "ttsBusy": "Đang tạo giọng đọc...",
+    "ttsHint": "Giọng đọc tạo bằng VieNeu-TTS chạy local qua bridge (127.0.0.1:8787). Nếu bridge chưa chạy, nút này sẽ báo lỗi rõ — không có audio giả.",
+    "close": "Đóng",
+    "mediaNote": "Media mẫu do VCut tự vẽ bằng Canvas ngay trên máy bạn (không dùng ảnh/video ngoài, license sạch 100%).",
+    "noVideoRecorder": "Trình duyệt này không ghi được video mẫu (thiếu MediaRecorder). Hãy dùng Chrome/Edge bản mới, hoặc chọn pack chỉ có ảnh (Thẻ tiêu đề, Bìa album).",
+    "recordTimeout": "Ghi video mẫu quá lâu (quá 20 giây mà chưa xong) — có thể trình duyệt kẹt khi ghi. Hãy đóng modal rồi bấm “Tạo ngay” lại, hoặc chọn pack chỉ có ảnh (Thẻ tiêu đề, Bìa album)."
+  },
+  "userLut": {
+    "cubeEmpty": "File .cube rỗng.",
+    "cubeMissingSize": "Thiếu dòng LUT_3D_SIZE trong file .cube.",
+    "cubeOnly3d": "Chỉ hỗ trợ LUT 3D (LUT_3D_SIZE). File LUT 1D chưa được hỗ trợ.",
+    "cubeRowCount": "Số dòng dữ liệu không khớp LUT_3D_SIZE {size}: có {rows} dòng, cần {expected} dòng.",
+    "cubeRowInvalid": "Dòng dữ liệu sai định dạng (cần đúng 3 số): \"{line}\"",
+    "cubeSizeDuplicate": "File có 2 dòng LUT_3D_SIZE.",
+    "cubeSizeInvalid": "LUT_3D_SIZE không hợp lệ: {value} (cần số nguyên {min}..{max}).",
+    "cubeTooLarge": "File .cube quá lớn ({size}MB, tối đa 10MB).",
+    "cubeTripleExpected": "{what} phải có đúng 3 số (nhận được: {got})",
+    "cubeTripleInvalid": "{what} chứa số không hợp lệ: {got}",
+    "cubeValueRange": "Giá trị màu ngoài khoảng cho phép (-1..2): \"{line}\""
+  },
+  "gop": {
+    "demux": {
+      "avccReadFailed": "demux-moov: không đọc được sample đầu để kiểm AVCC: {error}",
+      "badLayout": "demux-moov: bố cục sample bất thường ({reason} — moov giả?)",
+      "badStts": "demux-moov: timestamp stts bất thường ({reason} — moov giả?)",
+      "cttsStszMismatch": "demux-moov: ctts khai {cttsTotal} sample nhưng stsz có {count} — moov giả?",
+      "notAvcc": "demux-moov: sample 0 không phải AVCC hợp lệ ({reason} — moov giả?)",
+      "sampleOutOfFile": "demux-moov: sample {si} vượt ngoài file (offset {offset}+{size} > tổng {total})",
+      "sampleOutsideMdat": "demux-moov: sample {si} trỏ ngoài mdat (offset {offset}+{size} — moov giả?)",
+      "stssOutOfRange": "demux-moov: stss có {count} keyframe ngoài [1, {total}] — moov giả?",
+      "trialDecodeFailed": "demux-moov: trial-decode sample 0 lỗi ({reason} — moov giả?)",
+      "parserAvccTooShort": "avcC quá ngắn",
+      "parserMoovMissing": "không tìm thấy moov",
+      "parserSttsOverLimit": "stts: tổng số sample {total} vượt giới hạn {max} (moov chế tác?)",
+      "parserStszOverLimit": "stsz: số sample {count} vượt giới hạn {max} (moov chế tác?)",
+      "parserSampleTableMismatch": "sample table lệch: stts={stts} stsz={stsz}",
+      "parserSampleBuildMismatch": "dựng sample lệch: chunk cho {got}/{want}",
+      "parserNoAvc1Track": "không tìm thấy track video avc1 hợp lệ",
+      "avccEmpty": "sample rỗng",
+      "avccShortRead": "chỉ đọc được {got} byte của sample {total} byte (cần ≥ 5 để có 1 NAL)",
+      "avccNalTooLong": "NAL {nal} dài {len} (không hợp lệ) ở offset {off}",
+      "avccNalOverrun": "NAL {nal} dài {len} vượt sample còn lại {remaining} ở offset {off}",
+      "avccNalForbiddenBit": "NAL {nal} có forbidden_zero_bit ở offset {off}",
+      "avccNalTypeZero": "NAL {nal} có type 0 ở offset {off}",
+      "avccNoNal": "không đọc được NAL nào",
+      "avccTrailingBytes": "thừa {count} byte cuối không đủ 1 NAL",
+      "layoutNegativeOffset": "sample {sample} có offset/size âm ({offset}/{size})",
+      "layoutOffsetRewind": "sample {sample} offset {offset} lùi sau sample {prev} offset {prevOffset} (stco không tăng dần)",
+      "layoutOverlap": "sample {sample} [{start}, {end}) chồng lấn sample trước (kết thúc {prevEnd})",
+      "sttsNonPositiveDelta": "stts có delta ≤ 0 (nhỏ nhất {min})",
+      "sttsDeltaOutlier": "stts có delta lớn nhất {max} gấp {ratio}× delta giữa {median} (và > 2s)",
+      "sttsMdhdMismatch": "stts tổng {total} lệch mdhd {mdhd} quá dung sai {tol}",
+      "durationMvhdMismatch": "thời lượng video {video}s lệch mvhd {mvhd}s quá dung sai {tol}s",
+      "fpsVuiMismatch": "fps theo stts {medianFps} (median) / {modeFps} (mode) / {avgFps} (trung bình) lệch VUI SPS {vuiFps} ({pct}% > dung sai {tolPct}%)"
+    },
+    "range": {
+      "fetchParamsInvalid": "fetchVideoTrackByGopRange: prefixBytes/maxMoovBytes/tailScanBytes/tailInitialChunkBytes phải > 0",
+      "fetchUrlInvalid": "fetchVideoTrackByGopRange: url phải là string không rỗng",
+      "gopOutOfFile": "gop-{gi}-out-of-file: rangeEnd {rangeEnd} vượt tổng {total}",
+      "gopSampleOutOfRange": "gop-{gi}-sample-out-of-range: sample {si} nằm ngoài buffer GOP đã fetch",
+      "moovOutOfFile": "moov-out-of-file: moov {start}+{size} vượt tổng {total}",
+      "moovTooLarge": "moov-too-large: moov {size} byte vượt trần {max}",
+      "prefixShortBody": "prefix-short-body: xin {wanted} byte, nhận {got}",
+      "prefixStatusNot206": "prefix-status-{status}: server không trả 206 cho Range tiền tố",
+      "sampleChunkLimit": "sample-chunk-limit: sample 0 cần quá {maxChunks} chunk 512 KiB (size {sampleSize})",
+      "sampleRemainderInvalid": "fetchSampleRemainderChunked: sampleSize {sampleSize} / prefix {prefixLength} không hợp lệ",
+      "shortBody": "{kind}-short-body: xin {wanted} byte, nhận {got}",
+      "statusNot206": "{kind}-status-{status}: server không trả 206 cho Range {start}-{end}",
+      "sizeTooSmall": "size-too-small: file nhỏ hơn 1 byte, không cần Range",
+      "moovMissingAfterGate": "moov-missing-after-gate: gate báo faststart nhưng không tìm thấy box moov",
+      "trackNoSamples": "demux-moov: track không có sample",
+      "sampleZeroEmpty": "demux-moov: sample 0 rỗng (size 0) — moov giả?"
+    },
+    "trial": {
+      "decodeFailed": "decode-failed: VideoDecoder không decode được sample 0",
+      "noDecoder": "no-decoder: không có probe trial-decode",
+      "timeout": "timeout-{timeout}ms: trial-decode chưa xong, cho qua (fail-open)",
+      "unsupportedConfig": "unsupported-config: decoder không hỗ trợ codec/profile này — cho qua (fail-open)",
+      "timeoutNote": "Keyframe đầu ({size} MiB) chưa kiểm chứng kịp trong {timeout} ms — file vẫn mở bình thường, chỉ là bước kiểm tra keyframe chưa xong."
+    },
+    "gate": {
+      "moovTrailing": "moov-trailing: moov ở cuối file, cần probe đuôi chưa cài đặt",
+      "moovUnknown": "moov-unknown: chưa xác định được vị trí moov từ tiền tố đã đọc",
+      "acceptRangesUnsupported": "accept-ranges-unsupported: server báo {acceptRanges}",
+      "acceptRangesUnknown": "accept-ranges-unknown: server không gửi Accept-Ranges, không giả định",
+      "sizeUnknown": "size-unknown: chưa biết tổng kích thước file",
+      "rangeGopAttempt": "range-gop-attempt: moov-trước + {evidence} + đã biết size",
+      "rangeEvidenceProbe": "Range đã chứng minh bằng probe/prefix 206 (không có header Accept-Ranges)"
+    },
+    "probe": {
+      "statusNot206": "range-probe-status-{status}: server không trả 206 cho request Range",
+      "noContentRange": "range-probe-no-content-range: 206 nhưng thiếu Content-Range hợp lệ",
+      "mismatch": "range-probe-mismatch: server trả {start}-{end}, đã xin {reqStart}-{reqEnd}",
+      "totalMismatch": "range-probe-total-mismatch: Content-Range tổng {total}, đã biết {known}",
+      "ok": "range-probe-ok: 206 khớp range đã xin"
+    },
+    "controller": {
+      "unexpectedException": "gop-unexpected-exception: rơi về full-file",
+      "sizeProbeUnexpectedException": "gop-size-probe-unexpected-exception: rơi về full-file"
+    },
+    "cache": {
+      "disabled": "gop-disabled: caller chưa bật đường GOP",
+      "sizeUnknown": "gop-size-unknown: chưa biết size trước cửa sổ đầu tiên",
+      "belowThreshold": "gop-below-threshold: {size} <= {threshold}",
+      "largeFileLocked": "gop-large-file-locked: {size} > {large} (cổng S4 giữ nguyên)",
+      "rangeOk": "gop-range: {threshold} < {size} <= {large}",
+      "statusNot206": "gop-status-{status}: server không trả 206 cho Range GOP {start}-{end}",
+      "shortBody": "gop-short-body: xin {wanted} byte, nhận {got}"
+    },
+    "sizeprobe": {
+      "rangeStatusNot206": "size-probe-range-status-{status}: server không trả 206 cho Range 0-0",
+      "noContentRange": "size-probe-no-content-range: 206 nhưng thiếu Content-Range tổng hợp lệ"
+    }
+  },
+  "storageCleanup": {
+    "close": "Đóng",
+    "crossProjectWarning": "Kho lưu trữ dùng chung cho mọi project trên trình duyệt này. Mục \"có thể mồ côi\" chỉ có nghĩa là project hiện tại không còn dùng tới — một file .vcut khác vẫn có thể đang dùng chung bytes đó. Chỉ xóa những mục bạn chắc chắn không còn cần ở bất kỳ project nào; đã xóa thì không hoàn tác được, muốn lấy lại phải import lại file gốc.",
+    "deleteConfirm": "Xóa {count} mục đã chọn ({bytes}) khỏi kho lưu trữ? Mục nào còn được project khác dùng sẽ mất bytes sau khi reload. Không hoàn tác được.",
+    "deleteFailed": "Xóa kho thất bại — chưa xóa mục nào, thử quét lại.",
+    "deleteSelected": "Xóa đã chọn ({count})",
+    "deletedResult": "Đã xóa {count} mục, giải phóng {bytes}. Bỏ qua {skipped} mục.",
+    "empty": "Kho lưu trữ đang trống.",
+    "inUse": "Đang dùng (bin: {bin}, clip: {clips})",
+    "openBtn": "Dọn kho",
+    "openTitle": "Liệt kê và dọn bytes mồ côi trong kho lưu trữ (IndexedDB)",
+    "orphanCandidate": "Có thể mồ côi",
+    "scanAgain": "Quét lại",
+    "scanFailed": "Không quét được kho lưu trữ (IndexedDB không khả dụng). Thử lại sau.",
+    "scanning": "Đang quét kho lưu trữ…",
+    "selectOrphans": "Chọn tất cả mục mồ côi",
+    "selectRow": "Chọn để xóa",
+    "summary": "Kho có {assets} mục ({bytes}); {orphans} mục có thể mồ côi ({orphanBytes}).",
+    "title": "Dọn kho lưu trữ",
+    "currentProjectMark": "(project hiện tại)",
+    "forgetConfirm": "Quên project “{name}” khỏi sổ tham chiếu? Các bytes mà chỉ project này dùng sẽ được phép xóa ở panel Dọn kho.",
+    "forgetProject": "Quên",
+    "forgotProject": "Đã quên project {name} khỏi sổ tham chiếu.",
+    "projectAssets": "{count} asset",
+    "projectsNote": "Sổ này ghi project nào đang dùng bytes nào. Xóa bytes mà project khác còn dùng sẽ làm project đó mất media sau khi mở lại. Nếu một file .vcut đã xóa khỏi máy, bấm “Quên” để gỡ ghi nhận của nó.",
+    "projectsTitle": "Project đã ghi trong sổ tham chiếu",
+    "registryProtection": "Sổ tham chiếu đã chặn xóa bytes mà project khác (đã mở/lưu trên trình duyệt này) còn dùng — mục đó bị khóa ở dưới. Project chưa từng mở trên trình duyệt này thì sổ không biết, nên chỉ xóa mục bạn chắc chắn không còn cần ở bất kỳ project nào.",
+    "usedByOther": "Được project khác dùng: {projects}"
+  },
+  "bridgeErrors": {
+    "API_NOT_FOUND": "API không tồn tại.",
+    "ASSETMAP_BAD_VALUE": "assetMap: giá trị của \"{key}\" phải là chuỗi đường dẫn khác rỗng.",
+    "ASSETMAP_INVALID": "assetMap không hợp lệ: {detail}",
+    "ASSETMAP_NOT_OBJECT": "assetMap phải là JSON object { assetId: file }.",
+    "BEATS_NEEDS_AV": "Beat detection cần file AUDIO/VIDEO ({exts}).",
+    "BEATS_NOT_READY": "Beat detection chưa sẵn sàng: {reason}",
+    "BGREMOVE_FEATHER_INVALID": "Tham số feather không hợp lệ: \"{value}\" (phải là số nguyên trong [0, 8]).",
+    "BGREMOVE_NEEDS_VIDEO": "Xóa nền cần file VIDEO ({exts}).",
+    "BGREMOVE_NOT_READY": "Xóa nền chưa sẵn sàng: {reason}",
+    "BGREMOVE_SESSION_FORBIDDEN": "Session \"{session}\" BỊ CẤM: weights non-commercial, không được dùng. Dùng \"{fallback}\" (MIT).",
+    "BGREMOVE_SESSION_INVALID": "Tên session không hợp lệ: \"{value}\".",
+    "BGREMOVE_TEMPORAL_INVALID": "Tham số temporal không hợp lệ: \"{value}\" (phải trong [0, 0.9]).",
+    "BPM_INVALID": "BPM không hợp lệ: \"{value}\" (30–300).",
+    "BPM_RANGE_INVALID": "BPM tối thiểu phải nhỏ hơn BPM tối đa.",
+    "CAPTION_NEEDS_AV": "Caption cần file video hoặc audio (ảnh không có tiếng để nhận diện).",
+    "CAPTION_NOT_READY": "Caption chưa sẵn sàng: {reason}",
+    "DISK_LOW": "Ổ đĩa sắp đầy (còn {freeMb}MB) — dọn dẹp rồi thử lại.",
+    "INTERNAL_ERROR": "Lỗi máy chủ nội bộ.",
+    "INVALID_FILENAME": "Tên file không hợp lệ: {name}",
+    "INVALID_FILENAME_OR_TYPE": "Tên file không hợp lệ hoặc loại file không được phép: {name}",
+    "INVALID_JOB_ID": "Job id không hợp lệ.",
+    "INVALID_LUT_ID": "Id LUT không hợp lệ.",
+    "JOB_CANCEL_BAD_STATE": "Job đã ở trạng thái cuối (\"{status}\") — không huỷ được.",
+    "JOB_CREATE_FAILED": "Lỗi máy chủ khi tạo job — thử lại sau.",
+    "JOB_GONE": "Thư mục job đã bị dọn — không retry được, hãy tạo job mới.",
+    "JOB_INTERRUPTED_BY_RESTART": "Bị gián đoạn do bridge restart — dùng retry để render lại từ đầu.",
+    "JOB_NOT_DONE": "Job chưa xong (status={status}).",
+    "JOB_NOT_FOUND": "Không tìm thấy job.",
+    "JOB_RETRY_BAD_STATE": "Chỉ retry được job ở trạng thái \"error\" hoặc \"interrupted\" (hiện tại: \"{status}\").",
+    "JOB_RETRY_CANCELLED": "Chỉ retry được job ở trạng thái \"error\" hoặc \"interrupted\" (hiện tại: \"{status}\"). Job đã huỷ thì thư mục tạm đã bị xóa — hãy tạo job mới.",
+    "JOB_SPEC_MISSING_AFTER_RESTART": "spec.json bị thiếu sau khi server restart — không render lại được, hãy tạo job mới.",
+    "LUT_NOT_FOUND": "Không tìm thấy LUT.",
+    "MAGIC_MISMATCH": "File \"{name}\" có đuôi {ext} nhưng nội dung không khớp định dạng (có thể là file giả mạo).",
+    "MAGIC_TOO_SMALL": "File \"{name}\" quá nhỏ hoặc rỗng, không nhận diện được định dạng.",
+    "MAGIC_UNREADABLE": "Không đọc được nội dung file \"{name}\".",
+    "MISSING_AUDIO_VIDEO": "Thiếu file audio/video (field 'media').",
+    "MISSING_MEDIA": "Thiếu file media (field 'media').",
+    "MISSING_SPEC": "Thiếu field 'spec'.",
+    "MISSING_VIDEO": "Thiếu file video (field 'media').",
+    "OPENAPI_READ_FAILED": "Không đọc được OpenAPI spec.",
+    "PRESET_BITRATE_RANGE": "preset.audioBitrateKbps phải là số nguyên 32..512.",
+    "PRESET_CRF_RANGE": "preset.crf phải là số nguyên 0..51.",
+    "PRESET_NORMALIZE_INVALID": "preset.normalize phải thuộc: off|loudnorm|dynaudnorm.",
+    "PRESET_NORMALIZE_LRA_RANGE": "preset.normalizeLra phải trong 1..20.",
+    "PRESET_NORMALIZE_TARGET_RANGE": "preset.normalizeTarget phải trong -70..0.",
+    "PRESET_NORMALIZE_TP_RANGE": "preset.normalizeTp phải trong -9..0.",
+    "PRESET_NOT_JSON": "Field 'preset' phải là JSON hợp lệ.",
+    "PRESET_NOT_OBJECT": "Field 'preset' phải là object.",
+    "PRESET_X264_INVALID": "preset.x264Preset phải thuộc: {allowed}.",
+    "PROXY_BAD_HEIGHT": "height phải là 480 hoặc 720.",
+    "PROXY_INVALID_NAME": "Tên file proxy không hợp lệ.",
+    "PROXY_MISSING_FILE": "Thiếu file video (field 'file').",
+    "PROXY_NOT_FOUND": "Không tìm thấy file proxy.",
+    "QUEUE_FULL": "Hàng đợi đầy ({maxQueue} job đang chờ) — thử lại sau.",
+    "RATE_LIMITED": "Quá nhiều request — thử lại sau {retryAfter}s.",
+    "READ_OUTPUT_FAILED": "Lỗi khi đọc file output.",
+    "REFRAME_NEEDS_VIDEO": "Reframe cần file VIDEO ({exts}).",
+    "REFRAME_NOT_READY": "Reframe chưa sẵn sàng: {reason}",
+    "SAVE_FILE_FAILED": "Lỗi máy chủ khi lưu file — thử lại sau.",
+    "SAVE_SPEC_FAILED": "Lỗi máy chủ khi lưu spec — thử lại sau.",
+    "SCENE_END_INVALID": "end không hợp lệ: \"{value}\".",
+    "SCENE_NEEDS_VIDEO": "Tách cảnh cần file VIDEO ({exts}).",
+    "SCENE_NOT_READY": "Tách cảnh chưa sẵn sàng: {reason}",
+    "SCENE_RANGE_INVALID": "end phải lớn hơn start.",
+    "SCENE_START_INVALID": "start không hợp lệ: \"{value}\".",
+    "SCENE_THRESHOLD_INVALID": "Ngưỡng không hợp lệ: \"{value}\". Chọn số trong khoảng {min}..{max} (mặc định {def}).",
+    "SILENCE_MINDUR_INVALID": "Độ dài tối thiểu phải trong [{min}, {max}] giây (nhận \"{value}\").",
+    "SILENCE_NEEDS_AV": "Silence removal cần file video hoặc audio (ảnh không có track tiếng).",
+    "SILENCE_NOISE_INVALID": "Ngưỡng noise phải trong [{min}, {max}] dB (nhận \"{value}\").",
+    "SILENCE_NOT_READY": "Silence removal chưa sẵn sàng: {reason}",
+    "SPEC_NOT_JSON": "Field 'spec' phải là JSON hợp lệ.",
+    "SPEC_NO_TRACKS": "Spec thiếu tracks hoặc sai định dạng.",
+    "SPEC_TOO_LARGE": "Spec quá lớn (tối đa {limitMb}MB).",
+    "TRANSLATE_NEEDS_AV": "Dịch phụ đề cần file video hoặc audio (ảnh không có tiếng để nhận diện).",
+    "TRANSLATE_NOT_READY": "Dịch phụ đề chưa sẵn sàng: {reason}",
+    "TTS_NOT_READY": "TTS chưa sẵn sàng: {reason}",
+    "TTS_NO_WAV": "TTS xong nhưng không thấy file WAV.",
+    "TTS_PREPARE_FAILED": "Lỗi máy chủ khi chuẩn bị TTS — thử lại sau.",
+    "TTS_REF_AUDIO_MISSING": "Thiếu file giọng mẫu (field 'refAudio').",
+    "TTS_REF_AUDIO_TOO_LARGE": "File giọng mẫu quá lớn ({sizeMb}MB > 20MB).",
+    "TTS_REF_AUDIO_TYPE": "File giọng mẫu phải là audio ({exts}).",
+    "TTS_TEXT_EMPTY": "Text rỗng — nhập nội dung cần đọc.",
+    "TTS_TEXT_TOO_LONG": "Text quá dài ({length} > {max} ký tự).",
+    "UNSUPPORTED_ASPECT": "Tỉ lệ không hỗ trợ: \"{aspect}\". Chọn một trong: {aspects}.",
+    "UNSUPPORTED_LANG": "Ngôn ngữ không hỗ trợ: \"{lang}\". Chọn một trong: {langs}.",
+    "UNSUPPORTED_TARGET_LANG": "Ngôn ngữ đích chưa hỗ trợ: \"{lang}\". Hiện chỉ hỗ trợ: {langs} (giới hạn của faster-whisper translate task).",
+    "UNSUPPORTED_VOICE": "Giọng không hỗ trợ: \"{voice}\". Chọn một trong: {voices}.",
+    "UPLOAD_FILE_TOO_LARGE": "File vượt quá giới hạn {limitMb}MB.",
+    "UPLOAD_INVALID": "Upload không hợp lệ.",
+    "UPLOAD_TOO_MANY_FILES": "Quá nhiều file trong một request (tối đa 200).",
+    "UPLOAD_TOTAL_TOO_LARGE": "Tổng dung lượng upload vượt quá giới hạn {limitMb}MB.",
+    "TASK_CAPTION_FAILED": "Caption thất bại.",
+    "TASK_REFRAME_FAILED": "Reframe thất bại.",
+    "TASK_REFRAME_ANALYZE_FAILED": "Phân tích reframe thất bại.",
+    "TASK_BEATS_FAILED": "Phân tích beat thất bại.",
+    "TASK_BGREMOVE_FAILED": "Xóa nền thất bại.",
+    "TASK_SILENCE_FAILED": "Phân tích khoảng lặng thất bại.",
+    "TASK_SCENE_FAILED": "Tách cảnh thất bại.",
+    "TASK_TRANSLATE_FAILED": "Dịch phụ đề thất bại.",
+    "TASK_TTS_FAILED": "TTS thất bại.",
+    "TASK_TTS_CLONE_FAILED": "TTS clone thất bại.",
+    "TASK_PROXY_FAILED": "Tạo proxy thất bại."
+  },
+  "validation": {
+    "detail": "[{where}] {detail}",
+    "SPEC_NOT_OBJECT": "[{where}] spec phải là một object JSON",
+    "UNSUPPORTED_VERSION": "[{where}] không hỗ trợ \"{version}\" — worker này chỉ render spec version {supported}",
+    "MISSING_META": "[{where}] thiếu object meta",
+    "NONEMPTY_STRING": "[{where}] phải là chuỗi khác rỗng",
+    "NONEMPTY_STRING_VALUE": "[{where}] phải là chuỗi khác rỗng, nhận được: {value}",
+    "POSITIVE_INTEGER": "[{where}] phải là số nguyên dương, nhận được: {value}",
+    "EVEN_INTEGER": "[{where}] phải là số chẵn (yêu cầu của H.264), nhận được: {value}",
+    "POSITIVE_NUMBER": "[{where}] phải là số dương, nhận được: {value}",
+    "MUST_BE_ARRAY": "[{where}] phải là một mảng",
+    "MUST_BE_OBJECT": "[{where}] phải là object",
+    "MISSING_ID": "[{where}] thiếu id (chuỗi khác rỗng)",
+    "MUST_BE_BOOLEAN": "[{where}] phải là boolean",
+    "NUMBER_RANGE": "[{where}] phải trong khoảng {min}..{max}, nhận được: {value}",
+    "VOLUME_RANGE": "[{where}] volume phải trong khoảng {min}..{max}, nhận được: {value}",
+    "PLUGINS_NOT_ARRAY": "[{where}] phải là một mảng các { id | path, config? }",
+    "PLUGIN_NOT_OBJECT": "[{where}] phải là object { id | path, config? }",
+    "PLUGIN_ID_OR_PATH": "[{where}] chỉ khai đúng MỘT trong hai: id hoặc path",
+    "PLUGIN_MISSING_ID_PATH": "[{where}] thiếu id (plugin đóng gói sẵn) hoặc path (file plugin.js)",
+    "PLUGIN_ID_CHARS": "[{where}] id chỉ gồm chữ thường, số và dấu \"-\" (nhận: {value})",
+    "PLUGIN_PATH_JS": "[{where}] path phải trỏ tới file .js (nhận: {value})",
+    "PLUGIN_CONFIG_OBJECT": "[{where}] config phải là object JSON thuần",
+    "PLUGIN_DUPLICATE": "[{where}] plugin \"{key}\" khai báo trùng — registry sẽ từ chối nạp bản thứ hai",
+    "ADJUSTMENT_NOT_ARRAY": "[{where}] phải là một mảng các layer { id, start, duration, filters }",
+    "DUPLICATE_LAYER_ID": "[{where}] trùng id layer: \"{id}\"",
+    "ADJUSTMENT_TRACK_INDEX": "[{where}] tracks chứa chỉ số {index} vượt quá số track của spec ({total})",
+    "ADJUSTMENT_NO_OVERLAP": "[{where}] không layer nào giao với clip video nào trong scope của nó — render sẽ không đổi gì",
+    "TRACKS_EMPTY": "[{where}] mảng rỗng — không có gì để render",
+    "DUPLICATE_TRACK_ID": "[{where}] trùng id track: \"{id}\"",
+    "TRACK_KIND_INVALID": "[{where}] phải là \"video\" | \"audio\" | \"text\" | \"sticker\" | \"image\", nhận được: {value}",
+    "TRACK_HIDDEN_AUDIO": "[{where}] hidden không có tác dụng với track audio (chỉ mute mới tắt tiếng)",
+    "TOTAL_DURATION_ZERO": "[{where}] tổng thời lượng project phải > 0",
+    "CLIP_OVERLAP": "[{where}] clip \"{clipA}\" [{startA}, {endA}] chồng lấn clip \"{clipB}\" (bắt đầu {startB}) — trên cùng một track {kind} các clip không được đè lên nhau",
+    "TRANSITION_NO_NEXT": "[{where}] có transition ({type}) nhưng không có clip kề ngay sau trên cùng track (clip kết thúc ở {end}s) — transition yêu cầu 2 clip nối tiếp nhau",
+    "TRANSITION_MISMATCH": "[{where}] transitionOut ({out}s) và transitionIn của clip \"{clip}\" ({in}s) không khớp nhau — chỉ đặt một trong hai, hoặc đặt bằng nhau",
+    "TRANSITION_LONGER_THAN_CLIP": "[{where}] transition ({transition}s) dài hơn cả clip ({clip}s)",
+    "MOTION_TARGETFPS_TRANSITION": "[{where}] motion.targetFps ({targetFps}) khác project fps ({projectFps}) nhưng clip \"{clip}\" dính transition với clip \"{other}\" — xfade yêu cầu 2 input cùng fps (xem MOTION_LIMITS.md, đợt 9 M4)",
+    "TRANSITION_FIRST_CLIP": "[{where}] có transitionIn nhưng là clip đầu track — transition bị bỏ qua",
+    "OPACITY_TRANSITION": "[{where}] có opacity={opacity} và transition — đoạn chuyển cảnh đã merge sẽ dùng opacity của clip đích (\"{target}\") cho toàn bộ unit (xem OPACITY_LIMITS.md)",
+    "SR_TRANSITION": "[{where}] có keyframes scale/rotation và transition — đoạn chuyển cảnh được gộp qua xfade nên keyframes scale/rotation của clip này bị bỏ qua khi render (xem KEYFRAMES_LIMITS.md)",
+    "OPACITY_KF_TRANSITION": "[{where}] có keyframes opacity và transition — đoạn chuyển cảnh được gộp qua xfade nên keyframes opacity của clip này bị bỏ qua khi render (dùng opacity tĩnh của clip đích, xem OPACITY_LIMITS.md)",
+    "CLIP_KIND_MISMATCH": "[{where}] clip.kind là \"{clipKind}\" nhưng nằm trong track kind \"{trackKind}\" — phải khớp nhau",
+    "NUMBER_MIN_0": "[{where}] {field} phải là số >= 0, nhận được: {value}",
+    "NUMBER_GT_0": "[{where}] {field} phải là số > 0, nhận được: {value}",
+    "ENHANCE_VIDEO_ONLY": "[{where}] enhance chỉ dùng cho video clip",
+    "MOTION_VIDEO_ONLY": "[{where}] motion chỉ dùng cho video clip",
+    "MISSING_SRC": "[{where}] thiếu src (đường dẫn file media)",
+    "MISSING_IMAGE_SRC": "[{where}] thiếu src (đường dẫn file ảnh)",
+    "OUT_NOT_GT_IN": "[{where}] out phải > in, nhận được: in={in}, out={out}",
+    "SPEED_RANGE": "[{where}] speed phải trong khoảng {min}–{max}, nhận được: {value}",
+    "REVERSE_BOOLEAN": "[{where}] reverse phải là boolean, nhận được: {value}",
+    "SPEED_RAMP_REVERSE": "[{where}] speedKeyframes không dùng chung được với reverse=true (chưa hỗ trợ)",
+    "SPEED_AND_SPEED_KEYFRAMES": "[{where}] có cả speed và speedKeyframes — render dùng speedKeyframes, speed hằng bị bỏ qua",
+    "DURATION_EXCEEDS_SOURCE": "[{where}] duration ({duration}s) vượt quá đoạn nguồn hiệu dụng [in={in}, out={out}] / speed={speed} ({effective}s) — không đủ frame để phát",
+    "FIELD_MUST_BE_OBJECT": "[{where}] {field} phải là object",
+    "UNSUPPORTED_TRANSITION_TYPE": "[{where}] {field}.type không hỗ trợ: {value}",
+    "FIELD_DURATION_TOO_LONG": "[{where}] {field}.duration ({value}s) dài hơn duration của clip ({duration}s)",
+    "FADE_TOO_LONG": "[{where}] {field} ({value}s) dài hơn duration của clip ({duration}s)",
+    "FADE_CURVE": "[{where}] {field} phải là linear | ease-in | ease-out | sine (nhận được: {value})",
+    "VOLUME_KEYFRAMES_OBJECT": "[{where}] volumeKeyframes phải là object { keyframes: [...] }",
+    "SPEED_KEYFRAMES_OBJECT": "[{where}] speedKeyframes phải là object { keyframes: [...] }",
+    "KEYFRAMES_EMPTY": "[{where}] {field}.keyframes: mảng rỗng — cần ít nhất 1 keyframe",
+    "KEYFRAMES_TOO_MANY": "[{where}] {field}.keyframes: quá 128 keyframe",
+    "KEYFRAME_ITEM_OBJECT": "[{where}] {field} phải là object { t, v, easing }",
+    "KEYFRAME_T_RANGE": "[{where}] {field}.t phải trong [0, {max}] (nhận được: {value})",
+    "KEYFRAME_V_0_1": "[{where}] {field}.v phải trong 0..1 (nhận được: {value})",
+    "KEYFRAME_EASING": "[{where}] {field}.easing phải là linear | ease-in | ease-out (nhận được: {value})",
+    "KEYFRAME_V_RANGE": "[{where}] {field}.v phải trong {min}..{max} (nhận được: {value})",
+    "SPEED_EASING": "[{where}] {field}.easing phải là linear | ease-in | ease-out | bezier (nhận được: {value})",
+    "BEZIER_SHAPE": "[{where}] {field}.bezier phải là [x1, y1, x2, y2]: x1, x2 trong [0, 1], y1, y2 tự do (chuẩn cubic-bezier) (nhận được: {value})",
+    "SPEED_RAMP_CONSUMED": "[{where}] speedKeyframes đang bật: nguồn tiêu thụ = {consumed}s (∫speed trên duration={duration}s) — render dùng in + nguồn tiêu thụ, không dùng out (xem P3_LIMITS.md)",
+    "TEXT_MUST_BE_STRING": "[{where}] text phải là chuỗi, nhận được: {value}",
+    "TEXT_EMPTY_WARN": "[{where}] text rỗng — clip này sẽ không hiển thị gì",
+    "MISSING_STYLE": "[{where}] thiếu style",
+    "STYLE_FONTFAMILY_EMPTY": "[{where}] style.fontFamily phải là chuỗi khác rỗng",
+    "HEX_COLOR": "[{where}] style.{field} phải là mã hex (#rgb hoặc #rrggbb), nhận được: {value}",
+    "STYLE_BOOLEAN": "[{where}] style.{field} phải là boolean, nhận được: {value}",
+    "STYLE_POSITION": "[{where}] style.{field} là vị trí tương đối, phải trong khoảng 0..1, nhận được: {value}",
+    "UNSUPPORTED_ANIMATION": "[{where}] style.animation không hỗ trợ: {value}",
+    "TEXT_SR_IGNORED": "[{where}] keyframes scale/rotation của text clip {animation} bị bỏ qua khi render (ASS không hỗ trợ scale/rotate theo thời gian)",
+    "PARITY_KARAOKE": "[{where}] text clip parity có karaoke — karaoke thắng, animation parity bị bỏ qua khi render (tránh vẽ 1 clip bằng 2 lớp ASS)",
+    "KARAOKE_SR_IGNORED": "[{where}] keyframes scale/rotation của text clip karaoke bị bỏ qua khi render (ASS không hỗ trợ scale/rotate theo thời gian)",
+    "KARAOKE_NOT_ARRAY": "[{where}] karaoke phải là mảng không rỗng các {word, start, end}",
+    "KARAOKE_WORD_SHAPE": "[{where}] karaoke word sai hình dạng (cần {word: string khác rỗng, start, end: number, end > start}), nhận được: {value}",
+    "KARAOKE_WORD_OUT_OF_RANGE": "[{where}] karaoke word ngoài duration clip ({start}–{end} trong khi duration={duration})",
+    "KARAOKE_WORD_ORDER": "[{where}] karaoke words phải theo thứ tự thời gian không chồng lấn",
+    "CAPTION_OF_SHAPE": "[{where}] captionOf sai hình dạng (cần {clipId: string, mediaStart, mediaEnd: number, mediaEnd > mediaStart}) — render vẫn vẽ câu chữ theo start/duration, nhưng editor sẽ không bám link này",
+    "OPACITY_STATIC_AND_KEYFRAMES": "[{where}] có cả opacity tĩnh ({value}) và keyframes opacity — render dùng keyframes (tuyệt đối), opacity tĩnh bị bỏ qua (xem OPACITY_LIMITS.md)",
+    "SCALE_KEYFRAME_CLAMP": "[{where}] keyframe scale={value} nằm ngoài [{min}, {max}] — render sẽ clamp về khoảng này (xem KEYFRAMES_LIMITS.md)",
+    "CHROMA_TRANSITION": "[{where}] clip có chromaKey + transition: xfade không giữ alpha, vùng trong suốt có thể bị blend sai (xem CHROMA_LIMITS.md)",
+    "SPEED_RAMP_STABILIZE": "[{where}] speedKeyframes không dùng chung được với enhance.stabilize (vidstab detect theo trim gốc, không khớp các đoạn ramp)",
+    "SOURCE_AUDIO_DETACH": "[{where}] sourceAudioMode=\"detach\" chưa được hỗ trợ (render worker chỉ hỗ trợ \"inherit\" | \"mute\")",
+    "MASK_UNSUPPORTED_KIND": "[{where}] mask chưa hỗ trợ cho clip {kind} — mask sẽ bị bỏ qua (chỉ video/image render mask, xem MASK_LIMITS.md)",
+    "TRACK_TRANSITION": "[{where}] clip video có track nhưng dính transition — track bị bỏ qua ở unit đã merge (keyframes cũng vậy, xem D3_LIMITS.md)",
+    "TRACK_TEXT_ASS": "[{where}] clip text có track nhưng vẽ bằng ASS (typewriter/karaoke/parity) — track bị bỏ qua, chữ giữ vị trí tĩnh (xem D3_LIMITS.md)",
+    "TRACK_UNSUPPORTED_KIND": "[{where}] track chưa hỗ trợ cho clip {kind} — track sẽ bị bỏ qua (chỉ video/text/sticker bám quỹ đạo, xem D3_LIMITS.md)",
+    "MEDIA_ASSET_INVALID": "[{where}] asset \"{asset}\" không hợp lệ (id rỗng hoặc thoát khỏi media-dir)",
+    "MEDIA_PATH_TRAVERSAL": "[{where}] đường dẫn thoát khỏi media-dir (không cho phép \"../\")",
+    "MEDIA_ASSET_NOT_FOUND": "[{where}] không tìm thấy asset \"{asset}\": không có trong asset map và không có file cùng tên trong media-dir (upload file asset kèm spec, hoặc truyền asset map cho render worker)",
+    "MEDIA_FILE_NOT_FOUND": "[{where}] không tìm thấy file: {file}",
+    "MEDIA_NOT_FILE": "[{where}] không phải file thường: {file}",
+    "MEDIA_FFPROBE_FAILED": "[{where}] ffprobe đọc file thất bại: {detail}",
+    "MEDIA_NO_VIDEO": "[{where}] file không có video stream",
+    "MEDIA_STILL_AS_VIDEO": "[{where}] là ảnh tĩnh ({codec}) — video clip yêu cầu file video, dùng image track cho ảnh tĩnh (xem P0-03)",
+    "MEDIA_OUT_EXCEEDS": "[{where}] out={out}s vượt quá độ dài file ({duration}s)",
+    "MEDIA_NO_AUDIO_INHERIT": "[{where}] file không có audio stream (sourceAudioMode=\"inherit\" nhưng không có gì để giữ)",
+    "MEDIA_NO_VIDEO_IMAGE": "[{where}] file không có video stream (không phải ảnh?)",
+    "MEDIA_NOT_STILL": "[{where}] không phải ảnh tĩnh (codec={codec}, nb_frames={frames}) — image clip yêu cầu file ảnh, dùng video track cho file video",
+    "MEDIA_NO_AUDIO": "[{where}] file không có audio stream"
+  },
+  "jobNote": {
+    "recoveredRestart": "Phục hồi sau khi server restart — render lại từ đầu."
+  },
+  "export": {
+    "gpuProbe": {
+      "fallbackNote": "Nếu encoder GPU lỗi lúc render, VCut sẽ tự thử lại bằng libx264.",
+      "probing": "Đang probe GPU…",
+      "reprobe": "Probe lại GPU",
+      "reprobeDone": "Probe xong: {result}",
+      "reprobeError": "Không probe được GPU ({error})",
+      "statusCacheOff": "Cache probe GPU đang tắt — mỗi lần render đều probe lại",
+      "statusCpu": "Không phát hiện GPU — đang dùng CPU (libx264)",
+      "statusGpu": "GPU: {encoder} — đã probe {date}",
+      "statusUnknown": "Chưa probe GPU trên máy này",
+      "title": "Encoder GPU"
+    }
+  },
+  "legacyAdopt": {
+    "adopt": "Nhận",
+    "adoptAll": "Nhận tất cả",
+    "adoptFailed": "Không nhận được {from}: {error}",
+    "adopted": "Đã nhận {n} phiên bản từ {from} vào lịch sử project.",
+    "close": "Đóng",
+    "dismiss": "Bỏ qua",
+    "dismissAll": "Bỏ qua tất cả",
+    "dismissedNote": "Mục đã bỏ qua sẽ không hiện lại; dữ liệu vẫn còn trong kho lịch sử trên máy này.",
+    "embeddedHash": "Hash trong tên chuỗi",
+    "firstVersion": "Bản đầu",
+    "fragmentChain": "Mảnh quét được",
+    "intro": "VCut tìm thấy {n} chuỗi lịch sử cũ có thể thuộc về project này nhưng không đủ chắc để tự nhận (cùng tên, khác nội dung). Xem bằng chứng rồi quyết định từng chuỗi — dữ liệu gốc vẫn còn nguyên trong kho trên máy này.",
+    "kind": "Loại",
+    "lastVersion": "Bản cuối",
+    "name": "Tên",
+    "noHash": "—",
+    "noName": "(chuỗi proj — không có tên file)",
+    "openedHash": "Hash project đang mở",
+    "pointerChain": "Chuỗi con trỏ",
+    "reason": "Vì sao mơ hồ",
+    "reasonAmbiguousNameOnlyHashMismatch": "Cùng tên nhưng nội dung khác — có thể là file khác trùng tên, hoặc cùng file đã sửa ngoài app.",
+    "reasonAmbiguousNoContentEvidence": "Thiếu bằng chứng nội dung để đối chiếu.",
+    "reasonAmbiguousTrivialSpec": "Project đang mở còn trống (0 clip) nên hash không phân biệt được.",
+    "reasonScanError": "Lỗi khi đọc chuỗi này — dữ liệu còn nguyên, chưa nhận.",
+    "source": "Nguồn",
+    "title": "Lịch sử cũ chưa nhận được",
+    "versions": "{n} phiên bản"
   }
 }
