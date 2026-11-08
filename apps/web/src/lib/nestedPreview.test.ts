@@ -552,7 +552,7 @@ ok("P3 8 effect canvas KHÔNG còn bị ghi skipped (vẽ thật bằng effectCa
   // Tập tĩnh "thật sự chưa có đường vẽ" hiện rỗng: không còn type chuẩn
   // nào bị skip; lý do cũ R4 cho sharpen/mirror đã bị xóa (không còn
   // claim "không có CSS filter tương đương" cho thứ đã vẽ được).
-  assert.equal(skippedEffectReason("sharpen"), "type chưa biết, không có đường vẽ trong preview");
+  assert.equal(skippedEffectReason("sharpen"), 'type "sharpen" chưa biết, không có đường vẽ trong preview');
 });
 
 ok("R4 effect type lạ → bỏ qua với lý do 'chưa biết'", () => {
