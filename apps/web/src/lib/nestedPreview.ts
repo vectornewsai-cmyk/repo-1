@@ -68,6 +68,37 @@ import {
 // @ts-ignore: xem ghi chú trên (TS5097, đuôi .ts cho strip-types)
 import { composeTwoLevelCurve } from "./twoLevelCurve.ts";
 
+// Đợt 62 R6 — key instance cho attribution theo clip (đóng nợ đợt 61
+// §5.5: 2 instance nested cùng leaf id thì attribution + tickSkipped
+// phải tách theo instance, không theo leaf id — xem
+// previewClipKey62R6.ts). Import kèm đuôi .ts theo cùng quy ước trên.
+// @ts-ignore: xem ghi chú trên (TS5097, đuôi .ts cho strip-types)
+import { scopedClipId, stampPreviewInstanceKey } from "./previewClipKey62R6.ts";
+
+/**
+ * Phase 9 đợt 56 M5 — lookup i18n tùy chọn, KHÔNG import `../i18n`
+ * trực tiếp: file này được test bằng Node type-stripping, mà Node
+ * không resolve JSON import của `i18n/index.ts`
+ * (ERR_IMPORT_ATTRIBUTE_MISSING, đã kiểm chứng 07/11) — cùng lý do
+ * curveFix.ts / loadReport.ts tránh import i18n (xem LIMITS đợt 56
+ * M5). Khi `lookup` vắng → fallback đúng từng chữ chuỗi VI cũ nên
+ * test cũ + hành vi mặc định không đổi; UI (App/preview) truyền `t()`
+ * vào tham số `lookup` này để nhận chuỗi theo locale hiện tại. Key
+ * nằm trong `i18n/fragments/round56-m5.json` (parent merge vào
+ * vi.json/en.json cuối đợt 56).
+ */
+export type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
+
 // ---------------------------------------------------------------------------
 // Kiểu đầu vào (độc lập, duck-typed)
 // ---------------------------------------------------------------------------
@@ -471,15 +502,23 @@ function deepEqual(a: unknown, b: unknown): boolean {
  * thành "không áp" hay "áp mọi"). Chỉ số vượt quá số track thì KHÔNG
  * throw (nó chỉ đơn giản không khớp clip nào — ghi rõ trong LIMITS).
  */
-export function validateScopeTracks(v: unknown, label: string): number[] | undefined {
+export function validateScopeTracks(v: unknown, label: string, lookup?: I18nLookup): number[] | undefined {
   if (v === undefined) return undefined;
   if (!Array.isArray(v)) {
-    throw new Error(`${label}: scope tracks phải là một mảng các chỉ số track (nhận được: ${JSON.stringify(v)})`);
+    throw new Error(
+      trKey(lookup, "nested.scopeTracksNotArray",
+        { path: label, value: JSON.stringify(v) ?? "undefined" },
+        `${label}: scope tracks phải là một mảng các chỉ số track (nhận được: ${JSON.stringify(v)})`),
+    );
   }
   const out: number[] = [];
   for (const t of v) {
     if (typeof t !== "number" || !Number.isInteger(t) || t < 0) {
-      throw new Error(`${label}: scope tracks chứa chỉ số không hợp lệ: ${JSON.stringify(t)} (phải là số nguyên >= 0)`);
+      throw new Error(
+        trKey(lookup, "nested.scopeTracksBadIndex",
+          { path: label, value: JSON.stringify(t) ?? "undefined" },
+          `${label}: scope tracks chứa chỉ số không hợp lệ: ${JSON.stringify(t)} (phải là số nguyên >= 0)`),
+      );
     }
     out.push(t);
   }
@@ -507,34 +546,53 @@ export function validateScopeTracks(v: unknown, label: string): number[] | undef
 export function convertCanonicalLayer(
   raw: unknown,
   label: string,
+  lookup?: I18nLookup,
 ): AdjustmentWindow {
   if (!isRecord(raw)) {
-    throw new Error(`${label}: adjustment layer phải là một object`);
+    throw new Error(
+      trKey(lookup, "nested.adjNotObject", { path: label },
+        `${label}: adjustment layer phải là một object`),
+    );
   }
   const id = raw["id"];
   if (typeof id !== "string" || id.length === 0) {
-    throw new Error(`${label}: adjustment layer.id phải là chuỗi khác rỗng`);
+    throw new Error(
+      trKey(lookup, "nested.adjIdEmpty", { path: label },
+        `${label}: adjustment layer.id phải là chuỗi khác rỗng`),
+    );
   }
   const start = raw["start"];
   const duration = raw["duration"];
   if (!Number.isFinite(start) || (start as number) < 0) {
-    throw new Error(`${label}: adjustment layer "${id}".start phải là số >= 0`);
+    throw new Error(
+      trKey(lookup, "nested.adjStart", { path: label, id },
+        `${label}: adjustment layer "${id}".start phải là số >= 0`),
+    );
   }
   if (!Number.isFinite(duration) || (duration as number) <= 0) {
-    throw new Error(`${label}: adjustment layer "${id}".duration phải là số > 0`);
+    throw new Error(
+      trKey(lookup, "nested.adjDuration", { path: label, id },
+        `${label}: adjustment layer "${id}".duration phải là số > 0`),
+    );
   }
-  const scopeTracks = validateScopeTracks(raw["tracks"], `${label}: adjustment layer "${id}"`);
+  const scopeTracks = validateScopeTracks(raw["tracks"], `${label}: adjustment layer "${id}"`, lookup);
   const lutChain: string[] = [];
   const colorSum: Record<string, number> = {};
   const mergedEffects: EffectInput[] = [];
   const pushEffects = (list: unknown): void => {
     if (list === undefined) return;
     if (!Array.isArray(list)) {
-      throw new Error(`${label}: adjustment layer "${id}".effects phải là một mảng`);
+      throw new Error(
+        trKey(lookup, "nested.adjEffectsNotArray", { path: label, id },
+          `${label}: adjustment layer "${id}".effects phải là một mảng`),
+      );
     }
     for (const e of list) {
       if (!isRecord(e) || typeof e["type"] !== "string") {
-        throw new Error(`${label}: adjustment layer "${id}" có effect không hợp lệ (thiếu type chuỗi)`);
+        throw new Error(
+          trKey(lookup, "nested.adjEffectInvalid", { path: label, id },
+            `${label}: adjustment layer "${id}" có effect không hợp lệ (thiếu type chuỗi)`),
+        );
       }
       const idx = mergedEffects.findIndex((m) => m.type === e["type"]);
       if (idx >= 0) mergedEffects[idx] = e as unknown as EffectInput;
@@ -544,15 +602,24 @@ export function convertCanonicalLayer(
   const filters = raw["filters"];
   if (filters !== undefined) {
     if (!Array.isArray(filters)) {
-      throw new Error(`${label}: adjustment layer "${id}".filters phải là một mảng`);
+      throw new Error(
+        trKey(lookup, "nested.adjFiltersNotArray", { path: label, id },
+          `${label}: adjustment layer "${id}".filters phải là một mảng`),
+      );
     }
     for (const entry of filters) {
       if (!isRecord(entry)) {
-        throw new Error(`${label}: adjustment layer "${id}" có filter entry không phải object`);
+        throw new Error(
+          trKey(lookup, "nested.adjFilterNotObject", { path: label, id },
+            `${label}: adjustment layer "${id}" có filter entry không phải object`),
+        );
       }
       if (typeof entry["lut"] === "string") lutChain.push(entry["lut"] as string);
       else if (entry["lut"] !== undefined) {
-        throw new Error(`${label}: adjustment layer "${id}" có filter.lut không phải chuỗi`);
+        throw new Error(
+          trKey(lookup, "nested.adjFilterLut", { path: label, id },
+            `${label}: adjustment layer "${id}" có filter.lut không phải chuỗi`),
+        );
       }
       if (isRecord(entry["color"])) {
         for (const [k, v] of Object.entries(entry["color"] as Record<string, unknown>)) {
@@ -583,7 +650,10 @@ export function convertCanonicalLayer(
     Object.keys(colorSum).length === 0 &&
     mergedEffects.length === 0
   ) {
-    throw new Error(`${label}: adjustment layer "${id}" rỗng (không có lut/color/effects) — layer vô tác dụng`);
+    throw new Error(
+      trKey(lookup, "nested.adjEmpty", { path: label, id },
+        `${label}: adjustment layer "${id}" rỗng (không có lut/color/effects) — layer vô tác dụng`),
+    );
   }
   const filter: FilterInput = {};
   if (lutChain.length > 0) {
@@ -624,9 +694,12 @@ export function convertCanonicalLayer(
  *   đây — `flattenNested` giữ hành vi cũ là bỏ qua (skipped), vì đó
  *   là lỗi giá trị đơn lẻ, không phải mâu thuẫn giữa 2 field.
  */
-export function normalizeNestedClip(raw: unknown): NormalizedNestedInput {
+export function normalizeNestedClip(raw: unknown, lookup?: I18nLookup): NormalizedNestedInput {
   if (!isRecord(raw) || raw["kind"] !== "nested") {
-    throw new Error(`normalizeNestedClip: clip phải là nested clip (kind "nested")`);
+    throw new Error(
+      trKey(lookup, "nested.notNestedClip", {},
+        `normalizeNestedClip: clip phải là nested clip (kind "nested")`),
+    );
   }
   const id = typeof raw["id"] === "string" ? (raw["id"] as string) : "?";
   const label = `nested clip "${id}"`;
@@ -636,30 +709,40 @@ export function normalizeNestedClip(raw: unknown): NormalizedNestedInput {
   let subSpecLayers: CanonicalLayerInput[] | undefined;
   if (subSpec !== undefined) {
     if (!Array.isArray(subSpec["tracks"])) {
-      throw new Error(`${label}: subSpec.tracks phải là một mảng`);
+      throw new Error(
+        trKey(lookup, "nested.subSpecTracks", { path: label },
+          `${label}: subSpec.tracks phải là một mảng`),
+      );
     }
     const subTracks = subSpec["tracks"] as NestedTrackInput[];
     if (directTracks !== undefined && !deepEqual(directTracks, subTracks)) {
       throw new Error(
-        `${label}: vừa có tracks trực tiếp vừa có subSpec.tracks nhưng nội dung khác nhau ` +
-          `— chỉ giữ một nguồn duy nhất (xóa tracks cũ hoặc sửa subSpec cho khớp)`,
+        trKey(lookup, "nested.subSpecConflict", { path: label },
+          `${label}: vừa có tracks trực tiếp vừa có subSpec.tracks nhưng nội dung khác nhau ` +
+          `— chỉ giữ một nguồn duy nhất (xóa tracks cũ hoặc sửa subSpec cho khớp)`),
       );
     }
     tracks = subTracks;
     if (subSpec["adjustmentLayers"] !== undefined) {
       if (!Array.isArray(subSpec["adjustmentLayers"])) {
-        throw new Error(`${label}: subSpec.adjustmentLayers phải là một mảng`);
+        throw new Error(
+          trKey(lookup, "nested.subSpecAdjLayers", { path: label },
+            `${label}: subSpec.adjustmentLayers phải là một mảng`),
+        );
       }
       // Validate sớm: lỗi layer nằm đúng chỗ, không đợi tới flatten.
       for (const layer of subSpec["adjustmentLayers"] as unknown[]) {
-        convertCanonicalLayer(layer, `${label}.subSpec`);
+        convertCanonicalLayer(layer, `${label}.subSpec`, lookup);
       }
       subSpecLayers = subSpec["adjustmentLayers"] as CanonicalLayerInput[];
     }
   } else if (directTracks !== undefined) {
     tracks = directTracks;
   } else {
-    throw new Error(`${label}: không có tracks trực tiếp cũng không có subSpec — không có nội dung gì để phẳng`);
+    throw new Error(
+      trKey(lookup, "nested.noContent", { path: label },
+        `${label}: không có tracks trực tiếp cũng không có subSpec — không có nội dung gì để phẳng`),
+    );
   }
   const trim = isRecord(raw["trim"]) ? (raw["trim"] as Record<string, unknown>) : undefined;
   let inPoint: number;
@@ -668,18 +751,26 @@ export function normalizeNestedClip(raw: unknown): NormalizedNestedInput {
     const tin = trim["in"];
     const tout = trim["out"];
     if (!Number.isFinite(tin) || (tin as number) < 0) {
-      throw new Error(`${label}: trim.in phải là số >= 0`);
+      throw new Error(
+        trKey(lookup, "nested.trimIn", { path: label },
+          `${label}: trim.in phải là số >= 0`),
+      );
     }
     if (!Number.isFinite(tout) || (tout as number) <= (tin as number)) {
-      throw new Error(`${label}: trim.out phải là số > trim.in`);
+      throw new Error(
+        trKey(lookup, "nested.trimOut", { path: label },
+          `${label}: trim.out phải là số > trim.in`),
+      );
     }
     if (
       raw["in"] !== undefined &&
       (typeof raw["in"] !== "number" || Math.abs((raw["in"] as number) - (tin as number)) > PREVIEW_EPS)
     ) {
       throw new Error(
-        `${label}: trim.in (${tin}) mâu thuẫn với in cũ (${JSON.stringify(raw["in"])}) ` +
-          `— chỉ giữ một trong hai, hoặc đặt bằng nhau`,
+        trKey(lookup, "nested.trimInConflict",
+          { path: label, a: String(tin), b: JSON.stringify(raw["in"]) ?? "undefined" },
+          `${label}: trim.in (${tin}) mâu thuẫn với in cũ (${JSON.stringify(raw["in"])}) ` +
+          `— chỉ giữ một trong hai, hoặc đặt bằng nhau`),
       );
     }
     inPoint = tin as number;
@@ -693,7 +784,7 @@ export function normalizeNestedClip(raw: unknown): NormalizedNestedInput {
     const rampForTrim =
       raw["speedKeyframes"] !== undefined &&
       typeof duration === "number" && Number.isFinite(duration)
-        ? resolveNestedRampCurve(raw["speedKeyframes"], duration, label)
+        ? resolveNestedRampCurve(raw["speedKeyframes"], duration, label, lookup)
         : null;
     if (rampForTrim !== null) {
       // rampForTrim chỉ khác null khi duration là số hữu hạn (xem
@@ -705,11 +796,17 @@ export function normalizeNestedClip(raw: unknown): NormalizedNestedInput {
       const tol = rampForTrim.isConstant ? PREVIEW_EPS : 1e-4;
       if (Math.abs((tout as number) - expected) > tol) {
         throw new Error(
-          `${label}: trim.out (${tout as number}) không khớp in + ` +
-            (rampForTrim.isConstant
-              ? `duration × ${rampForTrim.constantV}`
-              : `∫speedKeyframes trên duration`) +
-            ` = ${expected} — sửa duration hoặc trim cho khớp (ngữ nghĩa render đợt 18 §2)`,
+          rampForTrim.isConstant
+            ? trKey(lookup, "nested.trimOutMismatchConst",
+                { path: label, value: String(tout as number), c: String(rampForTrim.constantV), expected: String(expected) },
+                `${label}: trim.out (${tout as number}) không khớp in + ` +
+                `duration × ${rampForTrim.constantV}` +
+                ` = ${expected} — sửa duration hoặc trim cho khớp (ngữ nghĩa render đợt 18 §2)`)
+            : trKey(lookup, "nested.trimOutMismatchCurve",
+                { path: label, value: String(tout as number), expected: String(expected) },
+                `${label}: trim.out (${tout as number}) không khớp in + ` +
+                `∫speedKeyframes trên duration` +
+                ` = ${expected} — sửa duration hoặc trim cho khớp (ngữ nghĩa render đợt 18 §2)`),
         );
       }
     } else if (
@@ -719,8 +816,10 @@ export function normalizeNestedClip(raw: unknown): NormalizedNestedInput {
       const expected = ((tout as number) - (tin as number)) / speed;
       if (Math.abs(duration - expected) > PREVIEW_EPS) {
         throw new Error(
-          `${label}: duration (${duration}) không khớp (trim.out − trim.in) / speed = ${expected} ` +
-            `— sửa duration hoặc trim cho khớp`,
+          trKey(lookup, "nested.durationMismatch",
+            { path: label, value: String(duration), expected: String(expected) },
+            `${label}: duration (${duration}) không khớp (trim.out − trim.in) / speed = ${expected} ` +
+            `— sửa duration hoặc trim cho khớp`),
         );
       }
     }
@@ -736,10 +835,11 @@ export function normalizeNestedClip(raw: unknown): NormalizedNestedInput {
     raw["speedKeyframes"] !== undefined && raw["reverse"] === true &&
     typeof raw["duration"] === "number" && Number.isFinite(raw["duration"])
   ) {
-    const r = resolveNestedRampCurve(raw["speedKeyframes"], raw["duration"], label);
+    const r = resolveNestedRampCurve(raw["speedKeyframes"], raw["duration"], label, lookup);
     if (r !== null && !r.isConstant) {
       throw new Error(
-        `${label}: reverse ở clip lồng nhau có speedKeyframes chưa được hỗ trợ (render đợt 18 §5)`,
+        trKey(lookup, "nested.reverseSpeed", { path: label },
+          `${label}: reverse ở clip lồng nhau có speedKeyframes chưa được hỗ trợ (render đợt 18 §5)`),
       );
     }
   }
@@ -835,6 +935,7 @@ export function resolvePreviewBoundaries(
   clips: unknown[],
   trackKind: string,
   label: string,
+  lookup?: I18nLookup,
 ): PreviewBoundaries {
   const nestedInfo = new Map<object, NestedBoundaryInfo>();
   const plainShift = new Map<object, number>();
@@ -866,8 +967,9 @@ export function resolvePreviewBoundaries(
       );
       if (own || prevHas || nextHas) {
         skipped.push(
-          `${tw}: clip lồng nhau "${c.id}" có transition qua biên nhưng ` +
-            "track không phải video — bỏ qua transition qua biên (chỉ hỗ trợ track video)",
+          trKey(lookup, "nested.failsoft.nonVideoBoundary", { path: tw, id: String(c.id) },
+            `${tw}: clip lồng nhau "${c.id}" có transition qua biên nhưng ` +
+            "track không phải video — bỏ qua transition qua biên (chỉ hỗ trợ track video)"),
         );
       }
     }
@@ -895,8 +997,9 @@ export function resolvePreviewBoundaries(
     if (!inB && outPs.length === 0) continue;
     if (prevCands.length > 1) {
       throw new Error(
-        `${tw}: nhiều clip kết thúc đúng lúc clip "${b["id"]}" bắt đầu — ` +
-          "không xác định được đầu trái của transition (clip chồng lấn nhau)",
+        trKey(lookup, "nested.multiEnd", { path: tw, id: String(b["id"]) },
+          `${tw}: nhiều clip kết thúc đúng lúc clip "${b["id"]}" bắt đầu — ` +
+          "không xác định được đầu trái của transition (clip chồng lấn nhau)"),
       );
     }
     if (prevCands.length === 0) {
@@ -908,12 +1011,15 @@ export function resolvePreviewBoundaries(
       );
       if (hasEarlier) {
         throw new Error(
-          `${tw}: clip "${b["id"]}" có transition nhưng clip kề trước không kết ` +
-            `thúc đúng lúc ${b["start"]}s — transition yêu cầu 2 clip nối tiếp nhau`,
+          trKey(lookup, "nested.transitionNoPrev",
+            { path: tw, id: String(b["id"]), start: String(b["start"]) },
+            `${tw}: clip "${b["id"]}" có transition nhưng clip kề trước không kết ` +
+            `thúc đúng lúc ${b["start"]}s — transition yêu cầu 2 clip nối tiếp nhau`),
         );
       }
       skipped.push(
-        `${tw}: clip "${b["id"]}" có transitionIn nhưng là clip đầu track — transition bị bỏ qua`,
+        trKey(lookup, "nested.failsoft.firstClipTransition", { path: tw, id: String(b["id"]) },
+          `${tw}: clip "${b["id"]}" có transitionIn nhưng là clip đầu track — transition bị bỏ qua`),
       );
       continue;
     }
@@ -927,32 +1033,46 @@ export function resolvePreviewBoundaries(
     if (inB && outP) {
       if (Math.abs(inB.duration - outP.duration) > PREVIEW_EPS) {
         throw new Error(
-          `${tw}: transitionOut (${outP.duration}s) của clip "${prev["id"]}" và ` +
+          trKey(lookup, "nested.transitionOutDuration",
+            { path: tw, a: String(outP.duration), id: String(prev["id"]), b: String(inB.duration), other: String(b["id"]) },
+            `${tw}: transitionOut (${outP.duration}s) của clip "${prev["id"]}" và ` +
             `transitionIn (${inB.duration}s) của clip "${b["id"]}" không khớp nhau ` +
-            "— chỉ đặt một trong hai, hoặc đặt bằng nhau",
+            "— chỉ đặt một trong hai, hoặc đặt bằng nhau"),
         );
       }
       if (inB.type !== outP.type) {
         throw new Error(
-          `${tw}: transitionOut (${outP.type}) của clip "${prev["id"]}" và ` +
+          trKey(lookup, "nested.transitionOutType",
+            { path: tw, a: outP.type, id: String(prev["id"]), b: inB.type, other: String(b["id"]) },
+            `${tw}: transitionOut (${outP.type}) của clip "${prev["id"]}" và ` +
             `transitionIn (${inB.type}) của clip "${b["id"]}" không khớp type ` +
-            "— transition qua biên yêu cầu cùng type",
+            "— transition qua biên yêu cầu cùng type"),
         );
       }
     }
     const eff = inB ?? outP;
     if (!eff || eff.type !== BOUNDARY_TRANSITION_TYPE) {
       throw new Error(
-        `${tw}: transition qua biên clip lồng nhau ("${prev["id"]}" → "${b["id"]}") ` +
-          `chỉ hỗ trợ type "fade", nhận được: "${eff ? eff.type : "?"}" — dùng "fade" hoặc bỏ transition`,
+        trKey(lookup, "nested.transitionCrossBorder",
+          { path: tw, a: String(prev["id"]), b: String(b["id"]), value: eff ? eff.type : "?" },
+          `${tw}: transition qua biên clip lồng nhau ("${prev["id"]}" → "${b["id"]}") ` +
+          `chỉ hỗ trợ type "fade", nhận được: "${eff ? eff.type : "?"}" — dùng "fade" hoặc bỏ transition`),
       );
     }
     const T = eff.duration;
     if (T > (prev["duration"] as number) + PREVIEW_EPS) {
-      throw new Error(`${tw}: transition (${T}s) dài hơn clip "${prev["id"]}" (${prev["duration"]}s)`);
+      throw new Error(
+        trKey(lookup, "nested.transitionLonger",
+          { path: tw, a: String(T), id: String(prev["id"]), b: String(prev["duration"]) },
+          `${tw}: transition (${T}s) dài hơn clip "${prev["id"]}" (${prev["duration"]}s)`),
+      );
     }
     if (T > (b["duration"] as number) + PREVIEW_EPS) {
-      throw new Error(`${tw}: transition (${T}s) dài hơn clip "${b["id"]}" (${b["duration"]}s)`);
+      throw new Error(
+        trKey(lookup, "nested.transitionLonger",
+          { path: tw, a: String(T), id: String(b["id"]), b: String(b["duration"]) },
+          `${tw}: transition (${T}s) dài hơn clip "${b["id"]}" (${b["duration"]}s)`),
+      );
     }
     pairs.push({ from: prev, to: b, T });
   }
@@ -962,8 +1082,9 @@ export function resolvePreviewBoundaries(
     const n = p.to;
     if (isNestedClip(n) && asFrom.has(n)) {
       throw new Error(
-        `${tw}: clip lồng nhau "${n["id"]}" vừa có transition qua biên ở cả ` +
-          "hai đầu (in + out) — chưa hỗ trợ 2 transition qua biên trên cùng một clip lồng nhau",
+        trKey(lookup, "nested.transitionBothSides", { path: tw, id: String(n["id"]) },
+          `${tw}: clip lồng nhau "${n["id"]}" vừa có transition qua biên ở cả ` +
+          "hai đầu (in + out) — chưa hỗ trợ 2 transition qua biên trên cùng một clip lồng nhau"),
       );
     }
     if (
@@ -971,8 +1092,9 @@ export function resolvePreviewBoundaries(
       (asFrom.has(n) || flatPairs.some((fp) => fp.from === n || fp.to === n))
     ) {
       throw new Error(
-        `${tw}: clip "${n["id"]}" bị dịch sớm ${p.T}s bởi transition qua biên ` +
-          "nên không giữ được transition khác — chưa hỗ trợ 2 transition liên tiếp qua biên",
+        trKey(lookup, "nested.transitionEarly", { path: tw, id: String(n["id"]), n: String(p.T) },
+          `${tw}: clip "${n["id"]}" bị dịch sớm ${p.T}s bởi transition qua biên ` +
+          "nên không giữ được transition khác — chưa hỗ trợ 2 transition liên tiếp qua biên"),
       );
     }
   }
@@ -990,9 +1112,10 @@ export function resolvePreviewBoundaries(
     if (isNestedClip(pp)) continue; // trường hợp này đã chặn ở vòng trên
     if (flatPairs.some((fp) => fp.from === pp && fp.to === a)) {
       throw new Error(
-        `${tw}: clip "${a["id"]}" đã có transition phẳng với clip kề trước ` +
+        trKey(lookup, "nested.transitionFlatExists", { path: tw, id: String(a["id"]) },
+          `${tw}: clip "${a["id"]}" đã có transition phẳng với clip kề trước ` +
           "nên transition qua biên của nó luôn dính đoạn đen cuối (gap của xfade " +
-          "phẳng) — bỏ transition phẳng hoặc transition qua biên",
+          "phẳng) — bỏ transition phẳng hoặc transition qua biên"),
       );
     }
   }
@@ -1043,6 +1166,7 @@ export function applyPreviewLeafVisual(
   outerPlaceLo: number,
   outerPlaceHi: number,
   clippedLeft: boolean,
+  lookup?: I18nLookup,
 ): void {
   if (copy.kind === "audio") return; // audio không mang opacity, không fade
   const outerDuration = copy.duration;
@@ -1065,33 +1189,39 @@ export function applyPreviewLeafVisual(
     const T = isFadeIn ? boundary.fadeIn : boundary.fadeOut;
     if (copy.kind !== "video" && copy.kind !== "text") {
       throw new Error(
-        `clip lá "${copy.id}" (kind ${copy.kind}) nằm ở biên transition ` +
+        trKey(lookup, "nested.leafAtTransitionEdge", { id: copy.id, kind: copy.kind },
+          `clip lá "${copy.id}" (kind ${copy.kind}) nằm ở biên transition ` +
           "qua biên nhưng preview không áp opacity keyframes cho kind này — " +
-          "transition qua biên chỉ hỗ trợ clip lá video/text ở biên",
+          "transition qua biên chỉ hỗ trợ clip lá video/text ở biên"),
       );
     }
     if (hasOpKf) {
       throw new Error(
-        `clip lá "${copy.id}" vừa có keyframes opacity vừa dính ` +
-          "transition qua biên — chưa hỗ trợ gộp fade biên với keyframes opacity sẵn có",
+        trKey(lookup, "nested.leafOpacityAndTransition", { id: copy.id },
+          `clip lá "${copy.id}" vừa có keyframes opacity vừa dính ` +
+          "transition qua biên — chưa hỗ trợ gộp fade biên với keyframes opacity sẵn có"),
       );
     }
     if (outerDuration < T - PREVIEW_EPS) {
       throw new Error(
-        `clip lá "${copy.id}" dài ${outerDuration}s, ngắn hơn transition ` +
-          `qua biên ${T}s — transition phải <= độ dài clip lá ở biên`,
+        trKey(lookup, "nested.leafShorterThanTransition",
+          { id: copy.id, n: String(outerDuration), t: String(T) },
+          `clip lá "${copy.id}" dài ${outerDuration}s, ngắn hơn transition ` +
+          `qua biên ${T}s — transition phải <= độ dài clip lá ở biên`),
       );
     }
     if (readTransField(copy, "transitionIn") || readTransField(copy, "transitionOut")) {
       throw new Error(
-        `clip lá "${copy.id}" vừa có transition trong project con vừa ` +
-          "dính transition qua biên — chưa hỗ trợ gộp 2 transition trên cùng clip lá",
+        trKey(lookup, "nested.leafInnerAndOuterTransition", { id: copy.id },
+          `clip lá "${copy.id}" vừa có transition trong project con vừa ` +
+          "dính transition qua biên — chưa hỗ trợ gộp 2 transition trên cùng clip lá"),
       );
     }
     if (isFadeIn && clippedLeft) {
       throw new Error(
-        `clip lá "${copy.id}" bị cửa sổ clip lồng nhau cắt trái nên ` +
-          "không giữ được transition qua biên — dời clip lá về đúng đầu cửa sổ hoặc bỏ transition",
+        trKey(lookup, "nested.leafCutLeft", { id: copy.id },
+          `clip lá "${copy.id}" bị cửa sổ clip lồng nhau cắt trái nên ` +
+          "không giữ được transition qua biên — dời clip lá về đúng đầu cửa sổ hoặc bỏ transition"),
       );
     }
     const keyframes = isFadeIn
@@ -1196,35 +1326,60 @@ export function resolveNestedRampCurve(
   curve: unknown,
   duration: number,
   label: string,
+  lookup?: I18nLookup,
 ): NestedRampInfo | null {
   if (curve === undefined) return null;
   const where = `${label}: speedKeyframes`;
   if (!isRecord(curve) || !Array.isArray(curve["keyframes"])) {
-    throw new Error(`${where} phải là object { keyframes: [...] }`);
+    throw new Error(
+      trKey(lookup, "curveErr.speedNotObject", { path: label },
+        `${where} phải là object { keyframes: [...] }`),
+    );
   }
   const arr = curve["keyframes"] as unknown[];
   if (arr.length === 0) {
-    throw new Error(`${where}.keyframes: mảng rỗng — cần ít nhất 1 keyframe`);
+    throw new Error(
+      trKey(lookup, "curveErr.speedEmpty", { path: label },
+        `${where}.keyframes: mảng rỗng — cần ít nhất 1 keyframe`),
+    );
   }
   if (arr.length > 128) {
-    throw new Error(`${where}.keyframes: quá 128 keyframe`);
+    throw new Error(
+      trKey(lookup, "curveErr.speedTooMany", { path: label },
+        `${where}.keyframes: quá 128 keyframe`),
+    );
   }
   const EASINGS = ["linear", "ease-in", "ease-out", "bezier"];
   for (let i = 0; i < arr.length; i++) {
     const kf = arr[i];
     const w = `${where}.keyframes[${i}]`;
-    if (!isRecord(kf)) throw new Error(`${w} phải là object { t, v, easing }`);
+    if (!isRecord(kf)) throw new Error(
+      trKey(lookup, "curveErr.kfNotObject", { path: w },
+        `${w} phải là object { t, v, easing }`),
+    );
     const t = kf["t"];
     const v = kf["v"];
     const easing = kf["easing"];
     if (typeof t !== "number" || !Number.isFinite(t) || t < 0 || t > duration + 1e-6) {
-      throw new Error(`${w}.t phải trong [0, ${duration}] (nhận được: ${JSON.stringify(t)})`);
+      throw new Error(
+        trKey(lookup, "curveErr.kfTOutOfRange",
+          { path: w, duration: String(duration), value: JSON.stringify(t) ?? "undefined" },
+          `${w}.t phải trong [0, ${duration}] (nhận được: ${JSON.stringify(t)})`),
+      );
     }
     if (typeof v !== "number" || !Number.isFinite(v) || v < 0.25 || v > 4) {
-      throw new Error(`${w}.v phải trong 0.25..4 (nhận được: ${JSON.stringify(v)})`);
+      throw new Error(
+        trKey(lookup, "curveErr.kfVRangeDots",
+          { path: w, min: "0.25", max: "4", value: JSON.stringify(v) ?? "undefined" },
+          `${w}.v phải trong 0.25..4 (nhận được: ${JSON.stringify(v)})`),
+      );
     }
     if (typeof easing !== "string" || !EASINGS.includes(easing)) {
-      throw new Error(`${w}.easing phải là linear | ease-in | ease-out | bezier (nhận được: ${JSON.stringify(easing)})`);
+      throw new Error(
+        trKey(lookup, "curveErr.kfEasing",
+          { path: w, value: JSON.stringify(easing) ?? "undefined" },
+          `${w}.easing phải là linear | ease-in | ease-out | bezier (nhận được: ${JSON.stringify(easing)})`),
+      );
     }
     if (easing === "bezier") {
       const b = kf["bezier"];
@@ -1234,7 +1389,10 @@ export function resolveNestedRampCurve(
         (b[0] as number) < 0 || (b[0] as number) > 1 ||
         (b[2] as number) < 0 || (b[2] as number) > 1
       ) {
-        throw new Error(`${w}.bezier phải là [x1, y1, x2, y2]: x1, x2 trong [0, 1], y1, y2 tự do`);
+        throw new Error(
+          trKey(lookup, "curveErr.kfBezierNoValue", { path: w },
+            `${w}.bezier phải là [x1, y1, x2, y2]: x1, x2 trong [0, 1], y1, y2 tự do`),
+        );
       }
     }
   }
@@ -1408,18 +1566,24 @@ function rescaleConstantCurve(
   curve: SpeedCurve,
   vOuter: number,
   label: string,
+  lookup?: I18nLookup,
 ): SpeedCurve {
   const ks = normalizeSpeedKeyframes(curve.keyframes);
   if (ks.length === 0) {
-    throw new Error(`${label}: không rescale được curve rỗng qua tốc độ hằng`);
+    throw new Error(
+      trKey(lookup, "nested.rescaleEmpty", { path: label },
+        `${label}: không rescale được curve rỗng qua tốc độ hằng`),
+    );
   }
   const axisLen = ks[ks.length - 1].t;
   const scaled = ks.map((k) => ({ ...k, t: k.t / vOuter, v: k.v * vOuter }));
   for (const k of scaled) {
     if (!Number.isFinite(k.v) || k.v < 0.25 - 1e-9 || k.v > 4 + 1e-9) {
       throw new Error(
-        `${label}: tốc độ hợp hai tầng = ${k.v} vượt khoảng 0.25..4 ` +
-          `(tốc độ trong × tốc độ ngoài hằng ${vOuter}) — render đợt 20 R1 từ chối`,
+        trKey(lookup, "nested.combinedSpeedOutOfRange",
+          { path: label, v: String(k.v), outer: String(vOuter) },
+          `${label}: tốc độ hợp hai tầng = ${k.v} vượt khoảng 0.25..4 ` +
+          `(tốc độ trong × tốc độ ngoài hằng ${vOuter}) — render đợt 20 R1 từ chối`),
       );
     }
   }
@@ -1467,10 +1631,13 @@ function flattenNested(
    * khi push vào sink (callback tự chuyển tiếp lên các tầng trên nữa).
    */
   postLeaf?: LeafPostFn,
+  /** Đợt 56 M5: lookup i18n tùy chọn (xem ghi chú I18nLookup ở đầu file). */
+  lookup?: I18nLookup,
 ): void {
   if (path.length >= MAX_NEST_DEPTH) {
     sink.skipped.push(
-      `nested "${nested.id}" vượt quá độ sâu ${MAX_NEST_DEPTH}, bỏ qua`,
+      trKey(lookup, "nested.failsoft.maxDepth", { id: nested.id, max: String(MAX_NEST_DEPTH) },
+        `nested "${nested.id}" vượt quá độ sâu ${MAX_NEST_DEPTH}, bỏ qua`),
     );
     return;
   }
@@ -1491,7 +1658,8 @@ function flattenNested(
     inPoint < 0
   ) {
     sink.skipped.push(
-      `nested "${nested.id}" có start/duration/in/speed không hợp lệ, bỏ qua`,
+      trKey(lookup, "nested.failsoft.invalidNested", { id: nested.id },
+        `nested "${nested.id}" có start/duration/in/speed không hợp lệ, bỏ qua`),
     );
     return;
   }
@@ -1505,6 +1673,7 @@ function flattenNested(
     (nested as Record<string, unknown>)["speedKeyframes"],
     nested.duration,
     nestedLabel,
+    lookup,
   );
   const isRamp = ramp !== null && !ramp.isConstant;
   if (
@@ -1512,13 +1681,15 @@ function flattenNested(
     (nested.speed < 0.25 || nested.speed > 4)
   ) {
     sink.skipped.push(
-      `${nestedLabel} có speed (${nested.speed}) ngoài 0.25..4 dù mang speedKeyframes, bỏ qua`,
+      trKey(lookup, "nested.failsoft.speedOutOfRange", { id: nested.id, speed: String(nested.speed) },
+        `${nestedLabel} có speed (${nested.speed}) ngoài 0.25..4 dù mang speedKeyframes, bỏ qua`),
     );
     return;
   }
   if (isRamp && (nested as Record<string, unknown>)["reverse"] === true) {
     throw new Error(
-      `${nestedLabel}: reverse ở clip lồng nhau có speedKeyframes chưa được hỗ trợ (render đợt 18 §5)`,
+      trKey(lookup, "nested.reverseSpeed", { path: nestedLabel },
+        `${nestedLabel}: reverse ở clip lồng nhau có speedKeyframes chưa được hỗ trợ (render đợt 18 §5)`),
     );
   }
   const effSpeed = ramp !== null && ramp.isConstant ? ramp.constantV : speed;
@@ -1530,7 +1701,9 @@ function flattenNested(
     (typeof opRaw !== "number" || !Number.isFinite(opRaw) || opRaw < 0 || opRaw > 1)
   ) {
     throw new Error(
-      `nested "${nested.id}": opacity phải là số trong khoảng 0..1, nhận được: ${JSON.stringify(opRaw)}`,
+      trKey(lookup, "nested.opacityRange",
+        { id: nested.id, value: JSON.stringify(opRaw) ?? "undefined" },
+        `nested "${nested.id}": opacity phải là số trong khoảng 0..1, nhận được: ${JSON.stringify(opRaw)}`),
     );
   }
   const boundary = ctx ?? { opacityMul: 1, shiftIn: 0, fadeIn: 0, fadeOut: 0 };
@@ -1609,6 +1782,7 @@ function flattenNested(
       track["clips"] as unknown[],
       trackKind,
       `nested "${nested.id}"`,
+      lookup,
     );
     for (const s of innerBoundary.skipped) sink.skipped.push(s);
     // R3 (đợt 20): cặp transition NỘI BỘ giữa 2 lá phẳng trên track con
@@ -1671,13 +1845,15 @@ function flattenNested(
       if (isNestedClip(raw)) {
         if (childPath.includes((raw as { id: string }).id)) {
           sink.skipped.push(
-            `nested "${(raw as { id: string }).id}" tạo chu trình (id đã có trong ${childPath.join(" > ")}), bỏ qua`,
+            trKey(lookup, "nested.failsoft.cycle",
+              { id: (raw as { id: string }).id, path: childPath.join(" > ") },
+              `nested "${(raw as { id: string }).id}" tạo chu trình (id đã có trong ${childPath.join(" > ")}), bỏ qua`),
           );
           continue;
         }
         // U3: normalize TRƯỚC khi đệ quy — nested con dạng subSpec/trim
         // hay tracks cũ đều về một dạng; mâu thuẫn thì throw (không nuốt).
-        const norm = normalizeNestedClip(raw);
+        const norm = normalizeNestedClip(raw, lookup);
         // T1 (đợt 21): hai tầng đều có curve nay ĐƯỢC HỢP qua chuỗi
         // postLeaf (mirror render đợt 20 R1), không còn throw như đợt
         // 18 §5. Placement của lá đã đúng qua childMap hợp thành nên
@@ -1731,7 +1907,7 @@ function flattenNested(
                     leafOut: Number.isFinite(copy.out)
                       ? (copy.out as number)
                       : undefined,
-                  });
+                  }, lookup);
                   const hadOut = Number.isFinite(copy.out);
                   copy = {
                     ...copy,
@@ -1769,6 +1945,7 @@ function flattenNested(
                       copy.speedKeyframes,
                       effSpeed,
                       `nested "${nested.id}"`,
+                      lookup,
                     ),
                   };
                 }
@@ -1784,7 +1961,7 @@ function flattenNested(
         flattenNested(norm, childMap, seqLo, seqHi, childPath, sink, [...parentStack, iti], {
           opacityMul: effMul,
           ...innerCtx,
-        }, childPost);
+        }, childPost, lookup);
       } else if (trackKind === "adjustment" || isAdjustmentLayer(raw)) {
         // U3: legacy normalize ở entry — scope host track (hoặc không
         // scope nếu là track adjustment chuyên biệt), không còn xét
@@ -1795,7 +1972,10 @@ function flattenNested(
           legacyLayerScope(trackKind, iti),
         );
         if (!adj) {
-          sink.skipped.push(`adjustment trong nested "${nested.id}" không hợp lệ, bỏ qua`);
+          sink.skipped.push(
+            trKey(lookup, "nested.failsoft.invalidNestedAdjustment", { id: nested.id },
+              `adjustment trong nested "${nested.id}" không hợp lệ, bỏ qua`),
+          );
           continue;
         }
         const aLo = Math.max(adj.start, seqLo);
@@ -1845,9 +2025,11 @@ function flattenNested(
           const refusal = nestedRampLeafRefusal(raw as Record<string, unknown>);
           if (refusal !== null) {
             throw new Error(
-              `clip lá "${raw.id}" (${raw.kind}) dưới clip lồng nhau có ` +
+              trKey(lookup, "nested.leafUnderNestedRefusal",
+                { id: String(raw.id), kind: String(raw.kind), refusal },
+                `clip lá "${raw.id}" (${raw.kind}) dưới clip lồng nhau có ` +
                 `speedKeyframes mà mang ${refusal} — hợp thành thời gian ` +
-                `phi tuyến chưa được hỗ trợ (render đợt 18 §5), không phẳng lệch`,
+                `phi tuyến chưa được hỗ trợ (render đợt 18 §5), không phẳng lệch`),
             );
           }
           if (raw.speedKeyframes !== undefined) {
@@ -1860,16 +2042,20 @@ function flattenNested(
             // hàm hợp ĐÚNG (tích phân) chứ không từ curve đã mã hoá.
             if (raw.kind !== "video" && raw.kind !== "audio") {
               throw new Error(
-                `clip lá "${raw.id}" (${raw.kind}) dưới clip lồng nhau có ` +
+                trKey(lookup, "nested.leafUnderNestedNonMedia",
+                  { id: String(raw.id), kind: String(raw.kind) },
+                  `clip lá "${raw.id}" (${raw.kind}) dưới clip lồng nhau có ` +
                   `speedKeyframes mà mang speedKeyframes — hợp curve chỉ hỗ trợ ` +
-                  `lá video/audio có trục nguồn (render đợt 20 R1)`,
+                  `lá video/audio có trục nguồn (render đợt 20 R1)`),
               );
             }
             if (!Number.isFinite(raw.in)) {
               throw new Error(
-                `clip lá "${raw.id}" (${raw.kind}) dưới clip lồng nhau có ` +
+                trKey(lookup, "nested.leafUnderNestedNoIn",
+                  { id: String(raw.id), kind: String(raw.kind) },
+                  `clip lá "${raw.id}" (${raw.kind}) dưới clip lồng nhau có ` +
                   `speedKeyframes mà mang speedKeyframes nhưng thiếu in hữu hạn ` +
-                  `— không neo được trục nguồn để hợp (render đợt 20 R1)`,
+                  `— không neo được trục nguồn để hợp (render đợt 20 R1)`),
               );
             }
             const composed = composeTwoLevelCurve({
@@ -1883,7 +2069,7 @@ function flattenNested(
               leafOut: Number.isFinite(raw.out)
                 ? (raw.out as number)
                 : undefined,
-            });
+            }, lookup);
             const segLo =
               nestedRampTauOffset(ramp, cLo - inPoint) - composed.startOffset;
             const segHi =
@@ -1897,9 +2083,10 @@ function flattenNested(
             ).keyframes;
             if (slicedTwo.length === 0) {
               throw new Error(
-                `clip lá "${raw.id}" dưới clip lồng nhau có speedKeyframes: ` +
+                trKey(lookup, "nested.leafSpeedKeyframesComposed", { id: String(raw.id) },
+                  `clip lá "${raw.id}" dưới clip lồng nhau có speedKeyframes: ` +
                   `không slice được curve hợp hai tầng cho đoạn khả kiến của lá ` +
-                  `— đoạn suy biến, không đoán`,
+                  `— đoạn suy biến, không đoán`),
               );
             }
             copy.speedKeyframes = { keyframes: slicedTwo };
@@ -1925,16 +2112,19 @@ function flattenNested(
             ).keyframes;
             if (sliced.length === 0) {
               throw new Error(
-                `clip lá "${raw.id}" dưới clip lồng nhau có speedKeyframes: ` +
-                  `không slice được curve cho đoạn output của lá — đoạn suy biến, không đoán`,
+                trKey(lookup, "nested.leafSpeedKeyframesSlice", { id: String(raw.id) },
+                  `clip lá "${raw.id}" dưới clip lồng nhau có speedKeyframes: ` +
+                  `không slice được curve cho đoạn output của lá — đoạn suy biến, không đoán`),
               );
             }
             const scaled = sliced.map((k) => ({ ...k, v: k.v * c }));
             for (const k of scaled) {
               if (k.v < 0.25 - 1e-9 || k.v > 4 + 1e-9) {
                 throw new Error(
-                  `clip lá "${raw.id}": tốc độ lá (${c}) × curve lồng nhau ` +
-                    `vượt khoảng 0.25..4 (keyframe v = ${k.v}) — render đợt 18 §5 từ chối`,
+                  trKey(lookup, "nested.leafSpeedProduct",
+                    { id: String(raw.id), a: String(c), v: String(k.v) },
+                    `clip lá "${raw.id}": tốc độ lá (${c}) × curve lồng nhau ` +
+                    `vượt khoảng 0.25..4 (keyframe v = ${k.v}) — render đợt 18 §5 từ chối`),
                 );
               }
             }
@@ -1965,11 +2155,13 @@ function flattenNested(
               raw.speedKeyframes,
               raw.duration,
               `clip lá "${raw.id}"`,
+              lookup,
             );
             if (leafRamp === null) {
               throw new Error(
-                `clip lá "${raw.id}": không resolve được speedKeyframes riêng ` +
-                  `dưới clip lồng nhau tốc độ hằng — không đoán`,
+                trKey(lookup, "nested.leafNoOwnCurve", { id: String(raw.id) },
+                  `clip lá "${raw.id}": không resolve được speedKeyframes riêng ` +
+                  `dưới clip lồng nhau tốc độ hằng — không đoán`),
               );
             }
             const cut = cLo - effStart;
@@ -1981,14 +2173,16 @@ function flattenNested(
             ).keyframes;
             if (slicedLeaf.length === 0) {
               throw new Error(
-                `clip lá "${raw.id}" dưới clip lồng nhau tốc độ hằng: ` +
-                  `không slice được curve riêng cho đoạn khả kiến — đoạn suy biến, không đoán`,
+                trKey(lookup, "nested.leafConstSpeed", { id: String(raw.id) },
+                  `clip lá "${raw.id}" dưới clip lồng nhau tốc độ hằng: ` +
+                  `không slice được curve riêng cho đoạn khả kiến — đoạn suy biến, không đoán`),
               );
             }
             copy.speedKeyframes = rescaleConstantCurve(
               { keyframes: slicedLeaf },
               effSpeed,
               `clip lá "${raw.id}"`,
+              lookup,
             );
             delete copy.speed;
             const leafCurve: SpeedCurve = { keyframes: leafRamp.keyframes };
@@ -2094,6 +2288,7 @@ function flattenNested(
           map.toOuter(placeLo - bShift),
           map.toOuter(placeHi - bShift),
           effStart < seqLo - PREVIEW_EPS,
+          lookup,
         );
         // T1: chuỗi hợp tầng ngoài (nếu nested này nằm dưới nested
         // khác). Đoạn output của lá ở tầng này: ramp thì qua τ, hằng
@@ -2129,7 +2324,8 @@ function flattenNested(
         });
       } else {
         sink.skipped.push(
-          `clip trong nested "${nested.id}" không nhận dạng được, bỏ qua`,
+          trKey(lookup, "nested.failsoft.unknownNestedClip", { id: nested.id },
+            `clip trong nested "${nested.id}" không nhận dạng được, bỏ qua`),
         );
       }
     }
@@ -2147,7 +2343,7 @@ function flattenNested(
   // mảng/track được giữ nguyên (xem LIMITS).
   if (nested.subSpecLayers) {
     for (const layer of nested.subSpecLayers) {
-      const win = convertCanonicalLayer(layer, `nested "${nested.id}".subSpec`);
+      const win = convertCanonicalLayer(layer, `nested "${nested.id}".subSpec`, lookup);
       const aLo = Math.max(win.start, seqLo);
       const aHi = Math.min(win.start + win.duration, seqHi);
       if (aHi <= aLo) continue;
@@ -2167,7 +2363,7 @@ function flattenNested(
  * Clip tầng ngoài giữ nguyên object (không copy); clip trong nested là copy
  * đã chỉnh start/duration/in. Clip nested/adjustment không còn trong kết quả.
  */
-export function flattenForPreview(input: FlattenSpecInput): FlattenResult {
+export function flattenForPreview(input: FlattenSpecInput, lookup?: I18nLookup): FlattenResult {
   const sink: FlattenSink = { clips: [], adjustments: [], skipped: [] };
   const plainShifts = new Map<unknown, number>();
   const identity: TimeMap = {
@@ -2185,17 +2381,18 @@ export function flattenForPreview(input: FlattenSpecInput): FlattenResult {
       track["clips"] as unknown[],
       trackKind,
       `track "${typeof track["id"] === "string" ? track["id"] : ti}"`,
+      lookup,
     );
     for (const s of outerBoundary.skipped) sink.skipped.push(s);
     for (const [clip, shift] of outerBoundary.plainShift) plainShifts.set(clip, shift);
     for (const raw of track["clips"] as unknown[]) {
       if (isNestedClip(raw)) {
         // U3: normalize trước khi flatten (subSpec/trim hay tracks cũ).
-        const norm = normalizeNestedClip(raw);
+        const norm = normalizeNestedClip(raw, lookup);
         flattenNested(norm, identity, -Infinity, Infinity, [], sink, [ti], {
           opacityMul: 1,
           ...(outerBoundary.nestedInfo.get(raw) ?? { ...ZERO_BOUNDARY }),
-        });
+        }, undefined, lookup);
       } else if (trackKind === "adjustment" || isAdjustmentLayer(raw)) {
         // U3: legacy normalize ở entry (scope host track / không scope).
         const adj = readAdjustment(
@@ -2212,7 +2409,10 @@ export function flattenForPreview(input: FlattenSpecInput): FlattenResult {
             trackStack: [ti],
           });
         } else {
-          sink.skipped.push(`adjustment tầng ngoài không hợp lệ, bỏ qua`);
+          sink.skipped.push(
+            trKey(lookup, "nested.failsoft.invalidOuterAdjustment", {},
+              `adjustment tầng ngoài không hợp lệ, bỏ qua`),
+          );
         }
       } else if (isLeafClip(raw)) {
         // R3: clip phẳng tầng ngoài bị dịch sớm bởi cặp biên — copy rồi
@@ -2232,7 +2432,10 @@ export function flattenForPreview(input: FlattenSpecInput): FlattenResult {
           trackStack: [ti],
         });
       } else {
-        sink.skipped.push(`clip tầng ngoài không nhận dạng được, bỏ qua`);
+        sink.skipped.push(
+          trKey(lookup, "nested.failsoft.unknownOuterClip", {},
+            `clip tầng ngoài không nhận dạng được, bỏ qua`),
+        );
       }
     }
   }
@@ -2245,10 +2448,13 @@ export function flattenForPreview(input: FlattenSpecInput): FlattenResult {
   // chính thứ tự đó là thứ tự áp (khớp render).
   if (input.adjustmentLayers !== undefined) {
     if (!Array.isArray(input.adjustmentLayers)) {
-      throw new Error(`flattenForPreview: spec.adjustmentLayers phải là một mảng (nếu có)`);
+      throw new Error(
+        trKey(lookup, "nested.flattenAdjLayers", {},
+          `flattenForPreview: spec.adjustmentLayers phải là một mảng (nếu có)`),
+      );
     }
     for (const layer of input.adjustmentLayers) {
-      const win = convertCanonicalLayer(layer, `spec`);
+      const win = convertCanonicalLayer(layer, `spec`, lookup);
       sink.adjustments.push({
         ...win,
         nestedPath: [],
@@ -2348,11 +2554,12 @@ export const PREVIEW_SUPPORTED_EFFECTS = new Set([
  */
 export const SKIPPED_EFFECT_REASONS: Record<string, string> = {};
 
-/** Lý do bỏ qua cho 1 effect type (type lạ → lý do "chưa biết"). */
-export function skippedEffectReason(type: string): string {
+/** Lý do bỏ qua cho 1 effect type (type lạ → lý do "chưa biết"). Đợt 57 N4: lookup tùy chọn (mẫu trKey của M5). Đợt 59 P3: truyền `{type}` cho trKey để lý do nêu đúng tên type (key `nested.failsoft.unknownEffectType` đã có `{type}` trong dict sau khi parent gộp fragment P3 cuối đợt 59). Parent gộp đợt 59 cũng đổi fallback không-lookup thành chuỗi ráp từ `type` cho nhất quán với dict (khuyến nghị P3 §5.1 #2) — xem LIMITS đợt 59 P3 §2 + LIMITS tổng hợp đợt 59. */
+export function skippedEffectReason(type: string, lookup?: I18nLookup): string {
   return (
     SKIPPED_EFFECT_REASONS[type] ??
-    "type chưa biết, không có đường vẽ trong preview"
+    trKey(lookup, "nested.failsoft.unknownEffectType", { type },
+      `type "${type}" chưa biết, không có đường vẽ trong preview`)
   );
 }
 
@@ -2400,6 +2607,7 @@ export function adjustmentAppliesToClip(
     trackStack?: number[];
   },
   clip: ClipScope,
+  lookup?: I18nLookup,
 ): boolean {
   // nestedPath thiếu (AdjustmentWindow thô, chưa qua flatten) = tầng ngoài.
   const adjPath = adj.nestedPath ?? [];
@@ -2413,13 +2621,15 @@ export function adjustmentAppliesToClip(
   if (scope === undefined) return true; // không scope = mọi track
   if (!Array.isArray(scope)) {
     throw new Error(
-      `adjustmentAppliesToClip: scopeTracks phải là một mảng các chỉ số track`,
+      trKey(lookup, "nested.adjScopeNotArray", {},
+        `adjustmentAppliesToClip: scopeTracks phải là một mảng các chỉ số track`),
     );
   }
   for (const t of scope) {
     if (typeof t !== "number" || !Number.isInteger(t) || t < 0) {
       throw new Error(
-        `adjustmentAppliesToClip: scopeTracks chứa chỉ số không hợp lệ: ${JSON.stringify(t)}`,
+        trKey(lookup, "nested.adjScopeBadIndex", { value: JSON.stringify(t) ?? "undefined" },
+          `adjustmentAppliesToClip: scopeTracks chứa chỉ số không hợp lệ: ${JSON.stringify(t)}`),
       );
     }
   }
@@ -2485,6 +2695,7 @@ export function applyAdjustmentPreview(
   layers: AdjustmentWindow[],
   time: number,
   clipScope?: ClipScope,
+  lookup?: I18nLookup,
 ): AdjustmentPreviewFilter {
   const active = layers.filter(
     (l) =>
@@ -2493,7 +2704,7 @@ export function applyAdjustmentPreview(
       l.duration > 0 &&
       time >= l.start &&
       time < l.start + l.duration &&
-      (clipScope === undefined || adjustmentAppliesToClip(l, clipScope)),
+      (clipScope === undefined || adjustmentAppliesToClip(l, clipScope, lookup)),
   );
   const lutChain: string[] = [];
   // U3: chuỗi LUT đầy đủ, không chỉ LUT đơn cuối: clip có thể đã mang
@@ -2556,7 +2767,7 @@ export function applyAdjustmentPreview(
     color,
     effects: merged,
     skippedEffects,
-    skippedReasons: skippedEffects.map((t) => skippedEffectReason(t)),
+    skippedReasons: skippedEffects.map((t) => skippedEffectReason(t, lookup)),
     activeLayerIds: active.map((l) => l.id),
     adjustmentActive: active.length > 0,
   };
@@ -2576,6 +2787,17 @@ function splitClipByAdjustments(
   clip: LeafClipInput,
   adjustments: AdjustmentWindow[],
   clipScope?: ClipScope,
+  lookup?: I18nLookup,
+  /**
+   * Đợt 58 O3: collector tùy chọn — thu `skippedReasons` của
+   * `applyAdjustmentPreview` để `buildPreviewSpecDetailed` trả lên UI
+   * (badge/toast preview). Không truyền thì hành vi cũ (bỏ ngay sau khi
+   * tính) giữ nguyên; mọi caller cũ gọi 4 tham số vẫn xanh.
+   * Đợt 61 R8: collector nay là `SkippedReasonsCollector` — ngoài chuỗi
+   * lý do còn thu `skippedByClip` song song (mỗi entry: clipId + type +
+   * reason + cửa sổ đoạn) để badge lọc theo clip đang ở frame hiện tại.
+   */
+  collect?: SkippedReasonsCollector,
 ): LeafClipInput[] {
   // U3: chỉ layer thỏa scope mới được cắt/gộp. Lọc TRƯỚC khi
   // tính điểm cắt — nếu không, clip ngoài scope layer vẫn bị cắt thành
@@ -2583,8 +2805,37 @@ function splitClipByAdjustments(
   const applicable =
     clipScope === undefined
       ? adjustments
-      : adjustments.filter((a) => adjustmentAppliesToClip(a, clipScope));
-  if (applicable.length === 0) return [clip];
+      : adjustments.filter((a) => adjustmentAppliesToClip(a, clipScope, lookup));
+  if (applicable.length === 0) {
+    // Đợt 59 P3 (đóng nợ đợt 58 §6.3): trước đây return ngay nên effect lạ
+    // trên clip không có layer nào áp không bao giờ sinh skippedReasons
+    // (dù applyAdjustmentPreview vẫn tính được skip từ chính clip.effects).
+    // Khi caller thu lý do (collect) thì chạy 1 lần applyAdjustmentPreview
+    // với layers rỗng để thu skippedReasons của riêng clip; không có
+    // collector thì vẫn return nhanh như cũ (không tốn thêm cho caller cũ).
+    // Thời gian lấy midpoint của clip (không còn layer nào để xét thời gian).
+    if (collect !== undefined) {
+      const merged = applyAdjustmentPreview(clip, [], clip.start + clip.duration / 2, clipScope, lookup);
+      for (let i = 0; i < merged.skippedEffects.length; i++) {
+        collect.skippedReasons.push(merged.skippedReasons[i]);
+        // Đợt 61 R8: attribution song song — cửa sổ là cả clip (không
+        // có layer nào cắt); reason lấy cùng chỉ số nên khớp từng chuỗi
+        // với skippedReasons (cùng map từ skippedEffects).
+        // Đợt 62 R6: clipId là key INSTANCE (scopedClipId): lá nested
+        // trong 2 instance khác nhau thì attribution tách nhau dù cùng
+        // leaf id (đóng nợ R8 §5.5); clip tầng ngoài (nestedPath [])
+        // thì key = đúng clip.id, không đổi.
+        collect.skippedByClip?.push({
+          clipId: scopedClipId(clipScope?.nestedPath, clip.id),
+          type: merged.skippedEffects[i],
+          reason: merged.skippedReasons[i],
+          start: clip.start,
+          duration: clip.duration,
+        });
+      }
+    }
+    return [clip];
+  }
   const s0 = clip.start;
   const e0 = clip.start + clip.duration;
   const cuts = new Set<number>([s0, e0]);
@@ -2642,7 +2893,27 @@ function splitClipByAdjustments(
         }
       }
     }
-    const merged = applyAdjustmentPreview(clip, adjustments, (s + e) / 2, clipScope);
+    // Đợt 57 N4: truyền lookup xuống applyAdjustmentPreview để
+    // skippedReasons dịch theo locale (trước đây rớt lookup ở đây).
+    const merged = applyAdjustmentPreview(clip, adjustments, (s + e) / 2, clipScope, lookup);
+    // Đợt 58 O3: thu lý do effect bị bỏ qua khi caller yêu cầu (xem
+    // tham số `collect`); không có collector thì vẫn bỏ như cũ.
+    // Đợt 61 R8: thu attribution song song — cửa sổ là ĐOẠN này (s, e),
+    // không phải cả clip: layer chỉ phủ 1 phần clip thì chỉ đoạn phủ
+    // mới skip type đó (badge chỉ hiện lý do khi playhead trong đoạn).
+    if (collect !== undefined) {
+      for (let i = 0; i < merged.skippedEffects.length; i++) {
+        collect.skippedReasons.push(merged.skippedReasons[i]);
+        // Đợt 62 R6: clipId là key INSTANCE (xem nhánh không-layer trên).
+        collect.skippedByClip?.push({
+          clipId: scopedClipId(clipScope?.nestedPath, clip.id),
+          type: merged.skippedEffects[i],
+          reason: merged.skippedReasons[i],
+          start: s,
+          duration: e - s,
+        });
+      }
+    }
     if (merged.adjustmentActive) {
       const filter: Record<string, unknown> = { ...(clip.filter ?? {}) };
       if (merged.lutChain.length > 0) {
@@ -2664,19 +2935,240 @@ function splitClipByAdjustments(
 }
 
 /**
+ * Đợt 58 O3 — kết quả đầy đủ của việc dựng spec preview: ngoài spec đã
+ * phẳng còn trả `skipped` (lý do flatten bỏ qua lá/nested — từ
+ * `FlattenResult.skipped`, đã dedupe giữ thứ tự) và `skippedReasons`
+ * (lý do effect bị bỏ qua — từ `applyAdjustmentPreview`, đã dedupe giữ
+ * thứ tự). Cả hai đều là chuỗi đã dịch theo `lookup` (không lookup →
+ * fallback VI, mẫu trKey của M5/N4).
+ *
+ * Giới hạn trung thực: `skippedReasons` chỉ sinh cho spec đi qua flatten
+ * (có nested hoặc adjustment — `buildPreviewSpecDetailed` trả đúng object
+ * cũ kèm skipped rỗng khi spec phẳng không có gì để làm phẳng, khóa O3 §B').
+ * Spec phẳng mang effect lạ được đường vẽ từng frame phát hiện thay cho
+ * đường flatten (xem `frameSkippedEffectTypes` trong previewEngine.ts +
+ * badge preview ở preview.tsx — đợt 59 P3). Đợt 59 P3 đã đóng giới hạn cũ
+ * "chỉ sinh khi có layer adjustment": `splitClipByAdjustments` nay thu
+ * skippedReasons cả khi không có layer nào áp lên clip (kể cả layer có
+ * nhưng scope không áp); lý do nêu đúng tên type qua `{type}` của key
+ * `nested.failsoft.unknownEffectType` (fragment P3, parent gộp cuối đợt).
+ * Đợt 60 Q6 đóng nốt giới hạn "spec phẳng → skippedReasons rỗng":
+ * early-return nay gọi `flatSpecSkippedReasons` (quét clip lá tầng ngoài
+ * bằng đúng classifier của đường flatten) nên tầng lib cũng đủ cho spec
+ * phẳng — early-return + identity spec KHÔNG đổi, khóa O3 §B' vẫn xanh.
+ * Ngược lại, đường vẽ từng frame vẫn giữ console.warn (`warnSkippedEffects`)
+ * song song với badge — console là kênh debug, badge là kênh user thấy.
+ */
+export interface BuildPreviewSpecDetailedResult {
+  spec: VideoSpec;
+  skipped: string[];
+  skippedReasons: string[];
+  /**
+   * Đợt 61 R8 — attribution theo clip cho `skippedReasons` (cùng thứ tự
+   * thu, đã dedupe trùng hệt): mỗi entry là 1 lý do của 1 clip/đoạn.
+   * `skippedReasons` (chuỗi spec-wide) GIỮ NGUYÊN — field này chỉ bổ
+   * sung để badge lọc theo clip đang ở frame hiện tại / clip không vẽ
+   * được (decoder tụt, thiếu media); xem `visibleSkippedReasons`.
+   * Cùng clip mang 2 type lạ → 2 entry; 2 clip cùng type → 2 entry
+   * trong khi `skippedReasons` dedupe còn 1 chuỗi.
+   */
+  skippedReasonsByClip: SkippedReasonAttribution[];
+}
+
+/** Dedupe giữ thứ tự xuất hiện đầu tiên (badge/toast không spam trùng). */
+function dedupeStrings(items: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const s of items) {
+    if (!seen.has(s)) {
+      seen.add(s);
+      out.push(s);
+    }
+  }
+  return out;
+}
+
+/**
+ * Đợt 61 R8 — attribution theo clip cho một lý do effect bị bỏ qua
+ * (đóng nợ đợt 60 §5.8 = LIMITS Q6 §5.1: badge spec-wide hiện lý do cả
+ * khi playhead ngoài clip, và khi decoder tụt thì lý do lib vẫn hiện).
+ *
+ * `reason` là đúng chuỗi đã dịch của `skippedReasons` (cùng classifier +
+ * cùng lookup nên badge hợp nhất không đếm trùng); `start`/`duration`
+ * là cửa sổ clip trong timeline của spec preview ĐÃ PHẲNG (lá nested
+ * đã chỉnh start/duration theo vị trí ngoài; đoạn bị cắt theo
+ * adjustment thì cửa sổ là đoạn đó, không phải cả clip).
+ *
+ * MỞ RỘNG contract kiểu cộng thêm (không phá vỡ): `skippedReasons:
+ * string[]` của O3/N4 GIỮ NGUYÊN nội dung + ngữ nghĩa; field mới
+ * `skippedReasonsByClip` chỉ BỔ SUNG để badge lọc theo clip đang ở
+ * frame hiện tại / clip không vẽ được (xem `visibleSkippedReasons`).
+ */
+export interface SkippedReasonAttribution {
+  /**
+   * Key INSTANCE của clip mang effect bị bỏ (không phải leaf id trần).
+   * Đợt 62 R6: `scopedClipId(nestedPath, leafId)` — clip tầng ngoài thì
+   * = leaf id; lá nested thì = "nA/leaf-1" (chuỗi nested bao ngoài +
+   * leaf id) để 2 instance cùng leaf id tách nhau (đóng nợ R8 §5.5).
+   * Phía vẽ đối chiếu bằng đúng key này qua `previewClipInstanceKey`
+   * (dấu `__vcutInstanceKey` trên clip spec phẳng) + tập
+   * `tickSkippedClipIds` (cũng lưu key instance từ đợt này).
+   */
+  clipId: string;
+  /** Type effect bị bỏ (vd "weird-xyz"). */
+  type: string;
+  /** Lý do đã dịch (cùng chuỗi với `skippedReasons`). */
+  reason: string;
+  /** Cửa sổ clip/đoạn trong timeline spec preview đã phẳng (giây). */
+  start: number;
+  duration: number;
+}
+
+/**
+ * Đợt 61 R8 — collector của `splitClipByAdjustments`: ngoài
+ * `skippedReasons` (chuỗi, như O3) còn thu `skippedByClip` song song
+ * (mỗi entry ứng với 1 lý do của 1 clip/đoạn). Không truyền
+ * `skippedByClip` thì chỉ thu chuỗi như cũ (tương thích ngược).
+ */
+export interface SkippedReasonsCollector {
+  skippedReasons: string[];
+  skippedByClip?: SkippedReasonAttribution[];
+}
+
+/** Dedupe attribution trùng hệt (cùng clipId + type + cửa sổ), giữ thứ tự. */
+function dedupeAttributions(items: SkippedReasonAttribution[]): SkippedReasonAttribution[] {
+  const seen = new Set<string>();
+  const out: SkippedReasonAttribution[] = [];
+  for (const a of items) {
+    const key = `${a.clipId}\0${a.type}\0${a.start}\0${a.duration}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      out.push(a);
+    }
+  }
+  return out;
+}
+
+/**
+ * Đợt 61 R8 — lý do lib CHỈ của clip đang ở frame `t` và đã vẽ được:
+ * cửa sổ chứa `t` (nửa mở `[start, start+duration)`) VÀ clipId không
+ * nằm trong `notDrawnClipIds` (tick trước không vẽ được: decoder tụt
+ * hoặc thiếu media — nguyên nhân khi đó không phải type effect).
+ * Cùng reason từ 2 clip thì chỉ cần 1 clip vẽ được là reason vẫn hiện.
+ * `attributions` rỗng/undefined → `[]` (phòng thủ, không crash).
+ * Dùng ở badge preview (preview.tsx); toast vẫn key theo tập spec-wide
+ * để không spam khi scrub playhead (xem LIMITS R8 §1).
+ */
+export function visibleSkippedReasons(
+  attributions: readonly SkippedReasonAttribution[] | undefined,
+  t: number,
+  notDrawnClipIds?: ReadonlySet<string>,
+): string[] {
+  const out: string[] = [];
+  if (!attributions) return out;
+  for (const a of attributions) {
+    if (notDrawnClipIds?.has(a.clipId)) continue;
+    if (t < a.start || t >= a.start + a.duration) continue;
+    if (!out.includes(a.reason)) out.push(a.reason);
+  }
+  return out;
+}
+
+/**
+ * Đợt 60 Q6 — đóng nợ đợt 59 P3 §5.3: `skippedReasons` tầng lib cho spec
+ * phẳng (không nested/adjustment, không qua flatten).
+ *
+ * Quét clip lá tầng ngoài, gọi đúng `applyAdjustmentPreview(clip, [],
+ * midpoint, scope, lookup)` như nhánh không-layer của
+ * `splitClipByAdjustments` (đợt 59 P3) — cùng classifier 16 type chuẩn,
+ * cùng lookup, nên lý do khớp với đường flatten từng chuỗi (badge hợp
+ * nhất 2 nguồn không đếm trùng). Chỉ clip có `effects` mới tốn 1 lần
+ * gọi (spec không effect nào chỉ tốn vòng quét — early-return vẫn rẻ);
+ * clip không phải leaf (thiếu id, duration <= 0) bị bỏ qua lặng lẽ như
+ * đường flatten. Kết quả dedupe giữ thứ tự.
+ *
+ * Early-return của `buildPreviewSpecDetailed` / `buildPreviewSpecFailsoft`
+ * GIỮ NGUYÊN (trả đúng object spec cũ, `skipped` rỗng) — chỉ
+ * `skippedReasons` nay có giá trị khi spec phẳng mang effect lạ. Khóa
+ * O3 §B' không vỡ: fixture của nó là clip phẳng không effect nên vẫn
+ * trả `[]`; test P3 §C boundary được cập nhật cùng lúc (xem LIMITS Q6).
+ *
+ * Đợt 61 R8: hàm này nay suy ra từ `flatSpecSkippedAttributions`
+ * (cùng vòng quét, cùng classifier) nên chuỗi lý do khớp từng chuỗi
+ * với attribution — badge lọc theo clip không lệch với `skippedReasons`.
+ */
+export function flatSpecSkippedReasons(spec: VideoSpec, lookup?: I18nLookup): string[] {
+  return dedupeStrings(flatSpecSkippedAttributions(spec, lookup).map((a) => a.reason));
+}
+
+/**
+ * Đợt 61 R8 — bản có attribution của `flatSpecSkippedReasons`: mỗi
+ * entry là 1 lý do của 1 clip lá tầng ngoài (clipId + type + reason +
+ * cửa sổ clip). Cùng clip mang 2 type lạ → 2 entry; 2 clip cùng type
+ * → 2 entry (mỗi clip 1) trong khi `skippedReasons` dedupe còn 1.
+ */
+export function flatSpecSkippedAttributions(spec: VideoSpec, lookup?: I18nLookup): SkippedReasonAttribution[] {
+  const out: SkippedReasonAttribution[] = [];
+  const input = spec as unknown as FlattenSpecInput;
+  const tracks = input.tracks ?? [];
+  for (let ti = 0; ti < tracks.length; ti++) {
+    const t = tracks[ti];
+    if (!isRecord(t) || !Array.isArray(t["clips"])) continue;
+    if (t["kind"] === "adjustment") continue;
+    const scope: ClipScope = { nestedPath: [], trackStack: [ti] };
+    for (const raw of t["clips"] as unknown[]) {
+      if (isNestedClip(raw) || isAdjustmentLayer(raw)) continue;
+      if (!isLeafClip(raw)) continue;
+      const clip = raw as LeafClipInput;
+      if (!Array.isArray(clip.effects) || clip.effects.length === 0) continue;
+      const merged = applyAdjustmentPreview(
+        clip,
+        [],
+        clip.start + clip.duration / 2,
+        scope,
+        lookup,
+      );
+      for (let i = 0; i < merged.skippedEffects.length; i++) {
+        out.push({
+          clipId: clip.id,
+          type: merged.skippedEffects[i],
+          reason: merged.skippedReasons[i],
+          start: clip.start,
+          duration: clip.duration,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/**
  * Spec dùng cho preview: nested đã phẳng, adjustment đã gộp vào clip qua
  * cắt đoạn (đoạn ngoài cửa sổ adjustment giữ nguyên filter gốc).
- * Không có nested/adjustment thì trả ĐÚNG object spec cũ (không copy).
+ * Không có nested/adjustment thì trả ĐÚNG object spec cũ (không copy)
+ * kèm skipped/skippedReasons rỗng.
  * Spec gốc không bị sửa: mọi clip bị cắt/gộp đều là copy.
  * U3: spec đầu ra KHÔNG còn field `adjustmentLayers` — layer chuẩn đã
  * gộp vào clip, giữ field lại sẽ khiến code nào đọc field đó áp layer
  * lần thứ hai (double-apply). Track adjustment chuyên biệt cũng bị bỏ
  * khỏi đầu ra như trước (layer của nó đã gộp vào clip).
+ *
+ * Đợt 58 O3: tách từ `buildPreviewSpec` cũ — thân hàm cũ giữ nguyên
+ * từng dòng, chỉ thêm việc thu `flat.skipped` + `skippedReasons` qua
+ * collector của `splitClipByAdjustments`. `buildPreviewSpec` nay chỉ là
+ * wrapper mỏng trả `.spec` nên mọi caller cũ không đổi hành vi.
+ * Đợt 60 Q6: "skippedReasons rỗng" ở early-return dưới đây CHỈ còn đúng
+ * khi spec phẳng không mang effect lạ — xem `flatSpecSkippedReasons`.
  */
-export function buildPreviewSpec(spec: VideoSpec): VideoSpec {
+export function buildPreviewSpecDetailed(
+  spec: VideoSpec,
+  lookup?: I18nLookup,
+): BuildPreviewSpecDetailedResult {
   const input = spec as unknown as FlattenSpecInput;
-  if (!hasNestedOrAdjustment(input)) return spec;
-  const flat = flattenForPreview(input);
+  if (!hasNestedOrAdjustment(input)) return { spec, skipped: [], skippedReasons: flatSpecSkippedReasons(spec, lookup), skippedReasonsByClip: flatSpecSkippedAttributions(spec, lookup) };
+  const flat = flattenForPreview(input, lookup);
+  const skipped = dedupeStrings(flat.skipped);
+  const collect: SkippedReasonsCollector = { skippedReasons: [], skippedByClip: [] };
   const adjustments: AdjustmentWindow[] = flat.adjustments;
   const outTracks: Track[] = [];
   for (let ti = 0; ti < spec.tracks.length; ti++) {
@@ -2695,7 +3187,7 @@ export function buildPreviewSpec(spec: VideoSpec): VideoSpec {
       // thuộc scope layer (layer chuẩn xét tracks tầng ngoài; layer
       // legacy host xét đúng track host).
       const scope: ClipScope = { nestedPath: [], trackStack: [ti] };
-      for (const seg of splitClipByAdjustments(base, adjustments, scope)) {
+      for (const seg of splitClipByAdjustments(base, adjustments, scope, lookup, collect)) {
         kept.push(seg as unknown as Clip);
       }
     }
@@ -2717,8 +3209,14 @@ export function buildPreviewSpec(spec: VideoSpec): VideoSpec {
         nestedPath: f.nestedPath,
         trackStack: f.trackStack,
       };
-      for (const seg of splitClipByAdjustments(f.clip, adjustments, scope)) {
-        segs.push(seg as unknown as Clip);
+      for (const seg of splitClipByAdjustments(f.clip, adjustments, scope, lookup, collect)) {
+        // Đợt 62 R6: đóng dấu key instance lên đoạn lá nested trong spec
+        // phẳng — phía vẽ (drawVideoClip/drawImageClip, collectActives,
+        // frameSkippedEffectTypes) đọc đúng key này qua
+        // `previewClipInstanceKey` để attribution + tickSkipped tách
+        // theo instance (2 instance cùng leaf id không còn lẫn nhau).
+        // stamp* luôn copy mới nên không sửa clip gốc của flatten.
+        segs.push(stampPreviewInstanceKey(seg, f.nestedPath) as unknown as Clip);
       }
     }
     segs.sort((a, b) => a.start - b.start);
@@ -2732,7 +3230,22 @@ export function buildPreviewSpec(spec: VideoSpec): VideoSpec {
   // U3: bỏ `adjustmentLayers` khỏi spec đầu ra (đã gộp vào clip).
   const { adjustmentLayers: _dropped, ...rest } = spec as unknown as Record<string, unknown>;
   void _dropped;
-  return { ...rest, tracks: outTracks } as VideoSpec;
+  return {
+    spec: { ...rest, tracks: outTracks } as VideoSpec,
+    skipped,
+    skippedReasons: dedupeStrings(collect.skippedReasons),
+    skippedReasonsByClip: dedupeAttributions(collect.skippedByClip ?? []),
+  };
+}
+
+/**
+ * Wrapper mỏng giữ API cũ: chỉ trả spec (bỏ skipped/skippedReasons).
+ * Mọi caller cũ (`preview.tsx` dùng `buildPreviewSpecFailsoft`, test J1…)
+ * không đổi hành vi; ai cần lý do bỏ qua thì dùng
+ * `buildPreviewSpecDetailed` / `buildPreviewSpecFailsoft`.
+ */
+export function buildPreviewSpec(spec: VideoSpec, lookup?: I18nLookup): VideoSpec {
+  return buildPreviewSpecDetailed(spec, lookup).spec;
 }
 
 
@@ -2749,7 +3262,7 @@ export function buildPreviewSpec(spec: VideoSpec): VideoSpec {
 // wrapper `buildPreviewSpecFailsoft` dưới đây, chỉ bắt lỗi ở tầng
 // preview, từng nested riêng lẻ:
 //
-// - Đường nhanh: `buildPreviewSpec` toàn spec thành công → trả nguyên
+// - Đường nhanh: `buildPreviewSpecDetailed` toàn spec thành công → trả nguyên
 //   spec đó, warnings rỗng (hành vi cũ, không tốn thêm lần flatten).
 // - Đường chậm (chỉ khi đường nhanh throw): cô lập từng nested tầng
 //   ngoài, flatten riêng từng cái. Nested lành giữ nguyên ramp đúng.
@@ -2764,6 +3277,9 @@ export function buildPreviewSpec(spec: VideoSpec): VideoSpec {
 //   lỗi ngoài phạm vi curve của nested.
 // - Spec gốc không bị sửa: mọi sanitize đều chạy trên bản clone của
 //   nested lỗi; nested lành đi qua đường flatten gốc, không qua clone.
+// - Đợt 58 O3: kết quả còn mang `skipped` / `skippedReasons` (lý do
+//   flatten/effect bị bỏ qua, đã dedupe) để UI hiển thị cùng badge +
+//   toast với warnings — xem `BuildPreviewSpecFailsoftResult`.
 // - LƯU Ý RENDER: fallback 1× chỉ cứu PREVIEW. Render vẫn fail-fast
 //   theo luật render (đợt 18 §5, đợt 20 R1) — project vi phạm vẫn
 //   không export được cho tới khi user sửa curve thật. Xem
@@ -2784,6 +3300,33 @@ export interface PreviewFailsoftWarning {
 export interface BuildPreviewSpecFailsoftResult {
   spec: VideoSpec;
   warnings: PreviewFailsoftWarning[];
+  /**
+   * Đợt 58 O3: lý do flatten bỏ qua (từ `FlattenResult.skipped`, đã
+   * dedupe giữ thứ tự) — trước đây `buildPreviewSpec` bỏ ngay sau khi
+   * flatten nên preview không bao giờ thấy. Đường nhanh lấy từ
+   * `buildPreviewSpecDetailed`; đường chậm gom từ từng lần flatten
+   * riêng lẻ thành công (nested bị drop thì không có flat để gom —
+   * warning của nó đã đủ).
+   */
+  skipped: string[];
+  /**
+   * Đợt 58 O3: lý do effect bị bỏ qua (từ `applyAdjustmentPreview`,
+   * đã dedupe giữ thứ tự). Đợt 59 P3: sinh cho mọi clip đi qua flatten,
+   * kể cả khi không có layer nào áp (xem `BuildPreviewSpecDetailedResult`).
+   * Đợt 60 Q6: spec phẳng cũng sinh (qua `flatSpecSkippedReasons` ở
+   * early-return) — early-return + identity spec giữ nguyên.
+   */
+  skippedReasons: string[];
+  /**
+   * Đợt 61 R8 — attribution theo clip cho `skippedReasons` (xem
+   * `BuildPreviewSpecDetailedResult.skippedReasonsByClip`): cùng nội
+   * dung lý do, thêm clipId + cửa sổ trong timeline spec preview đã
+   * phẳng, để badge lọc theo clip đang ở frame hiện tại / clip không
+   * vẽ được. Đường chậm gom từ bản detailed của track phẳng + từng
+   * nested riêng lẻ thành công (nested bị drop thì không có attribution
+   * — warning của nó đã đủ).
+   */
+  skippedReasonsByClip: SkippedReasonAttribution[];
 }
 
 /** Curve tuyến tính 1× hằng trên toàn bộ duration của clip mang nó. */
@@ -2890,18 +3433,20 @@ function stripNestedSpec(input: FlattenSpecInput): FlattenSpecInput {
   };
 }
 
-export function buildPreviewSpecFailsoft(spec: VideoSpec): BuildPreviewSpecFailsoftResult {
+export function buildPreviewSpecFailsoft(spec: VideoSpec, lookup?: I18nLookup): BuildPreviewSpecFailsoftResult {
   const input = spec as unknown as FlattenSpecInput;
-  if (!hasNestedOrAdjustment(input)) return { spec, warnings: [] };
+  if (!hasNestedOrAdjustment(input)) return { spec, warnings: [], skipped: [], skippedReasons: flatSpecSkippedReasons(spec, lookup), skippedReasonsByClip: flatSpecSkippedAttributions(spec, lookup) };
   try {
-    return { spec: buildPreviewSpec(spec), warnings: [] };
+    // Đợt 58 O3: đường nhanh qua bản detailed để giữ skipped/skippedReasons.
+    const detailed = buildPreviewSpecDetailed(spec, lookup);
+    return { spec: detailed.spec, warnings: [], skipped: detailed.skipped, skippedReasons: detailed.skippedReasons, skippedReasonsByClip: detailed.skippedReasonsByClip };
   } catch (firstError) {
     // Không phải lỗi nested-curve thì ném lại lỗi gốc, không nuốt:
     // (a) layer chuẩn cấp project không hợp lệ (flatten validate layer
     // trước cả nested), (b) spec không có nested tầng ngoài nào.
     try {
       if (Array.isArray(input.adjustmentLayers)) {
-        for (const layer of input.adjustmentLayers) convertCanonicalLayer(layer, "spec");
+        for (const layer of input.adjustmentLayers) convertCanonicalLayer(layer, "spec", lookup);
       }
     } catch {
       throw firstError;
@@ -2917,13 +3462,28 @@ export function buildPreviewSpecFailsoft(spec: VideoSpec): BuildPreviewSpecFails
     // Track phẳng của spec cuối: lấy từ spec đã lược nested. Nếu chính
     // spec lược nested còn throw thì lỗi không còn là lỗi từng nested
     // nữa → ném lại lỗi gốc (caller guard cuối sẽ hiện spec gốc).
+    // Đợt 58 O3: dùng bản detailed để giữ skipped/skippedReasons của
+    // track phẳng (ví dụ transition đầu track bị bỏ).
     let base: VideoSpec;
+    let baseSkipped: string[];
+    let baseSkippedReasons: string[];
+    let baseSkippedReasonsByClip: SkippedReasonAttribution[];
     try {
-      base = buildPreviewSpec(stripNestedSpec(input) as unknown as VideoSpec);
+      const baseDetailed = buildPreviewSpecDetailed(stripNestedSpec(input) as unknown as VideoSpec, lookup);
+      base = baseDetailed.spec;
+      baseSkipped = baseDetailed.skipped;
+      baseSkippedReasons = baseDetailed.skippedReasons;
+      baseSkippedReasonsByClip = baseDetailed.skippedReasonsByClip;
     } catch {
       throw firstError;
     }
     const warnings: PreviewFailsoftWarning[] = [];
+    // Đợt 58 O3: gom skipped/skippedReasons từ từng lần flatten riêng
+    // lẻ thành công (xem BuildPreviewSpecFailsoftResult).
+    // Đợt 61 R8: gom attribution song song — khởi tạo từ track phẳng
+    // rồi từng nested riêng lẻ nối thêm qua slowCollect.skippedByClip.
+    const slowSkipped: string[] = [...baseSkipped];
+    const slowCollect: SkippedReasonsCollector = { skippedReasons: [...baseSkippedReasons], skippedByClip: [...baseSkippedReasonsByClip] };
     const byKind = new Map<string, Clip[]>();
     for (const target of targets) {
       const nestedId =
@@ -2932,18 +3492,18 @@ export function buildPreviewSpecFailsoft(spec: VideoSpec): BuildPreviewSpecFails
           : "?";
       let flat: FlattenResult;
       try {
-        flat = flattenForPreview(isolateNestedSpec(input, target));
+        flat = flattenForPreview(isolateNestedSpec(input, target), lookup);
       } catch (e) {
         const reason = failsoftErrorMessage(e);
         const pass1 = clonePlainValue(target);
         sanitizeNestedCurves(pass1, "invalid-only");
         try {
-          flat = flattenForPreview(isolateNestedSpec(input, target, pass1));
+          flat = flattenForPreview(isolateNestedSpec(input, target, pass1), lookup);
         } catch {
           const pass2 = clonePlainValue(target);
           sanitizeNestedCurves(pass2, "force-all");
           try {
-            flat = flattenForPreview(isolateNestedSpec(input, target, pass2));
+            flat = flattenForPreview(isolateNestedSpec(input, target, pass2), lookup);
           } catch (e3) {
             warnings.push({
               nestedId,
@@ -2958,6 +3518,9 @@ export function buildPreviewSpecFailsoft(spec: VideoSpec): BuildPreviewSpecFails
       // Lá của nested này, split theo adjustments của chính lần flatten
       // này (layer ngoài + layer trong nested này; scope lọc trong hàm).
       // Clip phẳng tầng ngoài trong spec cô lập bị bỏ (nestedPath []).
+      // Đợt 58 O3: gom skipped của lần flatten thành công này (bản đã
+      // sanitize nếu có) + skippedReasons qua collector.
+      for (const s of flat.skipped) slowSkipped.push(s);
       for (const f of flat.clips) {
         if (f.nestedPath.length === 0) continue;
         const scope: ClipScope = {
@@ -2965,8 +3528,11 @@ export function buildPreviewSpecFailsoft(spec: VideoSpec): BuildPreviewSpecFails
           trackStack: f.trackStack,
         };
         const arr = byKind.get(f.trackKind) ?? [];
-        for (const seg of splitClipByAdjustments(f.clip, flat.adjustments, scope)) {
-          arr.push(seg as unknown as Clip);
+        for (const seg of splitClipByAdjustments(f.clip, flat.adjustments, scope, lookup, slowCollect)) {
+          // Đợt 62 R6: đóng dấu key instance như đường detailed trên
+          // (failsoft đường chậm phải cho cùng key, nếu không badge ở
+          // spec lỗi-nested sẽ lẫn 2 instance cùng leaf id).
+          arr.push(stampPreviewInstanceKey(seg, f.nestedPath) as unknown as Clip);
         }
         byKind.set(f.trackKind, arr);
       }
@@ -2983,6 +3549,12 @@ export function buildPreviewSpecFailsoft(spec: VideoSpec): BuildPreviewSpecFails
     }
     const { adjustmentLayers: _dropped, ...rest } = spec as unknown as Record<string, unknown>;
     void _dropped;
-    return { spec: { ...rest, tracks: outTracks } as VideoSpec, warnings };
+    return {
+      spec: { ...rest, tracks: outTracks } as VideoSpec,
+      warnings,
+      skipped: dedupeStrings(slowSkipped),
+      skippedReasons: dedupeStrings(slowCollect.skippedReasons),
+      skippedReasonsByClip: dedupeAttributions(slowCollect.skippedByClip ?? []),
+    };
   }
 }

@@ -76,6 +76,31 @@ export const SPEED_V_MIN = 0.25;
 export const SPEED_V_MAX = 4;
 export const SPEED_KEYFRAMES_MAX = 128;
 
+/**
+ * Phase 9 đợt 56 M5 — lookup i18n tùy chọn, KHÔNG import `../i18n`
+ * trực tiếp: file này được test bằng Node type-stripping, mà Node
+ * không resolve JSON import của `i18n/index.ts`
+ * (ERR_IMPORT_ATTRIBUTE_MISSING, đã kiểm chứng 07/11) — cùng lý do
+ * header `formatSanitizeSummaryLocalized` đã nêu (xem LIMITS đợt 56
+ * M5). Khi `lookup` vắng → fallback đúng từng chữ chuỗi VI cũ nên
+ * test cũ + hành vi mặc định không đổi; ExportPanel truyền `t()` vào
+ * tham số `lookup` này để nhận chuỗi theo locale hiện tại. Key mới
+ * nằm trong `i18n/fragments/round56-m5.json` (parent merge vào
+ * vi.json/en.json cuối đợt 56); 3 key `speedCurve.*` tái dùng đã có
+ * sẵn trong vi.json/en.json (không nằm trong fragment).
+ */
+export type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
+
 const SPEED_EASINGS: readonly string[] = ["linear", "ease-in", "ease-out", "bezier"];
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -818,6 +843,7 @@ export function checkSpeedKeyframesRenderFatal(
   path: string,
   clipId: string,
   duration: number | undefined,
+  lookup?: I18nLookup,
 ): SpeedCurveWarning[] {
   const warn = (
     keyframeIndex: number | null,
@@ -826,36 +852,55 @@ export function checkSpeedKeyframesRenderFatal(
     message: string,
   ): SpeedCurveWarning => ({ path, clipId, keyframeIndex, field, value, message });
   if (!isRecord(curve) || !Array.isArray(curve["keyframes"])) {
-    return [warn(null, "keyframes", curve, "speedKeyframes phải là object { keyframes: [...] }.")];
+    return [warn(null, "keyframes", curve,
+      trKey(lookup, "speedCurve.shape", {},
+        "speedKeyframes phải là object { keyframes: [...] }."))];
   }
   const arr = curve["keyframes"] as unknown[];
   if (arr.length === 0) {
-    return [warn(null, "keyframes", arr, "speedKeyframes.keyframes: mảng rỗng — cần ít nhất 1 keyframe.")];
+    return [warn(null, "keyframes", arr,
+      trKey(lookup, "speedCurve.keyframesEmpty", {},
+        "speedKeyframes.keyframes: mảng rỗng — cần ít nhất 1 keyframe."))];
   }
   const out: SpeedCurveWarning[] = [];
   if (arr.length > SPEED_KEYFRAMES_MAX) {
-    out.push(warn(null, "keyframes", arr.length, `speedKeyframes.keyframes: quá ${SPEED_KEYFRAMES_MAX} keyframe (có ${arr.length}).`));
+    out.push(warn(null, "keyframes", arr.length,
+      trKey(lookup, "speedCurve.keyframesTooMany", { value: String(arr.length) },
+        `speedKeyframes.keyframes: quá ${SPEED_KEYFRAMES_MAX} keyframe (có ${arr.length}).`)));
   }
   for (let i = 0; i < arr.length; i++) {
     const kf = arr[i];
     const w = `${path}.speedKeyframes.keyframes[${i}]`;
     if (!isRecord(kf)) {
-      out.push(warn(i, "keyframes", kf, `${w} phải là object { t, v, easing }.`));
+      out.push(warn(i, "keyframes", kf,
+        trKey(lookup, "curveErr.kfNotObjectDot", { path: w },
+          `${w} phải là object { t, v, easing }.`)));
       continue;
     }
     const t = kf["t"];
     const v = kf["v"];
     const easing = kf["easing"];
     if (!isFiniteNum(t) || (t as number) < 0 || (duration !== undefined && (t as number) > duration + 1e-6)) {
-      out.push(warn(i, "t", t, `${w}.t phải trong [0, ${duration}] (nhận được: ${JSON.stringify(t)}).`));
+      out.push(warn(i, "t", t,
+        trKey(lookup, "curveErr.kfTOutOfRangeDot",
+          { path: w, duration: String(duration), value: JSON.stringify(t) ?? "undefined" },
+          `${w}.t phải trong [0, ${duration}] (nhận được: ${JSON.stringify(t)}).`)));
     }
     if (!isFiniteNum(v) || (v as number) < SPEED_V_MIN || (v as number) > SPEED_V_MAX) {
-      out.push(warn(i, "v", v, `${w}.v phải trong [${SPEED_V_MIN}, ${SPEED_V_MAX}] (nhận được: ${JSON.stringify(v)}).`));
+      out.push(warn(i, "v", v,
+        trKey(lookup, "curveErr.kfVRangeBrackets",
+          { path: w, min: String(SPEED_V_MIN), max: String(SPEED_V_MAX), value: JSON.stringify(v) ?? "undefined" },
+          `${w}.v phải trong [${SPEED_V_MIN}, ${SPEED_V_MAX}] (nhận được: ${JSON.stringify(v)}).`)));
     }
     if (typeof easing !== "string" || !SPEED_EASINGS.includes(easing)) {
-      out.push(warn(i, "easing", easing, `${w}.easing phải là linear | ease-in | ease-out | bezier (nhận được: ${JSON.stringify(easing)}).`));
+      out.push(warn(i, "easing", easing,
+        trKey(lookup, "curveErr.kfEasingDot",
+          { path: w, value: JSON.stringify(easing) ?? "undefined" },
+          `${w}.easing phải là linear | ease-in | ease-out | bezier (nhận được: ${JSON.stringify(easing)}).`)));
     } else if (easing === "bezier" && !isValidBezier(kf["bezier"])) {
-      out.push(warn(i, "bezier", kf["bezier"], `${w}.bezier phải là [x1, y1, x2, y2]: x1, x2 trong [0, 1], y1, y2 tự do.`));
+      out.push(warn(i, "bezier", kf["bezier"],
+        trKey(lookup, "curveErr.kfBezierNoValueDot", { path: w },
+          `${w}.bezier phải là [x1, y1, x2, y2]: x1, x2 trong [0, 1], y1, y2 tự do.`)));
     }
   }
   return out;
@@ -864,7 +909,7 @@ export function checkSpeedKeyframesRenderFatal(
 /** Quét mọi speedKeyframes trong spec, chỉ giữ vi phạm render chặn
  *  được (để ExportPanel chặn export sớm với thông báo cụ thể). Quét
  *  đệ quy qua subSpec như collectSpeedCurveWarnings. */
-export function collectRenderFatalSpeedWarnings(spec: unknown): SpeedCurveWarning[] {
+export function collectRenderFatalSpeedWarnings(spec: unknown, lookup?: I18nLookup): SpeedCurveWarning[] {
   const out: SpeedCurveWarning[] = [];
   const walk = (s: unknown, prefix: string, seen: Set<object>): void => {
     if (!isRecord(s) || seen.has(s as object)) return;
@@ -885,6 +930,7 @@ export function collectRenderFatalSpeedWarnings(spec: unknown): SpeedCurveWarnin
               clipPath,
               typeof c["id"] === "string" ? (c["id"] as string) : "?",
               isFiniteNum(c["duration"]) ? (c["duration"] as number) : undefined,
+              lookup,
             ),
           );
         }
@@ -904,21 +950,25 @@ export function collectRenderFatalSpeedWarnings(spec: unknown): SpeedCurveWarnin
  * Trả về null nếu không có vi phạm render-fatal. Liệt kê tối đa 5
  * warning đầu + câu tổng kết; cuối câu nhắc nút sửa (không tự sửa).
  */
-export function exportCurveBlockers(spec: unknown): string | null {
-  const fatal = collectRenderFatalSpeedWarnings(spec);
+export function exportCurveBlockers(spec: unknown, lookup?: I18nLookup): string | null {
+  const fatal = collectRenderFatalSpeedWarnings(spec, lookup);
   if (fatal.length === 0) return null;
-  return formatExportCurveError(fatal);
+  return formatExportCurveError(fatal, 5, lookup);
 }
 
 /** Định dạng thông báo chặn export từ danh sách warnings có cấu trúc. */
-export function formatExportCurveError(warnings: SpeedCurveWarning[], limit = 5): string {
+export function formatExportCurveError(warnings: SpeedCurveWarning[], limit = 5, lookup?: I18nLookup): string {
   const shown = warnings.slice(0, limit);
   const lines = shown.map((w) => `• ${formatSpeedCurveWarning(w)}`);
-  const rest = warnings.length > shown.length ? `\n• … và ${warnings.length - shown.length} vi phạm khác.` : "";
-  return (
-    `Không xuất được: curve tốc độ vi phạm, render sẽ từ chối project này:\n${lines.join("\n")}${rest}\n` +
-    `Bấm “Sửa curve vi phạm” để tự động sửa (có xác nhận trước, hoàn tác được), hoặc sửa tay trong Speed panel rồi xuất lại.`
-  );
+  const rest = warnings.length > shown.length
+    ? trKey(lookup, "curveFix.moreViolations", { n: String(warnings.length - shown.length) },
+        `\n• … và ${warnings.length - shown.length} vi phạm khác.`)
+    : "";
+  const head = trKey(lookup, "curveFix.exportBlockedHead", {},
+    `Không xuất được: curve tốc độ vi phạm, render sẽ từ chối project này:`);
+  const tail = trKey(lookup, "curveFix.exportBlockedTail", {},
+    `Bấm “Sửa curve vi phạm” để tự động sửa (có xác nhận trước, hoàn tác được), hoặc sửa tay trong Speed panel rồi xuất lại.`);
+  return `${head}\n${lines.join("\n")}${rest}\n${tail}`;
 }
 
 /** Tóm tắt kết quả sanitize để UI hiện sau khi user xác nhận sửa. */

@@ -6,11 +6,53 @@
 //
 // Mirror công thức intensity trong server/render/src/effects.js:
 //   sharpen: unsharp amount 0.2 + t*1.8, luma-only (chroma amount = 0),
-//     kernel 5×5. Ở đây: độ sáng Y qua Gaussian tách được [1,4,6,4,1]/16,
-//     delta Y cộng đều vào R,G,B (đợt 14 R6: KHỚP render, MAD 0.40–0.61,
-//     ≤8 = 99.5–100% trên pattern + tự nhiên, t = 0/0.25/0.5/1, 72×45 và
-//     144×90 — bản box-blur 3×3 RGB cũ lệch tới MAD 4.96 trên tự nhiên).
-//   noise: strength 5 + t*45 (nhiễu Gauss, xem § noise bên dưới)
+//     kernel 5×5. Ở đây: độ sáng Y bt709 qua Gaussian tách được
+//     [1,4,6,4,1]/16, delta Y cộng vào plane Y (không cộng thẳng vào
+//     R,G,B — đợt 65 S7: render unsharp chạy trên plane Y yuv420p nên áp
+//     delta trong không gian YUV mới đúng kẹp gamut; áp RGB cũ lệch ở
+//     biên màu bão hoà, delta std B 5.07 so với render 4.34 ở full-res).
+//     Luma tính bằng bt709 (0.2126/0.7152/0.0722), KHÔNG phải bt601
+//     (đợt 65 S7: step-edge profile của render khớp delta tính từ Y
+//     bt709; bản bt601 cũ cho MAD 0.29/0.50, bản bt709 cho 0.19/0.26 ở
+//     full-res pre-encode). Delta tính từ Y native ƯỚC LƯỢNG (Y_est,
+//     xem estimateNativeY) thay vì Y derived — Y native lệch Y derived
+//     tới ~+10-17 ở vùng bão hoà. Kernel nhị thức đã xác nhận bằng
+//     step-edge profile trực tiếp (render [-8,-38,37,7] vs nhị thức
+//     [-7.6,-37.8,37.8,7.6]; Gaussian σ=1.0 lệch rõ [-6.6,-36.1,36.1,
+//     6.6]). Đợt 66 T4 (HYB4): hybrid theo kênh — kênh kẹp (base ước
+//     lượng vượt gamut > 4) convert trực tiếp từ (Y_est + ΔY, est
+//     chroma k sharpen riêng 1.04/1.09), kênh trong gamut cộng delta
+//     vào plain RGB như S7 — lần đầu KHỚP render full-res pre-encode
+//     testsrc2 cả 2 mức (le8 99,8–99,9%) và KHỚP cả 3 cảnh tự nhiên
+//     (le8 100%; xem LIMITS đợt 66 T4).
+//     Đợt 14 R6: KHỚP render, MAD 0.40–0.61, ≤8 = 99.5–100%
+//     trên pattern + tự nhiên (bản box-blur 3×3 RGB cũ lệch tới MAD
+//     4.96). Vẫn XẤP XỈ ở viewport testsrc2 bản S7 cũ (le8 98.1–
+//     98.3% ở full-res pre-encode, 98.6% tốt nhất ở viewport CRF 0 —
+//     xem LIMITS đợt 65 S7); bản S8r mới chưa đo headed (xem LIMITS
+//     đợt 66 T4).
+//   noise: strength 5 + t*45 — nhiễu Gauss TRONG KHÔNG GIAN YUV
+//     (đợt 63 R8): render áp `noise=alls:allf=t` lên từng plane yuv420p
+//     (Y đủ phân giải, U/V nửa phân giải, nearest 2×2 khi lên RGB — đo
+//     thật bằng xung chroma, xem LIMITS đợt 63 R8), nên preview cũ cộng
+//     nhiễu độc lập từng kênh RGB cho sai tỉ lệ std kênh ([1,1,1] thay vì
+//     [2.14,1.30,2.41]×σ) và corr ≈ 0 thay vì [0.15,0.26,0.30].
+//     Đợt 65 S7 — mô phỏng chiếu gamut của YUV native: base YUV native
+//     của nguồn bão hoà nằm NGOÀI khối RGB (31% mẫu U/V chạm rails
+//     16/240, base qua RGB-roundtrip có 0% — đo đợt 64 R9), nên nhiễu
+//     cộng vào base native bị phép convert YUV→RGB chiếu bỏ phần hướng
+//     ra ngoài gamut; cộng nhiễu vào base derived (đã bị kéo vào trong
+//     gamut) thì nhiễu "còn chỗ" để hiện ra → std R/B thừa 34%/17%.
+//     Vì vậy addYuvNoise cộng nhiễu vào base chroma NATIVE ƯỚC LƯỢNG
+//     (estimateNativeChroma: giãn tuyến tính khỏi 128, kCb=1.04,
+//     kCr=1.12 — hiệu chuẩn trên frame 30 testsrc2, band KHỚP kV
+//     1.11–1.14, kiểm chứng trên desat/smptebars) rồi mới convert về
+//     RGB (kẹp Uint8ClampedArray thực hiện chiếu gamut). Y giữ base
+//     derived (Y native ≈ Y derived, 0% chạm rail; dùng Y_est cho noise
+//     làm kurt R tệ đi 1.06–1.25 — đo đợt 65 S7, đã loại). Kết quả
+//     pre-encode full-res: noise05+noise10 KHỚP-THỐNG-KÊ (tỉ lệ std
+//     1.01–1.05, Δkurt ≤0.34, Δcorr ≤0.06, 4 seed; delta mean lệch
+//     ≤1.1 mức so với render).
 //   rgb-shift: rh = +(2 + t*14)px, bh = -(2 + t*14)px, CẮT phần thập phân
 //     (trunc, không làm tròn) và điền vùng trống bằng NHÂN BIÊN
 //     (edge replication) — đo trực tiếp đợt 16 H5: render(8.5) == render(8),
@@ -179,27 +221,76 @@ export function applyPixelate(img: ImageDataLike, intensity: number): ImageDataL
   return img;
 }
 
-function luminance(r: number, g: number, b: number): number {
-  return 0.299 * r + 0.587 * g + 0.114 * b;
-}
-
 /**
  * Sharpen (unsharp, luma-only như render `unsharp=5:5:amount:5:5:0`):
- * out = src + amount*(Y - blurGaussian5x5(Y)), amount = 0.2 + t*1.8,
- * delta Y cộng đều vào R,G,B. Gaussian tách được [1,4,6,4,1]/16, biên
- * clamp-to-edge. Alpha giữ nguyên.
- * Đợt 14 R6 thay box-blur 3×3 RGB cũ (lệch tới MAD 4.96 trên nguồn tự
- * nhiên t=1): mô hình luma+Gaussian này KHỚP render trên 16 điểm đo
- * (pattern + tự nhiên, t = 0/0.25/0.5/1, 72×45 và 144×90): MAD 0.40–0.61,
- * ≤8 = 99.5–100% (ngưỡng V6/V11: MAD ≤ 2 và ≥ 99% pixel lệch ≤ 8).
- * Phần dư ~0.5 là làm tròn chuyển đổi YUV của FFmpeg, như pixelate 0.667.
+ * delta tính từ luma bt709 (Y của render là plane Y bt709, không phải
+ * luma bt601 — xem step-edge profile đợt 65 S7) qua Gaussian tách được
+ * [1,4,6,4,1]/16, rồi áp theo HYBRID từng kênh (đợt 66 T4): kênh nào
+ * base ước lượng R0_est vượt gamut > 4 mức thì convert trực tiếp từ
+ * (Y_est + ΔY, est chroma) — vì render cộng delta vào base native chưa
+ * kẹp, còn cộng vào plain RGB đã kẹp lệch đúng bằng độ vượt gamut;
+ * kênh trong gamut thì cộng delta vào plain RGB như S7 (base plain
+ * chính xác, direct mang sai số chroma-est). Delta tính từ Y native
+ * ước lượng (estimateNativeY) thay vì Y derived: Y native lệch Y
+ * derived tới ~+10-17 ở vùng bão hoà (đo frame 30 testsrc2). Chroma
+ * est dùng hằng số sharpen riêng (kCb = 1.04, kCr = 1.09 — hồi quy
+ * native-vs-derived, khác hằng số noise 1.04/1.12). Đo full-res
+ * pre-encode (probe2b/2c đợt 66 T4): testsrc2 KHỚP cả 2 mức
+ * (sharp05 MAD 0,074/le8 99,9%; sharp10 MAD 0,103/le8 99,8%), 3 cảnh
+ * tự nhiên KHỚP hết (le8 100%) — lần đầu sharpen KHỚP render trên mọi
+ * cảnh đo. Biên clamp-to-edge. Alpha giữ nguyên.
  */
 export function applySharpen(img: ImageDataLike, intensity: number): ImageDataLike {
   const amount = 0.2 + clamp01(intensity) * 1.8;
   const { width: w, height: h, data: d } = img;
-  const lum = new Float64Array(w * h);
+  const lum = new Float64Array(w * h); // luma bt709 0..255 (derived)
+  const lumY = new Float64Array(w * h); // Y limited-range 16..235
+  const CB = new Float64Array(w * h);
+  const CR = new Float64Array(w * h);
   for (let i = 0; i < w * h; i++) {
-    lum[i] = luminance(d[i * 4], d[i * 4 + 1], d[i * 4 + 2]);
+    const r = d[i * 4];
+    const g = d[i * 4 + 1];
+    const b = d[i * 4 + 2];
+    lum[i] = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    lumY[i] = 16 + (219 * lum[i]) / 255;
+    const [, cb, cr] = rgbToYuv709(r, g, b);
+    CB[i] = cb;
+    CR[i] = cr;
+  }
+  const cw = (w + 1) >> 1;
+  const ch = (h + 1) >> 1;
+  const estCb = new Float64Array(cw * ch);
+  const estCr = new Float64Array(cw * ch);
+  for (let cy = 0; cy < ch; cy++) {
+    for (let cx = 0; cx < cw; cx++) {
+      let sCb = 0;
+      let sCr = 0;
+      let n = 0;
+      for (let dy = 0; dy < 2; dy++) {
+        for (let dx = 0; dx < 2; dx++) {
+          const x = cx * 2 + dx;
+          const y = cy * 2 + dy;
+          if (x >= w || y >= h) continue;
+          const i = y * w + x;
+          sCb += CB[i];
+          sCr += CR[i];
+          n++;
+        }
+      }
+      const i = cy * cw + cx;
+      estCb[i] = estimateNativeChroma(sCb / n, SHARPEN_CHROMA_K_CB);
+      estCr[i] = estimateNativeChroma(sCr / n, SHARPEN_CHROMA_K_CR);
+    }
+  }
+  // Y native ước lượng từng pixel (để tính delta như render trên Y
+  // native), dùng est chroma của khối chứa pixel đó.
+  const lumEst = new Float64Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      const ci = (y >> 1) * cw + (x >> 1);
+      lumEst[i] = estimateNativeY(lumY[i], estCb[ci], estCr[ci]);
+    }
   }
   const K = [1, 4, 6, 4, 1];
   const at = (x: number, y: number, arr: Float64Array): number => {
@@ -212,7 +303,7 @@ export function applySharpen(img: ImageDataLike, intensity: number): ImageDataLi
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       let s = 0;
-      for (let dx = -2; dx <= 2; dx++) s += K[dx + 2] * at(x + dx, y, lum);
+      for (let dx = -2; dx <= 2; dx++) s += K[dx + 2] * at(x + dx, y, lumEst);
       tmp[y * w + x] = s / 16;
     }
   }
@@ -224,11 +315,35 @@ export function applySharpen(img: ImageDataLike, intensity: number): ImageDataLi
     }
   }
   for (let i = 0; i < w * h; i++) {
-    const delta = amount * (lum[i] - blur[i]);
     const p = i * 4;
-    d[p] += delta;
-    d[p + 1] += delta;
-    d[p + 2] += delta;
+    const ci = (((i / w) | 0) >> 1) * cw + ((i % w) >> 1);
+    const deltaY = amount * (lumEst[i] - blur[i]);
+    // Đợt 66 T4 (HYB4): hybrid theo từng kênh. Base tốt nhất của render
+    // là R0 (YUV native chưa kẹp); ta có 2 ước lượng của nó: plain
+    // (chính xác tuyệt đối khi trong gamut, sai khi kẹp) và R0_est =
+    // YUV2RGB(Y_est, estCb, estCr) (sai ~±5 do sai số chroma-est, nhưng
+    // không kẹp). Với mỗi kênh:
+    //   - excess_est = |R0_est − biên| > 4 → kênh kẹp: dùng direct
+    //     out = clip(R0_est + ΔY_direct); delta-add ở đây lệch đúng
+    //     bằng độ vượt gamut (tới ~20 mức).
+    //   - ngược lại → dùng delta-add out = clip(plain + ΔY_add) như
+    //     S7: base plain chính xác, direct mang sai số chroma-est.
+    // Ngưỡng 4 ≈ sai số base của direct (probe2c: HYB4 tốt hơn HYB0
+    // cả testsrc2 lẫn ocean; ocean HYB0 le8 99,4% → HYB4 100%).
+    // Đo full-res pre-encode (probe2b/2c): testsrc2 sharp05 MAD 0,074/
+    // le8 99,9%, sharp10 0,103/99,8% (S7: 0,182/98,3% và 0,235/97,4%;
+    // S8r: 0,355/99,4% và 0,366/99,3%); 3 cảnh tự nhiên KHỚP hết
+    // (le8 100%, MAD 0,56–0,87 — bằng hoặc tốt hơn S7). Lần đầu
+    // sharpen KHỚP render trên mọi cảnh đo, cả 2 mức.
+    const deltaAdd = 1.164383 * (clamp255Byte(lumY[i] + deltaY) - lumY[i]);
+    const [r0, g0, b0] = yuv709ToRgb(lumEst[i], estCb[ci], estCr[ci]);
+    const deltaDirect = 1.164383 * (clamp255Byte(lumEst[i] + deltaY) - lumEst[i]);
+    const r0c = [r0, g0, b0];
+    const plainC = [d[p], d[p + 1], d[p + 2]];
+    for (let c = 0; c < 3; c++) {
+      const excess = r0c[c] > 255 ? r0c[c] - 255 : r0c[c] < 0 ? -r0c[c] : 0;
+      d[p + c] = clamp255Byte(excess > 4 ? r0c[c] + deltaDirect : plainC[c] + deltaAdd);
+    }
   }
   return img;
 }
@@ -460,6 +575,216 @@ export function gaussianGenerator(rnd: () => number): () => number {
 }
 
 /**
+ * Noise trong không gian YUV (đợt 63 R8) — mirror filter `noise` của
+ * FFmpeg trong pipeline render yuv420p thật.
+ *
+ * Đo thật bằng FFmpeg 8.1.2 (probe /tmp/r63-noise-probe.mjs, phẳng 128,
+ * bt709, alls=28/50): nhiễu render là Gauss từng plane, σ_plane ≈
+ * 0.97–0.98 × alls/√3 (kurtosis ≈ 0, tương quan giữa các plane ≈ 0),
+ * U/V ở nửa phân giải, và khi convert yuv420p→rgb24 swscale lấy mẫu
+ * chroma NEAREST theo khối 2×2 (xung U đơn lẻ cho footprint đúng 2×2,
+ * biên độ đầy đủ — không phải bilinear). Vì vậy σ = strength/√3 ở đây
+ * dùng đúng lý thuyết (lệch std ~2–3% so với render, trong ngưỡng).
+ *
+ * Hệ quả trong RGB (đo được): std từng kênh ≈ [2.14, 1.30, 2.41]×σ
+ * (R = 1.164·Y + 1.793·V, G = 1.164·Y − 0.213·U − 0.534·V,
+ * B = 1.164·Y + 2.115·U — hệ số khuếch đại của nhiễu plane), tương
+ * quan chéo kênh RG/RB/GB ≈ [0.15, 0.26, 0.30] (nhiễu Y chung cho cả
+ * 3 kênh). Mô hình RGB cũ (3 kênh độc lập, std bằng nhau, corr ≈ 0)
+ * sai cả 2 dấu hiệu này — đó chính là LỆCH-THỐNG-KÊ đợt 62 R8 đo được.
+ *
+ * Ma trận BT.709 limited-range (studio swing), khớp swscale của render
+ * cho nguồn HD: Y = 16 + 219·Y′, Cb = 128 + 224·Cb, Cr = 128 + 224·Cr
+ * với Y′ = 0.2126R + 0.7152G + 0.0722B (0..1). Chuyển đổi float cả 2
+ * chiều; roundtrip không nhiễu có MAD < 1 (test). Plane được kẹp
+ * 0..255 sau khi cộng nhiễu (av_clip_uint8 của filter) — chính kẹp này
+ * làm kurtosis phình ở vùng bão hòa (đợt 62 R8 §3.2), không phải lỗi
+ * mô hình; RGB cuối kẹp bởi Uint8ClampedArray.
+ *
+ * Thứ tự rút RNG xác định (cùng seed → cùng ảnh): nhiễu Cb rồi Cr theo
+ * từng mẫu chroma (row-major), rồi nhiễu Y từng pixel (row-major).
+ * Chroma: 1 mẫu cho khối 2×2 (cx = x>>1, cy = y>>1); khung lẻ dùng
+ * ceil(w/2)×ceil(h/2) mẫu.
+ */
+function rgbToYuv709(r: number, g: number, b: number): [number, number, number] {
+  const yl = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  const y = 16 + 219 * yl;
+  const cb = 128 + (224 * 0.5 * (b / 255 - yl)) / (1 - 0.0722);
+  const cr = 128 + (224 * 0.5 * (r / 255 - yl)) / (1 - 0.2126);
+  return [y, cb, cr];
+}
+
+function yuv709ToRgb(y: number, cb: number, cr: number): [number, number, number] {
+  const yy = 1.164383 * (y - 16);
+  const r = yy + 1.79274 * (cr - 128);
+  const g = yy - 0.21325 * (cb - 128) - 0.53282 * (cr - 128);
+  const b = yy + 2.1122 * (cb - 128);
+  return [r, g, b];
+}
+
+/**
+ * Ước lượng base YUV native từ base RGB-derived (đợt 65 S7, mô phỏng
+ * chiếu gamut). Base YUV native của nguồn bão hoà nằm ngoài khối RGB:
+ * khi decode về RGB, các giá trị ngoài gamut bị kẹp vào mặt khối, rồi
+ * convert ngược lại YUV cho ra base "derived" bị kéo vào trong rails
+ * (đo frame 30 testsrc2: native có ~31% mẫu U/V chạm rails 16/240,
+ * derived có 0%). Hồi quy tuyến tính native ≈ 128 + k·(derived − 128)
+ * với kCb ≈ 1.04, kCr ≈ 1.09 (đo trực tiếp); kCr hiệu chuẩn thực nghiệm
+ * lên 1.12 vì nó cho KHỚP-THỐNG-KÊ ở cả noise05 lẫn noise10 (band KHỚP
+ * kV 1.11–1.14; kV=1.10 lệch kurt R 0.36, kV=1.15 lệch 0.53 — đo
+ * probe5). Hệ số này là xấp xỉ theo nội dung (đã kiểm chứng khái quát
+ * trên desat 0.3 và smptebars — đều KHỚP), không phải hằng số vật lý.
+ * Với màu trong gamut (derived xa rails), giãn chỉ đổi base vài mức và
+ * không ảnh hưởng thống kê (kẹp [0,255] hiếm khi chạm).
+ */
+export const NATIVE_CHROMA_K_CB = 1.04;
+export const NATIVE_CHROMA_K_CR = 1.12;
+
+/**
+ * Hằng số giãn chroma RIÊNG cho sharpen (đợt 66 T4, S8r): kCb = 1.04,
+ * kCr = 1.09 — hồi quy tuyến tính native-vs-derived theo khối 2×2 trên
+ * frame 30 testsrc2 (U: a = 1,042/b = −5,86; V: a = 1,092/b = −12,43,
+ * probe1). KHÁC hằng số noise (1.04/1.12): noise cần kCr = 1.12 để khớp
+ * thống kê chiếu gamut (band KHỚP 1.11–1.14, S7); sharpen convert TRỰC
+ * TIẾP từ (Y_est, est chroma) nên cần base chính xác nhất theo hồi quy
+ * — kCr = 1.12 làm delta MAD tăng 0,355 → 0,523 trên testsrc2 (probe2).
+ * Trên nội dung tự nhiên, hồi quy cho k ≈ 1,00–1,03 và thống kê noise
+ * không nhạy với k trong [1,00, 1,15] (probe3, mọi k đều KHỚP y hệt),
+ * nên k sharpen 1,09 không gây hại ở đó; sharpen trên 3 cảnh tự nhiên
+ * vẫn KHỚP (le8 99,9–100%, probe2/3).
+ */
+export const SHARPEN_CHROMA_K_CB = 1.04;
+export const SHARPEN_CHROMA_K_CR = 1.09;
+
+function estimateNativeChroma(derived: number, k: number): number {
+  const e = 128 + k * (derived - 128);
+  return e < 16 ? 16 : e > 240 ? 240 : e;
+}
+
+function clamp255Byte(v: number): number {
+  return v < 0 ? 0 : v > 255 ? 255 : v;
+}
+
+/**
+ * Offset Y (thang 16..235) giữa Y native và Y derived, ước lượng từ
+ * độ vượt gamut của RGB tính từ (Y derived, chroma native ước lượng):
+ * Y_native − Y_derived ≈ Σ w_c·(RGB_est − clip(RGB_est)) với w là hệ
+ * số luma bt709 (0.2126/0.7152/0.0722), đổi thang ×219/255. Dấu đúng cả
+ * 2 chiều (R vượt 255 → offset dương; G âm → offset âm). Độ chính xác
+ * trên frame 30 testsrc2: mean|Y_est − Y_native| = 1.12 (Y derived
+ * chưa sửa: 2.67), signed mean −1.00. Chỉ dùng cho sharpen (tính delta);
+ * dùng cho noise làm kurt R tệ đi (đo đợt 65 S7, đã loại).
+ */
+function nativeLumaOffset(yDerived: number, cbEst: number, crEst: number): number {
+  const [r, g, b] = yuv709ToRgb(yDerived, cbEst, crEst);
+  let off = 0;
+  if (r > 255) off += 0.2126 * (r - 255);
+  else if (r < 0) off += 0.2126 * r;
+  if (g > 255) off += 0.7152 * (g - 255);
+  else if (g < 0) off += 0.7152 * g;
+  if (b > 255) off += 0.0722 * (b - 255);
+  else if (b < 0) off += 0.0722 * b;
+  return off * (219 / 255);
+}
+
+function estimateNativeY(yDerived: number, cbEst: number, crEst: number): number {
+  const o1 = nativeLumaOffset(yDerived, cbEst, crEst);
+  const o2 = nativeLumaOffset(yDerived + o1, cbEst, crEst);
+  return yDerived + (o1 + o2) / 2;
+}
+
+/** Cộng nhiễu Gauss không gian YUV vào ảnh (in-place). strength = alls. */
+export function addYuvNoise(img: ImageDataLike, strength: number, seed: number): ImageDataLike {
+  const { width: w, height: h, data: d } = img;
+  const sigma = strength / Math.sqrt(3);
+  const gauss = gaussianGenerator(mulberry32(seed));
+  const cw = (w + 1) >> 1;
+  const ch = (h + 1) >> 1;
+  // Base YUV từng pixel (derived từ RGB đã decode).
+  const Y = new Float64Array(w * h);
+  const CB = new Float64Array(w * h);
+  const CR = new Float64Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    const [yy, cb, cr] = rgbToYuv709(d[i * 4], d[i * 4 + 1], d[i * 4 + 2]);
+    Y[i] = yy;
+    CB[i] = cb;
+    CR[i] = cr;
+  }
+  // Base chroma native ước lượng theo khối 2×2 (mean derived của khối),
+  // rồi cộng nhiễu vào base ĐÓ (đợt 65 S7 — mô phỏng chiếu gamut, xem
+  // estimateNativeChroma). Y giữ base derived (Y native ≈ Y derived,
+  // 0% chạm rail; dùng Y_est cho noise làm kurt R tệ đi).
+  const estCb = new Float64Array(cw * ch);
+  const estCr = new Float64Array(cw * ch);
+  const cbNoise = new Float64Array(cw * ch);
+  const crNoise = new Float64Array(cw * ch);
+  for (let cy = 0; cy < ch; cy++) {
+    for (let cx = 0; cx < cw; cx++) {
+      let sCb = 0;
+      let sCr = 0;
+      let n = 0;
+      for (let dy = 0; dy < 2; dy++) {
+        for (let dx = 0; dx < 2; dx++) {
+          const x = cx * 2 + dx;
+          const y = cy * 2 + dy;
+          if (x >= w || y >= h) continue;
+          const i = y * w + x;
+          sCb += CB[i];
+          sCr += CR[i];
+          n++;
+        }
+      }
+      const i = cy * cw + cx;
+      estCb[i] = estimateNativeChroma(sCb / n, NATIVE_CHROMA_K_CB);
+      estCr[i] = estimateNativeChroma(sCr / n, NATIVE_CHROMA_K_CR);
+      cbNoise[i] = gauss() * sigma;
+      crNoise[i] = gauss() * sigma;
+    }
+  }
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const p = (y * w + x) * 4;
+      const i = y * w + x;
+      const ci = (y >> 1) * cw + (x >> 1);
+      const ny = Math.min(255, Math.max(0, Y[i] + gauss() * sigma));
+      const ncb = Math.min(255, Math.max(0, estCb[ci] + cbNoise[ci]));
+      const ncr = Math.min(255, Math.max(0, estCr[ci] + crNoise[ci]));
+      const [r, g, b] = yuv709ToRgb(ny, ncb, ncr);
+      d[p] = r;
+      d[p + 1] = g;
+      d[p + 2] = b;
+    }
+  }
+  return img;
+}
+/**
+ * Cộng nhiễu Gauss từng kênh RGB độc lập (in-place). strength = alls,
+ * sigma = strength/√3.
+ *
+ * Dùng cho glitch (đợt 65 S7 — đính chính giả định R63 R8): chuỗi render
+ * của glitch là `format=yuv420p,rgbashift=...,noise=...`; FFmpeg tự chèn
+ * scale yuv420p→gbrp cho rgbashift (log verbose probe9) và noise chạy
+ * tiếp trên các plane RGB đó — KHÔNG quay về yuv420p. Đo thật (probe9,
+ * fixture 64×8, ns=20): delta render vs shift-only có std [11.13,
+ * 10.85, 11.07] ≈ σ = 20/√3 = 11.55 và corr chéo kênh [0.038, -0.003,
+ * 0.008] ≈ 0 — đúng dấu hiệu nhiễu RGB độc lập, sai dấu hiệu YUV
+ * (std [24.7, 15.0, 27.9], corr [0.15, 0.26, 0.30]). Vì vậy glitch
+ * KHÔNG dùng addYuvNoise nữa. Thứ tự rút RNG: R,G,B từng pixel
+ * (row-major), cùng seed → cùng ảnh.
+ */
+export function addRgbNoise(img: ImageDataLike, strength: number, seed: number): ImageDataLike {
+  const { data: d } = img;
+  const sigma = strength / Math.sqrt(3);
+  const gauss = gaussianGenerator(mulberry32(seed));
+  for (let p = 0; p < d.length; p += 4) {
+    d[p] = d[p] + gauss() * sigma;
+    d[p + 1] = d[p + 1] + gauss() * sigma;
+    d[p + 2] = d[p + 2] + gauss() * sigma;
+  }
+  return img;
+}
+
+/**
  * RGB shift: kênh đỏ dịch phải s pixel, kênh xanh dương dịch trái s
  * pixel (s = 2 + t*14, mirror render rgbashift rh=+s, bh=-s). Kênh lục
  * và alpha giữ nguyên. Vùng trống NHÂN BIÊN (đợt 16 H5: render đúng
@@ -545,9 +870,10 @@ export function shakeOffsetAt(localT: number): { dx: number; dy: number } {
  * với s = 6 + t*10 px (CẮT phần thập phân, như rgbashift — đợt 16 H5)
  * và ns = round(10 + t*20). Kênh đỏ dịch phải s, kênh xanh dương dịch
  * trái s (kênh lục giữ nguyên), vùng trống NHÂN BIÊN (như applyRgbShift),
- * rồi cộng nhiễu Gauss (sigma = ns/√3, seed xác định để tua lại cho
- * cùng hình; render dùng nhiễu thời gian nên không khớp từng frame —
- * chỉ xấp xỉ về cấu trúc/thống kê, xem LIMITS).
+ * rồi cộng nhiễu Gauss KHÔNG GIAN YUV (sigma = ns/√3 từng plane,
+ * addYuvNoise — đợt 63 R8; seed xác định để tua lại cho cùng hình;
+ * render dùng nhiễu thời gian nên không khớp từng frame — chỉ xấp xỉ
+ * về cấu trúc/thống kê, xem LIMITS).
  * Đợt 14 R6 thay mô hình lát ngang dịch ngẫu nhiên cũ: render KHÔNG có
  * slice nào, nên slice cũ lệch MAD 30.11 (pattern) / 37.08 (tự nhiên)
  * so với render, trong khi mô hình này cho 18.58 / 22.26. Lưu ý trung
@@ -579,24 +905,24 @@ export function applyGlitch(
       d[p + 2] = src[(y * w + bs) * 4 + 2];
     }
   }
-  const gauss = gaussianGenerator(mulberry32(seed));
-  const sigma = ns / Math.sqrt(3);
-  for (let i = 0; i < d.length; i += 4) {
-    for (let c = 0; c < 3; c++) {
-      d[i + c] += gauss() * sigma;
-    }
-  }
-  return img;
+  // Đợt 65 S7: nhiễu glitch là nhiễu RGB độc lập (xem addRgbNoise) —
+  // chuỗi render `rgbashift,noise` chạy noise trên plane RGB sau khi
+  // rgbashift tự convert yuv420p→gbrp; giả định "noise yuv420p" của
+  // đợt 63 R8 sai (đo thật: corr ≈ 0, std ≈ σ, không phải corr
+  // [0.15,0.26,0.30] của YUV). addYuvNoise chỉ dùng cho effect noise.
+  return addRgbNoise(img, ns, seed);
 }
 
 /**
- * Noise: cộng nhiễu Gauss (sigma = strength/√3, strength = 5 + t*45,
- * mirror render) vào từng kênh RGB của từng pixel. Seed quyết định →
- * cùng seed cho cùng một ảnh ra, khác seed cho ảnh khác.
- * Đợt 16 H5 đổi từ nhiễu đều sang Gauss vì đo thật cho thấy nhiễu
- * render có dạng Gauss: kurtosis ≈ −0.17..0.05 (đều: −1.2), vượt
- * ±strength (đều kẹp đúng ±strength), std = strength/√3 (15.77 với
- * strength 28, lý thuyết đều/Gauss cùng 16.16), tương quan kênh ≈ 0.
+ * Noise: cộng nhiễu Gauss không gian YUV (sigma = strength/√3,
+ * strength = 5 + t*45, mirror render `noise=alls:allf=t` trong pipeline
+ * yuv420p) — xem addYuvNoise. Seed quyết định → cùng seed cho cùng một
+ * ảnh ra, khác seed cho ảnh khác.
+ * Đợt 65 S7 đổi tiếp sang base chroma native ước lượng (mô phỏng chiếu
+ * gamut — xem addYuvNoise): trên nội dung bão hoà, std R/B của preview
+ * thừa 34%/17% và kurt R lệch 2.94 so với render pre-encode; nay
+ * KHỚP-THỐNG-KÊ ở cả noise05 lẫn noise10 (tỉ lệ std 1.01–1.05,
+ * Δkurt ≤ 0.34, 4 seed; đo pre-encode full-res, xem LIMITS đợt 65 S7).
  * XẤP XỈ: render dùng noise thời gian (allf=t) nên mỗi frame nhiễu khác
  * nhau và không khớp từng frame với bản này; preview bù bằng cách đổi
  * seed theo thời gian (canvasEffectOps) để nhiễu vẫn "sống" theo frame.
@@ -608,15 +934,7 @@ export function applyNoise(
   seed: number,
 ): ImageDataLike {
   const strength = 5 + clamp01(intensity) * 45;
-  const { data: d } = img;
-  const gauss = gaussianGenerator(mulberry32(seed));
-  const sigma = strength / Math.sqrt(3);
-  for (let i = 0; i < d.length; i += 4) {
-    for (let c = 0; c < 3; c++) {
-      d[i + c] += gauss() * sigma;
-    }
-  }
-  return img;
+  return addYuvNoise(img, strength, seed);
 }
 
 // ---------------------------------------------------------------------------

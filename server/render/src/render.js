@@ -34,6 +34,7 @@ const {
   validateMedia,
   resolveFontFile,
   resolveSrc,
+  validationJsonLine,
 } = require("./validate");
 // Phase 3 modules: transitions (13 hiệu ứng xfade), speed/reverse, keyframes.
 const { buildXfadeFilter } = require("./transitions");
@@ -65,8 +66,11 @@ const { createPluginHost } = require("./plugins");
 // Phase 7 P2: clip enhancement (deinterlace/stabilize/denoise) + encode GPU.
 const {
   hasStabilize, buildEnhancePreChain, buildEnhancePostChain,
-  runStabilizeDetect, probeFilterSupport,
+  probeFilterSupport,
 } = require("./enhance");
+// Phase 9 đợt 62 R2: cache .trf vidstabdetect (khỏi detect lại khi render
+// lại cùng clip/src/trim/tham số — detect là pass đắt nhất của stabilize).
+const { ffmpegVersionLine, resolveStabilizeTrf } = require("./trfCache");
 // Phase 7 P3: speed ramp (đường cong tốc độ) + audio mixer (gain expr, normalize).
 const { buildSpeedRampVideo, buildSpeedRampAudio, buildMotionPostChain } = require("./speedramp");
 // Phase 9 đợt 8 S2: slow-mo mượt / nội suy frame / motion blur (chỉ nhánh thường).
@@ -75,7 +79,7 @@ const { buildGainFilter, buildNormalizeFilter } = require("./audiomix");
 // Đợt 50 F1: sanitize keyframe array ở cổng render (mirror cổng load web
 // đợt 49 E4) — xem keyframeSanitize.js; nối vào main() trước flatten + validate.
 const { sanitizeKeyframeArrays } = require("./keyframeSanitize");
-const { probeGpuEncoder, buildVideoEncodeArgs, tryEncode } = require("./gpuencode");
+const { probeGpuEncoder, probeGpuEncoderCached, buildVideoEncodeArgs, tryEncode, clearGpuProbeCache, GPU_CANDIDATES } = require("./gpuencode");
 // Phase 9 N2: nested sequence — làm phẳng clip lồng nhau thành spec phẳng
 // (xem nested.js + NESTED_RENDER_LIMITS.md). Chỉ một điểm nối có cờ ở main().
 const { hasNestedClips, flattenSpecForRender } = require("./nested");
@@ -159,6 +163,15 @@ Tùy chọn:
   --normalize-target <dB>  P3: target LUFS cho loudnorm (mặc định -14)
   --normalize-tp <dB>      P3: true peak ceiling cho loudnorm (mặc định -1.5)
   --normalize-lra <dB>     P3: loudness range cho loudnorm (mặc định 11)
+  --no-trf-cache      Đợt 62 R2: tắt cache .trf vidstabdetect (mặc định BẬT:
+                      render lại cùng clip/src/trim/tham số thì khỏi detect
+                      lại; thư mục cache ~/.cache/vcut/vidstab-cache, đổi
+                      bằng env VCUT_TRF_CACHE_DIR, tắt hẳn bằng VCUT_TRF_CACHE=0)
+  --reprobe-gpu       Đợt 64 R1: bỏ qua cache probe GPU, probe lại thật
+                      (dùng khi vừa gắn/tháo GPU; mặc định dùng cache đĩa
+                      ~/.cache/vcut/gpu-probe.json, TTL 30 ngày)
+  --no-gpu-probe-cache Đợt 64 R1: tắt cache đĩa probe GPU (probe lại mỗi lần
+                      render như trước đợt 64; tắt hẳn bằng VCUT_GPU_PROBE_CACHE=0)
   -y, --overwrite     Ghi đè file output nếu đã tồn tại
   -q, --quiet         Ẩn log chi tiết của ffmpeg
   --dry-run           Chỉ in câu lệnh ffmpeg, không chạy
@@ -184,6 +197,13 @@ function parseArgs(argv) {
     normalize: "off", normalizeTarget: -14, normalizeTp: -1.5, normalizeLra: 11,
     // Phase 9 R2: đường mask — png (mặc định, vẽ PNG 1 lần) hoặc geq (cũ).
     maskMode: "png",
+    // Phase 9 đợt 62 R2: cache .trf vidstabdetect (mặc định BẬT; tắt bằng
+    // --no-trf-cache hoặc env VCUT_TRF_CACHE=0). Xoá cache chỉ làm chậm
+    // lại (detect lại), không đổi kết quả render.
+    trfCache: true,
+    // Phase 9 đợt 64 R1: cache đĩa probe GPU (mặc định BẬT; --reprobe-gpu
+    // ép probe lại, --no-gpu-probe-cache tắt cache đĩa hẳn).
+    gpuProbeCache: true, reprobeGpu: false,
     overwrite: false, quiet: false, dryRun: false,
   };
   const needInt = (name, raw, min, max) => {
@@ -276,6 +296,9 @@ function parseArgs(argv) {
     }
     else if (a === "-y" || a === "--overwrite") args.overwrite = true;
     else if (a === "-q" || a === "--quiet") args.quiet = true;
+    else if (a === "--no-trf-cache") args.trfCache = false; // đợt 62 R2: tắt cache .trf vidstabdetect
+    else if (a === "--reprobe-gpu") args.reprobeGpu = true; // đợt 64 R1: ép probe GPU lại
+    else if (a === "--no-gpu-probe-cache") args.gpuProbeCache = false; // đợt 64 R1: tắt cache đĩa probe GPU
     else if (a === "--dry-run") args.dryRun = true;
     else if (a === "-h" || a === "--help") { printHelp(); process.exit(0); }
     else { console.error(`Tham số không rõ: ${a} (dùng --help để xem)`); process.exit(2); }
@@ -1321,6 +1344,12 @@ function main() {
   if (!v.ok) {
     console.error(`\n❌ Spec không hợp lệ (${v.errors.length} lỗi):`);
     v.errors.forEach((e, i) => console.error(`  ${i + 1}. ${e}`));
+    // Đợt 63 R5: dòng JSON có cấu trúc để bridge/web dịch từng dòng lỗi
+    // (errorDetail bóc ra, không hiện ra UI). Chuỗi người đọc ở trên
+    // KHÔNG ĐỔI. Dòng này in CUỐI để lọt cửa sổ tail 1500 ký tự của
+    // jobQueue._onError; validationJsonLine tự cắt ≤ 1200 ký tự.
+    const vLine = validationJsonLine(v.errorDetails, v.warningDetails);
+    if (vLine) console.error(vLine);
     process.exit(1);
   }
 
@@ -1359,6 +1388,9 @@ function main() {
   if (!mv.ok) {
     console.error(`\n❌ Media không hợp lệ (${mv.errors.length} lỗi):`);
     mv.errors.forEach((e, i) => console.error(`  ${i + 1}. ${e}`));
+    // Đợt 63 R5: như validateSpec ở trên (dòng JSON cuối, ≤ 1200 ký tự).
+    const mvLine = validationJsonLine(mv.errorDetails, mv.warningDetails);
+    if (mvLine) console.error(mvLine);
     process.exit(1);
   }
 
@@ -1390,6 +1422,8 @@ function main() {
           console.error(`❌ FFmpeg build này thiếu filter vidstab (detect=${sup.vidstabdetect}, transform=${sup.vidstabtransform}) — không render được stabilize`);
           process.exit(1);
         }
+        // Đợt 62 R2: version ffmpeg vào key cache .trf (1 lần spawn, ~50ms).
+        const ffmpegVersion = ffmpegVersionLine(args.ffmpeg);
         for (const clip of needsStab) {
           const safeId = clip.id.replace(/[^A-Za-z0-9_-]/g, "_");
           const trfPath = path.join(os.tmpdir(), `repo1-vidstab-${process.pid}-${safeId}.trf`);
@@ -1400,14 +1434,21 @@ function main() {
             stabTrfPaths.push(trfPath);
             continue;
           }
-          const r = runStabilizeDetect(args.ffmpeg, absOf(clip.src), clip, trfPath);
+          // Đợt 62 R2: cache .trf theo (src, trim, tham số detect) — HIT thì
+          // copy file cache về đường dẫn tạm riêng, khỏi chạy detect lại.
+          // Fail-fast giữ nguyên: detect lỗi → exit 1, không render thiếu stabilize.
+          const r = resolveStabilizeTrf(args.ffmpeg, absOf(clip.src), clip, {
+            enabled: args.trfCache,
+            ffmpegVersion: ffmpegVersion,
+            runTmpPath: trfPath,
+          });
           if (!r.ok) {
             console.error(`❌ vidstabdetect cho clip "${clip.id}" thất bại: ${r.error}`);
             process.exit(1);
           }
           stabTrf.set(clip.id, trfPath);
           stabTrfPaths.push(trfPath);
-          log(`   stabilize "${clip.id}" → ${trfPath}`);
+          log(`   stabilize "${clip.id}" → ${trfPath}${r.cached ? " (cache .trf HIT — không detect lại)" : " (cache .trf MISS — detect mới)"}`);
         }
       }
     }
@@ -1415,15 +1456,26 @@ function main() {
 
   // 3c. Phase 7 P2: chọn encoder video — auto probe GPU thật, fail → libx264.
   // Ép tay encoder mà probe fail → cảnh báo + fallback libx264 (KHÔNG fail job).
+  // Đợt 64 R1: đường auto dùng probeGpuEncoderCached — lần đầu probe thật +
+  // ghi cache đĩa (~/.cache/vcut/gpu-probe.json, TTL 30 ngày), các lần sau
+  // đọc cache (probe 0,31–2,50s wall mỗi lần render trước đây → ~0).
+  // --reprobe-gpu ép probe lại (đổi phần cứng); --encoder ép tay vẫn probe
+  // thật như cũ (không qua cache đĩa).
+  // Đợt 65 S4: nếu encoder GPU (kể cả từ cache) fail LÚC ENCODE ở bước 7,
+  // render.js thử lại 1 lần bằng libx264 + xoá cache probe lỗi (xem bước 7).
   let videoEncoder = "libx264";
   let encoderNote = "libx264 (CPU)";
   if (args.encoder === "auto") {
-    const gp = probeGpuEncoder(args.ffmpeg);
+    const gp = probeGpuEncoderCached(args.ffmpeg, {
+      forceReprobe: args.reprobeGpu,
+      cacheEnabled: args.gpuProbeCache,
+    });
+    const cacheTag = gp.cached ? ` (probe cache ${gp.source} HIT)` : "";
     if (gp.encoder) {
       videoEncoder = gp.encoder;
-      encoderNote = `${gp.encoder} (GPU auto-detect: ${gp.detail})`;
+      encoderNote = `${gp.encoder} (GPU auto-detect: ${gp.detail})${cacheTag}`;
     } else {
-      encoderNote = `libx264 (CPU — ${gp.detail})`;
+      encoderNote = `libx264 (CPU — ${gp.detail})${cacheTag}`;
     }
   } else if (args.encoder !== "libx264") {
     if (tryEncode(args.ffmpeg, args.encoder)) {
@@ -1707,9 +1759,43 @@ function main() {
     for (const [name, msg] of Object.entries(rep.hookErrors))
       console.error(`⚠️  plugin "${name}" (onExportStart): ${msg}`);
   }
-  const r = spawnSync(args.ffmpeg, ffArgs, {
+  let r = spawnSync(args.ffmpeg, ffArgs, {
     stdio: ["ignore", "ignore", args.quiet ? "ignore" : "inherit"],
   });
+  // Đợt 65 S4 — fallback libx264 khi encoder GPU fail LÚC ENCODE THẬT.
+  // Kịch bản (nợ đợt 64 R1 §1/§8.4): cache đĩa probe (TTL 30 ngày) nói GPU
+  // còn đó (vd h264_nvenc probe OK tuần trước) nhưng phần cứng đã tháo →
+  // probe không chạy lại → encode GPU fail → trước đây job fail luôn.
+  // Giờ: thử lại ĐÚNG 1 lần bằng libx264 (re-exec chính process này với
+  // --encoder libx264; graph filter dựng lại từ đầu nên nhánh vaapi
+  // hwupload không còn) + XOÁ cache probe lỗi để lần render sau probe
+  // lại thật thay vì kẹt ở encoder đã chết. Chỉ retry khi encoder đang
+  // dùng là GPU; libx264 fail thì không retry (lỗi nằm ở graph/spec,
+  // retry vô ích — tránh tốn 1 lần render nữa). Retry là process con
+  // đầy đủ (tự dọn temp của nó); temp của lần fail này được dọn ở dưới
+  // khi kết quả cuối thành công (r.status === 0).
+  if ((r.error || r.status !== 0) && videoEncoder !== "libx264"
+    && GPU_CANDIDATES.includes(videoEncoder)) {
+    console.error(`⚠️  encoder GPU ${videoEncoder} encode thất bại ` +
+      `(${r.error ? r.error.message : `thoát mã ${r.status}`}) → thử lại bằng libx264 (không fail job)`);
+    const cleared = clearGpuProbeCache();
+    console.error(`   cache probe GPU ${cleared ? "đã xoá (lần render sau probe lại thật)" : "không xoá được (để lần sau probe lại khi hết TTL)"}`);
+    const retryArgv = [...process.argv.slice(2)];
+    const encIdx = retryArgv.indexOf("--encoder");
+    if (encIdx >= 0 && encIdx + 1 < retryArgv.length) retryArgv[encIdx + 1] = "libx264";
+    else retryArgv.push("--encoder", "libx264");
+    // Lần fail có thể đã tạo file output dở dang; ép -y để lần retry
+    // không kẹt ở bước kiểm tra "file đã tồn tại" (dòng 1708).
+    if (!retryArgv.includes("-y") && !retryArgv.includes("--overwrite")) retryArgv.push("-y");
+    const rt0 = Date.now();
+    const rr = spawnSync(process.execPath, [__filename, ...retryArgv], {
+      stdio: ["ignore", "ignore", args.quiet ? "ignore" : "inherit"],
+    });
+    console.error(`   fallback libx264 ${rr.error || rr.status !== 0 ? "THẤT BẠI" : "thành công"} ` +
+      `(${((Date.now() - rt0) / 1000).toFixed(1)}s)`);
+    r = rr;
+    videoEncoder = "libx264";
+  }
   const dt = ((Date.now() - t0) / 1000).toFixed(1);
 
   // Plugin: onExportFinish — chạy cả khi render thất bại (success=false).

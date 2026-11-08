@@ -1,14 +1,21 @@
 {
   "app": {
     "loading": "Opening project…",
-    "name": "VCut Studio"
+    "name": "VCut Studio",
+    "proxyStaleToast": "Proxies for {names} are missing on the bridge — tap the Proxy button on the media card to recreate them.",
+    "mediaLibrary": "Media library",
+    "openMediaLibrary": "Open the media library",
+    "clipProps": "Clip properties",
+    "openInspector": "Open the properties panel",
+    "mediaLibraryShort": "📁 Library",
+    "closeMediaLibrary": "Close the library",
+    "propsShort": "⚙️ Properties",
+    "closeInspector": "Close the properties panel"
   },
   "common": {
-    "apply": "Apply",
     "cancel": "Cancel",
     "close": "Close",
     "language": "Language",
-    "loading": "Loading…",
     "bridgeConn": "Cannot connect to bridge ({url}). Run: cd server/bridge && npm start"
   },
   "mediabin": {
@@ -17,7 +24,32 @@
     "dragHint": "drag and drop onto a timeline track",
     "empty": "No files yet. Click “Import files” to add video, audio or images.",
     "import": "+ Import files",
-    "title": "Media library"
+    "title": "Media library",
+    "bridgeStatus": "Bridge returned {status}",
+    "noProxyUrl": "The bridge did not return a proxyUrl.",
+    "smallEnough": "“{name}” is already small enough — no proxy needed.",
+    "proxyAttached": "Attached a {height}p proxy for “{name}” — preview will be smoother.",
+    "proxyFailed": "Could not create a proxy: {error} (bridge: {url})",
+    "proxyStaleTitle": "The proxy file is missing on the bridge — tap to recreate the 720p proxy (export still uses the original file).",
+    "proxyOnTitle": "Using a {height}p proxy for preview",
+    "proxyCreateTitle": "Create a 720p proxy via the bridge for smoother preview (export still uses the original file).",
+    "recreateProxyFor": "Recreate the proxy for {name}",
+    "createProxyFor": "Create a proxy for {name}",
+    "proxyStaleBtn": "Proxy missing, recreate",
+    "proxyCreating": "Creating…",
+    "proxyFailedBtn": "Proxy failed, retry",
+    "proxyNotNeeded": "No proxy needed",
+    "bridgeDown": "The bridge is not running ({url}) — automatic proxy creation failed; tap the Proxy button to retry once the bridge is running.",
+    "autoProxyHint": "Auto-create a 720p proxy when importing video (smoother preview; export still uses the original).",
+    "emptyStep1": "Tap “＋ Import files” to add video, audio, or images.",
+    "emptyStep2": "Drag files onto a timeline track (or tap “＋ Add”).",
+    "emptyStep3": "Tap “⬇ Publish” to export the video.",
+    "reloadSample": "Reload the sample project",
+    "sampleProject": "↺ Sample project",
+    "unknownError": "unknown error",
+    "removeConfirm": "Remove “{name}” from the library? The original file on your computer will not be deleted.",
+    "removeTitle": "Remove “{name}” from the library",
+    "removed": "Removed “{name}” from the library."
   },
   "importProgress": {
     "hashing": "Importing {index}/{count}: {name} — hashing: {done} / {total} ({percent}%)",
@@ -58,7 +90,10 @@
     "paste": "Paste copied clip at playhead (Ctrl+V)",
     "pasteShort": "📥 Paste",
     "duplicate": "Duplicate selected clip right after the original (Ctrl+D)",
-    "duplicateShort": "⧉ Duplicate"
+    "duplicateShort": "⧉ Duplicate",
+    "welcome": "👋 Get started",
+    "welcomeHint": "Reopen the welcome screen / tour / template pack in one tap",
+    "welcomeLabel": "Reopen the welcome screen"
   },
   "inspector": {
     "projectTitle": "ℹ️ Project",
@@ -147,7 +182,9 @@
     "length": "Length (s)",
     "inPoint": "In (s)",
     "outPoint": "Out (s)",
-    "deleteClip": "🗑 Delete this clip"
+    "deleteClip": "🗑 Delete this clip",
+    "beatAnalyzeHint": "Analyze beats & cut clips",
+    "beatSectionTitle": "🎵 Cut to the beat"
   },
   "timeline": {
     "emptyLabel": "(empty)",
@@ -194,7 +231,69 @@
     "fxGutter": "🎛 FX",
     "fxTitle": "FX: {filter} · {from} → {to}",
     "fxMove": "Move adjustment layer",
-    "fxTrim": "Trim adjustment layer"
+    "fxTrim": "Trim adjustment layer",
+    "field": {
+      "duration": "duration",
+      "fallback": "property",
+      "opacity": "opacity",
+      "speed": "speed",
+      "src": "media source",
+      "start": "position",
+      "text": "text content",
+      "volume": "volume"
+    },
+    "histAddAudio": "Add audio \"{name}\"",
+    "histAddClip": "Add clip \"{name}\"",
+    "histAddFx": "Add adjustment layer ({kind})",
+    "histAddMarker": "Add marker",
+    "histAddMediaToTimeline": "Add media to the timeline",
+    "histAddStdFx": "Add standard adjustment layer ({kind})",
+    "histAddText": "Add text",
+    "histAddTrack": "Add {kind} track",
+    "histConvertFx": "Convert adjustment layer to the standard spec",
+    "histDelete": "Delete clip",
+    "histDeleteFx": "Delete adjustment layer",
+    "histDeleteMarker": "Delete marker",
+    "histDeleteMulti": "Delete {n} clips",
+    "histDeleteRipple": "Delete clip (ripple)",
+    "histDeleteRippleMulti": "Delete {n} clips (ripple)",
+    "histDeleteStdFx": "Delete standard adjustment layer",
+    "histDeleteTrack": "Delete track {name}",
+    "histDuplicate": "Duplicate clip",
+    "histDuplicateMulti": "Duplicate {n} clips",
+    "histEditDeepChild": "Edit a deep child clip inside the compound clip",
+    "histEditFx": "Edit adjustment layer",
+    "histEditMarker": "Edit marker",
+    "histEditMidNested": "Edit a deep intermediate nested clip inside the compound clip",
+    "histEditNestedChild": "Edit a child clip inside the compound clip",
+    "histEditStdFx": "Edit standard adjustment layer",
+    "histEditText": "Edit text",
+    "histFixClipSpeedCurve": "Fix the speed curve of 1 clip (load report)",
+    "histFixSpeedCurve": "Fix the violating speed curve",
+    "histFixSpeedKeyframe": "Fix 1 speed keyframe (load report)",
+    "histMoveMulti": "Move {n} clips",
+    "histNest": "Nest as {name}",
+    "histPaste": "Paste clip",
+    "histPasteMulti": "Paste {n} clips",
+    "histPatch": "Edit {field}",
+    "histPatchMulti": "Edit clip properties",
+    "histPatchTrack": "Edit track properties",
+    "histPatchTrackVolume": "Adjust track volume",
+    "histSetNestedCurve": "Set the speed curve for the nested clip (keep trim)",
+    "histSetNestedFx": "Set transition/opacity for the nested clip",
+    "histSplit": "Split clip",
+    "histSplitDeepChild": "Split a deep child clip inside the compound clip",
+    "histSplitDeepOuter": "Split a deep child clip at the outer marker (inverted τ)",
+    "histSplitScene": "Split scene ({n} points)",
+    "histToggleTrack": "Toggle track state",
+    "histTrimRipple": "Trim clip (ripple)",
+    "histTypeText": "Type text…",
+    "histUnnest": "Unnest compound clip",
+    "kind": {
+      "audio": "Audio",
+      "image": "Image",
+      "text": "Text"
+    }
   },
   "mixer": {
     "label": "MIX",
@@ -421,7 +520,6 @@
     "reset": "↺ Reset",
     "srcLabel": "Source segment",
     "effLabel": "Effective duration",
-    "warnTooShort": "Cannot set {s}× — the clip would be shorter than {min}s. Trim a longer source segment first.",
     "warnOverlap": "Not enough room on the timeline — the clip would be {dur} long and overlap the next clip. Move the other clip first.",
     "warnResetOverlap": "Not enough room to reset to 1× — move the other clip first.",
     "tip": "💡 Speed changes tempo but keeps voice pitch. Reverse plays from the end of the source back to the start.",
@@ -447,7 +545,9 @@
     "bezierXRange": "Bezier x1, x2 must be within [0, 1] — previous value kept.",
     "bezierInvalid": "Bezier values must be numbers — previous value kept.",
     "trimCurveDropped": "✂️ Trimmed {n} speed-curve point(s) that fell outside the clip — remaining points kept. Use Undo to restore them if you did not intend this.",
-    "patchCurveDropped": "✂️ Trimmed {n} speed-curve point(s) that fell outside the clip after the duration change — remaining points kept. Use Undo to restore them if you did not intend this."
+    "patchCurveDropped": "✂️ Trimmed {n} speed-curve point(s) that fell outside the clip after the duration change — remaining points kept. Use Undo to restore them if you did not intend this.",
+    "curveStabBlocked": "⚠️ This clip has stabilization on, so the speed curve can't be enabled — stabilize can't be combined with speedKeyframes. Turn off stabilization in the Enhance panel first, then enable the curve.",
+    "curveStabTitle": "Speed curve can't be enabled because this clip has stabilization on — stabilize can't be combined with speedKeyframes"
   },
   "keyframe": {
     "head": "🔑 Keyframes",
@@ -729,7 +829,11 @@
     "noValidCuts": "No cut points fall fully inside the clip.",
     "keepNote": "Untick to keep a segment as is. Applying will split the clip into {n} segments in a single undo step.",
     "applyBtn": "Split into {n} scenes",
-    "rescan": "Rescan"
+    "rescan": "Rescan",
+    "phase": {
+      "upload": "File received, preparing…",
+      "scan": "Scanning for scene cuts (long videos may take a few minutes)…"
+    }
   },
   "tts": {
     "emptyText": "Text is empty — enter content first.",
@@ -742,7 +846,12 @@
     "voiceTitle": "Choose a voice",
     "speakTitle": "Generate a WAV voiceover and place it on the timeline",
     "busyBtn": "⏳ Generating...",
-    "speakBtn": "🔊 Read aloud"
+    "speakBtn": "🔊 Read aloud",
+    "noRefFile": "No sample voice file selected for cloning.",
+    "bridgeErrorHttp": "Bridge returned HTTP error {status}",
+    "cloneFromSample": "🎭 Clone voice from a sample file (local)",
+    "refFileLabel": "Sample voice file for cloning",
+    "cloneHint": "Best sample: 3–30s, one clear voice, little noise. The cloned voice is only used on your machine and is never sent anywhere."
   },
   "drop": {
     "kindVideo": "video",
@@ -860,7 +969,72 @@
     "curveCreateOk": "Speed curve created (constant 1×) — 1 undo step to remove it.",
     "curveCreateAlreadyHas": "This nested clip already has a speed curve — use the mode block below to edit it.",
     "curveCreateReverse": "Cannot create a speed curve on a reversed nested clip (the validator forbids reverse + curve — turn off reverse and try again).",
-    "curveCreateFail": "Could not create the speed curve — the clip may have been deleted or the store refused; nothing changed."
+    "curveCreateFail": "Could not create the speed curve — the clip may have been deleted or the store refused; nothing changed.",
+    "scopeTracksNotArray": "{path}: scope tracks must be an array of track indices (got: {value})",
+    "scopeTracksBadIndex": "{path}: scope tracks contains an invalid index: {value} (must be an integer >= 0)",
+    "adjNotObject": "{path}: adjustment layer must be an object",
+    "adjIdEmpty": "{path}: adjustment layer.id must be a non-empty string",
+    "adjStart": "{path}: adjustment layer \"{id}\".start must be a number >= 0",
+    "adjDuration": "{path}: adjustment layer \"{id}\".duration must be a number > 0",
+    "adjEffectsNotArray": "{path}: adjustment layer \"{id}\".effects must be an array",
+    "adjEffectInvalid": "{path}: adjustment layer \"{id}\" has an invalid effect (missing string type)",
+    "adjFiltersNotArray": "{path}: adjustment layer \"{id}\".filters must be an array",
+    "adjFilterNotObject": "{path}: adjustment layer \"{id}\" has a filter entry that is not an object",
+    "adjFilterLut": "{path}: adjustment layer \"{id}\" has a filter.lut that is not a string",
+    "adjEmpty": "{path}: adjustment layer \"{id}\" is empty (no lut/color/effects) — the layer does nothing",
+    "notNestedClip": "normalizeNestedClip: the clip must be a nested clip (kind \"nested\")",
+    "subSpecTracks": "{path}: subSpec.tracks must be an array",
+    "subSpecConflict": "{path}: has both direct tracks and subSpec.tracks with different content — keep a single source (delete the old tracks or fix subSpec to match)",
+    "subSpecAdjLayers": "{path}: subSpec.adjustmentLayers must be an array",
+    "noContent": "{path}: has neither direct tracks nor subSpec — nothing to flatten",
+    "trimIn": "{path}: trim.in must be a number >= 0",
+    "trimOut": "{path}: trim.out must be a number > trim.in",
+    "trimInConflict": "{path}: trim.in ({a}) conflicts with the old in ({b}) — keep only one of them, or set them equal",
+    "trimOutMismatchConst": "{path}: trim.out ({value}) does not match in + duration × {c} = {expected} — fix the duration or the trim to match (render round 18 §2 semantics)",
+    "trimOutMismatchCurve": "{path}: trim.out ({value}) does not match in + ∫speedKeyframes over duration = {expected} — fix the duration or the trim to match (render round 18 §2 semantics)",
+    "durationMismatch": "{path}: duration ({value}) does not match (trim.out − trim.in) / speed = {expected} — fix the duration or the trim to match",
+    "reverseSpeed": "{path}: reverse on a nested clip with speedKeyframes is not supported yet (render round 18 §5)",
+    "multiEnd": "{path}: several clips end exactly when clip \"{id}\" starts — cannot determine the transition's left edge (overlapping clips)",
+    "transitionNoPrev": "{path}: clip \"{id}\" has a transition but the previous clip does not end exactly at {start}s — a transition requires two consecutive clips",
+    "transitionOutDuration": "{path}: transitionOut ({a}s) of clip \"{id}\" and transitionIn ({b}s) of clip \"{other}\" do not match — set only one of them, or set them equal",
+    "transitionOutType": "{path}: transitionOut ({a}) of clip \"{id}\" and transitionIn ({b}) of clip \"{other}\" do not match in type — cross-boundary transitions require the same type",
+    "transitionCrossBorder": "{path}: transition across the nested clip boundary (\"{a}\" → \"{b}\") only supports type \"fade\", got: \"{value}\" — use \"fade\" or drop the transition",
+    "transitionLonger": "{path}: transition ({a}s) is longer than clip \"{id}\" ({b}s)",
+    "transitionBothSides": "{path}: nested clip \"{id}\" has cross-boundary transitions on both ends (in + out) — 2 cross-boundary transitions on the same nested clip are not supported yet",
+    "transitionEarly": "{path}: clip \"{id}\" was shifted {n}s early by a cross-boundary transition so it cannot keep another transition — consecutive cross-boundary transitions are not supported yet",
+    "transitionFlatExists": "{path}: clip \"{id}\" already has a flattened transition with the previous clip, so its cross-boundary transition always catches a black segment at the end (gap of the flat xfade) — drop the flat transition or the cross-boundary one",
+    "leafAtTransitionEdge": "leaf clip \"{id}\" (kind {kind}) sits at a cross-boundary transition edge, but preview does not apply opacity keyframes for this kind — cross-boundary transitions only support video/text leaf clips at the edge",
+    "leafOpacityAndTransition": "leaf clip \"{id}\" has both opacity keyframes and a cross-boundary transition — merging an edge fade with existing opacity keyframes is not supported yet",
+    "leafShorterThanTransition": "leaf clip \"{id}\" is {n}s long, shorter than the cross-boundary transition {t}s — the transition must be <= the edge leaf clip length",
+    "leafInnerAndOuterTransition": "leaf clip \"{id}\" has both a transition inside the child project and a cross-boundary transition — merging 2 transitions on the same leaf clip is not supported yet",
+    "leafCutLeft": "leaf clip \"{id}\" was cut on the left by the nested clip window, so it cannot keep the cross-boundary transition — move the leaf clip to the window start or drop the transition",
+    "rescaleEmpty": "{path}: cannot rescale an empty curve through a constant speed",
+    "combinedSpeedOutOfRange": "{path}: combined two-level speed = {v} exceeds the 0.25..4 range (inner speed × constant outer speed {outer}) — rejected by render round 20 R1",
+    "opacityRange": "nested \"{id}\": opacity must be a number in the 0..1 range, got: {value}",
+    "leafUnderNestedRefusal": "leaf clip \"{id}\" ({kind}) under a nested clip with speedKeyframes carries {refusal} — merging into non-linear time is not supported yet (render round 18 §5), will not flatten incorrectly",
+    "leafUnderNestedNonMedia": "leaf clip \"{id}\" ({kind}) under a nested clip with speedKeyframes carries speedKeyframes — curve merging only supports video/audio leaves with a source axis (render round 20 R1)",
+    "leafUnderNestedNoIn": "leaf clip \"{id}\" ({kind}) under a nested clip with speedKeyframes carries speedKeyframes but has no finite in — cannot anchor the source axis for merging (render round 20 R1)",
+    "leafSpeedKeyframesComposed": "leaf clip \"{id}\" under a nested clip with speedKeyframes: could not slice the merged two-level curve for the leaf visible segment — degenerate segment, will not guess",
+    "leafSpeedKeyframesSlice": "leaf clip \"{id}\" under a nested clip with speedKeyframes: could not slice the curve for the leaf output segment — degenerate segment, will not guess",
+    "leafSpeedProduct": "leaf clip \"{id}\": leaf speed ({a}) × nested curve exceeds the 0.25..4 range (keyframe v = {v}) — rejected by render round 18 §5",
+    "leafNoOwnCurve": "leaf clip \"{id}\": could not resolve its own speedKeyframes under a constant-speed nested clip — will not guess",
+    "leafConstSpeed": "leaf clip \"{id}\" under a constant-speed nested clip: could not slice its own curve for the visible segment — degenerate segment, will not guess",
+    "flattenAdjLayers": "flattenForPreview: spec.adjustmentLayers must be an array (if present)",
+    "adjScopeNotArray": "adjustmentAppliesToClip: scopeTracks must be an array of track indices",
+    "adjScopeBadIndex": "adjustmentAppliesToClip: scopeTracks contains an invalid index: {value}",
+    "failsoft": {
+      "cycle": "nested \"{id}\" creates a cycle (id already in {path}), skipping",
+      "firstClipTransition": "{path}: clip \"{id}\" has a transitionIn but is the first clip on the track — the transition is skipped",
+      "invalidNested": "nested \"{id}\" has invalid start/duration/in/speed, skipping",
+      "invalidNestedAdjustment": "adjustment inside nested \"{id}\" is invalid, skipping",
+      "invalidOuterAdjustment": "outer-level adjustment is invalid, skipping",
+      "maxDepth": "nested \"{id}\" exceeds the max depth of {max}, skipping",
+      "nonVideoBoundary": "{path}: nested clip \"{id}\" has a cross-boundary transition but the track is not a video track — skipping the cross-boundary transition (video tracks only)",
+      "speedOutOfRange": "nested \"{id}\" has speed ({speed}) outside 0.25..4 despite carrying speedKeyframes, skipping",
+      "unknownEffectType": "unknown type \"{type}\", no draw path in preview",
+      "unknownNestedClip": "clip inside nested \"{id}\" is not recognized, skipping",
+      "unknownOuterClip": "outer-level clip is not recognized, skipping"
+    }
   },
   "adjustment": {
     "title": "🎛 Adjustment layer",
@@ -877,8 +1051,6 @@
     "durationAria": "Layer duration",
     "addButton": "Add layer",
     "addOk": "Adjustment layer added (1 undo step).",
-    "addFail": "Could not add — check: need a video track, duration >= 0.2s, no overlapping layer.",
-    "listTitle": "Layer list ({n})",
     "emptyList": "No adjustment layers yet.",
     "selectOnTimeline": "Select on timeline",
     "deleteButton": "Delete layer",
@@ -886,13 +1058,10 @@
     "editStart": "Start (s)",
     "editDuration": "Duration (s)",
     "save": "Save layer",
-    "saveOk": "Adjustment layer saved (1 undo step).",
-    "saveFail": "Could not save the layer — check for overlapping layers.",
     "specNote": "Standard layers are written to spec.adjustmentLayers (project level): they apply to every video clip overlapping in time, and layers may overlap (filters chain in order). Old layers still show separately below with a legacy badge.",
     "scopeLabel": "Scope",
     "scopeAll": "All tracks",
     "scopeSingle": "One track",
-    "scopeSingleBlocked": "One-track scope cannot be created yet: video-spec has no scope field for adjustment layers, so the panel will not write a fake scope into the spec. Pick “All tracks” to create the layer, or wait for the spec thread to add a scope field (see R7_UI_LIMITS.md).",
     "specAddFail": "Could not add the standard layer — check the filter, intensity 0..1, duration >= 0.2s.",
     "specListTitle": "Standard spec layers ({n})",
     "legacyListTitle": "Old legacy layers ({n})",
@@ -907,7 +1076,6 @@
   },
   "nestedBoundary": {
     "button": "Transition & opacity",
-    "title": "Transition across boundary + opacity",
     "note": "Only the fade type is joined across a nested boundary (R3): other types are rejected, nothing is written. Each end needs an adjacent clip touching the boundary exactly (no gap); do not set both an in and an out transition. Opacity 0..1 multiplies into each leaf clip.",
     "opacity": "Opacity",
     "opacityAria": "Nested clip opacity (empty = clear)",
@@ -943,7 +1111,6 @@
     "locate": "Locate on timeline",
     "locateNested": "This clip is inside a nested clip — the outermost clip on the timeline will be selected.",
     "locateUnavailable": "Cannot locate this clip on the timeline (its path no longer matches the current project).",
-    "fix": "Fix",
     "fixV": "Set v to a number within [0.25, 4].",
     "fixT": "Reorder t to be strictly increasing and keep it within [0, clip duration].",
     "fixEasing": "Change easing to linear, ease-in, ease-out or bezier.",
@@ -962,7 +1129,8 @@
     "fixLineConfirmTitle": "Fix the speed curve of clip “{clip}” ({path})? (Undoable with Undo)",
     "autosaveRestoredNote": "Autosave restored, with notes",
     "fixKeyframe": "Fix this keyframe",
-    "fixKeyframeConfirmTitle": "Fix keyframe #{index} of clip “{clip}” ({path})? (Undoable with Undo)"
+    "fixKeyframeConfirmTitle": "Fix keyframe #{index} of clip “{clip}” ({path})? (Undoable with Undo)",
+    "badCase": "bad case"
   },
   "speedCurve": {
     "shape": "speedKeyframes must be an object { keyframes: [...] }.",
@@ -994,7 +1162,10 @@
     "reasonShape": "speedKeyframes must be an object { keyframes: [...] } — cannot fix automatically, fix by hand in the Speed panel.",
     "reasonEmpty": "speedKeyframes.keyframes is empty — at least 1 keyframe is required, add one by hand in the Speed panel.",
     "reasonAllDropped": "every keyframe was dropped while fixing — no keyframes left, add some by hand in the Speed panel.",
-    "changeDropBeyondCap": "keyframes[{index}]: beyond the first {max} keyframes (total {count}) — dropped."
+    "changeDropBeyondCap": "keyframes[{index}]: beyond the first {max} keyframes (total {count}) — dropped.",
+    "moreViolations": "\n• … and {n} more violations.",
+    "exportBlockedHead": "Cannot export: violating speed curves, the render will reject this project:",
+    "exportBlockedTail": "Tap “Fix violating curves” to fix automatically (with confirmation first, undoable), or fix manually in the Speed panel and export again."
   },
   "exportPanel": {
     "curveWarningsTitle": "Violating speed curves ({count}):",
@@ -1003,7 +1174,75 @@
     "fixCurves": "Fix violating curves",
     "fixConfirmTitle": "Fix the following violating speed curves? (Undoable with Undo)",
     "errorDetailTitle": "Error detail [{code}]:",
-    "errorDetailMore": "… and {count} more error lines omitted."
+    "errorDetailMore": "… and {count} more error lines omitted.",
+    "bridgeError": "Bridge returned error {status}",
+    "bridgeServerDown": "Could not connect to the bridge server ({url}).",
+    "reframeAnalyzing": "Analyzing the subject and cropping… (long videos can take a few minutes)",
+    "reframeAdded": "✅ Added “{name}” to the media library — export with the TikTok 9:16 preset to post it.",
+    "reframeTitle": "📱 Auto-reframe by subject",
+    "reframeIntro": "Crop landscape video to portrait/square, automatically following faces or motion (local OpenCV, no cloud). The result is added to the media library.",
+    "aspect": "Aspect ratio:",
+    "reframeWorking": "⏳ Analyzing…",
+    "reframePreview": "👁 Preview trajectory",
+    "reframeWorking2": "⏳ Reframing…",
+    "trajSummary": "Source frame {sw}×{sh} — crop window {cw}×{ch} ({aspect}), {points} points / {duration}s. The green line is the crop center over time (● start → ● end); faded frames are crop areas at sample times. Detected: {face} faces, {motion} motion, {none} missed.",
+    "sourceNarrow": "The source is already narrower than the target ratio, so the window is the full frame — there is no movement trajectory to show.",
+    "specIssueMetaName": "meta.name is empty.",
+    "specIssueMetaSize": "meta.width/height must be > 0.",
+    "specIssueMetaFps": "meta.fps must be > 0.",
+    "specIssueTrackNoId": "A track is missing an id.",
+    "specIssueTrackKind": "Track {id}: invalid kind.",
+    "specIssueTrackClips": "Track {id}: clips must be an array.",
+    "specIssueClipStart": "{clip}: start must be >= 0.",
+    "specIssueClipDuration": "{clip}: duration must be > 0.",
+    "specIssueClipSrc": "{clip}: missing src.",
+    "specIssueClipIn": "{clip}: in must be >= 0.",
+    "specIssueClipOut": "{clip}: out must be > in.",
+    "specIssueFontSize": "{clip}: style.fontSize must be > 0.",
+    "specBadFormat": "The spec is not a valid video-spec (wrong version or missing meta/tracks).",
+    "userLutMissing": "User LUT “{name}” (the .cube file is not saved in the browser — please import it again)",
+    "missingMedia": "Missing original media files (please import them again): {files}",
+    "bridgeBusy": "The bridge is busy (all concurrent jobs are taken) — please try again later.",
+    "bridgeConnHint": "Could not connect to the bridge server. Please run: cd server/bridge && npm start (default {url})",
+    "sharePacking": "Downloading the rendered video to package the share page…",
+    "shareDownloadFailed": "Could not download the video (bridge returned {status}).",
+    "shareLinked": "The video is {size} MB, so the page uses linked mode: tap “Download MP4”, rename it to video.mp4, and put it in the same folder as the HTML file. {warnings}",
+    "shareDone": "Exported the single-file share page ({size} MB video embedded in the HTML). {warnings}",
+    "shareFailed": "Could not export the share page: {error}",
+    "title": "Export video",
+    "titleIcon": "⬇ Export video",
+    "specValid": "✅ Spec is valid (video-spec v{version}) — the render worker can read it.",
+    "specInvalid": "❌ Spec is invalid — fix the errors below and export again.",
+    "mp4Title": "🎬 Export MP4",
+    "quality": "Quality:",
+    "crfLabel": "CRF (0=best)",
+    "willExport": "Will export:",
+    "presetNote": "— the original project is unchanged; the preset only applies at render time.",
+    "sizeEstimate": "📦 Estimated size:",
+    "sizeEstimateHint": "Estimated from bitrate × duration; the real file may differ depending on the video content",
+    "sizeEstimateShort": "(estimated)",
+    "normalize": "Normalize audio:",
+    "normalizeOff": "Off (keep the original volume)",
+    "normalizeLoudnorm": "Loudnorm — to target LUFS",
+    "normalizeDynaudnorm": "Dynaudnorm — dynamic balance",
+    "ebruNote": "EBU R128 standard: -14 LUFS, true peak -1.5 dB. Only applies when there is audio; silent projects skip it.",
+    "renderIntro": "Export a real MP4 video via the local bridge server ({url}). Original media will be uploaded to the bridge for rendering.",
+    "uploading": "Uploading media...",
+    "queued": "Queued (position #{pos})…",
+    "rendering": "Rendering... {pct}%",
+    "renderEta": " — about {eta} left",
+    "downloadMp4": "⬇ Download MP4",
+    "exportShare": "🌐 Export share page",
+    "renderCancelled": "Render cancelled.",
+    "presetInvalid": "Preset is invalid",
+    "exportMp4": "Export MP4",
+    "exportMp4Size": "🎬 Export MP4 ({w}×{h})",
+    "jsonNote": "This JSON file is the “common language”: the render worker (Phase 1B) reads it to export MP4, and AI agents (Phase 4) generate exactly this format. The src field is the original file name in the project's media folder.",
+    "copied": "✓ Copied",
+    "copyJson": "⧉ Copy JSON",
+    "downloadJson": "⬇ Download .json",
+    "resumedJob": "Resumed the running export job.",
+    "retryRender": "Render again from the start"
   },
   "errorDetail": {
     "summary": {
@@ -1030,7 +1269,41 @@
     "exportArchiveDone": "Exported archive ({media} media, {size} MB).",
     "exportArchiveNotes": "Notes: {notes}",
     "saveNotes": "Saved, with notes: {notes}",
-    "saveDone": "Project saved."
+    "saveDone": "Project saved.",
+    "renameTitle": "Rename project",
+    "renameLabel": "Project name",
+    "renameHint": "The new name will be used as the default file name when choosing where to save.",
+    "renameSave": "Save",
+    "renameCancel": "Cancel",
+    "new": "🆕 New",
+    "newHint": "Create a new project",
+    "open": "📂 Open",
+    "openHint": "Open a project file (.vcut.json)",
+    "save": "💾 Save",
+    "saveHint": "Save to file (Ctrl+S)",
+    "saveAs": "💾 Save as…",
+    "saveAsHint": "Save under a different name",
+    "exportArchive": "📦 Export archive",
+    "exportArchiveHint": "Export the project + media as a single archive (.vcut.zip) — take it to another machine",
+    "importArchive": "📥 Import archive",
+    "importArchiveHint": "Import an archive file (.vcut.zip) — restore the project + media",
+    "history": "🕘 History",
+    "historyHint": "Project version history (stored locally, not synced to the cloud)",
+    "unsavedChangesHint": "There are changes not yet saved to a file (.vcut.json)",
+    "allSavedHint": "All changes have been saved",
+    "unsaved": "● Unsaved",
+    "autosaveAt": "✓ Autosaved {time}",
+    "saved": "✓ Saved",
+    "saveAsPrompt": "Project name",
+    "untitledProject": "Untitled project"
+  },
+  "nativeFiles": {
+    "importDone": "Added {count} media to the project.",
+    "importError": "Could not import some media: {errors}",
+    "importTooBig": "Total media size exceeds 4 GB — split it before adding.",
+    "exportDone": "Exported video to {path}.",
+    "exportError": "Could not export video: {error}",
+    "exportCancelled": "Video export cancelled (no destination folder chosen)."
   },
   "structuredNotes": {
     "blobUrl": "Clip \"{clipId}\" on track \"{trackId}\" points to a blob: URL — this media will be lost when the page reloads (see P2.2 asset store).",
@@ -1044,7 +1317,8 @@
     "archiveMissingImport": "Archive is missing {count} media from the project (needs manual relinking): {shown}{extra}",
     "motionNoteEmpty": "motion.motionBlur is empty (missing both frames and weights) → frames = {frames} (resolveMotionBlur default)",
     "motionNoteFrames": "motion.motionBlur.frames ({frames}) mismatches/misses weights.length ({weightsLength}) → frames = {newFrames} (weights kept)",
-    "motionNoteWeights": "motion.motionBlur.weights contains a number <= 0 ({weights}) → uniform weights ({frames} frames, render S2 requires positive numbers)"
+    "motionNoteWeights": "motion.motionBlur.weights contains a number <= 0 ({weights}) → uniform weights ({frames} frames, render S2 requires positive numbers)",
+    "projectIdMigrated": "This file has no stable project ID yet — a new ID was created. Save the file to keep this ID."
   },
   "relink": {
     "reading": "Reading {name} ({size})…",
@@ -1054,6 +1328,1747 @@
     "cleanup": "Clean up stale aliases",
     "cleanupDone": "Removed {removed} stale aliases from {cleaned} assets (scanned {scanned} assets).",
     "cleanupNone": "No stale aliases (scanned {scanned} assets).",
-    "cleanupError": "Could not clean up stale aliases: {detail}"
+    "cleanupError": "Could not clean up stale aliases: {detail}",
+    "unknownError": "Unknown error while relinking.",
+    "unknownErrorShort": "unknown error",
+    "title": "Missing media",
+    "titleCount": "🔗 Missing media ({n})",
+    "closeSkip": "Close (skip)",
+    "intro": "This project uses {n} media files that are not in this session yet. Re-select each file to keep editing — missing clips will show a placeholder until they are relinked.",
+    "usedIn": "{label} · used in {n} clips",
+    "usedTopAndNested": " ({top} at top level, {nested} inside nested clips)",
+    "usedNestedOnly": " (only inside nested clips)",
+    "pickFile": "Choose a replacement file for {src}",
+    "readingBtn": "⏳ Reading…",
+    "repick": "🔗 Choose again",
+    "cleanupAlias": "Delete aliases that collide with another asset's real name (created before the round-38 guard)",
+    "cleaning": "⏳ Cleaning…",
+    "skipPlaceholder": "Skip — keep editing with placeholders",
+    "kindAudio": "Audio",
+    "kindImage": "Image"
+  },
+  "motionTrack": {
+    "invalid": "Invalid trajectory: {error}",
+    "readFailed": "Could not read the trajectory file: {error}",
+    "attached": "Trajectory attached: {n} points",
+    "lost": " — ⚠️ tracking was lost mid-way; the clip stays still from the last point.",
+    "followNote": "The clip will follow the object in preview and in the real render.",
+    "loadOther": "Load another trajectory",
+    "detach": "Detach trajectory",
+    "intro": "Run {script} on the original video to create a trajectory JSON, then load that file here so the clip follows the object.",
+    "loadJson": "Load trajectory JSON…"
+  },
+  "preview": {
+    "missingMedia": "Missing media: {names}",
+    "curveWarnHidden": "⚠ Curve: {n} nested clips have errors ({dropped} hidden)",
+    "curveWarnFallback": "⚠ Curve: {n} nested clips fell back to 1×",
+    "curveFallbackLinear": "preview temporarily at 1× (export still fails fast — please fix the real curve)",
+    "curveFallbackHidden": "temporarily hidden from preview",
+    "curveFallbackLinearShort": "temporarily at 1×",
+    "curveToast": "Preview: nested “{id}” has an invalid speed curve ({reason}) — {fallback} so preview keeps going. Export still fails fast per render rules; please fix the real curve.",
+    "flattenWarn": "⚠ Preview failed to flatten",
+    "flattenWarnDetail": "{msg} — showing the original spec; nested clips may not display.",
+    "flattenToast": "Preview could not flatten the project ({msg}) — showing the original spec; nested clips may not display.",
+    "holdStale": "⏸ HELD FRAME (stale)",
+    "hold": "⏸ HELD FRAME",
+    "volumeTitle": "Preview audio level",
+    "proxyBadge": "Previewing with a lightweight proxy — the final export still uses the full-resolution original.",
+    "lutBadge": "Preview LUT mode: WebGL = real 3D LUT (matches render); CSS ≈ = approximated with a CSS filter",
+    "motionBadge": "Motion of the clip being previewed: INTERPOLATE = the render will interpolate new frames (preview keeps the project fps and does not interpolate); BLUR≈ = preview only draws an approximate blur trail, the render uses real motion blur",
+    "reverseBadge": "Reverse playback mode: the playhead moves backwards frame by frame, every video seeks per frame, and audio is off because it cannot play in sync backwards. Tap the ◀ button or press J to stop, or ▶ to play forwards again.",
+    "reverseLabel": "◀ REVERSE — no audio",
+    "holdBadge": "The decoder hasn't delivered a new frame yet, so preview is redrawing the last good frame instead of showing black. If it says (stale), the frame has been held for over 3 timeline seconds — the picture is frozen while the playhead keeps moving.",
+    "fsExitTitle": "Exit fullscreen (F)",
+    "fsEnterTitle": "View fullscreen (F)",
+    "fsExit": "Exit fullscreen",
+    "fsEnter": "View fullscreen",
+    "emptyTitle": "No clips yet",
+    "emptyHint": "Import files into the library, then drag them onto the timeline to start.",
+    "motionInterp": "INTERP",
+    "effectSkippedBadge": "⚠ {n} effect(s) not drawn in preview",
+    "effectSkippedToast": "Preview cannot draw {n} effect(s) (e.g. {first}). The render still includes them.",
+    "nestedSkippedBadge": "⚠ Skipped {n} nested item(s)",
+    "nestedSkippedToast": "Preview skipped {n} nested item(s) (first: {first}). See the warning badge below the preview for details."
+  },
+  "toasts": {
+    "closeAria": "Dismiss notification"
+  },
+  "desktop": {
+    "saveError": "Could not write the file",
+    "preloadIpcNotBytes": "File data over IPC is not bytes."
+  },
+  "media": {
+    "videoMetaFailed": "Could not read the video metadata",
+    "audioMetaFailed": "Could not read the audio metadata",
+    "imageReadFailed": "Could not read the image",
+    "unsupported": "Unsupported format: {detail}"
+  },
+  "beatsync": {
+    "title": "Cut to the beat",
+    "noClip": "Could not find the selected audio/video clip.",
+    "noSource": "The clip has no source file (its media was deleted or needs relinking).",
+    "bridgeError": "Error {status}",
+    "analyzeFailed": "Beat analysis failed.",
+    "noCutPoints": "No cut points left — pick at least 1 point.",
+    "applyFailed": "Could not split at any point (the clip may be locked or the points may be outside the clip).",
+    "cutTitle": "🎵 Cut clip to the beat",
+    "intro": "Beat detection uses a local algorithm (spectral flux + DP, no API). It works best on music with a clear beat; rubato or complex music may drift — please review the cut list before applying.",
+    "minBpm": "Minimum BPM",
+    "maxBpm": "Maximum BPM",
+    "analyze": "Analyze beats",
+    "analyzing": "Analyzing beats… (long tracks can take tens of seconds)",
+    "found": "Found {bpm} BPM — {beats} beats in {duration}s → {points} cut points in the clip. Untick any point you don't want to cut:",
+    "structure": "🎼 Structure (heuristic estimate, not real music understanding):",
+    "meter": "{meter}/4 time (confidence {confidence})",
+    "meterUnknown": "could not determine the time signature",
+    "section": "Section {label}: {start} → {end}",
+    "sectionRepeat": " (repeats ×{n})",
+    "sectionPeak": " (highest energy)",
+    "downbeatOnly": "Only keep cut points on downbeats (cut per bar, fewer points)",
+    "sectionNote": "Section labels (A/B/C, “repeat”, “high energy”) are only hints from harmonic similarity and energy — music that doesn't follow pop structure may be segmented wrongly.",
+    "structureError": "Could not analyze the structure ({error}) — still cutting to the beat as usual.",
+    "apply": "Cut the clip at the selected beats"
+  },
+  "caption": {
+    "mediaGone": "The media file no longer exists.",
+    "processing": "Processing…",
+    "failed": "Captioning failed.",
+    "bridgeDropped": "The bridge disconnected mid-way — please retry.",
+    "noMedia": "No video/audio file selected for captioning.",
+    "uploading": "Uploading the file to the bridge…",
+    "translating": "Original captions done — starting translation…",
+    "cancelled": "Captioning cancelled.",
+    "noCues": "Could not read any cues: {details}",
+    "cueError": "block {block}: {reason}",
+    "noCuesInFile": "The file has no subtitle cues.",
+    "importedWithErrors": "Imported {n} sentences, skipped {bad} broken cues: {details}",
+    "imported": "Imported {n} sentences from {file}.",
+    "readFileFailed": "Could not read the file: {error}",
+    "translateTo": "Translate captions to {lang}",
+    "title": "Auto-generate captions",
+    "titleIcon": "💬 Auto-generate captions",
+    "recognizeWith": "Speech recognition with {engine} — runs 100% on your machine, no audio is sent to the cloud.",
+    "noMediaInLibrary": "There are no video/audio files in the media library yet. Please import a file first.",
+    "spokenLang": "Spoken language in the video",
+    "translateToLabel": "🌐 Translate to",
+    "noTranslate": "No translation",
+    "translateWith": "Translation with {engine} — runs locally (no cloud), currently English only. The translation becomes a second caption track; the original track is kept.",
+    "alignNote": "Captions are aligned to the file's original time (second 0 = start of file). If the clip was trimmed or moved on the timeline, you can select sentences and drag them to match.",
+    "orImport": "Or import an existing subtitle file:",
+    "importFile": "Import an SRT or VTT file",
+    "exportProject": "Export the project's captions:",
+    "exportIncludes": "Includes {n} sentences from track: {tracks}. Free titles/text on other tracks are not exported.",
+    "exportEmpty": "This project has no captions yet (generate captions or import SRT/VTT first).",
+    "running": "Running for {elapsed} — just leave the window open.",
+    "found": "Found {n} caption sentences ({dropped} skipped). Please review, then tap Apply:",
+    "karaokeHint": "🎤 Highlight each word as it is spoken (karaoke, {words} words)",
+    "highlightColor": "Highlight color:",
+    "noWordTimestamps": "This caption run has no word timestamps, so karaoke cannot be attached (text is still created normally).",
+    "keepSentence": "Keep this sentence",
+    "dropSentence": "Skip this sentence",
+    "exportSrt": "⬇ Export SRT",
+    "exportVtt": "⬇ Export VTT",
+    "translated": "🌐 {n} translated sentences ({lang}) ({dropped} skipped) — will create track {track}:",
+    "start": "🎙 Start generating captions",
+    "redo": "← Start over",
+    "apply": "✓ Apply {n} caption sentences",
+    "applyExtra": " + {m} sentences in {lang}",
+    "foundPlain": "Found {n} caption sentences. Please review, then tap Apply:",
+    "translatedPlain": "🌐 {n} translated sentences ({lang}) — will create track {track}:",
+    "phase": {
+      "extract": "Extracting audio…",
+      "group": "Grouping caption lines…",
+      "transcribe": "Recognizing speech (long videos may take a few minutes)…",
+      "translating": "Translating to English (long videos may take a few minutes)…",
+      "upload": "File received, preparing…"
+    }
+  },
+  "silence": {
+    "noClip": "No video/audio clip selected for silence trimming.",
+    "noSource": "Could not find the clip's source file (its media was deleted or not relinked yet). Please relink the media first.",
+    "cancelled": "Silence analysis cancelled.",
+    "noSilenceInRange": "There is no silence inside the clip range (after deselection).",
+    "applyFailed": "Could not cut (the clip was deleted/locked, or the whole clip is silence).",
+    "cutDone": "Cut {n} silences, shortened by {seconds}s (Ctrl+Z to undo).",
+    "title": "Cut silences",
+    "titleIcon": "🔇 Cut silences",
+    "intro": "Automatically detects silent parts in the clip, cuts them out, and closes the gaps on the timeline (runs FFmpeg silencedetect on your machine, no cloud).",
+    "clipLabel": "Clip to trim",
+    "noClipInTimeline": "The timeline has no video/audio clips yet.",
+    "threshold": "Silence threshold:",
+    "thresholdHint": "(the closer to 0, the stricter)",
+    "minDuration": "Only cut silences longer than:",
+    "analyze": "🔍 Analyze silences",
+    "analyzing": "⏳ Analyzing audio with FFmpeg…",
+    "noSilenceFound": "No silence detected with the current threshold. Try lowering the dB threshold (e.g. -40) or reducing the minimum length.",
+    "backToParams": "← Edit parameters",
+    "cut": "✂ Cut {n} silences",
+    "foundPartial": "Found {n} silences (will cut {kept}, {skipped} deselected), {total}s in total. Untick any part you want to keep:",
+    "foundAll": "Found {n} silences — will cut all, {total}s in total. Untick any part you want to keep:"
+  },
+  "history": {
+    "readFailed": "Could not read the history: {error}",
+    "duplicate": "The spec matches the latest version — no duplicate snapshot created.",
+    "saved": "Saved version ({summary})",
+    "saveFailed": "Could not save the version: {error}",
+    "restoreConfirm": "There are unsaved changes. Restoring this version will replace the entire current project. Continue?",
+    "beforeRestore": "before restore",
+    "notFound": "This version no longer exists.",
+    "restored": "Restored version {time}{label}",
+    "restoreFailed": "Could not restore: {error}",
+    "deleteConfirm": "Delete version {time}? It cannot be restored.",
+    "imported": "Imported {n} new versions (existing versions skipped).",
+    "importFailed": "Could not import: {error}",
+    "title": "🕘 Version history (stored locally, not synced to the cloud)",
+    "note": "Snapshots save the full spec into IndexedDB on this machine. Up to {max} versions per project; to take it to another machine, export the history file.",
+    "labelPlaceholder": "Label for the snapshot (optional)",
+    "snapshot": "📸 Save version",
+    "export": "⬇ Export history",
+    "import": "⬆ Import history",
+    "empty": "No versions yet. Tap “Save version” to create the first snapshot.",
+    "colTime": "Time",
+    "colLabel": "Label",
+    "colChanges": "Changes",
+    "restore": "↩ Restore"
+  },
+  "templatePicker": {
+    "kindImage": "🖼 Image",
+    "kindText": "✏️ Text",
+    "aspect916": "9:16 portrait",
+    "aspect11": "1:1 square",
+    "backToList": "Back to list",
+    "meta": "{aspect} · {duration}s · {count} fields to fill",
+    "metaShort": "{duration}s · {count} fields",
+    "defaultValue": "(default: {value})",
+    "createFromTemplate": "Create project from template",
+    "confirmNew": "Create a new project from template {name}? The current project will be replaced (cannot be undone).",
+    "back": "Back",
+    "confirmCreate": "Confirm creation",
+    "title": "🎬 Video templates ({n} templates)",
+    "credit": "Templates designed by VCut Studio (MIT). Source files:",
+    "aspect169": "16:9 landscape"
+  },
+  "enhance": {
+    "selectClip": "Select a video clip on the timeline to enhance the image.",
+    "videoOnly": "Enhancement only works on video clips (images, text, stickers, and audio are not supported yet) — see {doc}.",
+    "deinterlace": "Deinterlace (yadif) — interlaced video to progressive",
+    "yadifMode": "Yadif mode",
+    "yadif0": "0 — keep fps (safe)",
+    "yadif1": "1 — one frame per field (doubles fps)",
+    "stabilize": "Stabilize (vidstab 2-pass) — smooths handheld shake",
+    "smoothing": "Smoothing: {n} frames",
+    "stabTwoPass": "Stabilization runs 2 passes: rendering analyzes the whole clip first, then renders, so it is slower than usual.",
+    "stabSpeedConflict": "⚠️ This clip has a speed curve — stabilization CANNOT be combined with speedKeyframes; rendering will be blocked. Turn one of them off.",
+    "denoise": "Denoise (hqdn3d) — reduces grain noise",
+    "denoiseStrength": "Denoise strength: {pct}%",
+    "heavyWarning": "⚠️ This clip has both a mask and heavy enhancement (stabilization / denoise) and is {duration}s long — rendering will be slow on a weak machine. Real measurements on a 2-vCPU VM (no GPU): 720p mask + denoise runs at ~17.6 fps, so a 60s clip takes ~100s for the render step alone; 1080p is ~3× slower. Stabilization adds another full-clip analysis pass. Tip: render a short test segment first, or turn something off.",
+    "quickDenoise": "✨ Enable quick denoise",
+    "disableAll": "Turn off all enhancements",
+    "activeSummary": "Active: {list}",
+    "badgeTitle": "Clip has enhancement — see the Enhance video section in the Inspector",
+    "presetBalanced": "Balanced — stabilize + denoise",
+    "presetCustom": "Custom",
+    "presetLabel": "Enhance preset",
+    "presetLight": "Light — light denoise",
+    "presetOff": "Off",
+    "presetStrong": "Strong — strong stabilize + denoise",
+    "sumDeinterlace": "Deinterlace",
+    "sumDenoise": "Denoise",
+    "sumStabilize": "Stabilize",
+    "previewApprox": "Preview is only an approximation — denoise is a light blur, stabilize is a suggested crop/scale, deinterlace is not shown; the render is exact.",
+    "previewOffNote": "Enhance preview is off — the preview shows the original frame, the render still applies enhance.",
+    "previewToggle": "Preview enhance (approximate)",
+    "presetSpeedBlocked": "⚠️ This clip has a speed curve, so the Balanced/Strong presets are disabled — stabilize can't be combined with speed keyframes. Use the Light preset (denoise only), or remove the speed curve first.",
+    "presetSpeedTitle": "Balanced/Strong presets are disabled because this clip has a speed curve — stabilize can't be combined with speed keyframes",
+    "stabilizeSpeedTitle": "Stabilize can't be combined with this clip's speed curve",
+    "fastMotionLevelFast": "fast",
+    "fastMotionLevelMedium": "moderate",
+    "fastMotionLevelSlow": "slow",
+    "fastMotionMeasuring": "Measuring clip motion…",
+    "fastMotionUnknown": "⚠️ Could not measure this clip's motion — denoise at {pct}% may leave ghost trails on fast-moving clips. Render a short test before exporting.",
+    "fastMotionWarning": "⚠️ Fast-moving clip (motion score {score} — {level}) — denoise at {pct}% may leave ghost trails (ghosting) on moving areas. Lower it below 70% if you see trails following moving objects.",
+    "fastMotionWarningSlow": "⚠️ Denoise at {pct}% may leave ghost trails — measurements on real footage show trails clearly increase from 50% to 70% even on {level}-motion clips (motion score {score}). Lower it below 70% if you see trails following moving objects."
+  },
+  "perf": {
+    "openFps": "Open the preview FPS meter",
+    "title": "Preview FPS meter",
+    "closeFps": "Close the FPS meter",
+    "status": "Status:",
+    "playing": "▶ Playing",
+    "paused": "⏸ Paused (this is not playback FPS)",
+    "fpsRecent": "FPS (last 1s):",
+    "fpsAvg": "Average FPS:",
+    "fpsMin": "Lowest FPS (1s window):",
+    "dropped": "Janky frames (>{ms}ms):",
+    "totalFrames": "Total frames:",
+    "note": "Measured with the app's rAF, not the preview canvas's direct draw calls.",
+    "presentedFps": "Presented frames (element):",
+    "presentedNote": "Frames the video element actually presented (getVideoPlaybackQuality), different from the canvas draw FPS above; shows … when paused or no video clip is playing."
+  },
+  "templatePack": {
+    "bridgeErrorHttp": "Bridge returned HTTP error {status}",
+    "mediaAddFailed": "Could not add the file to the media library.",
+    "ttsAdded": "✅ Added the narration{suffix} to the timeline.",
+    "audioPlaceholderUnsupported": "Pack does not support audio placeholders yet: {id}",
+    "missingSampleMedia": "Missing sample media for placeholder: {id}",
+    "album-cover": {
+      "name": "Album Cover",
+      "description": "Square video introducing an album: cover art + album name + artist name.",
+      "placeholder": {
+        "album": {
+          "label": "Album name"
+        },
+        "artist": {
+          "label": "Artist name"
+        },
+        "cover": {
+          "label": "Album cover photo"
+        }
+      }
+    },
+    "album-teaser": {
+      "name": "Album Teaser",
+      "description": "Square cover art + album name + release date.",
+      "placeholder": {
+        "album": {
+          "label": "Album name"
+        },
+        "cover": {
+          "label": "Cover photo"
+        },
+        "release": {
+          "label": "Release date"
+        }
+      }
+    },
+    "app-launch": {
+      "name": "App Launch",
+      "description": "Vertical app launch video: app screen + app name + tagline.",
+      "placeholder": {
+        "name": {
+          "label": "App name"
+        },
+        "screen": {
+          "label": "App screen video"
+        },
+        "tagline": {
+          "label": "Tagline"
+        }
+      }
+    },
+    "audiobook-promo": {
+      "name": "Audiobook Promo",
+      "description": "Square cover art + book title + narrator.",
+      "placeholder": {
+        "book": {
+          "label": "Book title"
+        },
+        "cover": {
+          "label": "Book cover photo"
+        },
+        "narrator": {
+          "label": "Narrator"
+        }
+      }
+    },
+    "birthday-card": {
+      "name": "Birthday Card",
+      "description": "Square birthday photo: name + wishes + sticker.",
+      "placeholder": {
+        "bg": {
+          "label": "Background photo"
+        },
+        "name": {
+          "label": "Recipient's name"
+        },
+        "wish": {
+          "label": "Wish"
+        }
+      }
+    },
+    "book-trailer": {
+      "name": "Book Trailer",
+      "description": "Landscape book trailer: cover art + excerpt + book title.",
+      "placeholder": {
+        "cover": {
+          "label": "Book cover photo"
+        },
+        "quote": {
+          "label": "Excerpt"
+        },
+        "title": {
+          "label": "Book title"
+        }
+      }
+    },
+    "breaking-news": {
+      "name": "Breaking News",
+      "description": "TV news frame: background video + headline + ticker.",
+      "placeholder": {
+        "footage": {
+          "label": "Scene footage"
+        },
+        "headline": {
+          "label": "News headline"
+        },
+        "ticker": {
+          "label": "Lower ticker"
+        }
+      }
+    },
+    "charity-appeal": {
+      "name": "Charity Appeal",
+      "description": "Landscape appeal video: field footage + message + bank account number.",
+      "placeholder": {
+        "cta": {
+          "label": "Call to action"
+        },
+        "field": {
+          "label": "Field footage"
+        },
+        "message": {
+          "label": "Message"
+        }
+      }
+    },
+    "concert-teaser": {
+      "name": "Concert Teaser",
+      "description": "Vertical concert teaser: 2 stage scenes + artist name + show date.",
+      "placeholder": {
+        "artist": {
+          "label": "Artist name"
+        },
+        "date": {
+          "label": "Show date"
+        },
+        "stage1": {
+          "label": "Stage scene 1"
+        },
+        "stage2": {
+          "label": "Stage scene 2"
+        }
+      }
+    },
+    "cooking-show": {
+      "name": "Vertical Cooking Show",
+      "description": "Vertical cooking video: 3 steps + dish name + quick tip.",
+      "placeholder": {
+        "dish": {
+          "label": "Dish name"
+        },
+        "step1": {
+          "label": "Step 1"
+        },
+        "step2": {
+          "label": "Step 2"
+        },
+        "step3": {
+          "label": "Step 3 (finished dish)"
+        },
+        "tip": {
+          "label": "Quick tip"
+        }
+      }
+    },
+    "desk-setup": {
+      "name": "Desk Setup",
+      "description": "Vertical desk setup tour: 2 desk scenes + owner's name.",
+      "placeholder": {
+        "desk1": {
+          "label": "Desk scene 1"
+        },
+        "desk2": {
+          "label": "Desk scene 2"
+        },
+        "owner": {
+          "label": "Setup owner's name"
+        }
+      }
+    },
+    "documentary-title": {
+      "name": "Documentary Title",
+      "description": "Documentary opening: footage + film title + episode number.",
+      "placeholder": {
+        "episode": {
+          "label": "Episode number"
+        },
+        "footage": {
+          "label": "Footage"
+        },
+        "title": {
+          "label": "Film title"
+        }
+      }
+    },
+    "event-invite": {
+      "name": "Event Invitation",
+      "description": "Vertical invitation video: photo + name + date/venue.",
+      "placeholder": {
+        "bg": {
+          "label": "Event photo"
+        },
+        "event": {
+          "label": "Event name"
+        },
+        "when": {
+          "label": "Time & venue"
+        }
+      }
+    },
+    "family-slideshow": {
+      "name": "Family Slideshow",
+      "description": "Landscape slideshow: 3 memory photos + a message.",
+      "placeholder": {
+        "message": {
+          "label": "Message"
+        },
+        "photo1": {
+          "label": "Photo 1"
+        },
+        "photo2": {
+          "label": "Photo 2"
+        },
+        "photo3": {
+          "label": "Photo 3"
+        }
+      }
+    },
+    "fashion-lookbook": {
+      "name": "Fashion Lookbook",
+      "description": "Vertical lookbook: 3 outfits + collection name.",
+      "placeholder": {
+        "collection": {
+          "label": "Collection name"
+        },
+        "look1": {
+          "label": "Outfit 1"
+        },
+        "look2": {
+          "label": "Outfit 2"
+        },
+        "look3": {
+          "label": "Outfit 3"
+        }
+      }
+    },
+    "fitness-promo": {
+      "name": "Gym Promo",
+      "description": "Landscape workout video: slogan + sign-up call to action.",
+      "placeholder": {
+        "cta": {
+          "label": "Call to action"
+        },
+        "footage": {
+          "label": "Workout video"
+        },
+        "slogan": {
+          "label": "Slogan"
+        }
+      }
+    },
+    "food-reel": {
+      "name": "Food Reel",
+      "description": "Vertical food review: 3 quick cuts + hook + dish name.",
+      "placeholder": {
+        "clip1": {
+          "label": "Scene 1 (opening)"
+        },
+        "clip2": {
+          "label": "Scene 2"
+        },
+        "clip3": {
+          "label": "Scene 3 (closing)"
+        },
+        "dish": {
+          "label": "Dish name"
+        },
+        "hook": {
+          "label": "Hook"
+        }
+      }
+    },
+    "gaming-highlight": {
+      "name": "Gaming Highlight",
+      "description": "Vertical highlight: 2 plays + featured score.",
+      "placeholder": {
+        "clip1": {
+          "label": "Play 1"
+        },
+        "clip2": {
+          "label": "Play 2 (highlight)"
+        },
+        "score": {
+          "label": "Score / result"
+        }
+      }
+    },
+    "graduation-celebration": {
+      "name": "Graduation Celebration",
+      "description": "Vertical graduation video: ceremony footage + name + class year.",
+      "placeholder": {
+        "ceremony": {
+          "label": "Ceremony video"
+        },
+        "name": {
+          "label": "Graduate's name"
+        },
+        "year": {
+          "label": "Class year"
+        }
+      }
+    },
+    "gym-transformation": {
+      "name": "Gym Journey",
+      "description": "Vertical before/after: 2 training scenes + weight lost + slogan.",
+      "placeholder": {
+        "after": {
+          "label": "After scene"
+        },
+        "before": {
+          "label": "Before scene"
+        },
+        "result": {
+          "label": "Result"
+        },
+        "slogan": {
+          "label": "Slogan"
+        }
+      }
+    },
+    "interview-cut": {
+      "name": "Interview Cut",
+      "description": "Landscape video with 2 alternating camera angles + speaker name.",
+      "placeholder": {
+        "guest": {
+          "label": "Guest camera"
+        },
+        "host": {
+          "label": "Host camera"
+        },
+        "name1": {
+          "label": "Host name"
+        },
+        "name2": {
+          "label": "Guest name"
+        }
+      }
+    },
+    "intro-logo": {
+      "name": "Logo Intro",
+      "description": "Landscape opening: logo + channel name + slogan.",
+      "placeholder": {
+        "channel": {
+          "label": "Channel name"
+        },
+        "logo": {
+          "label": "Logo image"
+        },
+        "slogan": {
+          "label": "Slogan"
+        }
+      }
+    },
+    "lofi-visual": {
+      "name": "Relaxing Lofi Music",
+      "description": "Still background image + song title + background music (audio placeholder).",
+      "placeholder": {
+        "artist": {
+          "label": "Artist"
+        },
+        "bg": {
+          "label": "Background photo"
+        },
+        "song": {
+          "label": "Song title"
+        },
+        "track": {
+          "label": "Music file"
+        }
+      }
+    },
+    "lower-third": {
+      "name": "Lower Third",
+      "description": "Speaker name strip at the bottom — for interviews and news.",
+      "placeholder": {
+        "footage": {
+          "label": "Background video"
+        },
+        "name": {
+          "label": "Speaker's name"
+        },
+        "role": {
+          "label": "Job title"
+        }
+      }
+    },
+    "lyric-video": {
+      "name": "Lyric Video",
+      "description": "Lyrics video: 4 lines fading in over a background photo.",
+      "placeholder": {
+        "bg": {
+          "label": "Background photo"
+        },
+        "line1": {
+          "label": "Lyric line 1"
+        },
+        "line2": {
+          "label": "Lyric line 2"
+        },
+        "line3": {
+          "label": "Lyric line 3"
+        },
+        "line4": {
+          "label": "Lyric line 4"
+        },
+        "music": {
+          "label": "Music file"
+        }
+      }
+    },
+    "morning-news": {
+      "name": "Morning News",
+      "description": "News opening: city video + show name + date.",
+      "placeholder": {
+        "city": {
+          "label": "Morning city video"
+        },
+        "date": {
+          "label": "Air date"
+        },
+        "show": {
+          "label": "Show name"
+        }
+      }
+    },
+    "outro-creator": {
+      "name": "Creator Outro",
+      "description": "Video ending: thanks + subscribe + channel name.",
+      "placeholder": {
+        "channel": {
+          "label": "Channel name"
+        },
+        "footage": {
+          "label": "Background video"
+        },
+        "subscribe": {
+          "label": "Subscribe call to action"
+        },
+        "thanks": {
+          "label": "Thank-you message"
+        }
+      }
+    },
+    "outro-subscribe": {
+      "name": "Subscribe Outro",
+      "description": "Landscape ending: thanks + subscribe button + next video.",
+      "placeholder": {
+        "next": {
+          "label": "Next video"
+        },
+        "subscribe": {
+          "label": "Subscribe call to action"
+        },
+        "thanks": {
+          "label": "Thank-you message"
+        }
+      }
+    },
+    "podcast-audiogram": {
+      "name": "Podcast Audiogram",
+      "description": "Square video for podcasts: cover art + episode title + guest.",
+      "placeholder": {
+        "audio": {
+          "label": "Podcast audio file"
+        },
+        "cover": {
+          "label": "Episode cover photo"
+        },
+        "episode": {
+          "label": "Episode title"
+        },
+        "guest": {
+          "label": "Guest"
+        }
+      }
+    },
+    "podcast-highlight": {
+      "name": "Vertical Podcast Highlight",
+      "description": "Vertical highlight cut: 1 spoken segment + a featured quote.",
+      "placeholder": {
+        "clip": {
+          "label": "Highlight clip"
+        },
+        "quote": {
+          "label": "Quote"
+        },
+        "show": {
+          "label": "Show name"
+        }
+      }
+    },
+    "podcast-studio": {
+      "name": "Podcast Studio",
+      "description": "Landscape podcast episode: 2 camera angles + episode title + guest name.",
+      "placeholder": {
+        "cam1": {
+          "label": "Camera 1 (host)"
+        },
+        "cam2": {
+          "label": "Camera 2 (guest)"
+        },
+        "episode": {
+          "label": "Episode title"
+        },
+        "guest": {
+          "label": "Guest name"
+        }
+      }
+    },
+    "product-showcase": {
+      "name": "Product Showcase",
+      "description": "Square 1:1 ad: product photo + name + price + call to action.",
+      "placeholder": {
+        "cta": {
+          "label": "Call to action"
+        },
+        "name": {
+          "label": "Product name"
+        },
+        "price": {
+          "label": "Price"
+        },
+        "product": {
+          "label": "Product photo"
+        }
+      }
+    },
+    "quote-card": {
+      "name": "Quote Card",
+      "description": "Square quote image: a saying + the author's name.",
+      "placeholder": {
+        "author": {
+          "label": "Author"
+        },
+        "bg": {
+          "label": "Background photo"
+        },
+        "quote": {
+          "label": "Quote"
+        }
+      }
+    },
+    "real-estate-tour": {
+      "name": "Real Estate Tour",
+      "description": "Landscape video of 3 spaces + address + price.",
+      "placeholder": {
+        "address": {
+          "label": "Address"
+        },
+        "price": {
+          "label": "Price"
+        },
+        "room1": {
+          "label": "Living room"
+        },
+        "room2": {
+          "label": "Bedroom"
+        },
+        "room3": {
+          "label": "Kitchen & yard"
+        }
+      }
+    },
+    "recipe-card": {
+      "name": "Recipe Card",
+      "description": "Vertical cooking video: cooking footage + dish name + ingredients.",
+      "placeholder": {
+        "dish": {
+          "label": "Dish name"
+        },
+        "footage": {
+          "label": "Cooking video"
+        },
+        "ingredients": {
+          "label": "Main ingredient"
+        }
+      }
+    },
+    "sale-banner": {
+      "name": "Sale Banner",
+      "description": "Landscape sale video: background + big discount text + terms.",
+      "placeholder": {
+        "footage": {
+          "label": "Background video"
+        },
+        "sale": {
+          "label": "Discount"
+        },
+        "terms": {
+          "label": "Terms"
+        }
+      }
+    },
+    "sale-countdown": {
+      "name": "Sale Countdown",
+      "description": "Vertical countdown video: product + discount + time left.",
+      "placeholder": {
+        "deadline": {
+          "label": "Deadline"
+        },
+        "discount": {
+          "label": "Discount"
+        },
+        "product": {
+          "label": "Product video"
+        }
+      }
+    },
+    "slideshow": {
+      "name": "Photo Slideshow",
+      "description": "4-photo slideshow with smooth transitions.",
+      "placeholder": {
+        "photo1": {
+          "label": "Photo 1"
+        },
+        "photo2": {
+          "label": "Photo 2"
+        },
+        "photo3": {
+          "label": "Photo 3"
+        },
+        "photo4": {
+          "label": "Photo 4"
+        },
+        "title": {
+          "label": "Album title"
+        }
+      }
+    },
+    "tiktok-viral": {
+      "name": "Vertical TikTok",
+      "description": "Vertical 9:16 video: 3 quick cuts + bold hook text.",
+      "placeholder": {
+        "caption": {
+          "label": "Persistent caption"
+        },
+        "clip1": {
+          "label": "Scene 1 (opening)"
+        },
+        "clip2": {
+          "label": "Scene 2"
+        },
+        "clip3": {
+          "label": "Scene 3 (ending)"
+        },
+        "hook": {
+          "label": "Opening 3-second hook"
+        }
+      }
+    },
+    "title-card": {
+      "name": "Title Card",
+      "description": "Cinematic title screen: large text fading in over a dark background.",
+      "placeholder": {
+        "bg": {
+          "label": "Background photo"
+        },
+        "title": {
+          "label": "Title"
+        }
+      }
+    },
+    "travel-diary": {
+      "name": "Travel Diary",
+      "description": "Landscape slideshow of 4 photos + a caption for each stop.",
+      "placeholder": {
+        "cap1": {
+          "label": "Caption 1"
+        },
+        "cap2": {
+          "label": "Caption 2"
+        },
+        "photo1": {
+          "label": "Photo 1"
+        },
+        "photo2": {
+          "label": "Photo 2"
+        },
+        "photo3": {
+          "label": "Photo 3"
+        },
+        "photo4": {
+          "label": "Photo 4"
+        }
+      }
+    },
+    "travel-montage": {
+      "name": "Travel Montage",
+      "description": "Landscape travel montage: 3 destinations + trip name.",
+      "placeholder": {
+        "place1": {
+          "label": "Stop 1"
+        },
+        "place2": {
+          "label": "Stop 2"
+        },
+        "place3": {
+          "label": "Stop 3"
+        },
+        "trip": {
+          "label": "Trip name"
+        }
+      }
+    },
+    "travel-vlog-intro": {
+      "name": "Travel Vlog Intro",
+      "description": "Travel intro: the place name flies in over the footage.",
+      "placeholder": {
+        "date": {
+          "label": "Time"
+        },
+        "footage": {
+          "label": "Location footage"
+        },
+        "location": {
+          "label": "Place name"
+        }
+      }
+    },
+    "tutorial-vertical": {
+      "name": "Vertical Tutorial",
+      "description": "Vertical 3-step tutorial: one scene and step text per step.",
+      "placeholder": {
+        "label1": {
+          "label": "Step 1 label"
+        },
+        "label2": {
+          "label": "Step 2 label"
+        },
+        "label3": {
+          "label": "Step 3 label"
+        },
+        "step1": {
+          "label": "Step 1"
+        },
+        "step2": {
+          "label": "Step 2"
+        },
+        "step3": {
+          "label": "Step 3"
+        }
+      }
+    },
+    "unboxing": {
+      "name": "Product Unboxing",
+      "description": "Square unboxing video: opening scene + name + price.",
+      "placeholder": {
+        "footage": {
+          "label": "Unboxing video"
+        },
+        "price": {
+          "label": "Price"
+        },
+        "product": {
+          "label": "Product name"
+        }
+      }
+    },
+    "webinar-invite": {
+      "name": "Webinar Invitation",
+      "description": "Landscape video inviting viewers to a webinar: speaker + topic + time.",
+      "placeholder": {
+        "speaker": {
+          "label": "Speaker photo"
+        },
+        "time": {
+          "label": "Time"
+        },
+        "topic": {
+          "label": "Topic"
+        }
+      }
+    },
+    "wedding-teaser": {
+      "name": "Wedding Teaser",
+      "description": "Wedding video opening: a moment + the bride and groom's names.",
+      "placeholder": {
+        "couple": {
+          "label": "Bride & groom's names"
+        },
+        "date": {
+          "label": "Wedding date"
+        },
+        "footage": {
+          "label": "Moment video"
+        }
+      }
+    },
+    "wedding-vows": {
+      "name": "Wedding Vows",
+      "description": "Landscape wedding moment: ceremony video + vows + the couple's names.",
+      "placeholder": {
+        "ceremony": {
+          "label": "Ceremony video"
+        },
+        "couple": {
+          "label": "Couple's names"
+        },
+        "vow": {
+          "label": "Vows"
+        }
+      }
+    },
+    "youtube-intro": {
+      "name": "YouTube Intro",
+      "description": "Channel opening: the channel title rises over cinematic footage.",
+      "placeholder": {
+        "footage": {
+          "label": "Background video"
+        },
+        "subtitle": {
+          "label": "Sub-line (slogan)"
+        },
+        "title": {
+          "label": "Channel name / title"
+        }
+      }
+    },
+    "youtube-outro": {
+      "name": "YouTube Outro",
+      "description": "Video ending: thanks + subscribe call to action, with a badge.",
+      "placeholder": {
+        "channel": {
+          "label": "Channel name"
+        },
+        "cta": {
+          "label": "Call to action"
+        },
+        "footage": {
+          "label": "Background video"
+        },
+        "thanks": {
+          "label": "Thank-you message"
+        }
+      }
+    }
+  },
+  "archive": {
+    "manifestBadFormat": "manifest.json is not a valid vcut-archive.",
+    "manifestInvalid": "manifest.json is invalid.",
+    "manifestNoFiles": "manifest.json is missing the files list.",
+    "manifestNotJson": "manifest.json is not valid JSON.",
+    "manifestVersion": "manifest formatVersion={version} is not supported.",
+    "mediaTooBig": "Total media size exceeds the limit of {limit} bytes.",
+    "missingEntry": "The archive is missing {name}.",
+    "missingMedia": "Missing media file in the archive: {name} (listed in the manifest).",
+    "noManifest": "The archive is missing manifest.json.",
+    "projectJsonInvalid": "project.json is invalid:",
+    "shaMismatch": "{name}: SHA-256 does not match the manifest — the file may be corrupt or tampered with.",
+    "sizeMismatch": "{name}: size {actual} differs from the manifest ({expected}).",
+    "tooManyFiles": "The archive has {n} files, over the limit of {limit}.",
+    "unknownEntry": "Unknown entry in the archive: {name} — only project.json, manifest.json, and media/* are accepted.",
+    "unsafeEntry": "Unsafe entry (path traversal?): {name}.",
+    "unsafeName": "Unsafe media name for packaging: {name}.",
+    "zipFailed": "Could not create the zip file: {error}",
+    "zipUnreadable": "Could not read the zip file: {error}"
+  },
+  "captions": {
+    "invalidData": "Invalid caption data.",
+    "langAuto": "Auto-detect",
+    "langEn": "English",
+    "langVi": "Vietnamese",
+    "noValidSentences": "No valid caption sentences.",
+    "tooManySentences": "Too many caption sentences.",
+    "translatedTrack": "Subtitles ({code})"
+  },
+  "exportPreset": {
+    "1080pDesc": "1920×1080 @30fps — good quality, moderate file size",
+    "1080pLabel": "1080p · Balanced",
+    "4kDesc": "3840×2160 @30fps — maximum detail, slow render, large file",
+    "4kLabel": "4K · High quality",
+    "720pDesc": "1280×720 @30fps — light file, fast render, good for watching on a phone",
+    "720pLabel": "720p · Fast",
+    "customDesc": "Set your own resolution, fps, and compression quality",
+    "customLabel": "Custom…",
+    "customLabelPlain": "Custom",
+    "errAudioBitrate": "audioBitrateKbps must be an integer {min}..{max}.",
+    "errCrf": "crf must be an integer {min}..{max} (0 = best).",
+    "errFps": "fps must be an integer {min}..{max}.",
+    "errHeight": "height must be an integer {min}..{max}.",
+    "errNotObject": "The preset must be an object.",
+    "errWidth": "width must be an integer {min}..{max}.",
+    "errX264": "x264Preset must be one of: {list}.",
+    "instaDesc": "1080×1080 @30fps — square size for the Instagram feed",
+    "instaLabel": "Instagram square 1:1",
+    "sizeEstimateNote": "≈ {size} · estimated, the real file may differ",
+    "sizeSummary": "{w}×{h} @{fps}fps · CRF {crf} · {x264} · audio {akbps}k",
+    "tiktokDesc": "1080×1920 portrait @30fps — the standard TikTok, Reels, and Shorts size",
+    "youtubeDesc": "1920×1080 @30fps — higher bitrate, good for uploading to YouTube"
+  },
+  "openProject": {
+    "proxyStaleToast": "Proxies for {names} are missing on the bridge — tap the Proxy button on the media card to recreate them.",
+    "unsavedConfirm": "There are changes not yet saved to a file. Discard them and continue?"
+  },
+  "sharePage": {
+    "bigVideoWarn": "Large video (~{size} MB) — the HTML file will be heavy and may be blocked when sent via chat/email.",
+    "durationLine": "Duration: {dur} — Static view page exported from VCut Studio (plays video only, no editing).",
+    "emptyProject": "(Empty project, no clips yet)",
+    "linkedNote": "Linked mode: you must send the video file together in the same folder as the HTML file, or the page won't play.",
+    "linkedWarn": "Video ~{size} MB exceeds the single-file embed limit ({limit} MB) — use linked mode (HTML + video.mp4 side by side).",
+    "noVideo": "Need videoBase64 (embedded) or videoFileName (linked) to create the share page.",
+    "openHint": "Open this file in a browser to watch — no need to install VCut or run a server.",
+    "timeHeader": "Time"
+  },
+  "store": {
+    "toastAliasClean": "No extra aliases (scanned {n} assets).",
+    "toastAliasCleaned": "Cleaned {n} extra aliases from {m} assets.",
+    "toastDedupNote": " (Same content as the already-saved file \"{name}\" — sharing that copy; no relink needed next time you open it.)",
+    "toastEmptyMeta": "File \"{name}\" could be read but its metadata is empty (the file may be corrupt).",
+    "toastRelinked": "Relinked → \"{name}\".",
+    "toastRelinkedMulti": "Relinked {n} clips → \"{name}\".",
+    "toastUnsupported": "Could not read file \"{name}\" — unsupported format.",
+    "toastUnusedMedia": "No clips use \"{name}\" anymore.",
+    "toastMediaInUse": "Cannot remove “{name}” — {count} clip(s) still use this media. Remove those clips from the timeline first."
+  },
+  "curveErr": {
+    "speedNotObject": "{path}: speedKeyframes must be an object { keyframes: [...] }",
+    "speedEmpty": "{path}: speedKeyframes.keyframes: empty array — at least 1 keyframe is required",
+    "speedTooMany": "{path}: speedKeyframes.keyframes: more than 128 keyframes",
+    "kfNotObject": "{path} must be an object { t, v, easing }",
+    "kfTOutOfRange": "{path}.t must be in [0, {duration}] (got: {value})",
+    "kfVRangeDots": "{path}.v must be in {min}..{max} (got: {value})",
+    "kfEasing": "{path}.easing must be linear | ease-in | ease-out | bezier (got: {value})",
+    "kfBezier": "{path}.bezier must be [x1, y1, x2, y2]: x1, x2 in [0, 1], y1, y2 free (got: {value})",
+    "kfBezierNoValue": "{path}.bezier must be [x1, y1, x2, y2]: x1, x2 in [0, 1], y1, y2 free",
+    "kfNotObjectDot": "{path} must be an object { t, v, easing }.",
+    "kfTOutOfRangeDot": "{path}.t must be in [0, {duration}] (got: {value}).",
+    "kfEasingDot": "{path}.easing must be linear | ease-in | ease-out | bezier (got: {value}).",
+    "kfVRangeBrackets": "{path}.v must be in [{min}, {max}] (got: {value}).",
+    "kfBezierNoValueDot": "{path}.bezier must be [x1, y1, x2, y2]: x1, x2 in [0, 1], y1, y2 free."
+  },
+  "twoLevel": {
+    "mergeDuration": "{path}: two-level curve merge: the leaf's mapped duration must be > 0",
+    "mergeBreakpoints": "{path}: two-level curve merge needs {n} breakpoints, exceeding the 128-keyframe limit of a ramp clip — reduce the keyframes of the outer/inner curve",
+    "speedOutOfRangeHermite": "{path}: combined two-level speed = {v} exceeds the {min}..{max} range at t'={t} — the outer × inner speed product exceeds the range even though each level is valid; reduce the amplitude of one curve",
+    "speedOutOfRangeInnerConst": "{path}: combined two-level speed = {v} exceeds the {min}..{max} range (constant inner speed {inner} × outer speed)",
+    "speedOutOfRangeOuterConst": "{path}: combined two-level speed = {v} exceeds the {min}..{max} range (constant outer speed {outer} × inner speed)",
+    "outerDuration": "{path}: outerDuration must be > 0 (got: {value})",
+    "leafDuration": "{path}: leafDuration must be > 0 (got: {value})",
+    "leafOutside": "{path}: the leaf lies completely outside the nested clip window — no visible segment to merge",
+    "sliceOuter": "{path}: could not slice the outer curve for the leaf's output segment — degenerate segment",
+    "sliceInner": "{path}: could not slice the inner curve for the visible segment — degenerate segment"
+  },
+  "projectRepo": {
+    "openFailed": "Could not open the file: {error}",
+    "keyframeDropped": "Removed broken keyframes from {count} fields ({fields}) — save the file to complete.",
+    "validateNotObject": "must be an object.",
+    "validateMissingId": "missing id.",
+    "validateStartRange": "start must be a number ≥ 0.",
+    "validateDurationPositive": "duration must be a number > 0.",
+    "validateMissingSrc": "missing src.",
+    "validateMissingIn": "missing in (source in-point).",
+    "validateMissingOut": "missing out (source out-point).",
+    "validateMissingText": "missing text.",
+    "validateSpeedRange": "speed must be within [0.25, 4].",
+    "validateTrimInvalid": "trim is invalid (needs in < out).",
+    "validateMissingSubSpec": "missing subSpec.",
+    "validateKindUnsupported": "unsupported kind: {kind}.",
+    "validateNotVideoSpec": "Not a valid video spec (version={version}, app supports {supported}). The file may be corrupt or use an unsupported schema version.",
+    "validateSubSpecCycle": "subSpec creates a cycle (child spec points back to an ancestor spec).",
+    "validateMetaName": "meta.name must be a non-empty string.",
+    "validateMetaWidth": "meta.width must be a number > 0.",
+    "validateMetaHeight": "meta.height must be a number > 0.",
+    "validateMetaFps": "meta.fps must be a number > 0.",
+    "validateTracksArray": "tracks must be an array.",
+    "validateClipsArray": "clips must be an array.",
+    "keyframeFixNotObject": "{where}: keyframes is not an object { keyframes: [...] } — field removed.",
+    "keyframeFixNotArray": "{where}.keyframes is not an array — field removed.",
+    "keyframeFixEmptyAfterDrop": "{where}.keyframes is empty after dropping {dropped} invalid entries — field removed.",
+    "keyframeFixDroppedEntries": "dropped {dropped} invalid entries (null/invalid)",
+    "keyframeFixEasingNormalized": "normalized {n} unknown easings to linear",
+    "keyframeFixKept": "{where}.keyframes: {parts} — kept {kept}/{total} entries.",
+    "invalidJson": "File is not valid JSON.",
+    "untitledProject": "Untitled project",
+    "moreWarnings": "Still {n} more speedKeyframes warnings (limited to showing 100).",
+    "projectIdMigrated": "This file has no stable project ID yet — a new ID was created. Save the file to keep this ID."
+  },
+  "projectHistory": {
+    "addedClips": "Added {n} clip(s)",
+    "firstVersion": "First version of the project.",
+    "movedClips": "Moved {n} clip(s)",
+    "noContentChange": "No content change (metadata only).",
+    "removedClips": "Removed {n} clip(s)",
+    "renamed": "Renamed: \"{old}\" → \"{new}\"",
+    "totalDuration": "Total duration: {old} → {new}",
+    "trackCount": "Track count: {old} → {new}",
+    "trimmedClips": "Trimmed {n} clip(s)",
+    "historyBadFormat": "File is not a VCut history file (vcut-history v1).",
+    "historyBadHash": "Version {id} has a wrong spec hash — the file may have been modified.",
+    "historyBadVersion": "History file has a broken version (missing id/projectId/spec).",
+    "historyMissingFields": "History file is missing projectId or the version list.",
+    "historyNotJsonObject": "History file is not a JSON object.",
+    "indexedDbOpenFailed": "Could not open IndexedDB.",
+    "noIndexedDb": "This browser has no IndexedDB.",
+    "migrateVersionsNeedsProjectId": "migrateVersions needs a valid target projectId (UUID or proj-<time>-<rand>)."
+  },
+  "subtitles": {
+    "untitledTrack": "(unnamed)",
+    "errBadTimestamp": "Malformed timestamp: \"{line}\".",
+    "errEmptyCue": "Cue has no text.",
+    "errEndNotAfterStart": "End time ({end}s) is not after start time ({start}s).",
+    "errMissingTimestamp": "Missing timestamp line (-->).",
+    "errMissingWebvtt": "Missing WEBVTT header line."
+  },
+  "templateEngine": {
+    "invalidSpec": "Spec is invalid after applying the template.",
+    "missingValues": "Template is missing values for: {names}"
+  },
+  "welcome": {
+    "title": "👋 Welcome to VCut Studio",
+    "lead": "A video editor that runs 100% on your machine: no uploads, no account, no AI fees.",
+    "step1Title": "1 · A video is ready on open",
+    "step1Body": "A sample project is preloaded: press ▶ to play, drag clips on the timeline to try cutting and splitting.",
+    "step2Title": "2 · One-click video from a template",
+    "step2Body": "Pick a sample pack — media, text and sample captions are generated on your machine, no files to prepare.",
+    "step3Title": "3 · Export MP4 when you like it",
+    "step3Body": "The Publish button at the top-right renders with local FFmpeg, straight to your machine.",
+    "sample": "▶ View sample project",
+    "pack": "⚡ One-click video",
+    "tour": "🧭 Take the 5-step tour",
+    "blank": "＋ Blank project",
+    "later": "Later",
+    "reopen": "Reopen this screen with the “👋 Start” button on the TopBar."
+  },
+  "tour": {
+    "title": "🧭 5-step tour",
+    "prev": "← Back",
+    "next": "Next →",
+    "skip": "Skip",
+    "done": "Done, let's edit!",
+    "step1Title": "Step 1 — Add media",
+    "step1Body": "Drag video/image/audio files into the Media library (left panel), or use its add-file button. Media stays on your machine.",
+    "step2Title": "Step 2 — Cut clips",
+    "step2Body": "On the timeline: click a clip, drag its edges to trim, press S at the playhead to split it in two.",
+    "step3Title": "Step 3 — Add text",
+    "step3Body": "Click “＋ Text” on the TopBar to add a text clip at the playhead, then edit content, size and color in the Properties panel.",
+    "step4Title": "Step 4 — Effects & color",
+    "step4Body": "Select a clip and open the Properties panel: video effects, color LUTs, masks and keyframes live there.",
+    "step5Title": "Step 5 — Export video",
+    "step5Body": "Click “Publish” on the TopBar, pick a preset and export: local FFmpeg renders an MP4 to your machine.",
+    "targetMissing": "That area was not found on screen (its panel may be closed) — read the guide and click Next."
+  },
+  "pack": {
+    "title": "⚡ One-click template pack",
+    "lead": "Pick a pack: sample media is generated on your machine, text and captions come from the template itself. Click “Create now” and you get a watchable project instantly, no files to prepare.",
+    "create": "Create now",
+    "creating": "Generating sample media, please wait a few seconds...",
+    "created": "Project created from pack!",
+    "clips": "clips",
+    "watch": "▶ Watch now",
+    "again": "🔁 Create another pack",
+    "tts": "🎙 Generate sample voiceover",
+    "ttsBusy": "Generating voiceover...",
+    "ttsHint": "Voiceover is made by local VieNeu-TTS through the bridge (127.0.0.1:8787). If the bridge is not running, this button reports a clear error — no fake audio.",
+    "close": "Close",
+    "mediaNote": "Sample media is drawn by VCut itself with Canvas on your machine (no outside images/videos, 100% clean license).",
+    "noVideoRecorder": "This browser cannot record sample video (no MediaRecorder). Use a recent Chrome/Edge, or pick an image-only pack (Title card, Album cover).",
+    "recordTimeout": "Recording the sample video took too long (over 20 seconds) — the browser may be stuck while recording. Please close this dialog and press “Create now” again, or pick an image-only pack (Title card, Album cover)."
+  },
+  "userLut": {
+    "cubeEmpty": "Cube file is empty.",
+    "cubeMissingSize": "Missing LUT_3D_SIZE line in the .cube file.",
+    "cubeOnly3d": "Only 3D LUTs are supported (LUT_3D_SIZE). 1D LUT files are not supported yet.",
+    "cubeRowCount": "Data row count does not match LUT_3D_SIZE {size}: got {rows} rows, need {expected}.",
+    "cubeRowInvalid": "Malformed data line (needs exactly 3 numbers): \"{line}\"",
+    "cubeSizeDuplicate": "File has two LUT_3D_SIZE lines.",
+    "cubeSizeInvalid": "Invalid LUT_3D_SIZE: {value} (needs an integer {min}..{max}).",
+    "cubeTooLarge": "Cube file too large ({size}MB, max 10MB).",
+    "cubeTripleExpected": "{what} must have exactly 3 numbers (got: {got})",
+    "cubeTripleInvalid": "{what} contains an invalid number: {got}",
+    "cubeValueRange": "Color value out of allowed range (-1..2): \"{line}\""
+  },
+  "gop": {
+    "demux": {
+      "avccReadFailed": "demux-moov: could not read the first sample to check AVCC: {error}",
+      "badLayout": "demux-moov: abnormal sample layout ({reason} — fake moov?)",
+      "badStts": "demux-moov: abnormal stts timestamps ({reason} — fake moov?)",
+      "cttsStszMismatch": "demux-moov: ctts declares {cttsTotal} samples but stsz has {count} — fake moov?",
+      "notAvcc": "demux-moov: sample 0 is not valid AVCC ({reason} — fake moov?)",
+      "sampleOutOfFile": "demux-moov: sample {si} is beyond the file (offset {offset}+{size} > total {total})",
+      "sampleOutsideMdat": "demux-moov: sample {si} points outside mdat (offset {offset}+{size} — fake moov?)",
+      "stssOutOfRange": "demux-moov: stss has {count} keyframes outside [1, {total}] — fake moov?",
+      "trialDecodeFailed": "demux-moov: trial-decode of sample 0 failed ({reason} — fake moov?)",
+      "parserAvccTooShort": "avcC too short",
+      "parserMoovMissing": "moov not found",
+      "parserSttsOverLimit": "stts: total sample count {total} exceeds the limit {max} (crafted moov?)",
+      "parserStszOverLimit": "stsz: sample count {count} exceeds the limit {max} (crafted moov?)",
+      "parserSampleTableMismatch": "sample table mismatch: stts={stts} stsz={stsz}",
+      "parserSampleBuildMismatch": "sample build mismatch: chunks cover {got}/{want}",
+      "parserNoAvc1Track": "no valid avc1 video track found",
+      "avccEmpty": "empty sample",
+      "avccShortRead": "only read {got} bytes of a {total}-byte sample (need ≥ 5 for 1 NAL)",
+      "avccNalTooLong": "NAL {nal} length {len} (invalid) at offset {off}",
+      "avccNalOverrun": "NAL {nal} length {len} exceeds the remaining sample {remaining} at offset {off}",
+      "avccNalForbiddenBit": "NAL {nal} has forbidden_zero_bit at offset {off}",
+      "avccNalTypeZero": "NAL {nal} has type 0 at offset {off}",
+      "avccNoNal": "could not read any NAL",
+      "avccTrailingBytes": "{count} trailing bytes left, not enough for 1 NAL",
+      "layoutNegativeOffset": "sample {sample} has a negative offset/size ({offset}/{size})",
+      "layoutOffsetRewind": "sample {sample} offset {offset} goes back after sample {prev} offset {prevOffset} (stco not increasing)",
+      "layoutOverlap": "sample {sample} [{start}, {end}) overlaps the previous sample (ends {prevEnd})",
+      "sttsNonPositiveDelta": "stts has a delta ≤ 0 (smallest {min})",
+      "sttsDeltaOutlier": "stts largest delta {max} is {ratio}× the median delta {median} (and > 2s)",
+      "sttsMdhdMismatch": "stts total {total} differs from mdhd {mdhd} by more than tolerance {tol}",
+      "durationMvhdMismatch": "video duration {video}s differs from mvhd {mvhd}s by more than tolerance {tol}s",
+      "fpsVuiMismatch": "fps from stts {medianFps} (median) / {modeFps} (mode) / {avgFps} (average) differs from VUI SPS {vuiFps} ({pct}% > tolerance {tolPct}%)"
+    },
+    "range": {
+      "fetchParamsInvalid": "fetchVideoTrackByGopRange: prefixBytes/maxMoovBytes/tailScanBytes/tailInitialChunkBytes must be > 0",
+      "fetchUrlInvalid": "fetchVideoTrackByGopRange: url must be a non-empty string",
+      "gopOutOfFile": "gop-{gi}-out-of-file: rangeEnd {rangeEnd} exceeds the total {total}",
+      "gopSampleOutOfRange": "gop-{gi}-sample-out-of-range: sample {si} is outside the fetched GOP buffer",
+      "moovOutOfFile": "moov-out-of-file: moov {start}+{size} exceeds the total {total}",
+      "moovTooLarge": "moov-too-large: moov is {size} bytes, over the {max} limit",
+      "prefixShortBody": "prefix-short-body: requested {wanted} bytes, got {got}",
+      "prefixStatusNot206": "prefix-status-{status}: server did not return 206 for the prefix Range",
+      "sampleChunkLimit": "sample-chunk-limit: sample 0 needs more than {maxChunks} 512 KiB chunks (size {sampleSize})",
+      "sampleRemainderInvalid": "fetchSampleRemainderChunked: sampleSize {sampleSize} / prefix {prefixLength} is invalid",
+      "shortBody": "{kind}-short-body: requested {wanted} bytes, got {got}",
+      "statusNot206": "{kind}-status-{status}: server did not return 206 for Range {start}-{end}",
+      "sizeTooSmall": "size-too-small: file smaller than 1 byte, no Range needed",
+      "moovMissingAfterGate": "moov-missing-after-gate: gate reported faststart but no moov box was found",
+      "trackNoSamples": "demux-moov: track has no samples",
+      "sampleZeroEmpty": "demux-moov: sample 0 is empty (size 0) — fake moov?"
+    },
+    "trial": {
+      "decodeFailed": "decode-failed: VideoDecoder could not decode sample 0",
+      "noDecoder": "no-decoder: no trial-decode probe",
+      "timeout": "timeout-{timeout}ms: trial-decode did not finish, skipping (fail-open)",
+      "unsupportedConfig": "unsupported-config: decoder does not support this codec/profile — skipping (fail-open)",
+      "timeoutNote": "First keyframe ({size} MiB) could not be verified within {timeout} ms — the file still opens normally; only the keyframe check did not finish."
+    },
+    "gate": {
+      "moovTrailing": "moov-trailing: moov is at the end of the file, tail probe not implemented yet",
+      "moovUnknown": "moov-unknown: could not determine moov position from the prefix read",
+      "acceptRangesUnsupported": "accept-ranges-unsupported: server reports {acceptRanges}",
+      "acceptRangesUnknown": "accept-ranges-unknown: server sent no Accept-Ranges, not assuming support",
+      "sizeUnknown": "size-unknown: total file size unknown",
+      "rangeGopAttempt": "range-gop-attempt: moov-first + {evidence} + size known",
+      "rangeEvidenceProbe": "Range proven by a verified probe/prefix 206 (no Accept-Ranges header)"
+    },
+    "probe": {
+      "statusNot206": "range-probe-status-{status}: server did not return 206 for the Range request",
+      "noContentRange": "range-probe-no-content-range: 206 but no valid Content-Range",
+      "mismatch": "range-probe-mismatch: server returned {start}-{end}, requested {reqStart}-{reqEnd}",
+      "totalMismatch": "range-probe-total-mismatch: Content-Range total {total}, known {known}",
+      "ok": "range-probe-ok: 206 matches the requested range"
+    },
+    "controller": {
+      "unexpectedException": "gop-unexpected-exception: falling back to full-file",
+      "sizeProbeUnexpectedException": "gop-size-probe-unexpected-exception: falling back to full-file"
+    },
+    "cache": {
+      "disabled": "gop-disabled: caller did not enable the GOP path",
+      "sizeUnknown": "gop-size-unknown: size unknown before the first window",
+      "belowThreshold": "gop-below-threshold: {size} <= {threshold}",
+      "largeFileLocked": "gop-large-file-locked: {size} > {large} (S4 gate kept as-is)",
+      "rangeOk": "gop-range: {threshold} < {size} <= {large}",
+      "statusNot206": "gop-status-{status}: server did not return 206 for GOP Range {start}-{end}",
+      "shortBody": "gop-short-body: requested {wanted} bytes, got {got}"
+    },
+    "sizeprobe": {
+      "rangeStatusNot206": "size-probe-range-status-{status}: server did not return 206 for Range 0-0",
+      "noContentRange": "size-probe-no-content-range: 206 but no valid Content-Range with a total"
+    }
+  },
+  "storageCleanup": {
+    "close": "Close",
+    "crossProjectWarning": "Storage is shared by every project in this browser. \"Possibly orphaned\" only means the current project no longer uses it — another .vcut file may still share those bytes. Only delete items you are sure no project needs; deletion cannot be undone, and getting bytes back requires re-importing the original file.",
+    "deleteConfirm": "Delete {count} selected items ({bytes}) from storage? Items still used by another project will lose their bytes after reload. This cannot be undone.",
+    "deleteFailed": "Storage cleanup failed — nothing was deleted, please rescan.",
+    "deleteSelected": "Delete selected ({count})",
+    "deletedResult": "Deleted {count} items, freed {bytes}. Skipped {skipped} items.",
+    "empty": "Storage is empty.",
+    "inUse": "In use (bin: {bin}, clips: {clips})",
+    "openBtn": "Clean up",
+    "openTitle": "List and clean orphaned bytes in storage (IndexedDB)",
+    "orphanCandidate": "Possibly orphaned",
+    "scanAgain": "Rescan",
+    "scanFailed": "Could not scan storage (IndexedDB unavailable). Please try again.",
+    "scanning": "Scanning storage…",
+    "selectOrphans": "Select all orphaned items",
+    "selectRow": "Select for deletion",
+    "summary": "Storage has {assets} items ({bytes}); {orphans} possibly orphaned ({orphanBytes}).",
+    "title": "Clean up storage",
+    "currentProjectMark": "(current project)",
+    "forgetConfirm": "Forget project “{name}” from the reference registry? Bytes used only by this project will become deletable in the Clean up panel.",
+    "forgetProject": "Forget",
+    "forgotProject": "Forgot project {name} from the reference registry.",
+    "projectAssets": "{count} asset(s)",
+    "projectsNote": "This registry records which project uses which bytes. Deleting bytes another project still uses will break that project when it is reopened. If a .vcut file was deleted from the computer, click “Forget” to remove its entry.",
+    "projectsTitle": "Projects in the reference registry",
+    "registryProtection": "The reference registry blocks deleting bytes that another project (opened or saved in this browser) still uses — those items are locked below. A project never opened in this browser is unknown to the registry, so only delete items you are sure no project needs.",
+    "usedByOther": "Used by another project: {projects}"
+  },
+  "bridgeErrors": {
+    "API_NOT_FOUND": "API does not exist.",
+    "ASSETMAP_BAD_VALUE": "assetMap: the value of \"{key}\" must be a non-empty path string.",
+    "ASSETMAP_INVALID": "Invalid assetMap: {detail}",
+    "ASSETMAP_NOT_OBJECT": "assetMap must be a JSON object { assetId: file }.",
+    "BEATS_NEEDS_AV": "Beat detection needs an AUDIO/VIDEO file ({exts}).",
+    "BEATS_NOT_READY": "Beat detection is not ready: {reason}",
+    "BGREMOVE_FEATHER_INVALID": "Invalid feather parameter: \"{value}\" (must be an integer within [0, 8]).",
+    "BGREMOVE_NEEDS_VIDEO": "Background removal needs a VIDEO file ({exts}).",
+    "BGREMOVE_NOT_READY": "Background removal is not ready: {reason}",
+    "BGREMOVE_SESSION_FORBIDDEN": "Session \"{session}\" is FORBIDDEN: non-commercial weights, must not be used. Use \"{fallback}\" (MIT).",
+    "BGREMOVE_SESSION_INVALID": "Invalid session name: \"{value}\".",
+    "BGREMOVE_TEMPORAL_INVALID": "Invalid temporal parameter: \"{value}\" (must be within [0, 0.9]).",
+    "BPM_INVALID": "Invalid BPM: \"{value}\" (30–300).",
+    "BPM_RANGE_INVALID": "Minimum BPM must be smaller than maximum BPM.",
+    "CAPTION_NEEDS_AV": "Caption needs a video or audio file (images have no speech to recognize).",
+    "CAPTION_NOT_READY": "Caption is not ready: {reason}",
+    "DISK_LOW": "Disk is almost full ({freeMb}MB left) — free some space and try again.",
+    "INTERNAL_ERROR": "Internal server error.",
+    "INVALID_FILENAME": "Invalid file name: {name}",
+    "INVALID_FILENAME_OR_TYPE": "Invalid file name or disallowed file type: {name}",
+    "INVALID_JOB_ID": "Invalid job id.",
+    "INVALID_LUT_ID": "Invalid LUT id.",
+    "JOB_CANCEL_BAD_STATE": "Job is already in a final state (\"{status}\") — cannot cancel.",
+    "JOB_CREATE_FAILED": "Server error while creating the job — try again later.",
+    "JOB_GONE": "The job folder has been cleaned up — cannot retry, please create a new job.",
+    "JOB_INTERRUPTED_BY_RESTART": "Interrupted by a bridge restart — use retry to render again from the start.",
+    "JOB_NOT_DONE": "Job is not done yet (status={status}).",
+    "JOB_NOT_FOUND": "Job not found.",
+    "JOB_RETRY_BAD_STATE": "Only jobs in \"error\" or \"interrupted\" state can be retried (current: \"{status}\").",
+    "JOB_RETRY_CANCELLED": "Only jobs in \"error\" or \"interrupted\" state can be retried (current: \"{status}\"). A cancelled job's temp folder has been deleted — please create a new job.",
+    "JOB_SPEC_MISSING_AFTER_RESTART": "spec.json is missing after the server restart — cannot render again, please create a new job.",
+    "LUT_NOT_FOUND": "LUT not found.",
+    "MAGIC_MISMATCH": "File \"{name}\" has a {ext} extension but its content does not match the format (it may be a fake file).",
+    "MAGIC_TOO_SMALL": "File \"{name}\" is too small or empty, cannot detect its format.",
+    "MAGIC_UNREADABLE": "Cannot read the content of file \"{name}\".",
+    "MISSING_AUDIO_VIDEO": "Missing audio/video file (field 'media').",
+    "MISSING_MEDIA": "Missing media file (field 'media').",
+    "MISSING_SPEC": "Missing field 'spec'.",
+    "MISSING_VIDEO": "Missing video file (field 'media').",
+    "OPENAPI_READ_FAILED": "Cannot read the OpenAPI spec.",
+    "PRESET_BITRATE_RANGE": "preset.audioBitrateKbps must be an integer 32..512.",
+    "PRESET_CRF_RANGE": "preset.crf must be an integer 0..51.",
+    "PRESET_NORMALIZE_INVALID": "preset.normalize must be one of: off|loudnorm|dynaudnorm.",
+    "PRESET_NORMALIZE_LRA_RANGE": "preset.normalizeLra must be within 1..20.",
+    "PRESET_NORMALIZE_TARGET_RANGE": "preset.normalizeTarget must be within -70..0.",
+    "PRESET_NORMALIZE_TP_RANGE": "preset.normalizeTp must be within -9..0.",
+    "PRESET_NOT_JSON": "Field 'preset' must be valid JSON.",
+    "PRESET_NOT_OBJECT": "Field 'preset' must be an object.",
+    "PRESET_X264_INVALID": "preset.x264Preset must be one of: {allowed}.",
+    "PROXY_BAD_HEIGHT": "height must be 480 or 720.",
+    "PROXY_INVALID_NAME": "Invalid proxy file name.",
+    "PROXY_MISSING_FILE": "Missing video file (field 'file').",
+    "PROXY_NOT_FOUND": "Proxy file not found.",
+    "QUEUE_FULL": "The queue is full ({maxQueue} jobs waiting) — try again later.",
+    "RATE_LIMITED": "Too many requests — try again in {retryAfter}s.",
+    "READ_OUTPUT_FAILED": "Error while reading the output file.",
+    "REFRAME_NEEDS_VIDEO": "Reframe needs a VIDEO file ({exts}).",
+    "REFRAME_NOT_READY": "Reframe is not ready: {reason}",
+    "SAVE_FILE_FAILED": "Server error while saving the file — try again later.",
+    "SAVE_SPEC_FAILED": "Server error while saving the spec — try again later.",
+    "SCENE_END_INVALID": "Invalid end: \"{value}\".",
+    "SCENE_NEEDS_VIDEO": "Scene detection needs a VIDEO file ({exts}).",
+    "SCENE_NOT_READY": "Scene detection is not ready: {reason}",
+    "SCENE_RANGE_INVALID": "end must be greater than start.",
+    "SCENE_START_INVALID": "Invalid start: \"{value}\".",
+    "SCENE_THRESHOLD_INVALID": "Invalid threshold: \"{value}\". Choose a number within {min}..{max} (default {def}).",
+    "SILENCE_MINDUR_INVALID": "Minimum duration must be within [{min}, {max}] seconds (got \"{value}\").",
+    "SILENCE_NEEDS_AV": "Silence removal needs a video or audio file (images have no audio track).",
+    "SILENCE_NOISE_INVALID": "Noise threshold must be within [{min}, {max}] dB (got \"{value}\").",
+    "SILENCE_NOT_READY": "Silence removal is not ready: {reason}",
+    "SPEC_NOT_JSON": "Field 'spec' must be valid JSON.",
+    "SPEC_NO_TRACKS": "Spec is missing tracks or has an invalid format.",
+    "SPEC_TOO_LARGE": "Spec is too large (max {limitMb}MB).",
+    "TRANSLATE_NEEDS_AV": "Subtitle translation needs a video or audio file (images have no speech to recognize).",
+    "TRANSLATE_NOT_READY": "Subtitle translation is not ready: {reason}",
+    "TTS_NOT_READY": "TTS is not ready: {reason}",
+    "TTS_NO_WAV": "TTS finished but no WAV file was found.",
+    "TTS_PREPARE_FAILED": "Server error while preparing TTS — try again later.",
+    "TTS_REF_AUDIO_MISSING": "Missing voice sample file (field 'refAudio').",
+    "TTS_REF_AUDIO_TOO_LARGE": "Voice sample file is too large ({sizeMb}MB > 20MB).",
+    "TTS_REF_AUDIO_TYPE": "Voice sample file must be audio ({exts}).",
+    "TTS_TEXT_EMPTY": "Text is empty — enter something to read aloud.",
+    "TTS_TEXT_TOO_LONG": "Text is too long ({length} > {max} characters).",
+    "UNSUPPORTED_ASPECT": "Unsupported aspect ratio: \"{aspect}\". Choose one of: {aspects}.",
+    "UNSUPPORTED_LANG": "Unsupported language: \"{lang}\". Choose one of: {langs}.",
+    "UNSUPPORTED_TARGET_LANG": "Target language not yet supported: \"{lang}\". Currently only: {langs} (faster-whisper translate task limitation).",
+    "UNSUPPORTED_VOICE": "Unsupported voice: \"{voice}\". Choose one of: {voices}.",
+    "UPLOAD_FILE_TOO_LARGE": "File exceeds the {limitMb}MB limit.",
+    "UPLOAD_INVALID": "Invalid upload.",
+    "UPLOAD_TOO_MANY_FILES": "Too many files in one request (max 200).",
+    "UPLOAD_TOTAL_TOO_LARGE": "Total upload size exceeds the {limitMb}MB limit.",
+    "TASK_CAPTION_FAILED": "Caption failed.",
+    "TASK_REFRAME_FAILED": "Reframe failed.",
+    "TASK_REFRAME_ANALYZE_FAILED": "Reframe analysis failed.",
+    "TASK_BEATS_FAILED": "Beat analysis failed.",
+    "TASK_BGREMOVE_FAILED": "Background removal failed.",
+    "TASK_SILENCE_FAILED": "Silence analysis failed.",
+    "TASK_SCENE_FAILED": "Scene detection failed.",
+    "TASK_TRANSLATE_FAILED": "Subtitle translation failed.",
+    "TASK_TTS_FAILED": "TTS failed.",
+    "TASK_TTS_CLONE_FAILED": "Voice clone TTS failed.",
+    "TASK_PROXY_FAILED": "Proxy creation failed."
+  },
+  "validation": {
+    "detail": "[{where}] {detail}",
+    "SPEC_NOT_OBJECT": "[{where}] spec must be a JSON object",
+    "UNSUPPORTED_VERSION": "[{where}] unsupported version \"{version}\" — this worker only renders spec version {supported}",
+    "MISSING_META": "[{where}] missing meta object",
+    "NONEMPTY_STRING": "[{where}] must be a non-empty string",
+    "NONEMPTY_STRING_VALUE": "[{where}] must be a non-empty string, got: {value}",
+    "POSITIVE_INTEGER": "[{where}] must be a positive integer, got: {value}",
+    "EVEN_INTEGER": "[{where}] must be an even number (H.264 requirement), got: {value}",
+    "POSITIVE_NUMBER": "[{where}] must be a positive number, got: {value}",
+    "MUST_BE_ARRAY": "[{where}] must be an array",
+    "MUST_BE_OBJECT": "[{where}] must be an object",
+    "MISSING_ID": "[{where}] missing id (non-empty string)",
+    "MUST_BE_BOOLEAN": "[{where}] must be a boolean",
+    "NUMBER_RANGE": "[{where}] must be in range {min}..{max}, got: {value}",
+    "VOLUME_RANGE": "[{where}] volume must be in range {min}..{max}, got: {value}",
+    "PLUGINS_NOT_ARRAY": "[{where}] must be an array of { id | path, config? }",
+    "PLUGIN_NOT_OBJECT": "[{where}] must be an object { id | path, config? }",
+    "PLUGIN_ID_OR_PATH": "[{where}] specify exactly ONE of: id or path",
+    "PLUGIN_MISSING_ID_PATH": "[{where}] missing id (bundled plugin) or path (plugin.js file)",
+    "PLUGIN_ID_CHARS": "[{where}] id may only contain lowercase letters, numbers and \"-\" (got: {value})",
+    "PLUGIN_PATH_JS": "[{where}] path must point to a .js file (got: {value})",
+    "PLUGIN_CONFIG_OBJECT": "[{where}] config must be a plain JSON object",
+    "PLUGIN_DUPLICATE": "[{where}] plugin \"{key}\" declared twice — the registry will refuse to load the second copy",
+    "ADJUSTMENT_NOT_ARRAY": "[{where}] must be an array of layers { id, start, duration, filters }",
+    "DUPLICATE_LAYER_ID": "[{where}] duplicate layer id: \"{id}\"",
+    "ADJUSTMENT_TRACK_INDEX": "[{where}] tracks contains index {index} beyond the spec track count ({total})",
+    "ADJUSTMENT_NO_OVERLAP": "[{where}] no layer overlaps any video clip in its scope — rendering will change nothing",
+    "TRACKS_EMPTY": "[{where}] empty array — nothing to render",
+    "DUPLICATE_TRACK_ID": "[{where}] duplicate track id: \"{id}\"",
+    "TRACK_KIND_INVALID": "[{where}] must be \"video\" | \"audio\" | \"text\" | \"sticker\" | \"image\", got: {value}",
+    "TRACK_HIDDEN_AUDIO": "[{where}] hidden has no effect on audio tracks (only mute silences audio)",
+    "TOTAL_DURATION_ZERO": "[{where}] total project duration must be > 0",
+    "CLIP_OVERLAP": "[{where}] clip \"{clipA}\" [{startA}, {endA}] overlaps clip \"{clipB}\" (starting {startB}) — clips on the same {kind} track must not overlap",
+    "TRANSITION_NO_NEXT": "[{where}] has a transition ({type}) but no clip immediately after on the same track (clip ends at {end}s) — a transition needs 2 consecutive clips",
+    "TRANSITION_MISMATCH": "[{where}] transitionOut ({out}s) and transitionIn of clip \"{clip}\" ({in}s) do not match — set only one of them, or set them equal",
+    "TRANSITION_LONGER_THAN_CLIP": "[{where}] transition ({transition}s) is longer than the clip ({clip}s)",
+    "MOTION_TARGETFPS_TRANSITION": "[{where}] motion.targetFps ({targetFps}) differs from project fps ({projectFps}) but clip \"{clip}\" has a transition with clip \"{other}\" — xfade requires both inputs at the same fps (see MOTION_LIMITS.md, round 9 M4)",
+    "TRANSITION_FIRST_CLIP": "[{where}] has transitionIn but is the first clip on the track — transition is skipped",
+    "OPACITY_TRANSITION": "[{where}] has opacity={opacity} and a transition — the merged transition segment will use the target clip's opacity (\"{target}\") for the whole unit (see OPACITY_LIMITS.md)",
+    "SR_TRANSITION": "[{where}] has scale/rotation keyframes and a transition — the segment is merged via xfade so this clip's scale/rotation keyframes are skipped when rendering (see KEYFRAMES_LIMITS.md)",
+    "OPACITY_KF_TRANSITION": "[{where}] has opacity keyframes and a transition — the segment is merged via xfade so this clip's opacity keyframes are skipped when rendering (the target clip's static opacity is used, see OPACITY_LIMITS.md)",
+    "CLIP_KIND_MISMATCH": "[{where}] clip.kind is \"{clipKind}\" but it sits in a track of kind \"{trackKind}\" — they must match",
+    "NUMBER_MIN_0": "[{where}] {field} must be a number >= 0, got: {value}",
+    "NUMBER_GT_0": "[{where}] {field} must be a number > 0, got: {value}",
+    "ENHANCE_VIDEO_ONLY": "[{where}] enhance is only for video clips",
+    "MOTION_VIDEO_ONLY": "[{where}] motion is only for video clips",
+    "MISSING_SRC": "[{where}] missing src (media file path)",
+    "MISSING_IMAGE_SRC": "[{where}] missing src (image file path)",
+    "OUT_NOT_GT_IN": "[{where}] out must be > in, got: in={in}, out={out}",
+    "SPEED_RANGE": "[{where}] speed must be in range {min}–{max}, got: {value}",
+    "REVERSE_BOOLEAN": "[{where}] reverse must be a boolean, got: {value}",
+    "SPEED_RAMP_REVERSE": "[{where}] speedKeyframes cannot be combined with reverse=true (not supported)",
+    "SPEED_AND_SPEED_KEYFRAMES": "[{where}] has both speed and speedKeyframes — render uses speedKeyframes, the constant speed is ignored",
+    "DURATION_EXCEEDS_SOURCE": "[{where}] duration ({duration}s) exceeds the effective source segment [in={in}, out={out}] / speed={speed} ({effective}s) — not enough frames to play",
+    "FIELD_MUST_BE_OBJECT": "[{where}] {field} must be an object",
+    "UNSUPPORTED_TRANSITION_TYPE": "[{where}] {field}.type is not supported: {value}",
+    "FIELD_DURATION_TOO_LONG": "[{where}] {field}.duration ({value}s) is longer than the clip duration ({duration}s)",
+    "FADE_TOO_LONG": "[{where}] {field} ({value}s) is longer than the clip duration ({duration}s)",
+    "FADE_CURVE": "[{where}] {field} must be linear | ease-in | ease-out | sine (got: {value})",
+    "VOLUME_KEYFRAMES_OBJECT": "[{where}] volumeKeyframes must be an object { keyframes: [...] }",
+    "SPEED_KEYFRAMES_OBJECT": "[{where}] speedKeyframes must be an object { keyframes: [...] }",
+    "KEYFRAMES_EMPTY": "[{where}] {field}.keyframes: empty array — at least 1 keyframe is needed",
+    "KEYFRAMES_TOO_MANY": "[{where}] {field}.keyframes: more than 128 keyframes",
+    "KEYFRAME_ITEM_OBJECT": "[{where}] {field} must be an object { t, v, easing }",
+    "KEYFRAME_T_RANGE": "[{where}] {field}.t must be in [0, {max}] (got: {value})",
+    "KEYFRAME_V_0_1": "[{where}] {field}.v must be in 0..1 (got: {value})",
+    "KEYFRAME_EASING": "[{where}] {field}.easing must be linear | ease-in | ease-out (got: {value})",
+    "KEYFRAME_V_RANGE": "[{where}] {field}.v must be in {min}..{max} (got: {value})",
+    "SPEED_EASING": "[{where}] {field}.easing must be linear | ease-in | ease-out | bezier (got: {value})",
+    "BEZIER_SHAPE": "[{where}] {field}.bezier must be [x1, y1, x2, y2]: x1, x2 in [0, 1], y1, y2 free (cubic-bezier standard) (got: {value})",
+    "SPEED_RAMP_CONSUMED": "[{where}] speedKeyframes is on: source consumed = {consumed}s (∫speed over duration={duration}s) — render uses in + consumed source, not out (see P3_LIMITS.md)",
+    "TEXT_MUST_BE_STRING": "[{where}] text must be a string, got: {value}",
+    "TEXT_EMPTY_WARN": "[{where}] empty text — this clip will show nothing",
+    "MISSING_STYLE": "[{where}] missing style",
+    "STYLE_FONTFAMILY_EMPTY": "[{where}] style.fontFamily must be a non-empty string",
+    "HEX_COLOR": "[{where}] style.{field} must be a hex code (#rgb or #rrggbb), got: {value}",
+    "STYLE_BOOLEAN": "[{where}] style.{field} must be a boolean, got: {value}",
+    "STYLE_POSITION": "[{where}] style.{field} is a relative position, must be in range 0..1, got: {value}",
+    "UNSUPPORTED_ANIMATION": "[{where}] style.animation is not supported: {value}",
+    "TEXT_SR_IGNORED": "[{where}] scale/rotation keyframes of text clip {animation} are skipped when rendering (ASS does not support scale/rotate over time)",
+    "PARITY_KARAOKE": "[{where}] parity text clip has karaoke — karaoke wins, the parity animation is skipped when rendering (to avoid drawing one clip with 2 ASS layers)",
+    "KARAOKE_SR_IGNORED": "[{where}] scale/rotation keyframes of karaoke text clip are skipped when rendering (ASS does not support scale/rotate over time)",
+    "KARAOKE_NOT_ARRAY": "[{where}] karaoke must be a non-empty array of {word, start, end}",
+    "KARAOKE_WORD_SHAPE": "[{where}] karaoke word has the wrong shape (needs {word: non-empty string, start, end: number, end > start}), got: {value}",
+    "KARAOKE_WORD_OUT_OF_RANGE": "[{where}] karaoke word outside clip duration ({start}–{end} while duration={duration})",
+    "KARAOKE_WORD_ORDER": "[{where}] karaoke words must be in chronological order without overlap",
+    "CAPTION_OF_SHAPE": "[{where}] captionOf has the wrong shape (needs {clipId: string, mediaStart, mediaEnd: number, mediaEnd > mediaStart}) — render still draws the text from start/duration, but the editor will not follow this link",
+    "OPACITY_STATIC_AND_KEYFRAMES": "[{where}] has both static opacity ({value}) and opacity keyframes — render uses keyframes (absolute), static opacity is ignored (see OPACITY_LIMITS.md)",
+    "SCALE_KEYFRAME_CLAMP": "[{where}] keyframe scale={value} is outside [{min}, {max}] — render will clamp to this range (see KEYFRAMES_LIMITS.md)",
+    "CHROMA_TRANSITION": "[{where}] clip has chromaKey + transition: xfade does not preserve alpha, transparent areas may blend incorrectly (see CHROMA_LIMITS.md)",
+    "SPEED_RAMP_STABILIZE": "[{where}] speedKeyframes cannot be combined with enhance.stabilize (vidstab detection follows the original trim, not the ramp segments)",
+    "SOURCE_AUDIO_DETACH": "[{where}] sourceAudioMode=\"detach\" is not supported yet (render worker only supports \"inherit\" | \"mute\")",
+    "MASK_UNSUPPORTED_KIND": "[{where}] mask is not supported for {kind} clips — mask will be skipped (only video/image render masks, see MASK_LIMITS.md)",
+    "TRACK_TRANSITION": "[{where}] video clip has a track but also a transition — track is skipped in the merged unit (keyframes too, see D3_LIMITS.md)",
+    "TRACK_TEXT_ASS": "[{where}] text clip has a track but is drawn with ASS (typewriter/karaoke/parity) — track is skipped, text stays static (see D3_LIMITS.md)",
+    "TRACK_UNSUPPORTED_KIND": "[{where}] track is not supported for {kind} clips — track will be skipped (only video/text/sticker follow a trajectory, see D3_LIMITS.md)",
+    "MEDIA_ASSET_INVALID": "[{where}] asset \"{asset}\" is invalid (empty id or escaping the media dir)",
+    "MEDIA_PATH_TRAVERSAL": "[{where}] path escapes the media dir (\"../\" is not allowed)",
+    "MEDIA_ASSET_NOT_FOUND": "[{where}] asset \"{asset}\" not found: not in the asset map and no file of the same name in the media dir (upload the asset file with the spec, or pass an asset map to the render worker)",
+    "MEDIA_FILE_NOT_FOUND": "[{where}] file not found: {file}",
+    "MEDIA_NOT_FILE": "[{where}] not a regular file: {file}",
+    "MEDIA_FFPROBE_FAILED": "[{where}] ffprobe failed to read the file: {detail}",
+    "MEDIA_NO_VIDEO": "[{where}] file has no video stream",
+    "MEDIA_STILL_AS_VIDEO": "[{where}] is a still image ({codec}) — video clips need a video file, use an image track for stills (see P0-03)",
+    "MEDIA_OUT_EXCEEDS": "[{where}] out={out}s exceeds the file duration ({duration}s)",
+    "MEDIA_NO_AUDIO_INHERIT": "[{where}] file has no audio stream (sourceAudioMode=\"inherit\" but there is nothing to keep)",
+    "MEDIA_NO_VIDEO_IMAGE": "[{where}] file has no video stream (not an image?)",
+    "MEDIA_NOT_STILL": "[{where}] is not a still image (codec={codec}, nb_frames={frames}) — image clips need an image file, use a video track for video files",
+    "MEDIA_NO_AUDIO": "[{where}] file has no audio stream"
+  },
+  "jobNote": {
+    "recoveredRestart": "Recovered after a server restart — rendering again from the start."
+  },
+  "export": {
+    "gpuProbe": {
+      "fallbackNote": "If the GPU encoder fails during render, VCut will automatically retry with libx264.",
+      "probing": "Probing GPU…",
+      "reprobe": "Re-probe GPU",
+      "reprobeDone": "Probe finished: {result}",
+      "reprobeError": "Could not probe the GPU ({error})",
+      "statusCacheOff": "GPU probe cache is off — every render re-probes",
+      "statusCpu": "No GPU detected — using CPU (libx264)",
+      "statusGpu": "GPU: {encoder} — probed {date}",
+      "statusUnknown": "GPU has not been probed on this machine",
+      "title": "GPU encoder"
+    }
+  },
+  "legacyAdopt": {
+    "adopt": "Adopt",
+    "adoptAll": "Adopt all",
+    "adoptFailed": "Could not adopt {from}: {error}",
+    "adopted": "Adopted {n} versions from {from} into this project's history.",
+    "close": "Close",
+    "dismiss": "Skip",
+    "dismissAll": "Skip all",
+    "dismissedNote": "Skipped chains will not be asked about again; their data stays in this machine's history store.",
+    "embeddedHash": "Hash embedded in chain",
+    "firstVersion": "First version",
+    "fragmentChain": "Scanned fragment",
+    "intro": "VCut found {n} old history chains that may belong to this project but are not certain enough to adopt automatically (same name, different content). Review the evidence and decide per chain — the original data stays untouched in this machine's store.",
+    "kind": "Kind",
+    "lastVersion": "Last version",
+    "name": "Name",
+    "noHash": "—",
+    "noName": "(proj chain — no file name)",
+    "openedHash": "Hash of the open project",
+    "pointerChain": "Pointer chain",
+    "reason": "Why ambiguous",
+    "reasonAmbiguousNameOnlyHashMismatch": "Same name but different content — this may be a different file with the same name, or the same file edited outside the app.",
+    "reasonAmbiguousNoContentEvidence": "No content evidence available to compare.",
+    "reasonAmbiguousTrivialSpec": "The open project is still empty (0 clips), so its hash cannot tell files apart.",
+    "reasonScanError": "Error while reading this chain — its data is untouched and not adopted.",
+    "source": "Source",
+    "title": "Old history not yet adopted",
+    "versions": "{n} versions"
   }
 }

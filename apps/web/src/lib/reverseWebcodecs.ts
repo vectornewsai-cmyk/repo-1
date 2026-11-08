@@ -83,24 +83,24 @@
  *   vẫn fallback về đường element cũ — cổng File.size chỉ chặn sớm
  *   hơn, không mở đường WebCodecs cho file lớn.
  *
- * Đợt 37 T5 (hủy fetch đang bay khi size tới muộn — nợ S4 §5.1):
+ * Đợt 37 T5 (huỷ fetch đang bay khi size tới muộn — nợ S4 §5.1):
  * - load() nay chạy dưới 1 AbortController riêng cho mỗi lần tải:
  *   HEAD và GET đều nhận signal của nó. Khi size vượt ngưỡng tới
  *   muộn (trong lúc fetch đang bay, controller chưa biết size) thì
- *   applyKnownFileSize hủy fetch đó ngay thay vì để body chạy tới
+ *   applyKnownFileSize huỷ fetch đó ngay thay vì để body chạy tới
  *   hết như trước — đỉnh heap ở cổng sau-tải không còn xảy ra trong
  *   trường hợp này, vì arrayBuffer() không bao giờ được gọi (fetch
  *   bị abort trước) hoặc bị reject khi đang chờ body.
  * - Giới hạn còn lại của cơ chế này (ghi rõ, không giấu): abort chỉ
  *   cứu được khi nó tới TRƯỚC lúc arrayBuffer() resolve. Sau khi
- *   buffer đã vật chất hóa thì không có cách nào "hủy ngược" heap:
+ *   buffer đã vật chất hóa thì không có cách nào "huỷ ngược" heap:
  *   load() chỉ còn tránh parse/decode (kiểm tra largeFile sau
  *   arrayBuffer) chứ đỉnh heap lúc đó đã xảy ra rồi. Tương tự, nếu
  *   tầng fetch phớt lờ signal (không phải fetch chuẩn của browser)
  *   thì arrayBuffer vẫn resolve đủ buffer rồi mới bị chặn ở kiểm
  *   tra sau-tải — hành vi an toàn (không decode, không giữ) nhưng
  *   không tiết kiệm heap. Xem LIMITS T5.
- * - dispose() cũng hủy fetch đang bay (cùng controller), tránh
+ * - dispose() cũng huỷ fetch đang bay (cùng controller), tránh
  *   fetch mồ côi sau khi preview đã bỏ controller.
  */
 import type { Mp4Sample, Mp4VideoTrack } from "./mp4Demux";
@@ -155,6 +155,24 @@ import {
   discoverSizeBytes,
   type GopSizeProbeSource,
 } from "./gopSizeProbe41W4";
+
+/**
+ * Đợt 61 R6 — dịch lý do fallback GOP của chính controller (mẫu Q4).
+ * `lookup` là `this.gopI18nLookup` (preview truyền `t()` lúc tạo
+ * controller); vắng → fallback đúng từng chữ chuỗi VI cũ. Key trong
+ * fragment R6 (`gop.controller.*`).
+ */
+type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
 
 /**
  * Ngân sách bộ nhớ mặc định cho 1 cửa sổ cache phát ngược (byte).
@@ -590,6 +608,13 @@ export type ReversePreviewControllerOptions = {
   /** Đợt 40 V2 — fetch dùng cho đường GOP (test truyền fake; production
    *  để trống để dùng global fetch qua module T3 / adapter bên dưới). */
   gopFetchImpl?: GopRangeFetchFn;
+  /**
+   * Đợt 60 Q4 — lookup i18n tùy chọn cho lý do fallback GOP
+   * (`gopFallbackReason`, chỉ test/diagnostics đọc, không phải chuỗi
+   * UI): preview truyền `t()` để lý do đi qua key `gop.*` trong dict;
+   * vắng → fallback VI cũ như trước.
+   */
+  i18nLookup?: (key: string, vars?: Record<string, string>) => string;
 };
 
 export class ReversePreviewController {
@@ -597,7 +622,7 @@ export class ReversePreviewController {
   private track: Mp4VideoTrack | null = null;
   private bytes: Uint8Array | null = null;
   private loadPromise: Promise<boolean> | null = null;
-  /** Đợt 37 T5 — controller hủy lần tải đang bay (null khi không tải). */
+  /** Đợt 37 T5 — controller huỷ lần tải đang bay (null khi không tải). */
   private loadAbort: AbortController | null = null;
   private unsupported = false;
   private largeFile = false;
@@ -642,11 +667,18 @@ export class ReversePreviewController {
   private gopEnabled = false;
   private gopThresholdBytes?: number;
   private gopFetchImpl?: GopRangeFetchFn;
+  // Đợt 60 Q4 — lookup i18n cho lý do fallback GOP (xem options).
+  private gopI18nLookup?: (key: string, vars?: Record<string, string>) => string;
   private gopCache: GopSegmentCache;
   private gopAttempted = false;
   private gopActive = false;
   private gopMeta: GopMeta[] = [];
   private gopFallbackReasonValue: string | null = null;
+  // Đợt 65 S6 — ghi chú trial-decode timeout (fail-open) từ outcome T3
+  // (null = không timeout / chưa thử GOP); UI đọc qua getter
+  // `gopTrialDecodeNote` + hàm registry `reverseTrialDecodeTimeoutNotes`
+  // để báo user lý do keyframe chưa kịp kiểm chứng.
+  private gopTrialDecodeNoteValue: string | null = null;
   // Đợt 41 W4 — kết quả probe size cho controller chưa biết size:
   // source/size khi probe thành công, lý do khi probe hỏng (để
   // test/harness đọc; probe hỏng không đánh dấu gopAttempted để
@@ -674,10 +706,12 @@ export class ReversePreviewController {
     this.totalBudgetBytes =
       options.totalBudgetBytes ?? REVERSE_TOTAL_MEMORY_BUDGET_BYTES;
     // Đợt 40 V2: ghi nhận cờ GOP + ghi đè test (không đổi mặc định
-    // production: tắt, ngưỡng 32 MiB, cache 32 MiB — xem gopCache40V2).
+    // production: tắt, ngưỡng 32 MiB, cache 16 MiB (đợt 51 H4) — xem gopCache40V2).
     this.gopEnabled = options.gopRangeEnabled ?? false;
     this.gopThresholdBytes = options.gopThresholdBytes;
     this.gopFetchImpl = options.gopFetchImpl;
+    // Đợt 60 Q4 — lookup i18n cho lý do fallback GOP (preview truyền t()).
+    this.gopI18nLookup = options.i18nLookup;
     this.gopCache = new GopSegmentCache(options.gopCacheMaxBytes);
     // Đợt 36 S4: cổng File.size truyền trước — chặn trước cả HEAD.
     // applyKnownFileSize chỉ ghi nhận size hợp lệ; size vượt ngưỡng
@@ -696,7 +730,7 @@ export class ReversePreviewController {
    * nên đường production thỏa điều kiện này; nếu fetch đã bay thì
    * Đợt 37 T5: size tới muộn TRONG LÚC fetch đang bay nay HỦY ĐƯỢC
    * (AbortController của lần tải đó) — xem LIMITS T5 cho trường hợp
-   * không hủy được (đã tải xong / đã biết size / buffer đã vật chất
+   * không huỷ được (đã tải xong / đã biết size / buffer đã vật chất
    * hóa) và fallback an toàn của từng trường hợp.
    */
   applyKnownFileSize(size: number | undefined): boolean {
@@ -704,15 +738,15 @@ export class ReversePreviewController {
     if (!(typeof size === "number") || !Number.isFinite(size) || size <= 0) {
       return false;
     }
-    // Đợt 37 T5: size vượt ngưỡng tới muộn thì hủy lần tải đang bay
+    // Đợt 37 T5: size vượt ngưỡng tới muộn thì huỷ lần tải đang bay
     // TRƯỚC khi khóa, để fetch không chạy tiếp tới arrayBuffer().
-    // Size trong ngưỡng không hủy (tải tiếp bình thường).
+    // Size trong ngưỡng không huỷ (tải tiếp bình thường).
     if (size > this.largeFileBytes) this.abortInFlightLoad();
     return this.rejectLargeFile(size);
   }
 
   /**
-   * Đợt 37 T5 — hủy lần tải đang bay nếu có (HEAD hoặc GET). Không
+   * Đợt 37 T5 — huỷ lần tải đang bay nếu có (HEAD hoặc GET). Không
    * làm gì khi không tải (loadAbort đã null sau khi tải settle).
    * Abort chỉ dừng phía client: body chưa đọc sẽ không vào heap;
    * tầng network có thể vẫn xả nốt phần đã đệm, nhưng arrayBuffer()
@@ -758,6 +792,16 @@ export class ReversePreviewController {
   /** Đợt 40 V2 — lý do T3 trả full-file (null khi chưa thử / đang chạy GOP). */
   get gopFallbackReason(): string | null {
     return this.gopFallbackReasonValue;
+  }
+
+  /**
+   * Đợt 65 S6 — ghi chú trial-decode timeout (fail-open) của lần thử GOP
+   * gần nhất: null khi trial-decode có verdict / không chạy / chưa thử.
+   * Chuỗi đã localize (qua lookup `gop.trial.timeoutNote` hoặc rớt về lý
+   * do timeout `gop.trial.timeout`) — UI hiển thị nguyên văn.
+   */
+  get gopTrialDecodeNote(): string | null {
+    return this.gopTrialDecodeNoteValue;
   }
 
   /** Đợt 41 W4 — probe size đã chạy chưa và kết quả (null = chưa probe). */
@@ -1045,7 +1089,7 @@ export class ReversePreviewController {
     if (!this.loadPromise) {
       this.loadPromise = (async () => {
         // Đợt 37 T5: mỗi lần tải có 1 AbortController riêng để
-        // applyKnownFileSize / dispose hủy được fetch đang bay.
+        // applyKnownFileSize / dispose huỷ được fetch đang bay.
         // ROUND43-Y6 — AbortController vắng mặt (browser rất cũ) thì
         // `new AbortController()` trước đây ném RA NGOÀI khối try/catch
         // của IIFE này, làm loadPromise reject, rồi ensureWindow
@@ -1059,7 +1103,7 @@ export class ReversePreviewController {
         try {
           // Cổng 1 — HEAD: biết trước file lớn thì không tải body.
           const headSize = await this.probeFileSize(abort.signal);
-          // Size tới muộn đã hủy trong lúc HEAD bay: không phát GET.
+          // Size tới muộn đã huỷ trong lúc HEAD bay: không phát GET.
           if (abort.signal.aborted) return false;
           if (headSize !== null && this.rejectLargeFile(headSize)) {
             return false;
@@ -1070,12 +1114,12 @@ export class ReversePreviewController {
             try {
               await resp.body?.cancel();
             } catch {
-              /* đã hủy, không đọc tiếp */
+              /* đã huỷ, không đọc tiếp */
             }
             return false;
           }
           if (!resp.ok) return false;
-          // Cổng 2 — header GET: biết trước khi đọc body thì hủy body,
+          // Cổng 2 — header GET: biết trước khi đọc body thì huỷ body,
           // không để arrayBuffer() nuốt cả file lớn vào heap.
           const getRaw = resp.headers
             ? resp.headers.get("content-length")
@@ -1086,7 +1130,7 @@ export class ReversePreviewController {
               try {
                 await resp.body?.cancel();
               } catch {
-                /* hủy body thất bại thì vẫn đã chặn, không đọc tiếp */
+                /* huỷ body thất bại thì vẫn đã chặn, không đọc tiếp */
               }
               return false;
             }
@@ -1095,7 +1139,7 @@ export class ReversePreviewController {
           // Đợt 37 T5: size tới muộn đã khóa fallback trong lúc
           // arrayBuffer bay (tầng fetch phớt lờ signal, hoặc abort
           // tới sau khi buffer resolve): KHÔNG parse/decode buffer
-          // này nữa — đỉnh heap lúc đó đã xảy ra và không hủy ngược
+          // này nữa — đỉnh heap lúc đó đã xảy ra và không huỷ ngược
           // được, nhưng ít nhất không decode thêm và không giữ buffer
           // (buf rơi khỏi scope khi hàm trả về, xem LIMITS T5).
           if (this.largeFile || this.disposed) return false;
@@ -1107,7 +1151,7 @@ export class ReversePreviewController {
             this.rejectLargeFile(buf.byteLength);
             return false;
           }
-          const track = parseMp4VideoTrack(buf);
+          const track = parseMp4VideoTrack(buf, this.gopI18nLookup);
           if (this.disposed) return false;
           this.track = track;
           this.bytes = new Uint8Array(buf);
@@ -1117,7 +1161,7 @@ export class ReversePreviewController {
           return false;
         } finally {
           // Tải đã settle: lần tải sau (nếu có) dùng controller mới,
-          // applyKnownFileSize sau thời điểm này không hủy nhầm tải cũ.
+          // applyKnownFileSize sau thời điểm này không huỷ nhầm tải cũ.
           if (this.loadAbort === abort) this.loadAbort = null;
         }
       })();
@@ -1163,6 +1207,7 @@ export class ReversePreviewController {
         meta.rangeEnd,
         this.knownFileSize,
         fetchImpl,
+        this.gopI18nLookup,
       );
       if (!res.ok) throw new Error(`gopSampleData: fetch bù GOP ${meta.index} hỏng: ${res.reason}`);
       seg = buildGopSegment(track, meta, res.bytes);
@@ -1241,6 +1286,7 @@ export class ReversePreviewController {
           meta.rangeEnd,
           this.knownFileSize,
           fetchImpl,
+          this.gopI18nLookup,
         );
         if (!res.ok) return false;
         seg = buildGopSegment(track, meta, res.bytes);
@@ -1384,7 +1430,7 @@ export class ReversePreviewController {
         if (this.gopEnabled && this.knownFileSize === null) {
           try {
             const probeFetch = this.gopFetchImpl ?? this.gopDefaultFetch();
-            const probe = await discoverSizeBytes(this.url, probeFetch);
+            const probe = await discoverSizeBytes(this.url, probeFetch, this.gopI18nLookup);
             this.gopSizeProbeSourceValue = probe.source;
             this.gopSizeProbeSizeValue = probe.size;
             this.gopSizeProbeReasonValue =
@@ -1402,8 +1448,12 @@ export class ReversePreviewController {
             // full-file cũ, không bao giờ ném ra draw.
             this.gopSizeProbeSourceValue = "unknown";
             this.gopSizeProbeSizeValue = null;
-            this.gopSizeProbeReasonValue =
-              "gop-size-probe-unexpected-exception: rơi về full-file";
+            this.gopSizeProbeReasonValue = trKey(
+              this.gopI18nLookup,
+              "gop.controller.sizeProbeUnexpectedException",
+              {},
+              "gop-size-probe-unexpected-exception: rơi về full-file",
+            );
           }
         }
         const wiring = resolveGopRangeWiring({
@@ -1411,6 +1461,7 @@ export class ReversePreviewController {
           knownSizeBytes: this.knownFileSize,
           thresholdBytes: this.gopThresholdBytes,
           largeFileBytes: this.largeFileBytes,
+          lookup: this.gopI18nLookup,
         });
         if (wiring.useGop) {
           this.gopAttempted = true;
@@ -1419,6 +1470,9 @@ export class ReversePreviewController {
               knownSizeBytes: this.knownFileSize,
               fetchImpl: this.gopFetchImpl,
               sharedSizeProbe,
+              // Đợt 60 Q4 — lookup i18n: lý do fallback GOP đi qua key
+              // gop.* trong dict (preview truyền t() lúc tạo controller).
+              lookup: this.gopI18nLookup,
               // Đợt 50 F4 — streaming: T3 chỉ demux + trả meta mọi
               // GOP, KHÔNG fetch byte GOP nào lượt đầu; cửa sổ đầu
               // fetch đúng GOP nó cần qua pre-resolve trong
@@ -1432,17 +1486,26 @@ export class ReversePreviewController {
               this.track = outcome.track;
               this.gopActive = true;
               this.gopMeta = outcome.gopMeta;
+              // Đợt 65 S6 — giữ ghi chú timeout fail-open (nếu có) để UI
+              // báo user lý do keyframe chưa kịp kiểm chứng.
+              this.gopTrialDecodeNoteValue = outcome.trialDecodeNote ?? null;
               transientGops = outcome.gops;
             } else {
               this.gopActive = false;
               this.gopFallbackReasonValue = outcome.reason;
+              this.gopTrialDecodeNoteValue = null;
             }
           } catch {
             // T3 cam kết không throw vì lỗi mạng/server/demux, nhưng
             // controller vẫn fail-soft: lỗi bất ngờ cũng chỉ rơi về
             // đường full-file, không bao giờ ném ra draw.
             this.gopActive = false;
-            this.gopFallbackReasonValue = "gop-unexpected-exception: rơi về full-file";
+            this.gopFallbackReasonValue = trKey(
+              this.gopI18nLookup,
+              "gop.controller.unexpectedException",
+              {},
+              "gop-unexpected-exception: rơi về full-file",
+            );
           }
         } else {
           // Wiring off (tắt / dưới ngưỡng / vượt S4 / chưa biết size):
@@ -1673,7 +1736,7 @@ export class ReversePreviewController {
 
   dispose(): void {
     this.disposed = true;
-    // Đợt 37 T5: hủy fetch đang bay để không còn tải mồ côi sau
+    // Đợt 37 T5: huỷ fetch đang bay để không còn tải mồ côi sau
     // khi preview đã bỏ controller (cùng cơ chế với size tới muộn).
     this.abortInFlightLoad();
     this.cache.closeAll();
@@ -1685,6 +1748,8 @@ export class ReversePreviewController {
     this.gopActive = false;
     this.gopMeta = [];
     this.gopFallbackReasonValue = null;
+    // Đợt 65 S6 — dọn cả ghi chú trial-decode timeout cùng đường GOP.
+    this.gopTrialDecodeNoteValue = null;
     // Đợt 41 W4: dọn cả trạng thái probe size.
     this.gopSizeProbeSourceValue = null;
     this.gopSizeProbeSizeValue = null;
@@ -1716,7 +1781,11 @@ const previewControllers = new Map<string, ReversePreviewController>();
 export function getReversePreviewController(
   url: string,
   knownFileSizeBytes?: number,
-  options?: { gopRangeEnabled?: boolean },
+  options?: {
+    gopRangeEnabled?: boolean;
+    // Đợt 60 Q4 — lookup i18n cho lý do fallback GOP (preview truyền t()).
+    i18nLookup?: (key: string, vars?: Record<string, string>) => string;
+  },
 ): ReversePreviewController {
   let c = previewControllers.get(url);
   if (!c) {
@@ -1727,6 +1796,7 @@ export function getReversePreviewController(
       // thỏa điều kiện này. Controller đã tạo trước mà không có cờ thì
       // giữ nguyên (không bật lén giữa chừng).
       gopRangeEnabled: options?.gopRangeEnabled ?? false,
+      i18nLookup: options?.i18nLookup,
     });
     previewControllers.set(url, c);
   } else if (knownFileSizeBytes !== undefined) {
@@ -1751,6 +1821,22 @@ export function reverseDecodeAheadWarnings(): string[] {
     for (const w of c.decodeAheadWarningList) {
       if (!out.includes(w)) out.push(w);
     }
+  }
+  return out;
+}
+
+/**
+ * Đợt 65 S6 — ghi chú trial-decode timeout (fail-open) đang bật trên mọi
+ * controller trong registry (preview.tsx đọc mỗi tick, mẫu
+ * `reverseDecodeAheadWarnings` đợt 37 T2): mỗi controller tối đa 1 ghi
+ * chú, khử trùng giữa các controller. Trả về đúng chuỗi T3 đã localize,
+ * không tự bịa thêm chuỗi — UI hiển thị nguyên văn (toast keyed).
+ */
+export function reverseTrialDecodeTimeoutNotes(): string[] {
+  const out: string[] = [];
+  for (const c of previewControllers.values()) {
+    const n = c.gopTrialDecodeNote;
+    if (n !== null && !out.includes(n)) out.push(n);
   }
   return out;
 }
@@ -1986,6 +2072,23 @@ function mirrorDrawStats(): void {
         gopFallbackReasons: [...previewControllers.values()]
           .map((c) => c.gopFallbackReason)
           .filter((r): r is string => r !== null),
+        // Đợt 51 H4 — thống kê cache GOP gộp của mọi controller (để
+        // harness headed đọc settled/evicted mà không cần DOM video:
+        // video element có thể đã bị gỡ khi dừng phát ngược nên DIAG
+        // qua getReversePreviewController(src) khi đó trả [] — gặp
+        // thật ở lượt cap32a). Chỉ cộng dồn số đo, không đổi hành vi.
+        gopCache: [...previewControllers.values()].reduce(
+          (acc, c) => {
+            const s = c.gopCacheStats;
+            acc.segments += s.segments;
+            acc.bytes += s.bytes;
+            acc.hits += s.hits;
+            acc.misses += s.misses;
+            acc.evictedBytes += s.evictedBytes;
+            return acc;
+          },
+          { segments: 0, bytes: 0, hits: 0, misses: 0, evictedBytes: 0 },
+        ),
       };
     }
   } catch {
@@ -2005,7 +2108,12 @@ export function reverseWebcodecsFrameFor(
   knownFileSizeBytes?: number,
   // Đợt 40 V2: preview bật đường GOP tường minh (mặc định tắt khi
   // gọi trực tiếp không có options — giữ nguyên hành vi test cũ).
-  options?: { gopRangeEnabled?: boolean },
+  // Đợt 60 Q4: i18nLookup tùy chọn cho lý do fallback GOP (preview
+  // truyền t(); test cũ không truyền → fallback VI cũ).
+  options?: {
+    gopRangeEnabled?: boolean;
+    i18nLookup?: (key: string, vars?: Record<string, string>) => string;
+  },
 ): { frame: VideoFrame; width: number; height: number } | null {
   const c = getReversePreviewController(url, knownFileSizeBytes, options);
   const hit = c.frameAt(sourceTimeSec);

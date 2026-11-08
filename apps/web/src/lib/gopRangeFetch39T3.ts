@@ -73,12 +73,68 @@
  *      `trailingSuffixValid`); hậu tố nằm ngoài cửa sổ đuôi 16 MiB
  *      (moov bắt đầu trước tailStart) vẫn fallback — QUYẾT GIỮ cửa
  *      sổ, xem LIMITS C5 §4 (đo thật + lý do).
+ *      Đợt 51 H4 — tail-scan streaming (`fetchTrailingMoovChunked`):
+ *      đuôi không fetch một lần cả cửa sổ 16 MiB nữa mà lấy theo
+ *      chunk từ EOF lùi về, gấp đôi mỗi lần (2 → 4 → 8 → 16 MiB),
+ *      dừng khi tìm thấy moov + xác nhận bằng 1 chunk nữa; moov
+ *      24 KiB ở cuối fixture 37 MiB chỉ cần 4 MiB đuôi thay vì
+ *      16,7 MiB. Mọi chunk vẫn qua kiểm chứng 206 nghiêm ngặt như cũ.
  *   5. Demux mảnh: chỉ lấy đúng box moov (từ tiền tố, từ range moov
  *      đã fetch riêng ở bước 4 khi moov tràn tiền tố, hoặc fetch
  *      thêm đúng range moov nếu moov tràn tiền tố; moov > 16 MiB →
  *      fallback) rồi gọi `parseMp4VideoTrack` trên buffer CHỈ chứa
  *      moov. Được phép vì parser chỉ cần moov để dựng sample table,
  *      còn offset sample là tuyệt đối trong file nên không đổi.
+ *      Đợt 52 I6 — sau demux, kiểm tra mọi sample offset+size nằm
+ *      trong tổng file đã biết (moov giả lồng trong moov thật có thể
+ *      qua tail-scan + demux nhưng sample table trỏ ngoài file — đo
+ *      thật ở LIMITS I6 §2); sample nào vượt thì fallback rõ ràng
+ *      thay vì trả meta sai cho controller ở stream-mode.
+ *      Đợt 53 J6 — thêm 2 lớp chặn moov giả trỏ VÀO TRONG file (nợ I6
+ *      §2.4): (a) stco-khớp-mdat — mọi sample phải nằm gọn trong một
+ *      box mdat đã biết từ tiền tố (`mdatRangesInPrefix`); (b) kiểm
+ *      AVCC sample đầu (`validateAvccSample` trong mp4Demux.ts) —
+ *      stream-mode fetch riêng sample đầu (tối đa 256 KiB, kind
+ *      "sample"), all-mode kiểm từ buffer GOP 0 vừa fetch. Moov giả
+ *      trỏ đúng vào byte H.264 thật vẫn qua được — decoder +
+ *      controller fallback là cửa cuối (ghi rõ trong LIMITS J6).
+ *      Đợt 54 K8 — thêm lớp (c) bố cục sample + nhất quán bảng
+ *      (`validateSampleLayout` + ctts-total == stsz + stss trong
+ *      [1, sampleCount]): bắt moov giả trỏ mọi sample về cùng offset,
+ *      đảo thứ tự chunk, khai offset ngẫu nhiên, hay bảng ctts/stss
+ *      lệch — mà không cần fetch thêm byte nào. Moov giả sao chép y
+ *      nguyên bảng sample thật nhưng sửa timestamp thì vẫn qua được
+ *      lớp này (xem LIMITS K8 §3).
+ *      Đợt 55 L8 — nối trial-decode VideoDecoder vào SAU lớp K8 +
+ *      kiểm AVCC sample đầu (xem `gopTrialDecode55L8.ts`): probe
+ *      inject được, fail-open khi không có decoder/lỗi/timeout; chỉ
+ *      decoder báo lỗi thật mới fallback full-file. Bắt đúng lớp moov
+ *      giả tinh vi "AVCC-đúng-cấu-trúc nhưng H.264-rác" mà AVCC +
+ *      K8 bỏ lọt (K8 §3.1 case B: decoder lỗi trong 0,5 ms, sample
+ *      thật decode OK 15,5 ms). Stream-mode chỉ chạy khi sample 0 ≤
+ *      cap fetch 256 KiB (đủ sample); all-mode chạy trên toàn bộ
+ *      sample 0 trong GOP 0 (không cap).
+ *      Đợt 56 M10 — (a) thêm lớp kiểm timestamp stts
+ *      (`validateSampleTimestamps` trong mp4Demux.ts: đối chiếu stts
+ *      với mdhd/mvhd + hình dạng delta) sau lớp K8, áp cả 2 mode —
+ *      bắt moov giả sửa timestamp mà K8 + AVCC + trial-decode đều bỏ
+ *      lọt; (b) stream-mode fetch thêm đúng phần còn lại của sample 0
+ *      khi 256 KiB < s0.size ≤ 2 MiB rồi mới trial-decode; (c) probe
+ *      trả "unsupported-config" (decoder không hỗ trợ profile, vd
+ *      High 4:4:4) thì fail-open, không chặn oan.
+ *      Đợt 57 N10 — (b) nâng tiếp: cap 2 MiB → 8 MiB, phần còn lại
+ *      của sample 0 fetch theo chunk 512 KiB rồi ráp lại (xem
+ *      `fetchSampleRemainderChunked`); sample > 8 MiB vẫn bỏ qua.
+ *      Đợt 59 P6 — nâng tiếp: cap 8 MiB → 32 MiB, tối đa 64 chunk;
+ *      sample > 32 MiB vẫn bỏ qua (timeout trần 2500 ms của O6 giữ
+ *      nguyên — keyframe thật ≳16 MiB vẫn timeout → fail-open).
+ *      Đợt 60 Q5 — nâng tiếp: cap 32 MiB → 64 MiB, tối đa 128 chunk;
+ *      sample > 64 MiB vẫn bỏ qua; probe null thì KHÔNG fetch
+ *      remainder nữa (đóng nợ N10 §6.2 — trước đây caller tắt
+ *      trial-decode vẫn trả phí fetch chunked tới 32 MiB). Timeout
+ *      trần 2500 ms của O6 giữ nguyên — keyframe thật ≳16 MiB vẫn
+ *      timeout → fail-open; phần chặn được thêm chỉ là rác lớn trong
+ *      (32, 64] MiB (fail trong ~ms).
  *   6. Chia GOP: sample keyframe mở đầu GOP mới; range của 1 GOP =
  *      [offset sample đầu, offset+size sample cuối]. Fetch từng GOP
  *      bằng Range, kiểm tra 206 + Content-Range khớp đúng range đã
@@ -124,11 +180,79 @@ import {
   resolveRangeGopFetch,
 } from "./reverseRangeGate38U2";
 import { findTrailingMoov, tailRangeFor } from "./gopTail45A4";
+import type { TailMoovCandidate } from "./gopTail45A4";
 import {
   parseMp4VideoTrack,
   sampleChunkInit,
+  validateAvccSample,
+  validateSampleLayout,
+  validateSampleTimestamps,
 } from "./mp4Demux";
 import type { Mp4Sample, Mp4VideoTrack } from "./mp4Demux";
+import {
+  createBrowserTrialDecodeProbe,
+  DEFAULT_TRIAL_DECODE_TIMEOUT_MS,
+  isTrialDecodeTimeoutReason,
+  runTrialDecode,
+  trialDecodeConfigFromTrack,
+} from "./gopTrialDecode55L8";
+import type { GopTrialDecodeProbe } from "./gopTrialDecode55L8";
+import { planTrialDecodeCall } from "./gopTrialDecodeWorker62R4";
+
+/**
+ * Đợt 60 Q4 — lookup i18n tùy chọn (mẫu projectRepo.ts đợt 56 M5: file
+ * này được test bằng Node nên KHÔNG import `../i18n` trực tiếp).
+ * Khi `lookup` vắng → fallback đúng từng chữ chuỗi VI cũ nên test cũ +
+ * hành vi mặc định không đổi; UI (preview.tsx → ReversePreviewController)
+ * truyền `t()` xuống qua `GopRangeFetchOptions.lookup`. Đợt 61 R6 —
+ * các lý do Q4 còn để thô (gate, checkRangeProbe, `size-too-small`,
+ * `moov-missing-after-gate`, `demux-moov: track không có sample`,
+ * `demux-moov: sample 0 rỗng`) nay đi qua key `gop.gate.*` /
+ * `gop.probe.*` / `gop.range.*` trong fragment R6; `demux-moov:
+ * <lỗi parser>` nay nhúng message parser đã dịch (mp4Demux nhận
+ * lookup). Còn giữ thô, có lý do: `exception: ...`, `tail-scan:
+ * <message>` (message động từ fetch/parser — xem LIMITS R6 §2.4).
+ */
+export type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
+
+/**
+ * Đợt 65 S6 — ghi chú timeout fail-open cho UI (đóng nợ LIMITS R10 đợt 64
+ * §6.4: lý do timeout chưa hiển thị cho user). Khi trial-decode hết
+ * timeout mà chưa có verdict, file vẫn mở bình thường nhưng bước kiểm
+ * keyframe chưa xong — user cần biết lý do, không phải chỉ thấy file mở.
+ * Chuỗi qua key `gop.trial.timeoutNote` trong dict (fragment round65-s6,
+ * parent gộp sau); lookup chưa có key (trả đúng key, đúng hợp đồng `t()`)
+ * thì rớt về `trialReason` — lý do timeout đã localize sẵn qua
+ * `gop.trial.timeout`. Không dùng trKey ở đây: key chưa vào dict nên
+ * trKey sẽ bị test P7 báo TRKEY-UNKNOWN-KEY (mẫu fragment R8 đợt 64 —
+ * chuỗi sống trong fragment trước, dict sau).
+ * Chỉ gọi khi trial skipped DO timeout (xem `isTrialDecodeTimeoutReason`).
+ */
+export function trialDecodeTimeoutNote(
+  lookup: I18nLookup | undefined,
+  trialReason: string,
+  timeoutMs: number,
+  sampleBytes: number,
+): string {
+  const key = "gop.trial.timeoutNote";
+  const vars = {
+    timeout: String(timeoutMs),
+    size: (sampleBytes / (1024 * 1024)).toFixed(1),
+  };
+  if (!lookup) return trialReason;
+  const out = lookup(key, vars);
+  return out === key ? trialReason : out;
+}
 
 /** Response tối thiểu mà đường fetch này cần (tương thích fetch chuẩn). */
 export interface GopRangeResponse {
@@ -183,12 +307,84 @@ export interface GopSegment {
 
 /** Một request Range đã thực hiện (để test/debug đối chiếu, không phải log UI). */
 export interface GopRangeRequestLog {
-  kind: "head" | "probe" | "prefix" | "moov" | "tail" | "gop";
+  kind: "head" | "probe" | "prefix" | "moov" | "tail" | "gop" | "sample";
   start: number | null;
   end: number | null;
   status: number;
   bytes: number;
 }
+
+/**
+ * Đợt 53 J6 — số byte tối đa fetch để kiểm AVCC sample đầu ở mode
+ * stream (sample keyframe thật thường chỉ vài chục KiB; sample lớn
+ * hơn thì chỉ kiểm tiền tố — xem `validateAvccSample`).
+ */
+export const MAX_FIRST_SAMPLE_PROBE_BYTES = 256 * 1024;
+
+/**
+ * Đợt 56 M10 — trần kích thước sample 0 được trial-decode ở mode
+ * stream, đợt 57 N10 nâng 2 MiB → 8 MiB, đợt 59 P6 nâng 8 MiB →
+ * 32 MiB (đóng nợ đợt 58 §6.6 + đợt 57 N10), đợt 60 Q5 nâng 32 MiB →
+ * 64 MiB (đóng nợ đợt 59 §6.2). Sample 0 ≤ 256 KiB thì
+ * đã fetch đủ (cap J6 ở trên); lớn hơn thì T3 fetch thêm phần còn
+ * lại theo chunk 512 KiB (xem `fetchSampleRemainderChunked`) rồi mới
+ * decode — nhưng chỉ tới trần này. Lý do chọn 64 MiB (đo thật, xem
+ * LIMITS N10 §2 + LIMITS P6 §1 + LIMITS Q5 §1): keyframe thật đo được
+ * 720p ~30 KiB, 1080p ~100 KiB, 4K crf 12 ~300–350 KiB, 4K lossless
+ * ~461 KiB, 4K nhiễu ~4,1 MiB, 4K nhiễu mạnh crf 12 ~9,7 MiB (P6),
+ * 8K nhiễu crf 18 ~19,7 MiB, 8K nhiễu mạnh crf 12 ~30,7 MiB (P6),
+ * 8K nhiễu mạnh crf 8 ~37,2 MB (Q5) — 64 MiB gấp ~2× keyframe thật
+ * lớn nhất đo được và bao phủ cả 8K bitrate rất cao; decode sample
+ * 300 KiB đo headed ~68 ms nên sample ~8 MiB (8K) có thể chạm timeout
+ * và fail-open (hướng an toàn) — timeout theo kích thước (đợt 58 O6,
+ * trần 2500 ms) chặn cứng chi phí decode bất kể cap; keyframe thật
+ * ≳16 MiB (decode ~0,15 ms/KiB) vẫn timeout → fail-open, còn rác
+ * lớn fail nhanh (~5 ms) nên nay có verdict thật thay vì bị bỏ qua.
+ * Nói thẳng: phần chặn được THÊM của đợt Q5 so với P6 chỉ là rác lớn
+ * trong (32, 64] MiB — keyframe thật trong khoảng đó vẫn fail-open vì
+ * timeout (chỉ tốn thêm phí fetch, đo headed thật xem LIMITS Q5 §2).
+ * Cap chặn kẻ giả khai sample đầu khổng lồ để ép fetch: tối đa
+ * 64 MiB qua ≤ 128 request 512 KiB. Sample 0 > 64 MiB vẫn bỏ qua
+ * trial-decode (fail-open) như hành vi cũ — all-mode vẫn chặn được
+ * vì GOP 0 đã fetch đủ range. KHÔNG tải toàn bộ file vào RAM: T3
+ * chỉ fetch đúng range sample 0 (tiền tố + chunk remainder), đỉnh
+ * heap transient ≈ sample (≤ 64 MiB) + 1 chunk 512 KiB — file (có
+ * thể hàng trăm MiB) không bao giờ được tải trọn. Decode vẫn 1 lần
+ * trên sample đã ráp đủ (VideoDecoder chỉ nhận 1 access unit trọn
+ * vẹn — xem LIMITS P6 §1.2, không có decode streaming từng đoạn).
+ * Đợt 60 Q5 (b): khi probe trial-decode là null (caller tắt hẳn)
+ * thì T3 KHÔNG fetch remainder nữa (đóng nợ N10 §6.2) — fetch đó
+ * là phí thuần vì runTrialDecode(null) trả pass ngay không decode;
+ * kiểm AVCC trên tiền tố vẫn chạy như cũ.
+ */
+export const MAX_TRIAL_DECODE_SAMPLE_BYTES = 64 * 1024 * 1024;
+
+/**
+ * Đợt 57 N10 — kích thước 1 chunk khi fetch phần còn lại của sample 0
+ * lớn ở mode stream: 512 KiB. Lý do: bằng đúng tiền tố mặc định
+ * (512 KiB) nên cùng bậc với mọi fetch khác của T3; đủ nhỏ để nằm
+ * dưới giới hạn độ dài Range của hầu hết server/proxy (một request
+ * Range 8 MiB duy nhất có thể bị server kẹp/clamp → 416 hoặc trả
+ * thiếu → fetchRangeChecked ném lỗi, trong khi chunk 512 KiB đi qua
+ * được), đủ lớn để sample tối đa 32 MiB chỉ cần ≤ 64 request; mỗi
+ * chunk qua đúng kiểm chứng 206 + Content-Range như mọi range khác.
+ */
+export const TRIAL_DECODE_SAMPLE_CHUNK_BYTES = 512 * 1024;
+
+/**
+ * Đợt 57 N10 — số request Range tối đa để fetch phần còn lại của
+ * sample 0 lớn: ceil((cap 64 MiB − tiền tố 256 KiB) / chunk 512 KiB)
+ * = ceil(127,5) = 128 (đợt 60 Q5 nâng cap 32 MiB → 64 MiB). Suy ra từ 3
+ * hằng trên (không hard-code số rời) để đổi cap/chunk là giới hạn tự
+ * khớp. Vòng fetch trong `fetchSampleRemainderChunked` dừng bằng giới
+ * hạn này (phòng thủ chống lặp vô hạn nếu logic tính chunk sai); T3
+ * không bao giờ gọi tới mức này vì cap đã chặn trước (remainder tối
+ * đa cần đúng 128).
+ */
+export const MAX_TRIAL_DECODE_SAMPLE_CHUNK_FETCHES = Math.ceil(
+  (MAX_TRIAL_DECODE_SAMPLE_BYTES - MAX_FIRST_SAMPLE_PROBE_BYTES) /
+    TRIAL_DECODE_SAMPLE_CHUNK_BYTES,
+);
 
 export type GopRangeOutcome =
   | {
@@ -210,6 +406,15 @@ export type GopRangeOutcome =
       /** Tổng sample byte THỰC trong các GOP đã fetch (0 ở mode stream). */
       totalSampleBytes: number;
       requests: GopRangeRequestLog[];
+      /**
+       * Đợt 65 S6 — ghi chú trial-decode timeout (fail-open): chỉ có khi
+       * trial-decode sample 0 HẾT timeout mà chưa có verdict — file vẫn mở
+       * bình thường nhưng bước kiểm keyframe chưa xong; UI hiện cho user
+       * biết lý do (toast + getter controller). Vắng = trial-decode có
+       * verdict (decode-ok) hoặc không chạy/không timeout (probe null,
+       * no-decoder, unsupported-config, sample > 64 MiB).
+       */
+      trialDecodeNote?: string;
     }
   | {
       mode: "full-file";
@@ -251,6 +456,15 @@ export interface GopRangeFetchOptions {
    */
   tailScanBytes?: number;
   /**
+   * Đợt 51 H4 — chunk đầu của tail-scan streaming (mặc định 2 MiB):
+   * tail-scan không fetch một lần cả cửa sổ đuôi (16,7 MiB ở fixture
+   * 37 MiB) nữa mà lấy từng chunk từ EOF lùi về, mỗi lần gấp đôi
+   * (2 → 4 → 8 → 16 MiB) cho tới khi tìm thấy moov + xác nhận bằng
+   * 1 chunk nữa (xem `fetchTrailingMoovChunked`). Chỉ là gợi ý đo/test
+   * (production không truyền); phải > 0.
+   */
+  tailInitialChunkBytes?: number;
+  /**
    * Đợt 50 F4 — streaming: true = chỉ demux + trả meta mọi GOP,
    * KHÔNG fetch byte GOP nào lượt đầu (đỉnh heap transient của T3
    * khi đó chỉ còn tiền tố + đuôi/moov, không còn chunk mọi GOP
@@ -260,6 +474,43 @@ export interface GopRangeFetchOptions {
    * lượt đầu; test hồi quy T3 khóa mặc định này.
    */
   streamGops?: boolean;
+  /**
+   * Đợt 55 L8 — probe trial-decode cho sample 0 (xem
+   * `gopTrialDecode55L8.ts`): chạy SAU lớp kiểm K8 + kiểm AVCC,
+   * chỉ khi đã có đủ toàn bộ sample 0.
+   * - undefined (mặc định): dùng probe VideoDecoder thật của trình
+   *   duyệt khi có, bỏ qua (fail-open) khi không có — Node/test cũ
+   *   không đổi hành vi (Node không có VideoDecoder).
+   * - null: tắt hẳn trial-decode (opt-out; vd caller đã tự kiểm
+   *   decode ở nơi khác).
+   * - function: probe inject (test / caller tự cung cấp decoder).
+   * Probe trả false (decode lỗi thật) → T3 fallback full-file với
+   * lý do `trial-decode: ...`; probe lỗi/timeout/không có → cho qua
+   * (fail-open), không chặn file thật.
+   */
+  trialDecodeProbe?: GopTrialDecodeProbe | null;
+  /**
+   * Đợt 55 L8 — timeout GỐC cho 1 lần trial-decode (mặc định 200 ms —
+   * đo thật: sample thật 720p decode OK 15,5–17,1 ms, mẫu rác lỗi
+   * 0,5–1,6 ms). Quá timeout → fail-open (cho qua). ≤ 0 / không
+   * finite → dùng mặc định.
+   * Đợt 58 O6 — đây là timeout gốc cho sample NHỎ (≤ 256 KiB); sample
+   * lớn hơn được cộng thêm theo kích thước ở cả 2 điểm gọi trial-decode
+   * dưới đây — keyframe 4K nhiễu 4,1 MiB decode ~623 ms (median,
+   * LIMITS O6 §1) nên không còn bị cắt ở 200 ms.
+   * Đợt 62 R4 — sample mà timeout main-thread chạm trần 2500 ms thì
+   * `planTrialDecodeCall` đưa sang worker nền với trần riêng 60 s
+   * (đợt 63 R4 nâng từ 30 s lên 45 s; đợt 64 R10 nâng lên 60 s —
+   * xem gopTrialDecodeWorker62R4.ts);
+   * timeout gốc này vẫn là base cho cả 2 đường.
+   */
+  trialDecodeTimeoutMs?: number;
+  /**
+   * Đợt 60 Q4 — lookup i18n tùy chọn: các lý do fallback/diagnostic
+   * của T3 đi qua key `gop.range.*` / `gop.demux.*` trong dict (và
+   * `gop.trial.*` qua runTrialDecode); vắng → fallback VI cũ.
+   */
+  lookup?: I18nLookup;
 }
 
 interface TopBox {
@@ -297,6 +548,60 @@ export function scanTopBoxes(prefix: Uint8Array): TopBox[] {
     off += size;
   }
   return boxes;
+}
+
+/**
+ * Đợt 53 J6 — vùng mdat theo header box top-level trong tiền tố
+ * (dùng cho kiểm tra stco-khớp-mdat ở bước 5).
+ *
+ * Khác `scanTopBoxes` ở chỗ KHÔNG dừng ở mdat cắt dở: mdat trailing
+ * khổng lồ luôn tràn tiền tố, nhưng size khai trong header vẫn cho
+ * biết vùng [start, start+size) mà mọi sample phải nằm trong. Box
+ * khác cắt dở thì dừng (không thấy được box sau nó). `size == 0`
+ * (kéo tới cuối file) thì end = knownSize, vắng knownSize thì cuối
+ * tiền tố. Trả [] khi không thấy mdat nào — caller BỎ QUA kiểm tra
+ * (fail-open, xem bước 5) thay vì fallback oan file thật (vd moov
+ * phình > tiền tố che mất header mdat). Rủi ro dư ghi trong LIMITS:
+ * file nhiều mdat mà mdat thứ hai nằm ngoài tiền tố thì sample trong
+ * đó bị fallback oan về full-file (vẫn phát được, chỉ chậm hơn).
+ */
+export function mdatRangesInPrefix(
+  prefix: Uint8Array,
+  knownSize: number | null,
+): Array<{ start: number; end: number }> {
+  const view = new DataView(prefix.buffer, prefix.byteOffset, prefix.byteLength);
+  const ranges: Array<{ start: number; end: number }> = [];
+  let off = 0;
+  while (off + 8 <= prefix.length) {
+    let size = view.getUint32(off);
+    const type = String.fromCharCode(
+      view.getUint8(off + 4),
+      view.getUint8(off + 5),
+      view.getUint8(off + 6),
+      view.getUint8(off + 7),
+    );
+    let header = 8;
+    if (size === 1) {
+      if (off + 16 > prefix.length) break;
+      const big = view.getBigUint64(off + 8);
+      if (big > BigInt(Number.MAX_SAFE_INTEGER)) break;
+      size = Number(big);
+      header = 16;
+    } else if (size === 0) {
+      size = (knownSize !== null ? knownSize : prefix.length) - off;
+    }
+    if (size < header) break;
+    if (type === "mdat") {
+      ranges.push({ start: off, end: off + size });
+      // mdat cắt dở (end vượt tiền tố) thì không thấy box sau — dừng.
+      if (off + size > prefix.length) break;
+      off += size;
+      continue;
+    }
+    if (off + size > prefix.length) break;
+    off += size;
+  }
+  return ranges;
 }
 
 /**
@@ -428,7 +733,7 @@ function finishGop(
 
 class GopRangeFailure extends Error {}
 
-/** Hủy body best-effort (để không nuốt body file lớn khi đã quyết fallback). */
+/** Huỷ body best-effort (để không nuốt body file lớn khi đã quyết fallback). */
 async function cancelBody(resp: GopRangeResponse): Promise<void> {
   try {
     await resp.body?.cancel();
@@ -441,6 +746,11 @@ async function cancelBody(resp: GopRangeResponse): Promise<void> {
  * Fetch 1 range và kiểm tra nghiêm ngặt bằng cổng gate: chỉ 206 +
  * Content-Range khớp ĐÚNG range đã xin (+ khớp tổng đã biết) mới
  * nhận body; còn lại → GopRangeFailure (caller chuyển thành fallback).
+ *
+ * Đợt 60 Q4 — `lookup` tùy chọn: lý do status/short-body đi qua key
+ * `gop.range.statusNot206` / `gop.range.shortBody`; vắng → VI cũ.
+ * Lý do của `checkRangeProbeResponse` (range-probe-*) KHÔNG có trong
+ * fragment P7 nên giữ nguyên chuỗi thô.
  */
 async function fetchRangeChecked(
   fetchImpl: GopRangeFetchFn,
@@ -448,8 +758,9 @@ async function fetchRangeChecked(
   start: number,
   end: number,
   knownTotal: number | null,
-  kind: "probe" | "prefix" | "moov" | "tail" | "gop",
+  kind: "probe" | "prefix" | "moov" | "tail" | "gop" | "sample",
   requests: GopRangeRequestLog[],
+  lookup?: I18nLookup,
 ): Promise<Uint8Array> {
   const resp = await fetchImpl(url, {
     headers: { Range: `bytes=${start}-${end}` },
@@ -458,7 +769,12 @@ async function fetchRangeChecked(
     requests.push({ kind, start, end, status: resp.status, bytes: 0 });
     await cancelBody(resp);
     throw new GopRangeFailure(
-      `${kind}-status-${resp.status}: server không trả 206 cho Range ${start}-${end}`,
+      trKey(
+        lookup,
+        "gop.range.statusNot206",
+        { kind, status: String(resp.status), start: String(start), end: String(end) },
+        `${kind}-status-${resp.status}: server không trả 206 cho Range ${start}-${end}`,
+      ),
     );
   }
   const contentRange = resp.headers.get("content-range");
@@ -467,6 +783,7 @@ async function fetchRangeChecked(
     contentRange,
     { start, end },
     knownTotal,
+    lookup,
   );
   if (check.outcome !== "range-ok") {
     requests.push({ kind, start, end, status: resp.status, bytes: 0 });
@@ -477,10 +794,269 @@ async function fetchRangeChecked(
   requests.push({ kind, start, end, status: resp.status, bytes: buf.length });
   if (buf.length !== end - start + 1) {
     throw new GopRangeFailure(
-      `${kind}-short-body: xin ${end - start + 1} byte, nhận ${buf.length}`,
+      trKey(
+        lookup,
+        "gop.range.shortBody",
+        { kind, wanted: String(end - start + 1), got: String(buf.length) },
+        `${kind}-short-body: xin ${end - start + 1} byte, nhận ${buf.length}`,
+      ),
     );
   }
   return buf;
+}
+
+/**
+ * Đợt 57 N10 — fetch phần còn lại của sample 0 lớn theo chunk rồi ráp
+ * lại thành đủ sample để trial-decode (thay cho 1 request Range duy
+ * nhất của M10 — xem LIMITS N10 §1.2: vì sao không decode streaming).
+ *
+ *   - `prefix` là đúng byte đầu của sample đã fetch (tiền tố AVCC
+ *     256 KiB của J6); hàm KHÔNG fetch lại phần này.
+ *   - Phần còn lại `[offset+prefix.length, offset+size-1]` được lấy
+ *     từng chunk `TRIAL_DECODE_SAMPLE_CHUNK_BYTES` (512 KiB), mỗi
+ *     chunk qua `fetchRangeChecked` nghiêm ngặt (206 + Content-Range
+ *     khớp mới nhận, kind "sample" như request tiền tố) rồi `set`
+ *     vào đúng vị trí trong buffer đích đã cấp trước (size = sample
+ *     đầy đủ) — không nối chuỗi buffer tạm nên đỉnh heap transient
+ *     ≈ size + 1 chunk thay vì size + remainder-copy như M10.
+ *   - Chunk nào lỗi (416/200/mạng) thì throw ngay (không thử chunk
+ *     sau): caller bắt và bỏ qua trial-decode (fail-open) — AVCC trên
+ *     tiền tố đã qua nên phần còn lại chỉ phục vụ probe, không đáng
+ *     fallback file thật vì lỗi mạng giữa chừng.
+ *   - Vòng lặp chặn bởi `MAX_TRIAL_DECODE_SAMPLE_CHUNK_FETCHES`
+ *     (64): quá giới hạn thì throw `sample-chunk-limit` thay vì
+ *     fetch tiếp — phòng thủ, T3 không bao giờ chạm tới vì cap 32 MiB
+ *     đã chặn trước (remainder tối đa cần đúng 64 chunk).
+ *   - Trả buffer sample ĐẦY ĐỦ (không phải chỉ phần còn lại) để
+ *     caller đưa thẳng vào probe; `prefix.length > size` hoặc
+ *     `size <= 0` là lỗi lập trình của caller → throw TypeError.
+ */
+export async function fetchSampleRemainderChunked(
+  fetchImpl: GopRangeFetchFn,
+  url: string,
+  sampleOffset: number,
+  sampleSize: number,
+  prefix: Uint8Array,
+  knownSize: number | null,
+  requests: GopRangeRequestLog[],
+  lookup?: I18nLookup,
+): Promise<Uint8Array> {
+  if (!(sampleSize > 0) || prefix.length > sampleSize) {
+    throw new TypeError(
+      trKey(
+        lookup,
+        "gop.range.sampleRemainderInvalid",
+        { sampleSize: String(sampleSize), prefixLength: String(prefix.length) },
+        `fetchSampleRemainderChunked: sampleSize ${sampleSize} / prefix ${prefix.length} không hợp lệ`,
+      ),
+    );
+  }
+  const full = new Uint8Array(sampleSize);
+  full.set(prefix, 0);
+  let fetched = prefix.length;
+  let chunkCount = 0;
+  while (fetched < sampleSize) {
+    if (++chunkCount > MAX_TRIAL_DECODE_SAMPLE_CHUNK_FETCHES) {
+      throw new GopRangeFailure(
+        trKey(
+          lookup,
+          "gop.range.sampleChunkLimit",
+          { maxChunks: String(MAX_TRIAL_DECODE_SAMPLE_CHUNK_FETCHES), sampleSize: String(sampleSize) },
+          `sample-chunk-limit: sample 0 cần quá ${MAX_TRIAL_DECODE_SAMPLE_CHUNK_FETCHES} chunk 512 KiB (size ${sampleSize})`,
+        ),
+      );
+    }
+    const chunkEnd = Math.min(
+      fetched + TRIAL_DECODE_SAMPLE_CHUNK_BYTES,
+      sampleSize,
+    ) - 1;
+    const chunk = await fetchRangeChecked(
+      fetchImpl,
+      url,
+      sampleOffset + fetched,
+      sampleOffset + chunkEnd,
+      knownSize,
+      "sample",
+      requests,
+      lookup,
+    );
+    full.set(chunk, fetched);
+    fetched += chunk.length;
+  }
+  return full;
+}
+
+/**
+ * Đợt 51 H4 — chunk đầu mặc định của tail-scan streaming (2 MiB).
+ * Moov trailing thật thường chỉ vài chục KiB và nằm sát EOF (fixture
+ * 37 MiB: moov 24.639 byte ở đúng cuối file) nên lấy cả cửa sổ đuôi
+ * 16,7 MiB một lần là lãng phí đỉnh heap transient; lấy 2 MiB đầu là
+ * đủ tìm thấy trong đa số trường hợp thật.
+ */
+export const DEFAULT_TAIL_INITIAL_CHUNK_BYTES = 2 * 1024 * 1024;
+
+export interface ChunkedTailScan {
+  /** Đã tìm thấy moov trailing hợp lệ chưa. */
+  found: boolean;
+  /** Buffer đuôi đã fetch (đúng hậu tố file, kết thúc ở EOF). */
+  tailBuf: Uint8Array;
+  /** Offset bắt đầu buffer đuôi trong file (= fileSize - tailBuf.length). */
+  tailStart: number;
+  /** Ứng viên moov (chỉ có khi found). */
+  candidate: TailMoovCandidate | null;
+  /** Lý do không thấy (chỉ có khi !found). */
+  reason: string | null;
+  /** Tổng byte đuôi đã chuyển qua mạng (= tailBuf.length, fetch tăng dần). */
+  fetchedBytes: number;
+  /** Số request Range đuôi đã phát. */
+  chunkCount: number;
+}
+
+/**
+ * Đợt 51 H4 — tail-scan streaming: fetch đuôi file theo chunk từ EOF
+ * lùi về, thay vì một lần cả cửa sổ đuôi (nợ F4 §5.3: đuôi 16,7 MiB
+ * nằm trong đỉnh transient T3).
+ *
+ * Thuật toán (mọi chunk đều qua `fetchRangeChecked` nghiêm ngặt như
+ * đường cũ — 206 + Content-Range khớp mới nhận body):
+ *   - Cửa sổ bắt đầu ở `initialChunkBytes` (mặc định 2 MiB), kẹp về
+ *     min(tailScanBytes, fileSize). Mỗi lần không thấy moov thì gấp
+ *     đôi cửa sổ (fetch thêm đúng phần mới ở phía trước rồi nối vào
+ *     đầu buffer cũ — tổng byte chuyển qua mạng = đúng cửa sổ cuối,
+ *     không fetch trùng), cho tới khi chạm trần cửa sổ.
+ *   - Thấy moov mà cửa sổ chưa chạm trần thì xác nhận bằng 1 lần gấp
+ *     đôi nữa rồi quét lại: ứng viên giữ nguyên (cùng start+size) thì
+ *     nhận; ứng viên đổi (quét rộng hơn thấy moov ngoài cùng hơn —
+ *     đúng luật "chọn start nhỏ nhất" của findTrailingMoov) thì nhận
+ *     ứng viên mới và xác nhận thêm tối đa 1 lần nữa. Vòng xác nhận
+ *     có chặn (tối đa 2 lần) và cửa sổ chỉ tăng nên vòng lặp luôn dừng,
+ *     trường hợp xấu nhất fetch đúng bằng cửa sổ cũ.
+ *   - Chunk nào lỗi mạng/server (416/200/...) thì throw ngay như
+ *     đường cũ (không thử cửa sổ lớn hơn — server đã từ chối range
+ *     đuôi thì range lớn hơn cũng không cứu được), caller chuyển thành
+ *     fallback với cùng dạng lý do `tail-scan: ...`.
+ *
+ * Tính chất an toàn: buffer tích lũy LUÔN là đúng hậu tố file kết
+ * thúc ở EOF nên `findTrailingMoov` nhận đúng đầu vào nó yêu cầu;
+ * ứng viên tìm thấy ở cửa sổ hẹp vẫn phải qua đủ 3 cửa (kết thúc ở
+ * EOF/hậu tố hợp lệ + nằm gọn + payload parse thành cây box có
+ * mvhd/trak) và demux ở bước 5 vẫn là cửa cuối. Rủi ro còn lại (ghi
+ * trong LIMITS H4 §5.3): file chế tác có moov giả lọt 3 cửa nằm trong
+ * moov thật mà moov thật bắt đầu TRƯỚC cửa sổ đã xác nhận thì bước
+ * xác nhận không nhìn thấy moov thật — trường hợp này cần byte chế
+ * tác cố ý, file encode thật không gặp.
+ *
+ * Đỉnh heap: buffer đuôi lớn nhất giữ cùng lúc ≈ cửa sổ lúc tìm thấy
+ * + 1 chunk xác nhận (fixture 37 MiB: 4 MiB thay vì 16,7 MiB);
+ * lúc nối chunk, transient ≈ 2× cửa sổ mới (buffer cũ + chunk mới +
+ * buffer nối) — vẫn thấp hơn hẳn 16,7 MiB một lần.
+ */
+export async function fetchTrailingMoovChunked(
+  fetchImpl: GopRangeFetchFn,
+  url: string,
+  knownSize: number,
+  tailScanBytes: number,
+  maxMoovBytes: number,
+  requests: GopRangeRequestLog[],
+  initialChunkBytes: number = DEFAULT_TAIL_INITIAL_CHUNK_BYTES,
+  // Đợt 60 Q4 — lookup i18n tùy chọn, truyền xuống fetchRangeChecked
+  // (lý do status/short-body của chunk đuôi đi qua key gop.range.*).
+  lookup?: I18nLookup,
+): Promise<ChunkedTailScan> {
+  const fullWindow = Math.min(tailScanBytes, knownSize);
+  let window = Math.min(initialChunkBytes, fullWindow);
+  // Lần đầu: fetch đúng cửa sổ đầu [size-window, size-1].
+  let acc = await fetchRangeChecked(
+    fetchImpl,
+    url,
+    knownSize - window,
+    knownSize - 1,
+    knownSize,
+    "tail",
+    requests,
+    lookup,
+  );
+  let chunkCount = 1;
+  // Mở rộng cửa sổ gấp đôi (kẹp trần): fetch thêm đúng phần mới ở
+  // phía trước rồi nối vào đầu buffer cũ.
+  const growOnce = async (): Promise<boolean> => {
+    if (window >= fullWindow) return false;
+    const next = Math.min(window * 2, fullWindow);
+    const extra = await fetchRangeChecked(
+      fetchImpl,
+      url,
+      knownSize - next,
+      knownSize - window - 1,
+      knownSize,
+      "tail",
+      requests,
+      lookup,
+    );
+    const joined = new Uint8Array(next);
+    joined.set(extra, 0);
+    joined.set(acc, extra.length);
+    acc = joined;
+    window = next;
+    chunkCount++;
+    return true;
+  };
+  let scan = findTrailingMoov(acc, knownSize, { maxMoovBytes });
+  let confirms = 0;
+  for (;;) {
+    if (!scan.found) {
+      if (window >= fullWindow) {
+        return {
+          found: false,
+          tailBuf: acc,
+          tailStart: knownSize - window,
+          candidate: null,
+          reason: scan.reason,
+          fetchedBytes: window,
+          chunkCount,
+        };
+      }
+      await growOnce();
+      scan = findTrailingMoov(acc, knownSize, { maxMoovBytes });
+      continue;
+    }
+    // Thấy moov: cửa sổ đã chạm trần thì nhận ngay; chưa thì xác
+    // nhận bằng 1 lần mở rộng rồi quét lại (xem header hàm).
+    if (window >= fullWindow || confirms >= 2) {
+      return {
+        found: true,
+        tailBuf: acc,
+        tailStart: knownSize - window,
+        candidate: scan.candidate,
+        reason: null,
+        fetchedBytes: window,
+        chunkCount,
+      };
+    }
+    const prev = scan.candidate;
+    await growOnce();
+    confirms++;
+    scan = findTrailingMoov(acc, knownSize, { maxMoovBytes });
+    if (!scan.found) continue; // không xảy ra trên suffix lớn hơn
+    // (ứng viên cũ vẫn hợp lệ trong suffix rộng hơn); vòng lặp sẽ
+    // mở rộng tiếp hoặc trả không-thấy khi chạm trần — phòng thủ.
+    if (
+      prev !== null &&
+      scan.candidate.start === prev.start &&
+      scan.candidate.size === prev.size
+    ) {
+      return {
+        found: true,
+        tailBuf: acc,
+        tailStart: knownSize - window,
+        candidate: scan.candidate,
+        reason: null,
+        fetchedBytes: window,
+        chunkCount,
+      };
+    }
+    // Ứng viên đổi (thấy moov ngoài cùng hơn): nhận ứng viên mới và
+    // xác nhận thêm 1 lần nữa ở vòng lặp sau (confirms đã tăng).
+  }
 }
 
 /**
@@ -494,8 +1070,13 @@ export async function fetchVideoTrackByGopRange(
   url: string,
   opts: GopRangeFetchOptions = {},
 ): Promise<GopRangeOutcome> {
+  // Đợt 60 Q4 — lookup i18n cho các lý do gop.range.*/gop.demux.*
+  // (xem GopRangeFetchOptions.lookup); vắng → fallback VI cũ.
+  const lookup = opts.lookup;
   if (typeof url !== "string" || url.length === 0) {
-    throw new TypeError("fetchVideoTrackByGopRange: url phải là string không rỗng");
+    throw new TypeError(
+      trKey(lookup, "gop.range.fetchUrlInvalid", {}, "fetchVideoTrackByGopRange: url phải là string không rỗng"),
+    );
   }
   const prefixBytes = opts.prefixBytes ?? 512 * 1024;
   const maxMoovBytes = opts.maxMoovBytes ?? 16 * 1024 * 1024;
@@ -504,12 +1085,32 @@ export async function fetchVideoTrackByGopRange(
     opts.tailScanBytes === undefined
       ? maxMoovBytes
       : Math.min(opts.tailScanBytes, maxMoovBytes);
-  if (!(prefixBytes > 0) || !(maxMoovBytes > 0) || !(tailScanBytes > 0)) {
-    throw new TypeError("fetchVideoTrackByGopRange: prefixBytes/maxMoovBytes/tailScanBytes phải > 0");
+  // ROUND51-H4: chunk đầu của tail-scan streaming (mặc định 2 MiB).
+  const tailInitialChunkBytes =
+    opts.tailInitialChunkBytes ?? DEFAULT_TAIL_INITIAL_CHUNK_BYTES;
+  if (!(prefixBytes > 0) || !(maxMoovBytes > 0) || !(tailScanBytes > 0) || !(tailInitialChunkBytes > 0)) {
+    throw new TypeError(
+      trKey(
+        lookup,
+        "gop.range.fetchParamsInvalid",
+        {},
+        "fetchVideoTrackByGopRange: prefixBytes/maxMoovBytes/tailScanBytes/tailInitialChunkBytes phải > 0",
+      ),
+    );
   }
   const fetchImpl: GopRangeFetchFn =
     opts.fetchImpl ??
     ((u, init) => fetch(u, init) as unknown as Promise<GopRangeResponse>);
+  // Đợt 55 L8 — phân giải probe trial-decode 1 lần: undefined = probe
+  // trình duyệt thật (null trong Node → bỏ qua, fail-open); null =
+  // tắt hẳn; function = probe inject. Phân giải ở đây để cả 2 mode
+  // dùng chung 1 probe, không tạo VideoDecoder thừa.
+  const trialProbe =
+    opts.trialDecodeProbe === undefined
+      ? createBrowserTrialDecodeProbe()
+      : opts.trialDecodeProbe;
+  const trialTimeoutMs =
+    opts.trialDecodeTimeoutMs ?? DEFAULT_TRIAL_DECODE_TIMEOUT_MS;
   const requests: GopRangeRequestLog[] = [];
   const fallback = (reason: string): GopRangeOutcome => ({
     mode: "full-file",
@@ -566,7 +1167,16 @@ export async function fetchVideoTrackByGopRange(
 
     // 2. Probe Range nhỏ, kiểm tra nghiêm ngặt bằng cổng gate.
     const probeEnd = knownSize !== null ? Math.min(1023, knownSize - 1) : 1023;
-    if (probeEnd < 0) return fallback("size-too-small: file nhỏ hơn 1 byte, không cần Range");
+    if (probeEnd < 0) {
+      return fallback(
+        trKey(
+          lookup,
+          "gop.range.sizeTooSmall",
+          {},
+          "size-too-small: file nhỏ hơn 1 byte, không cần Range",
+        ),
+      );
+    }
     // Probe chỉ chứng minh server HỖ TRỢ Range thật (206 khớp range);
     // size và Accept-Ranges còn thiếu sẽ lấy từ response tiền tố ở
     // bước 3 — không fetch thừa 1 lần nữa chỉ để đọc header probe.
@@ -586,6 +1196,7 @@ export async function fetchVideoTrackByGopRange(
       knownSize,
       "probe",
       requests,
+      lookup,
     );
 
     // 3. Tiền tố: quét moov. End kẹp theo size đã biết (nếu có).
@@ -601,7 +1212,12 @@ export async function fetchVideoTrackByGopRange(
       requests.push({ kind: "prefix", start: 0, end: prefixEnd, status: prefixResp.status, bytes: 0 });
       await cancelBody(prefixResp);
       return fallback(
-        `prefix-status-${prefixResp.status}: server không trả 206 cho Range tiền tố`,
+        trKey(
+          lookup,
+          "gop.range.prefixStatusNot206",
+          { status: String(prefixResp.status) },
+          `prefix-status-${prefixResp.status}: server không trả 206 cho Range tiền tố`,
+        ),
       );
     }
     const prefixContentRange = prefixResp.headers.get("content-range");
@@ -621,6 +1237,7 @@ export async function fetchVideoTrackByGopRange(
       prefixContentRange,
       { start: 0, end: effectivePrefixEnd },
       knownSize,
+      lookup,
     );
     if (prefixCheck.outcome !== "range-ok") {
       requests.push({ kind: "prefix", start: 0, end: prefixEnd, status: prefixResp.status, bytes: 0 });
@@ -638,18 +1255,26 @@ export async function fetchVideoTrackByGopRange(
     requests.push({ kind: "prefix", start: 0, end: prefixEnd, status: prefixResp.status, bytes: prefix.length });
     if (prefix.length !== effectivePrefixEnd + 1) {
       return fallback(
-        `prefix-short-body: xin ${effectivePrefixEnd + 1} byte, nhận ${prefix.length}`,
+        trKey(
+          lookup,
+          "gop.range.prefixShortBody",
+          { wanted: String(effectivePrefixEnd + 1), got: String(prefix.length) },
+          `prefix-short-body: xin ${effectivePrefixEnd + 1} byte, nhận ${prefix.length}`,
+        ),
       );
     }
 
     // 4. Vị trí moov + cổng gate (lần đầu tiên gate được code fetch gọi).
     const moovPosition = detectMoovPosition(prefix);
-    const decision = resolveRangeGopFetch({
-      moovPosition,
-      acceptRanges,
-      knownSizeBytes: knownSize,
-      rangeProvenByVerifiedProbe,
-    });
+    const decision = resolveRangeGopFetch(
+      {
+        moovPosition,
+        acceptRanges,
+        knownSizeBytes: knownSize,
+        rangeProvenByVerifiedProbe,
+      },
+      lookup,
+    );
     // ROUND44-Z4 — phân giải moov cắt dở trước khi kết luận fallback:
     // gate `unknown` có thể chỉ vì header moov nằm trong tiền tố nhưng
     // box moov tràn tiền tố (moov > tiền tố mặc định). Khi đó, nếu
@@ -667,21 +1292,36 @@ export async function fetchVideoTrackByGopRange(
     if (decision.mode !== "range-gop-attempt" && moovPosition === "unknown") {
       const truncated = findTruncatedMoovHeader(prefix);
       if (truncated !== null && !truncated.precededByMdat) {
-        const faststartDecision = resolveRangeGopFetch({
-          moovPosition: "faststart",
-          acceptRanges,
-          knownSizeBytes: knownSize,
-          rangeProvenByVerifiedProbe,
-        });
+        const faststartDecision = resolveRangeGopFetch(
+          {
+            moovPosition: "faststart",
+            acceptRanges,
+            knownSizeBytes: knownSize,
+            rangeProvenByVerifiedProbe,
+          },
+          lookup,
+        );
         if (faststartDecision.mode !== "range-gop-attempt") {
           return fallback(`gate: ${faststartDecision.reasons.join("; ")}`);
         }
         if (truncated.size > maxMoovBytes) {
-          return fallback(`moov-too-large: moov ${truncated.size} byte vượt trần ${maxMoovBytes}`);
+          return fallback(
+            trKey(
+              lookup,
+              "gop.range.moovTooLarge",
+              { size: String(truncated.size), max: String(maxMoovBytes) },
+              `moov-too-large: moov ${truncated.size} byte vượt trần ${maxMoovBytes}`,
+            ),
+          );
         }
         if (knownSize !== null && truncated.start + truncated.size > knownSize) {
           return fallback(
-            `moov-out-of-file: moov ${truncated.start}+${truncated.size} vượt tổng ${knownSize}`,
+            trKey(
+              lookup,
+              "gop.range.moovOutOfFile",
+              { start: String(truncated.start), size: String(truncated.size), total: String(knownSize) },
+              `moov-out-of-file: moov ${truncated.start}+${truncated.size} vượt tổng ${knownSize}`,
+            ),
           );
         }
         moovFetched = await fetchRangeChecked(
@@ -692,6 +1332,7 @@ export async function fetchVideoTrackByGopRange(
           knownSize,
           "moov",
           requests,
+          lookup,
         );
       } else {
         // ROUND45-A4 — tail-scan, CHỈ khi đường Z4 không áp dụng:
@@ -720,24 +1361,31 @@ export async function fetchVideoTrackByGopRange(
         if (tailRange === null) {
           return fallback(gateReason);
         }
-        let tailBuf: Uint8Array;
+        // ROUND51-H4 — tail-scan streaming: fetch đuôi theo chunk từ
+        // EOF lùi về (2 → 4 → 8 → 16 MiB) thay vì một lần cả cửa sổ
+        // đuôi 16,7 MiB; moov 24 KiB ở cuối fixture 37 MiB chỉ cần
+        // 2 MiB + 1 chunk xác nhận 2 MiB = 4 MiB. Lỗi chunk nào thì
+        // throw ngay như đường cũ (1 request tail, cùng dạng lý do).
+        let tailScan: ChunkedTailScan;
         try {
-          tailBuf = await fetchRangeChecked(
+          tailScan = await fetchTrailingMoovChunked(
             fetchImpl,
             url,
-            tailRange.start,
-            tailRange.end,
             knownSize,
-            "tail",
+            tailScanBytes,
+            maxMoovBytes,
             requests,
+            tailInitialChunkBytes,
+            lookup,
           );
         } catch (e) {
           return fallback(`${gateReason}; tail-scan: ${(e as Error).message}`);
         }
-        const tailResult = findTrailingMoov(tailBuf, knownSize, { maxMoovBytes });
-        if (!tailResult.found) {
-          return fallback(`${gateReason}; tail-scan: ${tailResult.reason}`);
+        if (!tailScan.found) {
+          return fallback(`${gateReason}; tail-scan: ${tailScan.reason}`);
         }
+        const tailBuf = tailScan.tailBuf;
+        const tailResult = { found: true as const, candidate: tailScan.candidate as TailMoovCandidate, tailStart: tailScan.tailStart };
         const cand = tailResult.candidate;
         moovFetched = tailBuf.slice(
           cand.start - tailResult.tailStart,
@@ -762,10 +1410,24 @@ export async function fetchVideoTrackByGopRange(
       if (!moovBox) {
         // Gate đã kết luận faststart nên moov phải có trong tiền tố;
         // không thấy nghĩa là tiền tố quét khác gate — fallback an toàn.
-        return fallback("moov-missing-after-gate: gate báo faststart nhưng không tìm thấy box moov");
+        return fallback(
+          trKey(
+            lookup,
+            "gop.range.moovMissingAfterGate",
+            {},
+            "moov-missing-after-gate: gate báo faststart nhưng không tìm thấy box moov",
+          ),
+        );
       }
       if (moovBox.size > maxMoovBytes) {
-        return fallback(`moov-too-large: moov ${moovBox.size} byte vượt trần ${maxMoovBytes}`);
+        return fallback(
+          trKey(
+            lookup,
+            "gop.range.moovTooLarge",
+            { size: String(moovBox.size), max: String(maxMoovBytes) },
+            `moov-too-large: moov ${moovBox.size} byte vượt trần ${maxMoovBytes}`,
+          ),
+        );
       }
       if (moovBox.start + moovBox.size <= prefix.length) {
         moovBytes = prefix.slice(moovBox.start, moovBox.start + moovBox.size);
@@ -778,6 +1440,7 @@ export async function fetchVideoTrackByGopRange(
           knownSize,
           "moov",
           requests,
+          lookup,
         );
       }
     }
@@ -785,12 +1448,143 @@ export async function fetchVideoTrackByGopRange(
     const moovBuf = new Uint8Array(moovBytes).buffer as ArrayBuffer;
     let track: Mp4VideoTrack;
     try {
-      track = parseMp4VideoTrack(moovBuf);
+      track = parseMp4VideoTrack(moovBuf, lookup);
     } catch (e) {
       return fallback(`demux-moov: ${(e as Error).message}`);
     }
     if (track.samples.length === 0) {
-      return fallback("demux-moov: track không có sample");
+      return fallback(
+        trKey(
+          lookup,
+          "gop.range.trackNoSamples",
+          {},
+          "demux-moov: track không có sample",
+        ),
+      );
+    }
+    // Đợt 52 I6 — kiểm tra sample table nằm trong file: moov GIẢ lồng
+    // trong moov thật (moov thật bắt đầu TRƯỚC cửa sổ tail-scan đã
+    // xác nhận) có thể qua đủ 3 cửa tail-scan rồi demux vẫn parse
+    // được, nhưng sample table của nó trỏ ngoài file (đo thật: range
+    // 100.000.000 trong file 5.061.286 byte vẫn được stream-mode trả
+    // gop-range — xem LIMITS I6 §2). Mode all đã tự chặn ở bước fetch
+    // GOP (rangeEnd vượt tổng), còn stream-mode trả meta ngay nên cần
+    // chặn tại đây: sample nào offset+size vượt tổng file đã biết thì
+    // fallback rõ ràng, không trả meta sai cho controller. File thật
+    // luôn có sample nằm trong file nên kiểm tra này không đổi hành vi
+    // với file thật. knownSize null (chưa xác định được size) thì bỏ
+    // qua — không đoán.
+    if (knownSize !== null) {
+      for (let si = 0; si < track.samples.length; si++) {
+        const s = track.samples[si];
+        if (!(s.offset >= 0) || s.offset + s.size > knownSize) {
+          return fallback(
+            trKey(
+              lookup,
+              "gop.demux.sampleOutOfFile",
+              { si: String(si), offset: String(s.offset), size: String(s.size), total: String(knownSize) },
+              `demux-moov: sample ${si} vượt ngoài file (offset ${s.offset}+${s.size} > tổng ${knownSize})`,
+            ),
+          );
+        }
+      }
+    }
+    // Đợt 53 J6 — kiểm tra stco khớp mdat: mọi sample phải nằm gọn
+    // trong một box mdat đã biết từ tiền tố (xem `mdatRangesInPrefix`).
+    // Moov giả trỏ vào vùng không phải mdat (ftyp, moov, free, udta...)
+    // thì fallback ngay — tầng byte này chặn được mọi moov giả trỏ
+    // ngoài mdat, kể cả khi offset vẫn trong file (tầng I6 chỉ chặn
+    // trỏ ngoài file). Không thấy mdat nào trong tiền tố (vd moov
+    // phình > tiền tố che mất header mdat) thì BỎ QUA kiểm tra
+    // (fail-open) thay vì fallback oan file thật. File thật luôn có
+    // sample trong mdat nên kiểm tra này không đổi hành vi với file thật.
+    const mdatRanges = mdatRangesInPrefix(prefix, knownSize);
+    if (mdatRanges.length > 0) {
+      for (let si = 0; si < track.samples.length; si++) {
+        const s = track.samples[si];
+        const inside = mdatRanges.some(
+          (r) => s.offset >= r.start && s.offset + s.size <= r.end,
+        );
+        if (!inside) {
+          return fallback(
+            trKey(
+              lookup,
+              "gop.demux.sampleOutsideMdat",
+              { si: String(si), offset: String(s.offset), size: String(s.size) },
+              `demux-moov: sample ${si} trỏ ngoài mdat (offset ${s.offset}+${s.size} — moov giả?)`,
+            ),
+          );
+        }
+      }
+    }
+    // Đợt 54 K8 — kiểm tra bố cục sample + nhất quán bảng sample (sau
+    // demux, trước khi chia mode — áp cho cả stream lẫn all). Bắt moov
+    // giả mà 3 lớp trước bỏ lọt: (a) bố cục — sample offset phải tăng
+    // dần và không chồng lấn (xem `validateSampleLayout` trong
+    // mp4Demux.ts): moov giả trỏ mọi sample về cùng offset, đảo thứ
+    // tự chunk hay khai offset ngẫu nhiên đều lộ; (b) ctts khai tổng
+    // số sample phải bằng đúng stsz — file hợp lệ luôn khớp (demux
+    // trước đây pad/cắt lặng lẽ); (c) entry stss phải nằm trong
+    // [1, sampleCount]. Cả 3 đều là bất biến của file hợp lệ nên
+    // không đổi hành vi file thật; file lạ vi phạm thì chỉ fallback
+    // về full-file (vẫn phát được, chỉ chậm hơn), không ném lỗi.
+    // Moov giả sao chép y nguyên bảng sample thật nhưng sửa timestamp
+    // thì vẫn qua được lớp này — lớp kiểm timestamp stts của đợt 56
+    // M10 (`validateSampleTimestamps`, ngay dưới đây) bắt phần lớn
+    // trường hợp đó; phần còn lọt (đổi tỉ lệ đều + sửa khớp mdhd/mvhd,
+    // hoán đổi delta) ghi trong LIMITS M10 §3.
+    const layout = validateSampleLayout(track.samples, lookup);
+    if (!layout.ok) {
+      return fallback(
+        trKey(
+          lookup,
+          "gop.demux.badLayout",
+          { reason: String(layout.reason) },
+          `demux-moov: bố cục sample bất thường (${layout.reason} — moov giả?)`,
+        ),
+      );
+    }
+    if (
+      track.cttsTotal !== null &&
+      track.cttsTotal !== undefined &&
+      track.cttsTotal !== track.samples.length
+    ) {
+      return fallback(
+        trKey(
+          lookup,
+          "gop.demux.cttsStszMismatch",
+          { cttsTotal: String(track.cttsTotal), count: String(track.samples.length) },
+          `demux-moov: ctts khai ${track.cttsTotal} sample nhưng stsz có ${track.samples.length} — moov giả?`,
+        ),
+      );
+    }
+    if ((track.stssOutOfRange ?? 0) > 0) {
+      return fallback(
+        trKey(
+          lookup,
+          "gop.demux.stssOutOfRange",
+          { count: String(track.stssOutOfRange), total: String(track.samples.length) },
+          `demux-moov: stss có ${track.stssOutOfRange} keyframe ngoài [1, ${track.samples.length}] — moov giả?`,
+        ),
+      );
+    }
+    // Đợt 56 M10 — kiểm tra nhất quán timestamp stts (sau lớp K8, trước
+    // khi chia mode — áp cho cả stream lẫn all): bắt moov giả sao chép
+    // y nguyên bảng sample thật nhưng sửa timestamp — lớp này K8 + AVCC
+    // + trial-decode đều bỏ lọt vì bảng sample và byte sample đều là
+    // thật (xem `validateSampleTimestamps` trong mp4Demux.ts; trial-decode
+    // thêm sample giữa/cuối KHÔNG bắt được lớp này nên không nối thêm).
+    // Chỉ fallback về full-file (vẫn phát được), không ném lỗi.
+    const tsCheck = validateSampleTimestamps(track, lookup);
+    if (!tsCheck.ok) {
+      return fallback(
+        trKey(
+          lookup,
+          "gop.demux.badStts",
+          { reason: String(tsCheck.reason) },
+          `demux-moov: timestamp stts bất thường (${tsCheck.reason} — moov giả?)`,
+        ),
+      );
     }
 
     // 6+7. Fetch từng GOP + ghép chunk cho decoder.
@@ -806,7 +1600,178 @@ export async function fetchVideoTrackByGopRange(
       rangeStart: d.rangeStart,
       rangeEnd: d.rangeEnd,
     }));
+    // Đợt 65 S6 — ghi chú timeout fail-open (chung cả 2 mode): chỉ gán
+    // khi trial-decode hết timeout (xem 2 khối trial bên dưới); undefined
+    // thì outcome không mang trường này (spread có điều kiện ở return).
+    let trialDecodeNote: string | undefined;
+    // Đợt 53 J6 — kiểm AVCC sample đầu ở mode stream: T3 không fetch
+    // byte GOP nào lượt đầu nên phải fetch riêng sample đầu (tối đa
+    // 256 KiB, 1 request Range kind "sample") rồi kiểm cấu trúc AVCC
+    // (xem `validateAvccSample` trong mp4Demux.ts). Moov giả trỏ lệch
+    // vào giữa dữ liệu mdat (vẫn trong mdat nên qua được kiểm mdat ở
+    // trên) sẽ đọc length NAL rác và bị chặn tại đây. Sample đầu rỗng
+    // thì fallback luôn (không fetch range rỗng). Fetch lỗi mạng/server
+    // cũng fallback rõ ràng — không đoán sample đầu là đúng.
     if (opts.streamGops === true) {
+      const s0 = track.samples[0];
+      if (!(s0.size > 0)) {
+        return fallback(
+          trKey(
+            lookup,
+            "gop.range.sampleZeroEmpty",
+            {},
+            "demux-moov: sample 0 rỗng (size 0) — moov giả?",
+          ),
+        );
+      }
+      const probeBytes = Math.min(s0.size, MAX_FIRST_SAMPLE_PROBE_BYTES);
+      let firstSample: Uint8Array;
+      try {
+        firstSample = await fetchRangeChecked(
+          fetchImpl,
+          url,
+          s0.offset,
+          s0.offset + probeBytes - 1,
+          knownSize,
+          "sample",
+          requests,
+          lookup,
+        );
+      } catch (e) {
+        return fallback(
+          trKey(
+            lookup,
+            "gop.demux.avccReadFailed",
+            { error: (e as Error).message },
+            `demux-moov: không đọc được sample đầu để kiểm AVCC: ${(e as Error).message}`,
+          ),
+        );
+      }
+      const v = validateAvccSample(firstSample, s0.size, lookup);
+      if (!v.ok) {
+        return fallback(
+          trKey(
+            lookup,
+            "gop.demux.notAvcc",
+            { reason: String(v.reason) },
+            `demux-moov: sample 0 không phải AVCC hợp lệ (${v.reason} — moov giả?)`,
+          ),
+        );
+      }
+      // Đợt 55 L8 — trial-decode sample 0 bằng VideoDecoder (sau lớp
+      // K8 + kiểm AVCC, tái dùng đúng request "sample" của J6, không
+      // thêm fetch). CHỈ chạy khi đã fetch đủ toàn bộ sample 0
+      // (s0.size ≤ cap 256 KiB): decode tiền tố cắt dở của sample lớn
+      // sẽ lỗi oan file thật nên trường hợp đó BỎ QUA (fail-open, ghi
+      // rõ trong LIMITS), không fetch thêm byte nào. Probe lỗi/timeout/
+      // không có decoder → cho qua (fail-open); chỉ decoder báo lỗi
+      // thật mới fallback — bắt đúng lớp moov giả tinh vi mà AVCC +
+      // K8 bỏ lọt (AVCC-đúng-cấu-trúc nhưng H.264-rác, xem LIMITS K8
+      // §3.1 case B: decoder lỗi trong 0,5 ms).
+      // Đợt 56 M10 — sample 0 > cap 256 KiB nhưng ≤ 2 MiB
+      // (MAX_TRIAL_DECODE_SAMPLE_BYTES): fetch thêm đúng phần còn lại
+      // của sample 0 (1 request Range kind "sample") rồi trial-decode
+      // đủ sample — keyframe 4K thật ~300–350 KiB nên không còn bỏ qua
+      // oan. Fetch phần còn lại lỗi → bỏ qua trial-decode (fail-open):
+      // AVCC trên tiền tố đã qua, phần còn lại chỉ phục vụ probe.
+      // Đợt 57 N10 — nâng cap lên 8 MiB, phần còn lại fetch theo
+      // chunk 512 KiB rồi ráp lại (`fetchSampleRemainderChunked`,
+      // tối đa 16 chunk) thay cho 1 request duy nhất — vì sao không
+      // decode streaming: xem LIMITS N10 §1.2 (VideoDecoder chỉ nhận
+      // EncodedVideoChunk trọn 1 access unit, không có API đưa từng
+      // mảnh của 1 sample). Chunk nào lỗi → bỏ qua trial-decode
+      // (fail-open) như M10. Sample 0 > 8 MiB vẫn bỏ qua như cũ
+      // (all-mode chặn được vì GOP 0 đã fetch đủ range).
+      // Đợt 59 P6 — nâng cap lên 32 MiB, tối đa 64 chunk; sample 0 >
+      // 32 MiB vẫn bỏ qua như cũ. Timeout trần 2500 ms của O6 giữ
+      // nguyên: keyframe thật ≳16 MiB decode ~0,15 ms/KiB nên vẫn
+      // timeout → fail-open (hướng an toàn), rác lớn fail nhanh nên
+      // nay có verdict thật thay vì bị bỏ qua (xem LIMITS P6 §1–§2).
+      // Đợt 62 R4 — sample lớn KHÔNG còn timeout → fail-open mù như trước:
+      // `planTrialDecodeCall` ở dưới đưa sample mà timeout main-thread đã
+      // chạm trần 2500 ms sang worker nền với trần 60 s (đợt 63 R4 nâng
+      // từ 30 s lên 45 s; đợt 64 R10 nâng lên 60 s; keyframe thật
+      // 9,7–58 MiB nay có verdict decode-ok ở tải trung bình; tải cực
+      // nặng vẫn có thể timeout → fail-open có lý do
+      // — xem LIMITS R4 đợt 63).
+      // Sample 0 > 64 MiB vẫn bỏ qua như cũ (xem LIMITS Q5 §1–§2).
+      // KHÔNG fetch remainder khi probe null (đóng nợ N10 §6.2, xem khối `if` ngay dưới).
+      // Đợt 58 O6 — timeout theo kích thước sample
+      // (`trialDecodeTimeoutForSampleSize`): sample ≤ 256 KiB giữ
+      // timeout gốc, sample lớn cộng 0,3 ms/KiB, trần 2500 ms —
+      // keyframe 4K nhiễu 4,1 MiB decode median 623 ms nên timeout
+      // của nó là 1327 ms (LIMITS O6 §1–§2), không còn bị cắt ở 200 ms.
+      // Đợt 60 Q5 (b) — KHÔNG fetch remainder khi probe null (đóng nợ
+      // N10 §6.2): trialDecodeProbe === null nghĩa là caller tắt hẳn
+      // trial-decode (opt-out) — runTrialDecode(null) trả pass ngay
+      // không decode (xem gopTrialDecode55L8.ts) nên fetch remainder
+      // là phí thuần (tới 64 MiB ở cap mới; đo thật: sample 12 MiB +
+      // probe null trước đây fetch 24 request / 12 MiB, nay chỉ còn
+      // 1 request tiền tố AVCC 256 KiB — tiết kiệm 23 request /
+      // 11.737.856 byte, xem test Q5). Chỉ fetch khi probe khác null.
+      // Kiểm AVCC trên tiền tố ở trên KHÔNG bị ảnh hưởng: vẫn chạy và
+      // vẫn chặn moov giả trỏ lệch dù probe null (xem test Q5 AVCC).
+      let trialSample: Uint8Array | null = null;
+      if (trialProbe !== null) {
+        if (s0.size <= MAX_FIRST_SAMPLE_PROBE_BYTES) {
+          trialSample = firstSample;
+        } else if (s0.size <= MAX_TRIAL_DECODE_SAMPLE_BYTES) {
+          try {
+            trialSample = await fetchSampleRemainderChunked(
+              fetchImpl,
+              url,
+              s0.offset,
+              s0.size,
+              firstSample,
+              knownSize,
+              requests,
+              lookup,
+            );
+          } catch {
+            trialSample = null; // bỏ qua trial-decode (fail-open)
+          }
+        }
+      }
+      if (trialSample !== null) {
+        // Đợt 62 R4 — sample lớn (timeout main-thread chạm trần 2500 ms)
+        // thì decode ở worker nền với trần dài hơn (60 s), không kẹt UI;
+        // sample nhỏ / probe inject / không có Worker giữ nguyên đường cũ.
+        // Chỉ probe mặc định mới được đưa sang worker (allowWorker).
+        const trialPlan = planTrialDecodeCall({
+          sampleBytes: trialSample.length,
+          baseTimeoutMs: trialTimeoutMs,
+          defaultProbe: trialProbe,
+          allowWorker: opts.trialDecodeProbe === undefined,
+        });
+        const trial = await runTrialDecode(
+          trialPlan.probe,
+          trialSample,
+          trialDecodeConfigFromTrack(track),
+          trialPlan.timeoutMs,
+          lookup,
+        );
+        if (!trial.passed) {
+          return fallback(
+            trKey(
+              lookup,
+              "gop.demux.trialDecodeFailed",
+              { reason: trial.reason },
+              `demux-moov: trial-decode sample 0 lỗi (${trial.reason} — moov giả?)`,
+            ),
+          );
+        }
+        // Đợt 65 S6 — timeout fail-open: file vẫn mở (passed=true) nhưng
+        // bước kiểm keyframe chưa xong — ghi chú để UI báo user lý do
+        // (toast + getter controller), không im lặng như trước.
+        if (trial.skipped && isTrialDecodeTimeoutReason(trial.reason)) {
+          trialDecodeNote = trialDecodeTimeoutNote(
+            lookup,
+            trial.reason,
+            trialPlan.timeoutMs,
+            trialSample.length,
+          );
+        }
+      }
       return {
         mode: "gop-range",
         track,
@@ -816,6 +1781,7 @@ export async function fetchVideoTrackByGopRange(
         totalGopRangeBytes: 0,
         totalSampleBytes: 0,
         requests,
+        ...(trialDecodeNote !== undefined ? { trialDecodeNote } : {}),
       };
     }
     const gops: GopSegment[] = [];
@@ -825,7 +1791,12 @@ export async function fetchVideoTrackByGopRange(
       const def = gopDefs[gi];
       if (knownSize !== null && def.rangeEnd > knownSize) {
         return fallback(
-          `gop-${gi}-out-of-file: rangeEnd ${def.rangeEnd} vượt tổng ${knownSize}`,
+          trKey(
+            lookup,
+            "gop.range.gopOutOfFile",
+            { gi: String(gi), rangeEnd: String(def.rangeEnd), total: String(knownSize) },
+            `gop-${gi}-out-of-file: rangeEnd ${def.rangeEnd} vượt tổng ${knownSize}`,
+          ),
         );
       }
       const gopBuf = await fetchRangeChecked(
@@ -836,6 +1807,7 @@ export async function fetchVideoTrackByGopRange(
         knownSize,
         "gop",
         requests,
+        lookup,
       );
       const chunks: GopSegment["chunks"] = [];
       for (let si = def.firstSampleIndex; si <= def.lastSampleIndex; si++) {
@@ -843,7 +1815,12 @@ export async function fetchVideoTrackByGopRange(
         const rel = s.offset - def.rangeStart;
         if (rel < 0 || rel + s.size > gopBuf.length) {
           return fallback(
-            `gop-${gi}-sample-out-of-range: sample ${si} nằm ngoài buffer GOP đã fetch`,
+            trKey(
+              lookup,
+              "gop.range.gopSampleOutOfRange",
+              { gi: String(gi), si: String(si) },
+              `gop-${gi}-sample-out-of-range: sample ${si} nằm ngoài buffer GOP đã fetch`,
+            ),
           );
         }
         const data = gopBuf.slice(rel, rel + s.size);
@@ -862,6 +1839,65 @@ export async function fetchVideoTrackByGopRange(
         sampleBytes: def.sampleBytes,
         chunks,
       });
+      // Đợt 53 J6 — kiểm AVCC sample đầu ở mode all: dùng luôn byte
+      // sample 0 vừa fetch trong GOP 0 (không thêm request), chặn moov
+      // giả trỏ lệch vào giữa dữ liệu mdat như mode stream ở trên.
+      // Kiểm ngay sau GOP 0 để không fetch thừa các GOP sau khi đã biết
+      // moov giả.
+      if (gi === 0) {
+        const v0 = validateAvccSample(chunks[0].data, track.samples[0].size, lookup);
+        if (!v0.ok) {
+          return fallback(
+            trKey(
+              lookup,
+              "gop.demux.notAvcc",
+              { reason: String(v0.reason) },
+              `demux-moov: sample 0 không phải AVCC hợp lệ (${v0.reason} — moov giả?)`,
+            ),
+          );
+        }
+        // Đợt 55 L8 — trial-decode sample 0 (như mode stream ở trên,
+        // nhưng ở đây chunks[0].data LUÔN là toàn bộ sample 0 vì GOP 0
+        // đã fetch đủ range — không có cap 256 KiB, không có trường
+        // hợp bỏ qua vì sample lớn). Kiểm ngay sau GOP 0 để không
+        // fetch thừa các GOP sau khi đã biết moov giả.
+        // Đợt 58 O6 — timeout theo kích thước sample như mode stream
+        // (sample lớn ở all-mode cũng được cộng thời gian).
+        // Đợt 62 R4 — như mode stream: sample lớn đi worker nền
+        // (planTrialDecodeCall), sample nhỏ / probe inject giữ đường cũ.
+        const trialPlan = planTrialDecodeCall({
+          sampleBytes: chunks[0].data.length,
+          baseTimeoutMs: trialTimeoutMs,
+          defaultProbe: trialProbe,
+          allowWorker: opts.trialDecodeProbe === undefined,
+        });
+        const trial = await runTrialDecode(
+          trialPlan.probe,
+          chunks[0].data,
+          trialDecodeConfigFromTrack(track),
+          trialPlan.timeoutMs,
+          lookup,
+        );
+        if (!trial.passed) {
+          return fallback(
+            trKey(
+              lookup,
+              "gop.demux.trialDecodeFailed",
+              { reason: trial.reason },
+              `demux-moov: trial-decode sample 0 lỗi (${trial.reason} — moov giả?)`,
+            ),
+          );
+        }
+        // Đợt 65 S6 — timeout fail-open như mode stream ở trên.
+        if (trial.skipped && isTrialDecodeTimeoutReason(trial.reason)) {
+          trialDecodeNote = trialDecodeTimeoutNote(
+            lookup,
+            trial.reason,
+            trialPlan.timeoutMs,
+            chunks[0].data.length,
+          );
+        }
+      }
     }
     return {
       mode: "gop-range",
@@ -872,6 +1908,7 @@ export async function fetchVideoTrackByGopRange(
       totalGopRangeBytes,
       totalSampleBytes,
       requests,
+      ...(trialDecodeNote !== undefined ? { trialDecodeNote } : {}),
     };
   } catch (e) {
     if (e instanceof GopRangeFailure) return fallback(e.message);

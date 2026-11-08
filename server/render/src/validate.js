@@ -18,6 +18,11 @@ const { SPEED_MIN, SPEED_MAX } = require("./speed");
 const { validateAnimations, SCALE_MIN, SCALE_MAX } = require("./keyframes");
 const { validateChroma } = require("./chroma");
 const { isTextFxAnimation } = require("./textfx");
+// Phase 9 đợt 63 R5: phân loại thông điệp validator thành mã có cấu trúc
+// (xem validateCodes.js) — err()/warn() giữ nguyên chuỗi cũ từng chữ,
+// đồng thời ghi thêm entry { where, code, params } vào errorDetails /
+// warningDetails để render worker in ra stderr dạng JSON cho bridge/web.
+const { makeValidationDetail, validationJsonLine } = require("./validateCodes");
 // Phase 9 đợt 10 V4: text animation rotate/skew/clip qua ASS (không phải drawtext).
 const { isParityAnimation } = require("./textAnimParity");
 const { validateVideoFilter } = require("./lut");
@@ -85,11 +90,23 @@ function validateSpec(spec) {
   const warnings = [];
   /** @type {Array<{trackId:string,from:string,to:string,duration:number}>} */
   const transitions = [];
-  const err = (where, msg) => errors.push(`[${where}] ${msg}`);
-  const warn = (where, msg) => warnings.push(`[${where}] ${msg}`);
+  // Đợt 63 R5: entry có cấu trúc song song với chuỗi cũ (xem validateCodes.js).
+  // Chuỗi errors/warnings KHÔNG ĐỔI từng chữ (client cũ + log + test cũ);
+  // entry thêm { where, code, params } để web dịch được từng dòng.
+  const errorDetails = [];
+  const warningDetails = [];
+  const err = (where, msg) => {
+    errors.push(`[${where}] ${msg}`);
+    errorDetails.push(makeValidationDetail(where, msg));
+  };
+  const warn = (where, msg) => {
+    warnings.push(`[${where}] ${msg}`);
+    warningDetails.push(makeValidationDetail(where, msg));
+  };
 
   if (typeof spec !== "object" || spec === null) {
-    return { ok: false, errors: ["spec phải là một object JSON"], warnings, transitions };
+    const msg = "spec phải là một object JSON";
+    return { ok: false, errors: [msg], errorDetails: [makeValidationDetail("spec", msg)], warnings, warningDetails, transitions };
   }
 
   // ---- version ----
@@ -210,11 +227,11 @@ function validateSpec(spec) {
   // ---- tracks ----
   if (!Array.isArray(spec.tracks)) {
     err("tracks", "phải là một mảng");
-    return { ok: errors.length === 0, errors, warnings, transitions };
+    return { ok: errors.length === 0, errors, errorDetails, warnings, warningDetails, transitions };
   }
   if (spec.tracks.length === 0) {
     err("tracks", "mảng rỗng — không có gì để render");
-    return { ok: errors.length === 0, errors, warnings, transitions };
+    return { ok: errors.length === 0, errors, errorDetails, warnings, warningDetails, transitions };
   }
 
   const seenTrackIds = new Set();
@@ -246,7 +263,7 @@ function validateSpec(spec) {
       err(`${tw}.volume`, `phải trong khoảng 0..2, nhận được: ${track.volume}`);
     }
     if (track.kind === "audio" && track.hidden === true) {
-      warn(`${tw}: hidden không có tác dụng với track audio (chỉ mute mới tắt tiếng)`);
+      warn(tw, "hidden không có tác dụng với track audio (chỉ mute mới tắt tiếng)");
     }
     if (!Array.isArray(track.clips)) {
       err(`${tw}.clips`, "phải là một mảng"); continue;
@@ -262,9 +279,13 @@ function validateSpec(spec) {
     // Clip trên cùng track video/image không được chồng lấn thời gian
     // (track khác nhau được phép chồng — sẽ composite theo thứ tự track).
     if (track.kind === "video" || track.kind === "image") {
-      const sorted = [...clips].sort((a, b) => a.start - b.start);
+      // Đợt 63 R5: clip null/không phải object đã bị báo lỗi ở validateClip
+      // — không được crash ở đây (trước đây `a.start` trên null ném
+      // TypeError, cả validateSpec vỡ thay vì trả errors).
+      const sorted = [...clips].sort((a, b) => (a?.start ?? 0) - (b?.start ?? 0));
       for (let i = 0; i + 1 < sorted.length; i++) {
         const a = sorted[i], b = sorted[i + 1];
+        if (!a || !b || typeof a !== "object" || typeof b !== "object") continue;
         if (a.start + a.duration > b.start + EPS) {
           err(tw, `clip "${a.id}" [${a.start}, ${a.start + a.duration}] chồng lấn clip "${b.id}" ` +
             `(bắt đầu ${b.start}) — trên cùng một track ${track.kind} các clip không được đè lên nhau`);
@@ -275,9 +296,11 @@ function validateSpec(spec) {
     // Ghép cặp transition: transitionOut của clip A cần clip B kề ngay sau trên cùng track.
     // Hỗ trợ mọi transition type (trừ "none").
     if (track.kind === "video") {
-      const sorted = [...clips].sort((a, b) => a.start - b.start);
+      const sorted = [...clips].sort((a, b) => (a?.start ?? 0) - (b?.start ?? 0));
       for (let i = 0; i < sorted.length; i++) {
         const clip = sorted[i];
+        // Đợt 63 R5: như vòng chồng lấn ở trên (clip null đã báo lỗi rồi).
+        if (!clip || typeof clip !== "object") continue;
         const outTr = clip.transitionOut && clip.transitionOut.type !== "none" ? clip.transitionOut : null;
         const next = sorted[i + 1] || null;
         const inTr = next && next.transitionIn && next.transitionIn.type !== "none" ? next.transitionIn : null;
@@ -392,16 +415,19 @@ function validateSpec(spec) {
   // Tổng thời lượng phải > 0
   let D = 0;
   for (const t of spec.tracks) {
-    if (!Array.isArray(t.clips)) continue;
+    // Đợt 63 R5: track null/không phải object đã bị báo lỗi ở vòng trên —
+    // không được crash ở đây (trước đây `t.clips` trên null ném TypeError,
+    // cả validateSpec vỡ thay vì trả errors).
+    if (!t || typeof t !== "object" || !Array.isArray(t.clips)) continue;
     for (const c of t.clips) {
-      if (isFiniteNumber(c.start) && isFiniteNumber(c.duration)) {
+      if (c && isFiniteNumber(c.start) && isFiniteNumber(c.duration)) {
         D = Math.max(D, c.start + c.duration);
       }
     }
   }
   if (!(D > 0)) err("tracks", "tổng thời lượng project phải > 0");
 
-  return { ok: errors.length === 0, errors, warnings, transitions };
+  return { ok: errors.length === 0, errors, errorDetails, warnings, warningDetails, transitions };
 }
 
 /** Validate một clip theo kind của track. */
@@ -897,10 +923,28 @@ function probeFile(ffprobeBin, absPath) {
 function validateMedia(spec, mediaDir, ffprobeBin, assetMap) {
   const errors = [];
   const warnings = [];
+  // Đợt 63 R5: như validateSpec — chuỗi cũ giữ nguyên, thêm entry có cấu
+  // trúc. Thông điệp ở đây đã nhúng "[where] " ở đầu chuỗi nên tách where
+  // bằng dấu "] " đầu tiên (where không bao giờ chứa "] " — xem LIMITS).
+  const errorDetails = [];
+  const warningDetails = [];
+  const splitWhere = (msg) => {
+    const cut = String(msg).indexOf("] ");
+    if (cut < 0) return { where: "", body: String(msg) };
+    return { where: String(msg).slice(1, cut), body: String(msg).slice(cut + 2) };
+  };
+  const err = (msg) => {
+    errors.push(msg);
+    const { where, body } = splitWhere(msg);
+    errorDetails.push(makeValidationDetail(where, body));
+  };
+  const warn = (msg) => {
+    warnings.push(msg);
+    const { where, body } = splitWhere(msg);
+    warningDetails.push(makeValidationDetail(where, body));
+  };
   /** @type {Map<string, object>} */
   const probes = new Map();
-  const err = (msg) => errors.push(msg);
-  const warn = (msg) => warnings.push(msg);
 
   const jobs = [];
   for (const track of spec.tracks) {
@@ -1014,7 +1058,7 @@ function validateMedia(spec, mediaDir, ffprobeBin, assetMap) {
     }
   }
 
-  return { ok: errors.length === 0, errors, warnings, probes };
+  return { ok: errors.length === 0, errors, errorDetails, warnings, warningDetails, probes };
 }
 
 /**
@@ -1052,4 +1096,6 @@ module.exports = {
   validateMedia,
   resolveFontFile,
   resolveSrc,
+  // Đợt 63 R5: dòng JSON có cấu trúc cho render.js in ra stderr.
+  validationJsonLine,
 };

@@ -25,6 +25,7 @@ import { pinchDistance, pinchZoom } from "./lib/pinch";
 // cũ, chỉ tách ra để test khóa được; xem timelineRulerSeek40V4.ts).
 import { rulerTimeFromClientX } from "./lib/timelineRulerSeek40V4";
 import { asAdjustmentLayer, isAdjustmentLayer, listAdjustmentLayers } from "./components/nested/nestUtils";
+import { clipHasEnhance, enhanceT } from "./components/enhance/presets";
 import { NestedClipPanel } from "./components/nested/NestedClipPanel";
 import { AdjustmentLayerPanel } from "./components/nested/AdjustmentLayerPanel";
 import "./components/nested/nested.css";
@@ -378,7 +379,7 @@ function ClipView({
         }}
       />
       <ClipThumb clip={clip} />
-      <div className="clip-label">{nested && <span className="clip-badge">📦</span>}{clipLabel(clip)}</div>
+      <div className="clip-label">{nested && <span className="clip-badge">📦</span>}{clip.kind === "video" && clipHasEnhance(clip) && <span className="clip-badge" data-enhance-badge title={enhanceT("enhance.badgeTitle", "Clip có tăng cường — xem mục Tăng cường video trong Inspector")}>✨</span>}{clipLabel(clip)}</div>
       {clip.kind === "audio" && (
         <ClipWaveform clip={clip} pxPerSec={pxPerSec} />
       )}
@@ -715,7 +716,7 @@ export function Timeline() {
     if ((e.target as HTMLElement).closest(".tl-clip")) return; // clip tự xử lý
     const el = lanesRef.current;
     if (!el) return;
-    // Q6: ngón thứ 2 trên vùng trống → hủy box select, chuyển sang pinch-zoom.
+    // Q6: ngón thứ 2 trên vùng trống → huỷ box select, chuyển sang pinch-zoom.
     lanePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (lanePointers.current.size === 2 && !dragRef.current) {
       boxStartRef.current = null;

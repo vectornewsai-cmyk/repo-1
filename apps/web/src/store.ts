@@ -46,6 +46,10 @@ import {
   unlinkCaptionInSpec,
 } from "./lib/captionFollow";
 import { LoadSampleQueue } from "./lib/loadSampleQueue";
+import { markSaved } from "./lib/projectRepo";
+// Đợt 63 R7 — projectId ổn định (module thuần; store sinh id mới khi
+// tạo/mở project, xem newProject/replaceProject/loadSample).
+import { generateProjectId, isValidProjectId } from "./lib/projectId63R7";
 import {
   isSpeedable,
   maxTrimLeft,
@@ -82,6 +86,14 @@ import { findMissingAssets, relinkAsset, type MissingAsset } from "./lib/relink"
 // Đợt 37 T3: ingest file import vào AssetStore để bền qua reload.
 import { AssetStore } from "./lib/assetStore";
 import type { StaleAliasReport } from "./lib/assetStore";
+import { deleteOrphanBinBytes, planOrphanBytesDeletion } from "./lib/binOrphan60Q7";
+// Đợt 61 R9 — duy trì refCount thật của AssetStore (đóng nợ 60 Q7 §5.5):
+// đồng bộ từ spec + bin hiện tại để lưới `remove()` từ chối khi còn
+// tham chiếu có tác dụng thật.
+import { syncAssetRefCounts } from "./lib/idbCleanup61R9";
+// Đợt 53 J5 — tách đường dẫn proxy từ URL đầy đủ để lưu bền vào manifest
+// (xem setMediaProxy + assetStore.setProxy).
+import { proxyPathFromUrl } from "./lib/proxy";
 import { ingestImportedItem, ingestImportedItemWithProgress } from "./lib/importAsset37T3";
 import type {
   ImportFileProgressCallback,
@@ -216,15 +228,15 @@ function patchOne(c: Clip, patch: Partial<Clip>): Clip {
 /** Nhãn tiếng Việt cho field clip thường chỉnh trong Inspector (dùng cho undo label). */
 function patchLabel(key: keyof Clip): string {
   const map: Record<string, string> = {
-    opacity: "độ trong suốt",
-    text: "nội dung chữ",
-    volume: "âm lượng",
-    speed: "tốc độ",
-    start: "vị trí",
-    duration: "độ dài",
-    src: "nguồn media",
+    opacity: i18nT("timeline.field.opacity"),
+    text: i18nT("timeline.field.text"),
+    volume: i18nT("timeline.field.volume"),
+    speed: i18nT("timeline.field.speed"),
+    start: i18nT("timeline.field.start"),
+    duration: i18nT("timeline.field.duration"),
+    src: i18nT("timeline.field.src"),
   };
-  return map[key as string] ?? "thuộc tính";
+  return map[key as string] ?? i18nT("timeline.field.fallback");
 }
 
 function withTrack(spec: VideoSpec, trackId: string, fn: (t: Track) => Track): VideoSpec {
@@ -466,6 +478,23 @@ function mediaKindForTrack(trackKind: TrackKind): MediaKind[] {
 interface EditorState {
   spec: VideoSpec;
   media: MediaItem[];
+  /**
+   * Đợt 63 R7 — projectId ổn định của project hiện tại (UUID, xem
+   * lib/projectId63R7.ts). Sinh lúc store khởi tạo (project trống đầu
+   * phiên), xoay mới ở newProject/loadSample, đặt theo file ở
+   * replaceProject(spec, projectId). Id này đi vào envelope lúc lưu +
+   * autosave và là khóa sổ tham chiếu liên project (`id:<uuid>`) —
+   * KHÔNG nằm trong spec (spec là VideoSpec dùng chung, validate bởi
+   * @repo-1/video-spec) và KHÁC projectId lịch sử của
+   * lib/projectHistory.ts (id đó gắn với tên/hash, không ổn định).
+   */
+  projectId: string;
+  /**
+   * Đợt 63 R7 — đặt projectId hiện tại (mở file/autosave/khôi phục
+   * version). Id không hợp lệ (rỗng/lạ) → sinh id mới thay vì ghi
+   * id rác vào state.
+   */
+  setProjectId: (id: string) => void;
   playhead: number;
   playing: boolean;
   /**
@@ -476,6 +505,12 @@ interface EditorState {
    * bật phát ngược. Tắt cờ không tự dừng phát (xem toggleReversePlayback).
    */
   reversePlayback: boolean;
+  /**
+   * Đợt 60 Q1: true = preview áp xấp xỉ enhance (denoise → blur nhẹ,
+   * stabilize → zoom crop gợi ý; deinterlace không có xấp xỉ). Cờ UI,
+   * mặc định bật, KHÔNG nằm trong spec nên không ảnh hưởng render/export.
+   */
+  enhancePreviewEnabled: boolean;
   pxPerSec: number;
   selection: Selection[];
   ready: boolean;
@@ -484,6 +519,8 @@ interface EditorState {
   togglePlay: () => void;
   /** Đợt 27 K4: bật/tắt chế độ phát ngược (không đổi playhead). */
   setReversePlayback: (on: boolean) => void;
+  /** Đợt 60 Q1: bật/tắt xem trước enhance (xấp xỉ) trong preview. */
+  setEnhancePreviewEnabled: (on: boolean) => void;
   /** Đợt 27 K4: phát ngược / tạm dừng phát ngược (phím J, nút ◀). */
   toggleReversePlayback: () => void;
   stopPlayback: () => void;
@@ -730,16 +767,42 @@ interface EditorState {
   toggleRipple: () => void;
 
   loadSample: () => Promise<void>;
-  /** Tạo project trống (xoá media phiên hiện tại — blob URL không bền vững). */
+  /**
+   * Tạo project trống (xoá media phiên hiện tại — blob URL không bền vững).
+   * Đợt 55 L5: undo 1 lần sau đó khôi phục project trước đó (1 entry
+   * chuyển đổi "Dự án mới"); redo quay lại project trống. Lưu ý: entry
+   * chỉ khôi phục spec + selection, KHÔNG khôi phục media bin.
+   */
   newProject: () => void;
-  /** Thay toàn bộ spec (mở file / khôi phục autosave). Media bị xoá vì blob URL cũ đã chết; App khôi phục autosave sẽ nạp lại media bin bằng rehydrate (đợt 36 S5) trước khi checkMissingMedia. */
-  replaceProject: (spec: VideoSpec) => void;
+  /**
+   * Thay toàn bộ spec (mở file / khôi phục autosave). Media bị xoá vì blob URL cũ đã chết; App khôi phục autosave sẽ nạp lại media bin bằng rehydrate (đợt 36 S5) trước khi checkMissingMedia.
+   * Đợt 63 R7 — tham số thứ hai `projectId` (tùy chọn): id ổn định của
+   * project vừa mở (từ envelope/autosave/version). Không truyền hoặc
+   * không hợp lệ → sinh id MỚI (template/archive/sample là project
+   * mới nên phải có id riêng, không được giữ id của project trước đó
+   * — giữ id cũ sẽ làm hai project khác nhau chung một khóa sổ).
+   */
+  replaceProject: (spec: VideoSpec, projectId?: string) => void;
   /**
    * Đợt 36 S5 — nạp lại media bin sau reload (từ AssetStore): thêm các
    * item chưa có (khớp theo tên), KHÔNG đụng spec/history/selection.
    * Idempotent: gọi lại với cùng item không nhân đôi media.
    */
   restoreMediaBin: (items: MediaItem[]) => void;
+  /**
+   * Đợt 59 P1 — xóa media khỏi bin theo yêu cầu CHỦ ĐÍCH của user (nút
+   * ✕ ở MediaBin). Đây là cách DUY NHẤT media rời khỏi bin mà không
+   * qua xóa clip: xóa hết clip khỏi timeline KHÔNG xóa media khỏi bin
+   * nữa (bin bền qua reload nhờ manifest binMedia trong autosave).
+   * Trả `{ ok: true }` khi đã xóa; `{ ok: false, message }` khi không
+   * xóa được: không tìm thấy item, hoặc còn clip đang dùng media này
+   * (kèm số clip — xóa khỏi bin lúc đó sẽ làm clip thành "missing" và
+   * hiện panel Relink oan nên phải chặn). Chỉ xóa khỏi bin trong phiên;
+   * bytes trong IndexedDB giữ nguyên (mồ côi, không tự hiện lại) và
+   * file gốc trên máy user không bị đụng tới. KHÔNG undo được (media
+   * bin không nằm trong history của spec — như import).
+   */
+  removeMediaFromBin: (mediaId: string) => { ok: boolean; message?: string };
   duration: () => number;
 
   // ---- Relink (R1-033): media thiếu sau khi mở project ----
@@ -815,7 +878,9 @@ export const useStore = create<EditorState>()((set, get) => {
     });
   };
 
-  /** Xoá history khi đổi project (không undo xuyên qua project khác). */
+  /** Xoá history khi đổi project (không undo xuyên qua project khác).
+   * Ngoại lệ đợt 55 L5: newProject KHÔNG dùng hàm này nữa mà ghi 1 entry
+   * chuyển đổi "Dự án mới" (xem newProject) để undo khôi phục project cũ. */
   const clearHistory = (): void => {
     history.clear();
     set(syncHistory());
@@ -824,9 +889,13 @@ export const useStore = create<EditorState>()((set, get) => {
   return {
   spec: emptySpec(),
   media: [],
+  projectId: generateProjectId(),
+  setProjectId: (id) =>
+    set({ projectId: isValidProjectId(id) ? id : generateProjectId() }),
   playhead: 0,
   playing: false,
   reversePlayback: false,
+  enhancePreviewEnabled: true,
   pxPerSec: 60,
   selection: [],
   clipboardSize: 0,
@@ -862,6 +931,8 @@ export const useStore = create<EditorState>()((set, get) => {
 
   setReversePlayback: (on) => set({ reversePlayback: on }),
 
+  setEnhancePreviewEnabled: (on) => set({ enhancePreviewEnabled: on }),
+
   toggleReversePlayback: () => {
     // Đợt 27 K4: đang phát ngược thì chỉ tạm dừng (giữ cờ để Space/K
     // tiếp tục ngược); chưa phát ngược thì bật cờ + phát, và nếu
@@ -895,14 +966,17 @@ export const useStore = create<EditorState>()((set, get) => {
   setProjectName: (name) =>
     set((s) => ({ spec: { ...s.spec, meta: { ...s.spec.meta, name } } })),
 
-  setMediaProxy: (mediaId, proxyUrl, proxyHeight, proxySizeBytes) =>
+  setMediaProxy: (mediaId, proxyUrl, proxyHeight, proxySizeBytes) => {
     set((s) => ({
       media: s.media.map((m) => {
         if (m.id !== mediaId) return m;
         // Đợt 38 U2: chỉ ghi proxySizeBytes khi là số hợp lệ (> 0);
         // bridge cũ không trả trường này thì giữ nguyên (không xóa
         // size đã biết bằng undefined, không ghi size rác).
-        const patch: Partial<typeof m> = { proxyUrl, proxyHeight };
+        // Đợt 54 K7: proxy mới tạo lại sau khi stale → xóa cờ proxyStale
+        // (item hết stale ngay khi có proxy mới, MediaBin hết hiện
+        // nút "Proxy mất, tạo lại").
+        const patch: Partial<typeof m> = { proxyUrl, proxyHeight, proxyStale: false };
         if (
           typeof proxySizeBytes === "number" &&
           Number.isFinite(proxySizeBytes) &&
@@ -912,7 +986,28 @@ export const useStore = create<EditorState>()((set, get) => {
         }
         return { ...m, ...patch };
       }),
-    })),
+    }));
+    // Đợt 53 J5 — lưu bền proxy vào manifest (nợ I9 §5): tách đường dẫn
+    // từ URL đầy đủ rồi ghi qua AssetStore.setProxy. Best-effort tuyệt
+    // đối, không await, không chặn UI: item không có assetId (media chưa
+    // ingest) hoặc path lạ thì chỉ mất bền vững — proxy trong phiên vẫn
+    // dùng được, lần reload sau mất proxy như hành vi cũ.
+    void (async () => {
+      try {
+        const item = get().media.find((m) => m.id === mediaId);
+        const path = proxyPathFromUrl(proxyUrl);
+        if (!item?.assetId || !path) return;
+        const assetStore = new AssetStore();
+        await assetStore.setProxy(item.assetId, {
+          proxyPath: path,
+          proxyHeight,
+          proxySizeBytes,
+        });
+      } catch {
+        // bỏ qua lặng lẽ như ingest: chỉ mất bền vững của proxy
+      }
+    })();
+  },
 
   importFiles: async (files, onProgress) => {
     const items: MediaItem[] = [];
@@ -966,6 +1061,9 @@ export const useStore = create<EditorState>()((set, get) => {
     // phiên vẫn resolve bình thường. Đường happy-path không đổi.
     try {
       const assetStore = new AssetStore();
+      // Đợt 53 J5 — gom assetId theo id item để ghi lên MediaItem sau
+      // ingest (setMediaProxy dùng nó nối proxy về đúng manifest).
+      const assetIds = new Map<string, string>();
       // Đợt 40 V5 — importFiles thường nay cũng có % thật: dùng đường
       // có tiến trình đợt 39 T5 khi caller truyền callback (helper tự
       // fallback về ingest thường khi không có callback, nên đường cũ
@@ -987,6 +1085,7 @@ export const useStore = create<EditorState>()((set, get) => {
               }
             : undefined,
         );
+        if (res.manifest) assetIds.set(it.id, res.manifest.assetId);
         if (res.manifest && res.nameMismatch) {
           try {
             await assetStore.addAlias(res.manifest.assetId, it.name);
@@ -994,6 +1093,18 @@ export const useStore = create<EditorState>()((set, get) => {
             // bỏ qua lặng lẽ như ingest: chỉ mất bền vững của tên bí danh
           }
         }
+      }
+      if (assetIds.size > 0) {
+        set((s) => ({
+          media: s.media.map((m) => {
+            const a = assetIds.get(m.id);
+            return a ? { ...m, assetId: a } : m;
+          }),
+        }));
+        // Đợt 61 R9 — item mới vào bin là một tham chiếu: đồng bộ
+        // refCount ngay (best-effort, không làm hỏng import nếu IDB lỗi;
+        // effect debounce ở App.tsx cũng sẽ đồng bộ lại sau đó).
+        void syncAssetRefCounts(assetStore, get().spec, get().media).catch(() => {});
       }
     } catch {
       // IndexedDB không khả dụng -> chỉ mất bền vững, import trong
@@ -1003,11 +1114,11 @@ export const useStore = create<EditorState>()((set, get) => {
 
   addTrack: (kind) => {
     const id = nextTrackId(kind);
-    const labels: Record<TrackKind, string> = { video: "Video", audio: "Âm thanh", text: "Chữ", sticker: "Sticker", image: "Ảnh" };
+    const labels: Record<TrackKind, string> = { video: "Video", audio: i18nT("timeline.kind.audio"), text: i18nT("timeline.kind.text"), sticker: "Sticker", image: i18nT("timeline.kind.image") };
     const count = get().spec.tracks.filter((t) => t.kind === kind).length + 1;
     const track: Track = { id, kind, label: `${labels[kind]} ${count}`, clips: [] };
     execCommand({
-      label: `Thêm track ${labels[kind]}`,
+      label: i18nT("timeline.histAddTrack", { kind: labels[kind] }),
       apply: (spec) => ({ ...spec, tracks: [...spec.tracks, track] }),
     });
     return id;
@@ -1019,7 +1130,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if (!track) return;
     execCommand(
       {
-        label: `Xoá track ${track.label ?? track.kind}`,
+        label: i18nT("timeline.histDeleteTrack", { name: track.label ?? track.kind }),
         apply: (spec) => ({ ...spec, tracks: spec.tracks.filter((t) => t.id !== trackId) }),
       },
       st.selection.filter((x) => x.trackId !== trackId),
@@ -1030,7 +1141,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const track = get().spec.tracks.find((t) => t.id === trackId);
     if (!track) return;
     execCommand({
-      label: "Đổi trạng thái track",
+      label: i18nT("timeline.histToggleTrack"),
       apply: (spec) => ({
         ...spec,
         tracks: spec.tracks.map((t) => (t.id === trackId ? flipTrackFlag(t, flag) : t)),
@@ -1049,7 +1160,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const keys = Object.keys(patch);
     if (!keys.some((k) => rec[k] !== prec[k])) return; // không đổi → bỏ qua
     execCommand({
-      label: keys.length === 1 && keys[0] === "volume" ? "Chỉnh âm lượng track" : "Chỉnh thuộc tính track",
+      label: keys.length === 1 && keys[0] === "volume" ? i18nT("timeline.histPatchTrackVolume") : i18nT("timeline.histPatchTrack"),
       mergeKey: `patchTrack:${trackId}`,
       apply: (spec) => withTrack(spec, trackId, (t) => ({ ...t, ...patch })),
     });
@@ -1085,7 +1196,7 @@ export const useStore = create<EditorState>()((set, get) => {
     }
     execCommand(
       {
-        label: `Thêm ${item.kind === "audio" ? "âm thanh" : "clip"} "${item.name}"`,
+        label: item.kind === "audio" ? i18nT("timeline.histAddAudio", { name: item.name }) : i18nT("timeline.histAddClip", { name: item.name }),
         apply: (s) => withTrack(s, trackId, (t) => ({ ...t, clips: [...t.clips, clip] })),
       },
       [{ trackId, clipId: clip.id }],
@@ -1102,7 +1213,7 @@ export const useStore = create<EditorState>()((set, get) => {
       (t) => t.kind === wantKind && !overlaps(t, "", playhead, dur),
     );
     // Gộp tạo track (nếu cần) + thêm clip thành 1 bước undo duy nhất.
-    get().beginHistoryGroup("Thêm media vào timeline");
+    get().beginHistoryGroup(i18nT("timeline.histAddMediaToTimeline"));
     try {
       let trackId = track?.id;
       if (!trackId) trackId = get().addTrack(wantKind);
@@ -1114,7 +1225,7 @@ export const useStore = create<EditorState>()((set, get) => {
 
   addTextClip: (trackId) => {
     // Gộp tạo track (nếu cần) + thêm chữ thành 1 bước undo duy nhất.
-    get().beginHistoryGroup("Thêm chữ");
+    get().beginHistoryGroup(i18nT("timeline.histAddText"));
     try {
       let tid = trackId;
       if (!tid) {
@@ -1126,7 +1237,7 @@ export const useStore = create<EditorState>()((set, get) => {
       const clip: TextClip = {
         kind: "text",
         id: uid("c"),
-        text: "Nhập chữ…",
+        text: i18nT("timeline.histTypeText"),
         start: get().playhead,
         duration: 3,
         style: {
@@ -1134,6 +1245,11 @@ export const useStore = create<EditorState>()((set, get) => {
           fontSize: 64,
           color: "#ffffff",
           bold: true,
+          // Đợt 59 P1: phải có đủ field như DEFAULT_TEXT_STYLE
+          // (normalizeTextStyle điền italic:false lúc load nên clip mới
+          // tạo thiếu field này sẽ toast "đã điền style" ở lần reload
+          // đầu — xem LIMITS đợt 59 P1 §2).
+          italic: false,
           x: 0.5,
           y: 0.5,
           animation: "fadeUp",
@@ -1141,7 +1257,7 @@ export const useStore = create<EditorState>()((set, get) => {
       };
       execCommand(
         {
-          label: "Thêm chữ",
+          label: i18nT("timeline.histAddText"),
           apply: (s) => withTrack(s, tid as string, (t) => ({ ...t, clips: [...t.clips, clip] })),
         },
         [{ trackId: tid as string, clipId: clip.id }],
@@ -1186,7 +1302,7 @@ export const useStore = create<EditorState>()((set, get) => {
       label,
       clips,
     };
-    const historyLabel = opts?.historyLabel ?? "Tạo phụ đề tự động";
+    const historyLabel = opts?.historyLabel ?? i18nT("caption.title");
     // Gộp tạo track + chèn toàn bộ câu thành 1 bước undo duy nhất.
     get().beginHistoryGroup(historyLabel);
     try {
@@ -1227,10 +1343,10 @@ export const useStore = create<EditorState>()((set, get) => {
     let next = splitLinkedCaptionsInSpec(res.spec, clipId, pieces);
     next = shiftCaptionsForMovedClips(oldSpec, next);
     // 1 bước undo duy nhất cho toàn bộ thao tác cắt.
-    get().beginHistoryGroup("Cắt khoảng lặng");
+    get().beginHistoryGroup(i18nT("silence.title"));
     try {
       execCommand({
-        label: "Cắt khoảng lặng",
+        label: i18nT("silence.title"),
         apply: () => next,
       });
     } finally {
@@ -1248,7 +1364,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if (start === found.clip.start) return;
     if (overlaps(found.track, clipId, start, found.clip.duration)) return;
     execCommand({
-      label: "Di chuyển clip",
+      label: i18nT("timeline.histMove"),
       // Gộp theo thời gian để phòng khi caller quên begin/endHistoryGroup.
       mergeKey: `move:${trackId}:${clipId}`,
       apply: (spec) => {
@@ -1258,7 +1374,7 @@ export const useStore = create<EditorState>()((set, get) => {
         }));
         const movedClip = findClip(moved, trackId, clipId)?.clip;
         if (!movedClip) return moved;
-        // Phase 7 P6 (caption follow): user tự kéo chính câu phụ đề → hủy
+        // Phase 7 P6 (caption follow): user tự kéo chính câu phụ đề → huỷ
         // link, câu thành chữ tự do; kéo clip nguồn → phụ đề bám theo.
         if (isLinkedCaption(movedClip)) return unlinkCaptionInSpec(moved, clipId);
         if (isSourceClip(movedClip)) return refollowCaptionsInSpec(moved, movedClip);
@@ -1277,13 +1393,13 @@ export const useStore = create<EditorState>()((set, get) => {
     );
     if (allowed.length === 0) return;
     execCommand({
-      label: allowed.length > 1 ? `Di chuyển ${allowed.length} clip` : "Di chuyển clip",
+      label: allowed.length > 1 ? i18nT("timeline.histMoveMulti", { n: String(allowed.length) }) : i18nT("timeline.histMove"),
       mergeKey: `movesel:${allowed.map((m) => m.clipId).sort().join(",")}`,
       apply: (s) => {
         let out = moveClipsBy(s, allowed, dxSec, (t) => snapToFrame(t, fps));
         // Phase 7 P6 (caption follow): clip được kéo trực tiếp mà là câu
-        // phụ đề → hủy link trước; sau đó câu bám theo các clip nguồn vừa
-        // kéo mới được tính lại (thứ tự này tránh kéo lại câu vừa hủy link).
+        // phụ đề → huỷ link trước; sau đó câu bám theo các clip nguồn vừa
+        // kéo mới được tính lại (thứ tự này tránh kéo lại câu vừa huỷ link).
         for (const m of allowed) {
           const c = findClip(out, m.trackId, m.clipId)?.clip;
           if (c && isLinkedCaption(c)) out = unlinkCaptionInSpec(out, m.clipId);
@@ -1353,7 +1469,7 @@ export const useStore = create<EditorState>()((set, get) => {
             return;
           }
           execCommand({
-            label: "Cắt clip",
+            label: i18nT("timeline.histTrim"),
             mergeKey: `trim:${trackId}:${clipId}`,
             apply: (s) => withTrack(s, trackId, (t) => ({
               ...t, clips: t.clips.map((c) => (c.id === clipId ? (trimmed as unknown as Clip) : c)),
@@ -1377,7 +1493,7 @@ export const useStore = create<EditorState>()((set, get) => {
           return;
         }
         execCommand({
-          label: "Cắt clip",
+          label: i18nT("timeline.histTrim"),
           mergeKey: `trim:${trackId}:${clipId}`,
           apply: (s) => withTrack(s, trackId, (t) => ({
             ...t, clips: t.clips.map((c) => (c.id === clipId ? (trimmed as unknown as Clip) : c)),
@@ -1436,7 +1552,7 @@ export const useStore = create<EditorState>()((set, get) => {
         );
         if (blocked) return;
         execCommand({
-          label: "Cắt clip",
+          label: i18nT("timeline.histTrim"),
           mergeKey: `trim:${trackId}:${clipId}`,
           apply: (s) => withTrack(s, trackId, (t) => ({
             ...t, clips: t.clips.map((c) => (c.id === clipId ? patchedR : c)),
@@ -1445,7 +1561,7 @@ export const useStore = create<EditorState>()((set, get) => {
         return;
       }
       execCommand({
-        label: "Cắt clip (ripple)",
+        label: i18nT("timeline.histTrimRipple"),
         mergeKey: `trim:${trackId}:${clipId}`,
         apply: (s) => {
           const foundNow = findClip(s, trackId, clipId);
@@ -1539,7 +1655,7 @@ export const useStore = create<EditorState>()((set, get) => {
       // Phase 9 đợt 13 C5: trim trái dịch gốc output → dịch keyframe t.
       const curveAdjLeft = curveAdjFor(shift, clip.duration - shift);
       execCommand({
-        label: "Cắt clip",
+        label: i18nT("timeline.histTrim"),
         mergeKey: `trim:${trackId}:${clipId}`,
         apply: (spec) => {
           const trimmed = withTrack(spec, trackId, (t) => ({
@@ -1560,7 +1676,7 @@ export const useStore = create<EditorState>()((set, get) => {
               ),
             }));
           }
-          // Phase 7 P6 (caption follow): trim trực tiếp câu phụ đề → hủy
+          // Phase 7 P6 (caption follow): trim trực tiếp câu phụ đề → huỷ
           // link; trim clip nguồn → phụ đề bám theo hình học mới.
           if (isLinkedCaption(tc)) return unlinkCaptionInSpec(out, clipId);
           if (isSourceClip(tc)) return refollowCaptionsInSpec(out, tc);
@@ -1620,7 +1736,7 @@ export const useStore = create<EditorState>()((set, get) => {
       if (ripple) {
         // R1-054: ripple trim — áp patch rồi dồn/đẩy các clip sau theo delta duration
         execCommand({
-          label: "Cắt clip (ripple)",
+          label: i18nT("timeline.histTrimRipple"),
           mergeKey: `trim:${trackId}:${clipId}`,
           apply: (spec) => {
             const foundNow = findClip(spec, trackId, clipId);
@@ -1651,7 +1767,7 @@ export const useStore = create<EditorState>()((set, get) => {
         notifyTrimmedCurve(curveAdjRight);
       } else {
         execCommand({
-          label: "Cắt clip",
+          label: i18nT("timeline.histTrim"),
           mergeKey: `trim:${trackId}:${clipId}`,
           apply: (spec) => {
             const trimmed = withTrack(spec, trackId, (t) => ({
@@ -1695,7 +1811,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const prec = patch as unknown as Record<string, unknown>;
     if (!keys.some((k) => rec[k] !== prec[k])) return 0;
     const label =
-      keys.length === 1 ? `Chỉnh ${patchLabel(keys[0])}` : "Chỉnh thuộc tính clip";
+      keys.length === 1 ? i18nT("timeline.histPatch", { field: patchLabel(keys[0]) }) : i18nT("timeline.histPatchMulti");
     // Phase 9 đợt 16 H3: lát cắt curve tính TRƯỚC exec (theo mẫu trimClip
     // đợt 13 C5: apply dùng đúng lát cắt này, không tính lại trong
     // apply) để patchClip báo được số keyframe bị cắt — toast + giá trị
@@ -1968,7 +2084,7 @@ export const useStore = create<EditorState>()((set, get) => {
         }
         // Phase 7 P6 (caption follow): đổi speed/reverse của clip nguồn →
         // phụ đề co/giãn/đảo theo; sửa start/duration của chính câu phụ đề
-        // qua Inspector → hủy link (user tự định vị câu).
+        // qua Inspector → huỷ link (user tự định vị câu).
         if (isSourceClip(pc) && ("speed" in patch || "reverse" in patch)) {
           return refollowCaptionsInSpec(out, pc);
         }
@@ -2029,7 +2145,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const res = sanitizeSpecSpeedCurves(st.spec);
     if (!res.changed) return res;
     execCommand({
-      label: "Sửa curve tốc độ vi phạm",
+      label: i18nT("timeline.histFixSpeedCurve"),
       apply: (spec) => sanitizeSpecSpeedCurves(spec).spec,
     });
     pushToast(summary ?? formatSanitizeSummary(res), "info");
@@ -2043,7 +2159,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const res = sanitizeOneKeyframe(st.spec, path, keyframeIndex);
     if (!res.changed) return res;
     execCommand({
-      label: "Sửa 1 keyframe tốc độ (báo cáo tải)",
+      label: i18nT("timeline.histFixSpeedKeyframe"),
       apply: (spec) => sanitizeOneKeyframe(spec, path, keyframeIndex).spec,
     });
     pushToast(summary ?? formatSanitizeSummary(res), "info");
@@ -2057,7 +2173,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const res = sanitizeOneSpeedCurve(st.spec, path);
     if (!res.changed) return res;
     execCommand({
-      label: "Sửa curve tốc độ của 1 clip (báo cáo tải)",
+      label: i18nT("timeline.histFixClipSpeedCurve"),
       apply: (spec) => sanitizeOneSpeedCurve(spec, path).spec,
     });
     pushToast(summary ?? formatSanitizeSummary(res), "info");
@@ -2076,7 +2192,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const srec = style as unknown as Record<string, unknown>;
     if (!keys.some((k) => rec[k] !== srec[k])) return;
     execCommand({
-      label: "Chỉnh chữ",
+      label: i18nT("timeline.histEditText"),
       mergeKey: `textstyle:${trackId}:${clipId}`,
       apply: (spec) => withTrack(spec, trackId, (t) => ({
         ...t,
@@ -2124,7 +2240,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const [left, right] = pair;
     execCommand(
       {
-        label: "Tách clip",
+        label: i18nT("timeline.histSplit"),
         apply: (spec) => {
           const split = withTrack(spec, track.id, (tr) => ({
             ...tr,
@@ -2143,7 +2259,7 @@ export const useStore = create<EditorState>()((set, get) => {
           }));
           // Phase 7 P6 (caption follow): tách clip nguồn → câu vắt qua
           // điểm cắt tách thành 2 theo từng nửa; tách trực tiếp câu phụ đề
-          // → 2 nửa đều hủy link (user tự chia câu).
+          // → 2 nửa đều huỷ link (user tự chia câu).
           if (isSourceClip(left) && isSourceClip(right)) {
             return splitLinkedCaptionsInSpec(clamped, clip.id, [left, right]);
           }
@@ -2175,7 +2291,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const res = addMarkerToList(st.spec.markers ?? [], marker);
     if ("error" in res) return null;
     execCommand({
-      label: "Thêm marker",
+      label: i18nT("timeline.histAddMarker"),
       apply: (spec) => ({ ...spec, markers: res.markers }),
     });
     return res.marker;
@@ -2186,7 +2302,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const next = updateMarkerInList(st.spec.markers ?? [], id, patch);
     if (next === st.spec.markers) return;
     execCommand({
-      label: "Sửa marker",
+      label: i18nT("timeline.histEditMarker"),
       apply: (spec) => ({ ...spec, markers: next }),
     });
   },
@@ -2196,7 +2312,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const next = removeMarkerFromList(st.spec.markers ?? [], id);
     if (next === st.spec.markers) return;
     execCommand({
-      label: "Xoá marker",
+      label: i18nT("timeline.histDeleteMarker"),
       apply: (spec) => ({ ...spec, markers: next }),
     });
   },
@@ -2214,7 +2330,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const sorted = [...times].sort((a, b) => a - b);
     let applied = 0;
     execCommand({
-      label: `Tách cảnh (${sorted.length} điểm)`,
+      label: i18nT("timeline.histSplitScene", { n: String(sorted.length) }),
       apply: (spec) => {
         const orig = findClip(spec, trackId, clipId)?.clip;
         if (!orig) return spec;
@@ -2253,7 +2369,7 @@ export const useStore = create<EditorState>()((set, get) => {
         }));
         // Phase 7 P6 (caption follow): tách clip nguồn tại nhiều điểm →
         // câu vắt qua nhiều mảnh tách theo từng mảnh; tách câu phụ đề →
-        // mọi mảnh hủy link.
+        // mọi mảnh huỷ link.
         if (pieces.every((p) => isSourceClip(p))) {
           return splitLinkedCaptionsInSpec(
             clamped,
@@ -2305,7 +2421,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const n = result.pasted.length;
     execCommand(
       {
-        label: n > 1 ? `Dán ${n} clip` : "Dán clip",
+        label: n > 1 ? i18nT("timeline.histPasteMulti", { n: String(n) }) : i18nT("timeline.histPaste"),
         apply: () => result.spec,
       },
       result.pasted,
@@ -2319,7 +2435,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const n = result.duplicated.length;
     execCommand(
       {
-        label: n > 1 ? `Nhân bản ${n} clip` : "Nhân bản clip",
+        label: n > 1 ? i18nT("timeline.histDuplicateMulti", { n: String(n) }) : i18nT("timeline.histDuplicate"),
         apply: () => result.spec,
       },
       result.duplicated,
@@ -2335,7 +2451,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if ("error" in res) return false;
     execCommand(
       {
-        label: `Gộp thành ${res.nested.name ?? "compound clip"}`,
+        label: i18nT("timeline.histNest", { name: res.nested.name ?? "compound clip" }),
         apply: () => res.spec,
       },
       [{ trackId: res.nestedTrackId, clipId: res.nested.id }],
@@ -2348,7 +2464,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if ("error" in res) return false;
     execCommand(
       {
-        label: "Rã compound clip",
+        label: i18nT("timeline.histUnnest"),
         apply: () => res.spec,
       },
       [],
@@ -2361,7 +2477,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if ("error" in res) return false;
     execCommand(
       {
-        label: `Thêm adjustment layer (${filterType})`,
+        label: i18nT("timeline.histAddFx", { kind: filterType }),
         apply: () => res.spec,
       },
       [{ trackId: res.hostTrackId, clipId: res.layer.id }],
@@ -2375,7 +2491,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const st = get();
     execCommand(
       {
-        label: "Xoá adjustment layer",
+        label: i18nT("timeline.histDeleteFx"),
         apply: () => next,
       },
       st.selection.filter((x) => x.clipId !== clipId),
@@ -2388,7 +2504,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if ("error" in res) return false;
     execCommand(
       {
-        label: "Di chuyển adjustment layer",
+        label: i18nT("timeline.fxMove"),
         mergeKey: `fxmove:${trackId}:${clipId}`,
         apply: () => res.spec,
       },
@@ -2402,7 +2518,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if ("error" in res) return false;
     execCommand(
       {
-        label: "Cắt adjustment layer",
+        label: i18nT("timeline.fxTrim"),
         mergeKey: `fxtrim:${trackId}:${clipId}`,
         apply: () => res.spec,
       },
@@ -2416,7 +2532,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if ("error" in res) return false;
     execCommand(
       {
-        label: "Sửa adjustment layer",
+        label: i18nT("timeline.histEditFx"),
         apply: () => res.spec,
       },
       get().selection,
@@ -2434,7 +2550,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if ("error" in res) return false;
     execCommand(
       {
-        label: `Thêm adjustment layer chuẩn (${filterType})`,
+        label: i18nT("timeline.histAddStdFx", { kind: filterType }),
         apply: () => res.spec,
       },
       get().selection,
@@ -2447,7 +2563,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if ("error" in res) return false;
     execCommand(
       {
-        label: "Sửa adjustment layer chuẩn",
+        label: i18nT("timeline.histEditStdFx"),
         apply: () => res.spec,
       },
       get().selection,
@@ -2460,7 +2576,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if (!next) return;
     execCommand(
       {
-        label: "Xoá adjustment layer chuẩn",
+        label: i18nT("timeline.histDeleteStdFx"),
         apply: () => next,
       },
       get().selection,
@@ -2476,7 +2592,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if ("error" in res) return false;
     execCommand(
       {
-        label: "Chuyển adjustment layer sang chuẩn spec",
+        label: i18nT("timeline.histConvertFx"),
         apply: () => res.spec,
       },
       get().selection.filter((x) => x.clipId !== clipId),
@@ -2489,7 +2605,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if ("error" in res) return false;
     execCommand(
       {
-        label: "Đặt transition/opacity cho nested clip",
+        label: i18nT("timeline.histSetNestedFx"),
         apply: () => res.spec,
       },
       get().selection,
@@ -2551,7 +2667,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if ("error" in res) return { ok: false, curveDropped: 0 };
     execCommand(
       {
-        label: "Sửa clip con trong compound clip",
+        label: i18nT("timeline.histEditNestedChild"),
         apply: () => res.spec,
       },
       get().selection,
@@ -2597,7 +2713,7 @@ export const useStore = create<EditorState>()((set, get) => {
     }
     execCommand(
       {
-        label: "Sửa clip con sâu trong compound clip",
+        label: i18nT("timeline.histEditDeepChild"),
         apply: () => res.spec,
       },
       get().selection,
@@ -2628,7 +2744,7 @@ export const useStore = create<EditorState>()((set, get) => {
     }
     execCommand(
       {
-        label: "Sửa nested trung gian sâu trong compound clip",
+        label: i18nT("timeline.histEditMidNested"),
         apply: () => res.spec,
       },
       get().selection,
@@ -2682,7 +2798,7 @@ export const useStore = create<EditorState>()((set, get) => {
     }
     execCommand(
       {
-        label: "Đặt speed curve cho nested clip (giữ trim)",
+        label: i18nT("timeline.histSetNestedCurve"),
         apply: (spec) =>
           withTrack(spec, trackId, (t) => ({
             ...t,
@@ -2699,7 +2815,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if ("error" in res) return false;
     execCommand(
       {
-        label: "Tách clip con sâu trong compound clip",
+        label: i18nT("timeline.histSplitDeepChild"),
         apply: () => res.spec,
       },
       get().selection,
@@ -2778,7 +2894,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if ("error" in res) return blocked("nested.splitOffsetInnerFailed", true);
     execCommand(
       {
-        label: "Tách clip con sâu theo mốc ngoài (đảo τ)",
+        label: i18nT("timeline.histSplitDeepOuter"),
         apply: () => res.spec,
       },
       get().selection,
@@ -2802,7 +2918,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if (rippleMode) {
       // R1-054: ripple delete từng clip — dồn các clip sau lên trước, không để lại gap.
       execCommand({
-        label: unlocked.length > 1 ? `Xoá ${unlocked.length} clip (ripple)` : "Xoá clip (ripple)",
+        label: unlocked.length > 1 ? i18nT("timeline.histDeleteRippleMulti", { n: String(unlocked.length) }) : i18nT("timeline.histDeleteRipple"),
         apply: (s) => {
           let cur = s;
           for (const x of unlocked) {
@@ -2818,7 +2934,7 @@ export const useStore = create<EditorState>()((set, get) => {
     }
     execCommand(
       {
-        label: unlocked.length > 1 ? `Xoá ${unlocked.length} clip` : "Xoá clip",
+        label: unlocked.length > 1 ? i18nT("timeline.histDeleteMulti", { n: String(unlocked.length) }) : i18nT("timeline.histDelete"),
         apply: (s) => deleteClips(s, unlocked).spec,
       },
       [],
@@ -2833,7 +2949,7 @@ export const useStore = create<EditorState>()((set, get) => {
     const st = get();
     execCommand(
       {
-        label: "Xoá clip (ripple)",
+        label: i18nT("timeline.histDeleteRipple"),
         apply: (s) => {
           const r = rippleDelete(s, trackId, clipId);
           // Phase 7 P6: như deleteSelection ripple — dịch câu theo clip bị dồn.
@@ -2865,6 +2981,10 @@ export const useStore = create<EditorState>()((set, get) => {
       clipboard = null; // K2: đổi project -> clipboard cũ không còn ý nghĩa
       set({
         spec,
+        // Đợt 63 R7 — project mẫu vừa load là một project mới (không
+        // phải file user đã lưu): sinh id riêng để sổ tham chiếu của
+        // phiên mẫu không đè lên bản ghi của project user cùng tên.
+        projectId: generateProjectId(),
         media,
         playhead: 0,
         playing: false,
@@ -2873,6 +2993,14 @@ export const useStore = create<EditorState>()((set, get) => {
         clipboardSize: 0,
       });
       didSet = true;
+      // ROUND54-K2: project mẫu vừa load chưa có thay đổi nào của user —
+      // đánh dấu đã-lưu để isDirty() = false. Trước đây lastSavedHash còn
+      // null nên isDirty() trả true (sample có tracks) ngay từ lúc sinh ra,
+      // khiến mọi lần mở file ngoài (double-click .vcut / recent / argv)
+      // đều bật window.confirm chặn renderer (xem D4c đợt 53). Autosave
+      // vẫn chạy như cũ (subscribe theo spec-thay-đổi, không phụ thuộc
+      // lastSavedHash); user sửa gì thì hash lệch → dirty trở lại.
+      markSaved(spec);
       clearHistory(); // đổi project -> không undo xuyên project
     } finally {
       // Đợt 47 C1: guard chỉ chống gọi trùng, không phải cờ một-lần:
@@ -2892,11 +3020,26 @@ export const useStore = create<EditorState>()((set, get) => {
   },
 
   newProject: () => {
+    // Đợt 55 L5 (nợ M10 đợt 54 K4 §3): chụp spec/selection TRƯỚC khi
+    // đổi — newProject cũ gọi clearHistory() nên undoDepth về 0 và
+    // Undo sau "Dự án mới" là no-op (clip không khôi phục). Nay ghi 1
+    // entry chuyển đổi "Dự án mới" (before = project cũ, after =
+    // project trống) rồi mới xoá history cũ hơn: undo 1 lần khôi phục
+    // đúng project trước đó, redo quay lại project trống. Chỉ ghi
+    // entry khi spec cũ còn clip — project đã trống thì clear thường
+    // để nút Undo không bật vì một entry rỗng.
+    const prevSpec = get().spec;
+    const prevSelection = get().selection;
+    const hadClips = prevSpec.tracks.some((t) => t.clips.length > 0);
     projectGeneration += 1; // Đợt 47 C1: đổi project → thế hệ mới
     trackSeq = 0;
     clipboard = null; // K2: đổi project -> clipboard cũ không còn ý nghĩa
+    const nextSpec = emptySpec();
     set({
-      spec: emptySpec(),
+      spec: nextSpec,
+      // Đợt 63 R7 — project trống mới = project mới: xoay id để sổ
+      // tham chiếu không nhầm với project vừa đóng (cùng tên "Dự án mới").
+      projectId: generateProjectId(),
       media: [],
       playhead: 0,
       playing: false,
@@ -2904,15 +3047,24 @@ export const useStore = create<EditorState>()((set, get) => {
       ready: true,
       clipboardSize: 0,
     });
-    clearHistory();
+    if (hadClips) {
+      history.resetWithTransition("Dự án mới", prevSpec, nextSpec, prevSelection, []);
+    } else {
+      clearHistory();
+    }
+    set(syncHistory());
   },
 
-  replaceProject: (spec) => {
+  replaceProject: (spec, projectId) => {
     projectGeneration += 1; // Đợt 47 C1: đổi project → thế hệ mới
     trackSeq = 100; // tránh trùng id khi thêm track mới sau khi mở file
     clipboard = null; // K2: đổi project -> clipboard cũ không còn ý nghĩa
     set({
       spec,
+      // Đợt 63 R7 — id của project vừa thay vào: mở file/autosave thì
+      // giữ id trong envelope; template/archive/khôi phục không truyền
+      // thì sinh mới (không giữ id project cũ).
+      projectId: isValidProjectId(projectId) ? projectId : generateProjectId(),
       media: [],
       playhead: 0,
       playing: false,
@@ -2935,6 +3087,80 @@ export const useStore = create<EditorState>()((set, get) => {
     if (fresh.length > 0) set((s) => ({ media: [...s.media, ...fresh] }));
   },
 
+  // Đợt 59 P1 — xóa media khỏi bin theo yêu cầu chủ đích của user.
+  // Chặn khi còn clip dùng tên này: findMissingAssets với tập tên đã
+  // trừ item này sẽ liệt kê đúng các clip còn trỏ tới nó (quét cả
+  // nested, cùng luật với checkMissingMedia) — clipCount > 0 thì từ
+  // chối kèm số clip để UI báo rõ. Xóa xong thì revoke blob: URL của
+  // item để khỏi rò rỉ (chỉ revoke URL blob:, URL http/data không đụng).
+  // Autosave sau đó (effect ở App.tsx, kích hoạt khi media đổi) sẽ ghi
+  // manifest bin mới không còn entry này nên reload không hồi lại item.
+  removeMediaFromBin: (mediaId) => {
+    const { spec, media } = get();
+    const item = media.find((m) => m.id === mediaId);
+    if (!item) return { ok: false };
+    const others = new Set(media.map((m) => m.name));
+    others.delete(item.name);
+    const used = findMissingAssets(spec, others).find((m) => m.src === item.name);
+    if (used && used.clipCount > 0) {
+      return {
+        ok: false,
+        message: i18nT("store.toastMediaInUse", { name: item.name, count: String(used.clipCount) }),
+      };
+    }
+    // Đợt 60 Q7 — dọn bytes IndexedDB mồ côi (nợ đợt 59 P1 §5.2): xóa
+    // khỏi bin mà bytes còn trong AssetStore thì kho phình dần. Chỉ xóa
+    // bytes khi plan cho phép; hai chặn mà chặn theo tên trên đây không
+    // thấy: (1) còn clip dùng asset qua src `asset:<id>` (file .vcut có
+    // thể mang dạng src này) → chặn luôn việc xóa khỏi bin, như chặn
+    // theo tên; (2) còn item khác trong bin dùng chung assetId (dedup)
+    // → chỉ xóa khỏi bin, giữ bytes cho item kia.
+    const orphanPlan = planOrphanBytesDeletion(spec, media, mediaId);
+    if (orphanPlan.action === "block-removal") {
+      return {
+        ok: false,
+        message: i18nT("store.toastMediaInUse", {
+          name: item.name,
+          count: String(orphanPlan.clipCount),
+        }),
+      };
+    }
+    if (item.url.startsWith("blob:")) {
+      try {
+        URL.revokeObjectURL(item.url);
+      } catch {
+        // revoke lỗi thì bỏ qua — chỉ rò rỉ 1 URL, không làm hỏng xóa
+      }
+    }
+    set((s) => ({ media: s.media.filter((m) => m.id !== mediaId) }));
+    // Đợt 61 R9 — cổng refCount (đóng nợ 60 Q7 §5.5): đồng bộ refCount
+    // từ spec/bin SAU khi item đã rời bin — LUÔN chạy, kể cả nhánh
+    // keep-bytes (item chung assetId còn lại vẫn giữ tham chiếu nên
+    // refCount phải giảm, vd 2 → 1; không sync thì số kẹt ở 2). Chỉ
+    // xóa bytes khi plan cho phép VÀ refCount tươi == 0. Lưới thứ hai:
+    // `remove()` trong deleteOrphanBinBytes tự nó cũng từ chối khi
+    // refCount > 0. Vẫn fire-and-forget best-effort như cũ: AssetStore()
+    // ném khi IndexedDB không khả dụng và sync/delete tự nuốt mọi lỗi
+    // — không được làm hỏng thao tác xóa khỏi bin. Autosave sau đó
+    // (effect App.tsx, debounce 5s) ghi manifest bin mới không còn
+    // entry này nên reload không hồi lại item (xem LIMITS về cửa sổ
+    // nhỏ giữa hai lần ghi).
+    void (async () => {
+      try {
+        const assetStore = new AssetStore();
+        const cur = get();
+        await syncAssetRefCounts(assetStore, cur.spec, cur.media);
+        if (orphanPlan.action !== "delete-bytes") return;
+        const fresh = await assetStore.get(orphanPlan.assetId);
+        if (fresh && fresh.refCount > 0) return; // còn tham chiếu — giữ bytes
+        await deleteOrphanBinBytes(assetStore, orphanPlan.assetId);
+      } catch {
+        // bỏ qua lặng lẽ — chỉ mất dọn bytes, item vẫn đã xóa khỏi bin
+      }
+    })();
+    return { ok: true };
+  },
+
   checkMissingMedia: () => {
     const { spec, media } = get();
     const names = new Set(media.map((m) => m.name));
@@ -2948,7 +3174,7 @@ export const useStore = create<EditorState>()((set, get) => {
     try {
       item = await fileToMediaItem(file);
     } catch {
-      return { ok: false, message: `Không đọc được file "${file.name}" — định dạng không hỗ trợ.` };
+      return { ok: false, message: i18nT("store.toastUnsupported", { name: file.name }) };
     }
     // 2. Verify: video/audio phải có duration, ảnh phải có kích thước.
     const looksBroken =
@@ -2958,7 +3184,7 @@ export const useStore = create<EditorState>()((set, get) => {
     if (looksBroken) {
       return {
         ok: false,
-        message: `File "${file.name}" đọc được nhưng metadata rỗng (có thể file hỏng).`,
+        message: i18nT("store.toastEmptyMeta", { name: file.name }),
       };
     }
     // 3. Thêm vào media (tên duy nhất như importFiles) + cập nhật clip src.
@@ -2989,14 +3215,14 @@ export const useStore = create<EditorState>()((set, get) => {
     if (n === oldSrc) {
       updatedCount = (missingAssets ?? []).find((m) => m.src === oldSrc)?.clipCount ?? 0;
       if (updatedCount === 0) {
-        return { ok: false, message: `Không còn clip nào dùng "${oldSrc}".` };
+        return { ok: false, message: i18nT("store.toastUnusedMedia", { name: oldSrc }) };
       }
     } else {
       const r = relinkAsset(spec, oldSrc, n);
       next = r.spec;
       updatedCount = r.updatedCount;
       if (updatedCount === 0) {
-        return { ok: false, message: `Không còn clip nào dùng "${oldSrc}".` };
+        return { ok: false, message: i18nT("store.toastUnusedMedia", { name: oldSrc }) };
       }
     }
     // Đợt 38 U3 — ingest đường relink tay (nợ đợt 37 T3 §4): relinkMedia
@@ -3021,13 +3247,16 @@ export const useStore = create<EditorState>()((set, get) => {
       const res = onProgress
         ? await ingestImportedItemWithProgress(assetStore, item, onProgress)
         : await ingestImportedItem(assetStore, item);
+      // Đợt 53 J5 — ghi assetId lên item (item chưa vào state nên gán
+      // trực tiếp an toàn) để setMediaProxy nối proxy về đúng manifest.
+      if (res.manifest) item.assetId = res.manifest.assetId;
       if (res.manifest && res.nameMismatch) {
         try {
           await assetStore.addAlias(res.manifest.assetId, n);
         } catch {
           // bỏ qua lặng lẽ như ingest
         }
-        dedupNote = ` (Nội dung trùng với file "${res.manifest.originalName}" đã lưu — dùng chung bản đó, lần mở sau không cần relink lại.)`;
+        dedupNote = i18nT("store.toastDedupNote", { name: res.manifest.originalName });
       }
       if (res.manifest && oldSrc !== n) {
         try {
@@ -3046,8 +3275,8 @@ export const useStore = create<EditorState>()((set, get) => {
       media: [...media, item],
       missingAssets: rest.length > 0 ? rest : null, // hết thiếu → tự đóng panel
     });
-    if (dedupNote) pushToast(`Đã relink → "${n}".${dedupNote}`, "info");
-    return { ok: true, message: `Đã relink ${updatedCount} clip → "${n}".${dedupNote}` };
+    if (dedupNote) pushToast(`${i18nT("store.toastRelinked", { name: n })}${dedupNote}`, "info");
+    return { ok: true, message: `${i18nT("store.toastRelinkedMulti", { n: String(updatedCount), name: n })}${dedupNote}` };
   },
 
   dismissRelink: () => set({ missingAssets: null }),
@@ -3058,11 +3287,11 @@ export const useStore = create<EditorState>()((set, get) => {
     const report = await assetStore.cleanupStaleAliases();
     if (report.removed.length > 0) {
       pushToast(
-        `Đã dọn ${report.removed.length} alias thừa khỏi ${report.cleaned} asset.`,
+        i18nT("store.toastAliasCleaned", { n: String(report.removed.length), m: String(report.cleaned) }),
         "info",
       );
     } else {
-      pushToast(`Không có alias thừa (đã quét ${report.scanned} asset).`, "info");
+      pushToast(i18nT("store.toastAliasClean", { n: String(report.scanned) }), "info");
     }
     return report;
   },

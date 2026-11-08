@@ -14,10 +14,12 @@
  */
 import {
   CHROMA_DEFAULTS,
+  EASINGS,
   EFFECT_TYPES,
   LUT_IDS,
   STICKER_DEFAULTS,
   interpolateKeyframes,
+  normalizeKeyframes,
   sourceTimeAt,
   speedAt,
   type ChromaKey,
@@ -33,7 +35,13 @@ import {
   type VideoClip,
   type VideoEffect,
   type VideoEffectType,
+  type VideoSpec,
 } from "@repo-1/video-spec";
+// Đợt 62 R6 — key instance cho clip trong spec phẳng (đóng nợ đợt 61
+// §5.5: 2 instance nested cùng leaf id thì `notDrawnClipIds` phải tách
+// theo instance — xem previewClipKey62R6.ts).
+// @ts-ignore: TS5097, đuôi .ts cho strip-types (xem nestedPreview.ts)
+import { previewClipInstanceKey } from "./previewClipKey62R6.ts";
 /** Thứ tự áp dụng transform — PHẢI khớp render.js (xem test thứ tự). */
 export const PREVIEW_TRANSFORM_ORDER = [
   "speed",
@@ -67,6 +75,46 @@ const KEYFRAME_MEMO_MAX = 256;
 const keyframeMemo = new WeakMap<object, Map<number, number>>();
 let keyframeMemoHits = 0;
 let keyframeMemoMisses = 0;
+
+/**
+ * Đợt 52 I7 — nội suy keyframe không để throw lọt ra tick preview.
+ * Từ đợt này `applyEasing` bản TS ném "easing không hỗ trợ" với easing lạ
+ * (thống nhất mirror với bản JS/render — trước đây TS trả undefined → NaN).
+ * Easing lạ chỉ tới được đây khi dữ liệu bị sửa tay in-memory (cổng load đã
+ * sanitize easing về linear, MCP add_keyframe chặn bằng z.enum): nội suy lại
+ * với easing lạ coi như "linear" (đúng ngữ nghĩa sanitize ở cổng load) để
+ * frame preview vẫn vẽ được thay vì rớt frame; hết đường (mảng rỗng sau
+ * normalize — caller đã lọc bằng hasUsableKeyframes nên không tới được đây)
+ * thì đóng băng ở giá trị keyframe đầu tiên, còn không thì 0.
+ */
+function interpolateKeyframesSafe(
+  kfs: Parameters<typeof interpolateKeyframes>[0],
+  t: number,
+): number {
+  try {
+    return interpolateKeyframes(kfs, t);
+  } catch {
+    const clean = (kfs as readonly unknown[]).map((k) =>
+      k &&
+      typeof k === "object" &&
+      !(EASINGS as readonly string[]).includes(
+        (k as { easing?: unknown }).easing as string,
+      )
+        ? { ...(k as Record<string, unknown>), easing: "linear" }
+        : k,
+    );
+    try {
+      return interpolateKeyframes(
+        clean as Parameters<typeof interpolateKeyframes>[0],
+        t,
+      );
+    } catch {
+      const first = normalizeKeyframes(kfs)[0];
+      return first ? first.v : 0;
+    }
+  }
+}
+
 export function memoInterpolateKeyframes(
   kfs: Parameters<typeof interpolateKeyframes>[0],
   t: number,
@@ -83,7 +131,7 @@ export function memoInterpolateKeyframes(
     return hit;
   }
   keyframeMemoMisses++;
-  const v = interpolateKeyframes(kfs, t);
+  const v = interpolateKeyframesSafe(kfs, t);
   per.set(frame, v);
   if (per.size > KEYFRAME_MEMO_MAX) {
     const oldest = per.keys().next().value;
@@ -94,6 +142,27 @@ export function memoInterpolateKeyframes(
 /** Thống kê cache (phục vụ bench, không ảnh hưởng logic). */
 export function keyframeMemoStats(): { hits: number; misses: number } {
   return { hits: keyframeMemoHits, misses: keyframeMemoMisses };
+}
+
+/**
+ * Đợt 51 H6 — animations có field nhưng toàn entry lỗi thì sau normalize
+ * còn rỗng, phải coi như KHÔNG có animation (khớp sanitize render của F1:
+ * field rỗng sau lọc thì bị xóa khỏi spec). Mọi chỗ gọi
+ * memoInterpolateKeyframes phải qua đây thay vì chỉ kiểm tra `a?.x`:
+ * `a.x` tồn tại nhưng keyframes `[null]` vẫn làm interpolateKeyframes ném
+ * "mảng keyframes rỗng" ra vòng rAF của preview (click-test headed H6 C1
+ * phát hiện: preview ném uncaught qua videoClipVisual, trong khi panel
+ * đã được F1 vá thì không sao). Keyframes hỗn hợp [null, hợp lệ] vẫn nội
+ * suy trên entry hợp lệ như cũ (interpolateKeyframes tự normalize).
+ */
+export function hasUsableKeyframes(
+  kf: { keyframes?: readonly unknown[] } | undefined | null,
+): boolean {
+  return (
+    !!kf &&
+    Array.isArray(kf.keyframes) &&
+    normalizeKeyframes(kf.keyframes as never).length > 0
+  );
 }
 export function resetKeyframeMemoStats(): void {
   keyframeMemoHits = 0;
@@ -440,6 +509,63 @@ export function effectsVisual(effects?: VideoEffect[]): EffectsVisual {
   return { css: parts.join(" "), vignette, skipped };
 }
 
+/**
+ * Đợt 60 Q6 — clip mà đường vẽ tick trước KHÔNG vẽ được (decoder tụt →
+ * decision "skip", hoặc chưa có source element): helper nhận tập id đó
+ * qua `opts.notDrawnClipIds` để KHÔNG liệt kê effect của chúng — clip
+ * không được vẽ thì nguyên nhân là decoder, không phải type effect
+ * (đóng nợ đợt 59 P3 §5.4). Tập này do preview.tsx ghi ở điểm `!srcEl`
+ * của `drawVideoClip` (tick trước) nên trễ tối đa 1 tick, cùng độ trễ
+ * với badge hold `tickHadHold`. Clip ở nhánh hold KHÔNG nằm trong tập
+ * này: frame giữ vẫn đi qua đúng pipeline nên effect vẫn bị skip thật
+ * như khi draw (warnSkippedEffects vẫn bắn).
+ */
+export interface FrameSkippedEffectOptions {
+  /**
+   * Key INSTANCE các video clip tick trước không vẽ được (xem ghi chú
+   * trên). Đợt 62 R6: tập này lưu key instance (`previewClipInstanceKey`)
+   * chứ không phải leaf id trần — 2 instance nested cùng leaf id thì
+   * 1 instance không vẽ được không loại lý do của instance kia.
+   */
+  notDrawnClipIds?: ReadonlySet<string>;
+}
+
+/**
+ * Đợt 59 P3 (đóng nợ đợt 58 §6.3): effect type mà frame tại `t` sẽ bỏ qua
+ * khi vẽ — hợp của `effectsVisual(clip.effects).skipped` trên các video
+ * clip đang hiện. Điều kiện hiện MIRROR vòng lặp video của `renderFrame`
+ * trong preview.tsx (track video không hidden, clip video, `t` trong
+ * `[start, start+duration)`), nên tập này đúng bằng tập mà đường vẽ từng
+ * frame bỏ qua — trừ clip trong `opts.notDrawnClipIds` (decoder tụt làm
+ * cả clip không được vẽ, xem `FrameSkippedEffectOptions` — đợt 60 Q6).
+ * Text/image/sticker không mang `effects` nên không đóng góp. Hàm thuần
+ * (spec phẳng + t + tập id tường minh) nên badge preview tính lại tươi
+ * mỗi tick, không cần state theo frame như `tickHadHold`; spec phẳng
+ * không nested/adjustment cũng được bao (đường flatten trả skipped rỗng
+ * cho spec đó — nay tầng lib cũng có skippedReasons riêng, xem
+ * `flatSpecSkippedReasons` trong nestedPreview.ts — đợt 60 Q6).
+ * Cùng classifier 16 type chuẩn với `applyAdjustmentPreview` nên hợp
+ * với `failsoft.skippedReasons` không lệch, không đếm trùng.
+ */
+export function frameSkippedEffectTypes(spec: VideoSpec, t: number, opts?: FrameSkippedEffectOptions): VideoEffectType[] {
+  const out: VideoEffectType[] = [];
+  for (const track of spec.tracks) {
+    if (track.hidden || track.kind !== "video") continue;
+    for (const clip of track.clips) {
+      if (clip.kind !== "video") continue;
+      if (t < clip.start || t >= clip.start + clip.duration) continue;
+      // Đợt 62 R6: đối chiếu bằng key INSTANCE (lá nested trong spec
+      // phẳng đã đóng dấu `__vcutInstanceKey` khi flatten; clip tầng
+      // ngoài / spec chưa phẳng thì key = đúng clip.id như cũ).
+      if (opts?.notDrawnClipIds?.has(previewClipInstanceKey(clip))) continue;
+      for (const s of effectsVisual(clip.effects).skipped) {
+        if (!out.includes(s)) out.push(s);
+      }
+    }
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Motion: slow-mo nội suy frame / motion blur — S4 (Phase 9 đợt 8, gap E8).
 // Shape CHÍNH THỨC của S1 (packages/video-spec/src/motion.ts, KHÔNG dùng
@@ -707,10 +833,31 @@ export function normalizeMotion(clip: { motion?: unknown }): MotionVisual {
  * frame mới (preview KHÔNG nội suy — giữ fps project), "BLUR≈" khi có
  * motion blur (preview chỉ ghosting xấp xỉ, không phải tmix). "" = không
  * có motion, badge ẩn. Dùng cho badge DOM ở preview.tsx (cùng mẫu PROXY/LUT).
+ *
+ * Phase 9 đợt 56 M6 — lookup i18n tùy chọn, KHÔNG import `../i18n`
+ * trực tiếp: file này được test bằng Node type-stripping, mà Node
+ * không resolve JSON import của `i18n/index.ts` (đã kiểm chứng 07/11,
+ * xem twoLevelCurve.ts). Khi `lookup` vắng → fallback đúng từng chữ
+ * chuỗi VI cũ nên test cũ + hành vi mặc định không đổi; UI (preview.tsx)
+ * truyền `t()` vào tham số `lookup` này để nhận chuỗi theo locale hiện
+ * tại. Key mới nằm trong `i18n/fragments/round56-m6.json` (parent merge
+ * vào vi.json/en.json cuối đợt 56).
  */
-export function motionBadgeText(m: MotionVisual): string {
+export type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
+
+export function motionBadgeText(m: MotionVisual, lookup?: I18nLookup): string {
   const parts: string[] = [];
-  if (m.interpolation) parts.push("NỘI SUY");
+  if (m.interpolation) parts.push(trKey(lookup, "preview.motionInterp", {}, "NỘI SUY"));
   if (m.motionBlur) parts.push("BLUR≈");
   return parts.join(" • ");
 }
@@ -808,11 +955,9 @@ export function videoClipVisual(
   // Render: buildOverlayExprs → offset = interp * (main - overlay).
   // Unit trong render đã pad đúng WxH nên (frame-unit) = 0 → không di chuyển.
   // Giữ công thức tổng quát để đúng cả khi render đổi pipeline.
-  const offsetX = a?.x
-    ? memoInterpolateKeyframes(a.x.keyframes, localT) * (frameW - unitW)
+  const offsetX = a?.x && hasUsableKeyframes(a.x) ? memoInterpolateKeyframes(a.x.keyframes, localT) * (frameW - unitW)
     : 0;
-  const offsetY = a?.y
-    ? memoInterpolateKeyframes(a.y.keyframes, localT) * (frameH - unitH)
+  const offsetY = a?.y && hasUsableKeyframes(a.y) ? memoInterpolateKeyframes(a.y.keyframes, localT) * (frameH - unitH)
     : 0;
   const colorCss = colorAdjustCssFilter(clip.filter?.color);
   // R4: chuỗi LUT preview-internal (filter.lutChain, do nestedPreview đặt).
@@ -837,18 +982,15 @@ export function videoClipVisual(
   // P1 (Phase 7): opacity keyframes thắng tuyệt đối opacity tĩnh (khớp
   // render K1); validate chặn giá trị ngoài [0,1] nhưng vẫn clamp phòng thủ
   // (geq của render cũng clamp lặng lẽ).
-  const opacity = a?.opacity
-    ? clamp01(memoInterpolateKeyframes(a.opacity.keyframes, localT))
+  const opacity = a?.opacity && hasUsableKeyframes(a.opacity) ? clamp01(memoInterpolateKeyframes(a.opacity.keyframes, localT))
     : (clip.opacity ?? 1);
   return {
     opacity,
     offsetX,
     offsetY,
-    scale: a?.scale
-      ? clampRenderScale(memoInterpolateKeyframes(a.scale.keyframes, localT))
+    scale: a?.scale && hasUsableKeyframes(a.scale) ? clampRenderScale(memoInterpolateKeyframes(a.scale.keyframes, localT))
       : 1,
-    rotation: a?.rotation
-      ? memoInterpolateKeyframes(a.rotation.keyframes, localT)
+    rotation: a?.rotation && hasUsableKeyframes(a.rotation) ? memoInterpolateKeyframes(a.rotation.keyframes, localT)
       : 0,
     cssFilter,
     lut: lutChain.length > 0 ? lutChain[lutChain.length - 1] : (clip.filter?.lut ?? null),
@@ -894,11 +1036,9 @@ export function videoElementPlacement(
   frameH: number,
 ): VideoElementPlacement {
   const a = clip.animations;
-  const scale = a?.scale
-    ? clampRenderScale(memoInterpolateKeyframes(a.scale.keyframes, localT))
+  const scale = a?.scale && hasUsableKeyframes(a.scale) ? clampRenderScale(memoInterpolateKeyframes(a.scale.keyframes, localT))
     : 1;
-  const rotationDeg = a?.rotation
-    ? memoInterpolateKeyframes(a.rotation.keyframes, localT)
+  const rotationDeg = a?.rotation && hasUsableKeyframes(a.rotation) ? memoInterpolateKeyframes(a.rotation.keyframes, localT)
     : 0;
   const rad = (rotationDeg * Math.PI) / 180;
   const ew = unitW * scale;
@@ -909,8 +1049,8 @@ export function videoElementPlacement(
   const bboxH = ew * sin + eh * cos;
   // Mirror buildOverlayExprs: có keyframe x/y thì dùng phân số nội suy,
   // không có thì căn giữa (0.5) — áp lên khoảng (frame − bbox) như overlay.
-  const xf = a?.x ? memoInterpolateKeyframes(a.x.keyframes, localT) : 0.5;
-  const yf = a?.y ? memoInterpolateKeyframes(a.y.keyframes, localT) : 0.5;
+  const xf = a?.x && hasUsableKeyframes(a.x) ? memoInterpolateKeyframes(a.x.keyframes, localT) : 0.5;
+  const yf = a?.y && hasUsableKeyframes(a.y) ? memoInterpolateKeyframes(a.y.keyframes, localT) : 0.5;
   const topLeftX = xf * (frameW - bboxW);
   const topLeftY = yf * (frameH - bboxH);
   return {
@@ -1284,11 +1424,9 @@ export function textSrPlacement(
   m: TextMeasure,
 ): TextSrPlacement {
   const a = clip.animations;
-  const scale = a?.scale
-    ? clampRenderScale(memoInterpolateKeyframes(a.scale.keyframes, localT))
+  const scale = a?.scale && hasUsableKeyframes(a.scale) ? clampRenderScale(memoInterpolateKeyframes(a.scale.keyframes, localT))
     : 1;
-  const rotationDeg = a?.rotation
-    ? memoInterpolateKeyframes(a.rotation.keyframes, localT)
+  const rotationDeg = a?.rotation && hasUsableKeyframes(a.rotation) ? memoInterpolateKeyframes(a.rotation.keyframes, localT)
     : 0;
   const pad = Math.max(4, Math.round(clip.style.fontSize / 4));
   const pngW = m.textW + 2 * pad;
@@ -1300,8 +1438,8 @@ export function textSrPlacement(
   const sin = Math.abs(Math.sin(rad));
   const bboxW = ew * cos + eh * sin;
   const bboxH = ew * sin + eh * cos;
-  const xf = a?.x ? memoInterpolateKeyframes(a.x.keyframes, localT) : 0.5;
-  const yf = a?.y ? memoInterpolateKeyframes(a.y.keyframes, localT) : 0.5;
+  const xf = a?.x && hasUsableKeyframes(a.x) ? memoInterpolateKeyframes(a.x.keyframes, localT) : 0.5;
+  const yf = a?.y && hasUsableKeyframes(a.y) ? memoInterpolateKeyframes(a.y.keyframes, localT) : 0.5;
   const topLeftX = xf * (frameW - bboxW);
   const topLeftY = yf * (frameH - bboxH);
   return {
@@ -1368,8 +1506,7 @@ export function textClipVisual(
   if (a && (a.scale || a.rotation) && st.animation !== "typewriter" &&
       !isParityTextAnimation(st.animation)) {
     const pl = textSrPlacement(clip, localT, frameW, frameH, m);
-    const srAlpha = a.opacity
-      ? memoInterpolateKeyframes(a.opacity.keyframes, localT)
+    const srAlpha = a.opacity && hasUsableKeyframes(a.opacity) ? memoInterpolateKeyframes(a.opacity.keyframes, localT)
       : 1;
     return {
       cx: pl.centerX,
@@ -1457,9 +1594,9 @@ export function textClipVisual(
   // 1. Keyframes ưu tiên hơn mọi animation (giống render.js).
   //    drawtext: x = (w-text_w)*interp — đây là MÉP TRÁI; đổi sang tâm để vẽ canvas.
   if (a && (a.x || a.y || a.opacity)) {
-    const xr = a.x ? memoInterpolateKeyframes(a.x.keyframes, localT) : (st.x ?? 0.5);
-    const yr = a.y ? memoInterpolateKeyframes(a.y.keyframes, localT) : (st.y ?? 0.5);
-    const alpha = a.opacity ? memoInterpolateKeyframes(a.opacity.keyframes, localT) : 1;
+    const xr = a.x && hasUsableKeyframes(a.x) ? memoInterpolateKeyframes(a.x.keyframes, localT) : (st.x ?? 0.5);
+    const yr = a.y && hasUsableKeyframes(a.y) ? memoInterpolateKeyframes(a.y.keyframes, localT) : (st.y ?? 0.5);
+    const alpha = a.opacity && hasUsableKeyframes(a.opacity) ? memoInterpolateKeyframes(a.opacity.keyframes, localT) : 1;
     return {
       cx: (frameW - m.textW) * xr + m.textW / 2,
       cy: (frameH - m.textH) * yr + m.textH / 2,

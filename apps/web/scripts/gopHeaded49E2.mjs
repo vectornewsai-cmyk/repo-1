@@ -7,6 +7,9 @@
 // bridge :8787 THẬT, thêm:
 //   - E2_MODE=gop (mặc định, toggle GOP BẬT): kỳ vọng gopActive=true,
 //     0 GET toàn file (quan sát qua CDP Network + resource timing).
+//     Đợt 53 J6: cổng e2e-no-full-file-get chỉ kiểm tra BLOB CHÍNH (blob
+//     nhiều GET Range nhất) — 2 GET không Range trên blob phụ (clip mẫu
+//     8 s) không còn làm FAIL oan (nợ I6 §5).
 //   - E2_MODE=fallback (toggle GOP TẮT trước khi phát ngược): đường
 //     cũ tải toàn file — đo đỉnh heap để trả nợ D4 §6.2, playhead vẫn
 //     phải lùi (fallback decode được).
@@ -138,7 +141,8 @@ if (!SHARED) {
 }
 const bridge = SHARED ? null : spawn("node", [path.join(REPO, "server/bridge/src/index.js")], {
   stdio: "pipe",
-  env: { ...process.env, BRIDGE_PORT: String(BRIDGE_PORT), BRIDGE_WORK_DIR: BRIDGE_WORK, BRIDGE_RATE_GENERAL: "5000" },
+  // Đợt 66 T9 — persist riêng theo PID (BRIDGE_WORK cố định giữa các lần chạy): tránh rò mốc limiter sang test khác (đợt 65 §3b).
+  env: { ...process.env, BRIDGE_PORT: String(BRIDGE_PORT), BRIDGE_WORK_DIR: BRIDGE_WORK, BRIDGE_RATE_GENERAL: "5000", BRIDGE_RATE_PERSIST_PATH: path.join(BRIDGE_WORK, `rate-limit-${process.pid}.json`) },
 });
 let bridgeLog = "";
 if (bridge) {
@@ -149,7 +153,12 @@ const bridgeBase = `http://127.0.0.1:${BRIDGE_PORT}`;
 async function waitBridge() {
   for (let i = 0; i < 60; i++) {
     try {
-      const r = await fetch(`${bridgeBase}/api/proxy/file/trail-d4.mp4`, { method: "HEAD" });
+      // Đợt 53 J6 — kiểm tra đúng file lượt này đã stage (trail-e2.mp4),
+      // không phải trail-d4.mp4 của lượt D4 cũ: work-dir mới chỉ có
+      // trail-e2.mp4 nên HEAD trail-d4.mp4 404 mãi và waitBridge luôn
+      // fail sau 30 s dù bridge đã lên (gặp thật ở lần chạy E2 đầu
+      // lượt này — bridge trả /api/health 200 trong khi waitBridge fail).
+      const r = await fetch(`${bridgeBase}/api/proxy/file/trail-e2.mp4`, { method: "HEAD" });
       if (r.status === 200) return r;
     } catch { /* chưa lên */ }
     await sleep(500);
@@ -238,7 +247,13 @@ class CDP {
     });
   }
   async evalJs(expression) {
-    const r = await this.send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
+    // Đợt 53 J6 — timeout 60 s cho mỗi evaluate: renderer treo (I6 §6.1:
+    // Runtime.evaluate không bao giờ trả) thì fail to thay vì treo cả
+    // lượt chạy vĩnh viễn. Evaluate thường trả trong < 1 s kể cả dưới tải.
+    const r = await Promise.race([
+      this.send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("evaluate timeout 60s: " + String(expression).slice(0, 80))), 60000)),
+    ]);
     if (r.exceptionDetails) throw new Error("evaluate failed: " + (r.exceptionDetails.exception?.description || JSON.stringify(r.exceptionDetails)));
     return r.result.value;
   }
@@ -309,7 +324,15 @@ async function heapNow(cdp) {
   return cdp.evalJs(`(() => { const m = performance.memory || {}; return { used: m.usedJSHeapSize ?? null, total: m.totalJSHeapSize ?? null, gc: typeof window.gc === "function" }; })()`).catch(() => ({ used: null, total: null, gc: false }));
 }
 async function gcNow(cdp) {
-  await cdp.evalJs(`(() => { try { if (window.gc) { window.gc(); window.gc(); } } catch {} return true; })()`).catch(() => null);
+  // Đợt 53 J6 — gc từ ngoài qua CDP thay vì window.gc() trong page:
+  // I6 §6.1 đo được gọi window.gc() trong page treo renderer 3/3 lần
+  // (Runtime.evaluate không bao giờ trả); lần chạy E2 này cũng treo
+  // đúng ở eval ngay sau gcNow thứ hai. HeapProfiler.collectGarbage
+  // qua CDP không chạy JS trong page nên không dính lỗi đó.
+  try {
+    await cdp.send("HeapProfiler.enable", {});
+    await cdp.send("HeapProfiler.collectGarbage", {});
+  } catch { /* bỏ qua */ }
 }
 
 const pageErrors = [];
@@ -573,13 +596,45 @@ try {
     record("e2e-fallback-expected", !gopSeen,
       `mode=fallback: gopActive từng thấy=${gopSeen} (kỳ vọng false), gopFallbackReasons=${JSON.stringify(gopReasons)} (toggle TẮT → engine=element, không tạo controller — xem §4 LIMITS)`);
   }
+  // Đợt 53 J6 — THU HẸP cổng e2e-no-full-file-get cho BLOB CHÍNH (nợ I6 §5):
+  // cổng cũ đếm MỌI blob GET không Range nên FAIL oan: đợt 52 đo được blob
+  // chính 37 MiB có 177 GET Range + 0 không Range, còn 2 GET không Range
+  // nằm trên 2 blob PHỤ (clip mẫu 8 s ở bin/timeline — probe metadata
+  // ban đầu của <video>, không phải tải toàn file 37 MiB). Cổng mới chỉ
+  // kiểm tra blob chính = blob có NHIỀU GET Range nhất (file 37 MiB đi
+  // hàng trăm Range GOP, blob phụ chỉ 4–5); URL ở đây đã cắt 40 ký tự
+  // nhưng vẫn chứa đủ đầu UUID để phân biệt các blob (cùng cách I6 đã
+  // dùng để xác định blob chính). Nhánh không có request blob: nào qua
+  // CDP (resource-timing) giữ nguyên — nó chỉ kiểm entry ≥90% file.
   const blobGetsNoRange = netBlobReqs.filter((r) => r.method === "GET" && !r.range);
   const blobGetsWithRange = netBlobReqs.filter((r) => r.method === "GET" && r.range);
+  const byUrl = {};
+  for (const r of netBlobReqs) {
+    const k = r.url || "(không url)";
+    byUrl[k] = byUrl[k] || { getRange: 0, getNoRange: 0, other: 0 };
+    if (r.method === "GET" && r.range) byUrl[k].getRange++;
+    else if (r.method === "GET") byUrl[k].getNoRange++;
+    else byUrl[k].other++;
+  }
+  console.log(`BLOB-BYURL: ${JSON.stringify(byUrl)}`);
+  let mainBlobUrl = null;
+  let mainBlobRange = 0;
+  let mainBlobNoRange = 0;
+  for (const [u, c] of Object.entries(byUrl)) {
+    if (c.getRange > mainBlobRange) {
+      mainBlobUrl = u;
+      mainBlobRange = c.getRange;
+      mainBlobNoRange = c.getNoRange;
+    }
+  }
+  if (mainBlobUrl !== null) {
+    console.log(`BLOB-CHÍNH: ${mainBlobUrl} — GET có Range=${mainBlobRange}, GET không Range=${mainBlobNoRange} (blob nhiều Range nhất = file 37 MiB)`);
+  }
   const bigResEntry = resEntries.filter((e) => typeof e.encoded === "number" && e.encoded >= fileSize * 0.9);
   record("e2e-no-full-file-get", MODE === "fallback" ? true :
-    (netBlobReqs.length > 0 ? blobGetsNoRange.length === 0 && blobGetsWithRange.length > 0 : bigResEntry.length === 0),
+    (netBlobReqs.length > 0 ? mainBlobNoRange === 0 && mainBlobRange > 0 : bigResEntry.length === 0),
     MODE === "fallback" ? `mode=fallback: đường cũ tải toàn file là hành vi kỳ vọng (không áp cổng này); Network blob: GET có Range=${blobGetsWithRange.length}, GET không Range=${blobGetsNoRange.length}` :
-    (netBlobReqs.length > 0 ? `CDP Network thấy ${netBlobReqs.length} request blob:: GET có Range=${blobGetsWithRange.length}, GET không Range=${blobGetsNoRange.length} (kỳ vọng 0)` :
+    (netBlobReqs.length > 0 ? `CDP Network thấy ${netBlobReqs.length} request blob: (toàn bộ: GET có Range=${blobGetsWithRange.length}, GET không Range=${blobGetsNoRange.length}); blob chính ${mainBlobUrl}: GET có Range=${mainBlobRange}, GET không Range=${mainBlobNoRange} (kỳ vọng 0)` :
     `CDP Network không thấy request blob: nào (Chrome không log fetch blob: qua Network); resource-timing blob: entries=${resEntries.length}, entry ≥90% file=${bigResEntry.length} (kỳ vọng 0)`));
   record("e2e-heap-measured", heapPeak !== null && heapBase.used !== null,
     `mode=${MODE}: heap peak used=${toMiB(heapPeak)} (delta vs baseline=${heapBase.used === null || heapPeak === null ? "null" : ((heapPeak - heapBase.used) / 1048576).toFixed(2) + " MiB"})}, settled=${toMiB(heapSettled.used)}, RSS đỉnh=${rssPeak} MiB (delta=${rssBase === null ? "null" : (rssPeak - rssBase).toFixed(2) + " MiB"}); file ${(fileSize / 1048576).toFixed(2)} MiB`);

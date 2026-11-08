@@ -171,7 +171,14 @@ input[type="color"] {
   background: var(--bg1);
   border-bottom: 1px solid var(--border-soft);
   position: relative;
-  z-index: 30;
+  /* Đợt 66 T8: KHÔNG đặt z-index ở đây nữa (trước đây z-index: 30).
+     z-index trên .topbar tạo stacking context: mọi con (kể cả nút ngôn
+     ngữ) bị kẹt dưới .modal-backdrop (z 400) nên không bấm được khi
+     modal mở (nợ S10 đợt 65). Bỏ z-index thì .topbar-lang-btn mới thoát
+     ra stacking context gốc để nổi lên trên backdrop. .flash-msg
+     (absolute, z 50 trong topbar) vẫn neo vào position: relative này
+     và vẫn vẽ trên nội dung editor (z ≤ 6); không phần tử nào khác
+     chồng lên dải topbar (xem LIMITS đợt 66 T8 §2). */
   /* D1 Phase 9 đợt 4: THAY workaround cuộn ngang của Q2 (overflow-x: auto
      từng giấu nút ngôn ngữ/xuất bản ở x≈2500 trên màn 1440px, user phải tự
      phát hiện và cuộn mới bấm được). TopBar nay wrap thành 2 hàng:
@@ -187,6 +194,20 @@ input[type="color"] {
 
 .topbar > * {
   flex-shrink: 0;
+}
+
+/* Đợt 66 T8 — nút đổi ngôn ngữ TopBar phải bấm được cả khi modal đang
+   mở (nợ S10 đợt 65: backdrop z 400 phủ TopBar, nút bị chặn pointer).
+   z-index 401 đặt nút lên trên .modal-backdrop (400) nhưng dưới
+   tour-card (450) và toasts (500), giữ đúng thứ tự z của đợt 62 R1.
+   Chỉ nút này thoát lên — phần còn lại của TopBar vẫn nằm dưới
+   backdrop nên modal giữ nguyên ngữ nghĩa chặn tương tác nền (không
+   nâng cả thanh công cụ lên như phương án z-index cho .topbar).
+   Cần .topbar KHÔNG có z-index (không tạo stacking context) thì nút
+   mới thoát ra được stacking context gốc — xem comment ở .topbar. */
+.topbar-lang-btn {
+  position: relative;
+  z-index: 401;
 }
 
 .brand {
@@ -390,6 +411,14 @@ input[type="color"] {
   padding: 10px 12px 6px;
 }
 
+/* Phase 9 đợt 60 Q2: HistoryPanel trước đây dùng inline style cho khung
+   (border/padding/marginTop) — chuyển y hệt sang class, bỏ inline style. */
+.history-panel {
+  border: 1px solid #444;
+  padding: 12px;
+  margin-top: 8px;
+}
+
 .mini-btn {
   padding: 4px 10px;
   font-size: 12px;
@@ -419,6 +448,16 @@ input[type="color"] {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   align-content: start;
+  /* Đợt 54 K7 — hàng grid giữ chiều cao tự nhiên của card (~151px):
+     mặc định `grid-auto-rows: auto` co hàng về 63px (chỉ bằng thumb)
+     khi container có chiều cao cố định và card `overflow: hidden`,
+     khiến tên + 2 nút (trong đó có nút Proxy) tràn ra ngoài card, bị
+     cắt và không bấm được — click chuột thật tại tâm nút Proxy rơi
+     vào `.tl-toolbar` ở viewport 1440×900 (đo headed K7: card 63px,
+     scrollH 149, nút y=413 trong khi toolbar y=404–485). Với
+     max-content, card giữ đủ cao, grid cuộn như thiết kế (scrollH
+     298 > clientH 152) và nút bấm được sau khi cuộn tới. */
+  grid-auto-rows: max-content;
 }
 
 .media-card {
@@ -491,9 +530,47 @@ input[type="color"] {
   color: var(--accent-hover);
 }
 
+/* Đợt 59 P1 — nút xóa media khỏi bin (góc trên-phải card, chỉ hiện rõ
+   khi hover card để khỏi rối mắt; bấm → confirm → store xóa). */
+.media-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 1;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.media-card:hover .media-remove {
+  opacity: 1;
+}
+
+.media-remove:hover {
+  background: var(--danger);
+}
+
 .media-add:hover {
   background: var(--accent);
   color: #fff;
+}
+
+/* Phase 9 đợt 60 Q2: nút proxy trong card media (harness query
+   .media-proxy) — cùng hình học với .media-add, giữ màu nút mặc định
+   để phân biệt với nút thêm vào timeline. */
+.media-proxy {
+  width: calc(100% - 12px);
+  margin: 4px 6px 8px;
+  padding: 4px 0;
+  font-size: 11px;
 }
 
 .media-empty {
@@ -637,6 +714,11 @@ input[type="color"] {
 .tl-marker-editor-time {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+}
+
+/* Phase 9 đợt 60 Q2: tiêu đề "Sửa marker" trước đây không có rule. */
+.tl-marker-editor-title {
+  font-weight: 600;
 }
 .tl-marker-editor input {
   flex: 1;
@@ -821,6 +903,31 @@ input[type="color"] {
 }
 
 .tl-ripple button.active {
+  opacity: 1;
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+/* Phase 9 đợt 60 Q2: 2 nhóm nút toolbar (.tl-markers, .tl-nested) trước
+   đây không có rule — mirror .tl-add-track / .tl-ripple. Lưu ý nút
+   Nested/Adjustment dùng className "active" nhưng trước đây không có
+   rule nào khớp nên bật không đổi diện mạo; nay có .tl-nested
+   button.active (mẫu .tl-ripple button.active). */
+.tl-markers,
+.tl-nested {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.tl-markers button,
+.tl-nested button {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+.tl-nested button.active {
   opacity: 1;
   border-color: var(--accent);
   color: var(--accent);
@@ -1221,6 +1328,15 @@ input[type="color"] {
 }
 
 /* ============ Modal / Export ============ */
+/* Đợt 62 R1: backdrop z 100 → 400 — modal phải là lớp trên cùng, trên
+   PerfOverlay (pill + panel FPS z 300, luôn mount trong App). Trước đây
+   backdrop 100 < pill 300 nên ở mobile (modal bottom-sheet, đáy = đáy
+   viewport) pill FPS đè lên góc phải footer, che đuôi nút chính (đo
+   headed: pill đè nút 1996.8px², panel mở đè trọn nút 6776px²).
+   Không ẩn pill: trạng thái "có modal mở" nằm rải ở App + ~12 modal,
+   nối vào PerfOverlay xâm lấn hơn mà panel mở cũng cần xử lý y hệt.
+   .toasts và .tour-card nâng theo để GIỮ thứ tự cũ (vốn trên backdrop):
+   toasts 200 → 500, tour-card 120 → 450. */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1229,7 +1345,7 @@ input[type="color"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 400;
 }
 
 .modal {
@@ -1243,6 +1359,13 @@ input[type="color"] {
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+}
+
+/* Đợt 61 parent gộp: panel dọn kho (StorageCleanupPanel, R9) rộng 720px thay
+   vì 640px mặc định của .modal — width chuyển từ inline style sang đây để
+   sweep class Q2/R4 không còn báo .storage-cleanup chưa định nghĩa. */
+.modal.storage-cleanup {
+  width: 720px;
 }
 
 .modal-head {
@@ -1342,6 +1465,33 @@ input[type="color"] {
   color: var(--muted);
 }
 
+/* Đợt 64 R8 — dòng ghi chú của job render (vd phục hồi sau restart),
+   nằm dưới nhãn tiến trình trong khối .render-progress; chỉ render khi
+   job có note nên không chiếm chỗ với job thường. Màu hổ phách để phân
+   biệt với nhãn tiến trình (xám) và banner lỗi (đỏ). */
+.render-note {
+  font-size: 12px;
+  color: #e8a13a;
+}
+
+/* Đợt 65 S4 — khối encoder GPU trong ExportPanel: dòng trạng thái probe
+   + nút "Probe lại GPU" + ghi chú fallback libx264. Dùng lại nhịp
+   preset-row/tips sẵn có; chỉ thêm viền mờ + khoảng cách để tách khỏi
+   khối normalize/reframe kề bên. */
+.gpu-probe {
+  margin: 8px 0 2px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+}
+.gpu-probe .preset-row {
+  flex-wrap: wrap;
+}
+.gpu-probe .tips {
+  flex: 1;
+  min-width: 160px;
+}
+
 /* R1-042: Export presets */
 .preset-row {
   display: flex;
@@ -1349,6 +1499,14 @@ input[type="color"] {
   gap: 10px;
   margin: 4px 0 2px;
   font-size: 13px;
+}
+
+/* Phase 9 đợt 60 Q2: section auto-reframe trong ExportPanel — đường kẻ
+   phân cách với nhóm normalize phía trên, không đổi layout con bên trong. */
+.reframe-section {
+  margin-top: 12px;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 4px;
 }
 .preset-row label {
   color: var(--muted);
@@ -1789,11 +1947,15 @@ button.danger {
   color: #fff;
 }
 /* ============ K5: Toasts (thay window.alert) ============ */
+/* Đợt 62 R1: toasts z 200 → 500 để giữ trên .modal-backdrop (400):
+   toast hiện lúc modal mở vẫn thấy được. Hệ quả: toast cũng che pill
+   FPS (z 300) trong vài giây nó hiện — chấp nhận, toast là UI transient
+   ưu tiên cao nhất. */
 .toasts {
   position: fixed;
   right: 16px;
   bottom: 16px;
-  z-index: 200;
+  z-index: 500;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1858,6 +2020,101 @@ button.danger {
   line-height: 1;
 }
 .preview-fs-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* Phase 9 đợt 60 Q2: 9 badge trạng thái preview trước đây chỉ có inline
+   style (class là hook cho ref/harness, không có rule CSS nào). Chuyển
+   toàn bộ style TĨNH sang đây — giá trị y hệt inline style cũ, chỉ còn
+   `display: "none"` ở lại inline vì JS bật/tắt qua ref (và `background`
+   của 2 badge reverse-engine / LUT vẫn được JS ghi đè qua
+   el.style.background khi có giá trị riêng). 2 phần tử render có điều
+   kiện (reverse-badge, decodeahead-toggle) bỏ hẳn prop style.
+   Các class này được harness click-test query (.preview-proxy-badge,
+   .preview-motion-badge, ...) nên GIỮ NGUYÊN tên class, không đổi tên. */
+.preview-proxy-badge,
+.preview-lut-badge,
+.preview-motion-badge,
+.preview-reverse-badge,
+.preview-hold-badge,
+.preview-reverse-engine-badge,
+.preview-curve-warn-badge,
+.preview-decodeahead-warn-badge {
+  position: absolute;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 5;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.preview-proxy-badge {
+  left: 8px;
+  top: 8px;
+  background: rgba(255, 170, 0, 0.9);
+  color: #111;
+}
+.preview-lut-badge {
+  right: 8px;
+  top: 8px;
+  background: rgba(140, 90, 0, 0.85);
+  color: #fff;
+}
+.preview-motion-badge {
+  left: 50%;
+  top: 8px;
+  transform: translateX(-50%);
+  background: rgba(90, 60, 160, 0.9);
+  color: #fff;
+}
+.preview-reverse-badge {
+  right: 8px;
+  bottom: 8px;
+  background: rgba(120, 40, 160, 0.92);
+  color: #fff;
+}
+.preview-hold-badge {
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  background: rgba(180, 120, 0, 0.92);
+  color: #fff;
+}
+.preview-reverse-engine-badge {
+  left: 8px;
+  bottom: 32px;
+  background: rgba(40, 120, 180, 0.92);
+  color: #fff;
+}
+.preview-curve-warn-badge {
+  left: 8px;
+  bottom: 8px;
+  background: rgba(180, 40, 40, 0.92);
+  color: #fff;
+}
+.preview-decodeahead-warn-badge {
+  left: 8px;
+  bottom: 32px;
+  background: rgba(150, 90, 0, 0.92);
+  color: #fff;
+}
+.preview-decodeahead-toggle {
+  position: absolute;
+  top: 10px;
+  right: 50px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 5;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.preview-decodeahead-toggle:hover {
   background: rgba(0, 0, 0, 0.8);
 }
 .preview-empty-hint {
@@ -1930,6 +2187,9 @@ button.danger {
 }
 
 /* ---- R1 (Phase 9): onboarding / tour / template pack ---- */
+/* Đợt 62 R1: tour-card z 120 → 450 để giữ trên .modal-backdrop (400) —
+   thứ tự cũ vốn là tour trên modal, nâng backdrop mà không nâng tour
+   thì tour sẽ chìm dưới lớp mờ và mất click khi modal mở trong lúc tour. */
 .tour-card {
   position: fixed;
   right: 16px;
@@ -1940,7 +2200,7 @@ button.danger {
   border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
-  z-index: 120;
+  z-index: 450;
   overflow: hidden;
 }
 .tour-head {
@@ -1959,6 +2219,10 @@ button.danger {
   gap: 8px;
 }
 .tour-body .muted, .tour-body .warn { margin: 0; }
+/* Phase 9 đợt 60 Q2: rule trên chỉ đặt margin — chữ .muted/.warn trong
+   TourCard vẫn hiện màu mặc định. Thêm màu, khớp .modal-body .muted/.warn. */
+.tour-body .muted { color: var(--muted); }
+.tour-body .warn { color: #f5b453; }
 .tour-card .btn-row { padding: 0 14px 14px; flex-wrap: wrap; }
 .tour-highlight {
   outline: 3px solid #8b7cf6 !important;

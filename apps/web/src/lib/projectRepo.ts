@@ -22,11 +22,45 @@
  */
 import { SPEC_VERSION, isTextAnimation, isVideoSpec, migrate, migrateMotion, MigrationError, readSchemaVersion } from "@repo-1/video-spec";
 import type { ClipMotion, TextStyle, TrackKind, VideoSpec } from "@repo-1/video-spec";
+// Đợt 63 R7 — projectId ổn định trong envelope (module thuần, không
+// import value từ file anh em khác ngoài module này nên test Node
+// type-stripping vẫn chạy được như trước).
+// @ts-ignore: TS5097, đuôi .ts cho strip-types (xem nestedPreview.ts)
+import { isValidProjectId, resolveEnvelopeProjectId } from "./projectId63R7.ts";
 
 export const PROJECT_FILE_EXT = ".vcut.json";
 export const AUTOSAVE_KEY = "vcut-studio:autosave:v1";
 export const AUTOSAVE_DEBOUNCE_MS = 5000;
 export const APP_VERSION = "0.1.0"; // đồng bộ với apps/web/package.json
+
+/**
+ * Phase 9 đợt 56 M5 — lookup i18n tùy chọn, KHÔNG import `../i18n`
+ * trực tiếp: file này được test bằng Node type-stripping, mà Node
+ * không resolve JSON import của `i18n/index.ts`
+ * (ERR_IMPORT_ATTRIBUTE_MISSING, đã kiểm chứng 07/11) — cùng lý do
+ * ghi ở `parseSessionPlayhead` dưới đây (xem LIMITS đợt 56 M5).
+ * Khi `lookup` vắng → fallback đúng từng chữ chuỗi VI cũ nên test cũ
+ * + hành vi mặc định không đổi; UI (openProjectFlow/App, vốn đã
+ * import `t()`) truyền `t()` vào tham số `lookup` này để nhận chuỗi
+ * theo locale hiện tại. Key mới nằm trong
+ * `i18n/fragments/round56-m5.json` (parent merge vào vi.json/en.json
+ * cuối đợt 56). Riêng các warning speedCurve KHÔNG nối ở đây: chúng
+ * đã i18n qua `messageKey` + key `speedCurve.*` có sẵn (UI dịch lúc
+ * hiển thị qua loadReport.resolveWarningMessage); field `message`
+ * giữ nguyên chuỗi VI làm fallback theo đúng comment ở
+ * SpeedCurveWarning (test cũ + formatStructured khóa từng chữ).
+ */
+export type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
 
 const TRACK_KINDS: readonly TrackKind[] = ["video", "audio", "text", "sticker", "image"];
 
@@ -64,6 +98,84 @@ export function parseSessionPlayhead(data: unknown): number | null {
   return p;
 }
 
+/**
+ * Đợt 59 P1 — một media trong bin, lưu trong envelope autosave.
+ *
+ * Bối cảnh (nợ đợt 58 §6.1 O2): rehydrate chỉ nạp media mà spec còn
+ * tham chiếu (thiết kế S5), nên media import rồi xóa hết clip khỏi
+ * timeline biến mất khỏi bin sau reload dù bytes còn trong IndexedDB.
+ * Từ đợt này autosave mang thêm manifest bin: rehydrate nạp đủ các
+ * entry này KÈM theo media trong spec. Entry chỉ mang `assetId` (khóa
+ * vào manifest trong AssetStore — bytes, metadata, proxy đều đọc từ
+ * đó) + `name` (tên hiển thị trong bin lúc autosave; có thể khác
+ * originalName khi item bị đổi tên do trùng — xem binMediaFromMedia).
+ * Media chỉ biến mất khỏi bin khi user xóa chủ đích ở MediaBin (lúc đó
+ * autosave sau đó không còn entry này nữa); bytes trong IndexedDB vẫn
+ * nằm đó (mồ côi, không tự hiện lại) như hành vi cũ khi xóa clip.
+ */
+export interface BinMediaEntry {
+  assetId: string;
+  name: string;
+}
+
+/** Trần số entry binMedia trong một envelope (chống envelope phình vô hạn). */
+export const MAX_BIN_MEDIA_ENTRIES = 500;
+
+/**
+ * Đợt 59 P1 — đọc manifest bin từ envelope autosave thô (JSON đã parse).
+ *
+ * Hàm thuần, đặt ở đây cùng parseSessionPlayhead vì projectRepo là nơi
+ * duy nhất đọc envelope autosave thô. Tương thích ngược: envelope cũ
+ * không có `binMedia` (hoặc không phải mảng) → null, caller (App) giữ
+ * hành vi cũ (rehydrate chỉ theo spec). `[]` (mảng rỗng hợp lệ) → []
+ * (bin trống có chủ đích — user đã xóa hết media khỏi bin). Entry xấu
+ * (thiếu/không phải chuỗi assetId/name, trùng assetId) bị loại lặng lẽ,
+ * KHÔNG throw, KHÔNG đoán giá trị; quá trần thì cắt ở 500 entry đầu.
+ */
+export function parseBinMedia(data: unknown): BinMediaEntry[] | null {
+  if (!isRecord(data)) return null;
+  const raw = data["binMedia"];
+  if (raw === undefined || raw === null) return null;
+  if (!Array.isArray(raw)) return null;
+  const out: BinMediaEntry[] = [];
+  const seen = new Set<string>();
+  for (const e of raw) {
+    if (!isRecord(e)) continue;
+    const assetId = e["assetId"];
+    const name = e["name"];
+    if (typeof assetId !== "string" || assetId.length === 0) continue;
+    if (typeof name !== "string" || name.length === 0) continue;
+    if (seen.has(assetId)) continue;
+    seen.add(assetId);
+    out.push({ assetId, name });
+    if (out.length >= MAX_BIN_MEDIA_ENTRIES) break;
+  }
+  return out;
+}
+
+/**
+ * Đợt 59 P1 — dựng manifest bin từ media bin hiện tại trong store.
+ *
+ * Chỉ item đã ingest mới có `assetId` (ghi lúc import/relink/rehydrate);
+ * item chưa ingest (vd: session-only, import lỗi ingest) không có bytes
+ * trong IndexedDB nên rehydrate không khôi phục được — loại khỏi
+ * manifest thay vì ghi entry chết. Thứ tự bin được giữ nguyên.
+ */
+export function binMediaFromMedia(
+  items: ReadonlyArray<{ assetId?: string; name: string }>,
+): BinMediaEntry[] {
+  const out: BinMediaEntry[] = [];
+  const seen = new Set<string>();
+  for (const m of items) {
+    if (typeof m.assetId !== "string" || m.assetId.length === 0) continue;
+    if (typeof m.name !== "string" || m.name.length === 0) continue;
+    if (seen.has(m.assetId)) continue;
+    seen.add(m.assetId);
+    out.push({ assetId: m.assetId, name: m.name });
+  }
+  return out;
+}
+
 export interface ProjectEnvelope {
   format: "vcut-project";
   formatVersion: 1;
@@ -71,14 +183,44 @@ export interface ProjectEnvelope {
   specVersion: string;
   savedAt: string; // ISO 8601
   name: string;
+  /**
+   * Đợt 63 R7 — id ổn định của project (UUID, xem lib/projectId63R7.ts).
+   * Sinh một lần lúc tạo project, persist trong file + autosave, và là
+   * khóa sổ tham chiếu liên project (`id:<uuid>`) thay cho tên. Tùy
+   * chọn: file cũ (trước đợt 63) không có field → mở file sẽ migration
+   * sinh id mới (xem parseProjectText + LoadResult.projectIdMigrated).
+   */
+  projectId?: string;
   spec: VideoSpec;
   session?: AutosaveSession;
+  /**
+   * Đợt 59 P1 — manifest media trong bin (CHỈ autosave, KHÔNG vào file
+   * `.vcut.json` tải xuống: file là project di động, còn manifest này
+   * trỏ vào AssetStore/IndexedDB của máy này — máy khác không có bytes
+   * đó; saveProject không truyền tham số này nên file không mang field).
+   * Envelope cũ không có field → App fallback hành vi cũ (chỉ spec).
+   */
+  binMedia?: BinMediaEntry[];
 }
 
 export interface LoadResult {
   ok: boolean;
   spec: VideoSpec | null;
   name: string;
+  /**
+   * Đợt 63 R7 — projectId ổn định của project vừa mở (luôn có khi
+   * ok: true; file cũ chưa có id thì đã migration sinh mới, xem
+   * projectIdMigrated). Cổng fail đặt "" (không có project để nhận id).
+   */
+  projectId: string;
+  /**
+   * Đợt 63 R7 — true khi file vừa mở CHƯA có projectId hợp lệ nên đã
+   * sinh id mới (migration). App phải lưu lại file/autosave để id này
+   * bền vững — nếu không, lần mở sau lại sinh id khác và sổ tham chiếu
+   * của project này sẽ có thêm một bản ghi mới (bản ghi cũ vẫn còn,
+   * chỉ thừa chứ không mất bảo vệ). Kèm một warning trong `warnings`.
+   */
+  projectIdMigrated: boolean;
   /** Lỗi chặn việc mở file (file hỏng). */
   errors: string[];
   /** Cảnh báo không chặn (định dạng cũ, blob: URL...). */
@@ -171,7 +313,8 @@ export type StructuredNoteCode =
   | "schemaMigrated"
   | "textStyleFixed"
   | "archiveMissingExport"
-  | "archiveMissingImport";
+  | "archiveMissingImport"
+  | "projectIdMigrated";
 
 export interface StructuredNote {
   code: StructuredNoteCode;
@@ -458,6 +601,13 @@ export interface ValidateSpecDeepOptions {
   speedCurveWarnings?: SpeedCurveWarning[];
   /** Tiền tố đường dẫn khi duyệt subSpec đệ quy (nội bộ). */
   pathPrefix?: string;
+  /**
+   * Đợt 60 Q4 — lookup i18n tùy chọn: lỗi validate đi qua key
+   * `projectRepo.validate*` trong dict (cả vi+en); vắng → fallback
+   * đúng từng chữ chuỗi VI cũ nên test cũ + hành vi mặc định không đổi.
+   * Đệ quy subSpec truyền ...opts nên lookup chảy xuống tự nhiên.
+   */
+  lookup?: I18nLookup;
 }
 
 function validateClipDeep(
@@ -467,23 +617,32 @@ function validateClipDeep(
   seenSpecs: Set<object>,
   opts?: ValidateSpecDeepOptions,
 ): void {
+  // Đợt 60 Q4 — lookup i18n cho các key projectRepo.validate* (xem trên).
+  const lookup = opts?.lookup;
   if (!isRecord(c)) {
-    errors.push(at(path, "phải là object."));
+    errors.push(at(path, trKey(lookup, "projectRepo.validateNotObject", {}, "phải là object.")));
     return;
   }
-  if (typeof c.id !== "string" || c.id.length === 0) errors.push(at(path, "thiếu id."));
-  if (!isFiniteNum(c.start) || c.start < 0) errors.push(at(path, "start phải là số ≥ 0."));
+  if (typeof c.id !== "string" || c.id.length === 0)
+    errors.push(at(path, trKey(lookup, "projectRepo.validateMissingId", {}, "thiếu id.")));
+  if (!isFiniteNum(c.start) || c.start < 0)
+    errors.push(at(path, trKey(lookup, "projectRepo.validateStartRange", {}, "start phải là số ≥ 0.")));
   if (!isFiniteNum(c.duration) || c.duration <= 0)
-    errors.push(at(path, "duration phải là số > 0."));
+    errors.push(at(path, trKey(lookup, "projectRepo.validateDurationPositive", {}, "duration phải là số > 0.")));
   const kind = c.kind as string;
   if (kind === "video" || kind === "audio") {
-    if (typeof c.src !== "string" || c.src.length === 0) errors.push(at(path, "thiếu src."));
-    if (!isFiniteNum(c.in)) errors.push(at(path, "thiếu in (điểm vào nguồn)."));
-    if (!isFiniteNum(c.out)) errors.push(at(path, "thiếu out (điểm ra nguồn)."));
+    if (typeof c.src !== "string" || c.src.length === 0)
+      errors.push(at(path, trKey(lookup, "projectRepo.validateMissingSrc", {}, "thiếu src.")));
+    if (!isFiniteNum(c.in))
+      errors.push(at(path, trKey(lookup, "projectRepo.validateMissingIn", {}, "thiếu in (điểm vào nguồn).")));
+    if (!isFiniteNum(c.out))
+      errors.push(at(path, trKey(lookup, "projectRepo.validateMissingOut", {}, "thiếu out (điểm ra nguồn).")));
   } else if (kind === "text") {
-    if (typeof c.text !== "string") errors.push(at(path, "thiếu text."));
+    if (typeof c.text !== "string")
+      errors.push(at(path, trKey(lookup, "projectRepo.validateMissingText", {}, "thiếu text.")));
   } else if (kind === "sticker" || kind === "image") {
-    if (typeof c.src !== "string" || c.src.length === 0) errors.push(at(path, "thiếu src."));
+    if (typeof c.src !== "string" || c.src.length === 0)
+      errors.push(at(path, trKey(lookup, "projectRepo.validateMissingSrc", {}, "thiếu src.")));
   } else if (kind === "nested") {
     // Phase 9 đợt 22 (parent fix theo phát hiện luồng F): trước đây nhánh này
     // không tồn tại nên mọi project chứa nested clip đều bị
@@ -499,7 +658,7 @@ function validateClipDeep(
       speed !== undefined &&
       (!isFiniteNum(speed) || (speed as number) < 0.25 || (speed as number) > 4)
     )
-      errors.push(at(path, "speed phải trong [0.25, 4]."));
+      errors.push(at(path, trKey(lookup, "projectRepo.validateSpeedRange", {}, "speed phải trong [0.25, 4].")));
     const trim = rec["trim"];
     if (trim !== undefined) {
       if (
@@ -508,11 +667,11 @@ function validateClipDeep(
         !isFiniteNum(trim["out"]) ||
         (trim["out"] as number) <= (trim["in"] as number)
       )
-        errors.push(at(path, "trim không hợp lệ (cần in < out)."));
+        errors.push(at(path, trKey(lookup, "projectRepo.validateTrimInvalid", {}, "trim không hợp lệ (cần in < out).")));
     }
     const sub = rec["subSpec"];
     if (!isRecord(sub)) {
-      errors.push(at(path, "thiếu subSpec."));
+      errors.push(at(path, trKey(lookup, "projectRepo.validateMissingSubSpec", {}, "thiếu subSpec.")));
     } else {
       const subErrors = validateSpecDeep(sub, seenSpecs, {
         ...opts,
@@ -521,7 +680,17 @@ function validateClipDeep(
       for (const e of subErrors) errors.push(at(path, `subSpec: ${e}`));
     }
   } else {
-    errors.push(at(path, `kind không hỗ trợ: ${JSON.stringify(kind)}.`));
+    errors.push(
+      at(
+        path,
+        trKey(
+          lookup,
+          "projectRepo.validateKindUnsupported",
+          { kind: JSON.stringify(kind) },
+          `kind không hỗ trợ: ${JSON.stringify(kind)}.`,
+        ),
+      ),
+    );
   }
   // Đợt 26 J5 — curve của chính clip này (lá video/audio, hoặc nested tự
   // mang curve): chỉ ghi warnings khi caller yêu cầu qua opts, KHÔNG
@@ -559,43 +728,77 @@ export function validateSpecDeep(
   seenSpecs: Set<object> = new Set(),
   opts?: ValidateSpecDeepOptions,
 ): string[] {
+  // Đợt 60 Q4 — lookup i18n cho các key projectRepo.validate* (xem
+  // ValidateSpecDeepOptions.lookup); vắng → fallback VI cũ.
+  const lookup = opts?.lookup;
   const errors: string[] = [];
   if (!isVideoSpec(spec)) {
     const v = isRecord(spec) ? (spec as Record<string, unknown>).version : undefined;
     errors.push(
-      `Không phải video-spec hợp lệ (version=${JSON.stringify(v)}, app hỗ trợ ${SPEC_VERSION}). ` +
-        `File có thể bị hỏng hoặc dùng schema version không được hỗ trợ.`,
+      trKey(
+        lookup,
+        "projectRepo.validateNotVideoSpec",
+        { version: String(JSON.stringify(v)), supported: SPEC_VERSION },
+        `Không phải video-spec hợp lệ (version=${JSON.stringify(v)}, app hỗ trợ ${SPEC_VERSION}). ` +
+          `File có thể bị hỏng hoặc dùng schema version không được hỗ trợ.`,
+      ),
     );
     return errors;
   }
   if (seenSpecs.has(spec as object)) {
-    errors.push("subSpec tạo vòng lặp (spec con trỏ lại spec tổ tiên).");
+    errors.push(
+      trKey(
+        lookup,
+        "projectRepo.validateSubSpecCycle",
+        {},
+        "subSpec tạo vòng lặp (spec con trỏ lại spec tổ tiên).",
+      ),
+    );
     return errors;
   }
   const chain = new Set(seenSpecs);
   chain.add(spec as object);
   const meta = spec.meta as unknown as Record<string, unknown>;
   if (typeof meta.name !== "string" || meta.name.trim().length === 0)
-    errors.push("meta.name phải là chuỗi khác rỗng.");
-  if (!isFiniteNum(meta.width) || meta.width <= 0) errors.push("meta.width phải là số > 0.");
-  if (!isFiniteNum(meta.height) || meta.height <= 0) errors.push("meta.height phải là số > 0.");
-  if (!isFiniteNum(meta.fps) || meta.fps <= 0) errors.push("meta.fps phải là số > 0.");
+    errors.push(
+      trKey(lookup, "projectRepo.validateMetaName", {}, "meta.name phải là chuỗi khác rỗng."),
+    );
+  if (!isFiniteNum(meta.width) || meta.width <= 0)
+    errors.push(trKey(lookup, "projectRepo.validateMetaWidth", {}, "meta.width phải là số > 0."));
+  if (!isFiniteNum(meta.height) || meta.height <= 0)
+    errors.push(trKey(lookup, "projectRepo.validateMetaHeight", {}, "meta.height phải là số > 0."));
+  if (!isFiniteNum(meta.fps) || meta.fps <= 0)
+    errors.push(trKey(lookup, "projectRepo.validateMetaFps", {}, "meta.fps phải là số > 0."));
   if (!Array.isArray(spec.tracks)) {
-    errors.push("tracks phải là mảng.");
+    // Nhánh phòng thủ (đợt 60 Q4): isVideoSpec đã chặn tracks không phải
+    // mảng nên không chạm tới được qua API công khai — vẫn nối key để
+    // nhất quán nếu isVideoSpec nới lỏng sau này.
+    errors.push(trKey(lookup, "projectRepo.validateTracksArray", {}, "tracks phải là mảng."));
     return errors;
   }
   const prefix = opts?.pathPrefix ?? "";
   spec.tracks.forEach((t: unknown, ti: number) => {
     const tp = `${prefix}tracks[${ti}]`;
     if (!isRecord(t)) {
-      errors.push(at(tp, "phải là object."));
+      errors.push(at(tp, trKey(lookup, "projectRepo.validateNotObject", {}, "phải là object.")));
       return;
     }
-    if (typeof t.id !== "string" || t.id.length === 0) errors.push(at(tp, "thiếu id."));
+    if (typeof t.id !== "string" || t.id.length === 0)
+      errors.push(at(tp, trKey(lookup, "projectRepo.validateMissingId", {}, "thiếu id.")));
     if (!TRACK_KINDS.includes(t.kind as TrackKind))
-      errors.push(at(tp, `kind không hỗ trợ: ${JSON.stringify(t.kind)}.`));
+      errors.push(
+        at(
+          tp,
+          trKey(
+            lookup,
+            "projectRepo.validateKindUnsupported",
+            { kind: JSON.stringify(t.kind) },
+            `kind không hỗ trợ: ${JSON.stringify(t.kind)}.`,
+          ),
+        ),
+      );
     if (!Array.isArray(t.clips)) {
-      errors.push(at(tp, "clips phải là mảng."));
+      errors.push(at(tp, trKey(lookup, "projectRepo.validateClipsArray", {}, "clips phải là mảng.")));
       return;
     }
     (t.clips as unknown[]).forEach((c, ci) => {
@@ -875,20 +1078,41 @@ const KEYFRAME_EASINGS_E4: readonly string[] = ["linear", "ease-in", "ease-out"]
  * Sanitize MỘT KeyframedValue ({ keyframes: [...] }) tại chỗ.
  * Trả về true nếu field còn dùng được (giữ lại), false nếu phải xóa field.
  * Ghi chú sửa vào `fixes` khi có thay đổi (kèm đường dẫn đầy đủ).
+ *
+ * Đợt 60 Q4 — `lookup` tùy chọn: các câu fix đi qua key
+ * `projectRepo.keyframeFix*` (cả vi+en); vắng → fallback VI cũ. Lưu ý:
+ * chuỗi fix nằm trong {fields} của key projectRepo.keyframeDropped nên
+ * sau đợt này cả trong lẫn ngoài đều dịch (M5 trước đây khóa trạng thái
+ * trong-VI/ngoài-EN — xem LIMITS Q4 §4).
  */
 function sanitizeOneKeyframedValue(
   kv: unknown,
   where: string,
   allowBezier: boolean,
   fixes: string[],
+  lookup?: I18nLookup,
 ): boolean {
   if (!isRecord(kv)) {
-    fixes.push(`${where}: keyframes không phải object { keyframes: [...] } — đã xóa field.`);
+    fixes.push(
+      trKey(
+        lookup,
+        "projectRepo.keyframeFixNotObject",
+        { where },
+        `${where}: keyframes không phải object { keyframes: [...] } — đã xóa field.`,
+      ),
+    );
     return false;
   }
   const arr = kv["keyframes"];
   if (!Array.isArray(arr)) {
-    fixes.push(`${where}.keyframes không phải mảng — đã xóa field.`);
+    fixes.push(
+      trKey(
+        lookup,
+        "projectRepo.keyframeFixNotArray",
+        { where },
+        `${where}.keyframes không phải mảng — đã xóa field.`,
+      ),
+    );
     return false;
   }
   const validEasings = allowBezier
@@ -911,14 +1135,49 @@ function sanitizeOneKeyframedValue(
     }
   }
   if (kept.length === 0) {
-    fixes.push(`${where}.keyframes rỗng sau khi loại ${dropped} entry lỗi — đã xóa field.`);
+    fixes.push(
+      trKey(
+        lookup,
+        "projectRepo.keyframeFixEmptyAfterDrop",
+        { where, dropped: String(dropped) },
+        `${where}.keyframes rỗng sau khi loại ${dropped} entry lỗi — đã xóa field.`,
+      ),
+    );
     return false;
   }
   if (dropped > 0 || coercedEasing > 0) {
     const parts: string[] = [];
-    if (dropped > 0) parts.push(`đã loại ${dropped} entry lỗi (null/không hợp lệ)`);
-    if (coercedEasing > 0) parts.push(`đã chuẩn hóa ${coercedEasing} easing lạ về linear`);
-    fixes.push(`${where}.keyframes: ${parts.join(", ")} — giữ ${kept.length}/${arr.length} entry.`);
+    if (dropped > 0)
+      parts.push(
+        trKey(
+          lookup,
+          "projectRepo.keyframeFixDroppedEntries",
+          { dropped: String(dropped) },
+          `đã loại ${dropped} entry lỗi (null/không hợp lệ)`,
+        ),
+      );
+    if (coercedEasing > 0)
+      parts.push(
+        trKey(
+          lookup,
+          "projectRepo.keyframeFixEasingNormalized",
+          { n: String(coercedEasing) },
+          `đã chuẩn hóa ${coercedEasing} easing lạ về linear`,
+        ),
+      );
+    fixes.push(
+      trKey(
+        lookup,
+        "projectRepo.keyframeFixKept",
+        {
+          where,
+          parts: parts.join(", "),
+          kept: String(kept.length),
+          total: String(arr.length),
+        },
+        `${where}.keyframes: ${parts.join(", ")} — giữ ${kept.length}/${arr.length} entry.`,
+      ),
+    );
   }
   (kv as Record<string, unknown>)["keyframes"] = kept;
   return true;
@@ -934,8 +1193,11 @@ const ANIMATION_PROPS_E4: readonly string[] = ["x", "y", "opacity", "scale", "ro
  * Mutate spec tại chỗ — chỉ dùng cho object vừa JSON.parse ở cổng load.
  * Trả về đường dẫn các field đã sửa (dạng tracks[i].clips[j].<field>,
  * kèm tiền tố `.subSpec.` khi qua nested).
+ *
+ * Đợt 60 Q4 — `lookup` tùy chọn, truyền xuống sanitizeOneKeyframedValue
+ * để các câu fix đi qua key `projectRepo.keyframeFix*`; vắng → VI cũ.
  */
-export function sanitizeKeyframeArrays(spec: VideoSpec): string[] {
+export function sanitizeKeyframeArrays(spec: VideoSpec, lookup?: I18nLookup): string[] {
   const fixed: string[] = [];
   const walk = (s: VideoSpec, prefix: string, seen: Set<object>): void => {
     if (seen.has(s as object)) return;
@@ -953,13 +1215,13 @@ export function sanitizeKeyframeArrays(spec: VideoSpec): string[] {
         // volumeKeyframes: audio clip (check mọi kind cho an toàn — field
         // lạ trên kind khác cũng không được phép mang entry null).
         if (rec["volumeKeyframes"] !== undefined) {
-          if (!sanitizeOneKeyframedValue(rec["volumeKeyframes"], where("volumeKeyframes"), false, fixed)) {
+          if (!sanitizeOneKeyframedValue(rec["volumeKeyframes"], where("volumeKeyframes"), false, fixed, lookup)) {
             delete rec["volumeKeyframes"];
           }
         }
         // speedKeyframes: cho phép easing bezier (speed curve hỗ trợ).
         if (rec["speedKeyframes"] !== undefined) {
-          if (!sanitizeOneKeyframedValue(rec["speedKeyframes"], where("speedKeyframes"), true, fixed)) {
+          if (!sanitizeOneKeyframedValue(rec["speedKeyframes"], where("speedKeyframes"), true, fixed, lookup)) {
             delete rec["speedKeyframes"];
           }
         }
@@ -968,7 +1230,7 @@ export function sanitizeKeyframeArrays(spec: VideoSpec): string[] {
           const anims = rec["animations"] as Record<string, unknown>;
           for (const prop of ANIMATION_PROPS_E4) {
             if (anims[prop] !== undefined) {
-              if (!sanitizeOneKeyframedValue(anims[prop], where(`animations.${prop}`), false, fixed)) {
+              if (!sanitizeOneKeyframedValue(anims[prop], where(`animations.${prop}`), false, fixed, lookup)) {
                 delete anims[prop];
               }
             }
@@ -989,11 +1251,13 @@ export function sanitizeKeyframeArrays(spec: VideoSpec): string[] {
  * Chấp nhận envelope `.vcut.json`; spec trần (không envelope) vẫn đọc được
  * kèm cảnh báo (tương thích ngược với file export JSON cũ).
  */
-export function parseProjectText(text: string): LoadResult {
+export function parseProjectText(text: string, lookup?: I18nLookup): LoadResult {
   const fail = (errors: string[], warnings: string[] = []): LoadResult => ({
     ok: false,
     spec: null,
     name: "",
+    projectId: "",
+    projectIdMigrated: false,
     errors,
     warnings,
     speedCurveWarnings: [],
@@ -1005,11 +1269,22 @@ export function parseProjectText(text: string): LoadResult {
   try {
     data = JSON.parse(text);
   } catch {
-    return fail(["File không phải JSON hợp lệ."]);
+    // Đợt 60 Q4 — key projectRepo.invalidJson (lookup tùy chọn, vắng → VI cũ).
+    return fail([trKey(lookup, "projectRepo.invalidJson", {}, "File không phải JSON hợp lệ.")]);
   }
   let spec: unknown;
-  let name = "Dự án không tên";
+  // Đợt 60 Q4 — key projectRepo.untitledProject: tên mặc định khi envelope
+  // không có tên (chỉ là tên hiển thị; lưu lại file sẽ giữ tên đã dịch
+  // theo locale lúc mở — cùng hành vi với projectMenu.untitledProject).
+  let name = trKey(lookup, "projectRepo.untitledProject", {}, "Dự án không tên");
   const warnings: string[] = [];
+  // Đợt 63 R7 — projectId ổn định: envelope có id hợp lệ thì giữ
+  // nguyên; file cũ/bare-spec chưa có id thì migration sinh mới (xem
+  // resolveEnvelopeProjectId — KHÔNG suy id từ tên/hash vì cả hai đều
+  // đổi được). Warning migration được gắn ở cuối hàm, sau khi biết
+  // file mở thành công (file hỏng thì không cần id).
+  let projectId = "";
+  let projectIdMigrated = false;
   // Đợt 31 N4: dạng cấu trúc song song với warnings (cùng thứ tự, trừ
   // speedCurve + câu tràn 100) — xem StructuredNote.
   const structuredNotes: StructuredNote[] = [];
@@ -1021,6 +1296,10 @@ export function parseProjectText(text: string): LoadResult {
       structuredNotes.push({ code: "formatVersionMismatch", params: { version }, fallback });
     }
     if (typeof data.name === "string" && data.name.length > 0) name = data.name;
+    // Đợt 63 R7 — đọc projectId từ envelope (migration khi thiếu/lạ).
+    const resolved = resolveEnvelopeProjectId(data.projectId);
+    projectId = resolved.projectId;
+    projectIdMigrated = resolved.migrated;
     // specVersion trong envelope chỉ là metadata; version thật nằm trong spec.version
     // và sẽ được migrate ở bước dưới nếu cần.
     spec = data.spec;
@@ -1029,6 +1308,26 @@ export function parseProjectText(text: string): LoadResult {
     warnings.push(fallback);
     structuredNotes.push({ code: "legacyEnvelope", params: {}, fallback });
     spec = data;
+    // Đợt 63 R7 — spec trần không có envelope nên không có projectId:
+    // migration sinh mới như file cũ (lưu lại file sẽ persist id này).
+    const resolved = resolveEnvelopeProjectId(undefined);
+    projectId = resolved.projectId;
+    projectIdMigrated = true;
+    // Phase 9 đợt 54 K1 — bare-spec: lấy tên project từ spec.meta.name.
+    // Bug đợt 53 J3 §4.2: file .vcut bare-spec (fixture H9, chỉ có
+    // meta.name, không có envelope name) load xong nhưng tên kẹt ở
+    // "Dự án không tên" vì nhánh này không đọc meta.name. migrate() chỉ
+    // deep-clone + bump version nên đọc ở đây vẫn đúng sau migrate.
+    // meta.name rỗng/không phải chuỗi → giữ mặc định cũ (validate ở dưới
+    // vẫn yêu cầu meta.name khác rỗng với spec hợp lệ).
+    if (
+      isRecord(data) &&
+      isRecord(data.meta) &&
+      typeof data.meta.name === "string" &&
+      data.meta.name.trim().length > 0
+    ) {
+      name = data.meta.name;
+    }
   }
 
   // P0-12 / R1-019: migrate schema version cũ → hiện tại TRƯỚC khi validate.
@@ -1049,7 +1348,7 @@ export function parseProjectText(text: string): LoadResult {
       });
     } catch (e) {
       const msg = e instanceof MigrationError ? e.message : String(e);
-      return fail([`Không mở được file: ${msg}`], warnings);
+      return fail([trKey(lookup, "projectRepo.openFailed", { error: msg }, `Không mở được file: ${msg}`)], warnings);
     }
   }
 
@@ -1059,13 +1358,22 @@ export function parseProjectText(text: string): LoadResult {
   // speedCurve (seed deep I6 trước đây load ok 0 warning nay load ok kèm
   // warning nêu đúng clip/keyframe/giá trị v=5).
   const speedCurveWarningsAll: SpeedCurveWarning[] = [];
-  const errors = validateSpecDeep(spec, new Set(), { speedCurveWarnings: speedCurveWarningsAll });
+  // Đợt 60 Q4 — truyền lookup xuống validateSpecDeep để lỗi validate đi
+  // qua key projectRepo.validate* (cả vi+en); vắng → fallback VI cũ.
+  const errors = validateSpecDeep(spec, new Set(), { speedCurveWarnings: speedCurveWarningsAll, lookup });
   if (errors.length > 0) return fail(errors, warnings);
   const speedCurveWarnings = speedCurveWarningsAll.slice(0, 100);
   for (const w of speedCurveWarnings) warnings.push(formatSpeedCurveWarning(w));
   if (speedCurveWarningsAll.length > 100) {
+    // Đợt 57 gộp N7: câu tràn đã dịch qua key projectRepo.moreWarnings
+    // (fragment round57-n7, dict 1937 key); không lookup -> fallback VI cũ.
     warnings.push(
-      `Còn ${speedCurveWarningsAll.length - 100} cảnh báo speedKeyframes khác (đã giới hạn hiển thị 100).`,
+      trKey(
+        lookup,
+        "projectRepo.moreWarnings",
+        { n: String(speedCurveWarningsAll.length - 100) },
+        `Còn ${speedCurveWarningsAll.length - 100} cảnh báo speedKeyframes khác (đã giới hạn hiển thị 100).`,
+      ),
     );
   }
   const vspec = spec as VideoSpec;
@@ -1112,24 +1420,45 @@ export function parseProjectText(text: string): LoadResult {
   // Fail-soft như speedCurve: project vẫn mở được, chỉ ghi warning +
   // keyframeFixes. Không thêm StructuredNote mới (tránh đụng union code
   // + key i18n của các luồng khác); warning chuỗi đã đủ cho UI/load-report.
-  const keyframeFixes = sanitizeKeyframeArrays(finalSpec);
+  // Đợt 60 Q4 — truyền lookup để câu fix đi qua keyframeFix* (vi+en).
+  const keyframeFixes = sanitizeKeyframeArrays(finalSpec, lookup);
   if (keyframeFixes.length > 0) {
     const shown = keyframeFixes.slice(0, 5).join(", ");
     const extra = keyframeFixes.length > 5 ? ", …" : "";
     warnings.push(
-      `Đã loại keyframe lỗi khỏi ${keyframeFixes.length} field (${shown}${extra}) — lưu lại file để hoàn tất.`,
+      trKey(lookup, "projectRepo.keyframeDropped",
+        { count: String(keyframeFixes.length), fields: `${shown}${extra}` },
+        `Đã loại keyframe lỗi khỏi ${keyframeFixes.length} field (${shown}${extra}) — lưu lại file để hoàn tất.`),
     );
   }
   const blobItems = findBlobWarningItems(finalSpec);
   warnings.push(...blobItems.map((n) => n.fallback));
   structuredNotes.push(...blobItems);
-  return { ok: true, spec: finalSpec, name, errors: [], warnings, speedCurveWarnings, textStyleFixes, keyframeFixes, structuredNotes };
+  // Đợt 63 R7 — file cũ vừa được gán id mới: báo rõ để user lưu lại
+  // file (id chỉ bền vững sau lần lưu sau; không lưu thì lần mở sau
+  // lại sinh id khác — sổ tham chiếu chỉ thừa thêm bản ghi, không mất
+  // bảo vệ). Warning chuỗi + structured note song song (quy ước đợt
+  // 31 N4: mọi warning đều có dạng cấu trúc để buildLoadReport trừ
+  // fallback khỏi otherWarnings). Key mới ở fragment round63-r7
+  // (parent gộp cuối đợt 63); chưa gộp thì trKey/formatStructuredNote
+  // trả fallback VI như mọi key mới.
+  if (projectIdMigrated) {
+    const fallback = trKey(
+      lookup,
+      "projectRepo.projectIdMigrated",
+      {},
+      "File chưa có mã project ổn định — đã tạo mã mới, lưu lại file để giữ mã này.",
+    );
+    warnings.push(fallback);
+    structuredNotes.push({ code: "projectIdMigrated", params: {}, fallback });
+  }
+  return { ok: true, spec: finalSpec, name, projectId, projectIdMigrated, errors: [], warnings, speedCurveWarnings, textStyleFixes, keyframeFixes, structuredNotes };
 }
 
 /** Đọc File từ <input> → LoadResult (validate đầy đủ, lỗi chi tiết). */
-export async function loadProject(file: File): Promise<LoadResult> {
+export async function loadProject(file: File, lookup?: I18nLookup): Promise<LoadResult> {
   const text = await file.text();
-  return parseProjectText(text);
+  return parseProjectText(text, lookup);
 }
 
 /** Đóng gói spec thành envelope + JSON text. */
@@ -1137,6 +1466,23 @@ export function serializeProject(
   spec: VideoSpec,
   name: string,
   session?: AutosaveSession,
+  /**
+   * Đợt 59 P1 — manifest bin (CHỈ autosave gọi với tham số này;
+   * saveProject không truyền nên file `.vcut.json` không mang field,
+   * xem ProjectEnvelope.binMedia). `undefined` = không ghi field
+   * (tương thích envelope cũ); `[]` = ghi mảng rỗng (bin trống có
+   * chủ đích). Đã qua parseBinMedia/binMediaFromMedia ở caller nên
+   * ở đây chỉ ghi nguyên vẹn.
+   */
+  binMedia?: BinMediaEntry[],
+  /**
+   * Đợt 63 R7 — projectId ổn định (UUID, xem lib/projectId63R7.ts).
+   * `undefined` / không hợp lệ = không ghi field (hành vi cũ — file
+   * mở ra sẽ migration sinh id mới). Mọi đường lưu của app đều truyền
+   * id từ store nên file lưu ra luôn mang id; chỉ test/caller cũ
+   * không truyền thì envelope thiếu field như trước.
+   */
+  projectId?: string,
 ): {
   json: string;
   envelope: ProjectEnvelope;
@@ -1155,6 +1501,12 @@ export function serializeProject(
     name: name && name.trim().length > 0 ? name : "Dự án không tên",
     spec,
   };
+  // Đợt 63 R7 — chỉ ghi projectId khi hợp lệ; id lạ/không truyền thì
+  // bỏ field (file mở ra sẽ migration như file cũ — không ghi id rác
+  // vào envelope).
+  if (isValidProjectId(projectId)) {
+    envelope.projectId = projectId;
+  }
   // Đợt 36 S5: chỉ ghi session khi playhead hợp lệ; session xấu thì bỏ
   // (không ghi field rác vào autosave), envelope cũ không có session
   // vẫn đọc được như trước.
@@ -1166,6 +1518,11 @@ export function serializeProject(
   ) {
     envelope.session = { playhead: session.playhead };
   }
+  // Đợt 59 P1: chỉ ghi binMedia khi caller truyền (autosave); file
+  // .vcut.json (saveProject không truyền) không mang field này.
+  if (binMedia !== undefined) {
+    envelope.binMedia = binMedia;
+  }
   return { json: JSON.stringify(envelope, null, 2), envelope, warnings, structuredNotes };
 }
 
@@ -1175,11 +1532,11 @@ export function serializeProject(
  * tham số) là dạng chính để UI dịch toast qua i18n; `warnings` chuỗi
  * cũ giữ lại để tương thích. Đánh dấu project là "đã lưu".
  */
-export function saveProject(spec: VideoSpec, name: string): {
+export function saveProject(spec: VideoSpec, name: string, projectId?: string): {
   warnings: string[];
   structuredNotes: StructuredNote[];
 } {
-  const { json, warnings, structuredNotes } = serializeProject(spec, name);
+  const { json, warnings, structuredNotes } = serializeProject(spec, name, undefined, undefined, projectId);
   const safeName = (name || "du-an").replace(/[\\/:*?"<>|]/g, "_").trim() || "du-an";
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -1219,9 +1576,32 @@ export function getLastAutosaveAt(): string | null {
 }
 
 /** Ghi autosave ngay lập tức (dùng cho test và sau khi mở file). */
-export function autosaveNow(spec: VideoSpec, name: string, session?: AutosaveSession): void {
+export function autosaveNow(
+  spec: VideoSpec,
+  name: string,
+  session?: AutosaveSession,
+  binMedia?: BinMediaEntry[],
+  /**
+   * Đợt 63 R7 — projectId ổn định: autosave cũng phải mang id, nếu
+   * không reload sẽ migration sinh id mới mỗi lần và sổ tham chiếu
+   * phình thêm bản ghi. Không truyền = hành vi cũ (envelope thiếu id).
+   */
+  projectId?: string,
+): void {
+  // Đợt 60 Q7 — ghi ngay HỦY timer debounce đang chờ: timer giữ payload
+  // chụp lúc lên lịch (có thể là spec/binMedia cũ hơn, thậm chí là bản
+  // KHÔNG có binMedia ở đường mở file); để nó bắn sau sẽ ghi đè envelope
+  // mới hơn bằng dữ liệu cũ — race tái hiện bằng test binOrphan60Q7
+  // C-R1 (autosave() cũ + autosaveNow() mới → timer cũ thắng, envelope
+  // quay về bản cũ). Lần ghi ngay luôn mới hơn mọi lần ghi hoãn đang
+  // chờ nên hủy là an toàn. Đường gọi duy nhất tự hủy là chính callback
+  // của timer (đã đặt autosaveTimer = null trước khi gọi tới đây).
+  if (autosaveTimer) {
+    clearTimeout(autosaveTimer);
+    autosaveTimer = null;
+  }
   try {
-    const { json } = serializeProject(spec, name, session);
+    const { json } = serializeProject(spec, name, session, binMedia, projectId);
     localStorage.setItem(AUTOSAVE_KEY, json);
     lastAutosaveAt = new Date().toISOString();
   } catch {
@@ -1230,18 +1610,25 @@ export function autosaveNow(spec: VideoSpec, name: string, session?: AutosaveSes
 }
 
 /** Lên lịch autosave (debounce 5s). Gọi mỗi khi spec thay đổi. */
-export function autosave(spec: VideoSpec, name: string, session?: AutosaveSession): void {
+export function autosave(
+  spec: VideoSpec,
+  name: string,
+  session?: AutosaveSession,
+  binMedia?: BinMediaEntry[],
+  /** Đợt 63 R7 — projectId ổn định, xem autosaveNow (chụp vào timer). */
+  projectId?: string,
+): void {
   if (autosaveTimer) clearTimeout(autosaveTimer);
   autosaveTimer = setTimeout(() => {
     autosaveTimer = null;
-    autosaveNow(spec, name, session);
+    autosaveNow(spec, name, session, binMedia, projectId);
   }, AUTOSAVE_DEBOUNCE_MS);
 }
 
 /** Đọc autosave. Trả null nếu không có hoặc file autosave hỏng (validate lại).
  *  Đợt 26 J5: kèm warnings (kể cả speedCurveWarnings có cấu trúc) để App
  *  hiển thị toast lúc khôi phục — trước đây cổng này bỏ warnings. */
-export function loadAutosave(): {
+export function loadAutosave(lookup?: I18nLookup): {
   spec: VideoSpec;
   name: string;
   savedAt: string;
@@ -1256,6 +1643,21 @@ export function loadAutosave(): {
    * reversePlayback luôn reset (xem AutosaveSession).
    */
   session: AutosaveSession | null;
+  /**
+   * Đợt 59 P1 — manifest media trong bin, đọc từ envelope autosave.
+   * null = envelope cũ không có field (App fallback hành vi cũ:
+   * rehydrate chỉ theo spec); [] = bin trống có chủ đích. App truyền
+   * thẳng sang rehydrateMediaItems để nạp đủ media bin sau reload.
+   */
+  binMedia: BinMediaEntry[] | null;
+  /**
+   * Đợt 63 R7 — projectId ổn định đọc từ envelope autosave (file cũ
+   * chưa có id thì parseProjectText đã migration sinh mới — App dùng
+   * id này cho store để autosave sau không đổi id nữa).
+   */
+  projectId: string;
+  /** Đợt 63 R7 — true khi autosave cũ chưa có id nên vừa migration (xem LoadResult). */
+  projectIdMigrated: boolean;
 } | null {
   let raw: string | null = null;
   try {
@@ -1264,16 +1666,23 @@ export function loadAutosave(): {
     return null;
   }
   if (!raw) return null;
-  const res = parseProjectText(raw);
+  const res = parseProjectText(raw, lookup);
   if (!res.ok || !res.spec) return null; // autosave hỏng → bỏ, không crash app
   // Đợt 36 S5: đọc session từ envelope thô (parseProjectText bỏ qua
   // field lạ nên không trả session; đọc riêng ở đây, không hợp lệ → null).
   let session: AutosaveSession | null = null;
+  // Đợt 59 P1: đọc manifest bin từ envelope thô, cùng mẫu session ở trên
+  // (null = envelope cũ, App fallback hành vi cũ; [] = bin trống có chủ
+  // đích). Đọc MỘT lần ở đây để lần ghi lại O6 bên dưới giữ nguyên được.
+  let binMedia: BinMediaEntry[] | null = null;
   try {
-    const parsed = parseSessionPlayhead(JSON.parse(raw) as unknown);
-    if (parsed !== null) session = { playhead: parsed };
+    const parsed = JSON.parse(raw) as unknown;
+    binMedia = parseBinMedia(parsed);
+    const parsedPlayhead = parseSessionPlayhead(parsed);
+    if (parsedPlayhead !== null) session = { playhead: parsedPlayhead };
   } catch {
     session = null;
+    binMedia = null;
   }
   // Phase 9 đợt 32 O6 — đóng D7 (nợ đợt 30 M5): parseProjectText (K1)
   // đã gắn style vào spec TRONG BỘ NHỚ, nhưng không ai ghi lại file
@@ -1290,8 +1699,14 @@ export function loadAutosave(): {
   // quota/storage nên lần ghi này không làm hỏng khôi phục.
   // Đợt 36 S5: lần ghi lại này phải mang theo session đã đọc, nếu không
   // playhead bền vững sẽ bị ghi đè mất ngay ở lần khôi phục đầu tiên.
+  // Đợt 59 P1: lần ghi lại này cũng phải mang theo binMedia đã đọc —
+  // nếu không, reload đầu tiên sau khi sửa style sẽ ghi đè mất manifest
+  // bin và reload sau đó lại mất bin (hồi quy đúng nợ đang đóng).
+  // Đợt 63 R7: lần ghi lại này cũng phải mang theo projectId đã đọc
+  // (kể cả id vừa migration) — nếu không, reload đầu tiên sau khi sửa
+  // style sẽ ghi đè mất id và lần sau lại migration sinh id khác.
   if ((res.textStyleFixes?.length ?? 0) > 0) {
-    autosaveNow(res.spec, res.name, session ?? undefined);
+    autosaveNow(res.spec, res.name, session ?? undefined, binMedia ?? undefined, res.projectId);
   }
   let savedAt = "";
   try {
@@ -1300,7 +1715,7 @@ export function loadAutosave(): {
   } catch {
     // bỏ qua
   }
-  return { spec: res.spec, name: res.name, savedAt, warnings: res.warnings, speedCurveWarnings: res.speedCurveWarnings, structuredNotes: res.structuredNotes, session };
+  return { spec: res.spec, name: res.name, savedAt, warnings: res.warnings, speedCurveWarnings: res.speedCurveWarnings, structuredNotes: res.structuredNotes, session, binMedia, projectId: res.projectId, projectIdMigrated: res.projectIdMigrated };
 }
 
 /**

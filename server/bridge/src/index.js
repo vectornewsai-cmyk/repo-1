@@ -29,7 +29,7 @@
  *  GET    /api/render/:id        → { id, status, progress, etaSeconds, queuePosition, attempts, error?, errorCode?, outputName?, qaReport? }
  *                                   + ?detail=1 → thêm errorDetail đã redact { code, summary, details, redactedTail } (L3 đợt 28)
  *  GET    /api/render/:id/download → file MP4 (khi status=done)
- *  DELETE /api/render/:id        → hủy job (kill cả process group) + xóa thư mục tạm
+ *  DELETE /api/render/:id        → huỷ job (kill cả process group) + xóa thư mục tạm
  *  POST   /api/render/:id/retry  → chạy lại job bị lỗi
  *  POST   /api/caption           multipart: field "media" (video/audio) → NDJSON segments
  *  POST   /api/reframe           multipart: field "media" (video), field "aspect"
@@ -38,6 +38,8 @@
  *  GET    /api/tts/voices        → { voices: [...], default }
  *  GET    /api/openapi.json      → OpenAPI 3.0 spec dạng JSON (R1-092, dùng cho Swagger UI)
  *  GET    /api/health            → { ok: true, version, ffmpeg, runningJobs, queuedJobs }
+ *  GET    /api/gpu-probe         → trạng thái cache probe GPU (chỉ đọc cache, không probe)
+ *  POST   /api/gpu-probe/reprobe → xoá cache probe + probe lại thật (nút "Probe lại GPU", đợt 65 S4)
  */
 "use strict";
 
@@ -52,6 +54,9 @@ const multer = require("multer");
 const { RenderJobService, newJobId, specDuration } = require("./jobQueue");
 const { publicJob } = require("./publicJob"); // L3 (đợt 28): serialize job, errorDetail opt-in
 const { buildTaskError } = require("./errorDetail"); // L3 (đợt 29): lỗi có cấu trúc cho các route tác vụ
+const { taskErrorPayload } = require("./taskError"); // Đợt 63 R5: payload TASK_* (tách ra để test đơn vị)
+const { apiError, apiErrorFrom, codedError } = require("./errorCodes"); // Đợt 62 R5: giao thức mã lỗi bridge→web (error + errorCode + errorParams)
+const { getGpuProbeStatus, reprobeGpu } = require("./gpuProbe"); // Đợt 65 S4: trạng thái + probe lại GPU encoder (nút "Probe lại GPU" trong ExportPanel)
 // R1-072: auto-caption (faster-whisper, chạy local qua caption.py)
 // R1-080: dịch phụ đề sang tiếng Anh (translate.py, faster-whisper translate task)
 const {
@@ -127,9 +132,37 @@ const WORK_ROOT = process.env.BRIDGE_WORK_DIR ||
 
 // --- R1-040 hardening: giới hạn & chính sách ---------------------------------
 const SPEC_MAX_BYTES = parseInt(process.env.BRIDGE_SPEC_MAX || String(10 * 1024 * 1024), 10); // 10MB
-const RATE_WINDOW_MS = 60 * 1000;
-const RATE_MAX_GENERAL = parseInt(process.env.BRIDGE_RATE_GENERAL || "120", 10); // req/phút/IP
-const RATE_MAX_RENDER = parseInt(process.env.BRIDGE_RATE_RENDER || "20", 10);     // POST render/phút/IP
+// Đợt 64 R7 — rate limit qua rateLimit.js (sliding-window): giá trị env sai
+// (NaN/0/âm) không còn tắt limiter lặng lẽ mà rơi về mặc định + cảnh báo.
+const { createRateLimiter, parseRateLimitInt, defaultPersistPath } = require("./rateLimit");
+function warnBadRateEnv(name, raw, fallback) {
+  if (raw !== undefined && parseRateLimitInt(raw, fallback) !== parseInt(String(raw), 10)) {
+    console.error(`⚠️  ${name}=${JSON.stringify(raw)} không hợp lệ — dùng mặc định ${fallback}.`);
+  }
+}
+const RATE_WINDOW_MS = parseRateLimitInt(process.env.BRIDGE_RATE_WINDOW_MS, 60 * 1000);
+warnBadRateEnv("BRIDGE_RATE_WINDOW_MS", process.env.BRIDGE_RATE_WINDOW_MS, RATE_WINDOW_MS);
+const RATE_MAX_GENERAL = parseRateLimitInt(process.env.BRIDGE_RATE_GENERAL, 120); // req/phút/IP
+warnBadRateEnv("BRIDGE_RATE_GENERAL", process.env.BRIDGE_RATE_GENERAL, RATE_MAX_GENERAL);
+const RATE_MAX_RENDER = parseRateLimitInt(process.env.BRIDGE_RATE_RENDER, 20);     // POST render/phút/IP
+warnBadRateEnv("BRIDGE_RATE_RENDER", process.env.BRIDGE_RATE_RENDER, RATE_MAX_RENDER);
+// Đợt 65 S5 — global cap + persist + siết env số còn lại của rate limiter:
+//  - BRIDGE_RATE_GLOBAL: giới hạn TỔNG request được chấp nhận trên mọi
+//    scope + mọi IP trong một cửa sổ (mặc định 600/phút; 0 = tắt).
+//  - BRIDGE_RATE_PERSIST_PATH: file JSON lưu trạng thái limiter để nạp lại
+//    sau restart (mặc định ~/.cache/vcut/rate-limit.json).
+//  - BRIDGE_RATE_PERSIST_MS: chu kỳ lưu đĩa định kỳ (mặc định 5000ms;
+//    0 = chỉ lưu khi tắt graceful).
+//  - BRIDGE_RATE_SWEEP_MS: chu kỳ dọn bucket hết hạn (mặc định = cửa sổ).
+// Số còn hardcode có chủ ý (ghi rõ, không đưa về env): sàn Retry-After 1s
+// (một phần của hợp đồng 429, đổi sẽ đổi hành vi client thấy được).
+const RATE_GLOBAL_MAX = parseRateLimitInt(process.env.BRIDGE_RATE_GLOBAL, 600); // req/phút toàn cục
+warnBadRateEnv("BRIDGE_RATE_GLOBAL", process.env.BRIDGE_RATE_GLOBAL, RATE_GLOBAL_MAX);
+const RATE_PERSIST_PATH = process.env.BRIDGE_RATE_PERSIST_PATH || defaultPersistPath();
+const RATE_PERSIST_MS = parseRateLimitInt(process.env.BRIDGE_RATE_PERSIST_MS, 5000);
+warnBadRateEnv("BRIDGE_RATE_PERSIST_MS", process.env.BRIDGE_RATE_PERSIST_MS, RATE_PERSIST_MS);
+const RATE_SWEEP_MS = parseRateLimitInt(process.env.BRIDGE_RATE_SWEEP_MS, RATE_WINDOW_MS);
+warnBadRateEnv("BRIDGE_RATE_SWEEP_MS", process.env.BRIDGE_RATE_SWEEP_MS, RATE_SWEEP_MS);
 const MIN_DISK_FREE_BYTES = parseInt(process.env.BRIDGE_MIN_DISK_FREE || String(256 * 1024 * 1024), 10); // 256MB
 
 /** Whitelist đuôi file media cho phép upload. */
@@ -207,20 +240,21 @@ function sanitizeFilename(name) {
 
 /**
  * R1-040: kiểm tra magic bytes của buffer có khớp với đuôi file không.
- * Trả về null nếu OK, message lỗi nếu không khớp.
+ * Trả về null nếu OK, { code, message, params } nếu không khớp
+ * (đợt 62 R5: mã lỗi bridge→web — message giữ nguyên chuỗi cũ).
  */
 function checkMagicBytes(safeName, buffer) {
   const ext = path.extname(safeName).toLowerCase();
   const candidates = MAGIC.filter((m) => m.ext.includes(ext));
   if (candidates.length === 0) return null; // không có rule → đã qua whitelist đuôi
   try {
-    if (buffer.length < 16) return `File "${safeName}" quá nhỏ hoặc rỗng, không nhận diện được định dạng.`;
+    if (buffer.length < 16) return { code: "MAGIC_TOO_SMALL", message: `File "${safeName}" quá nhỏ hoặc rỗng, không nhận diện được định dạng.`, params: { name: safeName } };
     for (const c of candidates) {
       try { if (c.test(buffer)) return null; } catch { /* tiếp tục */ }
     }
-    return `File "${safeName}" có đuôi ${ext} nhưng nội dung không khớp định dạng (có thể là file giả mạo).`;
+    return { code: "MAGIC_MISMATCH", message: `File "${safeName}" có đuôi ${ext} nhưng nội dung không khớp định dạng (có thể là file giả mạo).`, params: { name: safeName, ext } };
   } catch {
-    return `Không đọc được nội dung file "${safeName}".`;
+    return { code: "MAGIC_UNREADABLE", message: `Không đọc được nội dung file "${safeName}".`, params: { name: safeName } };
   }
 }
 
@@ -242,49 +276,47 @@ function isValidJobId(id) {
 }
 
 // ---------------------------------------------------------------------------
-// R1-040: Rate limiter (in-memory, theo IP, fixed window)
+// R1-040: Rate limiter (in-memory, theo IP, sliding-window — đợt 64 R7)
 // ---------------------------------------------------------------------------
-/** @type {Map<string, {count:number, resetAt:number}>} */
-const rateBuckets = new Map();
-setInterval(() => {
-  const now = Date.now();
-  for (const [k, v] of rateBuckets) if (v.resetAt <= now) rateBuckets.delete(k);
-}, RATE_WINDOW_MS).unref();
-
-function rateLimit(max) {
-  return (req, res, next) => {
-    const ip = req.ip || req.socket?.remoteAddress || "unknown";
-    const now = Date.now();
-    let b = rateBuckets.get(ip);
-    if (!b || b.resetAt <= now) {
-      b = { count: 0, resetAt: now + RATE_WINDOW_MS };
-      rateBuckets.set(ip, b);
-    }
-    b.count += 1;
-    res.setHeader("X-RateLimit-Limit", String(max));
-    res.setHeader("X-RateLimit-Remaining", String(Math.max(0, max - b.count)));
-    if (b.count > max) {
-      const retryAfter = Math.ceil((b.resetAt - now) / 1000);
-      res.setHeader("Retry-After", String(retryAfter));
-      return res.status(429).json({
-        error: `Quá nhiều request — thử lại sau ${retryAfter}s.`,
-      });
-    }
-    next();
-  };
-}
+// Đợt 63 R5 — sửa quirk đếm thừa (đợt 62 R5 §6.3): trước đây global limiter
+// (RATE_MAX_GENERAL) và per-route limiter (RATE_MAX_RENDER / silence)
+// dùng CHUNG 1 Map bucket theo IP nên 1 request qua 2 middleware đếm 2
+// lần vào cùng budget. Nay mỗi middleware có bucket riêng theo (scope,
+// IP): 1 request đếm đúng 1 lần vào mỗi budget mà nó đi qua.
+// Đợt 64 R7 — sửa quirk còn lại của bucket Map: fixed-window `{count,
+// resetAt}` cho phép burst 2×max quanh biên cửa sổ (4 cuối cửa sổ N +
+// 4 đầu cửa sổ N+1 = 7–8 request trong một cửa sổ trượt 60s, đo thật).
+// Nay sliding-window (xem rateLimit.js): bucket lưu mốc thời gian các
+// request đã chấp nhận, ≤ max trong BẤT KỲ cửa sổ trượt nào. Ngữ nghĩa
+// giới hạn không đổi: các route nặng vẫn chia chung 1 budget "render"
+// (20/phút), silence có budget riêng "silence" = RATE_MAX_GENERAL.
+// Đợt 65 S5 — thêm global cap (RATE_GLOBAL_MAX, mọi scope + IP cộng lại)
+// và persist trạng thái xuống đĩa (RATE_PERSIST_PATH, nạp lại khi khởi
+// động, lưu định kỳ + lúc tắt graceful): restart bridge không còn reset
+// budget về 0. Header mới khi global cap bật: X-RateLimit-Global-Remaining.
+const limiter = createRateLimiter({
+  windowMs: RATE_WINDOW_MS,
+  globalMax: RATE_GLOBAL_MAX,
+  persistPath: RATE_PERSIST_PATH,
+  persistIntervalMs: RATE_PERSIST_MS,
+  sweepIntervalMs: RATE_SWEEP_MS,
+});
+const { rateLimit } = limiter;
 
 /** R1-040: lỗi từ multer (file quá lớn, quá nhiều file...) → JSON rõ ràng. */
 // eslint-disable-next-line no-unused-vars
 function multerErrorHandler(err, req, res, next) {
   if (!err) return next();
   if (err.code && String(err.code).startsWith("LIMIT_")) {
-    const msg = err.code === "LIMIT_FILE_SIZE"
-      ? `File vượt quá giới hạn ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)}MB.`
-      : err.code === "LIMIT_FILE_COUNT"
-        ? "Quá nhiều file trong một request (tối đa 200)."
-        : "Upload không hợp lệ.";
-    return res.status(413).json({ error: msg });
+    // Đợt 62 R5: mã lỗi bridge→web (message giữ nguyên chuỗi cũ).
+    if (err.code === "LIMIT_FILE_SIZE") {
+      const limitMb = Math.round(MAX_UPLOAD_BYTES / 1024 / 1024);
+      return res.status(413).json(apiError("UPLOAD_FILE_TOO_LARGE", `File vượt quá giới hạn ${limitMb}MB.`, { limitMb }));
+    }
+    if (err.code === "LIMIT_FILE_COUNT") {
+      return res.status(413).json(apiError("UPLOAD_TOO_MANY_FILES", "Quá nhiều file trong một request (tối đa 200)."));
+    }
+    return res.status(413).json(apiError("UPLOAD_INVALID", "Upload không hợp lệ."));
   }
   return next(err);
 }
@@ -301,7 +333,7 @@ function pruneJobMedia(job) {
 /** R1-040: validate job id param trước khi tra cứu. */
 function validateJobIdParam(req, res, next) {
   if (!isValidJobId(req.params.id)) {
-    return res.status(400).json({ error: "Job id không hợp lệ." });
+    return res.status(400).json(apiError("INVALID_JOB_ID", "Job id không hợp lệ."));
   }
   next();
 }
@@ -322,33 +354,41 @@ function validateJobIdParam(req, res, next) {
  * vì trả luôn detail như các route đồng bộ khác.
  * Log server vẫn giữ e.message thô (kênh local, không phải API).
  */
-function taskErrorPayload(e, fallback) {
-  try {
-    const raw = e && e.message ? String(e.message) : "";
-    const built = buildTaskError({
-      message: raw || fallback,
-      stderr: e && e.stderrTail ? String(e.stderrTail) : "",
-      exitCode: e && Number.isInteger(e.code) ? e.code : undefined,
-      signal: e && e.signal ? String(e.signal) : null,
-    });
-    return { error: built.error, errorCode: built.errorCode, errorDetail: built.errorDetail };
-  } catch {
-    return { error: fallback, errorCode: "UNKNOWN", errorDetail: null };
-  }
-}
-
-/** R1-040: lấy version ffmpeg (chuỗi ngắn), null nếu không chạy được. */
+/**
+ * R1-040: lấy version ffmpeg (chuỗi ngắn), null nếu không chạy được.
+ *
+ * Đợt 52 I4 — CACHE VÒNG ĐỜI PROCESS: trước đây mỗi request /api/health
+ * spawn `ffmpeg -version` mới (đo thật 06–07/11: 604–1895 ms dưới tải,
+ * health tuần tự median 1007 ms / max 1603 ms khi loadavg ~6,6; 10 health
+ * đồng thời median 1521 ms). ffmpeg không đổi trong lúc bridge đang chạy
+ * nên kết quả lần đầu (kể cả null khi không có ffmpeg) được cache vĩnh
+ * viễn trong vòng đời process; các request đồng thời chia sẻ cùng một
+ * promise đang bay (không spawn trùng). Muốn probe lại thì restart bridge
+ * (manager làm vậy mỗi lần start). Health sau cache chỉ còn chi phí HTTP
+ * + statfs, đo được < 10 ms.
+ */
+let ffmpegVersionCache; // undefined = chưa probe; string|null = đã probe
+let ffmpegVersionInFlight = null;
 async function ffmpegVersion() {
-  try {
-    const out = await new Promise((resolve, reject) => {
-      execFile(FFMPEG, ["-version"], { timeout: 8000 }, (err, stdout) =>
-        err ? reject(err) : resolve(String(stdout || "")));
-    });
-    const first = out.split("\n")[0] || "";
-    return first.slice(0, 120);
-  } catch {
-    return null;
+  if (ffmpegVersionCache !== undefined) return ffmpegVersionCache;
+  if (!ffmpegVersionInFlight) {
+    ffmpegVersionInFlight = (async () => {
+      try {
+        const out = await new Promise((resolve, reject) => {
+          execFile(FFMPEG, ["-version"], { timeout: 8000 }, (err, stdout) =>
+            err ? reject(err) : resolve(String(stdout || "")));
+        });
+        const first = out.split("\n")[0] || "";
+        return first.slice(0, 120);
+      } catch {
+        return null;
+      }
+    })();
   }
+  const result = await ffmpegVersionInFlight;
+  ffmpegVersionCache = result;
+  ffmpegVersionInFlight = null;
+  return result;
 }
 
 function cleanupJobDir(dir) {
@@ -379,48 +419,48 @@ function parsePreset(raw) {
   try {
     p = JSON.parse(raw);
   } catch {
-    throw new Error("Field 'preset' phải là JSON hợp lệ.");
+    throw codedError("PRESET_NOT_JSON", "Field 'preset' phải là JSON hợp lệ.");
   }
   if (!p || typeof p !== "object" || Array.isArray(p))
-    throw new Error("Field 'preset' phải là object.");
+    throw codedError("PRESET_NOT_OBJECT", "Field 'preset' phải là object.");
   const out = { ...defaults };
   if (p.crf !== undefined) {
     if (!Number.isInteger(p.crf) || p.crf < 0 || p.crf > 51)
-      throw new Error("preset.crf phải là số nguyên 0..51.");
+      throw codedError("PRESET_CRF_RANGE", "preset.crf phải là số nguyên 0..51.");
     out.crf = p.crf;
   }
   if (p.x264Preset !== undefined) {
     if (typeof p.x264Preset !== "string" || !X264_PRESETS.includes(p.x264Preset))
-      throw new Error(`preset.x264Preset phải thuộc: ${X264_PRESETS.join(", ")}.`);
+      throw codedError("PRESET_X264_INVALID", `preset.x264Preset phải thuộc: ${X264_PRESETS.join(", ")}.`, { allowed: X264_PRESETS.join(", ") });
     out.x264Preset = p.x264Preset;
   }
   if (p.audioBitrateKbps !== undefined) {
     if (!Number.isInteger(p.audioBitrateKbps) || p.audioBitrateKbps < 32 || p.audioBitrateKbps > 512)
-      throw new Error("preset.audioBitrateKbps phải là số nguyên 32..512.");
+      throw codedError("PRESET_BITRATE_RANGE", "preset.audioBitrateKbps phải là số nguyên 32..512.");
     out.audioBitrate = `${p.audioBitrateKbps}k`;
   }
   // Phase 7 P3: normalize export — whitelist chặt như các field khác.
   if (p.normalize !== undefined) {
     if (typeof p.normalize !== "string" || !["off", "loudnorm", "dynaudnorm"].includes(p.normalize))
-      throw new Error("preset.normalize phải thuộc: off|loudnorm|dynaudnorm.");
+      throw codedError("PRESET_NORMALIZE_INVALID", "preset.normalize phải thuộc: off|loudnorm|dynaudnorm.");
     out.normalize = p.normalize;
   }
   if (p.normalizeTarget !== undefined) {
     if (typeof p.normalizeTarget !== "number" || !Number.isFinite(p.normalizeTarget) ||
         p.normalizeTarget < -70 || p.normalizeTarget > 0)
-      throw new Error("preset.normalizeTarget phải trong -70..0.");
+      throw codedError("PRESET_NORMALIZE_TARGET_RANGE", "preset.normalizeTarget phải trong -70..0.");
     out.normalizeTarget = p.normalizeTarget;
   }
   if (p.normalizeTp !== undefined) {
     if (typeof p.normalizeTp !== "number" || !Number.isFinite(p.normalizeTp) ||
         p.normalizeTp < -9 || p.normalizeTp > 0)
-      throw new Error("preset.normalizeTp phải trong -9..0.");
+      throw codedError("PRESET_NORMALIZE_TP_RANGE", "preset.normalizeTp phải trong -9..0.");
     out.normalizeTp = p.normalizeTp;
   }
   if (p.normalizeLra !== undefined) {
     if (typeof p.normalizeLra !== "number" || !Number.isFinite(p.normalizeLra) ||
         p.normalizeLra < 1 || p.normalizeLra > 20)
-      throw new Error("preset.normalizeLra phải trong 1..20.");
+      throw codedError("PRESET_NORMALIZE_LRA_RANGE", "preset.normalizeLra phải trong 1..20.");
     out.normalizeLra = p.normalizeLra;
   }
   return out;
@@ -507,9 +547,13 @@ app.set("trust proxy", false); // R1-040: không tin X-Forwarded-For (chạy loc
 // server, CLI — client local không phải browser) vẫn qua bình thường. Origin
 // lạ: không trả ACAO → trình duyệt tự chặn đọc response.
 const LOCAL_ORIGIN_RE = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
+// Phase 10 G1 (Electron shell): origin của app desktop VCut — scheme `app`
+// do chính Electron app đăng ký (apps/desktop/src/protocol.ts), không website
+// nào mạo danh được. Chỉ đúng host `vcut`, không mở thêm origin nào khác.
+const DESKTOP_ORIGIN_RE = /^app:\/\/vcut$/;
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || LOCAL_ORIGIN_RE.test(origin)) return callback(null, true);
+    if (!origin || LOCAL_ORIGIN_RE.test(origin) || DESKTOP_ORIGIN_RE.test(origin)) return callback(null, true);
     return callback(null, false);
   },
   // ROUND43-Y4: expose header Range cho web UI (origin khác port nên là
@@ -538,7 +582,7 @@ app.use((req, res, next) => {
 });
 
 // R1-040: rate limit chung cho mọi API
-app.use("/api/", rateLimit(RATE_MAX_GENERAL));
+app.use("/api/", rateLimit(RATE_MAX_GENERAL, "general"));
 
 app.use(express.json({ limit: "50mb" }));
 
@@ -625,9 +669,12 @@ function uploadMiddleware(mw) {
     const total = files.reduce((s, f) => s + (f.size || 0), 0);
     if (total > MAX_TOTAL_UPLOAD_BYTES) {
       cleanupUploadFiles(files);
-      return res.status(413).json({
-        error: `Tổng dung lượng upload vượt quá giới hạn ${Math.round(MAX_TOTAL_UPLOAD_BYTES / 1024 / 1024)}MB.`,
-      });
+      const totalLimitMb = Math.round(MAX_TOTAL_UPLOAD_BYTES / 1024 / 1024);
+      return res.status(413).json(apiError(
+        "UPLOAD_TOTAL_TOO_LARGE",
+        `Tổng dung lượng upload vượt quá giới hạn ${totalLimitMb}MB.`,
+        { limitMb: totalLimitMb },
+      ));
     }
     res.on("finish", () => cleanupUploadFiles(files));
     next();
@@ -663,20 +710,37 @@ app.get("/api/health", async (req, res) => {
   });
 });
 
+// --- GET /api/gpu-probe + POST /api/gpu-probe/reprobe (Đợt 65 S4) -----------
+// Nút "Probe lại GPU" trong ExportPanel: đọc trạng thái cache probe GPU
+// hiện tại (CHỈ ĐỌC cache, không probe — nhanh) và ép probe lại thật khi
+// user bấm (xoá cache cũ, kể cả cache lỗi do tháo GPU trong TTL, rồi probe
+// encode thử 1 frame từng encoder). Probe lại là thao tác thủ công, đồng
+// bộ (tối đa ~15s/encoder); không gọi trên đường render nóng.
+// Lưu ý: cả hai đều nằm dưới rateLimit general của /api/ (gắn ở trên).
+app.get("/api/gpu-probe", (req, res) => {
+  res.json(getGpuProbeStatus(FFMPEG));
+});
+app.post("/api/gpu-probe/reprobe", (req, res) => {
+  res.json(reprobeGpu(FFMPEG));
+});
+
 // --- POST /api/render -------------------------------------------------------
 app.post("/api/render",
-  rateLimit(RATE_MAX_RENDER), // R1-040: giới hạn riêng, chặt hơn cho render
+  rateLimit(RATE_MAX_RENDER, "render"), // R1-040: giới hạn riêng, chặt hơn cho render
   uploadMiddleware(upload.array("media", 200)),
   async (req, res) => {
   // R1-040: giới hạn kích thước spec (multipart text field không bị multer giới hạn)
   const specRaw = req.body.spec;
   if (typeof specRaw !== "string") {
-    return res.status(400).json({ error: "Thiếu field 'spec'." });
+    return res.status(400).json(apiError("MISSING_SPEC", "Thiếu field 'spec'."));
   }
   if (Buffer.byteLength(specRaw, "utf8") > SPEC_MAX_BYTES) {
-    return res.status(413).json({
-      error: `Spec quá lớn (tối đa ${Math.round(SPEC_MAX_BYTES / 1024 / 1024)}MB).`,
-    });
+    const specLimitMb = Math.round(SPEC_MAX_BYTES / 1024 / 1024);
+    return res.status(413).json(apiError(
+      "SPEC_TOO_LARGE",
+      `Spec quá lớn (tối đa ${specLimitMb}MB).`,
+      { limitMb: specLimitMb },
+    ));
   }
 
   // 1a. P7: asset map optional (JSON object { assetId: file }) — map do
@@ -689,16 +753,16 @@ app.post("/api/render",
         ? JSON.parse(req.body.assetMap)
         : req.body.assetMap;
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        throw new Error("assetMap phải là JSON object { assetId: file }.");
+        throw codedError("ASSETMAP_NOT_OBJECT", "assetMap phải là JSON object { assetId: file }.");
       }
       for (const [k, val] of Object.entries(parsed)) {
         if (!k || typeof val !== "string" || !val || val.includes("\0")) {
-          throw new Error(`assetMap: giá trị của "${k}" phải là chuỗi đường dẫn khác rỗng.`);
+          throw codedError("ASSETMAP_BAD_VALUE", `assetMap: giá trị của "${k}" phải là chuỗi đường dẫn khác rỗng.`, { key: k });
         }
       }
       assetMap = parsed;
     } catch (e) {
-      return res.status(400).json({ error: `assetMap không hợp lệ: ${e.message}` });
+      return res.status(400).json(apiErrorFrom(e, `assetMap không hợp lệ: ${e.message}`, "ASSETMAP_INVALID", { detail: e.message }));
     }
   }
 
@@ -707,18 +771,21 @@ app.post("/api/render",
   try {
     spec = JSON.parse(specRaw);
   } catch {
-    return res.status(400).json({ error: "Field 'spec' phải là JSON hợp lệ." });
+    return res.status(400).json(apiError("SPEC_NOT_JSON", "Field 'spec' phải là JSON hợp lệ."));
   }
   if (!spec || typeof spec !== "object" || !Array.isArray(spec.tracks)) {
-    return res.status(400).json({ error: "Spec thiếu tracks hoặc sai định dạng." });
+    return res.status(400).json(apiError("SPEC_NO_TRACKS", "Spec thiếu tracks hoặc sai định dạng."));
   }
 
   // R1-040: kiểm tra dung lượng đĩa trước khi nhận job
   const free = diskFreeBytes();
   if (free >= 0 && free < MIN_DISK_FREE_BYTES) {
-    return res.status(507).json({
-      error: `Ổ đĩa sắp đầy (còn ${Math.round(free / 1024 / 1024)}MB) — dọn dẹp rồi thử lại.`,
-    });
+    const freeMb = Math.round(free / 1024 / 1024);
+    return res.status(507).json(apiError(
+      "DISK_LOW",
+      `Ổ đĩa sắp đầy (còn ${freeMb}MB) — dọn dẹp rồi thử lại.`,
+      { freeMb },
+    ));
   }
 
   // 1b. Parse export preset (R1-042, optional) — validate whitelist nghiêm ngặt.
@@ -726,7 +793,7 @@ app.post("/api/render",
   try {
     preset = parsePreset(req.body.preset);
   } catch (e) {
-    return res.status(400).json({ error: e.message });
+    return res.status(400).json(apiErrorFrom(e));
   }
 
   // 2. Tạo job dir với id cuối cùng ngay từ đầu (tránh race rename)
@@ -738,7 +805,7 @@ app.post("/api/render",
     fs.mkdirSync(mediaDir, { recursive: true });
   } catch (e) {
     console.error(`[bridge] không tạo được thư mục job:`, e.message);
-    return res.status(500).json({ error: "Lỗi máy chủ khi tạo job — thử lại sau." });
+    return res.status(500).json(apiError("JOB_CREATE_FAILED", "Lỗi máy chủ khi tạo job — thử lại sau."));
   }
 
   // 3. Lưu media (sanitize tên file + whitelist loại + magic bytes — R1-040)
@@ -746,25 +813,25 @@ app.post("/api/render",
     const safe = sanitizeFilename(f.originalname);
     if (!safe) {
       cleanupJobDir(dir);
-      return res.status(400).json({ error: `Tên file không hợp lệ hoặc loại file không được phép: ${f.originalname}` });
+      return res.status(400).json(apiError("INVALID_FILENAME_OR_TYPE", `Tên file không hợp lệ hoặc loại file không được phép: ${f.originalname}`, { name: f.originalname }));
     }
     const magicErr = checkMagicBytes(safe, readUploadHead(f));
     if (magicErr) {
       cleanupJobDir(dir);
-      return res.status(400).json({ error: magicErr });
+      return res.status(400).json(apiError(magicErr.code, magicErr.message, magicErr.params));
     }
     const dest = path.join(mediaDir, safe);
     // Double-check: dest phải nằm trong mediaDir (chống traversal)
     if (!dest.startsWith(mediaDir + path.sep)) {
       cleanupJobDir(dir);
-      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+      return res.status(400).json(apiError("INVALID_FILENAME", `Tên file không hợp lệ: ${f.originalname}`, { name: f.originalname }));
     }
     try {
       moveUploadTo(f, dest);
     } catch (e) {
       console.error(`[bridge] không lưu được file media:`, e.message);
       cleanupJobDir(dir);
-      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+      return res.status(500).json(apiError("SAVE_FILE_FAILED", "Lỗi máy chủ khi lưu file — thử lại sau."));
     }
   }
 
@@ -778,7 +845,7 @@ app.post("/api/render",
   } catch (e) {
     console.error(`[bridge] không ghi được spec:`, e.message);
     cleanupJobDir(dir);
-    return res.status(500).json({ error: "Lỗi máy chủ khi lưu spec — thử lại sau." });
+    return res.status(500).json(apiError("SAVE_SPEC_FAILED", "Lỗi máy chủ khi lưu spec — thử lại sau."));
   }
 
   // 5. Xếp vào hàng đợi (service tự chạy khi có slot trống)
@@ -792,10 +859,10 @@ app.post("/api/render",
   } catch (e) {
     cleanupJobDir(dir);
     if (e.code === "QUEUE_FULL") {
-      return res.status(429).json({ error: e.message });
+      return res.status(429).json(apiError("QUEUE_FULL", e.message, e.params));
     }
     console.error(`[bridge] không tạo được job:`, e.message);
-    return res.status(500).json({ error: "Lỗi máy chủ khi tạo job — thử lại sau." });
+    return res.status(500).json(apiError("JOB_CREATE_FAILED", "Lỗi máy chủ khi tạo job — thử lại sau."));
   }
 
   return res.status(201).json({
@@ -813,7 +880,7 @@ app.post("/api/render",
 // → event {"type":"error"} trong stream (header đã gửi nên không đổi status được).
 app.post(
   "/api/caption",
-  rateLimit(RATE_MAX_RENDER), // R1-040: giới hạn chặt như render (tác vụ nặng)
+  rateLimit(RATE_MAX_RENDER, "render"), // R1-040: giới hạn chặt như render (tác vụ nặng)
   uploadMiddleware(upload.single("media")),
   async (req, res) => {
     // 1. Validate (chưa stream → lỗi trả JSON 4xx)
@@ -821,27 +888,28 @@ app.post(
     try {
       lang = validateLang(req.body.lang);
     } catch (e) {
-      return res.status(400).json({ error: e.message });
+      return res.status(400).json(apiErrorFrom(e));
     }
     const f = req.file;
     if (!f) {
-      return res.status(400).json({ error: "Thiếu file media (field 'media')." });
+      return res.status(400).json(apiError("MISSING_MEDIA", "Thiếu file media (field 'media')."));
     }
     const safe = sanitizeFilename(f.originalname);
     if (!safe) {
-      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+      return res.status(400).json(apiError("INVALID_FILENAME", `Tên file không hợp lệ: ${f.originalname}`, { name: f.originalname }));
     }
     const ext = path.extname(safe).toLowerCase();
     if (!AUDIO_VIDEO_EXTS.has(ext)) {
-      return res.status(400).json({
-        error: "Caption cần file video hoặc audio (ảnh không có tiếng để nhận diện).",
-      });
+      return res.status(400).json(apiError(
+        "CAPTION_NEEDS_AV",
+        "Caption cần file video hoặc audio (ảnh không có tiếng để nhận diện).",
+      ));
     }
     const magicErr = checkMagicBytes(safe, readUploadHead(f));
-    if (magicErr) return res.status(400).json({ error: magicErr });
+    if (magicErr) return res.status(400).json(apiError(magicErr.code, magicErr.message, magicErr.params));
     const avail = captionAvailable();
     if (!avail.available) {
-      return res.status(503).json({ error: `Caption chưa sẵn sàng: ${avail.reason}` });
+      return res.status(503).json(apiError("CAPTION_NOT_READY", `Caption chưa sẵn sàng: ${avail.reason}`, { reason: avail.reason }));
     }
 
     // 2. Lưu file vào thư mục tạm riêng (không bao giờ dùng path từ client)
@@ -856,7 +924,7 @@ app.post(
     } catch (e) {
       console.error(`[bridge] không lưu được file caption:`, e.message);
       cleanupJobDir(dir);
-      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+      return res.status(500).json(apiError("SAVE_FILE_FAILED", "Lỗi máy chủ khi lưu file — thử lại sau."));
     }
 
     // 3. Stream NDJSON: phase... → done | error
@@ -883,7 +951,7 @@ app.post(
         words: result.words || [],
       });
     } catch (e) {
-      send({ type: "error", ...taskErrorPayload(e, "Caption thất bại.") });
+      send({ type: "error", ...taskErrorPayload(e, "Caption thất bại.", "TASK_CAPTION_FAILED") });
     } finally {
       cleanupJobDir(dir);
       try { res.end(); } catch { /* bỏ qua */ }
@@ -897,34 +965,36 @@ app.post(
 // chủ thể rồi trả về MP4 đích qua res.download. Đồng bộ (timeout 10 phút).
 app.post(
   "/api/reframe",
-  rateLimit(RATE_MAX_RENDER), // R1-040: tác vụ nặng, giới hạn như render
+  rateLimit(RATE_MAX_RENDER, "render"), // R1-040: tác vụ nặng, giới hạn như render
   uploadMiddleware(upload.single("media")),
   async (req, res) => {
     let aspect;
     try {
       aspect = validateAspect(req.body.aspect);
     } catch (e) {
-      return res.status(400).json({ error: e.message });
+      return res.status(400).json(apiErrorFrom(e));
     }
     const f = req.file;
     if (!f) {
-      return res.status(400).json({ error: "Thiếu file video (field 'media')." });
+      return res.status(400).json(apiError("MISSING_VIDEO", "Thiếu file video (field 'media')."));
     }
     const safe = sanitizeFilename(f.originalname);
     if (!safe) {
-      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+      return res.status(400).json(apiError("INVALID_FILENAME", `Tên file không hợp lệ: ${f.originalname}`, { name: f.originalname }));
     }
     const ext = path.extname(safe).toLowerCase();
     if (!VIDEO_EXTS.has(ext)) {
-      return res.status(400).json({
-        error: `Reframe cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
-      });
+      return res.status(400).json(apiError(
+        "REFRAME_NEEDS_VIDEO",
+        `Reframe cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
+        { exts: [...VIDEO_EXTS].join(", ") },
+      ));
     }
     const magicErr = checkMagicBytes(safe, readUploadHead(f));
-    if (magicErr) return res.status(400).json({ error: magicErr });
+    if (magicErr) return res.status(400).json(apiError(magicErr.code, magicErr.message, magicErr.params));
     const avail = reframeAvailable();
     if (!avail.available) {
-      return res.status(503).json({ error: `Reframe chưa sẵn sàng: ${avail.reason}` });
+      return res.status(503).json(apiError("REFRAME_NOT_READY", `Reframe chưa sẵn sàng: ${avail.reason}`, { reason: avail.reason }));
     }
 
     const dir = path.join(
@@ -941,7 +1011,7 @@ app.post(
     } catch (e) {
       console.error(`[bridge] không lưu được file reframe:`, e.message);
       cleanupJobDir(dir);
-      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+      return res.status(500).json(apiError("SAVE_FILE_FAILED", "Lỗi máy chủ khi lưu file — thử lại sau."));
     }
 
     try {
@@ -954,7 +1024,7 @@ app.post(
     } catch (e) {
       cleanupJobDir(dir);
       // Chưa gửi header nào → trả JSON lỗi bình thường.
-      return res.status(500).json(taskErrorPayload(e, "Reframe thất bại."));
+      return res.status(500).json(taskErrorPayload(e, "Reframe thất bại.", "TASK_REFRAME_FAILED"));
     }
   }
 );
@@ -966,34 +1036,36 @@ app.post(
 // UI dùng JSON này vẽ overlay quỹ đạo lên preview trước khi user render thật.
 app.post(
   "/api/reframe/analyze",
-  rateLimit(RATE_MAX_RENDER),
+  rateLimit(RATE_MAX_RENDER, "render"),
   uploadMiddleware(upload.single("media")),
   async (req, res) => {
     let aspect;
     try {
       aspect = validateAspect(req.body.aspect);
     } catch (e) {
-      return res.status(400).json({ error: e.message });
+      return res.status(400).json(apiErrorFrom(e));
     }
     const f = req.file;
     if (!f) {
-      return res.status(400).json({ error: "Thiếu file video (field 'media')." });
+      return res.status(400).json(apiError("MISSING_VIDEO", "Thiếu file video (field 'media')."));
     }
     const safe = sanitizeFilename(f.originalname);
     if (!safe) {
-      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+      return res.status(400).json(apiError("INVALID_FILENAME", `Tên file không hợp lệ: ${f.originalname}`, { name: f.originalname }));
     }
     const ext = path.extname(safe).toLowerCase();
     if (!VIDEO_EXTS.has(ext)) {
-      return res.status(400).json({
-        error: `Reframe cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
-      });
+      return res.status(400).json(apiError(
+        "REFRAME_NEEDS_VIDEO",
+        `Reframe cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
+        { exts: [...VIDEO_EXTS].join(", ") },
+      ));
     }
     const magicErr = checkMagicBytes(safe, readUploadHead(f));
-    if (magicErr) return res.status(400).json({ error: magicErr });
+    if (magicErr) return res.status(400).json(apiError(magicErr.code, magicErr.message, magicErr.params));
     const avail = reframeAvailable();
     if (!avail.available) {
-      return res.status(503).json({ error: `Reframe chưa sẵn sàng: ${avail.reason}` });
+      return res.status(503).json(apiError("REFRAME_NOT_READY", `Reframe chưa sẵn sàng: ${avail.reason}`, { reason: avail.reason }));
     }
 
     const dir = path.join(
@@ -1007,7 +1079,7 @@ app.post(
     } catch (e) {
       console.error(`[bridge] không lưu được file reframe/analyze:`, e.message);
       cleanupJobDir(dir);
-      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+      return res.status(500).json(apiError("SAVE_FILE_FAILED", "Lỗi máy chủ khi lưu file — thử lại sau."));
     }
 
     try {
@@ -1016,7 +1088,7 @@ app.post(
       return res.json(data);
     } catch (e) {
       cleanupJobDir(dir);
-      return res.status(500).json(taskErrorPayload(e, "Phân tích reframe thất bại."));
+      return res.status(500).json(taskErrorPayload(e, "Phân tích reframe thất bại.", "TASK_REFRAME_ANALYZE_FAILED"));
     }
   }
 );
@@ -1027,35 +1099,37 @@ app.post(
 // UI dùng JSON này để cắt clip theo beat (beatSync.ts).
 app.post(
   "/api/beats/analyze",
-  rateLimit(RATE_MAX_RENDER),
+  rateLimit(RATE_MAX_RENDER, "render"),
   uploadMiddleware(upload.single("media")),
   async (req, res) => {
     const f = req.file;
     if (!f) {
-      return res.status(400).json({ error: "Thiếu file audio/video (field 'media')." });
+      return res.status(400).json(apiError("MISSING_AUDIO_VIDEO", "Thiếu file audio/video (field 'media')."));
     }
     const safe = sanitizeFilename(f.originalname);
     if (!safe) {
-      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+      return res.status(400).json(apiError("INVALID_FILENAME", `Tên file không hợp lệ: ${f.originalname}`, { name: f.originalname }));
     }
     const ext = path.extname(safe).toLowerCase();
     if (!AUDIO_VIDEO_EXTS.has(ext)) {
-      return res.status(400).json({
-        error: `Beat detection cần file AUDIO/VIDEO (${[...AUDIO_VIDEO_EXTS].join(", ")}).`,
-      });
+      return res.status(400).json(apiError(
+        "BEATS_NEEDS_AV",
+        `Beat detection cần file AUDIO/VIDEO (${[...AUDIO_VIDEO_EXTS].join(", ")}).`,
+        { exts: [...AUDIO_VIDEO_EXTS].join(", ") },
+      ));
     }
     const magicErr = checkMagicBytes(safe, readUploadHead(f));
-    if (magicErr) return res.status(400).json({ error: magicErr });
+    if (magicErr) return res.status(400).json(apiError(magicErr.code, magicErr.message, magicErr.params));
     const avail = beatsAvailable();
     if (!avail.available) {
-      return res.status(503).json({ error: `Beat detection chưa sẵn sàng: ${avail.reason}` });
+      return res.status(503).json(apiError("BEATS_NOT_READY", `Beat detection chưa sẵn sàng: ${avail.reason}`, { reason: avail.reason }));
     }
     // BPM range từ form (optional, mặc định beat.py: 40–240).
     const parseBpm = (raw, fallback) => {
       if (raw === undefined || raw === "") return fallback;
       const v = Number(raw);
       if (!Number.isFinite(v) || v < 30 || v > 300) {
-        throw new Error(`BPM không hợp lệ: "${raw}" (30–300).`);
+        throw codedError("BPM_INVALID", `BPM không hợp lệ: "${raw}" (30–300).`, { value: raw });
       }
       return v;
     };
@@ -1064,10 +1138,10 @@ app.post(
       minBpm = parseBpm(req.body.minBpm, undefined);
       maxBpm = parseBpm(req.body.maxBpm, undefined);
     } catch (e) {
-      return res.status(400).json({ error: e.message });
+      return res.status(400).json(apiErrorFrom(e));
     }
     if (minBpm !== undefined && maxBpm !== undefined && minBpm >= maxBpm) {
-      return res.status(400).json({ error: "BPM tối thiểu phải nhỏ hơn BPM tối đa." });
+      return res.status(400).json(apiError("BPM_RANGE_INVALID", "BPM tối thiểu phải nhỏ hơn BPM tối đa."));
     }
 
     const dir = path.join(
@@ -1081,7 +1155,7 @@ app.post(
     } catch (e) {
       console.error(`[bridge] không lưu được file beats/analyze:`, e.message);
       cleanupJobDir(dir);
-      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+      return res.status(500).json(apiError("SAVE_FILE_FAILED", "Lỗi máy chủ khi lưu file — thử lại sau."));
     }
 
     try {
@@ -1090,7 +1164,7 @@ app.post(
       return res.json(data);
     } catch (e) {
       cleanupJobDir(dir);
-      return res.status(500).json(taskErrorPayload(e, "Phân tích beat thất bại."));
+      return res.status(500).json(taskErrorPayload(e, "Phân tích beat thất bại.", "TASK_BEATS_FAILED"));
     }
   }
 );
@@ -1101,7 +1175,7 @@ app.post(
 // file MOV PNG có kênh alpha qua res.download. Đồng bộ (timeout 30 phút).
 app.post(
   "/api/bgremove",
-  rateLimit(RATE_MAX_RENDER), // R1-040: tác vụ nặng, giới hạn như render
+  rateLimit(RATE_MAX_RENDER, "render"), // R1-040: tác vụ nặng, giới hạn như render
   uploadMiddleware(upload.single("media")),
   async (req, res) => {
     let session, temporal, feather;
@@ -1110,27 +1184,29 @@ app.post(
       temporal = validateTemporal(req.body.temporal);
       feather = validateFeather(req.body.feather);
     } catch (e) {
-      return res.status(400).json({ error: e.message });
+      return res.status(400).json(apiErrorFrom(e));
     }
     const f = req.file;
     if (!f) {
-      return res.status(400).json({ error: "Thiếu file video (field 'media')." });
+      return res.status(400).json(apiError("MISSING_VIDEO", "Thiếu file video (field 'media')."));
     }
     const safe = sanitizeFilename(f.originalname);
     if (!safe) {
-      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+      return res.status(400).json(apiError("INVALID_FILENAME", `Tên file không hợp lệ: ${f.originalname}`, { name: f.originalname }));
     }
     const ext = path.extname(safe).toLowerCase();
     if (!VIDEO_EXTS.has(ext)) {
-      return res.status(400).json({
-        error: `Xóa nền cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
-      });
+      return res.status(400).json(apiError(
+        "BGREMOVE_NEEDS_VIDEO",
+        `Xóa nền cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
+        { exts: [...VIDEO_EXTS].join(", ") },
+      ));
     }
     const magicErr = checkMagicBytes(safe, readUploadHead(f));
-    if (magicErr) return res.status(400).json({ error: magicErr });
+    if (magicErr) return res.status(400).json(apiError(magicErr.code, magicErr.message, magicErr.params));
     const avail = bgremoveAvailable();
     if (!avail.available) {
-      return res.status(503).json({ error: `Xóa nền chưa sẵn sàng: ${avail.reason}` });
+      return res.status(503).json(apiError("BGREMOVE_NOT_READY", `Xóa nền chưa sẵn sàng: ${avail.reason}`, { reason: avail.reason }));
     }
 
     const dir = path.join(
@@ -1147,7 +1223,7 @@ app.post(
     } catch (e) {
       console.error(`[bridge] không lưu được file bgremove:`, e.message);
       cleanupJobDir(dir);
-      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+      return res.status(500).json(apiError("SAVE_FILE_FAILED", "Lỗi máy chủ khi lưu file — thử lại sau."));
     }
 
     try {
@@ -1170,7 +1246,7 @@ app.post(
     } catch (e) {
       cleanupJobDir(dir);
       // Chưa gửi header nào → trả JSON lỗi bình thường.
-      return res.status(500).json(taskErrorPayload(e, "Xóa nền thất bại."));
+      return res.status(500).json(taskErrorPayload(e, "Xóa nền thất bại.", "TASK_BGREMOVE_FAILED"));
     }
   }
 );
@@ -1182,7 +1258,7 @@ app.post(
 // Detect rất nhanh nên không cần stream tiến trình như caption.
 app.post(
   "/api/silence",
-  rateLimit(RATE_MAX_GENERAL),
+  rateLimit(RATE_MAX_GENERAL, "silence"), // Đợt 63 R5: bucket riêng, không đếm chung general
   uploadMiddleware(upload.single("media")),
   async (req, res) => {
     // 1. Validate
@@ -1191,27 +1267,28 @@ app.post(
       noiseDb = validateNoiseDb(req.body.noiseDb);
       minDur = validateMinDur(req.body.minDur);
     } catch (e) {
-      return res.status(400).json({ error: e.message });
+      return res.status(400).json(apiErrorFrom(e));
     }
     const f = req.file;
     if (!f) {
-      return res.status(400).json({ error: "Thiếu file media (field 'media')." });
+      return res.status(400).json(apiError("MISSING_MEDIA", "Thiếu file media (field 'media')."));
     }
     const safe = sanitizeFilename(f.originalname);
     if (!safe) {
-      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+      return res.status(400).json(apiError("INVALID_FILENAME", `Tên file không hợp lệ: ${f.originalname}`, { name: f.originalname }));
     }
     const ext = path.extname(safe).toLowerCase();
     if (!AUDIO_VIDEO_EXTS.has(ext)) {
-      return res.status(400).json({
-        error: "Silence removal cần file video hoặc audio (ảnh không có track tiếng).",
-      });
+      return res.status(400).json(apiError(
+        "SILENCE_NEEDS_AV",
+        "Silence removal cần file video hoặc audio (ảnh không có track tiếng).",
+      ));
     }
     const magicErr = checkMagicBytes(safe, readUploadHead(f));
-    if (magicErr) return res.status(400).json({ error: magicErr });
+    if (magicErr) return res.status(400).json(apiError(magicErr.code, magicErr.message, magicErr.params));
     const avail = silenceAvailable();
     if (!avail.available) {
-      return res.status(503).json({ error: `Silence removal chưa sẵn sàng: ${avail.reason}` });
+      return res.status(503).json(apiError("SILENCE_NOT_READY", `Silence removal chưa sẵn sàng: ${avail.reason}`, { reason: avail.reason }));
     }
 
     // 2. Lưu file vào thư mục tạm riêng (không bao giờ dùng path từ client)
@@ -1226,7 +1303,7 @@ app.post(
     } catch (e) {
       console.error(`[bridge] không lưu được file silence:`, e.message);
       cleanupJobDir(dir);
-      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+      return res.status(500).json(apiError("SAVE_FILE_FAILED", "Lỗi máy chủ khi lưu file — thử lại sau."));
     }
 
     // 3. Chạy detect rồi trả JSON
@@ -1241,7 +1318,7 @@ app.post(
         keep: result.keep,
       });
     } catch (e) {
-      res.status(500).json(taskErrorPayload(e, "Phân tích khoảng lặng thất bại."));
+      res.status(500).json(taskErrorPayload(e, "Phân tích khoảng lặng thất bại.", "TASK_SILENCE_FAILED"));
     } finally {
       cleanupJobDir(dir);
     }
@@ -1257,7 +1334,7 @@ app.post(
 // → event {"type":"error"} trong stream.
 app.post(
   "/api/scene",
-  rateLimit(RATE_MAX_RENDER), // R1-040: tác vụ nặng, giới hạn như render
+  rateLimit(RATE_MAX_RENDER, "render"), // R1-040: tác vụ nặng, giới hạn như render
   uploadMiddleware(upload.single("media")),
   async (req, res) => {
     // 1. Validate (chưa stream → lỗi trả JSON 4xx)
@@ -1266,27 +1343,29 @@ app.post(
       threshold = validateThreshold(req.body.threshold);
       ({ start, end } = validateRange(req.body.start, req.body.end));
     } catch (e) {
-      return res.status(400).json({ error: e.message });
+      return res.status(400).json(apiErrorFrom(e));
     }
     const f = req.file;
     if (!f) {
-      return res.status(400).json({ error: "Thiếu file video (field 'media')." });
+      return res.status(400).json(apiError("MISSING_VIDEO", "Thiếu file video (field 'media')."));
     }
     const safe = sanitizeFilename(f.originalname);
     if (!safe) {
-      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+      return res.status(400).json(apiError("INVALID_FILENAME", `Tên file không hợp lệ: ${f.originalname}`, { name: f.originalname }));
     }
     const ext = path.extname(safe).toLowerCase();
     if (!VIDEO_EXTS.has(ext)) {
-      return res.status(400).json({
-        error: `Tách cảnh cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
-      });
+      return res.status(400).json(apiError(
+        "SCENE_NEEDS_VIDEO",
+        `Tách cảnh cần file VIDEO (${[...VIDEO_EXTS].join(", ")}).`,
+        { exts: [...VIDEO_EXTS].join(", ") },
+      ));
     }
     const magicErr = checkMagicBytes(safe, readUploadHead(f));
-    if (magicErr) return res.status(400).json({ error: magicErr });
+    if (magicErr) return res.status(400).json(apiError(magicErr.code, magicErr.message, magicErr.params));
     const avail = sceneAvailable();
     if (!avail.available) {
-      return res.status(503).json({ error: `Tách cảnh chưa sẵn sàng: ${avail.reason}` });
+      return res.status(503).json(apiError("SCENE_NOT_READY", `Tách cảnh chưa sẵn sàng: ${avail.reason}`, { reason: avail.reason }));
     }
 
     // 2. Lưu file vào thư mục tạm riêng (không bao giờ dùng path từ client)
@@ -1301,7 +1380,7 @@ app.post(
     } catch (e) {
       console.error(`[bridge] không lưu được file scene:`, e.message);
       cleanupJobDir(dir);
-      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+      return res.status(500).json(apiError("SAVE_FILE_FAILED", "Lỗi máy chủ khi lưu file — thử lại sau."));
     }
 
     // 3. Stream NDJSON: phase... → done | error
@@ -1331,7 +1410,7 @@ app.post(
         count: result.cuts.length,
       });
     } catch (e) {
-      send({ type: "error", ...taskErrorPayload(e, "Tách cảnh thất bại.") });
+      send({ type: "error", ...taskErrorPayload(e, "Tách cảnh thất bại.", "TASK_SCENE_FAILED") });
     } finally {
       cleanupJobDir(dir);
       try { res.end(); } catch { /* bỏ qua */ }
@@ -1346,7 +1425,7 @@ app.post(
 // Stream NDJSON giống /api/caption: phase... → done | error.
 app.post(
   "/api/caption/translate",
-  rateLimit(RATE_MAX_RENDER), // R1-040: giới hạn chặt như render (tác vụ nặng)
+  rateLimit(RATE_MAX_RENDER, "render"), // R1-040: giới hạn chặt như render (tác vụ nặng)
   uploadMiddleware(upload.single("media")),
   async (req, res) => {
     // 1. Validate (chưa stream → lỗi trả JSON 4xx)
@@ -1355,27 +1434,28 @@ app.post(
       lang = validateLang(req.body.lang);
       target = validateTranslateTarget(req.body.target);
     } catch (e) {
-      return res.status(400).json({ error: e.message });
+      return res.status(400).json(apiErrorFrom(e));
     }
     const f = req.file;
     if (!f) {
-      return res.status(400).json({ error: "Thiếu file media (field 'media')." });
+      return res.status(400).json(apiError("MISSING_MEDIA", "Thiếu file media (field 'media')."));
     }
     const safe = sanitizeFilename(f.originalname);
     if (!safe) {
-      return res.status(400).json({ error: `Tên file không hợp lệ: ${f.originalname}` });
+      return res.status(400).json(apiError("INVALID_FILENAME", `Tên file không hợp lệ: ${f.originalname}`, { name: f.originalname }));
     }
     const ext = path.extname(safe).toLowerCase();
     if (!AUDIO_VIDEO_EXTS.has(ext)) {
-      return res.status(400).json({
-        error: "Dịch phụ đề cần file video hoặc audio (ảnh không có tiếng để nhận diện).",
-      });
+      return res.status(400).json(apiError(
+        "TRANSLATE_NEEDS_AV",
+        "Dịch phụ đề cần file video hoặc audio (ảnh không có tiếng để nhận diện).",
+      ));
     }
     const magicErr = checkMagicBytes(safe, readUploadHead(f));
-    if (magicErr) return res.status(400).json({ error: magicErr });
+    if (magicErr) return res.status(400).json(apiError(magicErr.code, magicErr.message, magicErr.params));
     const avail = translateAvailable();
     if (!avail.available) {
-      return res.status(503).json({ error: `Dịch phụ đề chưa sẵn sàng: ${avail.reason}` });
+      return res.status(503).json(apiError("TRANSLATE_NOT_READY", `Dịch phụ đề chưa sẵn sàng: ${avail.reason}`, { reason: avail.reason }));
     }
 
     // 2. Lưu file vào thư mục tạm riêng (không bao giờ dùng path từ client)
@@ -1390,7 +1470,7 @@ app.post(
     } catch (e) {
       console.error(`[bridge] không lưu được file translate:`, e.message);
       cleanupJobDir(dir);
-      return res.status(500).json({ error: "Lỗi máy chủ khi lưu file — thử lại sau." });
+      return res.status(500).json(apiError("SAVE_FILE_FAILED", "Lỗi máy chủ khi lưu file — thử lại sau."));
     }
 
     // 3. Stream NDJSON: phase... → done | error
@@ -1417,7 +1497,7 @@ app.post(
         segments: result.segments,
       });
     } catch (e) {
-      send({ type: "error", ...taskErrorPayload(e, "Dịch phụ đề thất bại.") });
+      send({ type: "error", ...taskErrorPayload(e, "Dịch phụ đề thất bại.", "TASK_TRANSLATE_FAILED") });
     } finally {
       cleanupJobDir(dir);
       try { res.end(); } catch { /* bỏ qua */ }
@@ -1441,7 +1521,7 @@ app.get("/api/render", (req, res) => {
 // ExportPanel không đổi gì vẫn nhận error cũ, không hồi quy.
 app.get("/api/render/:id", validateJobIdParam, (req, res) => {
   const job = service.get(req.params.id);
-  if (!job) return res.status(404).json({ error: "Không tìm thấy job." });
+  if (!job) return res.status(404).json(apiError("JOB_NOT_FOUND", "Không tìm thấy job."));
   const includeDetail = req.query.detail === "1" || req.query.error_detail === "1";
   res.json(publicJob(job, includeDetail));
 });
@@ -1449,30 +1529,32 @@ app.get("/api/render/:id", validateJobIdParam, (req, res) => {
 // --- GET /api/render/:id/download --------------------------------------------
 app.get("/api/render/:id/download", validateJobIdParam, (req, res) => {
   const job = service.get(req.params.id);
-  if (!job) return res.status(404).json({ error: "Không tìm thấy job." });
+  if (!job) return res.status(404).json(apiError("JOB_NOT_FOUND", "Không tìm thấy job."));
   if (job.status !== "done" || !fs.existsSync(job.outPath)) {
-    return res.status(409).json({ error: `Job chưa xong (status=${job.status}).` });
+    return res.status(409).json(apiError("JOB_NOT_DONE", `Job chưa xong (status=${job.status}).`, { status: job.status }));
   }
   res.setHeader("Content-Type", "video/mp4");
   res.setHeader("Content-Disposition", `attachment; filename="${job.outputName || "vcut-export.mp4"}"`);
   const stream = fs.createReadStream(job.outPath);
   stream.on("error", (e) => {
     console.error(`[bridge] lỗi đọc output job ${job.id}:`, e.message);
-    if (!res.headersSent) res.status(500).json({ error: "Lỗi khi đọc file output." });
+    if (!res.headersSent) res.status(500).json(apiError("READ_OUTPUT_FAILED", "Lỗi khi đọc file output."));
     else res.destroy();
   });
   stream.pipe(res);
 });
 
-// --- DELETE /api/render/:id (hủy) --------------------------------------------
+// --- DELETE /api/render/:id (huỷ) --------------------------------------------
 app.delete("/api/render/:id", validateJobIdParam, (req, res) => {
   const job = service.get(req.params.id);
-  if (!job) return res.status(404).json({ error: "Không tìm thấy job." });
+  if (!job) return res.status(404).json(apiError("JOB_NOT_FOUND", "Không tìm thấy job."));
   const ok = service.cancel(job.id);
   if (!ok) {
-    return res.status(409).json({
-      error: `Job đã ở trạng thái cuối ("${job.status}") — không hủy được.`,
-    });
+    return res.status(409).json(apiError(
+      "JOB_CANCEL_BAD_STATE",
+      `Job đã ở trạng thái cuối ("${job.status}") — không huỷ được.`,
+      { status: job.status },
+    ));
   }
   res.json({ ok: true, id: job.id, status: "cancelled" });
 });
@@ -1483,7 +1565,17 @@ app.post("/api/render/:id/retry", validateJobIdParam, (req, res) => {
     const job = service.retry(req.params.id);
     res.json({ jobId: job.id, status: job.status, queuePosition: job.queuePosition });
   } catch (e) {
-    if (e.code === "NOT_FOUND") return res.status(404).json({ error: e.message });
+    // Đợt 62 R5: map mã jobQueue (NOT_FOUND/BAD_STATE/GONE) sang mã catalog.
+    if (e.code === "NOT_FOUND") return res.status(404).json(apiError("JOB_NOT_FOUND", e.message));
+    if (e.code === "GONE") return res.status(409).json(apiError("JOB_GONE", e.message));
+    if (e.code === "BAD_STATE") {
+      const status = e.params && typeof e.params.status === "string" ? e.params.status : "";
+      return res.status(409).json(apiError(
+        status === "cancelled" ? "JOB_RETRY_CANCELLED" : "JOB_RETRY_BAD_STATE",
+        e.message,
+        status ? { status } : undefined,
+      ));
+    }
     return res.status(409).json({ error: e.message });
   }
 });
@@ -1495,17 +1587,17 @@ app.get("/api/tts/voices", (req, res) => {
   res.json({ voices: TTS_VOICES, default: DEFAULT_VOICE });
 });
 
-app.post("/api/tts", rateLimit(RATE_MAX_RENDER), async (req, res) => {
+app.post("/api/tts", rateLimit(RATE_MAX_RENDER, "render"), async (req, res) => {
   let text, voice;
   try {
     text = validateText(req.body && req.body.text);
     voice = validateVoice(req.body && req.body.voice);
   } catch (e) {
-    return res.status(400).json({ error: e.message });
+    return res.status(400).json(apiErrorFrom(e));
   }
   const avail = ttsAvailable();
   if (!avail.available) {
-    return res.status(503).json({ error: `TTS chưa sẵn sàng: ${avail.reason}` });
+    return res.status(503).json(apiError("TTS_NOT_READY", `TTS chưa sẵn sàng: ${avail.reason}`, { reason: avail.reason }));
   }
   const dir = path.join(
     WORK_ROOT,
@@ -1515,19 +1607,19 @@ app.post("/api/tts", rateLimit(RATE_MAX_RENDER), async (req, res) => {
     fs.mkdirSync(dir, { recursive: true });
   } catch (e) {
     console.error(`[bridge] không tạo được thư mục tts:`, e.message);
-    return res.status(500).json({ error: "Lỗi máy chủ khi chuẩn bị TTS — thử lại sau." });
+    return res.status(500).json(apiError("TTS_PREPARE_FAILED", "Lỗi máy chủ khi chuẩn bị TTS — thử lại sau."));
   }
   let result;
   try {
     result = await runTts({ text, voice, outDir: dir });
   } catch (e) {
     cleanupJobDir(dir);
-    return res.status(500).json(taskErrorPayload(e, "TTS thất bại."));
+    return res.status(500).json(taskErrorPayload(e, "TTS thất bại.", "TASK_TTS_FAILED"));
   }
   const wavPath = result.outPath;
   if (!fs.existsSync(wavPath)) {
     cleanupJobDir(dir);
-    return res.status(500).json({ error: "TTS xong nhưng không thấy file WAV." });
+    return res.status(500).json(apiError("TTS_NO_WAV", "TTS xong nhưng không thấy file WAV."));
   }
   const downloadName = `tts-${voice}-${Date.now()}.wav`;
   res.setHeader("X-TTS-Voice", encodeURIComponent(voice)); // Unicode → %encoded (header chỉ cho phép Latin-1)
@@ -1545,7 +1637,7 @@ app.post("/api/tts", rateLimit(RATE_MAX_RENDER), async (req, res) => {
 // Apache-2.0). File mẫu và WAV đích đều dọn sau khi gửi xong.
 app.post(
   "/api/tts/clone",
-  rateLimit(RATE_MAX_RENDER),
+  rateLimit(RATE_MAX_RENDER, "render"),
   uploadMiddleware(upload.single("refAudio")),
   async (req, res) => {
     let text;
@@ -1554,11 +1646,11 @@ app.post(
       text = validateText(req.body && req.body.text);
       refPath = validateRefAudio(req.file);
     } catch (e) {
-      return res.status(400).json({ error: e.message });
+      return res.status(400).json(apiErrorFrom(e));
     }
     const avail = ttsAvailable();
     if (!avail.available) {
-      return res.status(503).json({ error: `TTS chưa sẵn sàng: ${avail.reason}` });
+      return res.status(503).json(apiError("TTS_NOT_READY", `TTS chưa sẵn sàng: ${avail.reason}`, { reason: avail.reason }));
     }
     const dir = path.join(
       WORK_ROOT,
@@ -1568,19 +1660,19 @@ app.post(
       fs.mkdirSync(dir, { recursive: true });
     } catch (e) {
       console.error(`[bridge] không tạo được thư mục tts-clone:`, e.message);
-      return res.status(500).json({ error: "Lỗi máy chủ khi chuẩn bị TTS — thử lại sau." });
+      return res.status(500).json(apiError("TTS_PREPARE_FAILED", "Lỗi máy chủ khi chuẩn bị TTS — thử lại sau."));
     }
     let result;
     try {
       result = await runTts({ text, voice: undefined, refAudioPath: refPath, outDir: dir });
     } catch (e) {
       cleanupJobDir(dir);
-      return res.status(500).json(taskErrorPayload(e, "TTS clone thất bại."));
+      return res.status(500).json(taskErrorPayload(e, "TTS clone thất bại.", "TASK_TTS_CLONE_FAILED"));
     }
     const wavPath = result.outPath;
     if (!fs.existsSync(wavPath)) {
       cleanupJobDir(dir);
-      return res.status(500).json({ error: "TTS xong nhưng không thấy file WAV." });
+      return res.status(500).json(apiError("TTS_NO_WAV", "TTS xong nhưng không thấy file WAV."));
     }
     res.setHeader("X-TTS-Voice", "clone");
     res.setHeader("X-TTS-Duration", String(result.durationSec || 0));
@@ -1615,7 +1707,7 @@ app.get("/api/openapi.json", (req, res) => {
     res.json(openApiSpecCache);
   } catch (e) {
     console.error("[bridge] không đọc được openapi.yaml:", e.message);
-    res.status(500).json({ error: "Không đọc được OpenAPI spec." });
+    res.status(500).json(apiError("OPENAPI_READ_FAILED", "Không đọc được OpenAPI spec."));
   }
 });
 
@@ -1634,10 +1726,10 @@ app.post("/api/proxy",
   uploadMiddleware(upload.single("file")),
   async (req, res) => {
     try {
-      if (!req.file) return res.status(400).json({ error: "Thiếu file video (field 'file')." });
+      if (!req.file) return res.status(400).json(apiError("PROXY_MISSING_FILE", "Thiếu file video (field 'file')."));
       const height = parseInt(req.body.height, 10) || 720;
       if (![480, 720].includes(height)) {
-        return res.status(400).json({ error: "height phải là 480 hoặc 720." });
+        return res.status(400).json(apiError("PROXY_BAD_HEIGHT", "height phải là 480 hoặc 720."));
       }
       fs.mkdirSync(PROXY_DIR, { recursive: true });
       const safe = sanitizeFilename(req.file.originalname);
@@ -1672,7 +1764,7 @@ app.post("/api/proxy",
       // luôn kèm; errorDetail chỉ khi ?detail=1 (luật opt-in như render
       // job, khác các route đồng bộ khác trả luôn detail).
       console.error("[bridge] /api/proxy lỗi:", e.message);
-      const payload = taskErrorPayload(e, "Tạo proxy thất bại.");
+      const payload = taskErrorPayload(e, "Tạo proxy thất bại.", "TASK_PROXY_FAILED");
       const includeDetail = req.query.detail === "1" || req.query.error_detail === "1";
       return res.status(500).json(
         includeDetail
@@ -1684,11 +1776,11 @@ app.post("/api/proxy",
 app.get("/api/proxy/file/:name", (req, res) => {
   const name = req.params.name || "";
   if (!/^[A-Za-z0-9._-]+\.mp4$/.test(name)) {
-    return res.status(400).json({ error: "Tên file proxy không hợp lệ." });
+    return res.status(400).json(apiError("PROXY_INVALID_NAME", "Tên file proxy không hợp lệ."));
   }
   const full = path.join(PROXY_DIR, name);
   if (!full.startsWith(PROXY_DIR + path.sep) || !fs.existsSync(full)) {
-    return res.status(404).json({ error: "Không tìm thấy file proxy." });
+    return res.status(404).json(apiError("PROXY_NOT_FOUND", "Không tìm thấy file proxy."));
   }
   res.setHeader("Content-Type", "video/mp4");
   res.sendFile(full);
@@ -1703,11 +1795,11 @@ const FILTERS_DIR = path.resolve(__dirname, "..", "..", "..", "assets", "filters
 app.get("/api/luts/:id", (req, res) => {
   const id = req.params.id || "";
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(id)) {
-    return res.status(400).json({ error: "Id LUT không hợp lệ." });
+    return res.status(400).json(apiError("INVALID_LUT_ID", "Id LUT không hợp lệ."));
   }
   const full = path.join(FILTERS_DIR, `${id}.cube`);
   if (!full.startsWith(FILTERS_DIR + path.sep) || !fs.existsSync(full)) {
-    return res.status(404).json({ error: "Không tìm thấy LUT." });
+    return res.status(404).json(apiError("LUT_NOT_FOUND", "Không tìm thấy LUT."));
   }
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.sendFile(full);
@@ -1715,7 +1807,7 @@ app.get("/api/luts/:id", (req, res) => {
 
 // R1-040: 404 cho API không tồn tại → JSON (thay vì HTML của Express)
 app.use("/api/", (req, res) => {
-  res.status(404).json({ error: "API không tồn tại." });
+  res.status(404).json(apiError("API_NOT_FOUND", "API không tồn tại."));
 });
 
 // R1-040: error handler toàn cục — mọi lỗi chưa bắt → JSON gọn, KHÔNG leak stack.
@@ -1725,7 +1817,7 @@ app.use((err, req, res, next) => {
   console.error(`[bridge] unhandled error ${req.method} ${req.path}:`, err && err.stack || err);
   if (res.headersSent) return;
   const status = err && err.status && Number.isInteger(err.status) ? err.status : 500;
-  res.status(status).json({ error: "Lỗi máy chủ nội bộ." });
+  res.status(status).json(apiError("INTERNAL_ERROR", "Lỗi máy chủ nội bộ."));
 });
 
 // ---------------------------------------------------------------------------
@@ -1733,12 +1825,13 @@ const server = app.listen(PORT, () => {
   console.log(`🌉 VCut bridge server v${VERSION} đang chạy tại http://127.0.0.1:${PORT}`);
   console.log(`   render worker: ${RENDER_JS}`);
   console.log(`   work dir: ${WORK_ROOT} | max concurrent: ${MAX_CONCURRENT_JOBS} | max queue: ${MAX_QUEUE_LENGTH}`);
-  console.log(`   hardening: rate-limit ${RATE_MAX_GENERAL}/phút (render ${RATE_MAX_RENDER}/phút), spec ≤${Math.round(SPEC_MAX_BYTES / 1024 / 1024)}MB`);
+  console.log(`   hardening: rate-limit ${RATE_MAX_GENERAL}/phút (render ${RATE_MAX_RENDER}/phút), global ${RATE_GLOBAL_MAX}/phút, persist ${RATE_PERSIST_PATH}, spec ≤${Math.round(SPEC_MAX_BYTES / 1024 / 1024)}MB`);
 });
 
-// Shutdown graceful: hủy job, đóng server.
+// Shutdown graceful: huỷ job, đóng server.
 function shutdown() {
-  console.log("\n🛑 Đang tắt bridge server — hủy job...");
+  console.log("\n🛑 Đang tắt bridge server — huỷ job...");
+  try { limiter.flush(); } catch { /* best-effort: trạng thái limiter đã lưu định kỳ */ }
   try { service.shutdown(); } catch { /* bỏ qua */ }
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 8000).unref();
