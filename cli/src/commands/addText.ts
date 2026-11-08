@@ -23,13 +23,13 @@ export async function cmdAddText(args: ParsedArgs): Promise<void> {
   const bold = args.flags["bold"] === true || args.flags["bold"] === "true";
   const italic = args.flags["italic"] === true || args.flags["italic"] === "true";
 
-  if (start < 0) throw new CliError("--start phải >= 0");
-  if (!(duration > 0)) throw new CliError("--duration phải > 0");
-  if (!(fontSize > 0)) throw new CliError("--font-size phải > 0");
-  if (!/^#[0-9a-fA-F]{6}$/.test(color)) throw new CliError(`--color phải là hex #rrggbb, nhận được: ${color}`);
-  if (x < 0 || x > 1 || y < 0 || y > 1) throw new CliError("--x và --y phải trong khoảng 0..1");
+  if (start < 0) throw new CliError("NUMBER_NEGATIVE", "--start phải >= 0");
+  if (!(duration > 0)) throw new CliError("NUMBER_NOT_POSITIVE", "--duration phải > 0");
+  if (!(fontSize > 0)) throw new CliError("NUMBER_NOT_POSITIVE", "--font-size phải > 0");
+  if (!/^#[0-9a-fA-F]{6}$/.test(color)) throw new CliError("INVALID_HEX_COLOR", `--color phải là hex #rrggbb, nhận được: ${color}`);
+  if (x < 0 || x > 1 || y < 0 || y > 1) throw new CliError("NUMBER_OUT_OF_RANGE", "--x và --y phải trong khoảng 0..1");
   if (!(TEXT_ANIMATIONS as readonly string[]).includes(animation))
-    throw new CliError(`--animation không hợp lệ. Chọn một trong: ${(TEXT_ANIMATIONS as readonly string[]).join(", ")}`);
+    throw new CliError("ENUM_INVALID", `--animation không hợp lệ. Chọn một trong: ${(TEXT_ANIMATIONS as readonly string[]).join(", ")}`);
 
   const { spec, filePath } = await loadProject(projectPath);
   const track = findOrCreateTrack(spec, "text");

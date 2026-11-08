@@ -24,7 +24,7 @@ export async function cmdCaption(args: ParsedArgs): Promise<void> {
   try {
     await fs.access(srcAbs);
   } catch {
-    throw new CliError(`Không tìm thấy file nguồn: ${src}`);
+    throw new CliError("NOT_FOUND", `Không tìm thấy file nguồn: ${src}`);
   }
 
   const { spec, filePath } = await loadProject(projectPath);
@@ -50,12 +50,12 @@ export async function cmdCaption(args: ParsedArgs): Promise<void> {
     // lỗi giữ nguyên định dạng cũ (process exit 1 qua handler CliError
     // ở index.ts, như trước).
     const r = await runStreamed(PYTHON_BIN, pyArgs, 20 * 60 * 1000, "caption");
-    if (r.status !== 0) throw new CliError(`caption.py thất bại (exit ${r.status})`);
+    if (r.status !== 0) throw new CliError("SCRIPT_FAILED", `caption.py thất bại (exit ${r.status})`);
 
     const trackRaw = await fs.readFile(trackOut, "utf8");
     const track = JSON.parse(trackRaw) as Track;
     if (!track || !Array.isArray(track.clips))
-      throw new CliError("caption.py không trả về track hợp lệ");
+      throw new CliError("SCRIPT_INVALID_OUTPUT", "caption.py không trả về track hợp lệ");
 
     // Gắn ID mới để tránh trùng
     track.id = newId("track");

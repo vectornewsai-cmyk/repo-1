@@ -144,6 +144,11 @@ export async function buildSampleProject(): Promise<{ spec: VideoSpec; media: Me
     // Sau ingest, tỉa các manifest mẫu cũ cùng tên để kho mẫu không
     // phình theo mỗi lần tạo mẫu (mỗi lần ghi MediaRecorder cho bytes
     // khác nhau nên dedup theo sha không gom được chúng).
+    // Đợt 53 J5 — giữ assetId của manifest mẫu để MediaItem mẫu cũng
+    // nối được proxy về manifest khi user tạo proxy tay cho clip mẫu
+    // (mau-*.webm chỉ 640×360 nên auto-proxy bỏ qua, nhưng nút Proxy
+    // tay vẫn hiện vì item có file sau rehydrate).
+    let sampleAssetId: string | undefined;
     try {
       const store = new AssetStore();
       const kept = await store.ingest(blob, {
@@ -153,6 +158,7 @@ export async function buildSampleProject(): Promise<{ spec: VideoSpec; media: Me
         duration: seconds,
         thumbnail: thumb,
       });
+      sampleAssetId = kept.assetId;
       const all = await store.list();
       for (const m of all) {
         if (m.originalName === kept.originalName && m.assetId !== kept.assetId) {
@@ -162,6 +168,14 @@ export async function buildSampleProject(): Promise<{ spec: VideoSpec; media: Me
     } catch {
       // nuốt lỗi bền vững mẫu — xem chú thích trên.
     }
+    // Đợt 58 O2 — gắn `file` thật cho media mẫu trong phiên: blob mẫu
+    // đã có sẵn trong tay, nhưng trước đây MediaItem mẫu không mang
+    // `file` nên ExportPanel.collectMediaFiles coi mau-*.webm là thiếu
+    // (render báo lỗi missingMedia) và nút Proxy/reframe cũng ẩn cho
+    // tới khi user reload trang (lúc đó rehydrate mới dựng File từ
+    // IndexedDB). Gắn File tại đây để item trong phiên đồng nhất với
+    // item sau rehydrate (rehydrate36S5.ts dựng `new File([blob], …)`
+    // y hệt); không đổi bytes, tên hay đường ingest.
     media.push({
       id: uid("m"),
       name: `mau-${variant + 1}.${ext}`,
@@ -171,6 +185,8 @@ export async function buildSampleProject(): Promise<{ spec: VideoSpec; media: Me
       width: W,
       height: H,
       thumbnail: thumb,
+      file: new File([blob], `mau-${variant + 1}.${ext}`, { type: blob.type }),
+      ...(sampleAssetId ? { assetId: sampleAssetId } : {}),
     });
   }
 
@@ -220,6 +236,11 @@ export async function buildSampleProject(): Promise<{ spec: VideoSpec; media: Me
               fontSize: 72,
               color: "#ffffff",
               bold: true,
+              // Đợt 59 P1: phải có đủ field như DEFAULT_TEXT_STYLE
+              // (normalizeTextStyle điền italic:false lúc load nên mẫu
+              // thiếu field này sẽ toast "đã điền style" ở lần reload
+              // đầu sau mỗi lần tạo mẫu — xem LIMITS đợt 59 P1 §2).
+              italic: false,
               x: 0.5,
               y: 0.32,
               animation: "fadeUp",

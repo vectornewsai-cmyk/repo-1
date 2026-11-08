@@ -6,6 +6,7 @@
  */
 import type { TextClip, TextStyle } from "@repo-1/video-spec";
 import { uid } from "../lib";
+import { t } from "../i18n";
 
 /** 1 câu phụ đề: thời gian tính theo giây, gốc 0 = đầu file media. */
 export interface CaptionSegment {
@@ -117,9 +118,9 @@ export const CAPTION_DEFAULT_STYLE: TextStyle = {
 };
 
 export const CAPTION_LANGS = [
-  { code: "vi", label: "Tiếng Việt" },
+  { code: "vi", label: t("captions.langVi") },
   { code: "en", label: "English" },
-  { code: "auto", label: "Tự động phát hiện" },
+  { code: "auto", label: t("captions.langAuto") },
 ] as const;
 
 export type CaptionLangCode = (typeof CAPTION_LANGS)[number]["code"];
@@ -130,14 +131,38 @@ export type CaptionLangCode = (typeof CAPTION_LANGS)[number]["code"];
  * — list này mở rộng được khi có engine MT khác (vd: argos-translate en→vi).
  */
 export const TRANSLATE_TARGET_LANGS = [
-  { code: "en", label: "Tiếng Anh" },
+  { code: "en", label: t("captions.langEn") },
 ] as const;
 
 export type TranslateTargetCode = (typeof TRANSLATE_TARGET_LANGS)[number]["code"];
 
-/** Nhãn track cho phụ đề đã dịch — hiển thị trong timeline. */
-export function translatedTrackLabel(targetCode: string): string {
-  return `Phụ đề (${targetCode.toUpperCase()})`;
+/** Lookup i18n tùy chọn (mẫu M5/M6/N8): không lookup → dùng `t()` của module. */
+type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+
+/**
+ * Nhãn track cho phụ đề đã dịch — hiển thị trong timeline.
+ *
+ * Đợt 58 O5: dịch qua key `captions.translatedTrack` ("Phụ đề ({code})" /
+ * "Subtitles ({code})", fragment round58-o5.json — parent merge vào
+ * vi.json/en.json). `lookup` tùy chọn; không truyền thì dùng `t()` của
+ * module (đã import sẵn trong file này, gọi tại thời điểm gọi nên theo
+ * locale hiện tại) — vì vậy sau khi parent merge, CaptionModal KHÔNG cần
+ * sửa call-site, nhãn tự theo locale. Key chưa có trong dict (trước lúc
+ * merge) → fallback đúng từng chữ VI cũ ("Phụ đề (EN)"), hành vi mặc
+ * định không đổi (M4 khóa ở i18nAudit56M4.test.ts:319). Recognition ở
+ * subtitles.ts đã khớp cả hai tiền tố nên track dịch tạo mới dưới locale
+ * en vẫn được xuất phụ đề.
+ */
+export function translatedTrackLabel(
+  targetCode: string,
+  lookup?: I18nLookup,
+): string {
+  const code = targetCode.toUpperCase();
+  const look = lookup ?? t;
+  const out = look("captions.translatedTrack", { code });
+  return typeof out !== "string" || out === "captions.translatedTrack"
+    ? `Phụ đề (${code})`
+    : out;
 }
 
 /**
@@ -145,7 +170,7 @@ export function translatedTrackLabel(targetCode: string): string {
  * Bỏ qua câu hỏng, sắp xếp theo start. Throw nếu không còn câu nào.
  */
 export function validateCaptionSegments(raw: unknown): CaptionSegment[] {
-  if (!Array.isArray(raw)) throw new Error("Dữ liệu phụ đề không hợp lệ.");
+  if (!Array.isArray(raw)) throw new Error(t("captions.invalidData"));
   const out: CaptionSegment[] = [];
   for (const s of raw) {
     const r = s as Record<string, unknown> | null;
@@ -162,8 +187,8 @@ export function validateCaptionSegments(raw: unknown): CaptionSegment[] {
     });
   }
   out.sort((a, b) => a.start - b.start);
-  if (out.length === 0) throw new Error("Không có câu phụ đề hợp lệ nào.");
-  if (out.length > 5000) throw new Error("Quá nhiều câu phụ đề.");
+  if (out.length === 0) throw new Error(t("captions.noValidSentences"));
+  if (out.length > 5000) throw new Error(t("captions.tooManySentences"));
   return out;
 }
 

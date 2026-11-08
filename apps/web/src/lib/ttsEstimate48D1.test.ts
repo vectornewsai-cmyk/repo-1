@@ -2,11 +2,11 @@
  * ttsEstimate48D1.test.ts — Test cho đợt 48 luồng D1 (ROUND48-D1).
  *
  * Khóa:
- * 1. ĐỎ-TRƯỚC (ĐỢT 50 F3 — đã chuyển): nối UI — TtsButton phải import
- *    + gọi helper F3 (ttsDoneSuffixRange50F3) với voice đang chọn,
- *    không còn dùng helper E1 cho hậu tố toast. Test này ĐỎ khi
- *    TtsButton còn nối E1 (trạng thái trước luồng F3), XANH sau khi
- *    chuyển (xem ttsEstimate50F3.test.ts §1).
+ * 1. ĐỎ-TRƯỚC (ĐỢT 51 H1 — đã chuyển): nối UI — TtsButton phải import
+ *    + gọi helper H1 (ttsDoneSuffixRange51H1) với voice đang chọn,
+ *    không còn dùng helper F3 cho hậu tố toast. Test này ĐỎ khi
+ *    TtsButton còn nối F3 (trạng thái trước luồng H1), XANH sau khi
+ *    chuyển (xem ttsEstimate51H1.test.ts §1).
  * 2. Bằng chứng toast cũ sai: với text số-dày M3 (178 ký tự, thực
  *    tế 19,99 s), helper B3 cho "(≈9.2–10.7s)" — khoảng B3 KHÔNG
  *    chứa số thật (19,99 s); helper C4 (sau sửa D1) cho
@@ -115,19 +115,27 @@ function readTtsButtonSource(): string {
 // 1. ĐỎ-TRƯỚC (ĐỢT 50 F3 — đã chuyển): nối UI — TtsButton phải dùng helper F3 + truyền voice
 // ---------------------------------------------------------------------------
 
-test("nối UI (đợt 50 F3): TtsButton import + gọi helper F3 với voice, không dùng helper E1/C4/B3, không hardcode 18,4", () => {
+test("nối UI (đợt 51 H1): TtsButton import + gọi helper H1 với voice, không dùng helper F3/E1/C4/B3, không hardcode 18,4", () => {
   const code = readTtsButtonSource();
   assert(
-    code.includes('from "../lib/ttsEstimate50F3"'),
-    "TtsButton phải import từ ../lib/ttsEstimate50F3",
+    code.includes('from "../lib/ttsEstimate51H1"'),
+    "TtsButton phải import từ ../lib/ttsEstimate51H1",
   );
   assert(
-    code.includes("ttsDoneSuffixRange50F3({"),
-    "TtsButton phải gọi ttsDoneSuffixRange50F3({...})",
+    code.includes("ttsDoneSuffixRange51H1({"),
+    "TtsButton phải gọi ttsDoneSuffixRange51H1({...})",
   );
   assert(
     code.includes("voice: cloneMode ? undefined : voice"),
     "TtsButton phải truyền voice đang chọn (clone mode → undefined để fallback hệ số chung)",
+  );
+  assert(
+    !code.includes('from "../lib/ttsEstimate50F3"'),
+    "TtsButton không được còn import helper F3 (đã chuyển sang H1 ở đợt 51 H1)",
+  );
+  assert(
+    !code.includes("ttsDoneSuffixRange50F3({"),
+    "TtsButton không được còn gọi ttsDoneSuffixRange50F3({...})",
   );
   assert(
     !code.includes('from "../lib/ttsEstimate49E1"'),

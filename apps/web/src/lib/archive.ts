@@ -18,6 +18,7 @@
  */
 import JSZip from "jszip";
 import { archiveMissingNote, parseProjectText, serializeProject } from "./projectRepo";
+import { t } from "../i18n";
 import type { VideoSpec } from "@repo-1/video-spec";
 
 export const ARCHIVE_EXT = ".vcut.zip";
@@ -77,6 +78,12 @@ export interface ImportArchiveResult {
   ok: boolean;
   spec: VideoSpec | null;
   name: string;
+  /**
+   * Đợt 63 R7 — projectId ổn định đọc từ project.json trong archive
+   * (parseProjectText đã migration sinh mới khi archive cũ thiếu id).
+   * Cổng fail đặt "" (không có project để nhận id).
+   */
+  projectId: string;
   /** File media đã giải nén — caller import vào store qua importFiles(). */
   mediaFiles: File[];
   errors: string[];
@@ -204,6 +211,12 @@ export async function exportArchive(
   spec: VideoSpec,
   name: string,
   mediaSources: ArchiveMediaSource[],
+  /**
+   * Đợt 63 R7 — projectId ổn định để ghi vào project.json trong
+   * archive (nhập lại archive giữ nguyên id của project gốc thay vì
+   * sinh id mới). Không truyền = hành vi cũ (project.json thiếu id).
+   */
+  projectId?: string,
 ): Promise<ExportArchiveResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -214,7 +227,7 @@ export async function exportArchive(
     stats: { mediaFiles: 0, mediaBytes: 0, zipBytes: 0 },
   });
 
-  const { json, warnings: projWarnings, structuredNotes: projNotes } = serializeProject(spec, name);
+  const { json, warnings: projWarnings, structuredNotes: projNotes } = serializeProject(spec, name, undefined, undefined, projectId);
   warnings.push(...projWarnings);
 
   const srcs = collectMediaSrcs(spec);
@@ -237,7 +250,7 @@ export async function exportArchive(
       continue;
     }
     if (!isSafeEntryName(src) || src.includes("/")) {
-      errors.push(`Tên media không an toàn để đóng gói: ${JSON.stringify(src)}.`);
+      errors.push(t("archive.unsafeName", { name: JSON.stringify(src) }));
       continue;
     }
     const buf = new Uint8Array(await data.arrayBuffer());
@@ -280,7 +293,7 @@ export async function exportArchive(
       // Giữ mức nén mặc định cho project.json/manifest; media đã là STORE.
     });
   } catch (e) {
-    return fail([`Tạo file zip thất bại: ${(e as Error).message ?? e}.`]);
+    return fail([t("archive.zipFailed", { error: String((e as Error).message ?? e) })]);
   }
 
   return {
@@ -306,19 +319,19 @@ function parseManifest(text: string): { manifest: ArchiveManifest | null; error:
   try {
     data = JSON.parse(text);
   } catch {
-    return { manifest: null, error: "manifest.json không phải JSON hợp lệ." };
+    return { manifest: null, error: t("archive.manifestNotJson") };
   }
   if (!isRecord(data) || data.format !== "vcut-archive") {
-    return { manifest: null, error: "manifest.json không đúng định dạng vcut-archive." };
+    return { manifest: null, error: t("archive.manifestBadFormat") };
   }
   if (data.formatVersion !== 1) {
     return {
       manifest: null,
-      error: `manifest formatVersion=${JSON.stringify(data.formatVersion)} không được hỗ trợ.`,
+      error: t("archive.manifestVersion", { version: JSON.stringify(data.formatVersion) }),
     };
   }
   if (!Array.isArray(data.files)) {
-    return { manifest: null, error: "manifest.json thiếu danh sách files." };
+    return { manifest: null, error: t("archive.manifestNoFiles") };
   }
   return { manifest: data as unknown as ArchiveManifest, error: null };
 }
@@ -337,6 +350,7 @@ export async function importArchive(zipBlob: Blob): Promise<ImportArchiveResult>
     ok: false,
     spec: null,
     name: "",
+    projectId: "",
     mediaFiles: [],
     errors: errs,
     warnings,
@@ -346,12 +360,12 @@ export async function importArchive(zipBlob: Blob): Promise<ImportArchiveResult>
   try {
     zip = await JSZip.loadAsync(zipBlob);
   } catch (e) {
-    return fail([`Không đọc được file zip: ${(e as Error).message ?? e}.`]);
+    return fail([t("archive.zipUnreadable", { error: String((e as Error).message ?? e) })]);
   }
 
   const names = Object.keys(zip.files);
   if (names.length > MAX_ARCHIVE_FILES) {
-    return fail([`Archive có ${names.length} file, vượt giới hạn ${MAX_ARCHIVE_FILES}.`]);
+    return fail([t("archive.tooManyFiles", { n: String(names.length), limit: String(MAX_ARCHIVE_FILES) })]);
   }
 
   // 1. Kiểm tra tên entry an toàn + đúng định dạng archive.
@@ -359,28 +373,28 @@ export async function importArchive(zipBlob: Blob): Promise<ImportArchiveResult>
     const entry = zip.files[n];
     if (entry.dir) continue;
     if (!isSafeEntryName(n)) {
-      return fail([`Entry không an toàn (path traversal?): ${JSON.stringify(n)}.`]);
+      return fail([t("archive.unsafeEntry", { name: JSON.stringify(n) })]);
     }
     if (!isAllowedEntry(n)) {
       return fail([
-        `Entry lạ trong archive: ${JSON.stringify(n)} — chỉ chấp nhận project.json, manifest.json, media/*.`,
+        t("archive.unknownEntry", { name: JSON.stringify(n) }),
       ]);
     }
   }
 
   // 2. Đọc manifest.
   const manifestEntry = zip.file(ARCHIVE_MANIFEST_FILE);
-  if (!manifestEntry) return fail(["Archive thiếu manifest.json."]);
+  if (!manifestEntry) return fail([t("archive.noManifest")]);
   const { manifest, error: manifestErr } = parseManifest(await manifestEntry.async("string"));
-  if (!manifest) return fail([manifestErr ?? "manifest.json không hợp lệ."]);
+  if (!manifest) return fail([manifestErr ?? t("archive.manifestInvalid")]);
 
   // 3. Đọc + validate project.json.
   const projEntry = zip.file(manifest.projectFile);
-  if (!projEntry) return fail([`Archive thiếu ${manifest.projectFile}.`]);
+  if (!projEntry) return fail([t("archive.missingEntry", { name: manifest.projectFile })]);
   const projText = await projEntry.async("string");
-  const parsed = parseProjectText(projText);
+  const parsed = parseProjectText(projText, t);
   if (!parsed.ok || !parsed.spec) {
-    return fail([`project.json không hợp lệ:`, ...parsed.errors]);
+    return fail([t("archive.projectJsonInvalid"), ...parsed.errors]);
   }
   warnings.push(...parsed.warnings);
 
@@ -393,21 +407,21 @@ export async function importArchive(zipBlob: Blob): Promise<ImportArchiveResult>
   for (const [path, info] of expected) {
     const entry = zip.file(path);
     if (!entry) {
-      errors.push(`Thiếu file media trong archive: ${path} (có trong manifest).`);
+      errors.push(t("archive.missingMedia", { name: path }));
       continue;
     }
     const buf = new Uint8Array(await entry.async("uint8array"));
     totalBytes += buf.length;
     if (totalBytes > MAX_ARCHIVE_BYTES) {
-      return fail([`Tổng dung lượng media vượt giới hạn ${MAX_ARCHIVE_BYTES} byte.`]);
+      return fail([t("archive.mediaTooBig", { limit: String(MAX_ARCHIVE_BYTES) })]);
     }
     if (buf.length !== info.size) {
-      errors.push(`${path}: kích thước ${buf.length} khác manifest (${info.size}).`);
+      errors.push(t("archive.sizeMismatch", { name: path, actual: String(buf.length), expected: String(info.size) }));
       continue;
     }
     const hash = await sha256Hex(buf);
     if (!info.sha256.startsWith("fnv:") && hash !== info.sha256) {
-      errors.push(`${path}: SHA-256 không khớp manifest — file có thể bị hỏng hoặc giả mạo.`);
+      errors.push(t("archive.shaMismatch", { name: path }));
       continue;
     }
     const fileName = path.slice(ARCHIVE_MEDIA_DIR.length);
@@ -430,7 +444,7 @@ export async function importArchive(zipBlob: Blob): Promise<ImportArchiveResult>
     importNotes.push(note);
   }
 
-  return { ok: true, spec: parsed.spec, name: parsed.name, mediaFiles, errors: [], warnings, speedCurveWarnings: parsed.speedCurveWarnings, structuredNotes: importNotes };
+  return { ok: true, spec: parsed.spec, name: parsed.name, projectId: parsed.projectId, mediaFiles, errors: [], warnings, speedCurveWarnings: parsed.speedCurveWarnings, structuredNotes: importNotes };
 }
 
 /** Đoán MIME type từ đuôi file (đủ cho preview local). */

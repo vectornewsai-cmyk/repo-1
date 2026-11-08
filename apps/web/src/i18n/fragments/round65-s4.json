@@ -1,0 +1,34 @@
+{
+  "en": {
+    "export": {
+      "gpuProbe": {
+        "fallbackNote": "If the GPU encoder fails during render, VCut will automatically retry with libx264.",
+        "probing": "Probing GPU…",
+        "reprobe": "Re-probe GPU",
+        "reprobeDone": "Probe finished: {result}",
+        "reprobeError": "Could not probe the GPU ({error})",
+        "statusCacheOff": "GPU probe cache is off — every render re-probes",
+        "statusCpu": "No GPU detected — using CPU (libx264)",
+        "statusGpu": "GPU: {encoder} — probed {date}",
+        "statusUnknown": "GPU has not been probed on this machine",
+        "title": "GPU encoder"
+      }
+    }
+  },
+  "vi": {
+    "export": {
+      "gpuProbe": {
+        "fallbackNote": "Nếu encoder GPU lỗi lúc render, VCut sẽ tự thử lại bằng libx264.",
+        "probing": "Đang probe GPU…",
+        "reprobe": "Probe lại GPU",
+        "reprobeDone": "Probe xong: {result}",
+        "reprobeError": "Không probe được GPU ({error})",
+        "statusCacheOff": "Cache probe GPU đang tắt — mỗi lần render đều probe lại",
+        "statusCpu": "Không phát hiện GPU — đang dùng CPU (libx264)",
+        "statusGpu": "GPU: {encoder} — đã probe {date}",
+        "statusUnknown": "Chưa probe GPU trên máy này",
+        "title": "Encoder GPU"
+      }
+    }
+  }
+}

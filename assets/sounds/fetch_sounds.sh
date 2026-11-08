@@ -13,7 +13,8 @@
 #
 # Cách dùng:
 #   bash assets/sounds/fetch_sounds.sh            # tải toàn bộ (936 file, ~4MB)
-#   bash assets/sounds/fetch_sounds.sh --pack ui  # chỉ tải 1 pack
+#   bash assets/sounds/fetch_sounds.sh --pack=minimal  # chỉ tải 1 pack (78 file)
+#   bash assets/sounds/fetch_sounds.sh --pack minimal  # dạng cách cũng được
 #   bash assets/sounds/fetch_sounds.sh --dry-run  # liệt kê, không tải
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -38,15 +39,22 @@ toggle-on typing uncheck undo unlock volume-change wake warning)
 DRY_RUN=0
 ONLY_PACK=""
 
-for arg in "$@"; do
-  case "$arg" in
-    --dry-run) DRY_RUN=1 ;;
-    --pack) shift ;;
-    --pack=*) ONLY_PACK="${arg#--pack=}" ;;
+# Đợt 63 R8: parse đúng cả 2 dạng --pack=X và --pack X. Bản cũ dùng
+# `for arg in "$@"` + `shift` trong vòng lặp: shift không ảnh hưởng
+# danh sách đã expand nên dạng cách KHÔNG BAO GIỜ nhận được ONLY_PACK
+# (kiểm chứng: `--pack minimal --dry-run` liệt kê 936 file thay vì 78,
+# `--pack nope` tải toàn bộ thay vì báo lỗi) — chỉ dạng --pack=X là
+# chạy đúng. Nay dùng while/shift chuẩn, tham số lạ báo lỗi exit 2.
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run) DRY_RUN=1; shift ;;
+    --pack=*) ONLY_PACK="${1#--pack=}"; shift ;;
+    --pack)
+      if [[ -z "${2:-}" ]]; then echo "Thiếu tên pack sau --pack"; echo "Chọn: ${PACKS[*]}"; exit 2; fi
+      ONLY_PACK="$2"; shift 2 ;;
+    *) echo "Tham số không hợp lệ: $1"; echo "Dùng: --pack=<tên> | --pack <tên> | --dry-run"; exit 2 ;;
   esac
 done
-# hỗ trợ: --pack <tên>
-if [[ "${1:-}" == "--pack" && -n "${2:-}" ]]; then ONLY_PACK="$2"; fi
 
 if [[ -n "$ONLY_PACK" ]]; then
   ok=0; for p in "${PACKS[@]}"; do [[ "$p" == "$ONLY_PACK" ]] && ok=1; done
@@ -101,6 +109,9 @@ fi
 if command -v ffprobe >/dev/null 2>&1; then
   bad=0
   for f in "$OUT"/uisfx-*.ogg; do
+    # Đợt 63 R8: glob không khớp thì bash để nguyên pattern literal —
+    # bỏ qua để khỏi báo WARN giả khi thư mục rỗng (vd toàn bộ tải lỗi).
+    [[ -e "$f" ]] || continue
     ffprobe -v error -show_entries stream=codec_name -of csv=p=0 "$f" >/dev/null 2>&1 || { echo "WARN ffprobe: $f"; bad=$((bad+1)); }
   done
   echo "ffprobe: $bad file lỗi (0 là đạt)"

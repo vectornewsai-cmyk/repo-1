@@ -83,6 +83,17 @@ assert_fail "add-clip thiếu duration" $VCUT add-clip --project test.json --src
 assert_fail "validate file không tồn tại" $VCUT validate --project nofile.json
 assert_fail "lệnh không rõ" $VCUT frobnicate
 
+# 12. mã lỗi ổn định (đợt 63 R9): stderr phải chứa [MÃ]
+assert_code() {
+  local desc="$1"; local code="$2"; shift 2
+  if out=$("$@" 2>&1); then fail "$desc (đáng lẽ phải lỗi)";
+  elif echo "$out" | grep -q "\[$code\]"; then ok "$desc ([$code])";
+  else fail "$desc (thiếu [$code]): $out" | head -3; fi
+}
+assert_code "validate file không tồn tại -> PROJECT_READ_FAILED" PROJECT_READ_FAILED $VCUT validate --project nofile.json
+assert_code "create width 0 -> INTEGER_OUT_OF_RANGE" INTEGER_OUT_OF_RANGE $VCUT create --name "X" --width 0 --out /tmp/never63r9.json
+assert_code "add-clip kind lạ -> ENUM_INVALID" ENUM_INVALID $VCUT add-clip --project test.json --kind 3d --src sample.mp4 --start 0 --duration 1
+
 echo ""
 echo "=========================================="
 if [ "$FAIL" -eq 0 ]; then

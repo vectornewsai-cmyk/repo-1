@@ -104,7 +104,7 @@
 ## 3. Kiểm chứng (2026-10-25)
 - `lib/d6.test.ts` (MỚI): **11/11 pass** — project export + loại title,
   round-trip SRT/VTT, duplicate mang caption + karaoke, duplicate 2
-  nguồn (shift +10/+20), không nhân đôi câu, duplicate câu lẻ hủy link,
+  nguồn (shift +10/+20), không nhân đôi câu, duplicate câu lẻ huỷ link,
   karaoke ramp 1→2 ([0,0.66]/[0.66,1.27]), tốc độ hằng + clip ngược,
   từ cắt dở ở biên câu, refollow trim trái (từ media 5 → local 3),
   refollow move trên ramp (karaoke giữ nguyên).

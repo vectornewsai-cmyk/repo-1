@@ -311,9 +311,17 @@ ok("tích hợp: trailing thật + free trailer 17 MiB sau moov, tiền tố 409
     if (out.mode !== "full-file") return;
     assert.match(out.reason, /tail-scan/);
     assert.equal(out.requests.filter((r) => r.kind === "gop").length, 0);
-    assert.equal(out.requests.filter((r) => r.kind === "tail").length, 1);
-    // Đo thật cho quyết giữ cửa sổ: T3 chỉ tốn 1 request tail 16 MiB
-    // rồi fallback; cửa sổ lớn hơn sẽ cần moovStart→EOF byte.
+    // ROUND51-H4 — tail-scan streaming đổi bất biến đếm request: đường
+    // cũ fetch 1 lần cả cửa sổ 16 MiB; đường mới tăng dần 2 → 4 → 8 →
+    // 16 MiB rồi mới kết luận không thấy (4 request, tổng đúng 16 MiB
+    // — không hơn cửa sổ cũ, chỉ chia nhỏ). Kết luận full-file +
+    // lý do tail-scan + 0 GOP giữ nguyên, đó mới là khóa chính.
+    const tailReqs = out.requests.filter((r) => r.kind === "tail");
+    assert.equal(tailReqs.length, 4);
+    assert.deepEqual(tailReqs.map((r) => r.bytes), [2 * 1024 * 1024, 2 * 1024 * 1024, 4 * 1024 * 1024, 8 * 1024 * 1024]);
+    assert.equal(tailReqs.reduce((a, r) => a + r.bytes, 0), 16 * 1024 * 1024);
+    // Đo thật cho quyết giữ cửa sổ: T3 chỉ tốn 16 MiB tail (chia 4
+    // request) rồi fallback; cửa sổ lớn hơn sẽ cần moovStart→EOF byte.
     const moovStart = file.length - trailer.length - (scanTopBoxes(new Uint8Array(inflated))[scanTopBoxes(new Uint8Array(inflated)).length - 1]?.size ?? 0);
     console.log(`    đo: file=${file.length} byte, reason=${out.reason}, tail requests=${out.requests.filter((r) => r.kind === "tail").map((r) => `${r.start}-${r.end}`).join(",")}, cửa sổ cần để thấy moov=${file.length - moovStart} byte`);
     assert.ok(file.length - moovStart > 16 * 1024 * 1024, "cửa sổ cần phải lớn hơn 16 MiB");

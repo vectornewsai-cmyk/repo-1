@@ -87,10 +87,18 @@ ok("i18n: vi/en phẳng đủ key, bằng nhau, có 4 key reverseEngine mới", 
   // Số mới sau Z6 (đợt 42: 962/962; Z6 thêm đúng 4 key mỗi bên).
   // ROUND46-B6 cập nhật duy nhất số này: B6 thêm đúng 2 key mỗi bên
   // (badgeElementFailed/titleElementFailed) nên 966 -> 968, +3 key D4 -> 971, +2 key E2 -> 973; logic
+  // Parent gộp đợt 51: Phase 10 thêm 9 key -> 982 mỗi bên (vi == en, 0 key mồ côi).
+  // Parent gộp đợt 53: J4 thêm 5 key -> 987 mỗi bên (vi == en, 0 key mồ côi).
+  // Parent gộp đợt 55: L1 thêm 24 key i18n ProjectMenu/TopBar -> 1011 mỗi bên.
+// Parent gộp đợt 56: +711 key (683 fragment M1–M8 + 28 đề xuất M6) -> 1722 mỗi bên (vi == en, 0 key mồ côi).
+// Parent gộp đợt 57: +215 key (11 N4 + 180 label N5 + 1 N7 + 23 N8; 5 key EN N5 ghi đè, không tính thêm) -> 1937 mỗi bên (vi == en, 0 key mồ côi).
+// Parent gộp đợt 58: +5 key (4 O3 preview.*Skipped* + 1 O5 captions.translatedTrack) -> 1942 mỗi bên (vi == en, 0 key mồ côi).
+// Parent gộp đợt 59: +15 key (4 P1 mediabin/store + 11 P8 enhance.*) -> 1957 mỗi bên (vi == en); P3 ghi đè 1 key nested.failsoft.unknownEffectType (thêm {type}), không tăng số key; đợt 60 Q4: −14 key mồ côi +26 key fragment P7 → 1969 mỗi bên; parent gộp đợt 60: +3 key Q1 → 1972 mỗi bên; parent gộp đợt 61: +72 key (R2 3 + R5 1 + R6 50 + R9 18) → 2044 mỗi bên; parent gộp đợt 62: +102 key (R2 2 + R5 91 + R7 9) → 2146 mỗi bên.
+  // Parent gộp đợt 63: +131 key fragment (R1 5 + R5 123 + R7 2 + R9 1) − 1 key chết speed.warnTooShort − 1 key jobNote chưa có UI → 2275 mỗi bên (vi == en, 0 key mồ côi); parent gộp đợt 64: +7 key fragment (R2 6 + R8 1) + 1 key parent (projectHistory.migrateVersionsNeedsProjectId) → 2283 mỗi bên.
   // test Z6 không đổi. Nếu luồng khác cùng đợt cũng thêm key,
   // parent gộp cập nhật lại số này theo tổng thực tế.
-  assert.equal(vi.keys.size, 973);
-  assert.equal(en.keys.size, 973);
+  assert.equal(vi.keys.size, 2326);
+  assert.equal(en.keys.size, 2326);
 });
 
 ok("i18n: chuỗi badge đã dời từ hardcode preview.tsx sang dict (vi/en)", () => {

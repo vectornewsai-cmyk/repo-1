@@ -13,7 +13,7 @@
  *   kết thúc bằng ":") → fallback về summary thô, không hiện key hay
  *   placeholder.
  * - i18n: 13 key errorDetail.summary có mặt cả vi lẫn en (parity toàn
- *   dict 973 key đã khóa ở structuredNotes32/saveToast31).
+ *   dict 2326 key đã khóa (+131 key fragment đợt 63 − 1 key chết speed.warnTooShort − 1 key jobNote chưa có UI; +7 key fragment đợt 64 + 1 key parent + 14 key fragment đợt 65 (S2 1 + S4 10 + S6 1 + S8 2) + 29 key fragment đợt 66 (T7 27 + T8 2); +102 key đợt 62; +72 key fragment đợt 61: R2 3 + R5 1 + R6 50 + R9 18) ở structuredNotes32/saveToast31 (1011 đợt 55 L1 + 711 key đợt 56 + 215 key đợt 57 + 5 key đợt 58 + 15 key đợt 59 − 14 key mồ côi + 26 key fragment P7 đợt 60 Q4 + 72 key đợt 61 + 131 key đợt 63 − 1 key chết − 1 key jobNote chưa có UI).
  *
  * Không test render React (ExportPanel — như mọi đợt trước): wiring
  * khóa bằng tsc 0 lỗi + vite build pass.

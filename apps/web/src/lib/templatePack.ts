@@ -19,7 +19,7 @@
  */
 import { applyTemplateValues, type ApplyResult, type TemplateDef } from "./templateEngine";
 import { TEMPLATES } from "./templates";
-import { packSize, recordPackMedia, stillPackMedia, type GeneratedMedia } from "./sampleMedia";
+import { packSize, recordPackMedia, RecordPackTimeoutError, stillPackMedia, type GeneratedMedia } from "./sampleMedia";
 
 /** 6 pack tuyển: mỗi pack đúng 1 placeholder media, phủ 16:9 / 1:1 / 9:16. */
 export const PACK_TEMPLATE_IDS = [
@@ -64,24 +64,59 @@ export function packMediaSeconds(tpl: TemplateDef, placeholderId: string): numbe
  * Áp template với media đã sinh sẵn. fileNames[placeholderId] = tên file thật.
  * Text placeholder không cần truyền (applyTemplateValues tự lấy default).
  * Trả lỗi nếu thiếu file cho placeholder media hoặc còn marker sau khi áp.
+ *
+ * Phase 9 đợt 56 M6 — lookup i18n tùy chọn (xem templateEngine.ts):
+ * `lookup` được truyền tiếp cho applyTemplateValues để lỗi từ đó cũng
+ * dịch theo locale hiện tại. Key mới nằm trong
+ * `i18n/fragments/round56-m6.json` (parent merge vào vi.json/en.json
+ * cuối đợt 56).
  */
+export type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
+
 export function resolvePackSpec(
   tpl: TemplateDef,
   fileNames: Record<string, string>,
+  lookup?: I18nLookup,
 ): ApplyResult {
   const values: Record<string, string> = {};
   for (const p of tpl.template.placeholders) {
     if (p.kind === "video" || p.kind === "image") {
       if (!fileNames[p.id]) {
-        return { ok: false, error: `Thiếu media mẫu cho placeholder: ${p.id}` };
+        return {
+          ok: false,
+          error: trKey(
+            lookup,
+            "templatePack.missingSampleMedia",
+            { id: p.id },
+            `Thiếu media mẫu cho placeholder: ${p.id}`,
+          ),
+        };
       }
       values[p.id] = fileNames[p.id];
     } else if (p.kind === "audio") {
-      return { ok: false, error: `Pack chưa hỗ trợ placeholder audio: ${p.id}` };
+      return {
+        ok: false,
+        error: trKey(
+          lookup,
+          "templatePack.audioPlaceholderUnsupported",
+          { id: p.id },
+          `Pack chưa hỗ trợ placeholder audio: ${p.id}`,
+        ),
+      };
     }
     // text: để trống → applyTemplateValues dùng default của template.
   }
-  return applyTemplateValues(tpl, values);
+  return applyTemplateValues(tpl, values, lookup);
 }
 
 /** Câu chữ đầu tiên trong spec (dùng cho nút “Tạo giọng đọc mẫu”). */
@@ -118,7 +153,15 @@ export async function generatePackFiles(
     let gen: GeneratedMedia | null;
     if (p.kind === "video") {
       const name = `pack-${tpl.template.id}-${p.id}-${suffix}.webm`;
-      gen = await recordPackMedia(name, tpl.template.aspect, seconds, variant, label);
+      // Đợt 61 R5: recordPackMedia ném RecordPackTimeoutError khi quá hạn
+      // (onstop không fire) — đổi thành PackError riêng để modal báo đúng
+      // lỗi timeout thay vì nhầm thành "thiếu MediaRecorder" (NO_RECORDER).
+      try {
+        gen = await recordPackMedia(name, tpl.template.aspect, seconds, variant, label);
+      } catch (e) {
+        if (e instanceof RecordPackTimeoutError) throw new PackError("RECORD_TIMEOUT");
+        throw e;
+      }
       if (!gen) {
         throw new PackError("NO_RECORDER");
       }

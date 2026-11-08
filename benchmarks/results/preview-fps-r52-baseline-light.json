@@ -1,0 +1,24 @@
+{
+  "url": "http://127.0.0.1:5173",
+  "durationSec": 6,
+  "chromium": "/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome",
+  "timestamp": "2026-11-06T17:50:05.757Z",
+  "perfOverlayButton": true,
+  "playing": true,
+  "timeDisplay": {
+    "before": "00:00.0 / 00:08.0",
+    "after": "00:00.4 / 00:08.0",
+    "end": "00:03.1 / 00:08.0"
+  },
+  "frames": 29,
+  "fpsAvg": 4.66,
+  "fpsMin1s": 5,
+  "fpsMax1s": 7,
+  "dropsOver50ms": 28,
+  "maxIntervalMs": 692.9,
+  "hardwareConcurrency": 4,
+  "frozenDist": {
+    "validity": "UNVERIFIED",
+    "note": "Không đặt --dist-dir/BENCH_DIST_DIR nên dist không được đóng băng; bundle snapshot (nếu có) vẫn là not-captured."
+  }
+}

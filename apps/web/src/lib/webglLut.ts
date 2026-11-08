@@ -1,3 +1,5 @@
+import { BRIDGE_URL } from "./bridgeUrl";
+
 /**
  * webglLut.ts — Preview LUT bằng WebGL thật (R5, Phase 9).
  *
@@ -195,13 +197,7 @@ export function applyLutToPixels(
 export type LutPreviewMode = "webgl" | "loading" | "css" | "unavailable";
 
 function bridgeUrl(): string {
-  try {
-    const env = (import.meta as unknown as { env?: Record<string, string> }).env;
-    if (env?.VITE_BRIDGE_URL) return env.VITE_BRIDGE_URL;
-  } catch {
-    /* bỏ qua */
-  }
-  return "http://127.0.0.1:8787";
+  return BRIDGE_URL;
 }
 
 const VERT_SRC = `

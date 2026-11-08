@@ -1,0 +1,111 @@
+{
+  "url": "http://127.0.0.1:4173",
+  "durationSec": 6,
+  "warmupSec": 0,
+  "windowSize": "1440,900",
+  "chromium": "/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome",
+  "timestamp": "2026-11-06T19:19:36.405Z",
+  "headed": false,
+  "headlessNote": "headless=new",
+  "profileReused": "/tmp/vcut-fps-r52-profile",
+  "seedAutosave": "/tmp/vcut-fps-r52-seeds/autosave-fps-medium.json",
+  "loadAvg1Before": 10.93,
+  "cpuSamples": [
+    70.7,
+    68.6,
+    68.1,
+    67.5,
+    67.2,
+    67,
+    66.7,
+    66.2,
+    66.4,
+    74.7,
+    71
+  ],
+  "seedProjectName": "FPS-vừa",
+  "projectCheck": {
+    "projectName": "FPS-vừa",
+    "clips": 4
+  },
+  "seedLoaded": true,
+  "diagBefore": {
+    "canvas": {
+      "w": 872,
+      "h": 276
+    },
+    "wrapCss": {
+      "w": 874,
+      "h": 278
+    },
+    "dpr": 1,
+    "visibilityState": "visible",
+    "hold": null,
+    "idle": {
+      "ticks": 3,
+      "sleeping": false,
+      "pauseRetrySkipped": 0,
+      "seekFailureCount": 0,
+      "tickErrors": 0
+    },
+    "raf": {
+      "samples": 3
+    },
+    "longtasks": {
+      "count": 0,
+      "totalMs": 0
+    }
+  },
+  "cpuChromePctBefore": 72.7,
+  "perfOverlayButton": true,
+  "playing": true,
+  "noPlay": false,
+  "timeDisplay": {
+    "before": "00:00.0 / 00:08.0",
+    "after": "00:00.2 / 00:08.0"
+  },
+  "timer16HzCount": 189,
+  "timer16HzRate": 31.5,
+  "diagAfter": {
+    "canvas": {
+      "w": 872,
+      "h": 276
+    },
+    "wrapCss": {
+      "w": 874,
+      "h": 278
+    },
+    "dpr": 1,
+    "visibilityState": "visible",
+    "hold": null,
+    "idle": {
+      "ticks": 14,
+      "sleeping": false,
+      "pauseRetrySkipped": 0,
+      "seekFailureCount": 0,
+      "tickErrors": 0
+    },
+    "raf": {
+      "samples": 14
+    },
+    "longtasks": {
+      "count": 0,
+      "totalMs": 0
+    }
+  },
+  "previewRaf": {
+    "count": 10,
+    "gapP50ms": 916.6,
+    "gapP95ms": 1683.3,
+    "gapP99ms": 1683.3,
+    "over100ms": 10,
+    "lostMs": 7983,
+    "playheadStart": 0,
+    "playheadEnd": 0.9
+  },
+  "error": "Bộ đếm rAF chỉ thu được 9 mẫu.",
+  "frozenDist": {
+    "validity": "UNVERIFIED",
+    "note": "Không đặt --dist-dir/BENCH_DIST_DIR nên dist không được đóng băng; bundle snapshot (nếu có) vẫn là not-captured."
+  }
+}

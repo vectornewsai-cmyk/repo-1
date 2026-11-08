@@ -1,0 +1,213 @@
+{
+  "url": "http://127.0.0.1:5173",
+  "durationSec": 8,
+  "timestamp": "2026-11-06T18:22:11.011Z",
+  "seedAutosave": "/tmp/vcut-fps-r52-seeds/autosave-fps-medium.json",
+  "timeDisplayEnd": "00:01.4 / 00:08.0",
+  "samples": 1423,
+  "profileMs": 11183319,
+  "topFunctions": [
+    {
+      "fn": "(idle)",
+      "loc": "(native):-1",
+      "samples": 896,
+      "pct": 63
+    },
+    {
+      "fn": "(program)",
+      "loc": "(native):-1",
+      "samples": 222,
+      "pct": 15.6
+    },
+    {
+      "fn": "drawImage",
+      "loc": "(native):-1",
+      "samples": 79,
+      "pct": 5.6
+    },
+    {
+      "fn": "createAudioContext",
+      "loc": "src/lib/audioEngine.ts:55",
+      "samples": 57,
+      "pct": 4
+    },
+    {
+      "fn": "(garbage collector)",
+      "loc": "(native):-1",
+      "samples": 20,
+      "pct": 1.4
+    },
+    {
+      "fn": "tickInner",
+      "loc": "src/preview.tsx:1359",
+      "samples": 11,
+      "pct": 0.8
+    },
+    {
+      "fn": "ReactElement",
+      "loc": "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=4a53ae20:565",
+      "samples": 7,
+      "pct": 0.5
+    },
+    {
+      "fn": "createObjectURL",
+      "loc": "(native):-1",
+      "samples": 6,
+      "pct": 0.4
+    },
+    {
+      "fn": "now",
+      "loc": "(native):-1",
+      "samples": 6,
+      "pct": 0.4
+    },
+    {
+      "fn": "paintOnce",
+      "loc": "src/components/MixerMeter.tsx:37",
+      "samples": 4,
+      "pct": 0.3
+    },
+    {
+      "fn": "rehydrateMediaItems",
+      "loc": "src/lib/rehydrate36S5.ts:120",
+      "samples": 4,
+      "pct": 0.3
+    },
+    {
+      "fn": "validateProperty$1",
+      "loc": "/node_modules/.vite/deps/chunk-P45FODCX.js?v=4a53ae20:3366",
+      "samples": 3,
+      "pct": 0.2
+    },
+    {
+      "fn": "syncMedia",
+      "loc": "src/preview.tsx:1090",
+      "samples": 3,
+      "pct": 0.2
+    },
+    {
+      "fn": "loop",
+      "loc": "src/components/MixerMeter.tsx:90",
+      "samples": 3,
+      "pct": 0.2
+    },
+    {
+      "fn": "measureText",
+      "loc": "(native):-1",
+      "samples": 3,
+      "pct": 0.2
+    },
+    {
+      "fn": "performWorkUntilDeadline",
+      "loc": "/node_modules/.vite/deps/chunk-P45FODCX.js?v=4a53ae20:376",
+      "samples": 3,
+      "pct": 0.2
+    },
+    {
+      "fn": "t",
+      "loc": "src/i18n/index.ts:40",
+      "samples": 3,
+      "pct": 0.2
+    },
+    {
+      "fn": "renderWithHooks",
+      "loc": "/node_modules/.vite/deps/chunk-P45FODCX.js?v=4a53ae20:11575",
+      "samples": 3,
+      "pct": 0.2
+    },
+    {
+      "fn": "accumulateSinglePhaseListeners",
+      "loc": "/node_modules/.vite/deps/chunk-P45FODCX.js?v=4a53ae20:7215",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "pushHostContext",
+      "loc": "/node_modules/.vite/deps/chunk-P45FODCX.js?v=4a53ae20:11348",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "reconcileChildFibers2",
+      "loc": "/node_modules/.vite/deps/chunk-P45FODCX.js?v=4a53ae20:10588",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "ensure",
+      "loc": "src/lib/audioEngine.ts:96",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "diffProperties",
+      "loc": "/node_modules/.vite/deps/chunk-P45FODCX.js?v=4a53ae20:7649",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "assertValidProps",
+      "loc": "/node_modules/.vite/deps/chunk-P45FODCX.js?v=4a53ae20:2683",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "(anonymous)",
+      "loc": "src/Timeline.tsx:1011",
+      "samples": 2,
+      "pct": 0.1
+    }
+  ],
+  "topFiles": [
+    {
+      "url": "(native)",
+      "samples": 1238,
+      "pct": 87
+    },
+    {
+      "url": "src/lib/audioEngine.ts",
+      "samples": 61,
+      "pct": 4.3
+    },
+    {
+      "url": "/node_modules/.vite/deps/chunk-P45FODCX.js?v=4a53ae20",
+      "samples": 56,
+      "pct": 3.9
+    },
+    {
+      "url": "src/preview.tsx",
+      "samples": 25,
+      "pct": 1.8
+    },
+    {
+      "url": "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=4a53ae20",
+      "samples": 13,
+      "pct": 0.9
+    },
+    {
+      "url": "src/components/MixerMeter.tsx",
+      "samples": 7,
+      "pct": 0.5
+    },
+    {
+      "url": "src/lib/rehydrate36S5.ts",
+      "samples": 4,
+      "pct": 0.3
+    },
+    {
+      "url": "src/Timeline.tsx",
+      "samples": 4,
+      "pct": 0.3
+    },
+    {
+      "url": "src/lib/projectRepo.ts",
+      "samples": 4,
+      "pct": 0.3
+    },
+    {
+      "url": "src/i18n/index.ts",
+      "samples": 3,
+      "pct": 0.2
+    }
+  ]
+}

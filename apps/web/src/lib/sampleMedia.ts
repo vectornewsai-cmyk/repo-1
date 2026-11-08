@@ -102,14 +102,51 @@ export function stillPackMedia(
  * Video mẫu (webm) cho placeholder kind=video. Ghi realtime nên mất đúng
  * `seconds` giây. Trả null khi trình duyệt không ghi được (caller phải báo
  * lỗi rõ, không được giả vờ có video).
+ *
+ * Đợt 61 R5 — timeout (đóng nợ đợt 60 Q10 §4.4): trước đây `await done`
+ * (đợi MediaRecorder `onstop`) không có chặn trên — nếu `onstop` không bao
+ * giờ fire thì hàm treo vĩnh viễn, và TemplatePackModal đang chặn đóng lúc
+ * busy nên modal kẹt tới reload. Nay toàn bộ quá trình ghi bị đua với
+ * timeout: quá hạn thì thử `rec.stop()` (nếu còn ghi) rồi ném
+ * `RecordPackTimeoutError`; caller (`generatePackFiles`) đổi thành
+ * `PackError("RECORD_TIMEOUT")` để modal báo lỗi rõ + mở khóa busy.
+ * Timeout mặc định = max(20s, (seconds + 15)s): ghi realtime `seconds` giây
+ * + 15s dư cho `onstop` (bình thường fire trong ~1s sau stop), sàn 20s cho
+ * clip ngắn. Có thể truyền `opts.timeoutMs` để test nhanh / siết riêng.
  */
+export class RecordPackTimeoutError extends Error {
+  readonly timeoutMs: number;
+  constructor(timeoutMs: number) {
+    super(
+      `recordPackMedia timeout sau ${timeoutMs}ms (MediaRecorder onstop không fire)`,
+    );
+    this.name = "RecordPackTimeoutError";
+    this.timeoutMs = timeoutMs;
+  }
+}
+
+export interface RecordPackMediaOptions {
+  /** Chặn trên cho toàn bộ quá trình ghi (mặc định xem recordPackMediaTimeoutMs). */
+  timeoutMs?: number;
+}
+
+/** Timeout mặc định cho 1 lần ghi dài `seconds` giây. */
+export function recordPackMediaTimeoutMs(seconds: number): number {
+  return Math.max(20_000, (seconds + 15) * 1000);
+}
+
 export async function recordPackMedia(
   name: string,
   aspect: string,
   seconds: number,
   variant: number,
   label: string,
+  opts?: RecordPackMediaOptions,
 ): Promise<GeneratedMedia | null> {
+  const timeoutMs = opts?.timeoutMs ?? recordPackMediaTimeoutMs(seconds);
+  // Recorder để timeout handler dừng được từ bên ngoài `work` (đua race).
+  let rec: MediaRecorder | null = null;
+  const work = (async (): Promise<GeneratedMedia | null> => {
   try {
     if (typeof MediaRecorder === "undefined") return null;
     const { width, height } = packSize(aspect);
@@ -122,13 +159,13 @@ export async function recordPackMedia(
     const mime = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].find((m) =>
       MediaRecorder.isTypeSupported(m),
     );
-    const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 2_500_000 } : undefined);
+    rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 2_500_000 } : undefined);
     const chunks: Blob[] = [];
     rec.ondataavailable = (e) => {
       if (e.data.size > 0) chunks.push(e.data);
     };
     const done = new Promise<void>((resolve) => {
-      rec.onstop = () => resolve();
+      rec!.onstop = () => resolve();
     });
     drawPackFrame(ctx, width, height, seconds / 2, seconds, variant, label);
     const thumb = canvas.toDataURL("image/jpeg", 0.7);
@@ -153,5 +190,27 @@ export async function recordPackMedia(
     return { file: new File([blob], name, { type: "video/webm" }), thumb };
   } catch {
     return null;
+  }
+  })();
+  // Đua toàn bộ quá trình ghi với timeout: treo ở bất cứ chỗ nào (tick
+  // rAF không chạy, onstop không fire) cũng settle trong `timeoutMs`.
+  // Timeout thắng → thử dừng recorder rồi ném lỗi (không return null để
+  // caller phân biệt được timeout với "thiếu MediaRecorder" / blob rỗng).
+  // `work` thắng trước thì clearTimeout, không để timer treo sau khi xong.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      try {
+        if (rec && rec.state === "recording") rec.stop();
+      } catch {
+        /* recorder đã dừng / lỗi — lỗi timeout vẫn là kết quả chính */
+      }
+      reject(new RecordPackTimeoutError(timeoutMs));
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([work, timeout]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
   }
 }

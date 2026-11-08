@@ -1,9 +1,19 @@
 // webglLut.test.ts — test parseCubeData + trilinear CPU đối chiếu FFmpeg lut3d.
-// Chạy bằng Node type-stripping (không cần browser):
-//   node --experimental-strip-types src/lib/webglLut.test.ts
+// Chạy bằng esbuild bundle (mẫu các test lib khác, chạy từ gốc repo):
+//   ./node_modules/.bin/esbuild apps/web/src/lib/webglLut.test.ts \
+//     --bundle --platform=node --format=cjs \
+//     --outfile=/tmp/round58-o7/webglLut.test.cjs \
+//     && node /tmp/round58-o7/webglLut.test.cjs
+// (Đợt 58 O7: KHÔNG dùng node --experimental-strip-types — webglLut.ts
+// import "./bridgeUrl" không đuôi nên type-stripping gãy
+// ERR_MODULE_NOT_FOUND; sửa đuôi .ts vào code sản phẩm thì tsc lại gãy
+// TS5097 vì tsconfig không bật allowImportingTsExtensions. KHÔNG dùng
+// import.meta.url — esbuild --format=cjs để trống import.meta nên
+// fileURLToPath(import.meta.url) gãy, và bundle ra /tmp thì import.meta.url
+// cũng trỏ sai chỗ. Đường dẫn resolve từ process.cwd() theo mẫu
+// silenceModal57N1.test.ts.)
 // Phần GPU (shader) được kiểm chứng riêng bằng Playwright (xem R5_LIMITS.md).
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
 import {
@@ -13,8 +23,22 @@ import {
   type CubeData,
 } from "./webglLut.ts";
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const REPO = path.resolve(HERE, "..", "..", "..", "..");
+/** Tìm thư mục apps/web/src thật từ cwd (gốc repo hoặc apps/web). */
+function findSrc(): string {
+  const candidates = [
+    path.resolve(process.cwd(), "apps/web/src"),
+    path.resolve(process.cwd(), "src"),
+  ];
+  for (const c of candidates) {
+    if (existsSync(path.join(c, "lib", "webglLut.ts"))) return c;
+  }
+  throw new Error(
+    `không tìm thấy apps/web/src (chạy từ gốc repo; đã thử: ${candidates.join(", ")})`,
+  );
+}
+const SRC_DIR = findSrc();
+const HERE = path.join(SRC_DIR, "lib");
+const REPO = path.resolve(SRC_DIR, "..", "..", "..");
 
 let pass = 0;
 function ok(name: string, fn: () => void): void {

@@ -5,31 +5,38 @@
  * có từ đợt 40 V5) đều truyền callback tiến trình và render phần tử
  * [data-import-progress]. Kiểm toán tĩnh đọc source thật trên đĩa nên
  * nếu một panel sau này bỏ callback, test này vỡ thay vì im lặng.
+ *
+ * Chạy chuẩn (đợt 62 R9): node scripts/run-node-test.mjs apps/web/src/lib/importProgress41W3.test.ts
+ * (runner chọn --format=cjs; KHÔNG chạy node trực tiếp — import không đuôi).
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import {
   formatImportProgressText,
   type ImportProgressTranslator,
 } from "./importProgressText41W3";
 import type { ImportFileProgressEvent } from "./ingestProgress39T5";
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
 /**
- * Tìm thư mục src thật: bundle test có thể nằm ở /tmp (import.meta.url
- * khi đó không trỏ về repo) nên thử theo thứ tự: cwd của lần chạy
- * (repo root → apps/web/src, hoặc apps/web → src), rồi đi lên từ vị
- * trí file bundle. Không tìm thấy → fail rõ ràng thay vì ENOENT khó hiểu.
+ * Tìm thư mục src thật: bundle test có thể nằm ở /tmp nên thử theo thứ tự:
+ * cwd của lần chạy (repo root → apps/web/src, hoặc apps/web → src), rồi đi
+ * lên từ cwd. Không tìm thấy → fail rõ ràng thay vì ENOENT khó hiểu.
+ *
+ * Đợt 62 R9: KHÔNG dùng fileURLToPath(import.meta.url) nữa — esbuild
+ * --format=cjs để trống import.meta nên import.meta.url là undefined và
+ * fileURLToPath ném ERR_INVALID_ARG_TYPE ngay lúc load (0 test chạy được
+ * bằng bundle cjs; chạy node trực tiếp thì lại gãy import không đuôi).
+ * Đi lên từ process.cwd() thay vì vị trí file: cùng kết quả khi chạy từ
+ * gốc repo/apps/web, và chạy được cả 3 cách (xem speedcurveTrim.test.ts).
  */
 function findSrc(): string {
   const candidates: string[] = [
     path.resolve(process.cwd(), "apps/web/src"),
     path.resolve(process.cwd(), "src"),
   ];
-  let dir = HERE;
+  let dir = process.cwd();
   for (let i = 0; i < 8; i++) {
     candidates.push(path.join(dir, "src"), dir);
     const parent = path.dirname(dir);
@@ -80,18 +87,24 @@ test("done: đúng key, không percent", () => {
 
 test("kiểm toán tĩnh: mọi call site UI của importFiles đều truyền callback + render banner", () => {
   // Mỗi entry: file panel + chuỗi callback bắt buộc phải có cạnh importFiles.
-  const sites: Array<{ file: string; callback: string }> = [
+  // `call` (nếu có) là bằng chứng gọi thay cho literal "importFiles(":
+  // ProjectMenu mở bản nén qua openArchiveFileFlow (Phase 10 G4) — flow này
+  // chuyển onImportProgress thẳng vào st.importFiles (openProjectFlow.ts:180),
+  // nên panel không chứa literal "importFiles(" nhưng vẫn nối tiến trình thật
+  // (callback + banner data-import-progress đều có). Đợt 62 R9 đính chính
+  // audit cho đúng hình dạng code sau refactor G4, không bỏ panel khỏi audit.
+  const sites: Array<{ file: string; callback: string; call?: string }> = [
     { file: "MediaBin.tsx", callback: "(ev) => setImportProgress(ev)" },
     { file: "ExportPanel.tsx", callback: "(ev) => setImportProgress(ev)" },
     { file: "components/sticker/StickerPanel.tsx", callback: "(ev) => setImportProgress(ev)" },
-    { file: "components/project/ProjectMenu.tsx", callback: "(ev) => setImportProgress(ev)" },
+    { file: "components/project/ProjectMenu.tsx", callback: "(ev) => setImportProgress(ev)", call: "openArchiveFileFlow(f, (ev) => setImportProgress(ev))" },
     { file: "components/TtsButton.tsx", callback: "(ev) => setImportProgress(ev)" },
     { file: "components/BgRemovePanel.tsx", callback: "(ev) => setImportProgress(ev)" },
     { file: "components/onboarding/TemplatePackModal.tsx", callback: "(ev) => setImportProgress(ev)" },
   ];
   for (const s of sites) {
     const src = fs.readFileSync(path.join(SRC, s.file), "utf8");
-    assert.ok(src.includes("importFiles("), `${s.file} phải gọi importFiles`);
+    assert.ok(src.includes(s.call ?? "importFiles("), `${s.file} phải gọi importFiles`);
     assert.ok(src.includes(s.callback), `${s.file} phải truyền callback tiến trình vào importFiles`);
     assert.ok(src.includes("data-import-progress"), `${s.file} phải render phần tử data-import-progress`);
   }

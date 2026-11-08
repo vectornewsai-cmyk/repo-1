@@ -41,15 +41,31 @@
  * Không ghi thêm gì vào `__vcutPreviewIdle` (giữ nguyên shape cho
  * script cũ); hook mới là object riêng.
  *
- * Cách harness dùng hook (để đợt sau khỏi đoán): đọc
- * `window.__vcutPreviewRaf.samples.length` tại mỗi mark
- * (fwd-start/fwd-end/rev-start/rev-end) rồi cắt mẫu theo chỉ số
- * (mẫu đã tuần tự, không cắt theo timestamp). Với mỗi phase (loại
- * mẫu justWoke): gap P50/P95/P99, số gap > 100 ms, tổng lostMs,
- * tốc độ dự báo = 1 - tổng lost / wall phase, đối chiếu tốc độ
- * playhead đo được. Vì mẫu chỉ từ vòng preview nên không còn hiệu
- * chỉnh "cận dưới/cận trên" như probe N2.
+ * Cách harness dùng hook (để đợt sau khỏi đoán):
+ * - CẮT MẪU THEO TIMESTAMP, không cắt theo chỉ số tuyệt đối. `samples`
+ *   là ring buffer tối đa maxSamples (mặc định 5000): sau ~83 s rAF
+ *   (~5000 tick) mẫu cũ bị đẩy ra, nên `samples.length` lúc đầu slot
+ *   KHÔNG còn là mốc cắt hợp lệ — `samples.slice(fromIdx)` với fromIdx
+ *   vượt độ dài buffer trả về [] → `{ n: 0 }` dù vòng preview vẫn tick
+ *   (bug n=0, nợ R64 §8.3 — từng mắc ở clicktest-64r3-fps-long.mjs,
+ *   clicktest-61r3-fps-cal.mjs, bench-preview-fps.mjs; đã sửa ở đợt 66
+ *   T5 sang cắt theo timestamp). Cách đúng: ghi `performance.now()` ở
+ *   đầu/cuối slot (cùng đồng hồ với sample.t) rồi lọc
+ *   `x.t >= t0 && x.t <= t1` (kèm `x.playing && !x.justWoke` khi cần).
+ *   Mẫu trong slot dài vẫn có thể bị đẩy khỏi buffer nếu slot > ~83 s
+ *   — giữ slot ≤ 10–20 s, hoặc đọc mẫu ngay trong slot.
+ * - Với mỗi phase (loại mẫu justWoke): gap P50/P95/P99, số gap > 100 ms,
+ *   tổng lostMs, tốc độ dự báo = 1 - tổng lost / wall phase, đối chiếu
+ *   tốc độ playhead đo được. Vì mẫu chỉ từ vòng preview nên không còn
+ *   hiệu chỉnh "cận dưới/cận trên" như probe N2.
  */
+
+// Đợt 53 J5: import kèm đuôi .ts theo quy ước test strip-types của repo
+// (xem assetStore.ts: tsc cấm đuôi .ts khi allowImportingTsExtensions
+// tắt nên dòng import này mang @ts-ignore có chủ đích — vite và node
+// strip-types đều resolve được đuôi .ts).
+// @ts-ignore: xem ghi chú trên (TS5097, đuôi .ts cho strip-types)
+import { PREVIEW_DT_CAP_S } from "./playheadPacing.ts";
 
 export interface PreviewRafSample {
   /** now (tham số rAF, cùng đồng hồ với dt). */
@@ -89,8 +105,9 @@ export function createPreviewRafHook(maxSamples = 5000): PreviewRafHook {
     samples,
     record(now, lastBefore, playing, reverse, justWoke, playhead) {
       const gapMs = now - lastBefore;
-      // Khớp đúng công thức clamp của loop hiện tại: dt giây, clamp 0.1.
-      const dtMs = Math.min(100, gapMs);
+      // Đợt 53 J5 — khớp đúng công thức clamp của loop hiện tại
+      // (clampPreviewDt, trần PREVIEW_DT_CAP_S — trước đây clamp 0,1 s).
+      const dtMs = Math.min(PREVIEW_DT_CAP_S * 1000, gapMs);
       const sample: PreviewRafSample = {
         t: now,
         gapMs,

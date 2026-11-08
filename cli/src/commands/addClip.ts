@@ -18,16 +18,16 @@ export async function cmdAddClip(args: ParsedArgs): Promise<void> {
   const outPointRaw = args.flags["out"];
 
   if (!KINDS.includes(kindRaw as TrackKind))
-    throw new CliError(`--kind phải là một trong: ${KINDS.join(", ")}`);
+    throw new CliError("ENUM_INVALID", `--kind phải là một trong: ${KINDS.join(", ")}`);
   const kind = kindRaw as TrackKind;
 
-  if (start < 0) throw new CliError("--start phải >= 0");
-  if (!(duration > 0)) throw new CliError("--duration phải > 0");
-  if (inPoint < 0) throw new CliError("--in phải >= 0");
+  if (start < 0) throw new CliError("NUMBER_NEGATIVE", "--start phải >= 0");
+  if (!(duration > 0)) throw new CliError("NUMBER_NOT_POSITIVE", "--duration phải > 0");
+  if (inPoint < 0) throw new CliError("NUMBER_NEGATIVE", "--in phải >= 0");
 
   const outPoint = outPointRaw !== undefined && outPointRaw !== true ? Number(outPointRaw) : inPoint + duration;
   if (!Number.isFinite(outPoint) || outPoint <= inPoint)
-    throw new CliError("--out phải > --in");
+    throw new CliError("OUT_NOT_AFTER_IN", "--out phải > --in");
 
   const { spec, filePath } = await loadProject(projectPath);
   const track = findOrCreateTrack(spec, kind);

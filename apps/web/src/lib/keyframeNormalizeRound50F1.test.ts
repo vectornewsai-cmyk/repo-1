@@ -152,14 +152,15 @@ test("panel: animations.x = [] → live null (guard length > 0)", () => {
   assert.equal(panelLiveValue([], 1), null);
 });
 
-test("contract cũ (quirk tiền sẵn, không đổi ở luồng này): easing lạ ở tầng TS trả NaN, không ném", () => {
-  // applyEasing bản TS không có default nên easing lạ trả undefined → NaN
-  // (E4 đã ghi nhận; cổng load sanitize chuẩn hóa easing về linear nên
-  // đường project đã load không tới được đây). Mirror JS (keyframes.js)
-  // thì NÉM "easing không hỗ trợ" — lệch mirror tiền sẵn, không đổi ở
-  // luồng này vì đổi applyEasing chạm ngữ nghĩa preview.
-  assert.equal(
-    Number.isNaN(
+test("đợt 52 I7: easing lạ ở tầng TS NÉM như bản JS/render (thống nhất mirror)", () => {
+  // Trước đây applyEasing bản TS không có default nên easing lạ trả
+  // undefined → NaN (quirk F1 §7.6, giữ nguyên có chủ ý ở H5 §4). Đợt 52
+  // I7 đổi TS sang ném cùng message với bản JS/render ("easing không hỗ
+  // trợ: bounce"), kèm guard ở mọi caller preview (memoInterpolateKeyframes,
+  // computeClipGain, addKeyframeAt) nên NaN lặng không còn, tick preview
+  // vẫn sống nhờ fallback linear ở guard.
+  assert.throws(
+    () =>
       interpolateKeyframes(
         [
           { t: 0, v: 0, easing: "bounce" as unknown as Keyframe["easing"] },
@@ -167,8 +168,7 @@ test("contract cũ (quirk tiền sẵn, không đổi ở luồng này): easing 
         ],
         1,
       ),
-    ),
-    true,
+    /easing không hỗ trợ: bounce/,
   );
 });
 

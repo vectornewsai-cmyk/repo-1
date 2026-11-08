@@ -13,17 +13,17 @@ export async function cmdApplyTransition(args: ParsedArgs): Promise<void> {
   const side = optFlag(args.flags, "side", "out").toLowerCase();
 
   if (!isTransitionType(type))
-    throw new CliError(`--type không hợp lệ. Chọn một trong: ${(TRANSITION_TYPES as readonly string[]).join(", ")}`);
+    throw new CliError("ENUM_INVALID", `--type không hợp lệ. Chọn một trong: ${(TRANSITION_TYPES as readonly string[]).join(", ")}`);
   if (!(duration > 0) || duration > 2)
-    throw new CliError(`--duration phải trong khoảng 0..2 giây, nhận được: ${duration}`);
+    throw new CliError("NUMBER_OUT_OF_RANGE", `--duration phải trong khoảng 0..2 giây, nhận được: ${duration}`);
   if (!["in", "out", "both"].includes(side))
-    throw new CliError("--side phải là: in, out, hoặc both");
+    throw new CliError("ENUM_INVALID", "--side phải là: in, out, hoặc both");
 
   const { spec, filePath } = await loadProject(projectPath);
   const found = findClip(spec, clipId);
-  if (!found) throw new CliError(`Không tìm thấy clip: ${clipId}`);
+  if (!found) throw new CliError("NOT_FOUND", `Không tìm thấy clip: ${clipId}`);
   if (found.clip.kind !== "video")
-    throw new CliError(`Transition chỉ áp dụng cho clip video (clip ${clipId} là ${found.clip.kind})`);
+    throw new CliError("KIND_MISMATCH", `Transition chỉ áp dụng cho clip video (clip ${clipId} là ${found.clip.kind})`);
 
   const transition = { type, duration };
   if (side === "in" || side === "both") found.clip.transitionIn = transition;

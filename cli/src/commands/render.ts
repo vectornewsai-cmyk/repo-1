@@ -108,10 +108,10 @@ export async function cmdRender(args: ParsedArgs): Promise<void> {
   const crfOverride = args.flags["crf"] !== undefined ? numFlag(args.flags, "crf", 20) : undefined;
 
   const preset = PRESETS[presetName];
-  if (!preset) throw new CliError(`--preset không hợp lệ. Chọn: ${Object.keys(PRESETS).join(", ")}`);
+  if (!preset) throw new CliError("ENUM_INVALID", `--preset không hợp lệ. Chọn: ${Object.keys(PRESETS).join(", ")}`);
 
   if (!output.toLowerCase().endsWith(".mp4"))
-    throw new CliError("--output phải có đuôi .mp4");
+    throw new CliError("INVALID_OUTPUT_PATH", "--output phải có đuôi .mp4");
 
   const { spec } = await loadProject(projectPath);
 
@@ -120,12 +120,12 @@ export async function cmdRender(args: ParsedArgs): Promise<void> {
   if (errors.length > 0) {
     console.error("Project không hợp lệ, từ chối render:");
     for (const e of errors) console.error(`  ✗ ${e}`);
-    throw new CliError(`Có ${errors.length} lỗi validation`);
+    throw new CliError("VALIDATION_FAILED", `Có ${errors.length} lỗi validation`);
   }
   for (const w of warnings) console.error(`  ⚠ ${w}`);
 
   if (projectDuration(spec) <= 0)
-    throw new CliError("Project đang trống (chưa có clip nào) — thêm clip trước khi render");
+    throw new CliError("PROJECT_EMPTY", "Project đang trống (chưa có clip nào) — thêm clip trước khi render");
 
   // Ghi spec ra file tạm (render worker đọc từ file)
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vcut-render-"));
@@ -176,15 +176,14 @@ export async function cmdRender(args: ParsedArgs): Promise<void> {
       // bridge. Từ đợt 30, cả hai chế độ đều bắt được stderr nên nhánh
       // "không bắt được gì" chỉ còn cho lỗi spawn/timeout thật sự rỗng.
       if (captured.trim()) {
-        throw new CliError(formatRenderFailure(captured, status, signal));
+        throw new CliError("RENDER_FAILED", formatRenderFailure(captured, status, signal));
       }
       if (spawnError) {
-        throw new CliError(formatRenderFailure(String(spawnError), status, signal));
+        throw new CliError("RENDER_FAILED", formatRenderFailure(String(spawnError), status, signal));
       }
-      throw new CliError(
+      throw new CliError("RENDER_FAILED", 
         `Render thất bại [WORKER_EXIT]: Render worker thoát với mã ${status} ` +
-          `(không bắt được log worker — chạy lại với -q để nhận lỗi có cấu trúc đã redact).`
-      );
+          `(không bắt được log worker — chạy lại với -q để nhận lỗi có cấu trúc đã redact).`);
     }
   } finally {
     await fs.rm(tmpDir, { recursive: true, force: true });

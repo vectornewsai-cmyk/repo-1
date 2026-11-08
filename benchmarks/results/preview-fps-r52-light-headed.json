@@ -1,0 +1,120 @@
+{
+  "url": "http://127.0.0.1:5173",
+  "durationSec": 6,
+  "chromium": "/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome",
+  "timestamp": "2026-11-06T18:05:00.891Z",
+  "headed": true,
+  "headlessNote": "headed dưới Xvfb (không phải màn hình vật lý)",
+  "profileReused": "/tmp/vcut-fps-r52-profile",
+  "seedAutosave": null,
+  "loadAvg1Before": 12.66,
+  "cpuSamples": [
+    32.6,
+    31.8,
+    30.7,
+    30.3,
+    30.1,
+    36,
+    32.3,
+    31.2,
+    30.4,
+    29.9,
+    29.7,
+    29.7
+  ],
+  "projectCheck": {
+    "projectName": "Dự án mẫu",
+    "clips": 3
+  },
+  "diagBefore": {
+    "canvas": {
+      "w": 871,
+      "h": 275
+    },
+    "wrapCss": {
+      "w": 873,
+      "h": 277
+    },
+    "dpr": 1,
+    "hold": null,
+    "idle": {
+      "ticks": 3,
+      "sleeping": true,
+      "pauseRetrySkipped": 0,
+      "seekFailureCount": 0,
+      "tickErrors": 0
+    },
+    "raf": {
+      "samples": 3
+    }
+  },
+  "cpuChromePctBefore": 28.4,
+  "perfOverlayButton": true,
+  "playing": true,
+  "timeDisplay": {
+    "before": "00:00.0 / 00:08.0",
+    "after": "00:00.2 / 00:08.0",
+    "end": "00:01.2 / 00:08.0"
+  },
+  "diagAfter": {
+    "canvas": {
+      "w": 871,
+      "h": 275
+    },
+    "wrapCss": {
+      "w": 873,
+      "h": 277
+    },
+    "dpr": 1,
+    "hold": {
+      "draw": 4,
+      "hold": 6,
+      "skip": 2,
+      "maxHoldAgeSec": 0.29999999999999993,
+      "stale": false
+    },
+    "idle": {
+      "ticks": 15,
+      "sleeping": false,
+      "pauseRetrySkipped": 0,
+      "seekFailureCount": 0,
+      "tickErrors": 0
+    },
+    "raf": {
+      "samples": 15
+    }
+  },
+  "previewRaf": {
+    "count": 11,
+    "gapP50ms": 716.6,
+    "gapP95ms": 1383.2,
+    "gapP99ms": 1383.2,
+    "over100ms": 11,
+    "lostMs": 6883,
+    "playheadStart": 0.1,
+    "playheadEnd": 1.1
+  },
+  "frames": 11,
+  "fpsAvg": 1.59,
+  "fpsMin1s": null,
+  "fpsMax1s": null,
+  "dropsOver50ms": 10,
+  "maxIntervalMs": 900.1,
+  "frameTimeMs": {
+    "p5": 371.7,
+    "p50": 690.3,
+    "p95": 900.1
+  },
+  "loadAvg1After": 15.15,
+  "cpuChromePct": {
+    "samples": 12,
+    "avg": 31.2,
+    "max": 36,
+    "note": "%CPU theo 1 core (100% = 1 core đầy); VM 4 core nên trần ~400%."
+  },
+  "hardwareConcurrency": 4,
+  "frozenDist": {
+    "validity": "UNVERIFIED",
+    "note": "Không đặt --dist-dir/BENCH_DIST_DIR nên dist không được đóng băng; bundle snapshot (nếu có) vẫn là not-captured."
+  }
+}

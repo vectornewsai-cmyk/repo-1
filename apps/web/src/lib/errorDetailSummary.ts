@@ -27,6 +27,15 @@ export interface StructuredErrorDetail {
   details: string[];
   detailsOmitted: number;
   redactedTail: string;
+  // Đợt 63 R5: dòng validator đã dịch được (additive; payload bridge cũ
+  // không có — ExportPanel fallback về details thô). Entry:
+  // { where, code, params } — xem lib/validationErrors.ts.
+  validationDetails?: Array<{
+    where: string;
+    code: string;
+    params: Record<string, string>;
+  }>;
+  validationDetailsOmitted?: number;
 }
 
 export function localizedErrorSummary(

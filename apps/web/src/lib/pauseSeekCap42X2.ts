@@ -79,7 +79,7 @@ export interface SeekOutcomeLike {
 
 /**
  * Phân loại một kết quả seek thành thất bại cần đếm, hay null (= giữ
- * hành vi cũ: vẽ, retry không đếm, hoặc bỏ qua vì đã bị hủy).
+ * hành vi cũ: vẽ, retry không đếm, hoặc bỏ qua vì đã bị huỷ).
  * - cancelled → null (bị thay thế / cancel khi phát, không phải lỗi).
  * - timedOut > 0 → "timeout" (kể cả khi một phần element đã xong).
  * - ok === false, không cancelled → "error" (executor seek ném lỗi).

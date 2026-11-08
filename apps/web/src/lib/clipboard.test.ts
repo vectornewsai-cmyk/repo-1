@@ -300,7 +300,7 @@ function main(): void {
     eq(capOf(nc)?.clipId, "n1", "câu mới link id mới (không phải bản copy trực tiếp giữ link cũ)");
   });
 
-  test("copy câu một mình: paste thành chữ tự do (hủy link)", () => {
+  test("copy câu một mình: paste thành chữ tự do (huỷ link)", () => {
     const s = spec([
       track("v1", "video", [videoClip("v", 0, 10)]),
       track("t1", "text", [linkedCap("cap", 1)]),
@@ -311,7 +311,7 @@ function main(): void {
     assert(r !== null, "paste được");
     const nc = r!.spec.tracks[1].clips.find((c) => c.id === "n1")!;
     eq(nc.start, 21, "chữ dán ở 21");
-    assert(capOf(nc) === undefined, "đã hủy link (không trỏ về clip cũ)");
+    assert(capOf(nc) === undefined, "đã huỷ link (không trỏ về clip cũ)");
   });
 
   test("track caption khóa: nguồn vẫn dán, câu bị bỏ", () => {

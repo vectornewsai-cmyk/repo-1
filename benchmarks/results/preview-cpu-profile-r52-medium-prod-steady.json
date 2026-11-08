@@ -1,0 +1,173 @@
+{
+  "url": "http://127.0.0.1:4173",
+  "durationSec": 6,
+  "timestamp": "2026-11-06T18:58:35.709Z",
+  "seedAutosave": "/tmp/vcut-fps-r52-seeds/autosave-fps-medium.json",
+  "timeDisplayEnd": "00:02.4 / 00:08.0",
+  "samples": 1951,
+  "profileMs": 6687222,
+  "topFunctions": [
+    {
+      "fn": "(idle)",
+      "loc": "(native):-1",
+      "samples": 1851,
+      "pct": 94.9
+    },
+    {
+      "fn": "(program)",
+      "loc": "(native):-1",
+      "samples": 66,
+      "pct": 3.4
+    },
+    {
+      "fn": "Ze",
+      "loc": "/assets/index-CysPjIj-.js:137",
+      "samples": 3,
+      "pct": 0.2
+    },
+    {
+      "fn": "pumpLevel",
+      "loc": "/assets/index-CysPjIj-.js:83",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "D",
+      "loc": "/assets/index-CysPjIj-.js:24",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "queueMicrotask",
+      "loc": "(native):-1",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "fd",
+      "loc": "/assets/index-CysPjIj-.js:39",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "measureText",
+      "loc": "(native):-1",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "rg",
+      "loc": "/assets/index-CysPjIj-.js:39",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "f",
+      "loc": "/assets/index-CysPjIj-.js:129",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "wn",
+      "loc": "/assets/index-CysPjIj-.js:139",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "Iu",
+      "loc": "/assets/index-CysPjIj-.js:37",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "Z",
+      "loc": "/assets/index-CysPjIj-.js:129",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "xx",
+      "loc": "/assets/index-CysPjIj-.js:39",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "requestAnimationFrame",
+      "loc": "(native):-1",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "ym",
+      "loc": "/assets/index-CysPjIj-.js:37",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "n",
+      "loc": "/assets/index-CysPjIj-.js:39",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "rw",
+      "loc": "/assets/index-CysPjIj-.js:39",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "vm",
+      "loc": "/assets/index-CysPjIj-.js:37",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "Xx.e.unstable_now",
+      "loc": "/assets/index-CysPjIj-.js:24",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "dg",
+      "loc": "/assets/index-CysPjIj-.js:39",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "gg",
+      "loc": "/assets/index-CysPjIj-.js:39",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "Bs",
+      "loc": "/assets/index-CysPjIj-.js:39",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "h0",
+      "loc": "/assets/index-CysPjIj-.js:41",
+      "samples": 1,
+      "pct": 0.1
+    },
+    {
+      "fn": "(garbage collector)",
+      "loc": "(native):-1",
+      "samples": 1,
+      "pct": 0.1
+    }
+  ],
+  "topFiles": [
+    {
+      "url": "(native)",
+      "samples": 1924,
+      "pct": 98.6
+    },
+    {
+      "url": "/assets/index-CysPjIj-.js",
+      "samples": 27,
+      "pct": 1.4
+    }
+  ]
+}

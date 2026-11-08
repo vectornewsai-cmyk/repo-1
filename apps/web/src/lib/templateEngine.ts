@@ -66,10 +66,32 @@ export function findUnresolvedMarkers(spec: VideoSpec): string[] {
  * - values[id]: giá trị người dùng chọn (tên file media / nội dung chữ).
  * - Placeholder không có trong values → dùng `default` của nó.
  * Trả về lỗi nếu còn marker chưa thay được hoặc spec không hợp lệ.
+ *
+ * Phase 9 đợt 56 M6 — lookup i18n tùy chọn, KHÔNG import `../i18n`
+ * trực tiếp: file này được test bằng Node type-stripping, mà Node
+ * không resolve JSON import của `i18n/index.ts` (đã kiểm chứng 07/11,
+ * xem twoLevelCurve.ts). Khi `lookup` vắng → fallback đúng từng chữ
+ * chuỗi VI cũ nên test cũ + hành vi mặc định không đổi; UI (TemplatePicker)
+ * truyền `t()` vào tham số `lookup` này để nhận chuỗi theo locale hiện
+ * tại. Key mới nằm trong `i18n/fragments/round56-m6.json` (parent merge
+ * vào vi.json/en.json cuối đợt 56).
  */
+export type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
+
 export function applyTemplateValues(
   tpl: TemplateDef,
-  values: Record<string, string>
+  values: Record<string, string>,
+  lookup?: I18nLookup,
 ): ApplyResult {
   const spec = JSON.parse(JSON.stringify(tpl.spec)) as VideoSpec;
 
@@ -100,11 +122,19 @@ export function applyTemplateValues(
   if (unresolved.length > 0) {
     return {
       ok: false,
-      error: `Template thiếu giá trị cho: ${unresolved.join(", ")}`,
+      error: trKey(
+        lookup,
+        "templateEngine.missingValues",
+        { names: unresolved.join(", ") },
+        `Template thiếu giá trị cho: ${unresolved.join(", ")}`,
+      ),
     };
   }
   if (!isVideoSpec(finalSpec)) {
-    return { ok: false, error: "Spec sau khi áp template không hợp lệ." };
+    return {
+      ok: false,
+      error: trKey(lookup, "templateEngine.invalidSpec", {}, "Spec sau khi áp template không hợp lệ."),
+    };
   }
   // Đặt tên project theo template để dễ nhận biết.
   finalSpec.meta.name = `${tpl.template.name} — ${finalSpec.meta.name}`;

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Test sticker batch 3 (StickerHarvest): Twemoji CC-BY 4.0 + Noto Emoji Apache-2.0.
+"""Test sticker batch 1+2+3+K6: 30 sticker gốc VCut (tự vẽ) + Twemoji CC-BY 4.0 + Noto Emoji Apache-2.0 + Fluent MIT.
 
 Kiểm tra:
-[1] manifest JSON hợp lệ, đủ 173 entries, mỗi entry có sha256/file/license
+[1] manifest JSON hợp lệ, đủ 244 entries, mỗi entry có sha256/file/license
 [2] fetch_stickers.sh: syntax bash ok, số lượng fetch() khớp manifest
 [3] mỗi PNG trong manifest: tồn tại ở assets/stickers + public/stickers,
     mở được bằng PIL, có alpha channel, có pixel không trong suốt,
@@ -31,29 +31,33 @@ print("== [1] sticker-manifest.json ==")
 man_path = os.path.join(DIR, "sticker-manifest.json")
 try:
     man = json.load(open(man_path))
-    check(isinstance(man, list) and len(man) == 173, f"manifest có 173 entries (có {len(man) if isinstance(man, list) else '?'})")
+    check(isinstance(man, list) and len(man) == 244, f"manifest có 244 entries (có {len(man) if isinstance(man, list) else '?'})")
     files = [m["file"] for m in man]
     check(len(set(files)) == len(files), "không trùng tên file")
     check(all(re.match(r"^[0-9a-f]{64}$", m.get("sha256", "")) for m in man), "mọi entry có sha256 hợp lệ")
-    check(all(m.get("license") in ("CC-BY-4.0", "Apache-2.0") for m in man), "license chỉ CC-BY-4.0 / Apache-2.0")
-    check(all(m.get("category") == "emoji" for m in man), "category = emoji")
+    check(all(m.get("license") in ("CC-BY-4.0", "Apache-2.0", "MIT") for m in man), "license chỉ CC-BY-4.0 / Apache-2.0 / MIT")
+    check(all(m.get("category") in ("emoji", "shapes", "arrows", "badges", "bubbles") for m in man), "category thuộc 5 nhóm (emoji/shapes/arrows/badges/bubbles)")
     tw = sum(1 for m in man if m["file"].startswith("twemoji-"))
     noto = sum(1 for m in man if m["file"].startswith("noto-"))
     check(tw == 96, f"96 Twemoji (có {tw})")
     check(noto == 77, f"77 Noto (có {noto})")
+    fl = sum(1 for m in man if m["file"].startswith("fluent-"))
+    check(fl == 41, f"41 Fluent (có {fl})")
 except Exception as e:
     check(False, f"đọc manifest: {e}")
     man = []
 
 print("== [2] fetch_stickers.sh ==")
-sh = os.path.join(DIR, "fetch_stickers.sh")
-r = subprocess.run(["bash", "-n", sh], capture_output=True)
-check(r.returncode == 0, "bash -n syntax ok")
-txt = open(sh).read()
-n_fetch = txt.count('fetch "')
-check(n_fetch == 173, f"173 lệnh fetch (có {n_fetch})")
-check("sha256sum -c" in txt, "có verify SHA256")
-check('PUB="../../apps/web/public/stickers"' in txt, "copy sang public/stickers")
+for shname in ("fetch_stickers.sh", "fetch_stickers2.sh"):
+    sh = os.path.join(DIR, shname)
+    r = subprocess.run(["bash", "-n", sh], capture_output=True)
+    check(r.returncode == 0, f"bash -n syntax ok ({shname})")
+    txt = open(sh).read()
+    check("sha256sum -c" in txt, f"có verify SHA256 ({shname})")
+    check('PUB="../../apps/web/public/stickers"' in txt, f"copy sang public/stickers ({shname})")
+n_fetch = sum(open(os.path.join(DIR, s)).read().count('fetch "') for s in ("fetch_stickers.sh", "fetch_stickers2.sh"))
+n_remote = sum(1 for m in man if m.get("source") != "VCut Studio")
+check(n_fetch == n_remote == 214, f"214 lệnh fetch cho 214 entry fetch được (có {n_fetch} lệnh / {n_remote} entry)")
 
 print("== [3] PNG files ==")
 from PIL import Image
@@ -74,17 +78,17 @@ for m in man:
         n_ok += 1
     except Exception as e:
         check(False, f"{f}: {e}")
-check(n_ok == 173, f"173 PNG hợp lệ + sha256 khớp ({n_ok})")
+check(n_ok == 244, f"244 PNG hợp lệ + sha256 khớp ({n_ok})")
 
 print("== [4] SOURCES.md ==")
 src = open(os.path.join(REPO, "assets/SOURCES.md")).read()
 missing = [m["file"] for m in man if f"`stickers/{m['file']}`" not in src]
-check(not missing, f"SOURCES.md đủ 173 dòng ({len(missing)} thiếu)")
+check(not missing, f"SOURCES.md đủ 244 dòng ({len(missing)} thiếu)")
 
 print("== [5] sticker.ts STICKER_LIBRARY ==")
 ts = open(os.path.join(REPO, "packages/video-spec/src/sticker.ts")).read()
 missing_ts = [m["file"] for m in man if f'"{m["file"]}"' not in ts]
-check(not missing_ts, f"STICKER_LIBRARY đủ 173 entries ({len(missing_ts)} thiếu)")
+check(not missing_ts, f"STICKER_LIBRARY đủ 244 entries ({len(missing_ts)} thiếu)")
 
 print()
 if fails:

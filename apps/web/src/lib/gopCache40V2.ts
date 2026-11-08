@@ -35,11 +35,18 @@
  *
  * CACHE GOP (GopSegmentCache):
  * - LRU theo thứ tự chèn/chạm: get() chạm lại, put() vượt trần thì
- *   evict GOP cũ nhất trước. Trần kép: 32 MiB tổng rangeBytes VÀ
+ *   evict GOP cũ nhất trước. Trần kép: 16 MiB tổng rangeBytes VÀ
  *   32 GOP — trần byte giữ cache trong ngân sách tổng 320 MiB của
- *   controller (frame 192 MiB + cache GOP 32 MiB vẫn còn biên cho
+ *   controller (frame 192 MiB + cache GOP 16 MiB vẫn còn biên cho
  *   decoder/canvas); trần số GOP chặn trường hợp nhiều GOP nhỏ làm
  *   Map phình dù chưa chạm trần byte.
+ * - Đợt 51 H4 — trần byte 32 → 16 MiB (quyết định có số đo, xem
+ *   docs/PHASE9_ROUND51_H4_GOP_HEAP_LIMITS.md §2): 6 lượt headed
+ *   fixture 37 MiB cho thấy cache thật chỉ giữ tối đa 8,24 MiB,
+ *   evicted = 0 ở mọi trần (kể cả 8 MiB), settled heap không đổi
+ *   theo trần (do frame cache quyết định) và tốc độ lùi không đổi;
+ *   16 MiB giữ biên 2× trên mức tối đa quan sát được, còn 8 MiB
+ *   chỉ còn biên ~1,3 MiB nên không chọn.
  * - 1 GOP đơn lẻ vượt trần byte thì KHÔNG cache (put trả false) nhưng
  *   vẫn dùng được cho lần decode hiện tại qua windowSegments của
  *   controller — tránh 1 GOP thưa evict sạch cache rồi vẫn không vừa.
@@ -54,7 +61,7 @@
  *
  * KHÔNG CHUNK NỬA VỜI: fetchSingleGopRange chỉ nhận 206 +
  * Content-Range khớp đúng range (qua cổng gate); mọi trường hợp khác
- * trả { ok: false } và hủy body best-effort, không throw vì lỗi
+ * trả { ok: false } và huỷ body best-effort, không throw vì lỗi
  * mạng/server. Controller chỉ bắt đầu decode 1 cửa sổ khi mọi GOP
  * giao cửa sổ đó đã có trong cache/windowSegments; fetch bù hỏng thì
  * cửa sổ đó trả false trước khi decode — frameAt rơi về đường element
@@ -74,8 +81,29 @@ import type { Mp4Sample, Mp4VideoTrack } from "./mp4Demux";
 
 /** Ngưỡng dưới mặc định: chỉ file lớn hơn 32 MiB mới xét đường GOP. */
 export const GOP_RANGE_ACTIVATION_THRESHOLD_BYTES = 32 * 1024 * 1024;
-/** Trần cache GOP mặc định: 32 MiB tổng rangeBytes. */
-export const GOP_CACHE_MAX_BYTES = 32 * 1024 * 1024;
+
+/**
+ * Đợt 61 R6 — lookup i18n tùy chọn (mẫu Q4: file này được test bằng Node
+ * nên KHÔNG import `../i18n` trực tiếp). Khi `lookup` vắng → fallback
+ * đúng từng chữ chuỗi VI cũ nên test cũ + hành vi mặc định không đổi.
+ * Key trong fragment R6 (`gop.cache.*`).
+ */
+export type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
+/** Trần cache GOP mặc định: 16 MiB tổng rangeBytes.
+ * Đợt 51 H4 — 32 → 16 MiB sau 6 lượt đo headed (xem
+ * docs/PHASE9_ROUND51_H4_GOP_HEAP_LIMITS.md §2). Ngưỡng kích hoạt
+ * đường GOP (32 MiB) KHÔNG đổi — chỉ trần retention đổi. */
+export const GOP_CACHE_MAX_BYTES = 16 * 1024 * 1024;
 /** Trần số GOP giữ trong cache (kèm trần byte). */
 export const GOP_CACHE_MAX_SEGMENTS = 32;
 
@@ -88,6 +116,8 @@ export interface GopWiringInput {
   thresholdBytes?: number;
   /** Ngưỡng file lớn của controller (mặc định 128 MiB — cổng S4). */
   largeFileBytes?: number;
+  /** Lookup i18n tùy chọn (đợt 61 R6) — vắng thì lý do giữ chuỗi VI cũ. */
+  lookup?: I18nLookup;
 }
 
 export interface GopWiringDecision {
@@ -105,8 +135,12 @@ export function resolveGopRangeWiring(input: GopWiringInput): GopWiringDecision 
   const threshold =
     input.thresholdBytes ?? GOP_RANGE_ACTIVATION_THRESHOLD_BYTES;
   const large = input.largeFileBytes ?? 128 * 1024 * 1024;
+  const lookup = input.lookup;
   if (!input.enabled) {
-    return { useGop: false, reason: "gop-disabled: caller chưa bật đường GOP" };
+    return {
+      useGop: false,
+      reason: trKey(lookup, "gop.cache.disabled", {}, "gop-disabled: caller chưa bật đường GOP"),
+    };
   }
   const size = input.knownSizeBytes;
   if (
@@ -114,15 +148,42 @@ export function resolveGopRangeWiring(input: GopWiringInput): GopWiringDecision 
     !Number.isFinite(size) ||
     size <= 0
   ) {
-    return { useGop: false, reason: "gop-size-unknown: chưa biết size trước cửa sổ đầu tiên" };
+    return {
+      useGop: false,
+      reason: trKey(lookup, "gop.cache.sizeUnknown", {}, "gop-size-unknown: chưa biết size trước cửa sổ đầu tiên"),
+    };
   }
   if (size <= threshold) {
-    return { useGop: false, reason: `gop-below-threshold: ${size} <= ${threshold}` };
+    return {
+      useGop: false,
+      reason: trKey(
+        lookup,
+        "gop.cache.belowThreshold",
+        { size: String(size), threshold: String(threshold) },
+        `gop-below-threshold: ${size} <= ${threshold}`,
+      ),
+    };
   }
   if (size > large) {
-    return { useGop: false, reason: `gop-large-file-locked: ${size} > ${large} (cổng S4 giữ nguyên)` };
+    return {
+      useGop: false,
+      reason: trKey(
+        lookup,
+        "gop.cache.largeFileLocked",
+        { size: String(size), large: String(large) },
+        `gop-large-file-locked: ${size} > ${large} (cổng S4 giữ nguyên)`,
+      ),
+    };
   }
-  return { useGop: true, reason: `gop-range: ${threshold} < ${size} <= ${large}` };
+  return {
+    useGop: true,
+    reason: trKey(
+      lookup,
+      "gop.cache.rangeOk",
+      { threshold: String(threshold), size: String(size), large: String(large) },
+      `gop-range: ${threshold} < ${size} <= ${large}`,
+    ),
+  };
 }
 
 /** Metadata GOP đủ để tìm đoạn giao cửa sổ decode (không giữ chunk). */
@@ -283,6 +344,7 @@ export async function fetchSingleGopRange(
   rangeEnd: number,
   knownSizeBytes: number | null,
   fetchImpl: GopRangeFetchFn,
+  lookup?: I18nLookup,
 ): Promise<SingleGopFetchResult> {
   if (typeof url !== "string" || url.length === 0) {
     throw new TypeError("fetchSingleGopRange: url phải là string không rỗng");
@@ -302,7 +364,12 @@ export async function fetchSingleGopRange(
       }
       return {
         ok: false,
-        reason: `gop-status-${resp.status}: server không trả 206 cho Range GOP ${rangeStart}-${rangeEnd - 1}`,
+        reason: trKey(
+          lookup,
+          "gop.cache.statusNot206",
+          { status: String(resp.status), start: String(rangeStart), end: String(rangeEnd - 1) },
+          `gop-status-${resp.status}: server không trả 206 cho Range GOP ${rangeStart}-${rangeEnd - 1}`,
+        ),
       };
     }
     const check = checkRangeProbeResponse(
@@ -310,6 +377,7 @@ export async function fetchSingleGopRange(
       resp.headers.get("content-range"),
       { start: rangeStart, end: rangeEnd - 1 },
       knownSizeBytes,
+      lookup,
     );
     if (check.outcome !== "range-ok") {
       try {
@@ -323,7 +391,12 @@ export async function fetchSingleGopRange(
     if (buf.length !== rangeEnd - rangeStart) {
       return {
         ok: false,
-        reason: `gop-short-body: xin ${rangeEnd - rangeStart} byte, nhận ${buf.length}`,
+        reason: trKey(
+          lookup,
+          "gop.cache.shortBody",
+          { wanted: String(rangeEnd - rangeStart), got: String(buf.length) },
+          `gop-short-body: xin ${rangeEnd - rangeStart} byte, nhận ${buf.length}`,
+        ),
       };
     }
     return { ok: true, bytes: buf };

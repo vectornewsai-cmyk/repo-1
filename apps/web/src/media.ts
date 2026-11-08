@@ -3,6 +3,7 @@
  * các phần tử HTMLVideo/Audio/Image dùng cho preview & phát lại.
  */
 import { uid } from "./lib";
+import { t as i18nT } from "./i18n";
 
 export type MediaKind = "video" | "audio" | "image";
 
@@ -22,11 +23,26 @@ export interface MediaItem {
   /** File gốc — dùng để upload lên bridge server khi xuất MP4 (P0-01). */
   file?: File;
   /**
+   * Đợt 53 J5 — assetId của manifest trong AssetStore (ghi lúc import /
+   * relink / rehydrate). Dùng để nối proxy vào manifest cho bền qua
+   * reload (xem assetStore.setProxy): media chưa ingest (vd: sample cũ)
+   * thì không có, proxy khi đó chỉ sống trong phiên như trước.
+   */
+  assetId?: string;
+  /**
    * Q8 proxy: URL tới bản proxy nhẹ (vd: từ bridge /api/proxy/file/...).
    * Chỉ dùng cho PREVIEW — export cuối vẫn dùng file gốc (xem PROXY_LIMITS.md).
    * Khi có proxyUrl, MediaPool.videoFor() sẽ phát proxy thay cho bản gốc.
    */
   proxyUrl?: string;
+  /**
+   * Đợt 54 K7 — proxy đã chết: file proxy trên bridge không còn
+   * (WORK_ROOT bị xóa tay) nên rehydrate đã gỡ proxyUrl và đánh dấu
+   * stale thay vì giữ URL chết. MediaBin hiện nút "Proxy mất, tạo lại"
+   * cho item này; bấm tạo lại thì setMediaProxy ghi proxy mới và xóa
+   * cờ này. `undefined`/false = bình thường (không stale).
+   */
+  proxyStale?: boolean;
   /** Chiều cao của proxy (480|720) — để hiển thị badge PROXY. */
   proxyHeight?: number;
   /**
@@ -57,7 +73,7 @@ function probeVideo(url: string): Promise<{ duration: number; width: number; hei
       v.src = "";
     };
     v.onloadedmetadata = done;
-    v.onerror = () => reject(new Error("Không đọc được metadata video"));
+    v.onerror = () => reject(new Error(i18nT("media.videoMetaFailed")));
     v.src = url;
   });
 }
@@ -70,7 +86,7 @@ function probeAudio(url: string): Promise<{ duration: number }> {
       resolve({ duration: a.duration || 0 });
       a.src = "";
     };
-    a.onerror = () => reject(new Error("Không đọc được metadata audio"));
+    a.onerror = () => reject(new Error(i18nT("media.audioMetaFailed")));
     a.src = url;
   });
 }
@@ -79,12 +95,18 @@ function probeImage(url: string): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
-    img.onerror = () => reject(new Error("Không đọc được ảnh"));
+    img.onerror = () => reject(new Error(i18nT("media.imageReadFailed")));
     img.src = url;
   });
 }
 
 /** Chụp 1 frame video làm thumbnail (không throw nếu thất bại). */
+/** Đợt 66 T6 — timeout chờ frame đầu: đồng bộ LOAD_TIMEOUT_MS (5 s) của
+ *  lib/thumbnails.ts. Keyframe khổng lồ (64,0 MiB, 8K) decode bằng
+ *  <video> rất chậm trên CPU yếu (đo được >175 s chưa xong trên VM này)
+ *  — không có timeout thì fileToMediaItem treo vĩnh viễn và import
+ *  không bao giờ xong. Hết hạn → bỏ thumbnail, import vẫn tiếp tục. */
+const CAPTURE_VIDEO_THUMB_LOAD_TIMEOUT_MS = 5000;
 async function captureVideoThumb(url: string): Promise<string | undefined> {
   try {
     const v = document.createElement("video");
@@ -92,8 +114,12 @@ async function captureVideoThumb(url: string): Promise<string | undefined> {
     v.preload = "auto";
     v.src = url;
     await new Promise<void>((resolve, reject) => {
-      v.onloadeddata = () => resolve();
-      v.onerror = () => reject(new Error("thumb fail"));
+      const t = setTimeout(() => {
+        v.src = ""; // dừng load/decode đang chạy dở
+        reject(new Error("thumb load timeout"));
+      }, CAPTURE_VIDEO_THUMB_LOAD_TIMEOUT_MS);
+      v.onloadeddata = () => { clearTimeout(t); resolve(); };
+      v.onerror = () => { clearTimeout(t); reject(new Error("thumb fail")); };
     });
     // tua tới 10% hoặc 0.5s để tránh frame đen đầu video
     const target = Math.min(0.5, (v.duration || 1) * 0.1);
@@ -121,7 +147,7 @@ async function captureVideoThumb(url: string): Promise<string | undefined> {
 /** Biến 1 File người dùng chọn thành MediaItem (tên được làm duy nhất ở store). */
 export async function fileToMediaItem(file: File): Promise<MediaItem> {
   const kind = kindOf(file);
-  if (!kind) throw new Error(`Định dạng không hỗ trợ: ${file.name}`);
+  if (!kind) throw new Error(i18nT("media.unsupported", { detail: file.name }));
   const url = URL.createObjectURL(file);
   const item: MediaItem = { id: uid("m"), name: file.name, kind, url, duration: 0, file };
   try {
@@ -237,7 +263,7 @@ export class MediaPool {
       /* bỏ qua */
     }
     try {
-      // Gỡ src + load() để hủy hẳn lần nạp đang kẹt, giải phóng tài nguyên.
+      // Gỡ src + load() để huỷ hẳn lần nạp đang kẹt, giải phóng tài nguyên.
       el.removeAttribute("src");
       el.load();
     } catch {

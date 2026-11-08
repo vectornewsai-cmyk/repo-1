@@ -180,6 +180,44 @@ node server/render/src/lut.js --self-test
 bash server/bridge/test-export-e2e.sh
 ```
 
+### Running Node test files (`*.test.ts`) — pick the right runner
+
+The repo has no test framework (no vitest/jest); each `*.test.ts` runs
+standalone via Node or an esbuild bundle. **There is no single command
+that works for every file** — picking wrong crashes the run even when the
+product code is correct. Use the standard runner, which detects the right
+mode per file and prints its reasoning:
+
+```bash
+node scripts/run-node-test.mjs apps/web/src/lib/webglLut.test.ts
+node scripts/run-node-test.mjs <file> --repeat 3   # repeat (checks exit crashes)
+node scripts/run-node-test.mjs <file> --mode cjs   # force a mode
+```
+
+| File shape | Mode | Why |
+|---|---|---|
+| Default (imports `validate.js`, uses `react-dom/server`, or extensionless imports) | esbuild `--format=cjs` + `node` | `validate.js` uses dynamic `require("child_process")` (breaks in an ESM bundle); Node type-stripping cannot resolve extensionless imports |
+| Uses `import.meta.url` (`createRequire`, `fileURLToPath`) | `node` directly (type-stripping, Node ≥ 22.18) | esbuild `--format=cjs` empties `import.meta` (`empty-import-meta`), so `import.meta.url` is `undefined` and `createRequire` throws mid-file |
+| Top-level `await` | esbuild `--format=esm` + `node` (or `node` directly) | A CJS bundle cannot be built from top-level await |
+
+Rules for test authors (precedent: round 58 O7, round 62 R9): never use
+`import.meta.url` in a test — resolve paths from `process.cwd()` (repo
+root or `apps/web`) and `require` CJS files by absolute path, so the file
+runs under all three modes. Full root-cause analysis, reproduction logs
+and the verified matrix:
+[`docs/PHASE9_ROUND62_R9_TEST_RUNNER_LIMITS.md`](PHASE9_ROUND62_R9_TEST_RUNNER_LIMITS.md).
+
+Round 63 R9: bundle `--format=cjs` no longer emits the
+`empty-import-meta` warning from `bridgeUrl.ts:17` — the runner passes
+`--define:import.meta.env={}`, giving `import.meta.env` a real value
+instead of leaving it empty (same runtime result: `BRIDGE_URL` defaults
+to `127.0.0.1:8787` either way — measured). This is not log suppression
+(`--log-level` stays `warning`); `import.meta.url` is still broken under
+cjs, only `.env` is covered. `webglLut` was also tried as an ESM bundle
+in round 63 R9 and passes 7/7 with identical MAE (0.4510/0.5058), but
+stays on cjs (the default, proven since O7 — no measured benefit to
+switching). Regression test: `node scripts/run-node-test-63r9.test.mjs`.
+
 Honesty rule: a feature is "done" only with real renders/pixel checks or
 equivalent evidence — never from UI presence alone. See the master plan's
 acceptance checklist (repo `REPO1_MASTER_PLAN_*.md` in the workspace).

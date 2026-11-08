@@ -509,6 +509,89 @@ async function main(): Promise<void> {
     eq(assetIdFromSrc(ASSET_SRC_PREFIX), null, "prefix trơ trọi");
   });
 
+  console.log("== setProxy (đợt 53 J5: proxy bền qua reload) ==");
+  await test("setProxy ghi path/height/size vào manifest, đọc lại đủ", async () => {
+    const { store } = makeStore("proxy1");
+    const m = await store.ingest(textFile("video-bytes", "clip.mp4", "video/mp4"));
+    const saved = await store.setProxy(m.assetId, {
+      proxyPath: "/api/proxy/file/clip__proxy_720p.mp4",
+      proxyHeight: 720,
+      proxySizeBytes: 123456,
+    });
+    assert(saved !== null, "setProxy trả manifest");
+    eq(saved!.proxyPath, "/api/proxy/file/clip__proxy_720p.mp4", "proxyPath");
+    eq(saved!.proxyHeight, 720, "proxyHeight");
+    eq(saved!.proxySizeBytes, 123456, "proxySizeBytes");
+    const back = await store.get(m.assetId);
+    eq(back?.proxyPath, "/api/proxy/file/clip__proxy_720p.mp4", "đọc lại proxyPath");
+    eq(back?.sha256, m.sha256, "không đổi field khác");
+    await store.close();
+  });
+  await test("setProxy từ chối path lạ, không ghi rác vào manifest", async () => {
+    const { store } = makeStore("proxy2");
+    const m = await store.ingest(textFile("video-bytes", "clip.mp4", "video/mp4"));
+    for (const bad of [
+      "http://127.0.0.1:8787/api/proxy/file/clip__proxy_720p.mp4",
+      "/api/proxy/file/../../etc/passwd.mp4",
+      "/api/proxy/file/clip.mp4/extra",
+      "/api/proxy/file/clip.webm",
+      "",
+    ]) {
+      eq(await store.setProxy(m.assetId, { proxyPath: bad }), null, `từ chối ${bad}`);
+    }
+    eq((await store.get(m.assetId))?.proxyPath, undefined, "manifest không bị ghi path lạ");
+    await store.close();
+  });
+  await test("setProxy từ chối height lạ / size xấu, asset lạ → null", async () => {
+    const { store } = makeStore("proxy3");
+    const m = await store.ingest(textFile("video-bytes", "clip.mp4", "video/mp4"));
+    eq(
+      await store.setProxy(m.assetId, { proxyPath: "/api/proxy/file/c.mp4", proxyHeight: 1080 }),
+      null,
+      "height 1080 bị từ chối",
+    );
+    eq(
+      await store.setProxy(m.assetId, { proxyPath: "/api/proxy/file/c.mp4", proxySizeBytes: 0 }),
+      null,
+      "size 0 bị từ chối",
+    );
+    eq(
+      await store.setProxy("a_0000000000000000", {
+        proxyPath: "/api/proxy/file/c.mp4",
+      }),
+      null,
+      "asset lạ → null",
+    );
+    await store.close();
+  });
+  await test("setProxy(null) gỡ proxy, giữ nguyên field khác", async () => {
+    const { store } = makeStore("proxy4");
+    const m = await store.ingest(textFile("video-bytes", "clip.mp4", "video/mp4"));
+    await store.setProxy(m.assetId, {
+      proxyPath: "/api/proxy/file/clip__proxy_720p.mp4",
+      proxyHeight: 720,
+      proxySizeBytes: 999,
+    });
+    const cleared = await store.setProxy(m.assetId, null);
+    assert(cleared !== null, "clear trả manifest");
+    eq(cleared!.proxyPath, undefined, "proxyPath gỡ");
+    eq(cleared!.proxyHeight, undefined, "proxyHeight gỡ");
+    eq(cleared!.proxySizeBytes, undefined, "proxySizeBytes gỡ");
+    eq(cleared!.originalName, "clip.mp4", "tên giữ nguyên");
+    await store.close();
+  });
+  await test("setProxy 480p + path đã encode (%) được chấp nhận", async () => {
+    const { store } = makeStore("proxy5");
+    const m = await store.ingest(textFile("video-bytes", "my clip.mp4", "video/mp4"));
+    const saved = await store.setProxy(m.assetId, {
+      proxyPath: "/api/proxy/file/my%20clip__proxy_480p.mp4",
+      proxyHeight: 480,
+    });
+    assert(saved !== null, "path encode được chấp nhận");
+    eq(saved!.proxyHeight, 480, "height 480");
+    await store.close();
+  });
+
   console.log(`\n== KẾT QUẢ: ${pass} pass, ${fail} fail ==`);
   if (fail > 0) {
     console.error("Failed:", failedNames.join(", "));

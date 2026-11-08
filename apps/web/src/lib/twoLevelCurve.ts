@@ -37,6 +37,31 @@ import {
 export const TWO_LEVEL_SPEED_MIN = 0.25;
 export const TWO_LEVEL_SPEED_MAX = 4;
 
+/**
+ * Phase 9 đợt 56 M5 — lookup i18n tùy chọn, KHÔNG import `../i18n`
+ * trực tiếp: file này được test bằng Node type-stripping, mà Node
+ * không resolve JSON import của `i18n/index.ts`
+ * (ERR_IMPORT_ATTRIBUTE_MISSING, đã kiểm chứng 07/11) — cùng lý do
+ * curveFix.ts / loadReport.ts tránh import i18n (xem LIMITS đợt 56
+ * M5). Khi `lookup` vắng → fallback đúng từng chữ chuỗi VI cũ nên
+ * test cũ + hành vi mặc định không đổi; UI (App/preview) truyền `t()`
+ * vào tham số `lookup` này để nhận chuỗi theo locale hiện tại. Key
+ * nằm trong `i18n/fragments/round56-m5.json` (parent merge vào
+ * vi.json/en.json cuối đợt 56); key `speedCurve.*` tái dùng đã có sẵn
+ * trong vi.json/en.json (không nằm trong fragment).
+ */
+export type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
+
 export interface TwoLevelInput {
   /** Curve của nested ngoài (thời gian output tính từ đầu nested). */
   outerCurve: SpeedCurve;
@@ -82,33 +107,54 @@ function validateCurve(
   curve: SpeedCurve,
   duration: number,
   label: string,
+  lookup?: I18nLookup,
 ): SpeedCurve {
   if (typeof curve !== "object" || curve === null || !Array.isArray(curve.keyframes)) {
-    throw new Error(`${label}: speedKeyframes phải là object { keyframes: [...] }`);
+    throw new Error(
+      trKey(lookup, "curveErr.speedNotObject", { path: label },
+        `${label}: speedKeyframes phải là object { keyframes: [...] }`),
+    );
   }
   const arr = curve.keyframes;
   if (arr.length === 0) {
-    throw new Error(`${label}: speedKeyframes.keyframes: mảng rỗng — cần ít nhất 1 keyframe`);
+    throw new Error(
+      trKey(lookup, "curveErr.speedEmpty", { path: label },
+        `${label}: speedKeyframes.keyframes: mảng rỗng — cần ít nhất 1 keyframe`),
+    );
   }
   if (arr.length > 128) {
-    throw new Error(`${label}: speedKeyframes.keyframes: quá 128 keyframe`);
+    throw new Error(
+      trKey(lookup, "curveErr.speedTooMany", { path: label },
+        `${label}: speedKeyframes.keyframes: quá 128 keyframe`),
+    );
   }
   arr.forEach((kf, i) => {
     const w = `${label}.keyframes[${i}]`;
     if (typeof kf !== "object" || kf === null) {
-      throw new Error(`${w} phải là object { t, v, easing }`);
+      throw new Error(
+        trKey(lookup, "curveErr.kfNotObject", { path: w },
+          `${w} phải là object { t, v, easing }`),
+      );
     }
     if (!isFiniteNumber(kf.t) || kf.t < 0 || kf.t > duration + 1e-6) {
-      throw new Error(`${w}.t phải trong [0, ${duration}] (nhận được: ${kf.t})`);
+      throw new Error(
+        trKey(lookup, "curveErr.kfTOutOfRange",
+          { path: w, duration: String(duration), value: String(kf.t) },
+          `${w}.t phải trong [0, ${duration}] (nhận được: ${kf.t})`),
+      );
     }
     if (!isFiniteNumber(kf.v) || kf.v < TWO_LEVEL_SPEED_MIN || kf.v > TWO_LEVEL_SPEED_MAX) {
       throw new Error(
-        `${w}.v phải trong ${TWO_LEVEL_SPEED_MIN}..${TWO_LEVEL_SPEED_MAX} (nhận được: ${kf.v})`,
+        trKey(lookup, "curveErr.kfVRangeDots",
+          { path: w, min: String(TWO_LEVEL_SPEED_MIN), max: String(TWO_LEVEL_SPEED_MAX), value: String(kf.v) },
+          `${w}.v phải trong ${TWO_LEVEL_SPEED_MIN}..${TWO_LEVEL_SPEED_MAX} (nhận được: ${kf.v})`),
       );
     }
     if (!["linear", "ease-in", "ease-out", "bezier"].includes(kf.easing)) {
       throw new Error(
-        `${w}.easing phải là linear | ease-in | ease-out | bezier (nhận được: ${JSON.stringify(kf.easing)})`,
+        trKey(lookup, "curveErr.kfEasing",
+          { path: w, value: JSON.stringify(kf.easing) ?? "undefined" },
+          `${w}.easing phải là linear | ease-in | ease-out | bezier (nhận được: ${JSON.stringify(kf.easing)})`),
       );
     }
     if (kf.easing === "bezier") {
@@ -116,8 +162,10 @@ function validateCurve(
       if (!Array.isArray(b) || b.length !== 4 || !b.every((x) => isFiniteNumber(x)) ||
           b[0] < 0 || b[0] > 1 || b[2] < 0 || b[2] > 1) {
         throw new Error(
-          `${w}.bezier phải là [x1, y1, x2, y2]: x1, x2 trong [0, 1], y1, y2 tự do ` +
-          `(nhận được: ${JSON.stringify(b)})`,
+          trKey(lookup, "curveErr.kfBezier",
+            { path: w, value: JSON.stringify(b) ?? "undefined" },
+            `${w}.bezier phải là [x1, y1, x2, y2]: x1, x2 trong [0, 1], y1, y2 tự do ` +
+            `(nhận được: ${JSON.stringify(b)})`),
         );
       }
     }
@@ -303,15 +351,20 @@ function buildExact(
   };
 }
 
-function encodeHermite(exact: ExactTwoLevel, where: string): SpeedCurve {
+function encodeHermite(exact: ExactTwoLevel, where: string, lookup?: I18nLookup): SpeedCurve {
   const duration = exact.duration;
   if (!(duration > 0)) {
-    throw new Error(`${where}: hợp curve hai tầng: duration của lá sau ánh xạ phải > 0`);
+    throw new Error(
+      trKey(lookup, "twoLevel.mergeDuration", { path: where },
+        `${where}: hợp curve hai tầng: duration của lá sau ánh xạ phải > 0`),
+    );
   }
   if (exact.breakpoints.length > 128) {
     throw new Error(
-      `${where}: hợp curve hai tầng cần ${exact.breakpoints.length} điểm gãy, ` +
-      "vượt giới hạn 128 keyframe của clip ramp — giảm số keyframe của curve ngoài/trong",
+      trKey(lookup, "twoLevel.mergeBreakpoints",
+        { path: where, n: String(exact.breakpoints.length) },
+        `${where}: hợp curve hai tầng cần ${exact.breakpoints.length} điểm gãy, ` +
+        "vượt giới hạn 128 keyframe của clip ramp — giảm số keyframe của curve ngoài/trong"),
     );
   }
   let step = 0.25;
@@ -376,9 +429,11 @@ function encodeHermite(exact: ExactTwoLevel, where: string): SpeedCurve {
   for (const p of sample) {
     if (!isFiniteNumber(p.v) || p.v < TWO_LEVEL_SPEED_MIN - 1e-9 || p.v > TWO_LEVEL_SPEED_MAX + 1e-9) {
       throw new Error(
-        `${where}: tốc độ hợp hai tầng = ${p.v} vượt khoảng ` +
-        `${TWO_LEVEL_SPEED_MIN}..${TWO_LEVEL_SPEED_MAX} tại t'=${p.t} — tích tốc độ ngoài × ` +
-        "tốc độ trong vượt khoảng dù mỗi tầng đều hợp lệ; giảm biên độ một trong hai curve",
+        trKey(lookup, "twoLevel.speedOutOfRangeHermite",
+          { path: where, v: String(p.v), min: String(TWO_LEVEL_SPEED_MIN), max: String(TWO_LEVEL_SPEED_MAX), t: String(p.t) },
+          `${where}: tốc độ hợp hai tầng = ${p.v} vượt khoảng ` +
+          `${TWO_LEVEL_SPEED_MIN}..${TWO_LEVEL_SPEED_MAX} tại t'=${p.t} — tích tốc độ ngoài × ` +
+          "tốc độ trong vượt khoảng dù mỗi tầng đều hợp lệ; giảm biên độ một trong hai curve"),
       );
     }
     if (p.v < TWO_LEVEL_SPEED_MIN) p.v = TWO_LEVEL_SPEED_MIN;
@@ -413,16 +468,24 @@ function encodeHermite(exact: ExactTwoLevel, where: string): SpeedCurve {
  * ngoài cửa sổ hoàn toàn thì throw (caller nên bỏ lá trước khi gọi,
  * như mapClip trả null — hàm này không lặng lẽ trả duration 0).
  */
-export function composeTwoLevelCurve(input: TwoLevelInput): TwoLevelResult {
+export function composeTwoLevelCurve(input: TwoLevelInput, lookup?: I18nLookup): TwoLevelResult {
   const where = "twoLevelCurve";
   if (!isFiniteNumber(input.outerDuration) || input.outerDuration <= 0) {
-    throw new Error(`${where}: outerDuration phải > 0 (nhận được: ${input.outerDuration})`);
+    throw new Error(
+      trKey(lookup, "twoLevel.outerDuration",
+        { path: where, value: String(input.outerDuration) },
+        `${where}: outerDuration phải > 0 (nhận được: ${input.outerDuration})`),
+    );
   }
   if (!isFiniteNumber(input.leafDuration) || input.leafDuration <= 0) {
-    throw new Error(`${where}: leafDuration phải > 0 (nhận được: ${input.leafDuration})`);
+    throw new Error(
+      trKey(lookup, "twoLevel.leafDuration",
+        { path: where, value: String(input.leafDuration) },
+        `${where}: leafDuration phải > 0 (nhận được: ${input.leafDuration})`),
+    );
   }
-  const outer = validateCurve(input.outerCurve, input.outerDuration, "outerCurve");
-  const inner = validateCurve(input.innerCurve, input.leafDuration, "innerCurve");
+  const outer = validateCurve(input.outerCurve, input.outerDuration, "outerCurve", lookup);
+  const inner = validateCurve(input.innerCurve, input.leafDuration, "innerCurve", lookup);
   const totalOuter = integrateSpeed(outer, 0, input.outerDuration);
   const winStart = input.outerIn;
   const winEnd = input.outerIn + totalOuter;
@@ -431,7 +494,10 @@ export function composeTwoLevelCurve(input: TwoLevelInput): TwoLevelResult {
   const vs = Math.max(s, winStart);
   const ve = Math.min(e, winEnd);
   if (ve - vs <= 1e-6) {
-    throw new Error(`${where}: lá nằm ngoài cửa sổ clip lồng nhau hoàn toàn — không có đoạn khả kiến để hợp`);
+    throw new Error(
+      trKey(lookup, "twoLevel.leafOutside", { path: where },
+        `${where}: lá nằm ngoài cửa sổ clip lồng nhau hoàn toàn — không có đoạn khả kiến để hợp`),
+    );
   }
   const exact = buildExact(outer, input.outerDuration, input.outerIn, inner,
     { start: input.leafStart, in: input.leafIn }, vs, ve);
@@ -441,14 +507,19 @@ export function composeTwoLevelCurve(input: TwoLevelInput): TwoLevelResult {
     const vInner = inner.keyframes[0].v;
     const sliced = sliceSpeedKeyframes(outer.keyframes, exact.tStart, exact.tEnd);
     if (sliced.keyframes.length === 0) {
-      throw new Error(`${where}: không slice được curve ngoài cho đoạn output của lá — đoạn suy biến`);
+      throw new Error(
+        trKey(lookup, "twoLevel.sliceOuter", { path: where },
+          `${where}: không slice được curve ngoài cho đoạn output của lá — đoạn suy biến`),
+      );
     }
     const scaled = sliced.keyframes.map((k) => ({ ...k, v: k.v * vInner }));
     for (const k of scaled) {
       if (!isFiniteNumber(k.v) || k.v < TWO_LEVEL_SPEED_MIN || k.v > TWO_LEVEL_SPEED_MAX) {
         throw new Error(
-          `${where}: tốc độ hợp hai tầng = ${k.v} vượt khoảng ` +
-          `${TWO_LEVEL_SPEED_MIN}..${TWO_LEVEL_SPEED_MAX} (tốc độ trong hằng ${vInner} × tốc độ ngoài)`,
+          trKey(lookup, "twoLevel.speedOutOfRangeInnerConst",
+            { path: where, v: String(k.v), min: String(TWO_LEVEL_SPEED_MIN), max: String(TWO_LEVEL_SPEED_MAX), inner: String(vInner) },
+            `${where}: tốc độ hợp hai tầng = ${k.v} vượt khoảng ` +
+            `${TWO_LEVEL_SPEED_MIN}..${TWO_LEVEL_SPEED_MAX} (tốc độ trong hằng ${vInner} × tốc độ ngoài)`),
         );
       }
     }
@@ -459,21 +530,26 @@ export function composeTwoLevelCurve(input: TwoLevelInput): TwoLevelResult {
     const leftCut = exact.leftCut;
     const sliced = sliceSpeedKeyframes(inner.keyframes, leftCut, leftCut + (ve - vs));
     if (sliced.keyframes.length === 0) {
-      throw new Error(`${where}: không slice được curve trong cho đoạn khả kiến — đoạn suy biến`);
+      throw new Error(
+        trKey(lookup, "twoLevel.sliceInner", { path: where },
+          `${where}: không slice được curve trong cho đoạn khả kiến — đoạn suy biến`),
+      );
     }
     const scaled = sliced.keyframes.map((k) => ({ ...k, t: k.t / vo, v: k.v * vo }));
     for (const k of scaled) {
       if (!isFiniteNumber(k.v) || k.v < TWO_LEVEL_SPEED_MIN || k.v > TWO_LEVEL_SPEED_MAX) {
         throw new Error(
-          `${where}: tốc độ hợp hai tầng = ${k.v} vượt khoảng ` +
-          `${TWO_LEVEL_SPEED_MIN}..${TWO_LEVEL_SPEED_MAX} (tốc độ ngoài hằng ${vo} × tốc độ trong)`,
+          trKey(lookup, "twoLevel.speedOutOfRangeOuterConst",
+            { path: where, v: String(k.v), min: String(TWO_LEVEL_SPEED_MIN), max: String(TWO_LEVEL_SPEED_MAX), outer: String(vo) },
+            `${where}: tốc độ hợp hai tầng = ${k.v} vượt khoảng ` +
+            `${TWO_LEVEL_SPEED_MIN}..${TWO_LEVEL_SPEED_MAX} (tốc độ ngoài hằng ${vo} × tốc độ trong)`),
         );
       }
     }
     scaled[scaled.length - 1].t = exact.duration;
     speedKeyframes = { keyframes: normalizeSpeedKeyframes(scaled) };
   } else {
-    speedKeyframes = encodeHermite(exact, where);
+    speedKeyframes = encodeHermite(exact, where, lookup);
   }
   let out = exact.in + exact.consumed;
   if (input.leafOut !== undefined && out > input.leafOut + 1e-6) out = input.leafOut;

@@ -21,9 +21,9 @@ export async function cmdTts(args: ParsedArgs): Promise<void> {
   const voice = optFlag(args.flags, "voice", "");
   const start = numFlag(args.flags, "start", 0);
 
-  if (text.length === 0) throw new CliError("--text không được rỗng");
-  if (text.length > 2000) throw new CliError("--text tối đa 2000 ký tự");
-  if (start < 0) throw new CliError("--start phải >= 0");
+  if (text.length === 0) throw new CliError("STRING_REQUIRED", "--text không được rỗng");
+  if (text.length > 2000) throw new CliError("STRING_TOO_LONG", "--text tối đa 2000 ký tự");
+  if (start < 0) throw new CliError("NUMBER_NEGATIVE", "--start phải >= 0");
 
   const { spec, filePath } = await loadProject(projectPath);
 
@@ -47,7 +47,7 @@ export async function cmdTts(args: ParsedArgs): Promise<void> {
     // lỗi giữ nguyên định dạng cũ (process exit 1 qua handler CliError
     // ở index.ts, như trước).
     const r = await runStreamed(PYTHON_BIN, pyArgs, 10 * 60 * 1000, "tts");
-    if (r.status !== 0) throw new CliError(`tts.py thất bại (exit ${r.status})`);
+    if (r.status !== 0) throw new CliError("SCRIPT_FAILED", `tts.py thất bại (exit ${r.status})`);
 
     await fs.copyFile(tmpWav, destWav);
 

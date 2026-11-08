@@ -64,11 +64,23 @@ button {
   color: var(--accent-hover);
 }
 
+/* Đợt 63 R1: .m-sheet-backdrop z 80 → 350 — modal mở TỪ TRONG sheet
+ * (SceneModal/BeatSyncModal/StorageCleanupPanel) render .modal-backdrop
+ * (z 400) BÊN TRONG stacking context của sheet (position:fixed + z-index),
+ * nên ở root nó chỉ cao bằng 80 < pill FPS 300: pill hiện xuyên qua lớp mờ
+ * của modal và nhận click (đo headed M6: pill đè đuôi nút "Quét chuyển cảnh"
+ * 682.5px², elementFromPoint trúng pill; M7/M8: pill là phần tử trên cùng
+ * tại tâm của nó khi modal mở). Nâng sheet lên 350 (giữa pill 300 và
+ * backdrop 400): modal trong sheet lại trên pill, modal gốc (400) vẫn trên
+ * sheet, tour (450)/toast (500) vẫn trên hết. Hệ quả có chủ đích: pill/panel
+ * FPS bị lớp mờ của sheet che (không bấm được) trong lúc sheet mở — sheet
+ * chỉ mở khi user chủ động mở MediaBin/Inspector, pill là công cụ đo nên
+ * chấp nhận; fabbar (60) vốn đã dưới sheet nên không đổi. */
 .m-sheet-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
-  z-index: 80;
+  z-index: 350;
   display: flex;
   align-items: flex-end;
   justify-content: center;

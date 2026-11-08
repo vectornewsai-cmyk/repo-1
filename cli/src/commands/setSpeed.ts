@@ -11,13 +11,13 @@ export async function cmdSetSpeed(args: ParsedArgs): Promise<void> {
   const speed = numFlag(args.flags, "speed", 0);
 
   if (!(speed >= SPEED_MIN && speed <= SPEED_MAX))
-    throw new CliError(`--speed phải trong khoảng ${SPEED_MIN}..${SPEED_MAX}, nhận được: ${speed}`);
+    throw new CliError("NUMBER_OUT_OF_RANGE", `--speed phải trong khoảng ${SPEED_MIN}..${SPEED_MAX}, nhận được: ${speed}`);
 
   const { spec, filePath } = await loadProject(projectPath);
   const found = findClip(spec, clipId);
-  if (!found) throw new CliError(`Không tìm thấy clip: ${clipId}`);
+  if (!found) throw new CliError("NOT_FOUND", `Không tìm thấy clip: ${clipId}`);
   if (found.clip.kind !== "video" && found.clip.kind !== "audio")
-    throw new CliError(`Speed chỉ áp dụng cho clip video/audio (clip ${clipId} là ${found.clip.kind})`);
+    throw new CliError("KIND_MISMATCH", `Speed chỉ áp dụng cho clip video/audio (clip ${clipId} là ${found.clip.kind})`);
 
   found.clip.speed = speed;
   // Cập nhật duration theo invariant: duration = (out - in) / speed

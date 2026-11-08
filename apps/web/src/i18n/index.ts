@@ -37,6 +37,17 @@ try {
 
 const listeners = new Set<() => void>();
 
+/** Phase 10 G5 — người nghe đổi ngôn ngữ kèm giá trị mới (bridge desktop dùng để báo main). */
+const langChangeListeners = new Set<(lang: Lang) => void>();
+
+/** Đăng ký nhận ngôn ngữ mới mỗi khi setLang chạy. Trả về hàm huỷ đăng ký. */
+export function onLangChange(cb: (lang: Lang) => void): () => void {
+  langChangeListeners.add(cb);
+  return () => {
+    langChangeListeners.delete(cb);
+  };
+}
+
 export function getLang(): Lang {
   return lang;
 }
@@ -50,6 +61,7 @@ export function setLang(next: Lang): void {
     /* bỏ qua */
   }
   listeners.forEach((fn) => fn());
+  langChangeListeners.forEach((fn) => fn(next));
 }
 
 /** Lấy chuỗi theo key, có fallback vi → key. Hỗ trợ thay thế `{name}`. */

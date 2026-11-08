@@ -5,6 +5,65 @@
  * file gốc — spec không bao giờ trỏ sang proxy (xem PROXY_LIMITS.md).
  */
 import type { MediaItem } from "../media";
+// Đợt 53 J5: import kèm đuôi .ts theo quy ước test strip-types của repo
+// (xem assetStore.ts: tsc cấm đuôi .ts khi allowImportingTsExtensions
+// tắt nên dòng import này mang @ts-ignore có chủ đích — vite và node
+// strip-types đều resolve được đuôi .ts).
+// @ts-ignore: xem ghi chú trên (TS5097, đuôi .ts cho strip-types)
+import { isValidProxyPath } from "./assetStore.ts";
+
+/**
+ * Đợt 53 J5 — tách đường dẫn proxy (`/api/proxy/file/<tên>.mp4`) từ
+ * proxyUrl đầy đủ mà MediaBin đã lưu (`${BRIDGE_URL}/api/proxy/file/...`).
+ * Chỉ đường dẫn mới được lưu bền vào manifest (cổng bridge có thể đổi
+ * giữa các phiên); lúc rehydrate ghép lại với BRIDGE_URL hiện tại.
+ * - URL đầy đủ (bất kỳ origin nào) → path nếu khớp dạng bridge.
+ * - Đã là path → trả nguyên nếu hợp lệ.
+ * - Dạng khác / không khớp → null (caller bỏ qua việc lưu bền, proxy
+ *   trong phiên vẫn dùng được).
+ */
+export function proxyPathFromUrl(url: string | undefined | null): string | null {
+  if (typeof url !== "string" || url.length === 0) return null;
+  let path = url;
+  const marker = "/api/proxy/file/";
+  const idx = url.indexOf(marker);
+  if (idx >= 0) path = url.slice(idx);
+  if (isValidProxyPath(path)) return path;
+  return null;
+}
+
+/**
+ * Đợt 54 K7 — trạng thái sống của một proxyUrl, để rehydrate phát hiện
+ * proxy chết (WORK_ROOT của bridge bị xóa tay) mà không đoán mò:
+ * - "alive": bridge trả 2xx/3xx cho HEAD (file proxy còn trên đĩa).
+ * - "missing": bridge trả 404 (file đã mất — CHỈ trạng thái này mới
+ *   được coi là chết chắc và bị gỡ).
+ * - "unknown": mọi trường hợp còn lại (bridge chưa chạy / mất mạng /
+ *   fetch không có / status khác) — caller PHẢI giữ proxy như cũ, không
+ *   được kết luận stale (tránh gỡ oan khi bridge chỉ đang tắt).
+ * Dùng HEAD để khỏi tải bytes; route GET /api/proxy/file/:name của
+ * bridge phục vụ HEAD qua handler GET của Express (đo thật ở harness
+ * K7: file còn → 200, file đã xóa → 404). `fetchFn` inject được để
+ * unit test (mặc định globalThis.fetch).
+ */
+export type ProxyLiveness = "alive" | "missing" | "unknown";
+
+export async function checkProxyAlive(
+  proxyUrl: string,
+  fetchFn: typeof fetch = globalThis.fetch,
+): Promise<ProxyLiveness> {
+  if (typeof proxyUrl !== "string" || proxyUrl.length === 0) return "unknown";
+  if (typeof fetchFn !== "function") return "unknown";
+  try {
+    const res = await fetchFn(proxyUrl, { method: "HEAD" });
+    if (!res || typeof res.status !== "number") return "unknown";
+    if (res.status === 404) return "missing";
+    if (res.status >= 200 && res.status < 400) return "alive";
+    return "unknown";
+  } catch {
+    return "unknown";
+  }
+}
 
 /** URL thực tế preview sẽ phát: proxy nếu có, không thì file gốc. */
 export function previewUrlFor(item: MediaItem): string {

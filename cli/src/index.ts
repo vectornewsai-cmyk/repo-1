@@ -145,7 +145,9 @@ async function main(): Promise<void> {
     }
   } catch (e) {
     if (e instanceof CliError) {
-      console.error(`Lỗi: ${e.message}`);
+      // Đợt 63 R9: in mã ổn định kèm message để máy/agent khớp lỗi
+      // bằng mã (`Lỗi [MÃ]: ...`), message tiếng Việt giữ nguyên.
+      console.error(`Lỗi [${e.code}]: ${e.message}`);
     } else {
       console.error(`Lỗi không mong đợi: ${e instanceof Error ? e.message : String(e)}`);
     }

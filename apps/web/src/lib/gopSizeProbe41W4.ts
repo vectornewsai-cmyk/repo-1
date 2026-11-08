@@ -18,7 +18,7 @@
  *      (dùng `parseContentRange` của cổng gate, cùng luật) và
  *      `total > 0` mới nhận → size, nguồn `content-range`. 200
  *      (server phớt Range), 416, Content-Range lệch/không parse →
- *      không nhận. Body (1 byte) không đọc, chỉ hủy best-effort.
+ *      không nhận. Body (1 byte) không đọc, chỉ huỷ best-effort.
  *   3. Cả hai đều hỏng → `{ size: null, source: "unknown" }` kèm lý
  *      do ngắn; caller rơi về đường full-file cũ, KHÔNG throw.
  *
@@ -26,7 +26,7 @@
  * - Không bao giờ throw vì lỗi mạng/server/dạng response; chỉ throw
  *   khi `url` không phải string không rỗng (lỗi lập trình của caller).
  * - Không đọc body file lớn: HEAD không có body; Range 0-0 chỉ xin
- *   1 byte và hủy body ngay sau khi đọc header.
+ *   1 byte và huỷ body ngay sau khi đọc header.
  * - Không tự quyết ngưỡng: chỉ trả size + nguồn; quyết on/off vẫn
  *   thuộc `resolveGopRangeWiring` (32 MiB < size <= 128 MiB, V2).
  *   Size phát hiện được mà vượt trần S4 thì controller khóa fallback
@@ -50,6 +50,25 @@
  */
 
 import { parseContentRange } from "./reverseRangeGate38U2";
+
+/**
+ * Đợt 61 R6 — lookup i18n tùy chọn (mẫu Q4: file này được test bằng Node
+ * nên KHÔNG import `../i18n` trực tiếp). Khi `lookup` vắng → fallback
+ * đúng từng chữ chuỗi VI cũ nên test cũ + hành vi mặc định không đổi.
+ * Key trong fragment R6 (`gop.sizeprobe.*`). `size-probe-exception: ...`
+ * giữ thô (message động từ fetch — xem LIMITS R6 §2.4).
+ */
+export type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
 import type { GopRangeFetchFn, GopRangeResponse } from "./gopRangeFetch39T3";
 
 /** Nguồn của size phát hiện được (để test/harness đọc, không phải UI). */
@@ -71,7 +90,7 @@ export interface GopSizeProbeResult {
   acceptRanges: string | null;
 }
 
-/** Hủy body best-effort (không để body 1 byte / HEAD kẹt lại). */
+/** Huỷ body best-effort (không để body 1 byte / HEAD kẹt lại). */
 async function cancelBody(resp: GopRangeResponse): Promise<void> {
   try {
     await resp.body?.cancel();
@@ -91,6 +110,7 @@ function validSize(n: number): boolean {
 export async function discoverSizeBytes(
   url: string,
   fetchImpl: GopRangeFetchFn,
+  lookup?: I18nLookup,
 ): Promise<GopSizeProbeResult> {
   if (typeof url !== "string" || url.length === 0) {
     throw new TypeError("discoverSizeBytes: url phải là string không rỗng");
@@ -122,7 +142,12 @@ export async function discoverSizeBytes(
         size: null,
         source: "unknown",
         acceptRanges: null,
-        reason: `size-probe-range-status-${resp.status}: server không trả 206 cho Range 0-0`,
+        reason: trKey(
+          lookup,
+          "gop.sizeprobe.rangeStatusNot206",
+          { status: String(resp.status) },
+          `size-probe-range-status-${resp.status}: server không trả 206 cho Range 0-0`,
+        ),
       };
     }
     const parsed = parseContentRange(resp.headers.get("content-range"));
@@ -133,7 +158,12 @@ export async function discoverSizeBytes(
         size: null,
         source: "unknown",
         acceptRanges: null,
-        reason: "size-probe-no-content-range: 206 nhưng thiếu Content-Range tổng hợp lệ",
+        reason: trKey(
+          lookup,
+          "gop.sizeprobe.noContentRange",
+          {},
+          "size-probe-no-content-range: 206 nhưng thiếu Content-Range tổng hợp lệ",
+        ),
       };
     }
     return { size: parsed.total, source: "content-range", reason: "", acceptRanges: rangeAcceptRanges };

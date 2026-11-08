@@ -1,0 +1,78 @@
+{
+  "tool": "measure-1080p-proxy.mjs",
+  "arm": "orig",
+  "file": "clip1080p-orig.mp4",
+  "proxyOn": false,
+  "url": "http://127.0.0.1:4173",
+  "durationSec": 6,
+  "measuredAt": "2026-11-06T19:48:36.495Z",
+  "loadAvg1Before": 2.06,
+  "cpuSamples": [
+    111,
+    110.3,
+    110.2,
+    110.9,
+    111,
+    111.5,
+    112.3,
+    112.5,
+    112,
+    111.6,
+    111.9,
+    112.5
+  ],
+  "proxyBadgeText": "Proxy 720p",
+  "proxyBadgeVerified": true,
+  "timelineClips": 1,
+  "timeDisplay": {
+    "before": "00:00.0 / 00:08.0",
+    "afterPlay": "00:00.4 / 00:08.0",
+    "end": "00:05.1 / 00:08.0"
+  },
+  "diagBefore": {
+    "canvas": {
+      "w": 872,
+      "h": 276
+    },
+    "wrapCss": {
+      "w": 874,
+      "h": 278
+    },
+    "dpr": 1,
+    "visibilityState": "visible"
+  },
+  "playing": true,
+  "timer16HzCount": 221,
+  "timer16HzRate": 36.8,
+  "diagAfter": {
+    "canvas": {
+      "w": 872,
+      "h": 276
+    },
+    "wrapCss": {
+      "w": 874,
+      "h": 278
+    },
+    "dpr": 1,
+    "visibilityState": "visible"
+  },
+  "hardwareConcurrency": 4,
+  "frames": 51,
+  "fpsAvg": 8.22,
+  "fpsMin1s": 5,
+  "fpsMax1s": 10,
+  "dropsOver50ms": 48,
+  "maxIntervalMs": 281.9,
+  "frameTimeMs": {
+    "p5": 62.9,
+    "p50": 106.3,
+    "p95": 214
+  },
+  "loadAvg1After": 1.97,
+  "cpuChromePct": {
+    "samples": 12,
+    "avg": 111.5,
+    "max": 112.5,
+    "note": "%CPU theo 1 core (100% = 1 core đầy); VM 4 core nên trần ~400%."
+  }
+}

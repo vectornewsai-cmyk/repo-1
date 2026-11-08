@@ -244,7 +244,7 @@ test("duplicate cả nguồn lẫn câu: không nhân đôi câu (chỉ bản đ
   assert(capTrack.clips.some((c) => c.start === 12), "chỉ có bản đính kèm ở 12");
 });
 
-test("duplicate câu đơn lẻ (nguồn không nhân bản cùng): hủy link thành chữ tự do", () => {
+test("duplicate câu đơn lẻ (nguồn không nhân bản cùng): huỷ link thành chữ tự do", () => {
   const s = spec([
     track("v1", "video", "v1", [
       { kind: "video", id: "src", src: "a.mp4", start: 0, duration: 10, in: 0, out: 10 } as Clip,
@@ -258,7 +258,7 @@ test("duplicate câu đơn lẻ (nguồn không nhân bản cùng): hủy link t
   const capTrack = r.spec.tracks.find((t) => t.id === "cap")!;
   const copy = capTrack.clips.find((c) => c.id === "n1") as TextClip;
   eq(copy.start, 4, "bản sao ngay sau câu gốc");
-  eq("captionOf" in copy, false, "link bị hủy (giống paste)");
+  eq("captionOf" in copy, false, "link bị huỷ (giống paste)");
 });
 
 // --- (3) Karaoke chính xác dưới speed curve ----------------------------------

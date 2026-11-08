@@ -181,6 +181,29 @@ export class CommandStack {
     this.group = null;
   }
 
+  /**
+   * Đợt 55 L5 — ghi 1 bước chuyển project ("Dự án mới") vào undo stack:
+   * xoá toàn bộ history cũ rồi push đúng 1 entry before → after. Undo 1
+   * lần khôi phục project trước đó (đủ spec + selection); undo lần 2
+   * không còn gì (không undo xuyên qua nhiều project — giữ quy ước cũ
+   * của clear()). Redo quay lại spec mới. Caller tự quyết có gọi hay
+   * không (store.ts newProject chỉ gọi khi spec cũ còn clip để khôi
+   * phục; project đã trống thì clear() thường để nút Undo không bật
+   * vì một entry rỗng).
+   */
+  resetWithTransition(
+    label: string,
+    before: VideoSpec,
+    after: VideoSpec,
+    selBefore: Sel,
+    selAfter: Sel,
+  ): void {
+    this.undoStack.length = 0;
+    this.redoStack.length = 0;
+    this.group = null;
+    this.push({ label, before, after, selBefore, selAfter, at: Date.now() });
+  }
+
   private push(e: HistoryEntry): HistoryEntry {
     this.undoStack.push(e);
     if (this.undoStack.length > MAX_HISTORY) this.undoStack.shift();

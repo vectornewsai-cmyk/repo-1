@@ -14,6 +14,7 @@
  * - Tiêu đề và tên clip luôn được escape HTML để không chèn được script.
  */
 import type { VideoSpec } from "@repo-1/video-spec";
+import { getLang, t } from "../i18n";
 
 export const SHARE_EMBED_MAX_BYTES = 100 * 1024 * 1024; // 100 MB
 
@@ -76,7 +77,7 @@ function clipRows(spec: VideoSpec): string {
       );
     }
   }
-  return rows.length > 0 ? rows.join("\n") : `<tr><td colspan="3">(Project trống, chưa có clip)</td></tr>`;
+  return rows.length > 0 ? rows.join("\n") : `<tr><td colspan="3">${t("sharePage.emptyProject")}</td></tr>`;
 }
 
 /**
@@ -93,25 +94,27 @@ export function buildSharePage(input: SharePageInput): SharePageResult {
     const approxBytes = Math.floor((input.videoBase64.length * 3) / 4);
     if (approxBytes > SHARE_EMBED_MAX_BYTES) {
       throw new Error(
-        `Video ~${(approxBytes / 1048576).toFixed(0)}MB, vượt ngưỡng nhúng 1 file (${SHARE_EMBED_MAX_BYTES / 1048576}MB) — ` +
-          `hãy dùng chế độ linked (HTML + file video.mp4 đặt cạnh nhau).`,
+        t("sharePage.linkedWarn", {
+          size: (approxBytes / 1048576).toFixed(0),
+          limit: String(SHARE_EMBED_MAX_BYTES / 1048576),
+        }),
       );
     }
     if (approxBytes > 50 * 1024 * 1024) {
-      warnings.push(`Video lớn (~${(approxBytes / 1048576).toFixed(0)}MB) — file HTML sẽ nặng, gửi qua chat/email có thể bị chặn.`);
+      warnings.push(t("sharePage.bigVideoWarn", { size: (approxBytes / 1048576).toFixed(0) }));
     }
     mode = "embedded";
     videoSrc = `data:${input.videoMime};base64,${input.videoBase64}`;
   } else if (input.videoFileName) {
     mode = "linked";
     videoSrc = encodeURI(input.videoFileName);
-    warnings.push("Chế độ linked: phải gửi kèm file video đặt cùng thư mục với file HTML thì trang mới phát được.");
+    warnings.push(t("sharePage.linkedNote"));
   } else {
-    throw new Error("Cần videoBase64 (embedded) hoặc videoFileName (linked) để tạo trang chia sẻ.");
+    throw new Error(t("sharePage.noVideo"));
   }
   const specJson = JSON.stringify(input.spec);
   const html = `<!DOCTYPE html>
-<html lang="vi">
+<html lang="${getLang()}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -125,13 +128,13 @@ table{border-collapse:collapse;margin-top:16px} td,th{border:1px solid #444;padd
 </head>
 <body>
 <h1>${escapeHtml(title)}</h1>
-<p>Thời lượng: ${fmtDuration(duration)} — Trang xem tĩnh xuất từ VCut Studio (chỉ phát video, không chỉnh sửa).</p>
+<p>${t("sharePage.durationLine", { dur: fmtDuration(duration) })}</p>
 <video controls preload="metadata" src="${mode === "embedded" ? videoSrc : escapeHtml(videoSrc)}"></video>
 <table>
-<tr><th>Track</th><th>Clip</th><th>Thời gian</th></tr>
+<tr><th>Track</th><th>Clip</th><th>${t("sharePage.timeHeader")}</th></tr>
 ${clipRows(input.spec)}
 </table>
-<p class="note">Mở file này bằng trình duyệt là xem được, không cần cài VCut hay chạy server.</p>
+<p class="note">${t("sharePage.openHint")}</p>
 <script type="application/json" id="vcut-spec">${specJson.replace(/<\//g, "<\\/")}</script>
 </body>
 </html>`;

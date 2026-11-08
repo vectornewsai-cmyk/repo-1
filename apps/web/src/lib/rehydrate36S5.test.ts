@@ -304,5 +304,135 @@ await test("session-flush: JSON hỏng / playhead xấu → không throw, không
   eq(store.get(AUTOSAVE_KEY), "{khong-phai-json", "vẫn giữ nguyên");
 });
 
+await test("rehydrate (53 J5): manifest có proxyPath → item khôi phục proxyUrl + assetId", async () => {
+  const blob = new Blob(["x".repeat(10)], { type: "video/webm" });
+  const manifests = [
+    manifest({
+      assetId: "a_1111111111111111",
+      originalName: "mau-1.webm",
+      duration: 4,
+      width: 640,
+      height: 360,
+      thumbnail: "data:image/jpeg;base64,AAA",
+      proxyPath: "/api/proxy/file/mau-1__proxy_720p.mp4",
+      proxyHeight: 720,
+      proxySizeBytes: 123456,
+    }),
+  ];
+  const deps: RehydrateDeps = {
+    listManifests: async () => manifests,
+    loadBlob: async () => blob,
+    makeObjectURL: (b) => `blob:fake/${b.size}`,
+    proxyBaseUrl: "http://127.0.0.1:8799",
+  };
+  const r = await rehydrateMediaItems(deps, {
+    tracks: [{ id: "v1", kind: "video", clips: [{ kind: "video", id: "c1", src: "mau-1.webm" }] }],
+  });
+  eq(r.items.length, 1, "1 item");
+  eq(r.items[0].proxyUrl, "http://127.0.0.1:8799/api/proxy/file/mau-1__proxy_720p.mp4", "proxyUrl ghép với origin hiện tại");
+  eq(r.items[0].proxyHeight, 720, "proxyHeight");
+  eq(r.items[0].proxySizeBytes, 123456, "proxySizeBytes");
+  eq(r.items[0].assetId, "a_1111111111111111", "assetId để setMediaProxy nối về sau");
+});
+
+await test("rehydrate (53 J5): không truyền proxyBaseUrl → mặc định 8787", async () => {
+  const blob = new Blob(["x".repeat(10)], { type: "video/webm" });
+  const manifests = [
+    manifest({
+      assetId: "a_1111111111111111",
+      originalName: "mau-1.webm",
+      proxyPath: "/api/proxy/file/mau-1__proxy_720p.mp4",
+      proxyHeight: 720,
+    }),
+  ];
+  const deps: RehydrateDeps = {
+    listManifests: async () => manifests,
+    loadBlob: async () => blob,
+    makeObjectURL: (b) => `blob:fake/${b.size}`,
+  };
+  const r = await rehydrateMediaItems(deps, {
+    tracks: [{ id: "v1", kind: "video", clips: [{ kind: "video", id: "c1", src: "mau-1.webm" }] }],
+  });
+  eq(r.items[0].proxyUrl, "http://127.0.0.1:8787/api/proxy/file/mau-1__proxy_720p.mp4", "proxyUrl mặc định 8787");
+});
+
+await test("rehydrate (53 J5): manifest không có proxy → item không có proxyUrl nhưng vẫn có assetId", async () => {
+  const blob = new Blob(["x".repeat(10)], { type: "video/webm" });
+  const deps = fakeDeps({ a_1111111111111111: blob, a_2222222222222222: blob });
+  const r = await rehydrateMediaItems(deps, spec);
+  const noProxy = r.items.find((it) => it.name === "mau-1.webm");
+  assert(noProxy !== undefined, "có item mau-1");
+  eq(noProxy!.proxyUrl, undefined, "không proxyUrl");
+  eq(noProxy!.assetId, "a_1111111111111111", "vẫn có assetId");
+});
+
+const proxyManifest = () =>
+  manifest({
+    assetId: "a_1111111111111111",
+    originalName: "mau-1.webm",
+    duration: 4,
+    width: 640,
+    height: 360,
+    thumbnail: "data:image/jpeg;base64,AAA",
+    proxyPath: "/api/proxy/file/mau-1__proxy_720p.mp4",
+    proxyHeight: 720,
+    proxySizeBytes: 123456,
+  });
+const proxySpec = {
+  tracks: [{ id: "v1", kind: "video", clips: [{ kind: "video", id: "c1", src: "mau-1.webm" }] }],
+};
+const proxyDeps = (checkProxyUrl?: RehydrateDeps["checkProxyUrl"]): RehydrateDeps => ({
+  listManifests: async () => [proxyManifest()],
+  loadBlob: async () => new Blob(["x".repeat(10)], { type: "video/webm" }),
+  makeObjectURL: (b) => `blob:fake/${b.size}`,
+  proxyBaseUrl: "http://127.0.0.1:8799",
+  ...(checkProxyUrl ? { checkProxyUrl } : {}),
+});
+
+await test("rehydrate (54 K7): proxy chết (404) → gỡ proxyUrl, proxyStale=true, staleProxies có entry", async () => {
+  const r = await rehydrateMediaItems(proxyDeps(async () => "missing"), proxySpec);
+  eq(r.items.length, 1, "1 item");
+  eq(r.items[0].proxyUrl, undefined, "không giữ URL chết");
+  eq(r.items[0].proxyHeight, undefined, "không giữ height của proxy chết");
+  eq(r.items[0].proxySizeBytes, undefined, "không giữ size của proxy chết");
+  eq(r.items[0].proxyStale, true, "đánh dấu stale");
+  eq(r.items[0].assetId, "a_1111111111111111", "vẫn có assetId để tạo lại");
+  eq(r.staleProxies.length, 1, "1 stale entry");
+  eq(r.staleProxies[0].assetId, "a_1111111111111111", "stale assetId");
+  eq(r.staleProxies[0].proxyPath, "/api/proxy/file/mau-1__proxy_720p.mp4", "stale proxyPath");
+  eq(r.staleProxies[0].name, "mau-1.webm", "stale name");
+});
+
+await test("rehydrate (54 K7): checkProxyUrl 'alive' → giữ proxy như cũ", async () => {
+  const r = await rehydrateMediaItems(proxyDeps(async () => "alive"), proxySpec);
+  eq(r.items[0].proxyUrl, "http://127.0.0.1:8799/api/proxy/file/mau-1__proxy_720p.mp4", "giữ proxyUrl");
+  eq(r.items[0].proxyStale, undefined, "không stale");
+  eq(r.staleProxies.length, 0, "không stale entry");
+});
+
+await test("rehydrate (54 K7): checkProxyUrl 'unknown' (bridge tắt) → giữ proxy, không gỡ oan", async () => {
+  const r = await rehydrateMediaItems(proxyDeps(async () => "unknown"), proxySpec);
+  eq(r.items[0].proxyUrl, "http://127.0.0.1:8799/api/proxy/file/mau-1__proxy_720p.mp4", "giữ proxyUrl");
+  eq(r.items[0].proxyStale, undefined, "không stale");
+  eq(r.staleProxies.length, 0, "không stale entry");
+});
+
+await test("rehydrate (54 K7): không truyền checkProxyUrl → giữ proxy (hành vi cũ)", async () => {
+  const r = await rehydrateMediaItems(proxyDeps(), proxySpec);
+  eq(r.items[0].proxyUrl, "http://127.0.0.1:8799/api/proxy/file/mau-1__proxy_720p.mp4", "giữ proxyUrl");
+  eq(r.staleProxies.length, 0, "không stale entry");
+});
+
+await test("rehydrate (54 K7): checkProxyUrl throw → coi như unknown, giữ proxy", async () => {
+  const r = await rehydrateMediaItems(
+    proxyDeps(async () => {
+      throw new Error("mất mạng");
+    }),
+    proxySpec,
+  );
+  eq(r.items[0].proxyUrl, "http://127.0.0.1:8799/api/proxy/file/mau-1__proxy_720p.mp4", "giữ proxyUrl");
+  eq(r.staleProxies.length, 0, "không stale entry");
+});
+
 console.log(`\nrehydrate36S5: ${pass} pass, ${fail} fail${fail > 0 ? ` (${failedNames.join(", ")})` : ""}`);
 if (fail > 0) process.exitCode = 1;

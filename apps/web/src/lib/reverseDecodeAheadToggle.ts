@@ -155,7 +155,7 @@ export function shouldAutoApplyDecodeAhead(
 
 /**
  * Đợt 39 T4 — luật dọn prefetch đang bay khi user tắt giữa chừng.
- * Prefetch không hủy được giữa chừng (VideoDecoder không có cancel;
+ * Prefetch không huỷ được giữa chừng (VideoDecoder không có cancel;
  * decodeGop đã nuốt lỗi từng chunk): "tắt" nghĩa là (1) không khởi
  * động prefetch mới nào, (2) aheadRange về null ngay, và (3) khi
  * prefetch đang bay settle mà controller VẪN đang tắt VÀ không có lần

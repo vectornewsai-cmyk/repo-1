@@ -79,16 +79,53 @@ export function userLutIdFromName(filename: string): string {
   return `user-${slug || "lut"}`;
 }
 
+/**
+ * Phase 9 đợt 57 N8 — lookup i18n tùy chọn, KHÔNG import `../i18n`
+ * trực tiếp: file này được test bằng Node type-stripping, mà Node
+ * không resolve JSON import của `i18n/index.ts` (đã kiểm chứng 07/11,
+ * xem twoLevelCurve.ts). Khi `lookup` vắng → fallback đúng từng chữ
+ * chuỗi VI cũ nên test cũ + hành vi mặc định không đổi; UI (LutPicker)
+ * truyền `t()` vào tham số `lookup` này để nhận chuỗi theo locale hiện
+ * tại. Key mới nằm trong `i18n/fragments/round57-n8.json` (parent merge
+ * vào vi.json/en.json cuối đợt 57).
+ */
+export type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
+
 function parseTriple(
   parts: string[],
   what: string,
+  lookup?: I18nLookup,
 ): [number, number, number] {
   if (parts.length !== 3) {
-    throw new Error(`${what} phải có đúng 3 số (nhận được: ${parts.join(" ")})`);
+    throw new Error(
+      trKey(
+        lookup,
+        "userLut.cubeTripleExpected",
+        { what, got: parts.join(" ") },
+        `${what} phải có đúng 3 số (nhận được: ${parts.join(" ")})`,
+      ),
+    );
   }
   const nums = parts.map(Number);
   if (nums.some((n) => !Number.isFinite(n))) {
-    throw new Error(`${what} chứa số không hợp lệ: ${parts.join(" ")}`);
+    throw new Error(
+      trKey(
+        lookup,
+        "userLut.cubeTripleInvalid",
+        { what, got: parts.join(" ") },
+        `${what} chứa số không hợp lệ: ${parts.join(" ")}`,
+      ),
+    );
   }
   return nums as [number, number, number];
 }
@@ -97,14 +134,19 @@ function parseTriple(
  * Parse + validate nội dung file .cube (Adobe IRIDAS Cube, chỉ LUT 3D).
  * Ném Error với thông báo rõ ràng khi file sai định dạng.
  */
-export function parseCube(text: string, byteSize: number): ParsedCube {
+export function parseCube(text: string, byteSize: number, lookup?: I18nLookup): ParsedCube {
   if (byteSize > MAX_CUBE_BYTES) {
     throw new Error(
-      `File .cube quá lớn (${(byteSize / 1024 / 1024).toFixed(1)}MB, tối đa 10MB).`,
+      trKey(
+        lookup,
+        "userLut.cubeTooLarge",
+        { size: (byteSize / 1024 / 1024).toFixed(1) },
+        `File .cube quá lớn (${(byteSize / 1024 / 1024).toFixed(1)}MB, tối đa 10MB).`,
+      ),
     );
   }
   if (byteSize === 0 || text.trim().length === 0) {
-    throw new Error("File .cube rỗng.");
+    throw new Error(trKey(lookup, "userLut.cubeEmpty", {}, "File .cube rỗng."));
   }
   let title: string | undefined;
   let size: number | undefined;
@@ -127,37 +169,59 @@ export function parseCube(text: string, byteSize: number): ParsedCube {
       const n = Number(rest[0]);
       if (!Number.isInteger(n) || n < CUBE_SIZE_MIN || n > CUBE_SIZE_MAX) {
         throw new Error(
-          `LUT_3D_SIZE không hợp lệ: ${rest[0]} (cần số nguyên ${CUBE_SIZE_MIN}..${CUBE_SIZE_MAX}).`,
+          trKey(
+            lookup,
+            "userLut.cubeSizeInvalid",
+            { value: rest[0], min: String(CUBE_SIZE_MIN), max: String(CUBE_SIZE_MAX) },
+            `LUT_3D_SIZE không hợp lệ: ${rest[0]} (cần số nguyên ${CUBE_SIZE_MIN}..${CUBE_SIZE_MAX}).`,
+          ),
         );
       }
-      if (size !== undefined) throw new Error("File có 2 dòng LUT_3D_SIZE.");
+      if (size !== undefined) {
+        throw new Error(trKey(lookup, "userLut.cubeSizeDuplicate", {}, "File có 2 dòng LUT_3D_SIZE."));
+      }
       size = n;
       continue;
     }
     if (!sawData && key === "LUT_1D_SIZE") {
       throw new Error(
-        "Chỉ hỗ trợ LUT 3D (LUT_3D_SIZE). File LUT 1D chưa được hỗ trợ.",
+        trKey(
+          lookup,
+          "userLut.cubeOnly3d",
+          {},
+          "Chỉ hỗ trợ LUT 3D (LUT_3D_SIZE). File LUT 1D chưa được hỗ trợ.",
+        ),
       );
     }
     if (!sawData && key === "DOMAIN_MIN") {
-      domainMin = parseTriple(rest, "DOMAIN_MIN");
+      domainMin = parseTriple(rest, "DOMAIN_MIN", lookup);
       continue;
     }
     if (!sawData && key === "DOMAIN_MAX") {
-      domainMax = parseTriple(rest, "DOMAIN_MAX");
+      domainMax = parseTriple(rest, "DOMAIN_MAX", lookup);
       continue;
     }
     // Dòng dữ liệu: đúng 3 số thực.
     const parts = line.split(/\s+/);
     if (parts.length !== 3) {
       throw new Error(
-        `Dòng dữ liệu sai định dạng (cần đúng 3 số): "${line.slice(0, 60)}"`,
+        trKey(
+          lookup,
+          "userLut.cubeRowInvalid",
+          { line: line.slice(0, 60) },
+          `Dòng dữ liệu sai định dạng (cần đúng 3 số): "${line.slice(0, 60)}"`,
+        ),
       );
     }
     const nums = parts.map(Number);
     if (nums.some((n) => !Number.isFinite(n) || n < -1 || n > 2)) {
       throw new Error(
-        `Giá trị màu ngoài khoảng cho phép (-1..2): "${line.slice(0, 60)}"`,
+        trKey(
+          lookup,
+          "userLut.cubeValueRange",
+          { line: line.slice(0, 60) },
+          `Giá trị màu ngoài khoảng cho phép (-1..2): "${line.slice(0, 60)}"`,
+        ),
       );
     }
     sawData = true;
@@ -165,12 +229,17 @@ export function parseCube(text: string, byteSize: number): ParsedCube {
   }
 
   if (size === undefined) {
-    throw new Error("Thiếu dòng LUT_3D_SIZE trong file .cube.");
+    throw new Error(trKey(lookup, "userLut.cubeMissingSize", {}, "Thiếu dòng LUT_3D_SIZE trong file .cube."));
   }
   const expected = size * size * size;
   if (rows !== expected) {
     throw new Error(
-      `Số dòng dữ liệu không khớp LUT_3D_SIZE ${size}: có ${rows} dòng, cần ${expected} dòng.`,
+      trKey(
+        lookup,
+        "userLut.cubeRowCount",
+        { size: String(size), rows: String(rows), expected: String(expected) },
+        `Số dòng dữ liệu không khớp LUT_3D_SIZE ${size}: có ${rows} dòng, cần ${expected} dòng.`,
+      ),
     );
   }
   return { title, size, domainMin, domainMax, rows };

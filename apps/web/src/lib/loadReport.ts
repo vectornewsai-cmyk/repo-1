@@ -35,6 +35,24 @@
 import type { SpeedCurveWarning } from "./projectRepo";
 
 /**
+ * Đợt 60 Q4 — helper trKey cục bộ (mẫu projectRepo.ts đợt 56 M5):
+ * lookup vắng hoặc key thiếu → fallback VI cũ. Module này không import
+ * `../i18n` trực tiếp (quy ước Node type-stripping, xem ghi chú
+ * formatStructured ở dưới).
+ */
+type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
+
+/**
  * Chuỗi hiển thị của một warning cấu trúc — PHẢI khớp formatSpeedCurveWarning
  * trong projectRepo.ts (J5). Cố tình không import hàm đó: import runtime
  * từ projectRepo sẽ kéo @repo-1/video-spec vào, và loadReport.ts dùng
@@ -83,6 +101,15 @@ export interface LoadReport {
   structuredNotes: StructuredNoteShape[];
   /** true khi cổng load đã cắt ở 100 mục (warnings.length === 100 hoặc có câu tràn). */
   atCap: boolean;
+  /**
+   * Đợt 57 N7 — số cảnh báo tràn đọc được từ câu tràn của cổng load
+   * (parseOverflowCount), hoặc null khi không có câu tràn. Optional để
+   * literal LoadReport cũ (loadReportFix28.test.ts) vẫn biên dịch;
+   * buildLoadReport / buildHistoryLoadReport luôn gán giá trị. Panel
+   * (luồng sau) dùng số này + formatOverflowLine để hiện câu tràn đã
+   * dịch thay cho chuỗi `loadReport.atCap` chung chung.
+   */
+  overflowCount?: number | null;
 }
 
 /** Đầu vào tối thiểu để dựng báo cáo — khớp LoadResult và ImportArchiveResult. */
@@ -92,8 +119,61 @@ export interface LoadReportInput {
   structuredNotes?: StructuredNoteShape[];
 }
 
-/** Câu tràn 100 mục mà parseProjectText (J5) thêm vào warnings chuỗi. */
-const OVERFLOW_RE = /^Còn \d+ cảnh báo speedKeyframes khác/;
+/**
+ * Câu tràn 100 mục mà parseProjectText (J5) thêm vào warnings chuỗi.
+ *
+ * Đợt 57 N7 — đóng nợ M5 (LIMITS đợt 56 §5.3): regex cũ chỉ khớp chuỗi
+ * tiếng Việt đóng băng `Còn N cảnh báo speedKeyframes khác…` mà
+ * projectRepo.ts:1112 đẩy ra. Key `projectRepo.moreWarnings` (fragment
+ * round57-n7.json) dịch câu đó sang EN — khi một luồng khác nối
+ * projectRepo.ts:1112 bằng trKey, câu tràn tới đây sẽ là bản EN; regex
+ * phải nhận ra cả hai dạng, nếu không câu EN sẽ lọt vào otherWarnings
+ * và atCap về false (panel hiện chuỗi EN thô thay cho câu atCap đã
+ * dịch). Hai nhánh ghim đúng từng chữ template vi/en trong fragment;
+ * nhánh EN giữ nguyên hậu tố "(limited to showing 100)" để không khớp
+ * nhầm câu khác có chứa "more … warnings". Đổi wording fragment thì
+ * phải đổi regex này cùng lúc — test loadReport57N7.test.ts khóa bằng
+ * cách dựng câu EN trực tiếp từ fragment.
+ */
+const OVERFLOW_RE =
+  /^(?:Còn (\d+) cảnh báo speedKeyframes khác|Still (\d+) more speedKeyframes warnings)/;
+
+/** Key i18n của câu tràn (fragment round57-n7.json, parent gộp vào dict). */
+export const OVERFLOW_KEY = "projectRepo.moreWarnings";
+
+/**
+ * Đợt 57 N7 — trích số cảnh báo tràn từ một dòng warnings chuỗi, ở cả
+ * hai locale (VI literal cũ của projectRepo.ts:1112 hoặc bản EN đã dịch
+ * qua `projectRepo.moreWarnings`). Trả null khi dòng không phải câu
+ * tràn. Không parse gì khác ngoài số đếm ở đầu câu.
+ */
+export function parseOverflowCount(line: string): number | null {
+  const m = OVERFLOW_RE.exec(line);
+  if (!m) return null;
+  const n = Number(m[1] ?? m[2]);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Đợt 57 N7 — đường dịch của câu tràn: dựng câu tràn theo locale HIỆN
+ * TẠI qua key `projectRepo.moreWarnings` + vars `{n}` (cùng mẫu
+ * resolveWarningMessage: module này KHÔNG import i18n để test Node
+ * type-stripping vẫn chạy; panel truyền `(k, v) => t(k, v)`). Không có
+ * lookup, hoặc lookup trả về đúng key (key chưa gộp vào dict) → fallback
+ * về chuỗi tiếng Việt cũ đúng từng byte với projectRepo.ts:1112, không
+ * hiện key thô. `count` phải là số nguyên ≥ 0; giá trị khác → fallback
+ * VI với `String(count)` để không bịa số.
+ */
+export function formatOverflowLine(
+  count: number,
+  lookup?: (key: string, vars?: Record<string, string>) => string,
+): string {
+  const n = Number.isInteger(count) && count >= 0 ? String(count) : String(count);
+  const fallback = `Còn ${n} cảnh báo speedKeyframes khác (đã giới hạn hiển thị 100).`;
+  if (!lookup) return fallback;
+  const translated = lookup(OVERFLOW_KEY, { n });
+  return translated === OVERFLOW_KEY ? fallback : translated;
+}
 
 /**
  * Dựng LoadReport từ kết quả một lần load thành công. Không mutate
@@ -115,7 +195,12 @@ export function buildLoadReport(
   // lần) thì cả hai chuỗi trùng đều bị trừ, nhưng note vẫn còn đủ
   // trong structuredNotes nên UI không mất thông tin.
   const noteFallbacks = new Set(structuredNotes.map((n) => n.fallback));
-  const overflow = input.warnings.some((s) => OVERFLOW_RE.test(s));
+  // Đợt 57 N7: câu tràn khớp ở cả hai locale (VI literal cũ hoặc bản EN
+  // đã dịch qua projectRepo.moreWarnings); giữ lại số đếm để panel hiện
+  // câu tràn đã dịch bằng formatOverflowLine thay cho atCap chung chung.
+  const overflowLine = input.warnings.find((s) => OVERFLOW_RE.test(s));
+  const overflow = overflowLine !== undefined;
+  const overflowCount = overflowLine === undefined ? null : parseOverflowCount(overflowLine);
   const otherWarnings = input.warnings.filter(
     (s) => !formatted.has(s) && !noteFallbacks.has(s) && !OVERFLOW_RE.test(s),
   );
@@ -127,6 +212,7 @@ export function buildLoadReport(
     otherWarnings,
     structuredNotes,
     atCap: structured.length >= 100 || overflow,
+    overflowCount,
   };
 }
 
@@ -151,6 +237,7 @@ export function buildHistoryLoadReport(
     otherWarnings: [],
     structuredNotes: [],
     atCap: false,
+    overflowCount: null,
   };
 }
 
@@ -167,7 +254,9 @@ export function refreshLoadReportAfterFix(
   report: LoadReport,
   remaining: SpeedCurveWarning[],
 ): LoadReport {
-  return { ...report, warnings: remaining, atCap: false };
+  // Đợt 57 N7: overflowCount về null cùng atCap — danh sách mới là quét
+  // toàn bộ không cắt 100 nên không còn câu tràn nào để đếm.
+  return { ...report, warnings: remaining, atCap: false, overflowCount: null };
 }
 
 /**
@@ -234,7 +323,12 @@ export function formatStructuredNote(
       if (Array.isArray(cases) && cases.length > 0) {
         const parts: string[] = [];
         for (const c of cases) {
-          if (!c || typeof c.code !== "string") throw new Error("case xấu");
+          // Đợt 60 Q4 — key loadReport.badCase: "case xấu" là sentinel
+          // điều khiển nội bộ (throw → catch ngay dưới, message không
+          // bao giờ thoát ra ngoài); nối qua trKey chỉ để literal biến
+          // mất khỏi source + tiêu thụ đúng key fragment P7, không đổi
+          // hành vi: đường chung dưới vẫn là nơi trả chuỗi hiển thị.
+          if (!c || typeof c.code !== "string") throw new Error(trKey(lookup, "loadReport.badCase", {}, "case xấu"));
           const caseKey = `structuredNotes.${c.code}`;
           const tr = lookup(caseKey, c.vars ?? {});
           if (tr === caseKey) return note.fallback;
@@ -345,7 +439,7 @@ export function getLastLoadReport(): LoadReport | null {
 }
 
 /**
- * Đăng ký nhận báo cáo hiện tại + mọi thay đổi sau đó. Trả về hàm hủy
+ * Đăng ký nhận báo cáo hiện tại + mọi thay đổi sau đó. Trả về hàm huỷ
  * đăng ký. Callback được gọi ngay với snapshot hiện tại.
  */
 export function subscribeLoadReport(fn: Listener): () => void {

@@ -59,7 +59,7 @@ export function reqFlag(flags: Record<string, string | boolean>, name: string, a
     if (val === undefined) val = flags[a];
   }
   if (val === undefined || val === true) {
-    throw new CliError(`Thiếu tham số bắt buộc: --${name}`);
+    throw new CliError("MISSING_FLAG", `Thiếu tham số bắt buộc: --${name}`);
   }
   return String(val);
 }
@@ -76,7 +76,7 @@ export function numFlag(flags: Record<string, string | boolean>, name: string, d
   const v = flags[name];
   if (v === undefined || v === true) return def;
   const n = Number(v);
-  if (!Number.isFinite(n)) throw new CliError(`--${name} phải là số, nhận được: ${v}`);
+  if (!Number.isFinite(n)) throw new CliError("INVALID_NUMBER", `--${name} phải là số, nhận được: ${v}`);
   return n;
 }
 
@@ -85,9 +85,45 @@ export function boolFlag(flags: Record<string, string | boolean>, name: string):
   return flags[name] === true || flags[name] === "true" || flags[name] === "1";
 }
 
+/**
+ * Đợt 63 R9: CliError mang mã ổn định (catalog CLI_CODES dưới đây,
+ * cùng quy ước đặt tên với VALIDATION_CODES của MCP — client là
+ * máy/agent khớp lỗi bằng mã thay vì parse câu tiếng Việt; message
+ * tiếng Việt giữ nguyên từng chữ, KHÔNG dịch, KHÔNG nối dict i18n
+ * web vì CLI không có locale/t()).
+ */
+export const CLI_CODES = [
+  "ENUM_INVALID",
+  "INTEGER_OUT_OF_RANGE",
+  "INVALID_HEX_COLOR",
+  "INVALID_NUMBER",
+  "INVALID_OUTPUT_PATH",
+  "KIND_MISMATCH",
+  "MISSING_FLAG",
+  "NOT_FOUND",
+  "NUMBER_NEGATIVE",
+  "NUMBER_NOT_POSITIVE",
+  "NUMBER_OUT_OF_RANGE",
+  "OUT_NOT_AFTER_IN",
+  "PROJECT_EMPTY",
+  "PROJECT_NOT_JSON",
+  "PROJECT_NOT_SPEC",
+  "PROJECT_READ_FAILED",
+  "RENDER_FAILED",
+  "SCRIPT_FAILED",
+  "SCRIPT_INVALID_OUTPUT",
+  "SPEC_INVALID",
+  "STRING_REQUIRED",
+  "STRING_TOO_LONG",
+  "VALIDATION_FAILED",
+] as const;
+export type CliCode = (typeof CLI_CODES)[number];
+
 export class CliError extends Error {
-  constructor(message: string) {
+  readonly code: CliCode;
+  constructor(code: CliCode, message: string) {
     super(message);
     this.name = "CliError";
+    this.code = code;
   }
 }

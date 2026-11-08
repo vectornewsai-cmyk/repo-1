@@ -1,0 +1,1 @@
+{"en":{"gop":{"trial":{"timeoutNote":"First keyframe ({size} MiB) could not be verified within {timeout} ms — the file still opens normally; only the keyframe check did not finish."}}},"vi":{"gop":{"trial":{"timeoutNote":"Keyframe đầu ({size} MiB) chưa kiểm chứng kịp trong {timeout} ms — file vẫn mở bình thường, chỉ là bước kiểm tra keyframe chưa xong."}}}}

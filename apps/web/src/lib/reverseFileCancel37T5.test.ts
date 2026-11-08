@@ -1,10 +1,10 @@
-// reverseFileCancel37T5.test.ts — Hủy fetch đang bay khi size tới muộn
+// reverseFileCancel37T5.test.ts — Huỷ fetch đang bay khi size tới muộn
 // (đợt 37 T5, đóng nợ §5.1 của docs/PHASE9_ROUND36_S4_FILE_HEAP_LIMITS.md:
 // đợt 36 S4 chỉ chặn được khi size có TRƯỚC lần fetch đầu; size tới
 // muộn trong lúc fetch đang bay thì body vẫn chạy tới hết).
 //
 // Cơ chế mới trong reverseWebcodecs.ts: load() chạy dưới 1
-// AbortController riêng; applyKnownFileSize vượt ngưỡng hủy lần tải
+// AbortController riêng; applyKnownFileSize vượt ngưỡng huỷ lần tải
 // đó trước khi khóa fallback. Test này chứng minh bằng fake fetch
 // có kiểm soát (không dùng file lớn thật — ngưỡng test 1024 byte,
 // size "lớn" chỉ là con số 5000, giống cách S4 chứng minh cổng
@@ -264,8 +264,8 @@ function fixtureResp(calls: { arrayBuffer: number; cancelled: number }): unknown
   };
 }
 
-// ---- Test 1: size lớn tới muộn trong lúc HEAD bay -> hủy, GET = 0 ----
-ok("size lớn tới muộn lúc HEAD bay: hủy HEAD, GET = 0, arrayBuffer = 0, không tải lại", async () => {
+// ---- Test 1: size lớn tới muộn trong lúc HEAD bay -> huỷ, GET = 0 ----
+ok("size lớn tới muộn lúc HEAD bay: huỷ HEAD, GET = 0, arrayBuffer = 0, không tải lại", async () => {
   const calls = { head: 0, get: 0, arrayBuffer: 0, cancelled: 0 };
   const headGate = deferred<unknown>();
   g.fetch = async (_url: string, init?: FetchInit): Promise<unknown> => {
@@ -281,7 +281,7 @@ ok("size lớn tới muộn lúc HEAD bay: hủy HEAD, GET = 0, arrayBuffer = 0,
   });
   const p = c.ensureWindowForTime(0.1);
   await waitUntil(() => calls.head === 1, "HEAD bắt đầu");
-  // Size tới muộn, vượt ngưỡng -> khóa + hủy HEAD đang bay.
+  // Size tới muộn, vượt ngưỡng -> khóa + huỷ HEAD đang bay.
   assert.equal(c.applyKnownFileSize(5000), true);
   assert.equal(c.failed, true);
   assert.equal(c.largeFileFallback, true);
@@ -295,7 +295,7 @@ ok("size lớn tới muộn lúc HEAD bay: hủy HEAD, GET = 0, arrayBuffer = 0,
   assert.equal(calls.get, 0);
 });
 
-// ---- Test 2: size lớn tới muộn lúc GET bay -> hủy trước arrayBuffer ----
+// ---- Test 2: size lớn tới muộn lúc GET bay -> huỷ trước arrayBuffer ----
 ok("size lớn tới muộn lúc GET bay: arrayBuffer bị reject, không decode, không tải lại", async () => {
   const calls = { head: 0, get: 0, arrayBuffer: 0, cancelled: 0 };
   let arrayBufferRejected = false;
@@ -316,7 +316,7 @@ ok("size lớn tới muộn lúc GET bay: arrayBuffer bị reject, không decode
       arrayBuffer: async (): Promise<ArrayBuffer> => {
         calls.arrayBuffer++;
         // Body chưa resolve: chỉ resolve/reject theo signal — mô
-        // phỏng body đang tải dở mà fetch chuẩn hủy được.
+        // phỏng body đang tải dở mà fetch chuẩn huỷ được.
         try {
           await abortable(init?.signal, new Promise(() => {}));
         } catch {
@@ -343,8 +343,8 @@ ok("size lớn tới muộn lúc GET bay: arrayBuffer bị reject, không decode
   assert.equal(calls.get, 1);
 });
 
-// ---- Test 3: size trong ngưỡng tới muộn thì KHÔNG hủy ----
-ok("size trong ngưỡng tới muộn lúc HEAD bay: không hủy, tải + decode bình thường", async () => {
+// ---- Test 3: size trong ngưỡng tới muộn thì KHÔNG huỷ ----
+ok("size trong ngưỡng tới muộn lúc HEAD bay: không huỷ, tải + decode bình thường", async () => {
   const calls = { head: 0, get: 0, arrayBuffer: 0, cancelled: 0 };
   const headGate = deferred<unknown>();
   g.fetch = async (_url: string, init?: FetchInit): Promise<unknown> => {
@@ -360,7 +360,7 @@ ok("size trong ngưỡng tới muộn lúc HEAD bay: không hủy, tải + decod
   });
   const p = c.ensureWindowForTime(0.1);
   await waitUntil(() => calls.head === 1, "HEAD bắt đầu");
-  // Size trong ngưỡng tới muộn: ghi nhận, không khóa, không hủy.
+  // Size trong ngưỡng tới muộn: ghi nhận, không khóa, không huỷ.
   assert.equal(c.applyKnownFileSize(100), false);
   assert.equal(c.failed, false);
   headGate.resolve(headResp(null));
@@ -414,8 +414,8 @@ ok("fetch phớt lờ signal: buffer resolve sau khi khóa vẫn không decode (
   assert.equal(c.retainedFileBytes, 0);
 });
 
-// ---- Test 5: registry — size lớn tới muộn hủy tải của controller có sẵn ----
-ok("registry: size lớn tới muộn hủy tải đang bay của controller đã tạo trước", async () => {
+// ---- Test 5: registry — size lớn tới muộn huỷ tải của controller có sẵn ----
+ok("registry: size lớn tới muộn huỷ tải đang bay của controller đã tạo trước", async () => {
   const calls = { head: 0, get: 0, arrayBuffer: 0, cancelled: 0 };
   const headGate = deferred<unknown>();
   g.fetch = async (_url: string, init?: FetchInit): Promise<unknown> => {
@@ -430,7 +430,7 @@ ok("registry: size lớn tới muộn hủy tải đang bay của controller đ�
   const c = getReversePreviewController(url);
   const p = c.ensureWindowForTime(0.1);
   await waitUntil(() => calls.head === 1, "HEAD bắt đầu");
-  // Registry nhận size lớn muộn -> applyKnownFileSize -> hủy + khóa.
+  // Registry nhận size lớn muộn -> applyKnownFileSize -> huỷ + khóa.
   const c2 = getReversePreviewController(url, 300 * 1024 * 1024);
   assert.equal(c2, c);
   assert.equal(c.failed, true);
@@ -439,8 +439,8 @@ ok("registry: size lớn tới muộn hủy tải đang bay của controller đ�
   assert.equal(calls.get, 0);
 });
 
-// ---- Test 6: dispose hủy fetch đang bay ----
-ok("dispose lúc HEAD bay: hủy tải, ensure = false, GET = 0", async () => {
+// ---- Test 6: dispose huỷ fetch đang bay ----
+ok("dispose lúc HEAD bay: huỷ tải, ensure = false, GET = 0", async () => {
   const calls = { head: 0, get: 0, arrayBuffer: 0, cancelled: 0 };
   const headGate = deferred<unknown>();
   g.fetch = async (_url: string, init?: FetchInit): Promise<unknown> => {

@@ -23,6 +23,35 @@ export interface SubtitleCue {
   text: string;
 }
 
+/**
+ * Phase 9 đợt 56 M6 — lookup i18n tùy chọn, KHÔNG import `../i18n`
+ * trực tiếp: file này được test bằng Node type-stripping, mà Node
+ * không resolve JSON import của `i18n/index.ts` (đã kiểm chứng 07/11,
+ * xem twoLevelCurve.ts). Khi `lookup` vắng → fallback đúng từng chữ
+ * chuỗi VI cũ nên test cũ + hành vi mặc định không đổi; UI (CaptionModal)
+ * truyền `t()` vào tham số `lookup` này để nhận chuỗi theo locale hiện
+ * tại. Key mới nằm trong `i18n/fragments/round56-m6.json` (parent merge
+ * vào vi.json/en.json cuối đợt 56).
+ *
+ * KHÔNG dịch `CAPTION_TRACK_LABEL_PREFIX` ("Phụ đề") thành một token duy
+ * nhất: nó là token nhận diện track phụ đề (startsWith). Đợt 58 O5 mở
+ * recognition thành song ngữ — khớp cả "Phụ đề" (legacy + locale vi) và
+ * "Subtitles" (locale en, key captions.translatedTrack) qua
+ * isCaptionTrackLabel() — để track dịch tạo mới dưới locale en vẫn được
+ * xuất phụ đề, đồng thời project đã lưu bằng tiếng Việt vẫn nhận diện được.
+ */
+export type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
+
 export interface SubtitleParseResult {
   cues: SubtitleCue[];
   /** mỗi lỗi: khối thứ mấy (1-based) + lý do, để UI hiển thị */
@@ -67,7 +96,8 @@ function fmtTimestamp(sec: number, sep: "," | "."): string {
 function parseBlocks(
   text: string,
   parseTs: (raw: string) => number | null,
-  opts: { skipHeader?: boolean } = {}
+  opts: { skipHeader?: boolean } = {},
+  lookup?: I18nLookup,
 ): SubtitleParseResult {
   const normalized = text.replace(/\r\n?/g, "\n");
   const lines = normalized.split("\n");
@@ -77,7 +107,7 @@ function parseBlocks(
     if (!/^WEBVTT(\s|$)/.test(lines[0]?.trim() ?? "")) {
       return {
         cues: [],
-        errors: [{ block: 1, reason: "Thiếu dòng đầu WEBVTT." }],
+        errors: [{ block: 1, reason: trKey(lookup, "subtitles.errMissingWebvtt", {}, "Thiếu dòng đầu WEBVTT.") }],
       };
     }
     startIdx = 1;
@@ -103,7 +133,10 @@ function parseBlocks(
     if (blockLines.length >= 2 && !blockLines[0].includes("-->")) idx = 1;
     const tsLine = blockLines[idx];
     if (!tsLine || !tsLine.includes("-->")) {
-      errors.push({ block: blockNo, reason: "Thiếu dòng timestamp (-->)." });
+      errors.push({
+        block: blockNo,
+        reason: trKey(lookup, "subtitles.errMissingTimestamp", {}, "Thiếu dòng timestamp (-->)."),
+      });
       continue;
     }
     const [rawStart, rawEndPart] = tsLine.split("-->");
@@ -113,14 +146,24 @@ function parseBlocks(
     if (start === null || end === null) {
       errors.push({
         block: blockNo,
-        reason: `Timestamp sai định dạng: "${tsLine.trim()}".`,
+        reason: trKey(
+          lookup,
+          "subtitles.errBadTimestamp",
+          { line: tsLine.trim() },
+          `Timestamp sai định dạng: "${tsLine.trim()}".`,
+        ),
       });
       continue;
     }
     if (end <= start) {
       errors.push({
         block: blockNo,
-        reason: `Thời gian kết thúc (${end}s) không sau bắt đầu (${start}s).`,
+        reason: trKey(
+          lookup,
+          "subtitles.errEndNotAfterStart",
+          { end: String(end), start: String(start) },
+          `Thời gian kết thúc (${end}s) không sau bắt đầu (${start}s).`,
+        ),
       });
       continue;
     }
@@ -129,7 +172,10 @@ function parseBlocks(
       .join("\n")
       .trim();
     if (!text) {
-      errors.push({ block: blockNo, reason: "Cue không có text." });
+      errors.push({
+        block: blockNo,
+        reason: trKey(lookup, "subtitles.errEmptyCue", {}, "Cue không có text."),
+      });
       continue;
     }
     cues.push({ start, end, text: text.slice(0, 2000) });
@@ -138,14 +184,16 @@ function parseBlocks(
   return { cues, errors };
 }
 
-/** Parse SRT. Số thứ tự cue (nếu có) được bỏ qua, không yêu cầu liên tục. */
-export function parseSrt(text: string): SubtitleParseResult {
-  return parseBlocks(text, parseTimestamp);
+/** Parse SRT. Số thứ tự cue (nếu có) được bỏ qua, không yêu cầu liên tục.
+ * Đợt 57 N8: nhận lookup i18n tùy chọn; CaptionModal truyền `t()` để lý
+ * do lỗi hiển thị theo locale hiện tại (qua caption.cueError). */
+export function parseSrt(text: string, lookup?: I18nLookup): SubtitleParseResult {
+  return parseBlocks(text, parseTimestamp, {}, lookup);
 }
 
 /** Parse WebVTT. Thiếu header WEBVTT → lỗi toàn file (không cue nào). */
-export function parseVtt(text: string): SubtitleParseResult {
-  return parseBlocks(text, parseTimestampVtt, { skipHeader: true });
+export function parseVtt(text: string, lookup?: I18nLookup): SubtitleParseResult {
+  return parseBlocks(text, parseTimestampVtt, { skipHeader: true }, lookup);
 }
 
 /** Format cues thành SRT (số thứ tự 1-based, timestamp dấu phẩy). */
@@ -169,10 +217,10 @@ export function formatVtt(cues: SubtitleCue[]): string {
 }
 
 /** Phát hiện định dạng theo nội dung (VTT nếu bắt đầu bằng WEBVTT). */
-export function parseSubtitleFile(text: string): SubtitleParseResult {
+export function parseSubtitleFile(text: string, lookup?: I18nLookup): SubtitleParseResult {
   const first = text.replace(/\r\n?/g, "\n").split("\n")[0]?.trim() ?? "";
-  if (/^WEBVTT(\s|$)/.test(first)) return parseVtt(text);
-  return parseSrt(text);
+  if (/^WEBVTT(\s|$)/.test(first)) return parseVtt(text, lookup);
+  return parseSrt(text, lookup);
 }
 
 /**
@@ -194,31 +242,55 @@ export function clipsToCues(
 
 /**
  * Nhãn track phụ đề — Phase 9 D6: track caption do editor tạo có label
- * "Phụ đề N" (CAPTION_TRACK_LABEL + số) hoặc "Phụ đề (EN)" (track dịch).
+ * "Phụ đề N" (CAPTION_TRACK_LABEL + số) hoặc "Phụ đề (EN)" / "Subtitles (EN)"
+ * (track dịch, theo locale lúc tạo — key captions.translatedTrack).
  * Dùng để nhận diện track phụ đề khi xuất project (xem
  * collectProjectCaptions) — title/text tự do nằm trên track khác thì
  * không bị xuất nhầm thành phụ đề.
+ *
+ * Đợt 58 O5 — song ngữ, KHÔNG dùng flag isCaption riêng trên Track:
+ * video-spec không có field này (thêm flag phải đổi type + migration),
+ * mà project đã lưu vẫn không có flag nên vẫn phải khớp prefix legacy —
+ * khớp cả hai tiền tố là đủ và ít xâm lấn nhất.
  */
 export const CAPTION_TRACK_LABEL_PREFIX = "Phụ đề";
+/** Tiền tố EN của track phụ đề dịch (đợt 58 O5, key captions.translatedTrack). */
+export const CAPTION_TRACK_LABEL_PREFIX_EN = "Subtitles";
+
+/**
+ * Track có phải track phụ đề không — khớp tiền tố VI ("Phụ đề", legacy +
+ * locale vi) hoặc EN ("Subtitles", locale en). Label rỗng/undefined → false.
+ * Lưu ý: track do user tự đặt tên trùng tiền tố vẫn bị coi là caption —
+ * cùng giới hạn đã có với tiền tố VI từ D6, không mở rộng thêm.
+ */
+export function isCaptionTrackLabel(label: string | undefined): boolean {
+  const l = label ?? "";
+  return (
+    l.startsWith(CAPTION_TRACK_LABEL_PREFIX) ||
+    l.startsWith(CAPTION_TRACK_LABEL_PREFIX_EN)
+  );
+}
 
 /**
  * Thu thập TOÀN BỘ phụ đề của project để xuất SRT/VTT ở cấp project
  * (Phase 9 D6 — R4 chỉ xuất được segments đang review trong CaptionModal).
  * Một clip chữ được tính là phụ đề khi: có link captionOf (câu bám theo
- * clip nguồn), HOẶC nằm trên track phụ đề (label bắt đầu bằng "Phụ đề":
- * gồm track caption thường và track dịch; caption nhập tay từ SRT/VTT
- * không có captionOf nhưng vẫn nằm trên track này nên vẫn được xuất).
+ * clip nguồn), HOẶC nằm trên track phụ đề (label bắt đầu bằng "Phụ đề"
+ * hoặc "Subtitles" — song ngữ từ đợt 58 O5, xem isCaptionTrackLabel:
+ * gồm track caption thường và track dịch ở cả hai locale; caption nhập
+ * tay từ SRT/VTT không có captionOf nhưng vẫn nằm trên track này nên
+ * vẫn được xuất).
  * Title/chữ tự do trên track khác KHÔNG được xuất. Trả về cues đã sắp
  * theo start + tên các track đã góp cue (để UI báo rõ cho user).
  */
 export function collectProjectCaptions(
-  tracks: import("@repo-1/video-spec").Track[]
+  tracks: import("@repo-1/video-spec").Track[],
+  lookup?: I18nLookup,
 ): { cues: SubtitleCue[]; trackLabels: string[] } {
   const cues: SubtitleCue[] = [];
   const trackLabels: string[] = [];
   for (const t of tracks) {
-    const isCaptionTrack =
-      (t.label ?? "").startsWith(CAPTION_TRACK_LABEL_PREFIX);
+    const isCaptionTrack = isCaptionTrackLabel(t.label);
     const kept = t.clips.filter(
       (
         c
@@ -230,7 +302,7 @@ export function collectProjectCaptions(
           isCaptionTrack)
     );
     if (kept.length === 0) continue;
-    trackLabels.push(t.label ?? "(không tên)");
+    trackLabels.push(t.label ?? trKey(lookup, "subtitles.untitledTrack", {}, "(không tên)"));
     for (const c of kept) {
       cues.push({
         start: Math.round(c.start * 100) / 100,

@@ -106,6 +106,21 @@ ok("sharpen tăng gradient tại biên bước nhảy", () => {
   assert.ok(maxGradient(after) > before, `gradient ${maxGradient(after)} phải > ${before}`);
   console.log(`    gradient biên: ${before} → ${maxGradient(after)}`);
 });
+ok("sharpen không làm lệch vùng phẳng bão hoà (đợt 66 T4, HYB4: nhánh direct convert từ base ước lượng — uniform field phải giữ nguyên trong ±2, không được base-shift)", () => {
+  // ΔY = 0 trên vùng phẳng nên mọi nhánh đều phải trả về gần như input.
+  // Guard chống base-shift của nhánh direct: nếu est chroma/Y_est sai,
+  // vùng phẳng bão hoà sẽ lệch hẳn (S8r trên ocean lệch tới MAD 2,56).
+  for (const [name, rgb] of [["đỏ bão hoà", [255, 0, 0]], ["xanh dương bão hoà", [0, 0, 255]], ["vàng bão hoà", [255, 255, 0]], ["trắng", [255, 255, 255]]] as const) {
+    const a = img(16, 16, () => [rgb[0], rgb[1], rgb[2], 255]);
+    applySharpen(a, 1);
+    let worst = 0;
+    for (let i = 0; i < a.data.length; i += 4) {
+      for (let c = 0; c < 3; c++) worst = Math.max(worst, Math.abs(a.data[i + c] - rgb[c]));
+    }
+    console.log(`    ${name}: lệch tối đa ${worst} (ngưỡng ≤ 2)`);
+    assert.ok(worst <= 2, `${name}: vùng phẳng lệch tối đa ${worst} > 2 — base-shift của nhánh direct?`);
+  }
+});
 
 console.log("== effectCanvas: edgedetect ==");
 ok("edgedetect ≈ 0 ở vùng phẳng; step đối xứng hoàn hảo bị triệt tiêu (đúng render), step bất đối xứng mỏng 1 cột (NMS nghiêm, đợt 16 H5)", () => {
@@ -176,14 +191,23 @@ ok("glitch lặp lại được với cùng seed, đổi với seed khác", () =
   applyGlitch(c, 0.5, 43);
   assert.notDeepEqual([...c.data], [...a.data]);
 });
-ok("glitch = rgb-shift (s=6+t*10, trunc + nhân biên) + noise Gauss (ns=round(10+t*20)), không còn slice (đợt 16 H5)", () => {
+ok("glitch = rgb-shift (s=6+t*10, trunc + nhân biên) + noise Gauss RGB (ns=round(10+t*20)), không còn slice (đợt 16 H5; RGB đợt 65 S7)", () => {
   // Ảnh 64×8: R=x, G=128, B=255-x. t=0.5 → s=11, ns=20.
-  // Nhiễu Gauss (sigma = ns/√3 ≈ 11.55) KHÔNG kẹp ở ±ns nên không
-  // assert từng pixel ≤ ns như bản nhiễu đều cũ; thay bằng thống kê
-  // trên toàn khung: trung bình |lệch khỏi shift-thuần| ≈ sigma·√(2/π)
-  // ≈ 9.2 và độ lệch chuẩn ≈ sigma ≈ 11.55 cho mỗi kênh.
+  // Nhiễu Gauss RGB độc lập từng kênh (sigma = ns/√3 ≈ 11.55): KHÔNG
+  // phải nhiễu YUV — đợt 65 S7 đính chính giả định R63 R8 (xem
+  // addRgbNoise): chuỗi render glitch `rgbashift,noise` chạy noise
+  // trên plane RGB sau khi rgbashift tự convert yuv420p→gbrp; đo thật
+  // render (probe9): corr chéo kênh [0.038,-0.003,0.008] ≈ 0, std
+  // [11.13,10.85,11.07] ≈ σ. Ngưỡng [0.8,1.25]×lý thuyết cho cả 2 số
+  // — đo thật seed 42: mean|dev| [8.12,9.13,8.62], std
+  // [10.63,11.41,10.72] (tỉ lệ 0.88–0.99 so với lý thuyết: ảnh test có
+  // vùng bão hòa R/B nên kẹp 0/255 làm hẹp phân phối; render thật đo
+  // TB [8.04,8.98,8.84] — preview khớp render trong 0.2 TB / 0.5 std).
   const a = img(64, 8, (x) => [x, 128, 255 - x, 255]);
   applyGlitch(a, 0.5, 42);
+  const sigma = 20 / Math.sqrt(3);
+  const theoryStd = [1, 1, 1].map((k) => k * sigma);
+  const theoryMeanAbs = theoryStd.map((v) => v * Math.sqrt(2 / Math.PI));
   for (let c = 0; c < 3; c++) {
     const devs: number[] = [];
     for (let y = 0; y < 8; y++) {
@@ -197,11 +221,11 @@ ok("glitch = rgb-shift (s=6+t*10, trunc + nhân biên) + noise Gauss (ns=round(1
     const mean = devs.reduce((s, v) => s + Math.abs(v), 0) / devs.length;
     const mu = devs.reduce((s, v) => s + v, 0) / devs.length;
     const std = Math.sqrt(devs.reduce((s, v) => s + (v - mu) ** 2, 0) / devs.length);
-    assert.ok(mean >= 6 && mean <= 14, `kênh ${c}: trung bình |lệch| ${mean.toFixed(2)} ngoài [6,14]`);
-    assert.ok(std >= 8 && std <= 15, `kênh ${c}: std lệch ${std.toFixed(2)} ngoài [8,15]`);
+    assert.ok(mean >= 0.8 * theoryMeanAbs[c] && mean <= 1.25 * theoryMeanAbs[c], `kênh ${c}: trung bình |lệch| ${mean.toFixed(2)} ngoài [0.8,1.25]×${theoryMeanAbs[c].toFixed(2)} (nhiễu RGB)`);
+    assert.ok(std >= 0.8 * theoryStd[c] && std <= 1.25 * theoryStd[c], `kênh ${c}: std lệch ${std.toFixed(2)} ngoài [0.8,1.25]×${theoryStd[c].toFixed(2)} (nhiễu RGB)`);
   }
 });
-ok("noise lặp lại được với cùng seed, đổi với seed khác, thống kê Gauss đúng strength (đợt 16 H5)", () => {
+ok("noise lặp lại được với cùng seed, đổi với seed khác, thống kê Gauss YUV đúng strength (đợt 63 R8)", () => {
   const mk = () => img(32, 32, () => [128, 128, 128, 255]);
   const a = mk();
   const b = mk();
@@ -211,27 +235,65 @@ ok("noise lặp lại được với cùng seed, đổi với seed khác, thốn
   const c = mk();
   applyNoise(c, 0.5, 8);
   assert.notDeepEqual([...c.data], [...a.data]);
-  // strength = 5 + 0.5*45 = 27.5, sigma = strength/√3 ≈ 15.88.
-  // Nhiễu Gauss KHÔNG kẹp ở ±strength (render cũng vượt ±strength:
+  // strength = 5 + 0.5*45 = 27.5, sigma = strength/√3 ≈ 15.88 từng plane
+  // YUV. Nhiễu Gauss KHÔNG kẹp ở ±strength (render cũng vượt ±strength:
   // phẳng 128 + alls=28 cho min 76 / max 192), nên assert bằng thống
-  // kê thay vì biên độ từng pixel: trung bình ≈ 128, std mỗi kênh
-  // trong [0.8, 1.25]×sigma, kurtosis trong [-0.6, 0.6] (≈ 0 của Gauss,
-  // khác −1.2 của nhiễu đều cũ), và có pixel vượt strength.
+  // kê thay vì biên độ từng pixel. Đợt 63 R8: nhiễu nay trong không gian
+  // YUV (bt709 limited-range, U/V nửa phân giải) nên std từng kênh RGB
+  // KHÔNG bằng nhau mà theo hệ số convert: [2.14, 1.30, 2.41]×sigma
+  // (đo thật bằng FFmpeg yuv420p: [33.6, 20.4, 37.8] với sigma 15.7),
+  // và các kênh TƯƠNG QUAN với nhau ([0.15, 0.26, 0.30] — nhiễu Y chung)
+  // thay vì độc lập như mô hình RGB cũ. Ngưỡng std [0.85, 1.15]×lý
+  // thuyết: sai số lấy mẫu với n=4096 chỉ ~1.1% nên band này rộng rãi
+  // nhưng vẫn bắt được mô hình RGB cũ (tỉ lệ std [0.47, 0.78, 0.42] so
+  // với render yuv420p). Tương quan assert theo hiệu với lý thuyết
+  // ±0.12 (sai số lấy mẫu corr với n=4096 ≈ 0.016).
+  // Trung bình: sai số chuẩn của mean từng kênh (n=4096 pixel,
+  // 1024 mẫu chroma) là SE_R≈0.93, SE_G≈0.40, SE_B≈1.09 nên bound
+  // |mu|<4 ≈ 3.7σ trở lên cho mọi kênh. Dùng ảnh 64×64 cho phần thống
+  // kê (32×32 cho seed 7 có mean R −6.42 do mẫu chroma chỉ 256).
+  const s = img(64, 64, () => [128, 128, 128, 255]);
+  applyNoise(s, 0.5, 7);
+  const sigma = 27.5 / Math.sqrt(3);
+  const theoryStd = [2.14, 1.3, 2.41].map((k) => k * sigma);
+  const theoryCorr = [0.15, 0.26, 0.3]; // RG, RB, GB
+  const vals: number[][] = [[], [], []];
+  for (let ch = 0; ch < 3; ch++) {
+    for (let i = ch; i < s.data.length; i += 4) vals[ch].push(s.data[i] - 128);
+  }
+  const stats = vals.map((vs) => {
+    const n = vs.length;
+    const mu = vs.reduce((a2, v) => a2 + v, 0) / n;
+    const std = Math.sqrt(vs.reduce((a2, v) => a2 + (v - mu) ** 2, 0) / n);
+    const kurt = vs.reduce((a2, v) => a2 + ((v - mu) / std) ** 4, 0) / n - 3;
+    return { mu, std, kurt };
+  });
+  const corr = (x: number[], y: number[]) => {
+    const n = x.length;
+    const mx = x.reduce((a2, v) => a2 + v, 0) / n;
+    const my = y.reduce((a2, v) => a2 + v, 0) / n;
+    let sxy = 0, sxx = 0, syy = 0;
+    for (let i = 0; i < n; i++) { const dx = x[i] - mx, dy = y[i] - my; sxy += dx * dy; sxx += dx * dx; syy += dy * dy; }
+    return sxy / Math.sqrt(sxx * syy);
+  };
+  const corrs = [corr(vals[0], vals[1]), corr(vals[0], vals[2]), corr(vals[1], vals[2])];
   let maxDev = 0;
   for (let ch = 0; ch < 3; ch++) {
-    const vals: number[] = [];
-    for (let i = ch; i < a.data.length; i += 4) vals.push(a.data[i] - 128);
-    const mu = vals.reduce((s, v) => s + v, 0) / vals.length;
-    const std = Math.sqrt(vals.reduce((s, v) => s + (v - mu) ** 2, 0) / vals.length);
-    const kurt = vals.reduce((s, v) => s + ((v - mu) / std) ** 4, 0) / vals.length - 3;
-    assert.ok(Math.abs(mu) < 3, `kênh ${ch}: trung bình ${mu.toFixed(2)} lệch khỏi 0`);
-    assert.ok(std >= 12.7 && std <= 19.9, `kênh ${ch}: std ${std.toFixed(2)} ngoài [12.7,19.9]`);
-    assert.ok(kurt >= -0.6 && kurt <= 0.6, `kênh ${ch}: kurtosis ${kurt.toFixed(2)} ngoài [-0.6,0.6]`);
-    maxDev = Math.max(maxDev, ...vals.map((v) => Math.abs(v)));
+    assert.ok(Math.abs(stats[ch].mu) < 4, `kênh ${ch}: trung bình ${stats[ch].mu.toFixed(2)} lệch khỏi 0 (SE≈${[0.93, 0.4, 1.09][ch]})`);
+    assert.ok(
+      stats[ch].std >= 0.85 * theoryStd[ch] && stats[ch].std <= 1.15 * theoryStd[ch],
+      `kênh ${ch}: std ${stats[ch].std.toFixed(2)} ngoài [0.85,1.15]×${theoryStd[ch].toFixed(2)} (mô hình YUV)`,
+    );
+    assert.ok(stats[ch].kurt >= -0.6 && stats[ch].kurt <= 0.6, `kênh ${ch}: kurtosis ${stats[ch].kurt.toFixed(2)} ngoài [-0.6,0.6]`);
+    assert.ok(
+      Math.abs(corrs[ch] - theoryCorr[ch]) <= 0.12,
+      `corr ${["RG", "RB", "GB"][ch]} ${corrs[ch].toFixed(3)} lệch lý thuyết YUV ${theoryCorr[ch]} quá 0.12 (mô hình RGB cũ cho ≈ 0)`,
+    );
+    maxDev = Math.max(maxDev, ...vals[ch].map((v) => Math.abs(v)));
   }
   assert.ok(maxDev > 28, `nhiễu Gauss phải có pixel vượt strength, max lệch chỉ ${maxDev}`);
   // Alpha không đổi.
-  assert.ok(a.data.every((v, i) => i % 4 !== 3 || v === 255));
+  assert.ok(s.data.every((v, i) => i % 4 !== 3 || v === 255));
 });
 
 console.log("== effectCanvas: điều phối ==");

@@ -1,0 +1,111 @@
+{
+  "url": "http://127.0.0.1:5173",
+  "durationSec": 4,
+  "warmupSec": 4,
+  "chromium": "/home/hatch/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome",
+  "timestamp": "2026-11-06T18:40:48.395Z",
+  "headed": false,
+  "headlessNote": "headless=new",
+  "profileReused": "/tmp/vcut-fps-r52-profile",
+  "seedAutosave": "/tmp/vcut-fps-r52-seeds/autosave-fps-medium.json",
+  "loadAvg1Before": 16.52,
+  "cpuSamples": [
+    67.2,
+    67.2,
+    66.9,
+    66.7,
+    66.5,
+    65.8,
+    65.2,
+    64.6
+  ],
+  "seedProjectName": "FPS-vừa",
+  "projectCheck": {
+    "projectName": "FPS-vừa",
+    "clips": 4
+  },
+  "seedLoaded": true,
+  "diagBefore": {
+    "canvas": {
+      "w": 872,
+      "h": 276
+    },
+    "wrapCss": {
+      "w": 874,
+      "h": 278
+    },
+    "dpr": 1,
+    "visibilityState": "visible",
+    "hold": null,
+    "idle": {
+      "ticks": 4,
+      "sleeping": false,
+      "pauseRetrySkipped": 0,
+      "seekFailureCount": 0,
+      "tickErrors": 0
+    },
+    "raf": {
+      "samples": 4
+    },
+    "longtasks": {
+      "count": 0,
+      "totalMs": 0
+    }
+  },
+  "cpuChromePctBefore": 63.9,
+  "perfOverlayButton": true,
+  "playing": true,
+  "noPlay": false,
+  "timeDisplay": {
+    "before": "00:00.0 / 00:08.0",
+    "after": "00:00.7 / 00:08.0"
+  },
+  "diagAfter": {
+    "canvas": {
+      "w": 872,
+      "h": 276
+    },
+    "wrapCss": {
+      "w": 874,
+      "h": 278
+    },
+    "dpr": 1,
+    "visibilityState": "visible",
+    "hold": {
+      "draw": 5,
+      "hold": 6,
+      "skip": 4,
+      "maxHoldAgeSec": 0.19999999999999996,
+      "stale": false
+    },
+    "idle": {
+      "ticks": 20,
+      "sleeping": false,
+      "pauseRetrySkipped": 1,
+      "seekFailureCount": 0,
+      "tickErrors": 0
+    },
+    "raf": {
+      "samples": 20
+    },
+    "longtasks": {
+      "count": 0,
+      "totalMs": 0
+    }
+  },
+  "previewRaf": {
+    "count": 15,
+    "gapP50ms": 699.9,
+    "gapP95ms": 1783.2,
+    "gapP99ms": 1783.2,
+    "over100ms": 15,
+    "lostMs": 10083,
+    "playheadStart": 0,
+    "playheadEnd": 1.3
+  },
+  "error": "Bộ đếm rAF chỉ thu được 8 mẫu.",
+  "frozenDist": {
+    "validity": "UNVERIFIED",
+    "note": "Không đặt --dist-dir/BENCH_DIST_DIR nên dist không được đóng băng; bundle snapshot (nếu có) vẫn là not-captured."
+  }
+}

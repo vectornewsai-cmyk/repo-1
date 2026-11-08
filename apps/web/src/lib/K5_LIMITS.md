@@ -31,7 +31,7 @@
 ## Cố ý KHÔNG làm / để cho agent khác
 
 - `window.confirm` vẫn giữ (ProjectMenu bỏ thay đổi chưa lưu, BgRemovePanel):
-  xác nhận phá hủy cần quyết định thật của user, toast không thay thế được.
+  xác nhận phá huỷ cần quyết định thật của user, toast không thay thế được.
 - `Ctrl+D` duplicate clip: thuộc phạm vi K2 (copy/paste/duplicate) — K5
   không đụng để tránh xung đột.
 - `J` là tua lại 5s, KHÔNG phải phát ngược thật: preview chưa hỗ trợ phát

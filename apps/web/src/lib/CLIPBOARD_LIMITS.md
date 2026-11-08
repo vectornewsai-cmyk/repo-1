@@ -45,7 +45,7 @@
    link tới id mới của bản sao nguồn, dịch timeline đúng bằng độ dịch của
    bản sao nguồn, karaoke giữ nguyên. Câu nhân bản trực tiếp mà nguồn cũng
    nhân bản cùng thì bị bỏ qua (tránh nhân đôi); câu nhân bản trực tiếp mà
-   nguồn không nhân bản cùng thì hủy link thành chữ tự do (giống paste).
+   nguồn không nhân bản cùng thì huỷ link thành chữ tự do (giống paste).
    Xem chi tiết + trường hợp biên trong D6_LIMITS.md.
 
 1. **Clipboard nội bộ, không phải system clipboard**: không dán được clip

@@ -1,0 +1,64 @@
+{
+  "en": {
+    "projectHistory": {
+      "historyBadFormat": "File is not a VCut history file (vcut-history v1).",
+      "historyBadHash": "Version {id} has a wrong spec hash — the file may have been modified.",
+      "historyBadVersion": "History file has a broken version (missing id/projectId/spec).",
+      "historyMissingFields": "History file is missing projectId or the version list.",
+      "historyNotJsonObject": "History file is not a JSON object.",
+      "indexedDbOpenFailed": "Could not open IndexedDB.",
+      "noIndexedDb": "This browser has no IndexedDB."
+    },
+    "subtitles": {
+      "errBadTimestamp": "Malformed timestamp: \"{line}\".",
+      "errEmptyCue": "Cue has no text.",
+      "errEndNotAfterStart": "End time ({end}s) is not after start time ({start}s).",
+      "errMissingTimestamp": "Missing timestamp line (-->).",
+      "errMissingWebvtt": "Missing WEBVTT header line."
+    },
+    "userLut": {
+      "cubeEmpty": "Cube file is empty.",
+      "cubeMissingSize": "Missing LUT_3D_SIZE line in the .cube file.",
+      "cubeOnly3d": "Only 3D LUTs are supported (LUT_3D_SIZE). 1D LUT files are not supported yet.",
+      "cubeRowCount": "Data row count does not match LUT_3D_SIZE {size}: got {rows} rows, need {expected}.",
+      "cubeRowInvalid": "Malformed data line (needs exactly 3 numbers): \"{line}\"",
+      "cubeSizeDuplicate": "File has two LUT_3D_SIZE lines.",
+      "cubeSizeInvalid": "Invalid LUT_3D_SIZE: {value} (needs an integer {min}..{max}).",
+      "cubeTooLarge": "Cube file too large ({size}MB, max 10MB).",
+      "cubeTripleExpected": "{what} must have exactly 3 numbers (got: {got})",
+      "cubeTripleInvalid": "{what} contains an invalid number: {got}",
+      "cubeValueRange": "Color value out of allowed range (-1..2): \"{line}\""
+    }
+  },
+  "vi": {
+    "projectHistory": {
+      "historyBadFormat": "File không phải định dạng lịch sử VCut (vcut-history v1).",
+      "historyBadHash": "Version {id} sai hash spec — file có thể đã bị sửa.",
+      "historyBadVersion": "File lịch sử có version hỏng (thiếu id/projectId/spec).",
+      "historyMissingFields": "File lịch sử thiếu projectId hoặc danh sách version.",
+      "historyNotJsonObject": "File lịch sử không phải JSON object.",
+      "indexedDbOpenFailed": "Không mở được IndexedDB.",
+      "noIndexedDb": "Trình duyệt không có IndexedDB."
+    },
+    "subtitles": {
+      "errBadTimestamp": "Timestamp sai định dạng: \"{line}\".",
+      "errEmptyCue": "Cue không có text.",
+      "errEndNotAfterStart": "Thời gian kết thúc ({end}s) không sau bắt đầu ({start}s).",
+      "errMissingTimestamp": "Thiếu dòng timestamp (-->).",
+      "errMissingWebvtt": "Thiếu dòng đầu WEBVTT."
+    },
+    "userLut": {
+      "cubeEmpty": "File .cube rỗng.",
+      "cubeMissingSize": "Thiếu dòng LUT_3D_SIZE trong file .cube.",
+      "cubeOnly3d": "Chỉ hỗ trợ LUT 3D (LUT_3D_SIZE). File LUT 1D chưa được hỗ trợ.",
+      "cubeRowCount": "Số dòng dữ liệu không khớp LUT_3D_SIZE {size}: có {rows} dòng, cần {expected} dòng.",
+      "cubeRowInvalid": "Dòng dữ liệu sai định dạng (cần đúng 3 số): \"{line}\"",
+      "cubeSizeDuplicate": "File có 2 dòng LUT_3D_SIZE.",
+      "cubeSizeInvalid": "LUT_3D_SIZE không hợp lệ: {value} (cần số nguyên {min}..{max}).",
+      "cubeTooLarge": "File .cube quá lớn ({size}MB, tối đa 10MB).",
+      "cubeTripleExpected": "{what} phải có đúng 3 số (nhận được: {got})",
+      "cubeTripleInvalid": "{what} chứa số không hợp lệ: {got}",
+      "cubeValueRange": "Giá trị màu ngoài khoảng cho phép (-1..2): \"{line}\""
+    }
+  }
+}

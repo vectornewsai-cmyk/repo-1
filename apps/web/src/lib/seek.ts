@@ -11,8 +11,23 @@
  *  3. Chờ sự kiện `seeked` của từng element (có timeout dự phòng cho trường
  *     hợp metadata chưa tải xong và `seeked` không bao giờ bắn).
  *  4. Chỉ vẽ frame khi lần seek MỚI NHẤT đã xong — `Seeker` debounce khi scrub
- *     nhanh (chỉ seek khi thả tay) và hủy seek cũ (latest-wins), nên trong lúc
+ *     nhanh (chỉ seek khi thả tay) và huỷ seek cũ (latest-wins), nên trong lúc
  *     kéo canvas giữ nguyên frame tĩnh thay vì nhấp nháy frame sai.
+ *
+ * Đợt 53 J6 — guard `seekable` pre-seek (nợ I8, xem LIMITS đợt 52 I8 §3):
+ * trước khi gán `currentTime`, kiểm tra `el.seekable`: nếu mọi range đều
+ * kết thúc ở 0 (mẫu `[[0,0]]`) mà target > 0 thì KHÔNG gán, trả về
+ * `{ seeked: false, seekableBlocked: true }` ngay. Bằng chứng I8: phân
+ * tách hoàn hảo 56/56 — seek khi seekable `[[0,0]]` thì đáp 0, khi đã
+ * `[[0,3]]` thì đáp đúng; trạng thái `[[0,0]]` DÍNH suốt vòng đời tab
+ * (đợi 12 s không cứu được 6/10) nên "đợi thêm" không phải chiến lược
+ * khắc phục. Guard chỉ chặn đúng mẫu đã đo (`max end <= 0`, target > 0);
+ * seekable vắng (mock / trình duyệt cũ), rỗng (chưa có metadata), hay
+ * đã xác định (`end > 0`) thì đi đường cũ — fail-open, không đổi hành vi
+ * file thật. Element bị chặn vẫn được tính vào `failed` của seekAll
+ * (không seek được) và đếm riêng ở `seekableBlocked` để UI/harness đọc
+ * được lý do; đường failed-only cũ (nhánh vẽ + cap W2) xử lý tiếp như
+ * mọi lần seek hỏng khác — không thêm cap hay nhánh mới ở đây.
  *
  * Module này không phụ thuộc DOM thật: `Seekable` là interface tối thiểu nên
  * test được bằng mock trong Node.
@@ -30,12 +45,25 @@ import { snapToFrame } from "@repo-1/video-spec";
 // @ts-ignore: xem ghi chú trên (TS5097, đuôi .ts cho strip-types)
 import { WrongLandingTracker } from "./pause45A2.ts";
 
+/** TimeRanges tối thiểu mà guard seekable cần (khớp HTMLMediaElement.seekable). */
+export interface SeekableRanges {
+  readonly length: number;
+  start(index: number): number;
+  end(index: number): number;
+}
+
 /** Interface tối thiểu của HTMLMediaElement mà seek cần. */
 export interface Seekable {
   pause(): void;
   currentTime: number;
   /** Cờ seeking của element thật (HTMLMediaElement.seeking). Mock có thể bỏ qua. */
   seeking?: boolean;
+  /**
+   * Đợt 53 J6 — các range seekable của element thật
+   * (HTMLMediaElement.seekable). Vắng ở mock / trình duyệt cũ → guard
+   * pre-seek bỏ qua (fail-open, xem `seekableBlocksSeek`).
+   */
+  seekable?: SeekableRanges;
   addEventListener(
     type: "seeked",
     listener: () => void,
@@ -114,6 +142,58 @@ export function needsSeek(
 export interface SeekResult {
   seeked: boolean;
   timedOut: boolean;
+  /**
+   * Đợt 53 J6 — true khi seek bị guard `seekable` pre-seek chặn (xem
+   * `seekableBlocksSeek`): seekable `[[0,0]]` mà target > 0 nên không
+   * gán `currentTime` lần nào. Chỉ có khi bị chặn; vắng = đường cũ.
+   */
+  seekableBlocked?: boolean;
+}
+
+/**
+ * Đợt 53 J6 — lý do chặn seek khi `seekable` chưa xác định (mẫu
+ * `[[0,0]]` của I8). Giá trị này chỉ dùng trong code/test, không hiển
+ * thị trực tiếp cho user.
+ */
+export const SEEK_BLOCKED_SEEKABLE_UNDETERMINED = "seekable-chua-xac-dinh";
+
+/**
+ * Đợt 53 J6 — có nên chặn seek này vì `seekable` chưa xác định không?
+ * Trả về lý do chặn, hoặc null (= cứ seek như cũ).
+ *
+ * Luật chặn — đúng biên bằng chứng I8 (56/56, xem LIMITS đợt 52 I8 §3):
+ * seek khi seekable là `[[0,0]]` thì đáp 0; seek khi đã `[[0,3]]` thì
+ * đáp đúng. Vì vậy chỉ chặn khi TẤT CẢ range đều kết thúc ở ≤ 0 (end
+ * lớn nhất ≤ 0) VÀ target > 0 (seek về 0 thì `[[0,0]]` vẫn đúng, không
+ * chặn). Mọi trường hợp khác đều fail-open (trả null): seekable vắng
+ * (mock / trình duyệt không hỗ trợ), rỗng (length 0 — chưa có metadata;
+ * đường timeout hiện có xử lý), đã xác định (end > 0 — seek vượt cuối
+ * range là hợp lệ, trình duyệt tự fetch), hoặc đọc range ném lỗi.
+ * Không bao giờ throw.
+ */
+export function seekableBlocksSeek(
+  el: Pick<Seekable, "seekable">,
+  target: number,
+): string | null {
+  if (!(target > 0)) return null;
+  const ranges = el.seekable;
+  if (!ranges || typeof ranges.length !== "number" || ranges.length === 0) {
+    return null;
+  }
+  try {
+    let maxEnd = -Infinity;
+    for (let i = 0; i < ranges.length; i++) {
+      const e = ranges.end(i);
+      if (typeof e === "number" && Number.isFinite(e)) {
+        maxEnd = Math.max(maxEnd, e);
+      }
+    }
+    if (maxEnd === -Infinity) return null; // không đọc được end nào → fail-open
+    if (maxEnd <= 0) return SEEK_BLOCKED_SEEKABLE_UNDETERMINED;
+  } catch {
+    return null;
+  }
+  return null;
 }
 
 /**
@@ -146,7 +226,7 @@ export function seekElement(
       SEEK_ZERO_LANDING_MAX_RETRIES,
     );
     let assigned = false;
-    const finish = (seeked: boolean, timedOut: boolean) => {
+    const finish = (seeked: boolean, timedOut: boolean, blocked = false) => {
       if (done) return;
       done = true;
       if (timer) clearTimeout(timer);
@@ -170,19 +250,34 @@ export function seekElement(
         }
         onSeeked = null;
       }
-      resolve({ seeked, timedOut });
+      resolve(
+        blocked
+          ? { seeked, timedOut, seekableBlocked: true }
+          : { seeked, timedOut },
+      );
     };
     try {
       el.pause();
     } catch {
       /* bỏ qua */
     }
+    // Đợt 53 J6 — guard `seekable` pre-seek (xem header module): seek
+    // khi seekable `[[0,0]]` mà target > 0 thì đáp 0 (I8 56/56) nên
+    // KHÔNG gán `currentTime` lần nào; trả về ngay với cờ
+    // `seekableBlocked` để caller biết rõ lý do thay vì đáp 0 lặng.
+    // Kiểm tra 1 lần ở đầu (trạng thái `[[0,0]]` dính suốt vòng đời tab
+    // nên không cần kiểm lại ở mỗi attempt; retry ở tầng preview — nếu
+    // seekable đã xác định — sẽ qua guard ở lần gọi sau).
+    if (seekableBlocksSeek(el, snapped) !== null) {
+      finish(false, false, true);
+      return;
+    }
     // Đợt 31 N1: kiểm tra + chờ theo vòng attempt thay vì một lần set
     // rồi chờ mù. Lý do: (a) seeked có thể thuộc về seek CŨ đang bay
     // (element đã seeking khi vào — xảy ra ở lần retry sau timeout của
     // preview) — khi đó phải kiểm tra lại rồi mới phát seek của mình,
     // không được kết luận "xong" khi element vẫn ở frame cũ; (b) gán
-    // lại currentTime trong lúc element đang seeking sẽ hủy seek đang
+    // lại currentTime trong lúc element đang seeking sẽ huỷ seek đang
     // bay và giải mã lại từ đầu, khiến seek chậm (> timeout) không bao
     // giờ kịp hoàn tất qua các lần retry — nên khi seeking thì CHỈ
     // chờ seeked, không gán. Listener luôn gắn TRƯỚC khi gán để không
@@ -272,6 +367,11 @@ export interface SeekAllResult {
   done: number;
   timedOut: number;
   failed: number;
+  /**
+   * Đợt 53 J6 — số target bị guard `seekable` pre-seek chặn (đã tính
+   * trong `failed`; đếm riêng để caller đọc được lý do). Vắng = 0.
+   */
+  seekableBlocked?: number;
 }
 
 /**
@@ -300,12 +400,19 @@ export async function seekAll(
   let done = 0;
   let timedOut = 0;
   let failed = 0;
+  let seekableBlocked = 0;
   for (const r of results) {
     if (r.seeked) done += 1;
     else if (r.timedOut) timedOut += 1;
     else failed += 1;
+    if (r.seekableBlocked) seekableBlocked += 1;
   }
-  return { done, timedOut, failed };
+  return {
+    done,
+    timedOut,
+    failed,
+    ...(seekableBlocked > 0 ? { seekableBlocked } : {}),
+  };
 }
 
 export interface SeekOutcome extends SeekAllResult {
@@ -316,7 +423,7 @@ export interface SeekOutcome extends SeekAllResult {
 /**
  * Seeker: debounce + latest-wins cho scrub timeline.
  *
- * - `request(t)` mới sẽ hủy request cũ: promise cũ resolve `{ cancelled: true }`,
+ * - `request(t)` mới sẽ huỷ request cũ: promise cũ resolve `{ cancelled: true }`,
  *   executor chỉ chạy cho request mới nhất sau `debounceMs`.
  * - Trong lúc kéo nhanh, mỗi pointermove gọi `request` lại -> debounce reset liên
  *   tục -> chỉ seek 1 lần khi thả tay (hoặc dừng kéo > debounceMs).
@@ -350,7 +457,7 @@ export class Seeker {
     t: number,
     run: (t: number) => Promise<SeekAllResult>,
   ): Promise<SeekOutcome> {
-    // Request mới hủy mọi request cũ đang chờ -> promise cũ resolve cancelled,
+    // Request mới huỷ mọi request cũ đang chờ -> promise cũ resolve cancelled,
     // không bao giờ treo.
     this.flushPending();
     this.generation += 1;

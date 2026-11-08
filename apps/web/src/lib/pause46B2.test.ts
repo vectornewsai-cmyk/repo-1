@@ -221,7 +221,7 @@ await okAsync("B2 Seeker sync-throw: ném đồng bộ → settle thành outcome
 });
 
 // 10. Hồi quy Seeker: reject bất đồng bộ vẫn thành error; seek thường
-// vẫn ok; request mới hơn vẫn hủy request cũ (cancelled).
+// vẫn ok; request mới hơn vẫn huỷ request cũ (cancelled).
 await okAsync("B2 Seeker hồi quy: reject async → error; seek thường → ok", async () => {
   const seeker = new Seeker(5);
   const errOutcome = await withTimeout(
@@ -242,7 +242,7 @@ await okAsync("B2 Seeker hồi quy: reject async → error; seek thường → o
   assert.equal(okOutcome.done, 1);
 });
 
-await okAsync("B2 Seeker hồi quy: request mới hủy request cũ → cancelled", async () => {
+await okAsync("B2 Seeker hồi quy: request mới huỷ request cũ → cancelled", async () => {
   const seeker = new Seeker(50);
   const first = seeker.request(1.0, () => Promise.resolve({ done: 1, timedOut: 0, failed: 0 }));
   const second = seeker.request(2.0, () => Promise.resolve({ done: 1, timedOut: 0, failed: 0 }));

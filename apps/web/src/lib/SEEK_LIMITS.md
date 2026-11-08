@@ -20,7 +20,7 @@ Giờ đây: pause tất cả media → set `currentTime` đã snap về frame �
   - `seekAll()` — pause TẤT CẢ element trước (audio + video dừng cùng lúc),
     rồi seek song song bằng `Promise.all` → audio seek cùng lúc với video.
   - `Seeker` — debounce 80ms + latest-wins: kéo nhanh chỉ seek 1 lần khi thả
-    tay; request cũ bị hủy và promise cũ resolve `{ cancelled: true }`
+    tay; request cũ bị huỷ và promise cũ resolve `{ cancelled: true }`
     (không bao giờ treo).
 - `preview.tsx`:
   - Tách `collectActives()` khỏi `syncMedia()` để dùng chung cho seek.

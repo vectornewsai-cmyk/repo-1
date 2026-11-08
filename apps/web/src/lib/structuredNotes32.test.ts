@@ -22,7 +22,9 @@
  *   weights <= 0, cả hai) đều dịch en đầy đủ, không rò tiếng Việt
  *   (dấu), vi khớp fallback từng chữ; note cũ không có cases vẫn giữ
  *   hành vi đợt 31 (khung dịch, notes thô).
- * - i18n parity: dict vi/en flatten KHỚP TOÀN BỘ key (973 key mỗi bên,
+ * - i18n parity: dict vi/en flatten KHỚP TOÀN BỘ key (2283 key mỗi bên sau parent gộp đợt 64 (2275 sau đợt 63, +7 key fragment R2 6 + R8 1 + 1 key parent projectHistory); (2146 sau đợt 62, +131 key fragment − 1 key chết speed.warnTooShort − 1 key jobNote chưa có UI; 2044 sau đợt 61, +72 key; 1972 sau parent gộp đợt 60; 1969 sau đợt 60 Q4; 1957 sau gộp đợt 59,
+ *   — 1011 đợt 55 L1 + 711 key đợt 56 (683 fragment + 28 đề xuất M6))
+ *   — +215 key đợt 57 (11 N4 + 180 label N5 + 1 N7 + 23 N8; 5 key EN N5 ghi đè)
  *   tăng 13 so với 918 đợt 32 — 13 key errorDetail.summary đợt 34 Q4),
  *   0 key mồ côi cả hai chiều.
  *
@@ -299,8 +301,8 @@ test("motion cases: note cũ không có cases vẫn giữ hành vi đợt 31", (
 // ---- i18n parity ----
 
 test("i18n: vi == en toàn bộ dict (0 key mồ côi cả hai chiều)", () => {
-  eq(viDict.size, 973, `vi phải có 973 key, nhận ${viDict.size}`);
-  eq(enDict.size, 973, `en phải có 973 key, nhận ${enDict.size}`);
+  eq(viDict.size, 2326, `vi phải có 2326 key, nhận ${viDict.size}`);
+  eq(enDict.size, 2326, `en phải có 2326 key, nhận ${enDict.size}`);
   const onlyVi = [...viDict.keys()].filter((k) => !enDict.has(k));
   const onlyEn = [...enDict.keys()].filter((k) => !viDict.has(k));
   eq(onlyVi, [], `key chỉ có ở vi: ${JSON.stringify(onlyVi)}`);

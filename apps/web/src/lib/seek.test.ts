@@ -128,7 +128,7 @@ await ok("seekElement: đang seeking tới đúng target → KHÔNG gán lại, 
   el.setReported(F62);
   el.seeking = true; // seek cũ đang bay tới đúng target
   const p = seekElement(el, F61, { fps: 30, timeoutMs: 500 });
-  assert.equal(el.sets.length, 0); // gán lại sẽ hủy seek đang bay
+  assert.equal(el.sets.length, 0); // gán lại sẽ huỷ seek đang bay
   el.setReported(F61 - 1e-6);
   el.fireSeeked();
   assert.deepEqual(await p, { seeked: true, timedOut: false });

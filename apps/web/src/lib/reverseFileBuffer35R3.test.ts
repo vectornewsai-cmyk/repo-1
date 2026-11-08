@@ -361,7 +361,7 @@ ok("cổng HEAD: file lớn bị chặn trước khi tải body, fallback elemen
   c.dispose();
 });
 
-ok("cổng header GET: chặn trước arrayBuffer, có hủy body", async () => {
+ok("cổng header GET: chặn trước arrayBuffer, có huỷ body", async () => {
   const calls = installFetch({
     headLength: null,
     headOk: false,

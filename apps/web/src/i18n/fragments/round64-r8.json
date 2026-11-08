@@ -1,0 +1,12 @@
+{
+  "vi": {
+    "jobNote": {
+      "recoveredRestart": "Phục hồi sau khi server restart — render lại từ đầu."
+    }
+  },
+  "en": {
+    "jobNote": {
+      "recoveredRestart": "Recovered after a server restart — rendering again from the start."
+    }
+  }
+}

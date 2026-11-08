@@ -561,7 +561,7 @@ export function shiftCaptionsForMovedClips(
   return { ...newSpec, tracks };
 }
 
-/** Hủy link của 1 câu phụ đề (user tự sửa vị trí/thời lượng của câu). */
+/** Huỷ link của 1 câu phụ đề (user tự sửa vị trí/thời lượng của câu). */
 export function unlinkCaption(clip: TextClip): TextClip {
   if (!clip.captionOf) return clip;
   const { captionOf: _dropped, ...rest } = clip;
@@ -601,7 +601,7 @@ export function splitLinkedCaptionsInSpec(
   return mapSpecClips(spec, (clips) => splitLinkedCaptionsMulti(clips, origId, pieces));
 }
 
-/** Hủy link của 1 clip chữ cụ thể (user tự edit chính câu đó). */
+/** Huỷ link của 1 clip chữ cụ thể (user tự edit chính câu đó). */
 export function unlinkCaptionInSpec(spec: VideoSpec, clipId: string): VideoSpec {
   return mapSpecClips(spec, (clips) =>
     clips.map((c) =>

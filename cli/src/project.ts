@@ -62,18 +62,17 @@ export async function loadProject(projectPath: string): Promise<LoadedProject> {
   try {
     raw = await fs.readFile(filePath, "utf8");
   } catch {
-    throw new CliError(`Không đọc được file project: ${projectPath}`);
+    throw new CliError("PROJECT_READ_FAILED", `Không đọc được file project: ${projectPath}`);
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch (e) {
-    throw new CliError(`File project không phải JSON hợp lệ: ${e instanceof Error ? e.message : e}`);
+    throw new CliError("PROJECT_NOT_JSON", `File project không phải JSON hợp lệ: ${e instanceof Error ? e.message : e}`);
   }
   if (!isVideoSpec(parsed)) {
-    throw new CliError(
-      `File không phải video-spec hợp lệ (version phải là ${SPEC_VERSION}, cần meta + tracks)`
-    );
+    throw new CliError("PROJECT_NOT_SPEC", 
+      `File không phải video-spec hợp lệ (version phải là ${SPEC_VERSION}, cần meta + tracks)`);
   }
   return { spec: parsed, filePath };
 }
@@ -81,7 +80,7 @@ export async function loadProject(projectPath: string): Promise<LoadedProject> {
 /** Ghi project ra file (validate nhẹ trước khi ghi). */
 export async function saveProject(spec: VideoSpec, filePath: string): Promise<void> {
   if (!isVideoSpec(spec)) {
-    throw new CliError("Spec không hợp lệ, từ chối ghi file");
+    throw new CliError("SPEC_INVALID", "Spec không hợp lệ, từ chối ghi file");
   }
   await fs.mkdir(path.dirname(path.resolve(filePath)), { recursive: true });
   await fs.writeFile(filePath, JSON.stringify(spec, null, 2) + "\n", "utf8");

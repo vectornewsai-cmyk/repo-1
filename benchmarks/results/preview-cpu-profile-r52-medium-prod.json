@@ -1,0 +1,173 @@
+{
+  "url": "http://127.0.0.1:4173",
+  "durationSec": 8,
+  "timestamp": "2026-11-06T18:48:17.078Z",
+  "seedAutosave": "/tmp/vcut-fps-r52-seeds/autosave-fps-medium.json",
+  "timeDisplayEnd": "00:01.4 / 00:08.0",
+  "samples": 2128,
+  "profileMs": 11022924,
+  "topFunctions": [
+    {
+      "fn": "(idle)",
+      "loc": "(native):-1",
+      "samples": 1465,
+      "pct": 68.8
+    },
+    {
+      "fn": "m5",
+      "loc": "/assets/index-CysPjIj-.js:83",
+      "samples": 389,
+      "pct": 18.3
+    },
+    {
+      "fn": "(program)",
+      "loc": "(native):-1",
+      "samples": 174,
+      "pct": 8.2
+    },
+    {
+      "fn": "Ze",
+      "loc": "/assets/index-CysPjIj-.js:137",
+      "samples": 19,
+      "pct": 0.9
+    },
+    {
+      "fn": "(garbage collector)",
+      "loc": "(native):-1",
+      "samples": 7,
+      "pct": 0.3
+    },
+    {
+      "fn": "er",
+      "loc": "/assets/index-CysPjIj-.js:39",
+      "samples": 5,
+      "pct": 0.2
+    },
+    {
+      "fn": "ensure",
+      "loc": "/assets/index-CysPjIj-.js:83",
+      "samples": 4,
+      "pct": 0.2
+    },
+    {
+      "fn": "Mh",
+      "loc": "/assets/index-CysPjIj-.js:129",
+      "samples": 3,
+      "pct": 0.1
+    },
+    {
+      "fn": "measureText",
+      "loc": "(native):-1",
+      "samples": 3,
+      "pct": 0.1
+    },
+    {
+      "fn": "h0",
+      "loc": "/assets/index-CysPjIj-.js:41",
+      "samples": 3,
+      "pct": 0.1
+    },
+    {
+      "fn": "Ex",
+      "loc": "/assets/index-CysPjIj-.js:39",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "pumpLevel",
+      "loc": "/assets/index-CysPjIj-.js:83",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "Fd",
+      "loc": "/assets/index-CysPjIj-.js:39",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "WN",
+      "loc": "/assets/index-CysPjIj-.js:56",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "(anonymous)",
+      "loc": "/assets/index-CysPjIj-.js:41",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "xg",
+      "loc": "/assets/index-CysPjIj-.js:39",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "D",
+      "loc": "/assets/index-CysPjIj-.js:24",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "g",
+      "loc": "/assets/index-CysPjIj-.js:129",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "xx",
+      "loc": "/assets/index-CysPjIj-.js:39",
+      "samples": 2,
+      "pct": 0.1
+    },
+    {
+      "fn": "Xn",
+      "loc": "/assets/index-CysPjIj-.js:36",
+      "samples": 1,
+      "pct": 0
+    },
+    {
+      "fn": "tl",
+      "loc": "/assets/index-CysPjIj-.js:37",
+      "samples": 1,
+      "pct": 0
+    },
+    {
+      "fn": "onClick",
+      "loc": "/assets/index-CysPjIj-.js:56",
+      "samples": 1,
+      "pct": 0
+    },
+    {
+      "fn": "Df",
+      "loc": "/assets/index-CysPjIj-.js:45",
+      "samples": 1,
+      "pct": 0
+    },
+    {
+      "fn": "ZA",
+      "loc": "/assets/index-CysPjIj-.js:129",
+      "samples": 1,
+      "pct": 0
+    },
+    {
+      "fn": "m",
+      "loc": "/assets/index-CysPjIj-.js:129",
+      "samples": 1,
+      "pct": 0
+    }
+  ],
+  "topFiles": [
+    {
+      "url": "(native)",
+      "samples": 1652,
+      "pct": 77.6
+    },
+    {
+      "url": "/assets/index-CysPjIj-.js",
+      "samples": 476,
+      "pct": 22.4
+    }
+  ]
+}

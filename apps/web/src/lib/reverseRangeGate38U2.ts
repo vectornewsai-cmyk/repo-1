@@ -56,6 +56,24 @@
  * hệt trường hợp file gốc ở LIMITS T5 §5.1).
  */
 
+/**
+ * Đợt 61 R6 — lookup i18n tùy chọn (mẫu Q4: file này được test bằng Node
+ * nên KHÔNG import `../i18n` trực tiếp). Khi `lookup` vắng → fallback
+ * đúng từng chữ chuỗi VI cũ nên test cũ + hành vi mặc định không đổi.
+ * Key trong fragment R6 (`gop.gate.*`, `gop.probe.*`).
+ */
+export type I18nLookup = (key: string, vars?: Record<string, string>) => string;
+function trKey(
+  lookup: I18nLookup | undefined,
+  key: string,
+  vars: Record<string, string>,
+  fallback: string,
+): string {
+  if (!lookup) return fallback;
+  const out = lookup(key, vars);
+  return out === key ? fallback : out;
+}
+
 /** Vị trí moov suy từ thứ tự box top-level đã đọc được. */
 export type MoovPosition = "faststart" | "trailing" | "unknown";
 
@@ -140,14 +158,31 @@ function validSize(size: number | null | undefined): boolean {
  * Thứ tự kiểm tra cố ý: moov trước, rồi Accept-Ranges, rồi size —
  * để reasons luôn chỉ ra đúng rào cản đầu tiên gặp phải.
  */
-export function resolveRangeGopFetch(input: RangeGopInput): RangeGopDecision {
+export function resolveRangeGopFetch(
+  input: RangeGopInput,
+  lookup?: I18nLookup,
+): RangeGopDecision {
   const reasons: string[] = [];
   if (input.moovPosition === "trailing") {
-    reasons.push("moov-trailing: moov ở cuối file, cần probe đuôi chưa cài đặt");
+    reasons.push(
+      trKey(
+        lookup,
+        "gop.gate.moovTrailing",
+        {},
+        "moov-trailing: moov ở cuối file, cần probe đuôi chưa cài đặt",
+      ),
+    );
     return { mode: "full-file", eligible: false, reasons };
   }
   if (input.moovPosition !== "faststart") {
-    reasons.push("moov-unknown: chưa xác định được vị trí moov từ tiền tố đã đọc");
+    reasons.push(
+      trKey(
+        lookup,
+        "gop.gate.moovUnknown",
+        {},
+        "moov-unknown: chưa xác định được vị trí moov từ tiền tố đã đọc",
+      ),
+    );
     return { mode: "full-file", eligible: false, reasons };
   }
   // Đợt 49 E2 — dùng đúng luật rangeSupportEstablished: header "bytes"
@@ -157,7 +192,14 @@ export function resolveRangeGopFetch(input: RangeGopInput): RangeGopDecision {
   // khóa U2/T3 không đổi ý nghĩa; trường hợp mới chỉ xuất hiện ở
   // nhánh thành công (ghi rõ nguồn bằng chứng trong reason).
   if (typeof input.acceptRanges === "string" && !acceptsByteRanges(input.acceptRanges)) {
-    reasons.push(`accept-ranges-unsupported: server báo ${input.acceptRanges.trim()}`);
+    reasons.push(
+      trKey(
+        lookup,
+        "gop.gate.acceptRangesUnsupported",
+        { acceptRanges: input.acceptRanges.trim() },
+        `accept-ranges-unsupported: server báo ${input.acceptRanges.trim()}`,
+      ),
+    );
     return { mode: "full-file", eligible: false, reasons };
   }
   if (
@@ -166,18 +208,44 @@ export function resolveRangeGopFetch(input: RangeGopInput): RangeGopDecision {
       input.rangeProvenByVerifiedProbe ?? false,
     )
   ) {
-    reasons.push("accept-ranges-unknown: server không gửi Accept-Ranges, không giả định");
+    reasons.push(
+      trKey(
+        lookup,
+        "gop.gate.acceptRangesUnknown",
+        {},
+        "accept-ranges-unknown: server không gửi Accept-Ranges, không giả định",
+      ),
+    );
     return { mode: "full-file", eligible: false, reasons };
   }
   if (!validSize(input.knownSizeBytes)) {
-    reasons.push("size-unknown: chưa biết tổng kích thước file");
+    reasons.push(
+      trKey(
+        lookup,
+        "gop.gate.sizeUnknown",
+        {},
+        "size-unknown: chưa biết tổng kích thước file",
+      ),
+    );
     return { mode: "full-file", eligible: false, reasons };
   }
   const rangeEvidence =
     typeof input.acceptRanges === "string"
       ? "Accept-Ranges bytes"
-      : "Range đã chứng minh bằng probe/prefix 206 (không có header Accept-Ranges)";
-  reasons.push(`range-gop-attempt: moov-trước + ${rangeEvidence} + đã biết size`);
+      : trKey(
+          lookup,
+          "gop.gate.rangeEvidenceProbe",
+          {},
+          "Range đã chứng minh bằng probe/prefix 206 (không có header Accept-Ranges)",
+        );
+  reasons.push(
+    trKey(
+      lookup,
+      "gop.gate.rangeGopAttempt",
+      { evidence: rangeEvidence },
+      `range-gop-attempt: moov-trước + ${rangeEvidence} + đã biết size`,
+    ),
+  );
   return { mode: "range-gop-attempt", eligible: true, reasons };
 }
 
@@ -269,24 +337,45 @@ export function checkRangeProbeResponse(
   contentRangeHeader: string | null | undefined,
   requested: { start: number; end: number },
   knownTotalBytes?: number | null,
+  lookup?: I18nLookup,
 ): RangeProbeCheck {
   if (status !== 206) {
     return {
       outcome: "fallback-full-file",
-      reason: `range-probe-status-${status}: server không trả 206 cho request Range`,
+      reason: trKey(
+        lookup,
+        "gop.probe.statusNot206",
+        { status: String(status) },
+        `range-probe-status-${status}: server không trả 206 cho request Range`,
+      ),
     };
   }
   const parsed = parseContentRange(contentRangeHeader);
   if (!parsed) {
     return {
       outcome: "fallback-full-file",
-      reason: "range-probe-no-content-range: 206 nhưng thiếu Content-Range hợp lệ",
+      reason: trKey(
+        lookup,
+        "gop.probe.noContentRange",
+        {},
+        "range-probe-no-content-range: 206 nhưng thiếu Content-Range hợp lệ",
+      ),
     };
   }
   if (parsed.start !== requested.start || parsed.end !== requested.end) {
     return {
       outcome: "fallback-full-file",
-      reason: `range-probe-mismatch: server trả ${parsed.start}-${parsed.end}, đã xin ${requested.start}-${requested.end}`,
+      reason: trKey(
+        lookup,
+        "gop.probe.mismatch",
+        {
+          start: String(parsed.start),
+          end: String(parsed.end),
+          reqStart: String(requested.start),
+          reqEnd: String(requested.end),
+        },
+        `range-probe-mismatch: server trả ${parsed.start}-${parsed.end}, đã xin ${requested.start}-${requested.end}`,
+      ),
     };
   }
   if (
@@ -297,8 +386,21 @@ export function checkRangeProbeResponse(
   ) {
     return {
       outcome: "fallback-full-file",
-      reason: `range-probe-total-mismatch: Content-Range tổng ${parsed.total}, đã biết ${knownTotalBytes}`,
+      reason: trKey(
+        lookup,
+        "gop.probe.totalMismatch",
+        { total: String(parsed.total), known: String(knownTotalBytes) },
+        `range-probe-total-mismatch: Content-Range tổng ${parsed.total}, đã biết ${knownTotalBytes}`,
+      ),
     };
   }
-  return { outcome: "range-ok", reason: "range-probe-ok: 206 khớp range đã xin" };
+  return {
+    outcome: "range-ok",
+    reason: trKey(
+      lookup,
+      "gop.probe.ok",
+      {},
+      "range-probe-ok: 206 khớp range đã xin",
+    ),
+  };
 }

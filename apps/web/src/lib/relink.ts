@@ -29,6 +29,7 @@
  *     nhánh sâu hơn bị bỏ qua, xem LIMITS.
  */
 import type { Clip, Track, TrackKind, VideoSpec } from "@repo-1/video-spec";
+import { t as i18nT } from "../i18n";
 
 /** Loại asset có thể thiếu (text clip không có src nên không bao giờ thiếu). */
 export type RelinkableKind = "video" | "audio" | "image" | "sticker";
@@ -329,8 +330,8 @@ export function relinkAsset(spec: VideoSpec, oldSrc: string, newSrc: string): Re
 /** Icon + label tiếng Việt cho từng loại asset (dùng ở UI). */
 export const RELINK_KIND_META: Record<RelinkableKind, { icon: string; label: string }> = {
   video: { icon: "🎬", label: "Video" },
-  audio: { icon: "🎵", label: "Âm thanh" },
-  image: { icon: "🖼️", label: "Ảnh" },
+  audio: { icon: "🎵", label: i18nT("relink.kindAudio") },
+  image: { icon: "🖼️", label: i18nT("relink.kindImage") },
   sticker: { icon: "⭐", label: "Sticker" },
 };
 

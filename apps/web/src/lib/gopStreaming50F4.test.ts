@@ -32,6 +32,7 @@ import { join } from "node:path";
 import {
   fetchVideoTrackByGopRange,
   gopRangesFor,
+  MAX_FIRST_SAMPLE_PROBE_BYTES,
   type GopRangeFetchFn,
 } from "./gopRangeFetch39T3.ts";
 import {
@@ -248,18 +249,25 @@ ok("stream: chỉ GOP của cửa sổ được fetch — byte chunk khớp file
     }
     // Đối chiếu log server: mọi GET Range chỉ là probe / tiền tố /
     // đúng range GOP 2 — không GET nào chạm range của GOP khác.
+    // Đợt 53 J6 — cho phép thêm đúng 1 GET "sample": T3 stream-mode
+    // fetch riêng sample đầu để kiểm AVCC (chặn moov giả trỏ vào trong
+    // file); đó KHÔNG phải GOP ngoài cửa sổ — range của nó là sample 0
+    // (kẹp bởi MAX_FIRST_SAMPLE_PROBE_BYTES), và test vẫn khóa "không
+    // GET nào chạm range GOP khác" như cũ.
+    const s0 = out.track.samples[0];
     const gets = srv.log.filter((l) => l.method === "GET" && l.status === 206);
     const allowed: Array<[number, number]> = [
       [0, 1023],
       [0, fastBuf.length - 1],
       [meta2.rangeStart, meta2.rangeEnd - 1],
+      [s0.offset, s0.offset + Math.min(s0.size, MAX_FIRST_SAMPLE_PROBE_BYTES) - 1],
     ];
     for (const g of gets) {
       const r = parseLoggedRange(g.range);
       assert.ok(r !== null, `log Range không parse được: ${g.range}`);
       assert.ok(
         allowed.some(([a, b]) => r[0] === a && r[1] === b),
-        `GET Range ${g.range} không thuộc probe/prefix/GOP-2 — GOP ngoài cửa sổ đã bị fetch`,
+        `GET Range ${g.range} không thuộc probe/prefix/sample-0/GOP-2 — GOP ngoài cửa sổ đã bị fetch`,
       );
     }
     // Đúng 1 GET chạm GOP 2 (không fetch trùng).

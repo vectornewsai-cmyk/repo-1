@@ -1,0 +1,12 @@
+{
+  "vi": {
+    "projectHistory": {
+      "migrateVersionsNeedsProjectId": "migrateVersions cần projectId đích hợp lệ (UUID hoặc proj-<time>-<rand>)."
+    }
+  },
+  "en": {
+    "projectHistory": {
+      "migrateVersionsNeedsProjectId": "migrateVersions needs a valid target projectId (UUID or proj-<time>-<rand>)."
+    }
+  }
+}

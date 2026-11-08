@@ -47,7 +47,7 @@ export function clearToasts(): void {
 
 /**
  * Đăng ký nhận danh sách toast hiện tại + mọi thay đổi sau đó.
- * Trả về hàm hủy đăng ký. Callback được gọi ngay với snapshot hiện tại.
+ * Trả về hàm huỷ đăng ký. Callback được gọi ngay với snapshot hiện tại.
  */
 export function subscribeToasts(fn: Listener): () => void {
   listeners.add(fn);

@@ -11,13 +11,13 @@ export async function cmdApplyFilter(args: ParsedArgs): Promise<void> {
   const lut = reqFlag(args.flags, "lut");
 
   if (!isLutId(lut))
-    throw new CliError(`--lut không hợp lệ. Chọn một trong: ${(LUT_IDS as readonly string[]).join(", ")}`);
+    throw new CliError("ENUM_INVALID", `--lut không hợp lệ. Chọn một trong: ${(LUT_IDS as readonly string[]).join(", ")}`);
 
   const { spec, filePath } = await loadProject(projectPath);
   const found = findClip(spec, clipId);
-  if (!found) throw new CliError(`Không tìm thấy clip: ${clipId}`);
+  if (!found) throw new CliError("NOT_FOUND", `Không tìm thấy clip: ${clipId}`);
   if (found.clip.kind !== "video")
-    throw new CliError(`Filter chỉ áp dụng cho clip video (clip ${clipId} là ${found.clip.kind})`);
+    throw new CliError("KIND_MISMATCH", `Filter chỉ áp dụng cho clip video (clip ${clipId} là ${found.clip.kind})`);
 
   found.clip.filter = { lut };
 

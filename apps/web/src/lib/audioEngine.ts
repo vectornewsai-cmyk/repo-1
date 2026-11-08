@@ -25,7 +25,7 @@
  * AudioContext chưa được mở), update() gán el.volume trực tiếp như code cũ.
  */
 import type { KeyframedValue, FadeCurve } from "@repo-1/video-spec";
-import { interpolateKeyframes } from "@repo-1/video-spec";
+import { EASINGS, interpolateKeyframes, normalizeKeyframes } from "@repo-1/video-spec";
 
 function clamp(v: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, v));
@@ -52,6 +52,60 @@ export function fadeCurveFactor(curve: FadeCurve, p: number): number {
 }
 
 /**
+ * Đợt 52 I2 — volumeKeyframes có field nhưng toàn entry lỗi thì sau
+ * normalize còn rỗng, phải coi như KHÔNG có keyframe (khớp sanitize
+ * render của F1 + helper hasUsableKeyframes của H6 ở previewEngine):
+ * field rỗng sau lọc ≡ dùng volume tĩnh. `[null]` in-memory (qua
+ * patchClip, né cổng load mà E4 đã sanitize) có length 1 nên guard
+ * cũ `kfs.length > 0` không cứu — interpolateKeyframes ném "mảng
+ * keyframes rỗng" ngay đầu tick preview. Hỗn hợp [null, hợp lệ] vẫn
+ * nội suy trên entry hợp lệ (interpolateKeyframes tự normalize).
+ */
+export function hasUsableVolumeKeyframes(
+  kf: KeyframedValue | undefined | null,
+): boolean {
+  return (
+    !!kf &&
+    Array.isArray(kf.keyframes) &&
+    normalizeKeyframes(kf.keyframes as never).length > 0
+  );
+}
+
+/**
+ * Đợt 52 I7 — nội suy volumeKeyframes không để throw lọt ra tick preview.
+ * Từ đợt này `applyEasing` bản TS ném "easing không hỗ trợ" với easing lạ
+ * (thống nhất mirror với bản JS/render — trước đây TS trả undefined → NaN,
+ * gain bị clamp chặn lặng). Easing lạ chỉ tới được đây khi dữ liệu bị sửa
+ * tay in-memory (cổng load đã sanitize easing về linear, MCP add_keyframe
+ * chặn bằng z.enum): nội suy lại với easing lạ coi như "linear" (đúng ngữ
+ * nghĩa sanitize ở cổng load); hết đường thì rơi về volume tĩnh.
+ */
+function interpolateVolumeKeyframes(
+  kfs: KeyframedValue["keyframes"],
+  t: number,
+  fallback: number,
+): number {
+  try {
+    return interpolateKeyframes(kfs, t);
+  } catch {
+    const clean = (kfs as readonly unknown[]).map((k) =>
+      k &&
+      typeof k === "object" &&
+      !(EASINGS as readonly string[]).includes(
+        (k as { easing?: unknown }).easing as string,
+      )
+        ? { ...(k as Record<string, unknown>), easing: "linear" }
+        : k,
+    );
+    try {
+      return interpolateKeyframes(clean as KeyframedValue["keyframes"], t);
+    } catch {
+      return fallback;
+    }
+  }
+}
+
+/**
  * Tính gain mục tiêu cho 1 clip audio tại `elapsed` giây (tính từ đầu clip).
  *
  * Thứ tự khớp render worker (server/render/src/render.js + audiomix.js):
@@ -69,8 +123,8 @@ export function computeClipGain(
   const el = clamp(elapsed, 0, Math.max(0, clip.duration));
   let v: number;
   const kfs = clip.volumeKeyframes?.keyframes;
-  if (kfs && kfs.length > 0) {
-    v = interpolateKeyframes(kfs, el);
+  if (hasUsableVolumeKeyframes(clip.volumeKeyframes)) {
+    v = interpolateVolumeKeyframes(kfs!, el, clip.volume ?? 1);
   } else {
     v = clip.volume ?? 1;
   }
