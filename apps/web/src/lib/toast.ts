@@ -11,6 +11,13 @@ export interface ToastItem {
   id: number;
   message: string;
   kind: ToastKind;
+  /**
+   * Đợt 71 Y5 — toast dính: component Toasts KHÔNG tự đóng sau 4,5 s
+   * mà chỉ đóng khi caller gọi `dismissToast(id)` (hoặc bấm ×). Dùng
+   * cho toast trạng thái chạy dài (trial keyframe) — toast thường vẫn
+   * tự đóng như cũ. Mặc định false.
+   */
+  sticky?: boolean;
 }
 
 type Listener = (toasts: ToastItem[]) => void;
@@ -25,11 +32,31 @@ function emit(): void {
 }
 
 /** Thêm một toast, trả về id để có thể đóng sớm. */
-export function pushToast(message: string, kind: ToastKind = "info"): number {
+export function pushToast(
+  message: string,
+  kind: ToastKind = "info",
+  opts?: { sticky?: boolean },
+): number {
   const id = nextId++;
-  items = [...items, { id, message, kind }];
+  items = [...items, { id, message, kind, ...(opts?.sticky ? { sticky: true } : {}) }];
   emit();
   return id;
+}
+
+/**
+ * Đợt 71 Y5 — cập nhật nội dung toast đang hiện (tại chỗ, giữ nguyên
+ * id/vị trí, không tạo toast mới, không reset hẹn giờ tự đóng).
+ * Trả false khi id không còn tồn tại (đã đóng) — caller khi đó phải
+ * push lại nếu vẫn cần hiện. Dùng để cập nhật số giây đã trôi qua
+ * trên toast trạng thái trial keyframe mà không nhấp nháy / spam.
+ */
+export function updateToast(id: number, message: string): boolean {
+  const idx = items.findIndex((t) => t.id === id);
+  if (idx === -1) return false;
+  if (items[idx].message === message) return true;
+  items = items.map((t) => (t.id === id ? { ...t, message } : t));
+  emit();
+  return true;
 }
 
 /** Đóng toast theo id (không có tác dụng nếu id không tồn tại). */

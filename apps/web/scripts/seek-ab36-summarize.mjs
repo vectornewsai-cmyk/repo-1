@@ -25,6 +25,7 @@
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -167,5 +168,5 @@ const out = {
   pooled36PlusR1: summarizeSet(pooled, "pooled-36+R1-v2"),
 };
 const text = JSON.stringify(out, null, 2);
-if (process.argv[2]) fs.writeFileSync(process.argv[2], text);
+if (process.argv[2]) writeFileEpermRetry(process.argv[2], text);
 console.log(text);

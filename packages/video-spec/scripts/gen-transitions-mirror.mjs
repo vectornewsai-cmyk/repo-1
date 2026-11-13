@@ -20,7 +20,9 @@
 // cố tình bỏ qua chúng; chỉ TRANSITION_TYPES, TRANSITION_META và
 // isTransitionType được mirror (isTransitionType giữ đúng ngữ nghĩa cũ).
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
+// Đợt 86 N8: ghi qua helper retry EPERM (5×20 s + verify đủ byte).
+import { writeFileEpermRetry } from "../../../apps/web/scripts/eperm-retry.mjs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -135,5 +137,5 @@ export function isTransitionType(v) {
 }
 `;
 
-writeFileSync(jsPath, `${header}\n${typesBlock}\n${metaBlock}\n${fnBlock}`);
+writeFileEpermRetry(jsPath, `${header}\n${typesBlock}\n${metaBlock}\n${fnBlock}`);
 console.log(`gen-transitions-mirror: ${types.length} types, ${metaEntries.length} meta entries -> ${jsPath}`);

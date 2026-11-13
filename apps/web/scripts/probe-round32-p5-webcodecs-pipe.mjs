@@ -7,6 +7,7 @@
 // KHÔNG build app, KHÔNG sửa code sản phẩm, KHÔNG push.
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -99,7 +100,7 @@ async function main() {
   for (const f of ["page.js", "mp4Demux.js", "reverseWebcodecs.js", "sparse-gop-flat.mp4", "dense-gop-flat.mp4"]) {
     if (!fs.existsSync(path.join(SCRATCH, f))) fail(`thiếu ${f} trong ${SCRATCH}`);
   }
-  fs.writeFileSync(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>p5 wc probe</title><body>probe</body><script type="module" src="/page.js"></script>`);
+  writeFileEpermRetry(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>p5 wc probe</title><body>probe</body><script type="module" src="/page.js"></script>`);
   const server = serveDir(SCRATCH);
   await new Promise((r) => server.listen(PORT, "127.0.0.1", r));
   log(`phục vụ probe tại ${ORIGIN}`);
@@ -146,7 +147,7 @@ async function main() {
     result = await cdp.evaluate(`window.__p5Result || null`, cdp.sessionId).catch(() => null);
   }
   if (!result) fail("probe không trả kết quả sau 300s");
-  fs.writeFileSync(path.join(SCRATCH, "p5-webcodecs.json"), JSON.stringify(result, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "p5-webcodecs.json"), JSON.stringify(result, null, 2));
   log("KẾT QUẢ: " + JSON.stringify(result));
   cleanup();
   process.exit(0);

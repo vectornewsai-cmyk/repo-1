@@ -1,0 +1,130 @@
+{
+  "url": "http://127.0.0.1:5173",
+  "durationSec": 6,
+  "warmupSec": 1,
+  "windowSize": "1440,900",
+  "chromium": "/home/hatch/.cache/ms-playwright/chromium-1254/chrome-linux64/chrome",
+  "timestamp": "2026-11-11T09:10:00.257Z",
+  "headed": false,
+  "headlessNote": "headless=new",
+  "profileReused": null,
+  "seedAutosave": "/tmp/r88-p9-seed-tracked.json",
+  "loadAvg1Before": 8.04,
+  "cpuSamples": [
+    105.7,
+    113,
+    108.7,
+    107.1,
+    105.2,
+    103.9,
+    103.9,
+    102.3,
+    101,
+    99.8,
+    99.2
+  ],
+  "seedProjectName": "Dự án mẫu + tracked mask (r88-p9)",
+  "projectCheck": {
+    "projectName": "Dự án mẫu + tracked mask (r88-p9)",
+    "clips": 3
+  },
+  "seedLoaded": true,
+  "diagBefore": {
+    "canvas": {
+      "w": 872,
+      "h": 276
+    },
+    "wrapCss": {
+      "w": 874,
+      "h": 278
+    },
+    "dpr": 1,
+    "visibilityState": "visible",
+    "hold": null,
+    "idle": {
+      "ticks": 3,
+      "sleeping": false,
+      "pauseRetrySkipped": 0,
+      "seekFailureCount": 0,
+      "tickErrors": 0
+    },
+    "raf": {
+      "samples": 3
+    },
+    "longtasks": {
+      "count": 0,
+      "totalMs": 0
+    }
+  },
+  "cpuChromePctBefore": 115.1,
+  "perfOverlayButton": true,
+  "playing": true,
+  "noPlay": false,
+  "timeDisplay": {
+    "before": "00:00.0 / 00:08.0",
+    "after": "00:02.3 / 00:08.0",
+    "end": "00:08.0 / 00:08.0"
+  },
+  "timer16HzCount": 242,
+  "timer16HzRate": 40.3,
+  "diagAfter": {
+    "canvas": {
+      "w": 872,
+      "h": 276
+    },
+    "wrapCss": {
+      "w": 874,
+      "h": 278
+    },
+    "dpr": 1,
+    "visibilityState": "visible",
+    "hold": null,
+    "idle": {
+      "ticks": 38,
+      "sleeping": true,
+      "pauseRetrySkipped": 0,
+      "seekFailureCount": 0,
+      "tickErrors": 0
+    },
+    "raf": {
+      "samples": 38
+    },
+    "longtasks": {
+      "count": 0,
+      "totalMs": 0
+    }
+  },
+  "previewRaf": {
+    "count": 24,
+    "gapP50ms": 216.7,
+    "gapP95ms": 383.4,
+    "gapP99ms": 499.9,
+    "over100ms": 23,
+    "lostMs": 0,
+    "playheadStart": 2.3,
+    "playheadEnd": 8
+  },
+  "frames": 27,
+  "fpsAvg": 4.29,
+  "fpsMin1s": 5,
+  "fpsMax1s": 5,
+  "dropsOver50ms": 25,
+  "maxIntervalMs": 505.6,
+  "frameTimeMs": {
+    "p5": 75.6,
+    "p50": 202.1,
+    "p95": 382.8
+  },
+  "loadAvg1After": 8.23,
+  "cpuChromePct": {
+    "samples": 11,
+    "avg": 104.5,
+    "max": 113,
+    "note": "%CPU theo 1 core (100% = 1 core đầy); VM 4 core nên trần ~400%."
+  },
+  "hardwareConcurrency": 4,
+  "frozenDist": {
+    "validity": "UNVERIFIED",
+    "note": "Không đặt --dist-dir/BENCH_DIST_DIR nên dist không được đóng băng; bundle snapshot (nếu có) vẫn là not-captured."
+  }
+}

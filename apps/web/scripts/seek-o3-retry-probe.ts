@@ -14,6 +14,7 @@
 // Kết quả JSON: benchmarks/results/v32-o3-retry-longrun.json
 // KHÔNG push, KHÔNG sửa code sản phẩm (script đo thuần túy).
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import path from "node:path";
 import { seekElement, Seeker, type Seekable } from "../src/lib/seek.ts";
 
@@ -98,6 +99,6 @@ const result = {
 };
 const outPath = path.resolve("benchmarks/results/v32-o3-retry-longrun.json");
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
-fs.writeFileSync(outPath, JSON.stringify(result, null, 2));
+writeFileEpermRetry(outPath, JSON.stringify(result, null, 2));
 console.log(JSON.stringify(result, null, 2));
 console.log(`JSON: ${outPath}`);

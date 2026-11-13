@@ -42,6 +42,7 @@
  * file + hash manifest để đối chiếu bằng mắt.
  */
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import path from "node:path";
 import os from "node:os";
 import crypto from "node:crypto";
@@ -116,7 +117,7 @@ function doBackup() {
     totalBytes,
     files: manifestFiles,
   };
-  fs.writeFileSync(path.join(destDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
+  writeFileEpermRetry(path.join(destDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
   const manifestSha = sha256File(path.join(destDir, "manifest.json"));
   // index.json ở gốc: liệt kê mọi lần backup (đọc cũ, thêm mới).
   let index = { backups: [] };
@@ -132,7 +133,7 @@ function doBackup() {
     totalBytes: manifest.totalBytes,
     manifestSha256: manifestSha,
   });
-  fs.writeFileSync(indexPath, JSON.stringify(index, null, 2) + "\n");
+  writeFileEpermRetry(indexPath, JSON.stringify(index, null, 2) + "\n");
   console.log(`[backup] nguồn: ${SRC}`);
   console.log(`[backup] đích: ${destDir}`);
   console.log(`[backup] files=${manifest.fileCount} totalBytes=${totalBytes} manifestSha256=${manifestSha}`);

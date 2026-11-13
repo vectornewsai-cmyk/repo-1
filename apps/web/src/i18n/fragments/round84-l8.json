@@ -1,0 +1,62 @@
+{
+  "en": {
+    "bridgeErrors": {
+      "TTS_CLONED_VOICE_LIMIT": "You can save at most {max} cloned voices — delete an old one first.",
+      "TTS_CLONED_VOICE_NAME_DUP": "A voice named “{name}” already exists — pick another name.",
+      "TTS_CLONED_VOICE_NAME_EMPTY": "Enter a name for the cloned voice.",
+      "TTS_CLONED_VOICE_NAME_TOO_LONG": "Voice name must be at most {max} characters (currently {length}).",
+      "TTS_CLONED_VOICE_NOT_FOUND": "Cloned voice not found.",
+      "TTS_CLONED_VOICE_REGISTRY": "Could not load the cloned voice list — try again later."
+    },
+    "tts": {
+      "cloneCreateHint": "Best sample: 3–30s, one clear voice, low noise. The system reads one sample sentence to verify before saving — the voice stays only on your machine.",
+      "clonedGroupLabel": "Cloned voices",
+      "clonedVoiceMissing": "That cloned voice no longer exists — pick another voice.",
+      "clonedVoicesEmpty": "No cloned voices yet — create one from a sample below.",
+      "clonedVoicesTitle": "🎭 Cloned voices",
+      "createVoiceBtn": "Create voice",
+      "createVoiceTitle": "＋ Create a new cloned voice",
+      "creatingVoiceBtn": "⏳ Creating voice...",
+      "deleteVoice": "Delete",
+      "deleteVoiceConfirm": "Delete for sure?",
+      "loadVoicesFailed": "Could not load the cloned voice list.",
+      "presetGroupLabel": "Preset voices",
+      "previewLabel": "Listen to the sample reading:",
+      "voiceCreateFailed": "Could not create voice: {error}",
+      "voiceCreated": "✅ Created voice “{name}” — listen to the sample reading, then use it like a preset voice.",
+      "voiceDeleted": "Deleted voice “{name}”.",
+      "voiceNameLabel": "Voice name",
+      "voiceNamePlaceholder": "E.g. My voice"
+    }
+  },
+  "vi": {
+    "bridgeErrors": {
+      "TTS_CLONED_VOICE_LIMIT": "Đã lưu tối đa {max} giọng clone — xóa bớt giọng cũ rồi tạo mới.",
+      "TTS_CLONED_VOICE_NAME_DUP": "Đã có giọng tên “{name}” — chọn tên khác.",
+      "TTS_CLONED_VOICE_NAME_EMPTY": "Chưa nhập tên cho giọng clone.",
+      "TTS_CLONED_VOICE_NAME_TOO_LONG": "Tên giọng tối đa {max} ký tự (đang {length}).",
+      "TTS_CLONED_VOICE_NOT_FOUND": "Không tìm thấy giọng đã clone.",
+      "TTS_CLONED_VOICE_REGISTRY": "Không đọc được danh sách giọng đã clone — thử lại sau."
+    },
+    "tts": {
+      "cloneCreateHint": "Mẫu tốt nhất: 3–30s, một giọng nói rõ, ít nhiễu. Hệ thống đọc thử 1 câu mẫu để kiểm tra trước khi lưu — giọng chỉ lưu trên máy của bạn.",
+      "clonedGroupLabel": "Giọng đã clone",
+      "clonedVoiceMissing": "Giọng đã clone không còn nữa — chọn lại giọng khác.",
+      "clonedVoicesEmpty": "Chưa có giọng clone nào — tạo giọng mới từ file mẫu bên dưới.",
+      "clonedVoicesTitle": "🎭 Giọng đã clone",
+      "createVoiceBtn": "Tạo giọng",
+      "createVoiceTitle": "＋ Tạo giọng clone mới",
+      "creatingVoiceBtn": "⏳ Đang tạo giọng...",
+      "deleteVoice": "Xóa",
+      "deleteVoiceConfirm": "Chắc chắn xóa?",
+      "loadVoicesFailed": "Không tải được danh sách giọng đã clone.",
+      "presetGroupLabel": "Giọng có sẵn",
+      "previewLabel": "Nghe thử bản đọc mẫu:",
+      "voiceCreateFailed": "Không tạo được giọng: {error}",
+      "voiceCreated": "✅ Đã tạo giọng “{name}” — nghe thử bản đọc mẫu rồi dùng như giọng preset.",
+      "voiceDeleted": "Đã xóa giọng “{name}”.",
+      "voiceNameLabel": "Tên giọng",
+      "voiceNamePlaceholder": "VD: Giọng của tôi"
+    }
+  }
+}

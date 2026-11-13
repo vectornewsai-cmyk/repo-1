@@ -10,6 +10,9 @@ import { fileURLToPath } from "node:url";
 import type { VideoSpec } from "../../packages/video-spec/src/index.js";
 import { SPEC_VERSION } from "../../packages/video-spec/src/index.js";
 import { validateVideoSpec, ValidationError } from "./validate.js";
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (biến thể
+// async của apps/web/scripts/eperm-retry.mjs; xem ./epermRetry.ts).
+import { writeFileEpermRetryAsync } from "./epermRetry.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)); // .../mcp-server/dist/mcp-server/src
 export const SERVER_DIR = path.resolve(HERE, "..", "..", ".."); // .../mcp-server
@@ -76,9 +79,9 @@ export async function createProject(spec: VideoSpec, mediaDir: string): Promise<
   await ensureDirs();
   const projectId = newProjectId();
   const now = new Date().toISOString();
-  await fs.writeFile(projectFile(projectId), JSON.stringify(spec, null, 2), "utf8");
+  await writeFileEpermRetryAsync(projectFile(projectId), JSON.stringify(spec, null, 2), { label: "mcp-create-project" });
   const meta: ProjectMeta = { mediaDir, createdAt: now, updatedAt: now };
-  await fs.writeFile(metaFile(projectId), JSON.stringify(meta, null, 2), "utf8");
+  await writeFileEpermRetryAsync(metaFile(projectId), JSON.stringify(meta, null, 2), { label: "mcp-create-project-meta" });
   return { projectId };
 }
 
@@ -122,8 +125,8 @@ export async function saveProject(projectId: string, spec: VideoSpec): Promise<v
     meta = { mediaDir: DEFAULT_MEDIA_DIR, createdAt: "", updatedAt: "" };
   }
   meta.updatedAt = new Date().toISOString();
-  await fs.writeFile(projectFile(projectId), JSON.stringify(clean, null, 2), "utf8");
-  await fs.writeFile(metaFile(projectId), JSON.stringify(meta, null, 2), "utf8");
+  await writeFileEpermRetryAsync(projectFile(projectId), JSON.stringify(clean, null, 2), { label: "mcp-save-project" });
+  await writeFileEpermRetryAsync(metaFile(projectId), JSON.stringify(meta, null, 2), { label: "mcp-save-project-meta" });
 }
 
 /** Tìm clip video theo id trong spec (dùng cho apply_transition). */

@@ -15,6 +15,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "../store";
+import { useIsMobile } from "../lib/useIsMobile";
 import { getLang, t, useLang } from "../i18n";
 import { presentedLabel, presentedNote, presentedRate, readPlayingPresentedTotal } from "../lib/perfPresented65R8";
 
@@ -60,6 +61,28 @@ const btnStyle: React.CSSProperties = {
 export function PerfOverlay() {
   useLang(); // re-render khi đổi ngôn ngữ
   const playing = useStore((s) => s.playing);
+  // Đợt 80 H9: ở viewport hẹp (≤768px) pill cố định góc dưới-phải (right:12,
+  // bottom:12) đè lên tay cầm trim + clip ở lane video (đo headed 390px:
+  // pill 70×44 tại x 308–378, y 788–832 che trọn handle phải clip A và
+  // phần nhìn thấy của clip B → trim/chọn clip không bấm được). Dời cả
+  // pill lẫn panel sang góc dưới-trái, ngay trên timeline (bottom:262px =
+  // timeline mobile 250px + 12px khe): chỉ che video/letterbox, không che
+  // nút hay clip nào. Desktop giữ nguyên. Panel khi mở vẫn là overlay
+  // chẩn đoán do user mở chủ đích (đóng bằng ✕).
+  // Đợt 81 I8 (BUG MỚI do chính lần dời H9): panel mobile cao 292.5px ×
+  // rộng 378px (10 hàng số liệu + 2 ghi chú dài) nên mép trên vắt tới
+  // y≈289.5, che 2837px² nút TopBar "Cắt lặng" (y 278–322) — click vào tâm
+  // nút rơi vào panel, modal không mở (M10 63r1 FAIL, tái hiện bằng diag).
+  // Sửa tối thiểu: kẹp panel mobile cao tối đa 140px + cuộn trong (mép trên
+  // ≈442, dưới đáy topbar 437px ở 390px, chỉ che preview) — giữ nguyên vị
+  // trí bottom:262px để không chạm lại tay cầm trim.
+  const isMobile = useIsMobile();
+  const btnStyleEff: React.CSSProperties = isMobile
+    ? { ...btnStyle, right: "auto", left: "12px", bottom: "262px" }
+    : btnStyle;
+  const panelStyleEff: React.CSSProperties = isMobile
+    ? { ...panelStyle, right: "auto", left: "12px", bottom: "262px", maxHeight: "140px", overflowY: "auto" }
+    : panelStyle;
   const [open, setOpen] = useState(false);
   const [cur, setCur] = useState<WindowStat | null>(null);
   const [avg, setAvg] = useState<number | null>(null);
@@ -128,14 +151,14 @@ export function PerfOverlay() {
 
   if (!open) {
     return (
-      <button type="button" style={btnStyle} onClick={() => setOpen(true)} title={t("perf.openFps")}>
+      <button type="button" className="perf-fps-btn" style={btnStyleEff} onClick={() => setOpen(true)} title={t("perf.openFps")}>
         📈 FPS
       </button>
     );
   }
 
   return (
-    <div style={panelStyle} role="status" aria-label={t("perf.title")}>
+    <div className="perf-fps-panel" style={panelStyleEff} role="status" aria-label={t("perf.title")}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
         <strong>📈 FPS preview</strong>
         <button type="button" onClick={() => setOpen(false)} aria-label={t("perf.closeFps")} style={{ background: "none", border: "none", color: "#eee", cursor: "pointer" }}>

@@ -16,6 +16,8 @@ const fs = require("fs");
 const { spawn } = require("child_process");
 const { redactStderr } = require("./errorDetail"); // Đợt 29 L3: dòng [scene] LỖI có thể chứa đường dẫn
 const { codedError } = require("./errorCodes"); // Đợt 62 R5: mã lỗi bridge→web
+// Đợt 80 H8 (gap N4): hủy job thật.
+const { abortError, killChildOnAbort, killChildTree } = require("./aiProgress");
 
 const DEFAULT_THRESHOLD = 0.4;
 const MIN_THRESHOLD = 0.05;
@@ -113,12 +115,19 @@ function validateCuts(raw) {
  * @param {number|null} o.start khoảng bắt đầu (giây tuyệt đối), null = đầu file.
  * @param {number|null} o.end   khoảng kết thúc (giây tuyệt đối), null = cuối file.
  * @param {(phase:string)=>void} [o.onPhase]  callback khi phase đổi.
+ * @param {AbortSignal} [o.signal]  Đợt 80 H8: abort → kill cây process
+ *   python và reject lỗi AI_JOB_ABORTED (hủy thật, không còn chạy nền).
  * @param {object} [o.config]   override sceneConfigFromEnv() (cho test).
  * @returns {Promise<{cuts:number[], duration:number|null, threshold:number}>}
  */
-function runSceneDetect({ inputPath, threshold, start, end, onPhase, config }) {
+function runSceneDetect({ inputPath, threshold, start, end, onPhase, signal, config }) {
   const cfg = config || sceneConfigFromEnv();
   return new Promise((resolve, reject) => {
+    // Đã bị hủy trước khi spawn → từ chối ngay, không chạy script.
+    if (signal && signal.aborted) {
+      reject(abortError("Job đã bị hủy trước khi chạy."));
+      return;
+    }
     const outJson = path.join(
       path.dirname(inputPath),
       `scenes-${Date.now()}-${Math.random().toString(16).slice(2, 10)}.json`
@@ -135,16 +144,21 @@ function runSceneDetect({ inputPath, threshold, start, end, onPhase, config }) {
     let stdout = "";
     let stderr = "";
     let done = false;
+    // Khai báo trước để finish() gọi được cả khi spawn throw đồng bộ
+    // (trước lúc detachAbort thật được gán ở dưới).
+    let detachAbort = () => {};
     const finish = (err, result) => {
       if (done) return;
       done = true;
       clearTimeout(timer);
+      detachAbort();
       try { fs.unlinkSync(outJson); } catch { /* file có thể chưa được tạo */ }
       if (err) reject(err);
       else resolve(result);
     };
     const timer = setTimeout(() => {
-      try { child.kill("SIGKILL"); } catch { /* đã thoát */ }
+      // Timeout: kill cả cây process thay vì chỉ python.
+      killChildTree(child, 0).catch(() => {});
       finish(new Error(
         `Scene detection quá lâu (>${Math.round(cfg.timeoutMs / 1000)}s) — thử video ngắn hơn.`
       ));
@@ -154,10 +168,23 @@ function runSceneDetect({ inputPath, threshold, start, end, onPhase, config }) {
 
     let child;
     try {
-      child = spawn(cfg.pythonBin, args, { stdio: ["ignore", "pipe", "pipe"] });
+      child = spawn(cfg.pythonBin, args, {
+        stdio: ["ignore", "pipe", "pipe"],
+        shell: false,
+        // Đợt 80 H8: group riêng để hủy diệt được cả ffmpeg con.
+        detached: process.platform !== "win32",
+      });
     } catch (e) {
       finish(new Error(`Không khởi chạy được scene.py: ${e.message}`));
       return;
+    }
+    // Đợt 80 H8: hủy thật — signal abort → kill cây process, reject lỗi
+    // AI_JOB_ABORTED (route phân biệt để gửi event "cancelled").
+    detachAbort = killChildOnAbort(child, signal, 2000);
+    if (signal) {
+      signal.addEventListener("abort", () => {
+        finish(abortError("Job đã bị hủy."));
+      }, { once: true });
     }
     child.on("error", (e) => {
       finish(new Error(`Không khởi chạy được scene.py: ${e.message}`));

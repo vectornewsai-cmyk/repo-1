@@ -10,6 +10,7 @@
 // Kết quả in ra stdout (JSON); --json ghi thêm file.
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -132,7 +133,7 @@ console.log(value);
 if (JSON_OUT) {
   const p = path.isAbsolute(JSON_OUT) ? JSON_OUT : path.join(ROOT, JSON_OUT);
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  fs.writeFileSync(p, JSON.stringify({ browser: "chromium-headless-playwright-1248", result: JSON.parse(value) }, null, 2));
+  writeFileEpermRetry(p, JSON.stringify({ browser: "chromium-headless-playwright-1248", result: JSON.parse(value) }, null, 2));
   console.log(`JSON: ${p}`);
 }
 ws.close();

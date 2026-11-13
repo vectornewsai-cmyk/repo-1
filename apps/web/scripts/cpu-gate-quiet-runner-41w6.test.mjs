@@ -11,6 +11,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -79,7 +80,7 @@ test("sampleSystemLoad thật: hình dạng hợp lệ, nproc khớp máy", () =
 function diagOn(rounds) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "w6-test-diag-"));
   const f = path.join(dir, "rounds.json");
-  fs.writeFileSync(f, JSON.stringify(rounds));
+  writeFileEpermRetry(f, JSON.stringify(rounds));
   const r = spawnSync(process.execPath, ["--experimental-strip-types", DIAG_HELPER, f], { encoding: "utf8", timeout: 60000 });
   fs.unlinkSync(f);
   fs.rmdirSync(dir);

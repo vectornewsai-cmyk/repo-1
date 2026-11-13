@@ -9,6 +9,7 @@
 // KHÔNG build app, KHÔNG sửa code sản phẩm, KHÔNG push.
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -112,7 +113,7 @@ async function main() {
   for (const f of ["page.js", "mp4Demux.js", "reverseWebcodecs.js", "reverseDecodeAhead.js", "noise-30s.mp4"]) {
     if (!fs.existsSync(path.join(SCRATCH, f))) fail(`thiếu ${f} trong ${SCRATCH}`);
   }
-  fs.writeFileSync(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>q3 decode-ahead probe</title><body>probe</body><script type="module" src="/page.js"></script>`);
+  writeFileEpermRetry(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>q3 decode-ahead probe</title><body>probe</body><script type="module" src="/page.js"></script>`);
   const server = serveDir(SCRATCH);
   await new Promise((r) => server.listen(PORT, "127.0.0.1", r));
   log(`phục vụ probe tại ${ORIGIN}`);
@@ -173,7 +174,7 @@ async function main() {
   if (!result) fail("probe không trả kết quả sau 600s");
   result.rssByStage = rssByStage;
   result.pipe = { chromePid: chrome.pid, display: DISPLAY };
-  fs.writeFileSync(path.join(SCRATCH, "q3-decode-ahead.json"), JSON.stringify(result, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "q3-decode-ahead.json"), JSON.stringify(result, null, 2));
   log("KẾT QUẢ: " + JSON.stringify(result));
   cleanup();
   process.exit(0);

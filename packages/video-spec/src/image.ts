@@ -36,6 +36,15 @@ export interface ImageClip {
    * Áp sau khi ảnh đã lấp đầy khung hình.
    */
   mask?: import("./mask.js").ClipMask;
+  /**
+   * Phase 9 đợt 88 closing — Quỹ đạo motion tracking cho clip ảnh, cùng
+   * ngữ nghĩa VideoClip/TextClip (D3): mask bám track (render png/trackgeq
+   * đã làm từ đợt 87 O2), ảnh đứng yên. Trước đây type thiếu field này
+   * trong khi render + validator đã chấp nhận track ở runtime, và
+   * normalizeImageClip làm rơi track qua chuẩn hoá — preview giữ mask tĩnh
+   * (lệch render) vì call site không truyền được track có type.
+   */
+  track?: import("./tracking.js").TrackAttachment;
 }
 
 export interface ImageTrack {
@@ -66,7 +75,7 @@ function isFiniteNumber(x: unknown): x is number {
 }
 
 /** Chuẩn hoá image clip: điền giá trị mặc định cho các trường optional. */
-export function normalizeImageClip(c: ImageClip): Required<Omit<ImageClip, "mask">> & { mask?: import("./mask.js").ClipMask } {
+export function normalizeImageClip(c: ImageClip): Required<Omit<ImageClip, "mask" | "track">> & { mask?: import("./mask.js").ClipMask; track?: import("./tracking.js").TrackAttachment } {
   return {
     kind: "image",
     id: c.id,
@@ -76,6 +85,9 @@ export function normalizeImageClip(c: ImageClip): Required<Omit<ImageClip, "mask
     fit: c.fit ?? IMAGE_DEFAULTS.fit,
     // Phase 7 P4: giữ mask qua chuẩn hoá (không làm rơi field).
     ...(c.mask ? { mask: c.mask } : {}),
+    // Phase 9 đợt 88 closing: giữ track qua chuẩn hoá (như mask) — render
+    // + validator đã chấp nhận image+track, preview cần track để mask bám.
+    ...(c.track ? { track: c.track } : {}),
   };
 }
 

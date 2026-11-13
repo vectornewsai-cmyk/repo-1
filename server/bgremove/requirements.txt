@@ -1,37 +1,46 @@
 # server/bgremove — xoá nền local (rembg MIT + birefnet-general MIT)
-# Venv này chạy bằng Python 3.10 (xem dưới) — KHÔNG dùng system Python 3.12.
+# Venv này chạy bằng Python 3.12 — xem dưới. KHÔNG dùng system Python 3.12
+# trực tiếp (venv riêng để pin deps).
 #
-# ROUND53-J8 (07/11/2026) — bộ pin đã verify chạy thật trên VM này
-# (venv server/bgremove/.venv, Python 3.10.22 qua `uv python install 3.10`):
-#   uv venv --python 3.10 server/bgremove/.venv
-#   uv pip install --python server/bgremove/.venv/bin/python -r requirements.txt
-#   (đặt TMPDIR sang đĩa lớn — /tmp trên VM chỉ là tmpfs 512M, uv giải
-#   nén wheel llvmlite 57M sẽ chết vì hết chỗ.)
+# ROUND67-U8 (08/11/2026) — rebuild venv Python 3.10 → 3.12 để vá CVE
+# (nợ đợt 66 T10: pip-audit tts 39 + bgremove 66 lỗ hổng).
+#   LÝ DO BẮT BUỘC LÊN 3.12 (đã kiểm chứng bằng metadata PyPI + dry-run):
+#   * Pillow 13.0.0 requires_python >=3.11 → venv 3.10 không cài được.
+#   * rembg 2.0.75 và 2.0.82 (bản vá CVE) đều requires_python >=3.11
+#     (2.0.60 là bản cuối hỗ trợ 3.10: '>=3.8, <3.13') → venv 3.10 không
+#     vá được BẤT KỲ lỗ hổng rembg nào.
+#   * rembg 2.0.82 còn kẹp pillow<13.0.0 → hai bản vá "khuyên dùng"
+#     (rembg 2.0.82 + Pillow 13.0.0) mâu thuẫn nhau; chỉ rembg >=2.0.87
+#     mới cho Pillow 13 (pillow<14.0.0,>=12.3.0).
+#   * rembg 2.0.87 VẪN CÓ sessions/birefnet_general.py
+#     (BiRefNetSessionGeneral) và dùng đúng model cũ
+#     BiRefNet-general-epoch_244.onnx md5 7a35a0141cbbc80de11d9c9a28f52697
+#     (đã có trong ~/.u2net — không cần tải lại).
+#   * opencv 5.0.0.93 dùng wheel cp37-abi3 → cài được trên 3.12;
+#     onnxruntime 1.23.2 có wheel cp312; numpy 2.5.4 requires >=3.12
+#     (đã sạch CVE ở audit tts) và thỏa rembg 2.0.87 (numpy>=2.3.0,<3.0.0).
+#   Cách rebuild (venv cũ giữ lại làm backup .venv-py310-bak tới khi
+#   verify xong, rồi mới xóa):
+#     mv server/bgremove/.venv server/bgremove/.venv-py310-bak
+#     uv venv --python 3.12 server/bgremove/.venv
+#     TMPDIR=~/workspace/.tmp uv pip install \
+#       --python server/bgremove/.venv/bin/python -r requirements.txt
+#   (đặt TMPDIR sang đĩa lớn — /tmp trên VM chỉ là tmpfs 512M.)
 #
-# rembg 2.0.38 → 2.0.60 (LÝ DO, có bằng chứng — xem LIMITS J8):
-#   * rembg 2.0.38 KHÔNG có session BiRefNet nào (wheel không chứa
-#     sessions/birefnet*.py); new_session('birefnet-general') lặng lẽ trả
-#     về U2netSession — tức "birefnet-general" trên pin K4 thực chất
-#     chạy u2net. Kiểm chứng bằng source đã cài + wheel trên PyPI.
-#   * rembg 2.0.60 là bản ĐẦU TIÊN có sessions/birefnet_general.py
-#     (BiRefNetSessionGeneral, tải BiRefNet-general-epoch_244.onnx,
-#     md5 7a35a0141cbbc80de11d9c9a28f52697) và vẫn cho Python 3.10
-#     (requires_python '>=3.8, <3.13').
-#   * Extra `[cpu]` BẮT BUỘC ở 2.0.60 (đính chính): ở 2.0.38 onnxruntime
-#     là dep lõi, nhưng 2.0.60 dời onnxruntime sang extra `cpu`
-#     (Requires-Dist: onnxruntime; extra == "cpu"); cài plain `rembg`
-#     bằng pip sẽ THIẾU onnxruntime → `import rembg` lỗi ngay (đã gặp
-#     thật ở --fresh của build-slim-venv.mjs, xem LIMITS J8). Pin thêm
-#     onnxruntime==1.23.2 tường minh để khóa version (extra kéo bản mới
-#     nhất, có thể đổi).
-# numpy 2.5.4 → 2.2.6: numpy 2.5.4 yêu cầu Python >=3.12 nên uv từ chối
-#   giải trên Python 3.10; 2.2.6 là bản uv resolve được cho 3.10.
-# opencv 5.0.0.93 + Pillow 10.2.0 giữ nguyên pin cũ (resolve được trên 3.10).
-# Các dep kéo theo (đã freeze trong venv, xem LIMITS J8): pooch 1.9.0,
-# pymatting 1.1.16, numba 0.68.1, scikit-image 0.25.2, scipy 1.15.3.
-# Venv ~706M (cây pymatting/numba/llvmlite nặng).
-rembg[cpu]==2.0.60
+# ROUND53-J8 (07/11/2026) — lịch sử bộ pin cũ (giữ để đối chiếu):
+#   rembg 2.0.38 → 2.0.60: 2.0.38 KHÔNG có session BiRefNet nào (wheel
+#   không chứa sessions/birefnet*.py); 2.0.60 là bản ĐẦU TIÊN có
+#   sessions/birefnet_general.py và vẫn cho Python 3.10.
+#   Extra `[cpu]` BẮT BUỘC (onnxruntime dời sang extra `cpu` từ 2.0.60).
+#   numpy 2.5.4 → 2.2.6 lúc đó vì numpy 2.5.4 yêu cầu Python >=3.12
+#   nên uv từ chối giải trên Python 3.10; nay venv đã lên 3.12 nên pin
+#   numpy trở lại 2.5.4 (bản mới nhất, sạch CVE).
+#   Các dep kéo theo ở venv 3.10 cũ (đã freeze, xem LIMITS J8): pooch 1.9.0,
+#   pymatting 1.1.16, numba 0.68.1, scikit-image 0.25.2, scipy 1.15.3.
+#   rembg 2.0.87 yêu cầu mới (transitive, uv tự resolve): numpy>=2.3.0,
+#   scikit-image>=0.26.0,<0.27.0, scipy>=1.16.3,<2.0.0, pymatting>=1.1.14.
+rembg[cpu]==2.0.87
 onnxruntime==1.23.2
 opencv-python-headless==5.0.0.93
-numpy==2.2.6
-Pillow==10.2.0
+numpy==2.5.4
+Pillow==13.0.0

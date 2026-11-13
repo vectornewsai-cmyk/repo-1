@@ -13,6 +13,7 @@
 
 const { execFileSync, spawnSync } = require("child_process");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const path = require("path");
 const os = require("os");
 
@@ -62,7 +63,7 @@ const renderJs = path.join(__dirname, "src", "render.js");
 function runRender(spec, outName) {
   const specPath = path.join(outDir, `${outName}.json`);
   const outPath = path.join(outDir, `${outName}.mp4`);
-  fs.writeFileSync(specPath, JSON.stringify(spec, null, 2));
+  writeFileEpermRetry(specPath, JSON.stringify(spec, null, 2));
   console.log(`\n🔨 Render ${outName} (mode=${spec.tracks[0].clips[0].sourceAudioMode}, speed=${spec.tracks[0].clips[0].speed})...`);
   const r = spawnSync("node", [
     renderJs, "--spec", specPath, "--media-dir", mediaDir, "--out", outPath,

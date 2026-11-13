@@ -12,6 +12,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
@@ -97,7 +98,7 @@ print("OK")
     ],
   };
   const specPath = path.join(outDir, "demo-image.json");
-  fs.writeFileSync(specPath, JSON.stringify(spec, null, 2));
+  writeFileEpermRetry(specPath, JSON.stringify(spec, null, 2));
   console.log("✅ spec đã viết (3 image clip, 9s, không video track)");
 
   // 3. Chạy CHÍNH render.js (kèm validate.js bên trong)

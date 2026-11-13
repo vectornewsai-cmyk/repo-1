@@ -18,6 +18,15 @@ import { resolveBridgeApiError, type BridgeApiErrorBody } from "../lib/bridgeErr
 import { formatImportProgressText } from "../lib/importProgressText41W3";
 import type { ImportFileProgressEvent } from "../lib/ingestProgress39T5";
 import { BRIDGE_URL } from "../lib/bridgeUrl";
+import {
+  AI_JOB_STREAM_DROPPED,
+  AiJobCancelledError,
+  formatAiJobEta,
+  readAiJobStream,
+  resolveAiJobPhaseLabel,
+  type AiJobProgressState,
+} from "../lib/aiJobStream"; // Đợt 80 H8: progress + hủy thật cho job AI dài
+import { AiJobProgress } from "./AiJobProgress"; // Đợt 80 H8: thanh tiến trình AI dùng chung
 
 
 type Status = "idle" | "running" | "error";
@@ -28,6 +37,8 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
   useLang();
   const [status, setStatus] = useState<Status>("idle");
   const [msg, setMsg] = useState("");
+  // Đợt 80 H8: tiến trình THẬT của job đang chạy (% + ETA từ bridge).
+  const [jobProgress, setJobProgress] = useState<AiJobProgressState | null>(null);
   // Đợt 41 W3 — tiến trình importFiles của file MOV đã xoá nền (như MediaBin V5).
   const [importProgress, setImportProgress] = useState<ImportFileProgressEvent | null>(null);
   // Phase 7 P6: chọn session — "auto" (mặc định) thử birefnet trước, lỗi/OOM
@@ -52,6 +63,7 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
     }
     setStatus("running");
     setMsg(i18nT("bgremove.running"));
+    setJobProgress(null);
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     try {
@@ -72,11 +84,40 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
           : null;
         throw new Error(resolveBridgeApiError(j, i18nT, i18nT("bgremove.bridgeHttp", { status: String(res.status) })));
       }
-      // Phase 7 P6: bridge báo session thực sự đã dùng qua header — hiển
-      // thị rõ nếu đã fallback (đừng để user tưởng vẫn là birefnet).
-      const sessionUsed = res.headers.get("X-Bgremove-Session-Used") || session;
-      const fallbackFrom = res.headers.get("X-Bgremove-Fallback-From") || "";
-      const blob = await res.blob();
+      // Đợt 80 H8: đọc NDJSON stream — progress THẬT theo frame + hủy thật
+      // (abort fetch → bridge kill python; trước đây job cứ chạy nền).
+      let doneEvt;
+      try {
+        doneEvt = await readAiJobStream(res, {
+          onPhase: (phase) => {
+            setMsg(resolveAiJobPhaseLabel(phase, (k, vars) => i18nT(k, vars)));
+          },
+          onProgress: (p) => {
+            setMsg(resolveAiJobPhaseLabel(p.phase, (k, vars) => i18nT(k, vars)));
+            setJobProgress(p);
+          },
+        });
+      } catch (e) {
+        if (e instanceof AiJobCancelledError) throw e;
+        if ((e as Error).message === AI_JOB_STREAM_DROPPED) {
+          throw new Error(i18nT("bgremove.failed"));
+        }
+        const body = (e as { bridgeBody?: BridgeApiErrorBody }).bridgeBody;
+        throw new Error(resolveBridgeApiError(body ?? null, i18nT, i18nT("bgremove.failed")));
+      }
+      // Phase 7 P6: bridge báo session thực sự đã dùng trong event done —
+      // hiển thị rõ nếu đã fallback (đừng để user tưởng vẫn là birefnet).
+      const sessionUsed = typeof doneEvt.sessionUsed === "string" ? doneEvt.sessionUsed : session;
+      const fallbackFrom = typeof doneEvt.fallbackFrom === "string" ? doneEvt.fallbackFrom : "";
+      const downloadUrl = typeof doneEvt.downloadUrl === "string" ? doneEvt.downloadUrl : "";
+      if (!downloadUrl) throw new Error(i18nT("bgremove.failed"));
+      setMsg(i18nT("aiJob.downloading"));
+      const dlRes = await fetch(`${BRIDGE_URL}${downloadUrl}`, { signal: ctrl.signal });
+      if (!dlRes.ok) {
+        throw new Error(i18nT("aiJob.downloadFailed", { status: String(dlRes.status) }));
+      }
+      const blob = await dlRes.blob();
+      if (!blob || blob.size === 0) throw new Error(i18nT("aiJob.downloadEmpty"));
       const dot = mediaItem.name.lastIndexOf(".");
       const base = dot > 0 ? mediaItem.name.slice(0, dot) : mediaItem.name;
       const file = new File([blob], `${base}_no_bg.mov`, { type: "video/quicktime" });
@@ -99,7 +140,7 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
           : "")
       );
     } catch (e) {
-      if ((e as Error).name === "AbortError") {
+      if ((e as Error).name === "AbortError" || e instanceof AiJobCancelledError) {
         setStatus("idle");
         setMsg(i18nT("bgremove.aborted"));
       } else {
@@ -155,7 +196,12 @@ export function BgRemovePanel({ mediaItem }: { mediaItem: MediaItem | undefined 
       {status === "running" ? (
         <div>
           <p style={{ fontSize: 12 }}>{msg}</p>
-          <button type="button" onClick={cancel}>{i18nT("bgremove.cancel")}</button>
+          {/* Đợt 80 H8: tiến trình THẬT (% + ETA) + nút Hủy thật. */}
+          <AiJobProgress
+            progress={jobProgress?.progress ?? null}
+            etaText={formatAiJobEta(jobProgress?.etaSeconds ?? null, (k, vars) => i18nT(k, vars))}
+            onCancel={cancel}
+          />
         </div>
       ) : (
         <button type="button" onClick={run} disabled={!mediaItem?.file}>

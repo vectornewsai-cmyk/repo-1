@@ -152,6 +152,9 @@ export async function generatePackFiles(
     const label = tpl.template.name.toUpperCase();
     let gen: GeneratedMedia | null;
     if (p.kind === "video") {
+      // Đợt 74 B3 — ".webm" ở đây chỉ là tên yêu cầu: recordPackMedia
+      // đổi đuôi thành .mp4 khi recorder thật ghi mp4 (Safari), nên
+      // fileNames/spec src nhận đúng tên cuối (xem sampleMedia.ts).
       const name = `pack-${tpl.template.id}-${p.id}-${suffix}.webm`;
       // Đợt 61 R5: recordPackMedia ném RecordPackTimeoutError khi quá hạn
       // (onstop không fire) — đổi thành PackError riêng để modal báo đúng

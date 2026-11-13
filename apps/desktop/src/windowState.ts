@@ -5,6 +5,9 @@
 import { app } from "electron";
 import * as fs from "node:fs";
 import * as path from "node:path";
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (port JS của
+// apps/web/scripts/eperm-retry.mjs; xem services/epermRetry.js).
+import { writeFileEpermRetry } from "./services/epermRetry.js";
 
 export interface WindowState {
   height: number;
@@ -52,7 +55,7 @@ export function loadWindowState(): WindowState {
 export function saveWindowState(state: WindowState): void {
   try {
     fs.mkdirSync(path.dirname(stateFile()), { recursive: true });
-    fs.writeFileSync(stateFile(), JSON.stringify(state), "utf-8");
+    writeFileEpermRetry(stateFile(), JSON.stringify(state), { label: "desktop-window-state.json" });
   } catch {
     // Không chặn thoát app vì lỗi ghi state.
   }

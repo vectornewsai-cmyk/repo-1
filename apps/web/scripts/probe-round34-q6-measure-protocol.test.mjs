@@ -22,6 +22,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import { PERSEEK_SPEC_FIELDS, validatePerSeekEntry } from "./per-seek-probe.mjs";
@@ -70,7 +71,7 @@ function classify(n2) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "y5-q6-"));
   try {
     const input = path.join(dir, "forward-hold.json");
-    fs.writeFileSync(input, JSON.stringify(n2));
+    writeFileEpermRetry(input, JSON.stringify(n2));
     const r = spawnSync("node", [Q6, "classify", input, "0"], { encoding: "utf8" });
     assert.equal(r.status, 0, `Q6 classify exit ${r.status}: ${r.stderr}`);
     return JSON.parse(fs.readFileSync(input.replace(/\.json$/, "") + ".labeled.json", "utf8"));

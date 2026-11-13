@@ -6,13 +6,22 @@
  * đổi chưa lưu), và version hiện tại trước khi khôi phục được snapshot tự
  * động để không mất dữ liệu.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useStore } from "../../store";
 import {
   HISTORY_KEEP_DEFAULT,
+  getHistoryChangedSeq,
   getHistoryStore,
+  subscribeHistoryChanged,
   type ProjectVersion,
 } from "../../lib/projectHistory";
+// Đợt 67 U6 — mở lại các chuỗi legacy đã "Bỏ qua" (modal nhận thủ công):
+// nút này yêu cầu modal LegacyHistoryAdoptModal hiện lên với mục đã bỏ qua.
+import {
+  getDismissedLegacyIdsSnapshot,
+  requestLegacyAdoptModal,
+  subscribeDismissedLegacyIds,
+} from "../../lib/legacyAdoptUi";
 import { collectSpeedCurveWarnings, isDirty, markSaved } from "../../lib/projectRepo";
 // Phase 9 đợt 28 L4: khôi phục bypass parseProjectText nên J5 không
 // chạy ở đó — quét lại spec đã khôi phục và đồng bộ báo cáo tải.
@@ -44,6 +53,11 @@ export function HistoryPanel({ onClose }: { onClose: () => void }) {
   const [versions, setVersions] = useState<ProjectVersion[]>([]);
   const [label, setLabel] = useState("");
   const [busy, setBusy] = useState(false);
+  // Đợt 67 U6 — số chuỗi legacy đã bỏ qua (để nút mở lại hiện số lượng).
+  const dismissedCount = useSyncExternalStore(subscribeDismissedLegacyIds, getDismissedLegacyIdsSnapshot).length;
+  // Đợt 67 U6 — tự đọc lại khi lịch sử đổi mà không đổi projectId
+  // (nhập archive mang lịch sử mới, nhận/hoàn tác legacy).
+  const historySeq = useSyncExternalStore(subscribeHistoryChanged, getHistoryChangedSeq);
   // Đợt 64 R6 — lịch sử khóa theo projectId ổn định của envelope
   // (store.projectId), không còn khóa theo id legacy gắn với tên file
   // (getCurrentProjectId): đổi tên project không đứt chuỗi; hai file
@@ -59,7 +73,7 @@ export function HistoryPanel({ onClose }: { onClose: () => void }) {
     }
   };
 
-  useEffect(() => { void refresh(); }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void refresh(); }, [projectId, historySeq]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const doSnapshot = async () => {
     setBusy(true);
@@ -172,6 +186,14 @@ export function HistoryPanel({ onClose }: { onClose: () => void }) {
           {t("history.import")}
           <input type="file" accept=".json,application/json" style={{ display: "none" }} onChange={(e) => void onImportFile(e)} />
         </label>
+        <button
+          type="button"
+          data-testid="history-open-dismissed"
+          title={t("legacyAdopt.openDismissed", { n: String(dismissedCount) })}
+          onClick={() => requestLegacyAdoptModal()}
+        >
+          {t("legacyAdopt.openDismissed", { n: String(dismissedCount) })}
+        </button>
       </div>
       {versions.length === 0 ? (
         <p style={{ color: "#aaa" }}>{t("history.empty")}</p>

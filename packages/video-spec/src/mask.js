@@ -6,7 +6,10 @@
  * D4 — sort/has/normalize/interpolate/maskGeometryAt + validate keyframes
  * — vì Rollup resolve "./mask.js" sang mirror này, mirror cũ làm vite
  * build fail với "interpolateMaskAt is not exported".)
+ * Phase 9 đợt 87 O1: thêm maskGeometryAtTrack (mirror mask.ts).
  */
+import { interpolateTrack } from "./tracking.js";
+
 export const MASK_SHAPES = ["rect", "ellipse"];
 
 export const MASK_DEFAULTS = {
@@ -87,6 +90,22 @@ export function interpolateMaskAt(m, t) {
 export function maskGeometryAt(m, t) {
   const g = interpolateMaskAt(m, t);
   return { ...m, x: g.x, y: g.y, w: g.w, h: g.h, keyframes: undefined };
+}
+
+/**
+ * Phase 9 đợt 87 O1 — Hình học mask bám motion track tại thời gian cục bộ
+ * t (giây, tương đối từ clip.start). Mirror chính xác maskGeometryAtTrack
+ * ở mask.ts: không track (undefined/null, points rỗng/không phải mảng) →
+ * đúng maskGeometryAt(m, t); có track → tâm = interpolateTrack(points, t)
+ * (tuyến tính, kẹp ngoài khoảng), w/h vẫn từ interpolateMaskAt (keyframes
+ * thắng w/h, keyframe x/y bị track ghi đè); shape/feather/invert giữ
+ * nguyên; keyframes bị bỏ khỏi kết quả.
+ */
+export function maskGeometryAtTrack(m, track, t) {
+  const g = maskGeometryAt(m, t);
+  if (!track || !Array.isArray(track.points) || track.points.length === 0) return g;
+  const pos = interpolateTrack(track.points, t);
+  return { ...g, x: pos.x, y: pos.y };
 }
 
 export function validateMask(m) {

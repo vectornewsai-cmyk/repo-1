@@ -1,8 +1,12 @@
 // previewLoop50F2.test.ts — Đợt 50 luồng F2: khóa quyết định ngủ/tick
 // của vòng lặp preview (§7.6) + trần tường 10 s cho chuỗi skip (§7.7).
 //
-// Chạy bằng esbuild bundle (không chạy trực tiếp strip-types được vì
-// previewLoop50F2.ts import extensionless như code production):
+// Chạy bằng node strip-types (từ gốc repo) — đợt 91 S2 đã thêm đuôi .ts
+// cho 2 import trong previewLoop50F2.ts (pauseDraw41W2.ts,
+// pauseSeekCap42X2.ts) nên strip-types phân giải được; trước đó lỗi
+// ERR_MODULE_NOT_FOUND vì import extensionless. Cách cũ bằng esbuild
+// bundle vẫn chạy được:
+//   node --experimental-strip-types apps/web/src/lib/previewLoop50F2.test.ts
 //   ../../node_modules/.bin/esbuild apps/web/src/lib/previewLoop50F2.test.ts \
 //     --bundle --platform=node --format=esm --outfile=/tmp/f2-previewLoop50F2.test.mjs \
 //     && node /tmp/f2-previewLoop50F2.test.mjs

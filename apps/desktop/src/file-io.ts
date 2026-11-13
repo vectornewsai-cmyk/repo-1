@@ -35,6 +35,9 @@
  */
 import * as fsp from "node:fs/promises";
 import * as path from "node:path";
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte, bản async
+// (port JS của apps/web/scripts/eperm-retry.mjs; xem services/epermRetry.js).
+import { writeFileEpermRetryAsync } from "./services/epermRetry.js";
 import type { IpcMain } from "electron";
 import {
   MAX_READ_FILE_BYTES,
@@ -170,7 +173,7 @@ export async function writeProjectFile(
   try {
     await fsp.mkdir(path.dirname(filePath), { recursive: true });
     const tmp = `${filePath}.tmp-${process.pid}`;
-    await fsp.writeFile(tmp, content, "utf-8");
+    await writeFileEpermRetryAsync(tmp, content, { label: "desktop-write-project-file" });
     await fsp.rename(tmp, filePath);
     return filePath;
   } catch (err) {

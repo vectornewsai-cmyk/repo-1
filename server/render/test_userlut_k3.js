@@ -20,6 +20,7 @@
 const assert = require("assert");
 const { execFileSync, spawnSync } = require("child_process");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 
@@ -81,7 +82,7 @@ async function main() {
     cubeLines.push(`${b} ${g} ${r}`);
   }
   const cubeText = cubeLines.join("\n") + "\n";
-  fs.writeFileSync(path.join(mediaDir, "__lut_user-test-look.cube"), cubeText);
+  writeFileEpermRetry(path.join(mediaDir, "__lut_user-test-look.cube"), cubeText);
 
   // ---- 1. parseCube (transpile web lib sang CommonJS tạm) ----
   const tsOut = path.join(tmp, "userLut.js");
@@ -118,7 +119,7 @@ async function main() {
   };
   function render(spec, outName) {
     const specPath = path.join(tmp, `${outName}.json`);
-    fs.writeFileSync(specPath, JSON.stringify(spec));
+    writeFileEpermRetry(specPath, JSON.stringify(spec));
     const r = spawnSync(process.execPath, [RENDER_JS, "--spec", specPath,
       "--out", path.join(tmp, `${outName}.mp4`), "--media-dir", mediaDir, "-y"],
       { encoding: "utf8" });

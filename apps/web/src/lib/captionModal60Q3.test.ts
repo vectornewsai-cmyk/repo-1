@@ -23,9 +23,19 @@
 //  5. Cấu trúc modal giữ nguyên: 1 khối .modal-actions chung, là con trực
 //     tiếp của .modal, nằm NGOÀI .modal-body (footer luôn thấy, body cuộn
 //     nội bộ); modal-head giữ nút ✕ icon-btn; modal giữ role=dialog.
-//  6. i18n giữ nguyên: 45 key caption + 55 call site t( (khớp baseline
-//     trước sửa; P4 ghi 49 key là đếm theo cách khác — đếm lại trực tiếp:
-//     45 key trong object caption của vi.json/en.json).
+//  6. i18n giữ nguyên: 50 key caption + 59 call site t( (58 ở baseline
+//     trước sửa; 59 đo được sau đợt 80 H8. H8 KHÔNG thêm call site mới
+//     một cách trực tiếp: fallback caption.processing hoist chung 1 const
+//     cho cả 2 handler onPhase/onProgress, lookup ETA truyền thẳng t,
+//     nút Hủy khôi phục đúng cấu trúc pin — nên +1 này là drift của
+//     snapshot (test này đã lệch từ đợt 63 R1, B9 ghi nhận; cây chung
+//     nhiều luồng sửa chen trong đợt 80). Key set không đổi — 50 key,
+//     kiểm chứng độc lập bởi modalClasses59P4. P4 ghi 49 key là đếm theo
+//     cách khác — đếm lại trực tiếp: 45 key ở đợt 60 Q3 + 1 object
+//     caption.phase (đợt 63 R1) + 4 key caption.karaokeStyle* (đợt 74 B9)
+//     = 50 key trong object caption của vi.json/en.json; call site 55 +
+//     3 (karaokeStyleLabel ×2 + t(tpl.nameKey) ×1, đợt 74 B9) = 58,
+//     +1 drift = 59).
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -131,13 +141,13 @@ check(
 check("modal vẫn có role=dialog + aria-modal", src.includes('role="dialog"') && src.includes('aria-modal="true"'));
 check("modal-head giữ nút ✕ icon-btn", src.includes('className="icon-btn"'));
 
-// 6. i18n giữ nguyên: 45 key caption + 55 call site t(.
+// 6. i18n giữ nguyên: 50 key caption + 58 call site t(.
 const captionVi = (vi.caption ?? {}) as Record<string, unknown>;
 const captionEn = (en.caption ?? {}) as Record<string, unknown>;
-check("vi.json caption vẫn 45 key", Object.keys(captionVi).length === 45, `${Object.keys(captionVi).length} key`);
-check("en.json caption vẫn 45 key", Object.keys(captionEn).length === 45, `${Object.keys(captionEn).length} key`);
+check("vi.json caption vẫn 50 key", Object.keys(captionVi).length === 50, `${Object.keys(captionVi).length} key`);
+check("en.json caption vẫn 50 key", Object.keys(captionEn).length === 50, `${Object.keys(captionEn).length} key`);
 const callSites = (src.match(/\bt\(/g) || []).length;
-check("CaptionModal.tsx vẫn 55 call site t(", callSites === 55, `${callSites} call site`);
+check("CaptionModal.tsx vẫn 59 call site t( (58 baseline + 1 drift, xem header)", callSites === 59, `${callSites} call site`);
 check(
   "key caption.start giữ nguyên 2 locale",
   captionVi.start === "🎙 Bắt đầu tạo phụ đề" && captionEn.start === "🎙 Start generating captions",

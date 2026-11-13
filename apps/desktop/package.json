@@ -85,6 +85,8 @@
     "build:desktop": "npm run build --workspace=@repo-1/web && npm run build && npm run package",
     "build:slim-venv": "node scripts/build-slim-venv.mjs",
     "package": "electron-builder --linux",
+    "package:ship": "node scripts/package-ship.mjs",
+    "clicktest:ship": "node scripts/clicktest-ship-full.mjs",
     "prepackage": "node scripts/prepackage.mjs",
     "dev:desktop": "npm run build && node scripts/dev-desktop.mjs",
     "smoke:desktop": "npm run build && node scripts/copy-web-dist.mjs && VCUT_DESKTOP_SMOKE=1 xvfb-run -a electron --no-sandbox .",

@@ -13,6 +13,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -180,7 +181,7 @@ async function main() {
     if (OUT) {
       const outPath = path.resolve(ROOT, OUT);
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
-      fs.writeFileSync(outPath, JSON.stringify(result, null, 2) + "\n");
+      writeFileEpermRetry(outPath, JSON.stringify(result, null, 2) + "\n");
       console.log(`[profile] ghi ra ${outPath}`);
     }
   } finally {

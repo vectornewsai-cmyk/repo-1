@@ -47,8 +47,9 @@ export type BridgeErrorTranslator = (
 /**
  * Tập mã lỗi API bridge — KHỚP 1:1 với BRIDGE_ERROR_CODES ở
  * server/bridge/src/errorCodes.js và key `bridgeErrors.*` trong
- * fragment round62-r5 (91 mã) + fragment round63-r5 (11 mã TASK_*).
- * Test bridgeErrors62R5 khóa 3 chiều này (đọc cả 2 fragment).
+ * fragment round62-r5 (91 mã) + fragment round63-r5 (11 mã TASK_*)
+ * + fragment round84-l8 (6 mã TTS_CLONED_VOICE_*).
+ * Test bridgeErrors62R5 khóa 3 chiều này (đọc cả 3 fragment).
  * KHÔNG chứa mã phân loại render của errorDetail.js
  * (SPEED_CURVE_VIOLATION, MISSING_ASSET, SPEC_VALIDATION, OUTPUT_QA,
  * WORKER_START, WORKER_EXIT, FFMPEG_ERROR, UNKNOWN) — các mã đó đi
@@ -141,6 +142,12 @@ export const BRIDGE_ERROR_CODES: ReadonlySet<string> = new Set([
   "TASK_TTS_FAILED",
   "TRANSLATE_NEEDS_AV",
   "TRANSLATE_NOT_READY",
+  "TTS_CLONED_VOICE_LIMIT", // Đợt 84 L8: giọng đã clone lưu lại được
+  "TTS_CLONED_VOICE_NAME_DUP", // Đợt 84 L8
+  "TTS_CLONED_VOICE_NAME_EMPTY", // Đợt 84 L8
+  "TTS_CLONED_VOICE_NAME_TOO_LONG", // Đợt 84 L8
+  "TTS_CLONED_VOICE_NOT_FOUND", // Đợt 84 L8
+  "TTS_CLONED_VOICE_REGISTRY", // Đợt 84 L8
   "TTS_NOT_READY",
   "TTS_NO_WAV",
   "TTS_PREPARE_FAILED",

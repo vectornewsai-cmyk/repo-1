@@ -7,6 +7,7 @@
 
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 const path = require("node:path");
 
@@ -78,13 +79,13 @@ async function main() {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "scene-stub-"));
     const stub = path.join(dir, "stub.py");
     // Stub: nhận argv như scene.py thật, ghi JSON hợp lệ.
-    fs.writeFileSync(stub, `import json, sys
+    writeFileEpermRetry(stub, `import json, sys
 out = sys.argv[sys.argv.index("--out") + 1]
 print("[scene] quét scene (threshold=0.4)...", flush=True)
 json.dump({"cuts": [2.0, 4.0], "duration": 6.0, "threshold": 0.4, "cut_candidates": 2}, open(out, "w"))
 `);
     const inputPath = path.join(dir, "in.mp4");
-    fs.writeFileSync(inputPath, "fake");
+    writeFileEpermRetry(inputPath, "fake");
     const phases = [];
     const res = await runSceneDetect({
       inputPath,
@@ -103,12 +104,12 @@ json.dump({"cuts": [2.0, 4.0], "duration": 6.0, "threshold": 0.4, "cut_candidate
   await check("stub exit != 0 -> lỗi rõ", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "scene-stub-"));
     const stub = path.join(dir, "stub.py");
-    fs.writeFileSync(stub, `import sys
+    writeFileEpermRetry(stub, `import sys
 print("[scene] LỖI: boom", file=sys.stderr)
 sys.exit(1)
 `);
     const inputPath = path.join(dir, "in.mp4");
-    fs.writeFileSync(inputPath, "fake");
+    writeFileEpermRetry(inputPath, "fake");
     await assert.rejects(
       () => runSceneDetect({
         inputPath, threshold: 0.4, start: null, end: null,

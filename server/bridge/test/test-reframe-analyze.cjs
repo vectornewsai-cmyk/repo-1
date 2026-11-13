@@ -12,6 +12,7 @@
 const assert = require("node:assert/strict");
 const path = require("node:path");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 const { execFileSync } = require("node:child_process");
 
@@ -33,7 +34,7 @@ function ok(name, cond) {
   // Tạo bằng cv2 (ffmpeg drawbox/overlay không đánh giá được x theo t một
   // cách đáng tin cậy trên build này — đã thử và xác minh là không ra hộp).
   const genPy = path.join(dir, "gen.py");
-  fs.writeFileSync(genPy, `
+  writeFileEpermRetry(genPy, `
 import cv2, numpy as np, sys
 out = sys.argv[1]
 w, h, fps, n = 640, 360, 30, 90

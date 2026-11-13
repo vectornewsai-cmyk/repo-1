@@ -24,6 +24,7 @@
  *        --out-dir /tmp/vcut-fps-r52-seeds
  */
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import path from "node:path";
 
 function arg(name, def) {
@@ -132,8 +133,8 @@ const medium = buildMedium();
 const heavy = buildHeavy();
 const mediumPath = path.join(path.resolve(OUT_DIR), "autosave-fps-medium.json");
 const heavyPath = path.join(path.resolve(OUT_DIR), "autosave-fps-heavy.json");
-fs.writeFileSync(mediumPath, JSON.stringify(medium, null, 2) + "\n");
-fs.writeFileSync(heavyPath, JSON.stringify(heavy, null, 2) + "\n");
+writeFileEpermRetry(mediumPath, JSON.stringify(medium, null, 2) + "\n");
+writeFileEpermRetry(heavyPath, JSON.stringify(heavy, null, 2) + "\n");
 const countClips = (env) => env.spec.tracks.reduce((a, t) => a + t.clips.length, 0);
 console.log(`medium: ${mediumPath} (tracks=${medium.spec.tracks.length}, clips=${countClips(medium)}, adjustmentLayers=0)`);
 console.log(`heavy: ${heavyPath} (tracks=${heavy.spec.tracks.length}, clips=${countClips(heavy)}, adjustmentLayers=${(heavy.spec.adjustmentLayers ?? []).length})`);

@@ -37,6 +37,7 @@
 
 const { execFileSync, spawnSync } = require("child_process");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 
@@ -62,7 +63,7 @@ function ffProbe(file) {
 
 function renderSpec(spec, outName) {
   const specPath = path.join(WORK, `spec-${outName}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const outPath = path.join(WORK, `${outName}.mp4`);
   const r = spawnSync(process.execPath, [
     path.join(HERE, "render.js"),

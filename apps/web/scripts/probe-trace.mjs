@@ -14,6 +14,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -173,7 +174,7 @@ async function main() {
     cdp.close();
     const outPath = OUT ? path.resolve(ROOT, OUT) : path.resolve(ROOT, "benchmarks/results/preview-trace-r52.json");
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
-    fs.writeFileSync(outPath, JSON.stringify({ traceEvents: cdp.events }, null, 0));
+    writeFileEpermRetry(outPath, JSON.stringify({ traceEvents: cdp.events }, null, 0));
     console.log(`[trace] events=${cdp.events.length} timeEnd=${timeEnd.trim()} -> ${outPath} (${(fs.statSync(outPath).size / 1024).toFixed(0)}KB)`);
   } finally {
     try { chrome.kill("SIGTERM"); } catch { /* noop */ }

@@ -19,7 +19,7 @@ function ok(cond, label) {
 }
 
 console.log("== EXPORT_PRESETS ==");
-ok(Array.isArray(ep.EXPORT_PRESETS) && ep.EXPORT_PRESETS.length === 7, "có 7 preset (720p/1080p/4k/tiktok/youtube/ig-square/custom)");
+ok(Array.isArray(ep.EXPORT_PRESETS) && ep.EXPORT_PRESETS.length === 10, "có 10 preset (720p/1080p/4k/tiktok/reels/shorts/youtube/ig-square/ig-portrait/custom)");
 const ids = ep.EXPORT_PRESETS.map((p) => p.id);
 ok(ids.includes("720p") && ids.includes("1080p") && ids.includes("4k") && ids.includes("custom"), "đủ 4 id cũ");
 
@@ -55,21 +55,46 @@ ok(ep.validateExportPreset({ ...p1080, x264Preset: "evil; rm -rf" }).length > 0,
 ok(ep.validateExportPreset({ ...p1080, x264Preset: "Medium" }).length > 0, "x264Preset sai case bị từ chối");
 ok(ep.validateExportPreset({ ...p1080, audioBitrateKbps: 16 }).length > 0, "audio bitrate quá thấp bị từ chối");
 ok(ep.validateExportPreset({ ...p1080, audioBitrateKbps: 1024 }).length > 0, "audio bitrate quá cao bị từ chối");
+// Đợt 80 H10 (S4): trần bitrate video — tùy chọn, có mặt phải trong 500..100000.
+ok(ep.validateExportPreset({ ...p1080, videoBitrateKbps: 8000 }).length === 0, "videoBitrateKbps=8000 hợp lệ");
+ok(ep.validateExportPreset({ ...p1080, videoBitrateKbps: 499 }).length > 0, "videoBitrateKbps=499 bị từ chối");
+ok(ep.validateExportPreset({ ...p1080, videoBitrateKbps: 100001 }).length > 0, "videoBitrateKbps=100001 bị từ chối");
+ok(ep.validateExportPreset({ ...p1080, videoBitrateKbps: 8000.5 }).length > 0, "videoBitrateKbps không nguyên bị từ chối");
+ok(ep.validateExportPreset({ ...p1080, videoBitrateKbps: "8000" }).length > 0, "videoBitrateKbps chuỗi bị từ chối");
 
 console.log("== preset mạng xã hội (R1-064) ==");
 const tiktok = ep.getPreset("tiktok");
 ok(tiktok && tiktok.width === 1080 && tiktok.height === 1920 && tiktok.fps === 30, "tiktok = 1080x1920 @30fps (9:16)");
+ok(tiktok.videoBitrateKbps === 10000, "tiktok trần 10 Mbps (thực hành chung, TikTok không công bố bitrate)");
+ok(tiktok.label === "TikTok 9:16", "tiktok label qua i18n (không còn nhãn gộp TikTok/Reels)");
+// Đợt 80 H10 (S4): Reels + Shorts tách khỏi preset TikTok gộp.
+const reels = ep.getPreset("reels");
+ok(reels && reels.width === 1080 && reels.height === 1920 && reels.fps === 30, "reels = 1080x1920 @30fps (9:16)");
+ok(reels.videoBitrateKbps === 8000 && reels.audioBitrateKbps === 128, "reels trần 8 Mbps + audio 128k");
+const shorts = ep.getPreset("shorts");
+ok(shorts && shorts.width === 1080 && shorts.height === 1920 && shorts.fps === 30, "shorts = 1080x1920 @30fps (9:16)");
+ok(shorts.videoBitrateKbps === 8000 && shorts.audioBitrateKbps === 384, "shorts trần 8 Mbps (số YouTube công bố) + audio 384k stereo");
 const youtube = ep.getPreset("youtube");
 ok(youtube && youtube.width === 1920 && youtube.height === 1080, "youtube = 1920x1080");
 ok(youtube.crf === 18 && youtube.audioBitrateKbps === 192, "youtube crf 18 + audio 192k (bitrate cao)");
+ok(youtube.videoBitrateKbps === 8000, "youtube trần 8 Mbps (số YouTube công bố cho 1080p30)");
 const igsq = ep.getPreset("ig-square");
 ok(igsq && igsq.width === 1080 && igsq.height === 1080, "ig-square = 1080x1080 (1:1)");
-for (const id of ["tiktok", "youtube", "ig-square"]) {
+ok(igsq.videoBitrateKbps === 6000, "ig-square trần 6 Mbps (thực hành chung)");
+const igport = ep.getPreset("ig-portrait");
+ok(igport && igport.width === 1080 && igport.height === 1350, "ig-portrait = 1080x1350 (4:5, thêm đợt 73 A9)");
+ok(igport.videoBitrateKbps === 6000, "ig-portrait trần 6 Mbps (thực hành chung)");
+for (const id of ["tiktok", "reels", "shorts", "youtube", "ig-square", "ig-portrait"]) {
   const p = ep.getPreset(id);
   ok(ep.validateExportPreset(p).length === 0, `preset "${id}" hợp lệ`);
 }
-ok(ep.estimateVideoBitrateKbps(ep.getPreset("youtube")) > ep.estimateVideoBitrateKbps(ep.getPreset("1080p")),
-  "crf thấp hơn (youtube 18 < 1080p 20) → ước tính bitrate video cao hơn");
+// CRF thấp hơn → ước tính bitrate cao hơn (so trên cùng khung, không trần).
+ok(ep.estimateVideoBitrateKbps({ ...p1080, crf: 18 }) > ep.estimateVideoBitrateKbps({ ...p1080, crf: 20 }),
+  "crf thấp hơn (18 < 20) → ước tính bitrate video cao hơn (không trần)");
+// Đợt 80 H10: ước tính bị kẹp bởi trần bitrate của preset.
+ok(ep.estimateVideoBitrateKbps(reels) === 8000, "reels heuristic ~8.8 Mbps → ước tính kẹp đúng trần 8000");
+ok(ep.estimateVideoBitrateKbps(shorts) === 8000, "shorts heuristic ~8.8 Mbps → ước tính kẹp đúng trần 8000");
+ok(ep.estimateVideoBitrateKbps(tiktok) < 10000, "tiktok heuristic ~8.8 Mbps < trần 10 Mbps → trần không kẹp");
 
 console.log("== estimateSize (R1-064) ==");
 // Công thức: bpppf = 0.1 * 2^((23-20)/6) ≈ 0.1414; 1920*1080*30*0.1414/1000 ≈ 8796 kbps
@@ -98,6 +123,10 @@ const custom = ep.defaultCustomPreset();
 ok(custom.id === "custom" && custom.width === 1920, "defaultCustomPreset lấy từ 1080p");
 ok(ep.presetSummary(p1080).includes("1920×1080"), "presetSummary có resolution");
 ok(ep.presetSummary(p1080).includes("CRF 20"), "presetSummary có CRF");
+// Đợt 80 H10: preset có trần bitrate thì summary hiện rõ trần.
+ok(ep.presetSummary(ep.getPreset("reels")).includes("≤8 Mbps"), "presetSummary reels có ≤8 Mbps");
+ok(ep.presetSummary(ep.getPreset("tiktok")).includes("≤10 Mbps"), "presetSummary tiktok có ≤10 Mbps");
+ok(!ep.presetSummary(p1080).includes("Mbps"), "presetSummary 1080p (không trần) không có Mbps");
 
 console.log(`\n== KẾT QUẢ: ${pass} pass, ${fail} fail ==`);
 process.exit(fail === 0 ? 0 : 1);

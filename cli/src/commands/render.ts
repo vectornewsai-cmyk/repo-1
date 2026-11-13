@@ -10,6 +10,9 @@ import { CliError, numFlag, optFlag, reqFlag, type ParsedArgs } from "../args.js
 import { RENDER_WORKER_JS } from "../paths.js";
 import { formatRenderFailure, redactWorkerLine } from "../renderErrors.js";
 import { loadProject, projectDuration, validateProject } from "../project.js";
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (biến thể
+// async của apps/web/scripts/eperm-retry.mjs; xem ../epermRetry.ts).
+import { writeFileEpermRetryAsync } from "../epermRetry.js";
 
 /**
  * Đợt 30 M3 — chạy worker ở chế độ không-quiet mà KHÔNG để stderr thô
@@ -133,7 +136,7 @@ export async function cmdRender(args: ParsedArgs): Promise<void> {
   const outAbs = path.resolve(output);
 
   try {
-    await fs.writeFile(tmpSpec, JSON.stringify(spec), "utf8");
+    await writeFileEpermRetryAsync(tmpSpec, JSON.stringify(spec), { label: "cli-render-tmp-spec" });
     await fs.mkdir(path.dirname(outAbs), { recursive: true });
 
     const renderArgs = [RENDER_WORKER_JS, "--spec", tmpSpec, "--out", outAbs];

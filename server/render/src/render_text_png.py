@@ -34,6 +34,19 @@ def hex_to_rgb(h):
     return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
 
 
+def hex_to_rgba(h):
+    """#rrggbb → (r, g, b, 255); #rrggbbaa → (r, g, b, aa).
+
+    Đợt 74 B9: nền template karaoke "Nền mờ" (#00000080) cần giữ alpha
+    thật thay vì ép đục như trước (hex_to_rgb + 255 bỏ qua alpha).
+    """
+    h = h.lstrip("#")
+    if len(h) == 3:
+        h = "".join(c * 2 for c in h)
+    a = int(h[6:8], 16) if len(h) == 8 else 255
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), a)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--font", required=True)
@@ -41,7 +54,7 @@ def main():
     ap.add_argument("--color", required=True)
     ap.add_argument("--text", required=True)
     ap.add_argument("--out", required=True)
-    ap.add_argument("--bg", default=None, help="màu nền box (#rrggbb), không có = trong suốt")
+    ap.add_argument("--bg", default=None, help="màu nền box (#rrggbb hoặc #rrggbbaa), không có = trong suốt")
     ap.add_argument("--pad", type=int, default=0, help="padding box (px)")
     a = ap.parse_args()
 
@@ -65,7 +78,7 @@ def main():
     d = ImageDraw.Draw(img)
     if a.bg:
         d.rectangle([0, 0, img.width - 1, img.height - 1],
-                    fill=hex_to_rgb(a.bg) + (255,))
+                    fill=hex_to_rgba(a.bg))
     y = pad
     for ln in lines:
         d.text((pad, y), ln, font=font, fill=hex_to_rgb(a.color) + (255,))

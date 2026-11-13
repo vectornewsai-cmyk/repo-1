@@ -10,6 +10,9 @@ import type { Clip, Track, TrackKind, VideoSpec } from "../../packages/video-spe
 import { isVideoSpec, projectDuration, SPEC_VERSION } from "../../packages/video-spec/src/index.js";
 import { RENDER_VALIDATE_JS } from "./paths.js";
 import { CliError } from "./args.js";
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (biến thể
+// async của apps/web/scripts/eperm-retry.mjs; xem ./epermRetry.ts).
+import { writeFileEpermRetryAsync } from "./epermRetry.js";
 
 const require = createRequire(import.meta.url);
 
@@ -83,7 +86,7 @@ export async function saveProject(spec: VideoSpec, filePath: string): Promise<vo
     throw new CliError("SPEC_INVALID", "Spec không hợp lệ, từ chối ghi file");
   }
   await fs.mkdir(path.dirname(path.resolve(filePath)), { recursive: true });
-  await fs.writeFile(filePath, JSON.stringify(spec, null, 2) + "\n", "utf8");
+  await writeFileEpermRetryAsync(filePath, JSON.stringify(spec, null, 2) + "\n", { label: "cli-save-project" });
 }
 
 /** Validate đầy đủ, trả về errors/warnings. */

@@ -11,6 +11,7 @@
 
 const { execSync } = require("child_process");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const path = require("path");
 
 const OUT_DIR = process.argv.includes("--out-dir")
@@ -64,7 +65,7 @@ function main() {
 
   // Pixel check bằng Python PIL (ghi ra file để tránh lỗi quoting)
   const pyFile = path.join(OUT_DIR, "_pixelcheck.py");
-  fs.writeFileSync(pyFile, `
+  writeFileEpermRetry(pyFile, `
 from PIL import Image
 img = Image.open("${framesDir}/check.png").convert("RGB")
 w, h = img.size

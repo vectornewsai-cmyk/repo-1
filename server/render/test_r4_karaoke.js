@@ -11,6 +11,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { execFileSync, spawnSync } = require("child_process");
@@ -61,7 +62,7 @@ async function main() {
     ],
   };
   const specPath = path.join(dir, "spec.json");
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const out = path.join(dir, "out.mp4");
   const r = spawnSync("node", ["src/render.js", "--spec", specPath, "--out", out, "--media-dir", mediaDir],
     { cwd: __dirname, encoding: "utf8" });
@@ -93,7 +94,7 @@ for t in [0.4, 2.0, 3.6]:
     print(f"{t} yellow={yellow} white={white}")
 `;
   const pyFile = path.join(dir, "count.py");
-  fs.writeFileSync(pyFile, py);
+  writeFileEpermRetry(pyFile, py);
   const counts = {};
   try {
     const o = run("python3", [pyFile, dir, out]);

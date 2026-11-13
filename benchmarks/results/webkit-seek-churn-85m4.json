@@ -1,0 +1,414 @@
+{
+  "startedAt": "2026-11-11T01:03:54.603Z",
+  "engine": "webkit",
+  "cases": {
+    "h264_30s_g250_640|base": {
+      "clip": "h264_30s_g250_640",
+      "variant": "base",
+      "raw": {
+        "duration": 30,
+        "ticks": 0,
+        "seeks": [
+          {
+            "target": 3,
+            "seekedMs": 136,
+            "ct500msAfter": 3.518,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 15,
+            "seekedMs": 244,
+            "ct500msAfter": 15.566,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 27,
+            "seekedMs": 125,
+            "ct500msAfter": 27.578,
+            "seekingAfter": false,
+            "timeout": false
+          }
+        ]
+      }
+    },
+    "h264_30s_g250_640|play": {
+      "clip": "h264_30s_g250_640",
+      "variant": "play",
+      "raw": {
+        "duration": 30,
+        "ticks": 251,
+        "seeks": [
+          {
+            "target": 3,
+            "seekedMs": 124,
+            "ct500msAfter": 3.522,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 15,
+            "seekedMs": 202,
+            "ct500msAfter": 15.524,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 27,
+            "seekedMs": 58,
+            "ct500msAfter": 27.519,
+            "seekingAfter": false,
+            "timeout": false
+          }
+        ]
+      }
+    },
+    "h264_30s_g250_640|draw": {
+      "clip": "h264_30s_g250_640",
+      "variant": "draw",
+      "raw": {
+        "duration": 30,
+        "ticks": 104,
+        "seeks": [
+          {
+            "target": 3,
+            "seekedMs": 410,
+            "ct500msAfter": 3.7,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 15,
+            "seekedMs": 463,
+            "ct500msAfter": 15.467,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 27,
+            "seekedMs": 281,
+            "ct500msAfter": 27.6,
+            "seekingAfter": false,
+            "timeout": false
+          }
+        ]
+      }
+    },
+    "h264_30s_g250_640|rate": {
+      "clip": "h264_30s_g250_640",
+      "variant": "rate",
+      "raw": {
+        "duration": 30,
+        "ticks": 254,
+        "seeks": [
+          {
+            "target": 3,
+            "seekedMs": 91,
+            "ct500msAfter": 3.517,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 15,
+            "seekedMs": 169,
+            "ct500msAfter": 15.55,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 27,
+            "seekedMs": 55,
+            "ct500msAfter": 27.52,
+            "seekingAfter": false,
+            "timeout": false
+          }
+        ]
+      }
+    },
+    "h264_30s_g250_640|all": {
+      "clip": "h264_30s_g250_640",
+      "variant": "all",
+      "raw": {
+        "duration": 30,
+        "ticks": 118,
+        "seeks": [
+          {
+            "target": 3,
+            "seekedMs": 906,
+            "ct500msAfter": 4.231,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 15,
+            "seekedMs": 445,
+            "ct500msAfter": 15.5,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 27,
+            "seekedMs": 253,
+            "ct500msAfter": 27.567,
+            "seekingAfter": false,
+            "timeout": false
+          }
+        ]
+      }
+    },
+    "h264_30s_g30_640|base": {
+      "clip": "h264_30s_g30_640",
+      "variant": "base",
+      "raw": {
+        "duration": 30,
+        "ticks": 0,
+        "seeks": [
+          {
+            "target": 3,
+            "seekedMs": 71,
+            "ct500msAfter": 3.521,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 15,
+            "seekedMs": 27,
+            "ct500msAfter": 15.52,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 27,
+            "seekedMs": 27,
+            "ct500msAfter": 27.522,
+            "seekingAfter": false,
+            "timeout": false
+          }
+        ]
+      }
+    },
+    "h264_30s_g30_640|play": {
+      "clip": "h264_30s_g30_640",
+      "variant": "play",
+      "raw": {
+        "duration": 30,
+        "ticks": 218,
+        "seeks": [
+          {
+            "target": 3,
+            "seekedMs": 22,
+            "ct500msAfter": 3.516,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 15,
+            "seekedMs": 34,
+            "ct500msAfter": 15.525,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 27,
+            "seekedMs": 55,
+            "ct500msAfter": 27.549,
+            "seekingAfter": false,
+            "timeout": false
+          }
+        ]
+      }
+    },
+    "h264_30s_g30_640|draw": {
+      "clip": "h264_30s_g30_640",
+      "variant": "draw",
+      "raw": {
+        "duration": 30,
+        "ticks": 94,
+        "seeks": [
+          {
+            "target": 3,
+            "seekedMs": 343,
+            "ct500msAfter": 3.733,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 15,
+            "seekedMs": 294,
+            "ct500msAfter": 15.667,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 27,
+            "seekedMs": 237,
+            "ct500msAfter": 27.667,
+            "seekingAfter": false,
+            "timeout": false
+          }
+        ]
+      }
+    },
+    "h264_30s_g30_640|rate": {
+      "clip": "h264_30s_g30_640",
+      "variant": "rate",
+      "raw": {
+        "duration": 30,
+        "ticks": 237,
+        "seeks": [
+          {
+            "target": 3,
+            "seekedMs": 66,
+            "ct500msAfter": 3.52,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 15,
+            "seekedMs": 27,
+            "ct500msAfter": 15.522,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 27,
+            "seekedMs": 27,
+            "ct500msAfter": 27.522,
+            "seekingAfter": false,
+            "timeout": false
+          }
+        ]
+      }
+    },
+    "h264_30s_g30_640|all": {
+      "clip": "h264_30s_g30_640",
+      "variant": "all",
+      "raw": {
+        "duration": 30,
+        "ticks": 90,
+        "seeks": [
+          {
+            "target": 3,
+            "seekedMs": 331,
+            "ct500msAfter": 3.733,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 15,
+            "seekedMs": 302,
+            "ct500msAfter": 15.7,
+            "seekingAfter": false,
+            "timeout": false
+          },
+          {
+            "target": 27,
+            "seekedMs": 302,
+            "ct500msAfter": 27.7,
+            "seekingAfter": false,
+            "timeout": false
+          }
+        ]
+      }
+    }
+  },
+  "summary": {
+    "h264_30s_g250_640|base": {
+      "medianSeekedMs": 136,
+      "seekedMs": [
+        136,
+        244,
+        125
+      ],
+      "timeouts": 0
+    },
+    "h264_30s_g250_640|play": {
+      "medianSeekedMs": 124,
+      "seekedMs": [
+        124,
+        202,
+        58
+      ],
+      "timeouts": 0
+    },
+    "h264_30s_g250_640|draw": {
+      "medianSeekedMs": 410,
+      "seekedMs": [
+        410,
+        463,
+        281
+      ],
+      "timeouts": 0
+    },
+    "h264_30s_g250_640|rate": {
+      "medianSeekedMs": 91,
+      "seekedMs": [
+        91,
+        169,
+        55
+      ],
+      "timeouts": 0
+    },
+    "h264_30s_g250_640|all": {
+      "medianSeekedMs": 445,
+      "seekedMs": [
+        906,
+        445,
+        253
+      ],
+      "timeouts": 0
+    },
+    "h264_30s_g30_640|base": {
+      "medianSeekedMs": 27,
+      "seekedMs": [
+        71,
+        27,
+        27
+      ],
+      "timeouts": 0
+    },
+    "h264_30s_g30_640|play": {
+      "medianSeekedMs": 34,
+      "seekedMs": [
+        22,
+        34,
+        55
+      ],
+      "timeouts": 0
+    },
+    "h264_30s_g30_640|draw": {
+      "medianSeekedMs": 294,
+      "seekedMs": [
+        343,
+        294,
+        237
+      ],
+      "timeouts": 0
+    },
+    "h264_30s_g30_640|rate": {
+      "medianSeekedMs": 27,
+      "seekedMs": [
+        66,
+        27,
+        27
+      ],
+      "timeouts": 0
+    },
+    "h264_30s_g30_640|all": {
+      "medianSeekedMs": 302,
+      "seekedMs": [
+        331,
+        302,
+        302
+      ],
+      "timeouts": 0
+    }
+  },
+  "loadEnd": [
+    0.59,
+    1.85,
+    3.35
+  ],
+  "finishedAt": "2026-11-11T01:04:31.546Z"
+}

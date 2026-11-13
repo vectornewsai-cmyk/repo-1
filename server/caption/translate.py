@@ -19,6 +19,7 @@ import json
 import os
 import sys
 import tempfile
+import time
 
 # Tái sử dụng pipeline caption.py — script cùng thư mục nên import trực tiếp.
 import caption as cap
@@ -50,6 +51,9 @@ def translate_transcribe(wav_path, src_lang, model_name, model_dir):
     Trả về (words, detected_src_lang, audio_duration_sec). Cấu trúc words
     giống caption.transcribe để tái dùng group_words.
     """
+    # Đợt 80 H8 (gap N4): báo rõ phase nạp model + tiến trình thật
+    # (như caption.transcribe — xem caption.py).
+    print("[translate] nạp model...", flush=True)
     model = cap.load_model(model_name, model_dir)
     audio = cap.load_wav_mono16k(wav_path)
     language = None if src_lang == "auto" else src_lang
@@ -57,8 +61,15 @@ def translate_transcribe(wav_path, src_lang, model_name, model_dir):
     segments, info = model.transcribe(audio, task="translate",
                                       language=language,
                                       word_timestamps=True, vad_filter=True)
+    duration = len(audio) / 16000.0
+    last_print = 0.0
     words = []
     for seg in segments:
+        end = getattr(seg, "end", 0.0) or 0.0
+        now = time.time()
+        if end > 0 and duration > 0 and now - last_print >= 1.0:
+            print(f"[translate] progress {end:.1f}/{duration:.1f}", flush=True)
+            last_print = now
         if not seg.words:
             continue
         for w in seg.words:

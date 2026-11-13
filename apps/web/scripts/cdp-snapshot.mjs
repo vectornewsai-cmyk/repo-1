@@ -66,6 +66,7 @@
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -145,7 +146,7 @@ export function captureCdpHangSnapshot({
   const file = path.join(outDir, fileName);
   try {
     fs.mkdirSync(outDir, { recursive: true });
-    fs.writeFileSync(file, JSON.stringify(snapshot, null, 2));
+    writeFileEpermRetry(file, JSON.stringify(snapshot, null, 2));
     return { file, snapshot };
   } catch (e) {
     return { file: null, snapshot, error: e.message };

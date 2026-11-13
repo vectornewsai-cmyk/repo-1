@@ -51,7 +51,12 @@ def run_main_with_stub(calls, fail_sessions, argv_extra=None):
     try:
         with tempfile.TemporaryDirectory() as d:
             out = os.path.join(d, "out.mov")
-            argv = ["--input", "in.mp4", "--output", out] + (argv_extra or [])
+            # Đợt 88 P7: RAM guard mặc định chặn birefnet trên máy ít RAM
+            # trước khi tới run_once — file này test đường retry SAU LỖI
+            # (guard đã cho qua), nên tắt guard ở đây; đường guard có test
+            # riêng ở test_bgremove_ramguard.py.
+            argv = ["--input", "in.mp4", "--output", out,
+                    "--no-ram-guard"] + (argv_extra or [])
             buf = io.StringIO()
             exit_msg = None
             try:

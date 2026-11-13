@@ -14,6 +14,7 @@ import type { VideoSpec } from "../../../packages/video-spec/src/index.js";
 import { projectDuration } from "../../../packages/video-spec/src/index.js";
 import { ValidationError, validateVideoSpec } from "../validate.js";
 import { loadProject, RENDER_WORKER_JS, RENDERS_DIR, resolveMediaDir, resolveOutPath } from "../store.js";
+import { writeFileEpermRetryAsync } from "../epermRetry.js";
 import { fail, handleError, ok, projectIdSchema } from "./common.js";
 import { formatRenderFailure, redactProbeStderr } from "./renderErrors.js";
 
@@ -106,7 +107,7 @@ export function registerExportTools(server: McpServer): void {
         const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "repo1-export-"));
         const tmpSpec = path.join(tmpDir, "spec.json");
         try {
-          await fs.writeFile(tmpSpec, JSON.stringify(renderSpec), "utf8");
+          await writeFileEpermRetryAsync(tmpSpec, JSON.stringify(renderSpec), { label: "mcp-export-tmp-spec" });
           const crf = args.crf ?? preset.crf;
           const r = spawnSync(
             process.execPath,

@@ -1,0 +1,339 @@
+{
+  "measuredAt": "2026-11-10T03:07:01.944Z",
+  "host": {
+    "os": "Linux 7.0.0-44-generic",
+    "cpus": 4,
+    "cpuModel": "AMD EPYC 9D25 126-Core Processor",
+    "totalMemMiB": 7934,
+    "loadavg": [
+      28.06,
+      15.77,
+      11.98
+    ],
+    "display": ":99"
+  },
+  "clipsDir": "/tmp/g8/clips",
+  "notes": "webkit-2388 is the newest Playwright WebKit (playwright-core 1.65.0 is latest on npm, checked 2026-11-10). No system libwebkitgtk. No /dev/dri. See docs/PHASE9_ROUND79_G8_GPU_SAFARI_LIMITS.md.",
+  "chromium": {
+    "engine": "chromium",
+    "mode": "headed-xvfb",
+    "launchedMs": 7976,
+    "version": "158.0.8127.18",
+    "executablePath": "/home/hatch/.cache/ms-playwright/chromium-1254/chrome-linux64/chrome",
+    "gpu": {
+      "webgl2": {
+        "context": true,
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "shadingLanguage": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+        "unmaskedVendor": "Google Inc. (Google)",
+        "unmaskedRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "hwContextAllowed": false
+      },
+      "webgl": {
+        "context": true,
+        "version": "WebGL 1.0 (OpenGL ES 2.0 Chromium)",
+        "shadingLanguage": "WebGL GLSL ES 1.0 (OpenGL ES GLSL ES 1.0 Chromium)",
+        "unmaskedVendor": "Google Inc. (Google)",
+        "unmaskedRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "hwContextAllowed": false
+      },
+      "webgpu": {
+        "present": true,
+        "high-performance": {
+          "adapter": null
+        },
+        "low-power": {
+          "adapter": null
+        },
+        "default": {
+          "adapter": null
+        }
+      },
+      "videoDecoderHw": {
+        "prefer-hardware": false,
+        "prefer-software": true
+      },
+      "mediaRecorder": true,
+      "canvasCaptureStream": true,
+      "webglShaderMs": {
+        "frames": 12,
+        "size": "640x360",
+        "iterations": 30,
+        "median": 0,
+        "p95": 0.1,
+        "min": 0
+      }
+    },
+    "chromeGpu": {
+      "ok": true,
+      "featureStatus": [],
+      "rawHead": [],
+      "contentLength": 632
+    },
+    "fps": {
+      "rafCanvas": [
+        {
+          "frames": 109,
+          "wallMs": 5073,
+          "fps": 21.49,
+          "gapMedianMs": 33.3,
+          "gapP95Ms": 100.1,
+          "gapMaxMs": 250.1
+        },
+        {
+          "frames": 121,
+          "wallMs": 5022,
+          "fps": 24.09,
+          "gapMedianMs": 16.8,
+          "gapP95Ms": 83.4,
+          "gapMaxMs": 200
+        }
+      ],
+      "videoPlayback": {
+        "clip": "h264.mp4",
+        "hasRvfc": true,
+        "presentedFrames": 86,
+        "wallMs": 5060,
+        "fps": 17,
+        "currentTime": 0.89,
+        "quality": {
+          "totalVideoFrames": 151,
+          "droppedVideoFrames": 53,
+          "corruptedVideoFrames": 0
+        }
+      }
+    },
+    "fpsLoadavg": {
+      "before": [
+        28.6,
+        16.73,
+        12.38
+      ],
+      "after": [
+        26.5,
+        16.85,
+        12.49
+      ]
+    },
+    "playback": {
+      "h264.mp4": {
+        "file": "h264.mp4",
+        "result": {
+          "videoElement": true,
+          "readyState": 2,
+          "videoWidth": 320,
+          "videoHeight": 180,
+          "duration": 2,
+          "error": null,
+          "networkState": 1
+        },
+        "playable": true
+      },
+      "vp9.webm": {
+        "file": "vp9.webm",
+        "result": {
+          "videoElement": true,
+          "readyState": 4,
+          "videoWidth": 320,
+          "videoHeight": 180,
+          "duration": 2,
+          "error": null,
+          "networkState": 1
+        },
+        "playable": true
+      },
+      "vp8.webm": {
+        "file": "vp8.webm",
+        "result": {
+          "videoElement": true,
+          "readyState": 4,
+          "videoWidth": 320,
+          "videoHeight": 180,
+          "duration": 2,
+          "error": null,
+          "networkState": 1
+        },
+        "playable": true
+      },
+      "av1.mp4": {
+        "file": "av1.mp4",
+        "result": {
+          "videoElement": true,
+          "readyState": 4,
+          "videoWidth": 320,
+          "videoHeight": 180,
+          "duration": 2,
+          "error": null,
+          "networkState": 1
+        },
+        "playable": true
+      },
+      "hevc.mp4": {
+        "file": "hevc.mp4",
+        "result": {
+          "videoElement": true,
+          "readyState": 0,
+          "videoWidth": 0,
+          "videoHeight": 0,
+          "duration": null,
+          "error": null,
+          "networkState": 3
+        },
+        "playable": false
+      }
+    }
+  },
+  "webkit": {
+    "engine": "webkit",
+    "mode": "headed-xvfb-or-fallback",
+    "launchedMs": 3316,
+    "version": "27.2",
+    "gpu": {
+      "webgl2": {
+        "context": true,
+        "version": "WebGL 2.0",
+        "shadingLanguage": "WebGL GLSL ES 3.00",
+        "unmaskedVendor": "Apple Inc.",
+        "unmaskedRenderer": "Apple GPU",
+        "hwContextAllowed": true
+      },
+      "webgl": {
+        "context": true,
+        "version": "WebGL 1.0",
+        "shadingLanguage": "WebGL GLSL ES 1.0 (1.0)",
+        "unmaskedVendor": "Apple Inc.",
+        "unmaskedRenderer": "Apple GPU",
+        "hwContextAllowed": true
+      },
+      "webgpu": {
+        "present": false
+      },
+      "videoDecoderHw": {
+        "prefer-hardware": true,
+        "prefer-software": true
+      },
+      "mediaRecorder": false,
+      "canvasCaptureStream": true,
+      "webglShaderMs": {
+        "frames": 12,
+        "size": "640x360",
+        "iterations": 30,
+        "median": 107,
+        "p95": 501,
+        "min": 97
+      }
+    },
+    "fps": {
+      "rafCanvas": [
+        {
+          "frames": 27,
+          "wallMs": 5255,
+          "fps": 5.14,
+          "gapMedianMs": 197,
+          "gapP95Ms": 296,
+          "gapMaxMs": 298
+        },
+        {
+          "frames": 25,
+          "wallMs": 5308,
+          "fps": 4.71,
+          "gapMedianMs": 198,
+          "gapP95Ms": 400,
+          "gapMaxMs": 676
+        }
+      ],
+      "videoPlayback": {
+        "clip": "h264.mp4",
+        "hasRvfc": true,
+        "presentedFrames": 0,
+        "wallMs": 7013,
+        "fps": 0,
+        "currentTime": 0,
+        "quality": {
+          "totalVideoFrames": 3,
+          "droppedVideoFrames": 1,
+          "corruptedVideoFrames": 0
+        }
+      }
+    },
+    "fpsLoadavg": {
+      "before": [
+        24.45,
+        17.38,
+        12.83
+      ],
+      "after": [
+        26.5,
+        18.43,
+        13.3
+      ]
+    },
+    "playback": {
+      "h264.mp4": {
+        "file": "h264.mp4",
+        "result": {
+          "videoElement": true,
+          "readyState": 4,
+          "videoWidth": 320,
+          "videoHeight": 180,
+          "duration": 2,
+          "error": null,
+          "networkState": 1
+        },
+        "playable": true
+      },
+      "vp9.webm": {
+        "file": "vp9.webm",
+        "result": {
+          "videoElement": true,
+          "readyState": 4,
+          "videoWidth": 320,
+          "videoHeight": 180,
+          "duration": 2,
+          "error": null,
+          "networkState": 1
+        },
+        "playable": true
+      },
+      "vp8.webm": {
+        "file": "vp8.webm",
+        "result": {
+          "videoElement": true,
+          "readyState": 4,
+          "videoWidth": 320,
+          "videoHeight": 180,
+          "duration": 2,
+          "error": null,
+          "networkState": 1
+        },
+        "playable": true
+      },
+      "av1.mp4": {
+        "file": "av1.mp4",
+        "result": {
+          "videoElement": true,
+          "readyState": 4,
+          "videoWidth": 320,
+          "videoHeight": 180,
+          "duration": 2,
+          "error": null,
+          "networkState": 1
+        },
+        "playable": true
+      },
+      "hevc.mp4": {
+        "file": "hevc.mp4",
+        "result": {
+          "videoElement": true,
+          "readyState": 4,
+          "videoWidth": 320,
+          "videoHeight": 180,
+          "duration": 2,
+          "error": null,
+          "networkState": 1
+        },
+        "playable": true
+      }
+    }
+  }
+}

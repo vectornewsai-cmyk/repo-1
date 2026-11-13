@@ -22,7 +22,7 @@ if $VENV/bin/python server/tts/tts.py --text "" --out /tmp/x.wav 2>&1 | grep -q 
 else
   fail "từ chối text rỗng" "không báo lỗi đúng"
 fi
-LONG=$(python3 -c "print('a'*2001)")
+LONG=$(python3 -c "print('a'*5001)") # R78 F5: MAX_TEXT_LEN là 5000 từ R4 (trước đây 2000) — test phải vượt 5000 mới đúng nghĩa "quá dài"
 if $VENV/bin/python server/tts/tts.py --text "$LONG" --out /tmp/x.wav 2>&1 | grep -q "quá dài"; then
   ok "từ chối text > 2000 ký tự"
 else
@@ -53,7 +53,7 @@ node -e "
 const { validateText, validateVoice, ttsAvailable, TTS_VOICES, DEFAULT_VOICE } = require('./server/bridge/src/tts.js');
 let ok = true;
 try { validateText(''); ok = false; } catch (e) { if (!/rỗng/.test(e.message)) ok = false; }
-try { validateText('x'.repeat(2001)); ok = false; } catch (e) { if (!/quá dài/.test(e.message)) ok = false; }
+try { validateText('x'.repeat(5001)); ok = false; } catch (e) { if (!/quá dài/.test(e.message)) ok = false; } // R78 F5: giới hạn là 5000 (R4), không phải 2000
 if (validateText('  Xin chào  ') !== 'Xin chào') ok = false;
 try { validateVoice('nope'); ok = false; } catch (e) { if (!/không hỗ trợ/.test(e.message)) ok = false; }
 if (validateVoice('Hải Đăng') !== 'Hải Đăng') ok = false;

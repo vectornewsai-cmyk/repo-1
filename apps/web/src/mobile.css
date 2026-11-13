@@ -260,9 +260,23 @@ button {
     width: 22px;
   }
 
+  /* Đợt 80 H9: thanh MixerMeter (left:140px cố định + track 120px + dB
+     min-width 62px) tràn 2px qua mép phải viewport 390px (đo headed:
+     mixer-meter 149..392, mixer-meter-idle 352..392). Thu track + nhãn dB
+     ở màn hẹp cho vừa khung preview; desktop giữ nguyên. */
+  .mixer-meter-track {
+    width: 84px;
+  }
+
+  .mixer-meter-db {
+    min-width: 48px;
+  }
+
   /* Modal chiếm gần hết màn hình, cuộn được bên trong. */
   .modal {
     max-width: calc(100vw - 24px);
+    /* Đợt 73 A7: fallback 100vh cho Safari < 15.4 (không hiểu dvh). */
+    max-height: calc(100vh - 48px);
     max-height: calc(100dvh - 48px);
     overflow-y: auto;
   }

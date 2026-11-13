@@ -6,6 +6,7 @@
 
 const { execFileSync, execSync } = require("child_process");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const path = require("path");
 
 const ROOT = path.join(__dirname);
@@ -61,7 +62,7 @@ for (const j of jobs) {
   };
   const specPath = path.join(OUT, `${tag}.json`);
   const outMp4 = path.join(OUT, `${tag}.mp4`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   try {
     run("node", [path.join(ROOT, "src", "render.js"), "--spec", specPath,
       "--out", outMp4, "--media-dir", MEDIA, "-y"]);

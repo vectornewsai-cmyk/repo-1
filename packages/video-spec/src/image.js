@@ -35,6 +35,8 @@ export function normalizeImageClip(c) {
         fit: c.fit ?? IMAGE_DEFAULTS.fit,
         // Phase 7 P4: giữ mask qua chuẩn hoá (không làm rơi field).
         ...(c.mask ? { mask: c.mask } : {}),
+        // Phase 9 đợt 88 closing: giữ track qua chuẩn hoá (như mask) — mirror image.ts.
+        ...(c.track ? { track: c.track } : {}),
     };
 }
 /**

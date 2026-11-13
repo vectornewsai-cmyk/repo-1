@@ -1,0 +1,191 @@
+{
+  "date": "2026-11-11T04:01:20.676Z",
+  "cases": {
+    "P11-wait8s-plain-rep1": {
+      "mode": "wait8s",
+      "waitedMs": 8001,
+      "duration": 4,
+      "maxCt": 4,
+      "finalCt": 4,
+      "finalEnded": true,
+      "finalRs": 4,
+      "frozenAtEnd": false,
+      "ev": {
+        "stalled": 0,
+        "waiting": 0,
+        "suspend": 0,
+        "progress": 0,
+        "timeupdate": 15,
+        "canplay": 0,
+        "canplaythrough": 0,
+        "playing": 1,
+        "ended": 1,
+        "error": 0
+      },
+      "buffered": [],
+      "totalFrames": 87,
+      "droppedFrames": 0,
+      "playErr": null
+    },
+    "P11-wait8s-plain-rep2": {
+      "mode": "wait8s",
+      "waitedMs": 8000,
+      "duration": 4,
+      "maxCt": 4,
+      "finalCt": 4,
+      "finalEnded": true,
+      "finalRs": 4,
+      "frozenAtEnd": false,
+      "ev": {
+        "stalled": 0,
+        "waiting": 0,
+        "suspend": 0,
+        "progress": 0,
+        "timeupdate": 13,
+        "canplay": 0,
+        "canplaythrough": 0,
+        "playing": 1,
+        "ended": 1,
+        "error": 0
+      },
+      "buffered": [],
+      "totalFrames": 57,
+      "droppedFrames": 2,
+      "playErr": null
+    },
+    "P11-wait8s-plain-rep3": {
+      "mode": "wait8s",
+      "waitedMs": 8000,
+      "duration": 4,
+      "maxCt": 4,
+      "finalCt": 4,
+      "finalEnded": true,
+      "finalRs": 4,
+      "frozenAtEnd": false,
+      "ev": {
+        "stalled": 0,
+        "waiting": 0,
+        "suspend": 0,
+        "progress": 0,
+        "timeupdate": 15,
+        "canplay": 0,
+        "canplaythrough": 0,
+        "playing": 1,
+        "ended": 1,
+        "error": 0
+      },
+      "buffered": [],
+      "totalFrames": 87,
+      "droppedFrames": 0,
+      "playErr": null
+    },
+    "P12-canplaythrough-plain-rep1": {
+      "mode": "canplaythrough",
+      "waitedMs": 307,
+      "duration": 4,
+      "maxCt": 0.289,
+      "finalCt": 0.289,
+      "finalEnded": false,
+      "finalRs": 2,
+      "frozenAtEnd": true,
+      "ev": {
+        "stalled": 1,
+        "waiting": 1,
+        "suspend": 0,
+        "progress": 1,
+        "timeupdate": 2,
+        "canplay": 0,
+        "canplaythrough": 0,
+        "playing": 1,
+        "ended": 0,
+        "error": 0
+      },
+      "buffered": [
+        [
+          0,
+          4
+        ]
+      ],
+      "totalFrames": 5,
+      "droppedFrames": 0,
+      "playErr": null
+    },
+    "P12-canplaythrough-plain-rep2": {
+      "mode": "canplaythrough",
+      "waitedMs": 399,
+      "duration": 4,
+      "maxCt": 1.318,
+      "finalCt": 1.318,
+      "finalEnded": false,
+      "finalRs": 2,
+      "frozenAtEnd": true,
+      "ev": {
+        "stalled": 1,
+        "waiting": 1,
+        "suspend": 0,
+        "progress": 1,
+        "timeupdate": 5,
+        "canplay": 0,
+        "canplaythrough": 0,
+        "playing": 1,
+        "ended": 0,
+        "error": 0
+      },
+      "buffered": [
+        [
+          0,
+          4
+        ]
+      ],
+      "totalFrames": 19,
+      "droppedFrames": 0,
+      "playErr": null
+    },
+    "P12-canplaythrough-plain-rep3": {
+      "mode": "canplaythrough",
+      "waitedMs": 287,
+      "duration": 4,
+      "maxCt": 0.797,
+      "finalCt": 0.797,
+      "finalEnded": false,
+      "finalRs": 2,
+      "frozenAtEnd": true,
+      "ev": {
+        "stalled": 1,
+        "waiting": 1,
+        "suspend": 0,
+        "progress": 1,
+        "timeupdate": 3,
+        "canplay": 0,
+        "canplaythrough": 0,
+        "playing": 1,
+        "ended": 0,
+        "error": 0
+      },
+      "buffered": [
+        [
+          0,
+          4
+        ]
+      ],
+      "totalFrames": 10,
+      "droppedFrames": 0,
+      "playErr": null
+    },
+    "P13-wait8s-loop-5": {
+      "mode": "wait8s-loop",
+      "duration": 4,
+      "ended": 3,
+      "seekedCount": 3,
+      "quality": {
+        "total": 266,
+        "dropped": 0
+      },
+      "finalCt": 0.083,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.95
+    }
+  }
+}

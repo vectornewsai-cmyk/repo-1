@@ -79,11 +79,13 @@ function fakeFactory(fake: FakeWorker): () => Worker {
   return () => fake as unknown as Worker;
 }
 
-// ---- Trần mới 60 s (tỉ lệ 1,2 giữ nguyên) ----
+// ---- Trần mới 90 s (tỉ lệ 1,2 giữ nguyên; đợt 67 U5 nâng từ 60 s —
+// xem LIMITS U5 đợt 67 §1: trần 60 s cắt công thức ở 64 MiB (78.536 ms),
+// trần 90 s không cắt bất kỳ sample nào trong dải cho phép) ----
 
-ok("cap 64: hằng số — tỉ lệ 1,2 ms/KiB, trần 60 s", () => {
+ok("cap 64: hằng số — tỉ lệ 1,2 ms/KiB, trần 90 s (đợt 67 U5 nâng từ 60 s)", () => {
   assert.equal(WORKER_TRIAL_DECODE_TIMEOUT_EXTRA_MS_PER_KIB, 1.2);
-  assert.equal(MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS, 60_000);
+  assert.equal(MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS, 90_000);
 });
 
 ok("cap 64: 42.493.646 B → 49691 ms (hết bị trần 45 s cũ cắt)", () => {
@@ -106,21 +108,21 @@ ok("cap 64: 50.388.107 B (crf1-veryfast) → 58942 ms (chưa chạm trần)", ()
   assert.equal(trialDecodeTimeoutForSampleSizeWorker(50_388_107, 200), 58_942);
 });
 
-ok("cap 64: 51.821.731 B (crf1, đã đo 42,5–47,0 s) → trần 60 s (không trần 60.622 ms)", () => {
-  assert.equal(trialDecodeTimeoutForSampleSizeWorker(51_821_731, 200), 60_000);
+ok("cap 64: 51.821.731 B (crf1, đã đo 42,5–47,0 s) → 60622 ms (đợt 67 U5: không còn chạm trần 60 s cũ)", () => {
+  assert.equal(trialDecodeTimeoutForSampleSizeWorker(51_821_731, 200), 60_622);
 });
 
-ok("cap 64: 57.939.416 B (crf1-superfast, đã đo 53,2–58,0 s) → trần 60 s (không trần 67.791 ms)", () => {
-  // Trần 45 s cũ cắt cả 2 rep (45.050 / 45.007 ms fail-open); trần 60 s
-  // bao được lần đo chậm nhất 57.992 ms (headroom 1,03× — mỏng, ghi rõ).
-  assert.equal(trialDecodeTimeoutForSampleSizeWorker(57_939_416, 200), 60_000);
+ok("cap 64: 57.939.416 B (crf1-superfast, đã đo 53,2–58,0 s) → 67791 ms (đợt 67 U5: không còn chạm trần 60 s cũ)", () => {
+  // Trần 45 s cũ cắt cả 2 rep (45.050 / 45.007 ms fail-open); timeout
+  // 67.791 ms bao được lần đo chậm nhất 57.992 ms (headroom 1,17×).
+  assert.equal(trialDecodeTimeoutForSampleSizeWorker(57_939_416, 200), 67_791);
 });
 
-ok("cap 64: 64 MiB → trần 60 s (không trần 78.536 ms; dải 58–64 MiB chưa đo trực tiếp)", () => {
-  assert.equal(trialDecodeTimeoutForSampleSizeWorker(64 * 1024 * 1024, 200), 60_000);
+ok("cap 64: 64 MiB → 78536 ms (không chạm trần 90 s; trần 60 s cũ cắt ở 60000 ms — đợt 67 U5)", () => {
+  assert.equal(trialDecodeTimeoutForSampleSizeWorker(64 * 1024 * 1024, 200), 78_536);
 });
 
-ok("cap 64: timeout đơn điệu theo kích thước, trần chỉ chạm từ ~51,8 MB trở lên", () => {
+ok("cap 64: timeout đơn điệu theo kích thước, không chạm trần trong dải ≤ 64 MiB (đợt 67 U5)", () => {
   const t42 = trialDecodeTimeoutForSampleSizeWorker(42_493_646, 200);
   const t47 = trialDecodeTimeoutForSampleSizeWorker(47_608_364, 200);
   const t49 = trialDecodeTimeoutForSampleSizeWorker(49_658_687, 200);
@@ -129,12 +131,12 @@ ok("cap 64: timeout đơn điệu theo kích thước, trần chỉ chạm từ 
   const t64 = trialDecodeTimeoutForSampleSizeWorker(64 * 1024 * 1024, 200);
   assert.ok(t42 < t47 && t47 < t49, `t42=${t42} t47=${t47} t49=${t49}`);
   assert.ok(t49 < t51, `t49=${t49} t51=${t51}`);
-  assert.equal(t51, t57);
-  assert.equal(t57, t64);
-  assert.equal(t64, MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS);
+  assert.ok(t51 < t57, `t51=${t51} t57=${t57}`);
+  assert.ok(t57 < t64, `t57=${t57} t64=${t64}`);
+  assert.ok(t64 < MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS, `t64=${t64} trần=${MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS}`);
 });
 
-ok("cap 64: routing 57.939.416 B → worker, timeout 60000 ms (trần mới)", () => {
+ok("cap 64: routing 57.939.416 B → worker, timeout 67791 ms (đợt 67 U5: không còn chạm trần)", () => {
   const fake = new FakeWorker();
   const plan = planTrialDecodeCall({
     sampleBytes: 57_939_416,
@@ -144,8 +146,8 @@ ok("cap 64: routing 57.939.416 B → worker, timeout 60000 ms (trần mới)", (
     workerFactory: fakeFactory(fake),
   });
   assert.equal(plan.viaWorker, true);
-  assert.equal(plan.timeoutMs, 60_000);
-  assert.equal(plan.timeoutMs, MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS);
+  assert.equal(plan.timeoutMs, 67_791);
+  assert.ok(plan.timeoutMs < MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS);
 });
 
 ok("cap 64: routing 49.658.687 B → worker, timeout 58087 ms (chưa chạm trần)", () => {

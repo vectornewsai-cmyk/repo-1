@@ -1,7 +1,7 @@
 # EXPORTPRESETS_LIMITS.md — Giới hạn trung thực của module export presets (R1-042 + R1-064)
 
 File liên quan: `apps/web/src/lib/exportPresets.ts`, `apps/web/src/ExportPanel.tsx`.
-Test: `bash apps/web/scripts/test-export-presets.sh` (55/55 pass).
+Test: `bash apps/web/scripts/test-export-presets.sh` (82/82 pass — đợt 80 H10 sửa harness gãy + thêm preset Reels/Shorts).
 
 ## 1. Preset là lựa chọn ở THỜI ĐIỂM RENDER, không phải thuộc tính project
 - UI clone spec, override `meta.width/height/fps` theo preset, gửi kèm quality params
@@ -36,3 +36,32 @@ Test: `bash apps/web/scripts/test-export-presets.sh` (55/55 pass).
 
 ## 6. Chưa có click-test browser thật
 - Hiển thị estimate trong ExportPanel chưa được click-test (nợ chung hạ tầng của dự án).
+
+## 7. Đợt 80 H10 (S4) — preset mạng xã hội 1 chạm + trần bitrate
+- Thêm preset `reels` và `shorts` (1080×1920 @30fps, H.264); preset
+  `tiktok` tách khỏi nhãn gộp cũ (nay chỉ TikTok). `ig-square` (1:1) và
+  `ig-portrait` (4:5) đã có từ trước, nay có thêm trần bitrate.
+- Mỗi preset mạng xã hội có `videoBitrateKbps` (trần VBV maxrate, kẹp
+  bên cạnh CRF qua `-maxrate <n>k -bufsize <2n>k`): TikTok 10 Mbps
+  (thực hành chung — TikTok KHÔNG công bố bitrate cho đăng thường),
+  Reels 8 Mbps (thực hành chung 5–8 Mbps; Instagram chỉ công bố tối
+  thiểu 3.500 kbps + tối đa API 25 Mbps), Shorts 8 Mbps (SỐ YOUTUBE
+  CÔNG BỐ cho 1080p SDR @24–30fps), YouTube 16:9 8 Mbps (cùng số),
+  feed 1:1/4:5 6 Mbps (thực hành chung — Instagram không công bố).
+  Xem chi tiết nguồn trong `docs/PHASE9_ROUND80_H10_SOCIAL_PRESETS_LIMITS.md`.
+- Trần CHỈ áp cho libx264 (CPU). Encoder GPU (NVENC/QSV/VAAPI) bỏ qua
+  `maxrate` trong `buildVideoEncodeArgs` — máy có GPU thì file xuất
+  không bị kẹp trần (ghi rõ trong code + test gpuencode).
+- `estimateVideoBitrateKbps` kẹp ước tính ở trần khi có trần; preset
+  không trần (720p/1080p/4k/custom) giữ hành vi CRF-only như trước.
+- Audio Shorts 384 kbps theo đúng khuyến nghị stereo của YouTube
+  (khác preset `youtube` 16:9 dùng 192k từ trước — không đổi preset
+  cũ để tránh đổi hành vi đã kiểm chứng).
+- Harness test-export-presets.sh đã GÃY trước đợt này (thiếu
+  `resolveJsonModule` → tsc TS2732; count preset 7 sai từ khi thêm
+  `ig-portrait` đợt 73 mà không cập nhật) — đợt này sửa cả hai.
+- Hồi quy phát hiện (KHÔNG do H10): test-bridge-error-protocol.cjs
+  138 pass / 2 fail — 2 fail đếm call site `taskErrorPayload` (nhận 9,
+  muốn 11) vì 2 call site TTS dùng `failCode ||` nên regex của test
+  không đếm được; catalog 102 mã vẫn pass. Nợ của đợt khác, ghi ở đây
+  để không nhầm là do H10.

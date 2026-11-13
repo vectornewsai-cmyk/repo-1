@@ -34,6 +34,7 @@
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("node:path");
 
 const HERE = __dirname;
@@ -77,7 +78,7 @@ function synthRgb(w, h) {
 function directFfmpegYuv(rgb, w, h, tag, matrix) {
   const rawIn = path.join(TMP, `${tag}-in.raw`);
   const out = path.join(TMP, `${tag}.yuv`);
-  fs.writeFileSync(rawIn, rgb);
+  writeFileEpermRetry(rawIn, rgb);
   const vf = matrix
     ? `pad=ceil(iw/2)*2:ceil(ih/2)*2:0:0:black,scale=out_color_matrix=${matrix},format=yuv420p`
     : "pad=ceil(iw/2)*2:ceil(ih/2)*2:0:0:black,format=yuv420p";

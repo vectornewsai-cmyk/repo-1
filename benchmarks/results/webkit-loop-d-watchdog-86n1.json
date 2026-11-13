@@ -1,0 +1,114 @@
+{
+  "date": "2026-11-11T04:04:56.253Z",
+  "cases": {
+    "B-baseline-rep1": {
+      "useWatchdog": false,
+      "duration": 4,
+      "ended": 2,
+      "rescues": [],
+      "resumeMs": [
+        428,
+        1004
+      ],
+      "seekedCount": 2,
+      "quality": {
+        "total": 195,
+        "dropped": 0
+      },
+      "finalCt": 0.313,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.91
+    },
+    "W-watchdog-rep1": {
+      "useWatchdog": true,
+      "duration": 4,
+      "ended": 0,
+      "rescues": [
+        {
+          "atT": 2.93,
+          "from": 0.392,
+          "to": 0.592
+        },
+        {
+          "atT": 5.27,
+          "from": 0.592,
+          "to": 0.792
+        },
+        {
+          "atT": 7.56,
+          "from": 0.792,
+          "to": 0.992
+        }
+      ],
+      "resumeMs": [],
+      "seekedCount": 3,
+      "quality": {
+        "total": 7,
+        "dropped": 0
+      },
+      "finalCt": 0.992,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.91
+    },
+    "B-baseline-rep2": {
+      "useWatchdog": false,
+      "duration": 4,
+      "ended": 5,
+      "rescues": [],
+      "resumeMs": [
+        624,
+        331,
+        480,
+        705,
+        492
+      ],
+      "seekedCount": 5,
+      "quality": {
+        "total": 450,
+        "dropped": 0
+      },
+      "finalCt": 0.583,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 23.02
+    },
+    "W-watchdog-rep2": {
+      "useWatchdog": true,
+      "duration": 4,
+      "ended": 0,
+      "rescues": [
+        {
+          "atT": 2.84,
+          "from": 0.364,
+          "to": 0.564
+        },
+        {
+          "atT": 5.13,
+          "from": 0.564,
+          "to": 0.764
+        },
+        {
+          "atT": 7.47,
+          "from": 0.764,
+          "to": 0.964
+        }
+      ],
+      "resumeMs": [],
+      "seekedCount": 3,
+      "quality": {
+        "total": 5,
+        "dropped": 0
+      },
+      "finalCt": 0.964,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.92
+    }
+  }
+}

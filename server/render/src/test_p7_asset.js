@@ -16,6 +16,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -40,13 +41,13 @@ function run(cmd, args, label) {
 }
 function render(spec, name, assetMap) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const outPath = path.join(work, `${name}.mp4`);
   const args = ["src/render.js", "--spec", specPath, "--out", outPath,
     "--media-dir", mediaDir, "-y"];
   if (assetMap) {
     const mapPath = path.join(work, `${name}.assetmap.json`);
-    fs.writeFileSync(mapPath, JSON.stringify(assetMap));
+    writeFileEpermRetry(mapPath, JSON.stringify(assetMap));
     args.push("--asset-map", mapPath);
   }
   const r = spawnSync("node", args, { cwd: path.join(__dirname, ".."), stdio: ["ignore", "pipe", "pipe"] });

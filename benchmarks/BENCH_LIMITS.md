@@ -1,9 +1,15 @@
 # BENCH_LIMITS.md — Giới hạn trung thực của bộ benchmark
 
-1. **Máy test yếu**: VM 2 vCPU (AMD EPYC 7D13), 8GB RAM, không GPU. Mọi số liệu CPU-bound
-   (render x264, whisper, TTS, rembg) đều thấp hơn nhiều so với máy dev/laptop hiện đại
-   có 8-16 nhân + GPU. Không suy ra "VCut chậm" từ số tuyệt đối — hãy nhìn realtime factor
-   và so sánh tương đối.
+1. **Máy test yếu — và đã đổi nhiều lần**: VM test không có GPU (CPU-only toàn bộ)
+   và đã đổi phần cứng dưới chân nhiều lần. Bảng thế hệ máy + quy tắc trích số
+   tuyệt đối xem `RESULTS.md` mục "Nhãn máy" (đợt 78 F10): thế hệ 1 = AMD EPYC
+   7D13, 2 vCPU (đo 20–24/10/2026); thế hệ 2 = 4 vCPU, model không ghi lại
+   (đo 06–07/11); thế hệ 3 = AMD EPYC 9D25, 4 vCPU (đo 08–09/11); thế hệ 4
+   (hiện tại, từ 10/11) = AMD EPYC 9D64, 4 vCPU. Số tuyệt đối chỉ so được trong
+   cùng một thế hệ máy. Mọi số liệu CPU-bound (render x264, whisper, TTS, rembg)
+   đều thấp hơn nhiều so với máy dev/laptop hiện đại có 8-16 nhân + GPU. Không
+   suy ra "VCut chậm" từ số tuyệt đối — hãy nhìn realtime factor và so sánh
+   tương đối trong cùng một lượt đo.
 2. **Render dùng testsrc2**, không phải footage thật. testsrc2 có nhiều chi tiết chuyển động
    nên encode nặng hơn footage tĩnh, nhẹ hơn footage 4K thật có noise. Số liệu mang tính
    tham chiếu pipeline, không phải tốc độ với video người dùng.
@@ -14,8 +20,10 @@
 5. **BgRemoval bench dùng u2net**, không phải birefnet-general (mặc định của app).
    Lý do: birefnet-general OOM/SIGKILL trên máy 8GB ở inference 1024×1024 (đã đo).
    u2net nhanh hơn nhưng mask kém chi tiết hơn — số fps KHÔNG đại diện cho chất lượng.
-6. **TTS bench**: VieNeu-TTS 0.5B trên CPU 2 nhân đạt ~0.4x realtime trên máy này;
-   máy mạnh hơn sẽ nhanh hơn đáng kể (model ONNX scale tốt theo số nhân).
+6. **TTS bench**: VieNeu-TTS 0.5B trên CPU máy thế hệ 1 (2 vCPU 7D13) đạt ~0.4x
+   realtime; số infer thuần đính chính 06/11 (0,12–0,75×, median 0,32×/0,44×,
+   72 lần đo) đo trên VM 4 vCPU thế hệ 2 — xem RESULTS.md §3 + §9.3. Máy mạnh
+   hơn sẽ nhanh hơn đáng kể (model ONNX scale tốt theo số nhân).
 7. **Preview FPS — cập nhật Phase 9 R3:** đã đo được trên Chromium headless
    bằng `apps/web/scripts/bench-preview-fps.mjs` (xem RESULTS.md mục 8).
    Số headless là THAM CHIẾU (decode phần mềm, VM chia sẻ tải), KHÔNG đồng

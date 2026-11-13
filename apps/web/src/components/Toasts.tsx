@@ -16,9 +16,12 @@ export function Toasts() {
 
   useEffect(() => {
     if (toasts.length === 0) return;
-    const timers = toasts.map((t) =>
-      window.setTimeout(() => dismissToast(t.id), AUTO_CLOSE_MS),
-    );
+    // Đợt 71 Y5 — toast dính (sticky) không tự đóng: chỉ toast thường
+    // mới hẹn giờ 4,5 s. Toast dính đóng khi caller dismiss (trial
+    // xong/lỗi/timeout) hoặc user bấm ×.
+    const timers = toasts
+      .filter((t) => !t.sticky)
+      .map((t) => window.setTimeout(() => dismissToast(t.id), AUTO_CLOSE_MS));
     return () => timers.forEach((id) => window.clearTimeout(id));
   }, [toasts]);
 

@@ -1,0 +1,32 @@
+{
+  "en": {
+    "tts": {
+      "allVoicesExported": "✅ Exported all {count} voice(s) — keep the .json file to import them later.",
+      "exportAllVoices": "Export all",
+      "exportVoice": "Export",
+      "importFailedDetail": "Failed to import {count} voice(s): {names}.",
+      "importSkipped": "Skipped {count} voice(s) already saved: {names}.",
+      "importVoices": "Import voices",
+      "importingVoicesBtn": "⏳ Importing voices...",
+      "voiceExportFailed": "Could not export voice: {error}",
+      "voiceExported": "✅ Exported voice “{name}” — keep the .json file to import it later.",
+      "voiceImportFailed": "Could not import voices: {error}",
+      "voiceImported": "✅ Imported {count} voice(s): {names}."
+    }
+  },
+  "vi": {
+    "tts": {
+      "allVoicesExported": "✅ Đã xuất tất cả {count} giọng — giữ file .json để nhập lại sau.",
+      "exportAllVoices": "Xuất tất cả",
+      "exportVoice": "Xuất",
+      "importFailedDetail": "Nhập lỗi {count} giọng: {names}.",
+      "importSkipped": "Bỏ qua {count} giọng đã có: {names}.",
+      "importVoices": "Nhập giọng",
+      "importingVoicesBtn": "⏳ Đang nhập giọng...",
+      "voiceExportFailed": "Không xuất được giọng: {error}",
+      "voiceExported": "✅ Đã xuất giọng “{name}” — giữ file .json để nhập lại sau.",
+      "voiceImportFailed": "Không nhập được giọng: {error}",
+      "voiceImported": "✅ Đã nhập {count} giọng: {names}."
+    }
+  }
+}

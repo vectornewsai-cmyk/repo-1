@@ -35,6 +35,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -165,7 +166,7 @@ function withMutatedSrc(mutate) {
       "DEFAULT_SPEED_BEZIER = [0.3, 0.1, 0.25, 1]",
     );
     if (next === src) throw new Error("không tìm thấy DEFAULT_SPEED_BEZIER để tạo lệch giả");
-    fs.writeFileSync(p, next);
+    writeFileEpermRetry(p, next);
   });
   check(
     r.status !== 0 && /FAIL/.test(r.stdout || ""),
@@ -181,7 +182,7 @@ function withMutatedSrc(mutate) {
     const src = fs.readFileSync(p, "utf8");
     const next = src.replace("export function cubicBezierY", "function cubicBezierY");
     if (next === src) throw new Error("không tìm thấy export cubicBezierY để tạo lệch giả");
-    fs.writeFileSync(p, next);
+    writeFileEpermRetry(p, next);
   });
   check(
     r.status !== 0 && /FAIL/.test(r.stdout || ""),

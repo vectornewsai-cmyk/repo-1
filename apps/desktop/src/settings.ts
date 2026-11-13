@@ -20,6 +20,9 @@
  */
 import * as fs from "node:fs";
 import * as path from "node:path";
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (port JS của
+// apps/web/scripts/eperm-retry.mjs; xem services/epermRetry.js).
+import { writeFileEpermRetry } from "./services/epermRetry.js";
 import type { DesktopLang } from "./i18n-desktop";
 
 export interface DesktopSettings {
@@ -102,7 +105,7 @@ export class SettingsStore {
   save(): void {
     fs.mkdirSync(path.dirname(this.filePath), { recursive: true });
     const tmp = `${this.filePath}.tmp-${process.pid}`;
-    fs.writeFileSync(tmp, JSON.stringify(this.settings, null, 2), "utf-8");
+    writeFileEpermRetry(tmp, JSON.stringify(this.settings, null, 2), { label: "desktop-settings.json" });
     fs.renameSync(tmp, this.filePath);
   }
 

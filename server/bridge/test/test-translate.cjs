@@ -5,6 +5,7 @@
 
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 const path = require("node:path");
 const {
@@ -99,7 +100,7 @@ ok("translateConfigFromEnv đọc TRANSLATE_PY", () => {
 (async () => {
   console.log("== [4] runTranslate qua stub (5 câu vi→en) ==");
   const tmpWav = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "vcut-tr-")), "t.wav");
-  fs.writeFileSync(tmpWav, Buffer.alloc(100)); // stub chỉ cần file tồn tại
+  writeFileEpermRetry(tmpWav, Buffer.alloc(100)); // stub chỉ cần file tồn tại
   const cfg = { pythonBin: "python3", translatePy: STUB, timeoutMs: 30000 };
   const phases = [];
 

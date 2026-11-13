@@ -20,7 +20,7 @@
 // Việc parent còn phải làm lúc gộp (KHÔNG thuộc file test này):
 //   - Xóa key `speed.warnTooShort` khỏi `vi.json` + `en.json` (luồng này
 //     KHÔNG được sửa dict trực tiếp) + cập nhật test khóa số key
-//     (i18nOrphans60Q4.test.ts đang assert 2326 key lá sau parent gộp đợt 66).
+//     (i18nOrphans60Q4.test.ts đang assert 2461 key lá sau đợt 80 H7; 2463 sau đợt 81 I6: +2 key aiJob.*; 2489 sau đợt 84 L8/L9: +2 key L9 +24 key L8; 2507 sau đợt 85 M7/M8: +11 key M7 +7 key M8; 2515 sau đợt 87 O5/closing: +7 key O5 +1 key closing; 2516 sau đợt 88 P6: +1 key validation.TRACK_IMAGE_MASK; 2517 sau đợt 91 S5: +1 key motionTrack.title; 2518 sau đợt 92 T5: +1 key sticker.title; 2767 sau đợt 93 U5: +249 key sticker.cat.*/sticker.item.*).
 //   - Cho tới lúc đó, test orphan của Q4 sẽ đỏ với ĐÚNG 1 key mồ côi
 //     (`speed.warnTooShort`) — đó là đỏ chờ gộp, không phải bug mới.
 //   - Chuỗi `warnTooShort` vẫn còn trong `apps/web/scripts/

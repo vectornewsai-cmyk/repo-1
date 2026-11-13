@@ -15,6 +15,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import net from "node:net";
 import os from "node:os";
@@ -176,7 +177,7 @@ async function main() {
     // Lặp lại 1 lần để kiểm tra tính lặp lại của các bậc.
     const r2 = await cdp.evalJs(PROBE_FN(`http://127.0.0.1:${PORT}/frame15.png`, [0.8, 0.9, 1.2, 1.8, 2.4]));
     log(`lặp lại: ` + r2.rows.map((x) => `${x.blur}px→giảm ${x.reduct}% edge ${x.edge}px`).join(", "));
-    fs.writeFileSync(path.join(os.homedir(), "workspace", "goals", "capcut-clone-video-editor", "hidden_files", "round61-r3", "blur-fine-probe.json"), JSON.stringify({ levels: r, repeat: r2 }, null, 2));
+    writeFileEpermRetry(path.join(os.homedir(), "workspace", "goals", "capcut-clone-video-editor", "hidden_files", "round61-r3", "blur-fine-probe.json"), JSON.stringify({ levels: r, repeat: r2 }, null, 2));
     log("xong, đã ghi blur-fine-probe.json");
     process.exitCode = 0;
   } catch (e) {

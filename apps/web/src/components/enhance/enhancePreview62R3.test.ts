@@ -118,16 +118,18 @@ ok("blend: plan denoise 0.3 → alpha 0.195 + blur 3.0 (hết vùng chết s<0.2
   assert.deepEqual(p.applied, ["denoise"]);
 });
 
-ok("blend: hook debug mang đủ field mới (alpha + cờ speed-block)", () => {
+ok("blend: hook debug mang đủ field mới (alpha + cờ speed-block + tap deinterlace đợt 75 C8)", () => {
   const p = enhancePreviewPlan({ denoise: true }, true);
   const d = enhancePreviewDebug("c1", p, true);
   approx(d.denoiseBlurPx, 3.0);
   approx(d.denoiseBlendAlpha, 0.486);
   assert.equal(d.stabilizeBlockedBySpeedRamp, false);
+  assert.equal(d.deinterlaceTap, false);
   assert.equal(d.offscreenApplied, true);
   assert.deepEqual(Object.keys(d).sort(), [
     "applied",
     "clipId",
+    "deinterlaceTap",
     "denoiseBlendAlpha",
     "denoiseBlurPx",
     "enabled",

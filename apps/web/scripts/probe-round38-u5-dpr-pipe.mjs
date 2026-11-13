@@ -8,6 +8,7 @@
 // Profile Chrome đặt trong workspace (bài học T5: /tmp là tmpfs 512M).
 import { spawn, execSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -48,7 +49,7 @@ function bundle(src, outName) {
 bundle("apps/web/src/lib/mp4Demux.ts", "mp4Demux.js");
 bundle("apps/web/src/lib/reverseWebcodecs.ts", "reverseWebcodecs.js");
 fs.copyFileSync(path.join(HERE, "probe-round38-u5-dpr-page.js"), path.join(SCRATCH, "page.js"));
-fs.writeFileSync(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>u5 dpr probe</title><body>probe</body><script type="module" src="/page.js"></script>`);
+writeFileEpermRetry(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>u5 dpr probe</title><body>probe</body><script type="module" src="/page.js"></script>`);
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split("?")[0]);
@@ -121,7 +122,7 @@ for (const dsf of [2, 3]) {
   console.log(`[${stamp()}] DSF=${dsf} xong: element backing ${result.runs["dsf" + dsf].element.backingW}x${result.runs["dsf" + dsf].element.backingH}, wc drawn ${result.runs["dsf" + dsf].webcodecs.drawn}/${result.runs["dsf" + dsf].webcodecs.decoded}`);
 }
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
-fs.writeFileSync(OUT, JSON.stringify(result, null, 2));
+writeFileEpermRetry(OUT, JSON.stringify(result, null, 2));
 console.log("ghi " + OUT);
 server.close();
 process.exit(0);

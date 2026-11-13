@@ -9,6 +9,8 @@
  *   lỗi rõ ràng, KHÔNG dùng ảnh tĩnh giả làm video (preview/render sẽ vỡ).
  */
 
+import { recorderContainerType } from "./sampleMime";
+
 export interface GeneratedMedia {
   file: File;
   /** Thumbnail dataURL để hiện trong MediaBin (không bắt buộc). */
@@ -99,7 +101,8 @@ export function stillPackMedia(
 }
 
 /**
- * Video mẫu (webm) cho placeholder kind=video. Ghi realtime nên mất đúng
+ * Video mẫu cho placeholder kind=video (webm trên Chromium, mp4 trên
+ * Safari — đuôi tên file theo container thật, đợt 74 B3). Ghi realtime nên mất đúng
  * `seconds` giây. Trả null khi trình duyệt không ghi được (caller phải báo
  * lỗi rõ, không được giả vờ có video).
  *
@@ -185,9 +188,20 @@ export async function recordPackMedia(
     });
     rec.stop();
     await done;
-    const blob = new Blob(chunks, { type: "video/webm" });
+    // Đợt 73 A7: nhãn Blob/File phải theo đúng container recorder thật sự
+    // dùng (rec.mimeType) — Safari ghi mp4 mặc định khi webm không được hỗ
+    // trợ; hard-code "video/webm" sẽ gán nhãn sai khiến <video> không phát
+    // được media mẫu trên Safari. Chromium vẫn ra "video/webm" như cũ.
+    const containerType = recorderContainerType(rec?.mimeType);
+    const blob = new Blob(chunks, { type: containerType });
     if (blob.size === 0) return null;
-    return { file: new File([blob], name, { type: "video/webm" }), thumb };
+    // Đợt 74 B3 — tên file theo container thật (đóng nợ A7 §5.2): caller
+    // đặt tên "... .webm" nhưng Safari ghi mp4 → đổi đuôi thành .mp4 để
+    // tên khớp bytes; Chromium giữ .webm như cũ (test R5 khóa tên
+    // "ok.webm" vì mock recorder không có mimeType → container webm).
+    const finalName =
+      containerType === "video/mp4" ? name.replace(/\.webm$/i, ".mp4") : name;
+    return { file: new File([blob], finalName, { type: containerType }), thumb };
   } catch {
     return null;
   }

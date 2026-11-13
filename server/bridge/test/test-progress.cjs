@@ -6,6 +6,7 @@
 
 const { EventEmitter } = require("events");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 
@@ -86,7 +87,7 @@ async function main() {
     });
     const w = tmpWork();
     // spec có fps → fallback dùng được
-    fs.writeFileSync(path.join(w, "spec.json"), JSON.stringify({
+    writeFileEpermRetry(path.join(w, "spec.json"), JSON.stringify({
       meta: { name: "t", width: 640, height: 360, fps: 30 },
       tracks: [],
     }));
@@ -138,7 +139,7 @@ async function main() {
     ok(typeof job.etaSeconds === "number" && job.etaSeconds >= 0,
       `sau 2 sample có ETA (${job.etaSeconds})`);
     // done → etaSeconds = 0
-    fs.writeFileSync(path.join(job.dir, "output.mp4"), Buffer.alloc(100));
+    writeFileEpermRetry(path.join(job.dir, "output.mp4"), Buffer.alloc(100));
     proc.emit("close", 0, null);
     await sleep(20);
     ok(job.status === "done" && job.progress === 1 && job.etaSeconds === 0,

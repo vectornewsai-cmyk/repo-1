@@ -12,8 +12,10 @@
 //     (sample là bản sao đã transfer)
 //   worker → main: `{ type: "result", outcome }` hoặc
 //     `{ type: "error", message }`
+//   Đợt 78 F8: result có thêm `reason` tùy chọn khi outcome === false và
+//   worker biết rõ lý do (quét zero-run) — xem file protocol.
 // Worker không tự terminate sau khi trả verdict — main thread terminate.
-import { createBrowserTrialDecodeProbe } from "./gopTrialDecode55L8";
+import { createBrowserTrialDecodeProbe, scanAvccZeroRun } from "./gopTrialDecode55L8";
 import type {
   TrialDecodeWorkerRequest,
   TrialDecodeWorkerResponse,
@@ -26,6 +28,27 @@ const scope = self as unknown as {
 
 scope.onmessage = (ev: MessageEvent<TrialDecodeWorkerRequest>): void => {
   const { sample, config } = ev.data;
+  const bytes = new Uint8Array(sample);
+  // Đợt 77 E7 — quét zero-run AVCC trong worker TRƯỚC khi decode: đường
+  // worker là đường duy nhất cho sample lớn (≥ ~7,7 MiB) nên quét ở đây
+  // vừa bắt được keyframe bị zero-giữa vừa không kẹt main thread (quét
+  // 50 MiB lossless ~1 s — xem LIMITS E7 §2.3). Violation → false
+  // (decode-failed) để main thread fallback về full-file như probe-false;
+  // inconclusive → decode như cũ (fail-open).
+  // Đợt 78 F8 — kèm theo lý do quét (`reason: "zero-run: ..."`, đúng
+  // định dạng T3 tự tổng hợp ở đường main-thread) để lý do không bị mất
+  // ở protocol boolean — main thread chuyển thành structured failure và
+  // runTrialDecode giữ nguyên tới T3 (xem gopTrialDecode55L8.ts /
+  // gopTrialDecodeWorker62R4.ts). Chuỗi reason tiếng Anh (quy ước file).
+  const scan = scanAvccZeroRun(bytes, config.codec);
+  if (scan.violation) {
+    scope.postMessage({
+      type: "result",
+      outcome: false,
+      reason: `zero-run: ${scan.reason}`,
+    });
+    return;
+  }
   const probe = createBrowserTrialDecodeProbe();
   if (probe === null) {
     scope.postMessage({
@@ -34,7 +57,7 @@ scope.onmessage = (ev: MessageEvent<TrialDecodeWorkerRequest>): void => {
     });
     return;
   }
-  void probe(new Uint8Array(sample), config).then(
+  void probe(bytes, config).then(
     (outcome) => scope.postMessage({ type: "result", outcome }),
     (e: unknown) =>
       scope.postMessage({

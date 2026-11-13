@@ -11,6 +11,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const path = require("path");
 const { spawnSync, execFileSync } = require("child_process");
 
@@ -57,7 +58,7 @@ const dryCases = [
 ];
 for (const c of dryCases) {
   const specPath = path.join(outDir, "dry-spec.json");
-  fs.writeFileSync(specPath, JSON.stringify(makeSpec(1280, 720, 30)));
+  writeFileEpermRetry(specPath, JSON.stringify(makeSpec(1280, 720, 30)));
   const r = spawnSync("node", [RENDER_JS, "--spec", specPath,
     "--out", path.join(outDir, "dry.mp4"),
     "--crf", String(c.crf), "--x264-preset", c.x264, "--audio-bitrate", c.abitrate,
@@ -89,7 +90,7 @@ const renderCases = [
 for (const c of renderCases) {
   const specPath = path.join(outDir, `spec-${c.label}.json`);
   const outFile = path.join(outDir, `preset-${c.label}.mp4`);
-  fs.writeFileSync(specPath, JSON.stringify(makeSpec(c.w, c.h, 30)));
+  writeFileEpermRetry(specPath, JSON.stringify(makeSpec(c.w, c.h, 30)));
   const r = spawnSync("node", [RENDER_JS, "--spec", specPath, "--out", outFile,
     "-y", "-q", "--crf", "28", "--x264-preset", "veryfast", "--audio-bitrate", "96k"],
     { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });

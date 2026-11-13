@@ -3,7 +3,7 @@
 // 1. vi.json và en.json phải có cùng tập key (flatten).
 // 2. Mọi key literal i18nT("...") trong src/ phải tồn tại trong cả 2 dict.
 // 3. Mọi key MỚI của R6 (các section liệt kê dưới) phải được code dùng tới
-//    (literal, hoặc qua prefix động transition.opt./textanim.opt.).
+//    (literal, hoặc qua prefix động transition.opt./textanim.opt./sticker.cat./sticker.item.).
 // 4. Catalog transition (68 type) và textanim (18 anim) phải đủ label+desc.
 //
 // Chạy: node apps/web/scripts/r6-i18n-check.cjs
@@ -78,7 +78,14 @@ const dynamicPrefixes = ["transition.opt.", "textanim.opt.",
   // orphans đã coi "scene.phase." là prefix động từ trước; r6-check
   // chưa có nên báo thừa 2 key này — không phải hồi quy đợt 65 (không
   // luồng đợt 65 nào đụng code scene phase).
-  "scene.phase."];
+  "scene.phase.",
+  // Parent gộp đợt 93: sticker.cat.* / sticker.item.* dùng qua labelKey
+  // trong data layer (packages/video-spec/src/sticker.ts, ngoài cây quét
+  // apps/web/src của r6) và StickerPanel dịch bằng i18nT(entry.labelKey)
+  // — key không xuất hiện literal trong src nên r6 báo thừa 249 key.
+  // Mức dùng đã khóa ở chỗ khác: orphans 17/17 (quét labelKey) +
+  // css60 §8 khối checkI18n StickerPanel (60/60).
+  "sticker.cat.", "sticker.item."];
 const r6Keys = Object.keys(fv).filter(
   (k) => R6_SECTIONS.includes(k.split(".")[0]) || R6_COMMON_KEYS.includes(k),
 );

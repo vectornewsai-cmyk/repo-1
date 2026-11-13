@@ -5,6 +5,7 @@
  */
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
@@ -39,7 +40,7 @@ function makeAudio(wavPath) {
   execFileSync("ffmpeg", ["-y", "-v", "error", "-f", "lavfi",
     "-i", "anullsrc=r=44100:cl=mono:d=2", sil]);
   const lst = path.join(tmp, "list.txt");
-  fs.writeFileSync(lst, [`file '${s1}'`, `file '${sil}'`, `file '${s2}'`].join("\n"));
+  writeFileEpermRetry(lst, [`file '${s1}'`, `file '${sil}'`, `file '${s2}'`].join("\n"));
   execFileSync("ffmpeg", ["-y", "-v", "error", "-f", "concat", "-safe", "0",
     "-i", lst, "-c:a", "pcm_s16le", wavPath]);
   fs.rmSync(tmp, { recursive: true, force: true });

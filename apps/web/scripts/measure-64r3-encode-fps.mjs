@@ -24,6 +24,7 @@
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -116,7 +117,7 @@ async function main() {
     }
   }
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, JSON.stringify(results, null, 2));
+  writeFileEpermRetry(OUT, JSON.stringify(results, null, 2));
   log(`đã ghi ${OUT}`);
 }
 

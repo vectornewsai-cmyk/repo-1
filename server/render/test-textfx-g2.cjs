@@ -10,6 +10,7 @@
 
 const { execFileSync } = require("child_process");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 
@@ -46,7 +47,7 @@ for (const anim of ANIMS) {
   };
   const specPath = path.join(tmp, `${anim}.json`);
   const outPath = path.join(tmp, `${anim}.mp4`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
 
   try {
     execFileSync("node", [RENDER, "--spec", specPath, "--out", outPath, "-y", "-q"],

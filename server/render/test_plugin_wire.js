@@ -19,6 +19,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -45,7 +46,7 @@ const gen = run("ffmpeg", ["-v", "error", "-f", "lavfi",
 if (gen.status !== 0) { console.error("Không tạo được media mẫu:", gen.stderr); process.exit(2); }
 
 // --- Plugin probe (theo path): validate warning + export-finish warning ---
-fs.writeFileSync(path.join(tmp, "probe.js"), `
+writeFileEpermRetry(path.join(tmp, "probe.js"), `
 module.exports = {
   manifest: {
     name: "e2e-probe", version: "1.0.0", author: "test",
@@ -75,7 +76,7 @@ function makeSpec(extra) {
 }
 function writeSpec(name, spec) {
   const p = path.join(tmp, name);
-  fs.writeFileSync(p, JSON.stringify(spec, null, 2), "utf8");
+  writeFileEpermRetry(p, JSON.stringify(spec, null, 2), "utf8");
   return p;
 }
 function render(specPath, outName) {

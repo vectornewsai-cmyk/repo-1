@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-11T04:08:29.562Z",
+  "cases": {
+    "B-baseline-rep1": {
+      "useWatchdog": false,
+      "duration": 4,
+      "ended": 0,
+      "rescues": [],
+      "resumeMs": [],
+      "seekedCount": 0,
+      "quality": {
+        "total": 5,
+        "dropped": 0
+      },
+      "finalCt": 0.184,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.98
+    },
+    "W-watchdog-rep1": {
+      "useWatchdog": true,
+      "duration": 4,
+      "ended": 0,
+      "rescues": [
+        {
+          "atT": 3.07,
+          "from": 0.292,
+          "to": 0.312
+        },
+        {
+          "atT": 5.3,
+          "from": 0.312,
+          "to": 0.332
+        },
+        {
+          "atT": 7.76,
+          "from": 0.332,
+          "to": 0.352
+        }
+      ],
+      "resumeMs": [],
+      "seekedCount": 3,
+      "quality": {
+        "total": 4,
+        "dropped": 1
+      },
+      "finalCt": 0.352,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.96
+    },
+    "B-baseline-rep2": {
+      "useWatchdog": false,
+      "duration": 4,
+      "ended": 0,
+      "rescues": [],
+      "resumeMs": [],
+      "seekedCount": 0,
+      "quality": {
+        "total": 4,
+        "dropped": 1
+      },
+      "finalCt": 0.583,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.92
+    },
+    "W-watchdog-rep2": {
+      "useWatchdog": true,
+      "duration": 4,
+      "ended": 0,
+      "rescues": [
+        {
+          "atT": 3.13,
+          "from": 0.414,
+          "to": 0.434
+        },
+        {
+          "atT": 5.53,
+          "from": 0.434,
+          "to": 0.454
+        },
+        {
+          "atT": 8.01,
+          "from": 0.454,
+          "to": 0.474
+        }
+      ],
+      "resumeMs": [],
+      "seekedCount": 3,
+      "quality": {
+        "total": 2,
+        "dropped": 1
+      },
+      "finalCt": 0.474,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.97
+    }
+  }
+}

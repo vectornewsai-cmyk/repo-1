@@ -16,8 +16,16 @@
 // KHÔNG ngủ. Các đường ngủ kiểu bỏ cuộc dùng lại helper W2/X2 để
 // không lệch với định nghĩa gốc của chúng.
 
-import { pauseRetryMaySleep } from "./pauseDraw41W2";
-import { seekFailureMaySleep } from "./pauseSeekCap42X2";
+// Đợt 91 S2: import kèm đuôi .ts theo quy ước strip-types của repo
+// (file test import "./previewLoop50F2.ts"); tsc với moduleResolution
+// bundler mà không bật allowImportingTsExtensions sẽ báo TS5097 cho
+// đường dẫn đuôi .ts nên 2 dòng import này mang @ts-ignore có chủ đích
+// — vite và node strip-types đều resolve được đuôi .ts, chỉ tsc là cần
+// bỏ qua (đã kiểm chứng: tsc 0 với @ts-ignore này).
+// @ts-ignore: xem ghi chú trên (TS5097, đuôi .ts cho strip-types)
+import { pauseRetryMaySleep } from "./pauseDraw41W2.ts";
+// @ts-ignore: xem ghi chú trên (TS5097, đuôi .ts cho strip-types)
+import { seekFailureMaySleep } from "./pauseSeekCap42X2.ts";
 
 /** Mặt tối thiểu của trạng thái vòng lặp mà quyết định ngủ cần. */
 export interface PreviewLoopSleepState {

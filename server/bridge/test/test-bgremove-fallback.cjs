@@ -17,6 +17,7 @@
 const assert = require("node:assert/strict");
 const path = require("node:path");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 
 const {
@@ -66,9 +67,9 @@ print(f"[bgremove] session_used={session}", file=sys.stderr)
 async function withStub(mode, fn) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bgfb-"));
   const stubPath = path.join(dir, "stub_bgremove.py");
-  fs.writeFileSync(stubPath, STUB);
+  writeFileEpermRetry(stubPath, STUB);
   const countFile = path.join(dir, "count");
-  fs.writeFileSync(countFile, "0");
+  writeFileEpermRetry(countFile, "0");
   const prevPy = process.env.BGREMOVE_PY;
   const prevMode = process.env.STUB_MODE;
   const prevCount = process.env.STUB_COUNT;

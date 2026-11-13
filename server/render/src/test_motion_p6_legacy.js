@@ -23,6 +23,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -60,7 +61,7 @@ const vclip = (extra) => ({
 });
 function render(clip, name) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(specWith(clip)));
+  writeFileEpermRetry(specPath, JSON.stringify(specWith(clip)));
   const outPath = path.join(work, `${name}.mp4`);
   const r = spawnSync("node", ["src/render.js", "--spec", specPath, "--out", outPath,
     "--media-dir", mediaDir, "--x264-preset", "veryfast", "--crf", "28", "-y"],

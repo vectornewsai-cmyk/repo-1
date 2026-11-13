@@ -13,6 +13,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -103,7 +104,7 @@ for (const c of cases) {
   const specPath = path.join(outDir, `spec-${c.op}.json`);
   const mp4Path = path.join(outDir, `opacity-${c.op}.mp4`);
   const framePath = path.join(outDir, "frames", `opacity-${c.op}.png`);
-  fs.writeFileSync(specPath, JSON.stringify(makeSpec(c.op), null, 2));
+  writeFileEpermRetry(specPath, JSON.stringify(makeSpec(c.op), null, 2));
   sh("node", [RENDER, "--spec", specPath, "--out", mp4Path,
     "--media-dir", path.join(outDir, "media"), "-y", "-q"]);
   const p = ffprobe(mp4Path);
@@ -150,7 +151,7 @@ console.log("== [4] Kết hợp opacity + effects ==");
   spec.tracks[1].clips[0].effects = [{ type: "grayscale", intensity: 1 }];
   const specPath = path.join(outDir, "spec-combo.json");
   const mp4Path = path.join(outDir, "opacity-combo.mp4");
-  fs.writeFileSync(specPath, JSON.stringify(spec, null, 2));
+  writeFileEpermRetry(specPath, JSON.stringify(spec, null, 2));
   sh("node", [RENDER, "--spec", specPath, "--out", mp4Path,
     "--media-dir", path.join(outDir, "media"), "-y", "-q"]);
   const p = ffprobe(mp4Path);

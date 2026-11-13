@@ -1,0 +1,453 @@
+{
+  "tool": "bench_round87_o7_mask_track.cjs",
+  "date": "2026-11-11T05:47:55.834Z",
+  "machine": {
+    "cpu": "AMD EPYC 9D25 126-Core Processor",
+    "vcpu": 4,
+    "ramTotalMiB": 7934,
+    "gpu": "none",
+    "ffmpeg": "ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers",
+    "node": "v24.22.1"
+  },
+  "clip": "testsrc2 1280x720 30fps 5s (150 frames), veryfast/CRF23, render.js thật",
+  "renders": [
+    {
+      "arm": "b0-baseline-1",
+      "maskMode": "png",
+      "status": 0,
+      "wallSec": 3.64,
+      "fps": 41.2,
+      "outBytes": 1452357,
+      "durationSec": 5,
+      "loadBefore": {
+        "loadavg": "3.68 1.21 0.58",
+        "ramAvailMiB": 1134
+      },
+      "loadAfter": {
+        "loadavg": "3.68 1.21 0.58",
+        "ramAvailMiB": 1083
+      }
+    },
+    {
+      "arm": "b0-baseline-2",
+      "maskMode": "png",
+      "status": 0,
+      "wallSec": 3.61,
+      "fps": 41.57,
+      "outBytes": 1452357,
+      "durationSec": 5,
+      "loadBefore": {
+        "loadavg": "3.68 1.21 0.58",
+        "ramAvailMiB": 1080
+      },
+      "loadAfter": {
+        "loadavg": "4.10 1.34 0.62",
+        "ramAvailMiB": 1039
+      }
+    },
+    {
+      "arm": "b1-static-png-1",
+      "maskMode": "png",
+      "status": 0,
+      "wallSec": 4.41,
+      "fps": 34.01,
+      "outBytes": 228329,
+      "durationSec": 5,
+      "loadBefore": {
+        "loadavg": "4.10 1.34 0.62",
+        "ramAvailMiB": 1021
+      },
+      "loadAfter": {
+        "loadavg": "4.82 1.54 0.69",
+        "ramAvailMiB": 1041
+      }
+    },
+    {
+      "arm": "b1-static-png-2",
+      "maskMode": "png",
+      "status": 0,
+      "wallSec": 4.3,
+      "fps": 34.84,
+      "outBytes": 228329,
+      "durationSec": 5,
+      "loadBefore": {
+        "loadavg": "4.82 1.54 0.69",
+        "ramAvailMiB": 1033
+      },
+      "loadAfter": {
+        "loadavg": "5.55 1.74 0.76",
+        "ramAvailMiB": 1083
+      }
+    },
+    {
+      "arm": "b2-static-geq-1",
+      "maskMode": "geq",
+      "status": 0,
+      "wallSec": 35.05,
+      "fps": 4.28,
+      "outBytes": 207208,
+      "durationSec": 5,
+      "loadBefore": {
+        "loadavg": "5.55 1.74 0.76",
+        "ramAvailMiB": 1072
+      },
+      "loadAfter": {
+        "loadavg": "7.82 2.74 1.13",
+        "ramAvailMiB": 648
+      }
+    },
+    {
+      "arm": "b2-static-geq-2",
+      "maskMode": "geq",
+      "status": 0,
+      "wallSec": 31.06,
+      "fps": 4.83,
+      "outBytes": 207208,
+      "durationSec": 5,
+      "loadBefore": {
+        "loadavg": "7.82 2.74 1.13",
+        "ramAvailMiB": 649
+      },
+      "loadAfter": {
+        "loadavg": "8.43 3.33 1.38",
+        "ramAvailMiB": 1064
+      }
+    },
+    {
+      "arm": "b3-tracked-1",
+      "maskMode": "png",
+      "status": 0,
+      "wallSec": 13.79,
+      "fps": 10.87,
+      "outBytes": 270655,
+      "durationSec": 5,
+      "loadBefore": {
+        "loadavg": "8.43 3.33 1.38",
+        "ramAvailMiB": 1050
+      },
+      "loadAfter": {
+        "loadavg": "9.05 3.71 1.54",
+        "ramAvailMiB": 1196
+      }
+    },
+    {
+      "arm": "b3-tracked-2",
+      "maskMode": "png",
+      "status": 0,
+      "wallSec": 7.93,
+      "fps": 18.91,
+      "outBytes": 270655,
+      "durationSec": 5,
+      "loadBefore": {
+        "loadavg": "9.05 3.71 1.54",
+        "ramAvailMiB": 1196
+      },
+      "loadAfter": {
+        "loadavg": "8.60 3.79 1.58",
+        "ramAvailMiB": 974
+      }
+    },
+    {
+      "arm": "b4-tracked-denoise",
+      "maskMode": "png",
+      "status": 0,
+      "wallSec": 9.18,
+      "fps": 16.34,
+      "outBytes": 255073,
+      "durationSec": 5,
+      "loadBefore": {
+        "loadavg": "8.60 3.79 1.58",
+        "ramAvailMiB": 962
+      },
+      "loadAfter": {
+        "loadavg": "8.56 3.86 1.62",
+        "ramAvailMiB": 1098
+      }
+    },
+    {
+      "arm": "b5-tracked-stabilize",
+      "maskMode": "png",
+      "status": 0,
+      "wallSec": 13.57,
+      "fps": 11.05,
+      "outBytes": 236807,
+      "durationSec": 5,
+      "loadBefore": {
+        "loadavg": "8.56 3.86 1.62",
+        "ramAvailMiB": 1102
+      },
+      "loadAfter": {
+        "loadavg": "7.48 3.85 1.65",
+        "ramAvailMiB": 1085
+      }
+    }
+  ],
+  "maskVideoGen": [
+    {
+      "label": "gen-720p-2s-2kf",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "duration": 2,
+      "keyframes": [
+        {
+          "t": 0,
+          "x": 0.2,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        {
+          "t": 2,
+          "x": 0.8,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        }
+      ],
+      "nFrames": 60,
+      "status": 0,
+      "wallSec": 1.79,
+      "secPerFrame": 0.0298,
+      "mkvBytes": 530021,
+      "loadBefore": {
+        "loadavg": "6.96 3.80 1.65",
+        "ramAvailMiB": 1118
+      },
+      "loadAfter": {
+        "loadavg": "6.96 3.80 1.65",
+        "ramAvailMiB": 1044
+      }
+    },
+    {
+      "label": "gen-720p-5s-2kf",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "duration": 5,
+      "keyframes": [
+        {
+          "t": 0,
+          "x": 0.2,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        {
+          "t": 5,
+          "x": 0.8,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        }
+      ],
+      "nFrames": 150,
+      "status": 0,
+      "wallSec": 4.21,
+      "secPerFrame": 0.0281,
+      "mkvBytes": 1326129,
+      "loadBefore": {
+        "loadavg": "6.96 3.80 1.65",
+        "ramAvailMiB": 1044
+      },
+      "loadAfter": {
+        "loadavg": "6.48 3.75 1.64",
+        "ramAvailMiB": 1000
+      }
+    },
+    {
+      "label": "gen-720p-5s-11kf",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "duration": 5,
+      "keyframes": [
+        {
+          "t": 0,
+          "x": 0.2,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        {
+          "t": 0.5,
+          "x": 0.26,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        {
+          "t": 1,
+          "x": 0.32,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        {
+          "t": 1.5,
+          "x": 0.38,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        {
+          "t": 2,
+          "x": 0.44,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        {
+          "t": 2.5,
+          "x": 0.5,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        {
+          "t": 3,
+          "x": 0.56,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        {
+          "t": 3.5,
+          "x": 0.62,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        {
+          "t": 4,
+          "x": 0.6799999999999999,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        {
+          "t": 4.5,
+          "x": 0.74,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        {
+          "t": 5,
+          "x": 0.8,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        }
+      ],
+      "nFrames": 150,
+      "status": 0,
+      "wallSec": 3.88,
+      "secPerFrame": 0.0259,
+      "mkvBytes": 1326139,
+      "loadBefore": {
+        "loadavg": "6.48 3.75 1.64",
+        "ramAvailMiB": 1000
+      },
+      "loadAfter": {
+        "loadavg": "6.28 3.76 1.66",
+        "ramAvailMiB": 1014
+      }
+    },
+    {
+      "label": "gen-720p-10s-2kf",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "duration": 10,
+      "keyframes": [
+        {
+          "t": 0,
+          "x": 0.2,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        {
+          "t": 10,
+          "x": 0.8,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        }
+      ],
+      "nFrames": 300,
+      "status": 0,
+      "wallSec": 7.57,
+      "secPerFrame": 0.0252,
+      "mkvBytes": 2649901,
+      "loadBefore": {
+        "loadavg": "6.28 3.76 1.66",
+        "ramAvailMiB": 1014
+      },
+      "loadAfter": {
+        "loadavg": "5.86 3.71 1.65",
+        "ramAvailMiB": 1028
+      }
+    },
+    {
+      "label": "gen-1080p-5s-2kf",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "duration": 5,
+      "keyframes": [
+        {
+          "t": 0,
+          "x": 0.2,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        {
+          "t": 5,
+          "x": 0.8,
+          "y": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        }
+      ],
+      "nFrames": 150,
+      "status": 0,
+      "wallSec": 9.99,
+      "secPerFrame": 0.0666,
+      "mkvBytes": 3013114,
+      "loadBefore": {
+        "loadavg": "5.86 3.71 1.65",
+        "ramAvailMiB": 1028
+      },
+      "loadAfter": {
+        "loadavg": "5.43 3.69 1.67",
+        "ramAvailMiB": 1254
+      }
+    }
+  ],
+  "frameChecks": [
+    {
+      "label": "tracked@2.5 vs static-png@2.5 (cùng hình học x=0.5)",
+      "mean": 0.234,
+      "max": 82,
+      "pctGt8": 0.489
+    },
+    {
+      "label": "tracked@0.2 vs tracked@4.8 (mask phải di chuyển)",
+      "mean": 40.65,
+      "max": 255,
+      "pctGt8": 21.465
+    },
+    {
+      "label": "static png@2.5 vs static geq@2.5 (kiểm lại R2)",
+      "mean": 0.251,
+      "max": 115,
+      "pctGt8": 0.464
+    }
+  ],
+  "notes": [
+    "1 frame PNG tạm 720p = 2204 B, 1080p = 3940 B (đĩa tạm mask_anim ≈ nFrames x số này, xoá sau khi encode xong)"
+  ]
+}

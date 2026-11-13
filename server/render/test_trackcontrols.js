@@ -15,6 +15,7 @@
 
 const { execFileSync, spawnSync } = require("child_process");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 
@@ -56,7 +57,7 @@ const aclip = (id, src) => ({ kind: "audio", id, src, start: 0, duration: 3, in:
 function render(spec, outName) {
   const specPath = path.join(WORK, outName + ".json");
   const outPath = path.join(WORK, outName + ".mp4");
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const r = spawnSync("node", [path.join(HERE, "src", "render.js"),
     "--spec", specPath, "--out", outPath, "--media-dir", MEDIA, "-y", "-q"],
     { encoding: "utf8" });

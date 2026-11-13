@@ -15,6 +15,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { execFileSync, spawnSync } = require("child_process");
@@ -25,7 +26,7 @@ function run(cmd, args) {
 
 function renderSpec(dir, mediaDir, spec, name) {
   const specPath = path.join(dir, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const out = path.join(dir, `${name}.mp4`);
   const r = spawnSync("node", ["src/render.js", "--spec", specPath, "--out", out, "--media-dir", mediaDir],
     { cwd: __dirname, encoding: "utf8" });
@@ -137,7 +138,7 @@ async function main() {
   const bad = JSON.parse(JSON.stringify(spec1));
   bad.tracks[0].clips[0].mask.keyframes[0].t = -1;
   const badPath = path.join(dir, "bad.json");
-  fs.writeFileSync(badPath, JSON.stringify(bad));
+  writeFileEpermRetry(badPath, JSON.stringify(bad));
   const rb = spawnSync("node", ["src/render.js", "--spec", badPath, "--out", path.join(dir, "bad.mp4"),
     "--media-dir", mediaDir], { cwd: __dirname, encoding: "utf8" });
   ok(rb.status !== 0, "keyframes t âm → render thoát lỗi (validate chặn)");

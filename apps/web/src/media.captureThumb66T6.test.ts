@@ -1,3 +1,11 @@
+// media.captureThumb66T6.test.ts — unit test captureVideoThumb/fileToMediaItem
+// (đợt 66 T6; runner thống nhất đợt 96 X8 — xem apps/web/scripts/run-media-tests.mjs).
+// Chạy (từ gốc repo): media.ts import "./lib" không đuôi nên Node
+// --experimental-strip-types không resolve được (thư mục src/lib/ tồn tại)
+// — bundle qua esbuild (ESM; CJS fail do top-level await) rồi chạy:
+//   ./node_modules/.bin/esbuild apps/web/src/media.captureThumb66T6.test.ts --bundle --format=esm --platform=node --outfile=/tmp/capture-thumb-66t6.test.mjs && node /tmp/capture-thumb-66t6.test.mjs
+// Hoặc chạy cả 3 test media.* cùng lúc:
+//   node apps/web/scripts/run-media-tests.mjs
 import { fileToMediaItem } from "./media";
 
 /** Khai báo tối thiểu để không cần @types/node. */
