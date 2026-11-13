@@ -35,6 +35,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -112,7 +113,7 @@ function topBoxes(buf) {
     raw.subarray(mdat.start + mdat.header, mdat.start + mdat.size),
     Buffer.alloc(pad, 0), raw.subarray(moov.start),
   ]);
-  fs.writeFileSync(fixPath, inflated);
+  writeFileEpermRetry(fixPath, inflated);
   // Khẳng định tiền tố 4096 không tới được moov (điều kiện tái hiện nợ A4).
   const prefixBoxes = topBoxes(inflated.subarray(0, 4096));
   if (prefixBoxes.some((b) => b.type === "moov")) {
@@ -198,7 +199,7 @@ window.__a4t3 = async () => {
 };
 window.__a4ready = true;
 </script>`;
-fs.writeFileSync(path.join(SCRATCH, "tail45-page.html"), pageHtml);
+writeFileEpermRetry(path.join(SCRATCH, "tail45-page.html"), pageHtml);
 const server = createServer((req, res) => {
   const u = new URL(req.url, "http://127.0.0.1");
   if (u.pathname === "/tail45-page.html") {

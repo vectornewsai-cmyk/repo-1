@@ -339,8 +339,8 @@ test("formatNoteLines: dịch note + giữ chuỗi lẻ, không trùng lặp", (
 // ---- i18n parity ----
 
 test("i18n: vi == en toàn bộ dict (0 key mồ côi cả hai chiều)", () => {
-  eq(viDict.size, 2326, `vi phải có 2326 key, nhận ${viDict.size}`);
-  eq(enDict.size, 2326, `en phải có 2326 key, nhận ${enDict.size}`);
+  eq(viDict.size, 2767, `vi phải có 2767 key, nhận ${viDict.size}`);
+  eq(enDict.size, 2767, `en phải có 2767 key, nhận ${enDict.size}`);
   const onlyVi = [...viDict.keys()].filter((k) => !enDict.has(k));
   const onlyEn = [...enDict.keys()].filter((k) => !viDict.has(k));
   eq(onlyVi, [], `key chỉ có ở vi: ${JSON.stringify(onlyVi)}`);

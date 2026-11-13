@@ -28,6 +28,8 @@ import { rehydrateMediaItems } from "./rehydrate36S5";
 // (y hệt đường autosave ở App.tsx) + origin bridge hiện tại.
 import { checkProxyAlive } from "./proxy";
 import { BRIDGE_URL } from "./bridgeUrl";
+// Đợt 75 C6 — probe lại codec lúc rehydrate sau mở file (như App.tsx).
+import { probeImportedFileCodec } from "./codecProbe";
 import { t } from "../i18n";
 import type { ImportFileProgressEvent } from "./ingestProgress39T5";
 // Đợt 27 K5 (load report): chỉ 3 dòng ghi/xoá báo cáo lần load gần
@@ -43,7 +45,9 @@ import {
 } from "./loadReport";
 import {
   adoptLegacyHistoryChain,
+  ARCHIVE_HISTORY_MAX_VERSIONS,
   getHistoryStore,
+  notifyHistoryChanged,
 } from "./projectHistory";
 // Đợt 66 T7 — mảnh legacy mơ hồ → UI nhận thủ công (LegacyHistoryAdoptModal).
 import { queueAmbiguousFromAdoptResult } from "./legacyAdoptUi";
@@ -94,6 +98,14 @@ async function rehydrateAfterOpen(spec: Parameters<typeof rehydrateMediaItems>[1
         // (chỉ 404 chắc chắn mới bị coi là chết).
         proxyBaseUrl: BRIDGE_URL,
         checkProxyUrl: checkProxyAlive,
+        // Đợt 75 C6 — như đường autosave ở App.tsx: probe lại codec cho
+        // item khôi phục để badge cảnh báo sống qua lần mở file này.
+        probeUnsupportedCodec: async (file) => {
+          const probe = await probeImportedFileCodec(file);
+          return probe && probe.verdict === "unsupported"
+            ? probe.codecLabel
+            : undefined;
+        },
       },
       spec,
     );
@@ -120,6 +132,29 @@ async function rehydrateAfterOpen(spec: Parameters<typeof rehydrateMediaItems>[1
     }
   } catch {
     // IndexedDB không khả dụng → giữ bin rỗng, Relink báo như cũ.
+  }
+}
+
+/**
+ * Đợt 67 U6 — câu giải thích khi bỏ qua lịch sử kèm trong archive
+ * Đợt 79 G9 — câu giải thích nay qua key i18n `openProject.archiveHistory*`
+ * (trước đây là chuỗi VI dựng tay; file này không nằm trong 36 file audit
+ * i18n P7 quét nên lọt). `detail` là dữ liệu (projectId / số lượng), không dịch.
+ */
+export function archiveHistorySkippedMessage(
+  reason: "project-mismatch" | "too-many" | "version-project-mismatch",
+  detail: string,
+): string {
+  switch (reason) {
+    case "project-mismatch":
+      return t("openProject.archiveHistoryProjectMismatch", { detail });
+    case "too-many":
+      return t("openProject.archiveHistoryTooMany", {
+        detail,
+        max: String(ARCHIVE_HISTORY_MAX_VERSIONS),
+      });
+    case "version-project-mismatch":
+      return t("openProject.archiveHistoryVersionMismatch", { detail });
   }
 }
 
@@ -206,6 +241,68 @@ export async function openArchiveFileFlow(
   // UI nhận thủ công (LegacyHistoryAdoptModal).
   const archiveAdoptResult = await adoptLegacyHistoryChain(res.projectId, res.name, undefined, { spec: res.spec });
   queueAmbiguousFromAdoptResult(archiveAdoptResult);
+  // Đợt 67 U6 — nhập lịch sử KÈM TRONG archive (chuỗi mới từ máy khác
+  // — đóng nợ đợt 66 T7 §5.2: trước đây lịch sử của file gốc không đi
+  // theo `.vcut.zip`, đường archive chỉ nhận được chuỗi legacy ĐÃ CÓ
+  // trên máy này). Lịch sử trong archive phải thuộc đúng project của
+  // archive (importArchiveHistory kiểm projectId + hash từng version);
+  // lệch/xung đột thì bỏ qua lịch sử (ghi note vào báo cáo tải) mà
+  // KHÔNG hỏng cả lần nhập archive. Xung đột cùng id khác nội dung thì
+  // giữ bản local, chỉ đếm (xem HistoryImportDetail).
+  let archiveHistoryNote: StructuredNote | undefined;
+  if (res.history) {
+    try {
+      const detail = await getHistoryStore().importArchiveHistory(res.history, res.projectId, t);
+      if (detail.skippedReason) {
+        // Lịch sử trong archive không thuộc về project này / quá giới
+        // hạn: bỏ qua lịch sử, không hỏng lần nhập archive. Câu giải
+        // thích dựng ở đây (file này không nằm trong 36 file audit i18n
+        // P7 quét) — importArchiveHistory chỉ trả mã lý do + chi tiết.
+        const msg = archiveHistorySkippedMessage(detail.skippedReason, detail.skippedDetail);
+        archiveHistoryNote = {
+          code: "archiveHistorySkipped",
+          params: { error: msg },
+          fallback: `Bỏ qua lịch sử trong bản nén: ${msg}`,
+        };
+      } else {
+        // Đợt 67 U6 — kho đổi thật thì báo HistoryPanel đang mở đọc lại
+        // (panel chỉ tự refresh khi projectId đổi; nhập archive thêm
+        // version cho CÙNG projectId đang mở).
+        if (detail.imported > 0) notifyHistoryChanged();
+        archiveHistoryNote = {
+          code: "archiveHistoryImported",
+          params: {
+            imported: String(detail.imported),
+            skipped: String(detail.skipped),
+            conflicts: String(detail.conflicts),
+          },
+          fallback: `Đã nhập ${detail.imported} phiên bản lịch sử từ bản nén (${detail.skipped} đã có sẵn, ${detail.conflicts} xung đột — giữ bản trên máy).`,
+        };
+      }
+    } catch (e) {
+      const msg = (e as Error).message;
+      archiveHistoryNote = {
+        code: "archiveHistorySkipped",
+        params: { error: msg },
+        fallback: `Bỏ qua lịch sử trong bản nén: ${msg}`,
+      };
+    }
+  } else if (res.historyError) {
+    // Đợt 79 G9 — historyErrorCode (nếu có) cho câu dịch qua key
+    // openProject.archiveHistory*; historyError (chuỗi VI cũ) giữ làm
+    // fallback cho archive cũ / test A4-A5 (khóa nhắc "history.json").
+    const msg =
+      res.historyErrorCode === "notObject"
+        ? t("openProject.archiveHistoryNotObject")
+        : res.historyErrorCode === "badJson"
+          ? t("openProject.archiveHistoryBadJson")
+          : res.historyError;
+    archiveHistoryNote = {
+      code: "archiveHistorySkipped",
+      params: { error: msg },
+      fallback: `Bỏ qua lịch sử trong bản nén: ${msg}`,
+    };
+  }
   if (res.mediaFiles.length > 0) {
     await st.importFiles(res.mediaFiles, onImportProgress);
   }
@@ -218,7 +315,15 @@ export async function openArchiveFileFlow(
   // media còn rỗng; effect autosave ở App.tsx sẽ ghi lại manifest đúng
   // sau khi restoreMediaBin (xem LIMITS đợt 59 P1 §5).
   autosave(res.spec, res.name, undefined, binMediaFromMedia(useStore.getState().media), res.projectId);
-  const archiveReport = buildLoadReport(res, "archive", res.name);
+  // Đợt 67 U6 — note nhập lịch sử (nếu có) đi kèm báo cáo tải để panel
+  // + toast hiện rõ số phiên bản đã nhập/bỏ qua/xung đột.
+  const archiveReport = buildLoadReport(
+    archiveHistoryNote
+      ? { ...res, structuredNotes: [...(res.structuredNotes ?? []), archiveHistoryNote] }
+      : res,
+    "archive",
+    res.name,
+  );
   warnListReport(archiveReport);
   setLastLoadReport(archiveReport);
   return true;
@@ -254,7 +359,7 @@ export function buildNativeSavePayload(): {
   const st = useStore.getState();
   // Đợt 63 R7 — payload native mang theo projectId ổn định (như
   // saveProject web) để file ghi ra giữ nguyên id.
-  const result = serializeProject(st.spec, st.spec.meta.name, undefined, undefined, st.projectId);
+  const result = serializeProject(st.spec, st.spec.meta.name, undefined, undefined, st.projectId, (k, vars) => t(k, vars));
   return {
     json: result.json,
     name: st.spec.meta.name,

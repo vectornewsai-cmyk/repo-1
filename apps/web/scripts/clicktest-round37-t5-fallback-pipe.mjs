@@ -50,6 +50,7 @@
 // vấn đề chỉ là frame element tới muộn, không phải playhead đứng.
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -309,7 +310,7 @@ async function main() {
         : "",
     };
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
-    fs.writeFileSync(OUT, JSON.stringify(result, null, 2));
+    writeFileEpermRetry(OUT, JSON.stringify(result, null, 2));
     log(`kết quả ghi tại ${OUT}`);
     for (const [k, v] of Object.entries(checks)) log(`check ${k}: ${v ? "PASS" : "FAIL"}`);
     log(`drawDelta=${drawDelta} holdDelta=${holdDelta} wcHits=${wcHits} wcMisses=${wcMisses} firstContentIndex=${firstContentIndex} badge=${reverseBadgeSeen}`);

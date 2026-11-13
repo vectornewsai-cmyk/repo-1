@@ -58,6 +58,7 @@
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("node:path");
 
 const HERE = __dirname;
@@ -276,7 +277,7 @@ function main() {
       const probeOut = { pair: OPT.pair, matrixHow, probe: { bt601: f601, bt709: f709, effective: previewMatrix }, cells: [] };
       if (OPT.out) {
         fs.mkdirSync(path.dirname(path.resolve(OPT.out)), { recursive: true });
-        fs.writeFileSync(OPT.out, JSON.stringify(probeOut, null, 2));
+        writeFileEpermRetry(OPT.out, JSON.stringify(probeOut, null, 2));
         console.log(`JSON đã ghi: ${OPT.out}`);
       }
       return probeOut;
@@ -327,7 +328,7 @@ function main() {
   }
   if (OPT.out) {
     fs.mkdirSync(path.dirname(path.resolve(OPT.out)), { recursive: true });
-    fs.writeFileSync(OPT.out, JSON.stringify(results, null, 2));
+    writeFileEpermRetry(OPT.out, JSON.stringify(results, null, 2));
     console.log(`JSON đã ghi: ${OPT.out}`);
   }
   return results;

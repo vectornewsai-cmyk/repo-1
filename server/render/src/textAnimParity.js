@@ -55,6 +55,7 @@
 
 const assert = require("assert");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 
@@ -212,7 +213,7 @@ function buildParityAss(clips, meta, boxById) {
     L.push(`Dialogue: 0,${assTime(t0)},${assTime(t1)},PA${ci},,0,0,0,,${ov}${escapeAssText(clip.text)}`);
   });
   const file = path.join(os.tmpdir(), `repo1-text-parity-${process.pid}.ass`);
-  fs.writeFileSync(file, L.join("\n") + "\n", "utf8");
+  writeFileEpermRetry(file, L.join("\n") + "\n", "utf8");
   return file;
 }
 

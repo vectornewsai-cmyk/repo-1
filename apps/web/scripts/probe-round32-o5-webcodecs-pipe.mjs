@@ -30,6 +30,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -264,7 +265,7 @@ const PROBE_JS = String.raw`
 
 async function main() {
   for (const f of ["sparse.h264", "dense.h264"]) if (!fs.existsSync(path.join(SCRATCH, f))) fail(`thiếu fixture ${f} trong ${SCRATCH}`);
-  fs.writeFileSync(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>wc probe</title><body>probe</body>`);
+  writeFileEpermRetry(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>wc probe</title><body>probe</body>`);
   const server = serveDir(SCRATCH);
   await new Promise((r) => server.listen(PORT, "127.0.0.1", r));
   log(`phục vụ probe tại ${ORIGIN}`);
@@ -317,7 +318,7 @@ async function main() {
     result = await cdp.evaluate(`window.__wcResult || null`, cdp.sessionId).catch(() => null);
   }
   if (!result) fail("probe không trả kết quả sau 300s");
-  fs.writeFileSync(path.join(SCRATCH, "wc-result.json"), JSON.stringify(result, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "wc-result.json"), JSON.stringify(result, null, 2));
   log("KẾT QUẢ: " + JSON.stringify(result));
   cleanup();
   process.exit(0);

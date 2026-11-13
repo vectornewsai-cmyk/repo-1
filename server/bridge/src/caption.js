@@ -17,6 +17,8 @@ const os = require("os");
 const { spawn } = require("child_process");
 const { redactStderr } = require("./errorDetail"); // Đợt 29 L3: tail lỗi phải redact trước khi ra API
 const { codedError } = require("./errorCodes"); // Đợt 62 R5: mã lỗi bridge→web
+// Đợt 80 H8 (gap N4): hủy job thật + tiến trình thật.
+const { abortError, killChildOnAbort, killChildTree } = require("./aiProgress");
 
 /**
  * Whitelist ngôn ngữ — caption.py chỉ nhận mã ISO ngắn; whitelist chặn
@@ -76,15 +78,38 @@ function captionAvailable(cfg = captionConfigFromEnv()) {
 /** Nhận diện phase từ 1 dòng stdout của caption.py. */
 function phaseFromLine(line) {
   const l = String(line || "");
+  if (l.includes("[caption] nạp model") || l.includes("[caption] dùng model local") ||
+      l.includes("[caption] tải model")) return "load";
   if (l.includes("[caption] trích audio")) return "extract";
   if (l.includes("[caption] đang transcribe")) return "transcribe";
   if (l.includes("[caption] xong")) return "group";
   return null;
 }
 
+/**
+ * Đợt 80 H8 (gap N4): nhận diện tiến trình THẬT từ 1 dòng stdout của
+ * caption.py / translate.py — dạng "[caption] progress 12.3/60.0" (giây
+ * audio đã transcribe / tổng giây audio). Trả về { done, total } hoặc
+ * null khi dòng không phải progress. Đây là tiến trình thật: faster-whisper
+ * trả segments theo thứ tự thời gian nên seg.end = vị trí đã xử lý.
+ */
+function progressFromLine(line, tag) {
+  const t = tag || "caption";
+  const m = new RegExp(`\\[${t}\\]\\s+progress\\s+([\\d.]+)\\/([\\d.]+)`).exec(String(line || ""));
+  if (!m) return null;
+  const done = parseFloat(m[1]);
+  const total = parseFloat(m[2]);
+  if (!Number.isFinite(done) || !Number.isFinite(total) || total <= 0) return null;
+  return { done, total };
+}
+
 /** Nhãn tiếng Việt cho từng phase (hiện trong modal). */
 const PHASE_LABELS = {
   upload: "Đã nhận file, chuẩn bị…",
+  // Đợt 80 H8: báo rõ khi nạp model chậm — lần đầu tải/khởi tạo model
+  // faster-whisper có thể mất vài phút, trước đây UI chỉ hiện "Đang trích
+  // xuất audio…" nên user tưởng app treo.
+  load: "Đang nạp model nhận diện giọng nói (lần đầu có thể mất vài phút)…",
   extract: "Đang trích xuất audio…",
   transcribe: "Đang nhận diện giọng nói (video dài có thể mất vài phút)…",
   group: "Đang gộp câu phụ đề…",
@@ -130,6 +155,8 @@ function translateAvailable(cfg = translateConfigFromEnv()) {
 /** Nhận diện phase từ 1 dòng stdout của translate.py. */
 function translatePhaseFromLine(line) {
   const l = String(line || "");
+  if (l.includes("[translate] nạp model") || l.includes("[caption] dùng model local") ||
+      l.includes("[caption] tải model")) return "load";
   if (l.includes("[translate] trích audio")) return "extract";
   if (l.includes("[translate] đang dịch")) return "translating";
   if (l.includes("[translate] xong")) return "group";
@@ -139,6 +166,8 @@ function translatePhaseFromLine(line) {
 /** Nhãn tiếng Việt cho từng phase dịch (hiện trong modal). */
 const TRANSLATE_PHASE_LABELS = {
   upload: "Đã nhận file, chuẩn bị…",
+  // Đợt 80 H8: như PHASE_LABELS.load — báo rõ khi nạp model chậm.
+  load: "Đang nạp model dịch giọng nói (lần đầu có thể mất vài phút)…",
   extract: "Đang trích xuất audio…",
   translating: "Đang dịch sang tiếng Anh (video dài có thể mất vài phút)…",
   group: "Đang gộp câu phụ đề…",
@@ -216,14 +245,30 @@ function validateWords(raw) {
  * CỐ ĐỊNH (không shell), stream phase từ stdout, đọc JSON output, validate
  * segments. Dùng nội bộ bởi runCaption/runTranslate.
  *
+ * Đợt 80 H8 (gap N4) — tiến trình + hủy thật:
+ *   - `signal` (AbortSignal): khi abort → kill cả cây process python
+ *     (SIGTERM rồi SIGKILL sau 2s) và reject lỗi AI_JOB_ABORTED để route
+ *     phân biệt "user hủy" với "lỗi chạy thật".
+ *   - `onProgress({ phase, done, total })`: tiến trình THẬT từ dòng
+ *     "[caption] progress <giây đã xong>/<tổng giây>" của caption.py
+ *     (faster-whisper trả segments theo thứ tự thời gian).
+ *   - spawn `detached` (POSIX) để process thành group leader — kill group
+ *     mới diệt được cả ffmpeg con của bước trích audio (xem killChildTree).
+ *
  * @returns {Promise<{parsed: object, segments: Array}>}
  */
 function runPythonScriptJob({
   pythonBin, scriptPy, scriptName, tmpPrefix,
-  inputPath, langArg, timeoutMs, onPhase, phaseFromLineFn,
+  inputPath, langArg, timeoutMs, onPhase, onProgress, signal,
+  phaseFromLineFn, progressTag,
   timeoutMsg, spawnFailMsg, childErrorMsg, emptyErrorMsg,
 }) {
   return new Promise((resolve, reject) => {
+    // Đã bị hủy trước khi spawn → từ chối ngay, không chạy script.
+    if (signal && signal.aborted) {
+      reject(abortError("Job đã bị hủy trước khi chạy."));
+      return;
+    }
     const outPath = path.join(
       os.tmpdir(),
       `${tmpPrefix}${Date.now()}-${process.pid}.json`
@@ -240,6 +285,8 @@ function runPythonScriptJob({
       child = spawn(pythonBin, args, {
         stdio: ["ignore", "pipe", "pipe"],
         shell: false,
+        // Đợt 80 H8: group riêng để hủy diệt được cả process con.
+        detached: process.platform !== "win32",
       });
     } catch (e) {
       reject(new Error(`${spawnFailMsg}: ${e.message}`));
@@ -255,6 +302,7 @@ function runPythonScriptJob({
       if (done) return;
       done = true;
       clearTimeout(timer);
+      detachAbort();
       fn();
     };
     // Xóa file JSON tạm — gọi SAU khi đã đọc xong (close handler),
@@ -268,10 +316,29 @@ function runPythonScriptJob({
         try { if (onPhase) onPhase(p); } catch { /* callback UI lỗi thì bỏ qua */ }
       }
     };
+    const emitProgress = (p) => {
+      if (!p) return;
+      try {
+        if (onProgress) onProgress({ phase: lastPhase, done: p.done, total: p.total });
+      } catch { /* callback UI lỗi thì bỏ qua */ }
+    };
+    // Đợt 80 H8: hủy thật — signal abort → kill cây process rồi reject
+    // lỗi AI_JOB_ABORTED (route phân biệt để gửi event "cancelled").
+    const detachAbort = killChildOnAbort(child, signal, 2000);
+    if (signal) {
+      signal.addEventListener("abort", () => {
+        finish(() => {
+          cleanupOut();
+          reject(abortError("Job đã bị hủy."));
+        });
+      }, { once: true });
+    }
 
     const timer = setTimeout(() => {
       finish(() => {
-        try { child.kill("SIGKILL"); } catch { /* bỏ qua */ }
+        // Timeout: kill cả cây process (như abort) thay vì chỉ python —
+        // trước đây child.kill("SIGKILL") để lại ffmpeg con mồ côi.
+        killChildTree(child, 0).catch(() => {});
         cleanupOut();
         reject(new Error(timeoutMsg));
       });
@@ -286,6 +353,7 @@ function runPythonScriptJob({
         const line = stdoutBuf.slice(0, idx);
         stdoutBuf = stdoutBuf.slice(idx + 1);
         emitPhase(phaseFromLineFn(line));
+        emitProgress(progressFromLine(line, progressTag));
       }
     });
     child.stderr.on("data", (d) => {
@@ -332,7 +400,7 @@ function runPythonScriptJob({
   });
 }
 
-function runCaption({ inputPath, lang, onPhase, config } = {}) {
+function runCaption({ inputPath, lang, onPhase, onProgress, signal, config } = {}) {
   const cfg = config || captionConfigFromEnv();
   const language = validateLang(lang);
   if (typeof inputPath !== "string" || !path.isAbsolute(inputPath)) {
@@ -351,7 +419,10 @@ function runCaption({ inputPath, lang, onPhase, config } = {}) {
     langArg: language,
     timeoutMs: cfg.timeoutMs,
     onPhase,
+    onProgress,
+    signal,
     phaseFromLineFn: phaseFromLine,
+    progressTag: "caption",
     timeoutMsg:
       `Caption quá thời gian (${Math.round(cfg.timeoutMs / 60000)} phút) — thử video ngắn hơn.`,
     spawnFailMsg: "Không khởi động được caption.py",
@@ -381,7 +452,7 @@ function runCaption({ inputPath, lang, onPhase, config } = {}) {
  *   audioDurationSec:number, translateTimeSec:number,
  *   segments:Array<{start,end,text}>>}}
  */
-function runTranslate({ inputPath, lang, target, onPhase, config } = {}) {
+function runTranslate({ inputPath, lang, target, onPhase, onProgress, signal, config } = {}) {
   const cfg = config || translateConfigFromEnv();
   const sourceLang = validateLang(lang);
   const targetLang = validateTranslateTarget(target);
@@ -401,7 +472,10 @@ function runTranslate({ inputPath, lang, target, onPhase, config } = {}) {
     langArg: sourceLang,
     timeoutMs: cfg.timeoutMs,
     onPhase,
+    onProgress,
+    signal,
     phaseFromLineFn: translatePhaseFromLine,
+    progressTag: "translate",
     timeoutMsg:
       `Dịch quá thời gian (${Math.round(cfg.timeoutMs / 60000)} phút) — thử video ngắn hơn.`,
     spawnFailMsg: "Không khởi động được translate.py",
@@ -425,6 +499,7 @@ module.exports = {
   validateSegments,
   validateWords,
   phaseFromLine,
+  progressFromLine, // Đợt 80 H8: parse "[caption] progress done/total"
   captionAvailable,
   runCaption,
   // R1-080: dịch phụ đề sang tiếng Anh

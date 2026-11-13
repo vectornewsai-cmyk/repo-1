@@ -53,10 +53,14 @@
 const assert = require("assert");
 const crypto = require("crypto");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
 const { normStabParam, runStabilizeDetect } = require("./enhance");
+// Phase 9 đợt 74 B4: timeout cho `ffmpeg -version` (probe nhanh, trước
+// đây không timeout — treo thì render treo theo ở bước resolve .trf).
+const { KILL_SIGNAL, probeTimeoutMs } = require("./timeouts");
 
 const TRF_CACHE_VERSION = "v1";
 const TRF_CACHE_MAX_ENTRIES = 128;
@@ -77,10 +81,11 @@ function trfCacheEnabled() {
   return process.env.VCUT_TRF_CACHE !== "0";
 }
 
-/** Dòng đầu của `ffmpeg -version` ("" nếu không chạy được — key vẫn dùng được). */
+/** Dòng đầu của `ffmpeg -version` ("" nếu không chạy được — key vẫn dùng được).
+ * Đợt 74 B4: timeout 15s; treo → "" như khi không chạy được (không treo job). */
 function ffmpegVersionLine(ffmpeg) {
   try {
-    const r = spawnSync(ffmpeg, ["-version"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+    const r = spawnSync(ffmpeg, ["-version"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: probeTimeoutMs(), killSignal: KILL_SIGNAL });
     if (r.error || r.status !== 0) return "";
     return ((r.stdout || "").split("\n")[0] || "").trim();
   } catch {
@@ -203,7 +208,11 @@ function storeTrfCache(cacheDir, key, trfPath, limits) {
  * @param {string} ffmpeg đường dẫn ffmpeg
  * @param {string} inputAbs file nguồn tuyệt đối
  * @param {object} clip clip (cần id, in, duration, speed?, enhance.stabilize)
- * @param {object} [opts] { cacheDir?, ffmpegVersion?, enabled?, runTmpPath?, limits? }
+ * @param {object} [opts] { cacheDir?, ffmpegVersion?, enabled?, runTmpPath?, limits?,
+ *                          singleThread?: boolean } — singleThread (đợt 67 U1)
+ *   chuyển cho runStabilizeDetect (chỉ có tác dụng khi detect thật, tức
+ *   cache MISS hoặc cache tắt; HIT thì copy .trf cũ, không detect lại).
+ *   Mặc định false (giữ hành vi cũ) trừ khi caller truyền true.
  * @returns {{ok:boolean, trfPath?:string, cached?:boolean, cacheKey?:string|null, error?:string}}
  *   cached=true: dùng lại .trf cũ (không detect). cached=false: detect mới.
  *   ok=false: detect thất bại (fail-fast — caller exit 1, KHÔNG ghi cache).
@@ -214,7 +223,7 @@ function resolveStabilizeTrf(ffmpeg, inputAbs, clip, opts) {
   const safeId = String(clip.id).replace(/[^A-Za-z0-9_-]/g, "_");
   const runTmpPath = o.runTmpPath || path.join(os.tmpdir(), `repo1-vidstab-${process.pid}-${safeId}.trf`);
   if (!enabled) {
-    const r = runStabilizeDetect(ffmpeg, inputAbs, clip, runTmpPath);
+    const r = runStabilizeDetect(ffmpeg, inputAbs, clip, runTmpPath, { singleThread: !!o.singleThread });
     if (!r.ok) return { ok: false, error: r.error, cached: false, cacheKey: null };
     return { ok: true, trfPath: runTmpPath, cached: false, cacheKey: null };
   }
@@ -234,7 +243,7 @@ function resolveStabilizeTrf(ffmpeg, inputAbs, clip, opts) {
     }
     return { ok: true, trfPath: runTmpPath, cached: true, cacheKey: key };
   }
-  const r = runStabilizeDetect(ffmpeg, inputAbs, clip, runTmpPath);
+  const r = runStabilizeDetect(ffmpeg, inputAbs, clip, runTmpPath, { singleThread: !!o.singleThread });
   if (!r.ok) return { ok: false, error: r.error, cached: false, cacheKey: key };
   const stored = storeTrfCache(cacheDir, key, runTmpPath, o.limits);
   if (!stored.ok) {
@@ -251,7 +260,7 @@ function selfTest() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "r62r2-trfcache-test-"));
   // File nguồn giả (chỉ cần tồn tại để stat; key không đọc nội dung).
   const src = path.join(tmp, "src.mp4");
-  fs.writeFileSync(src, Buffer.alloc(1234, 7));
+  writeFileEpermRetry(src, Buffer.alloc(1234, 7));
   const base = { id: "c0", in: 0, duration: 5, speed: 1, enhance: { stabilize: { smoothing: 10, shakiness: 5, accuracy: 15, stepsize: 6, mincontrast: 0.3 } } };
   const k1 = computeTrfCacheKey(src, base, "ffmpeg version 8.1.2");
   const k1b = computeTrfCacheKey(src, base, "ffmpeg version 8.1.2");
@@ -277,10 +286,10 @@ function selfTest() {
   assert.notStrictEqual(computeTrfCacheKey(src, base, "ffmpeg version 7.0"), k1, "đổi ffmpeg version phải đổi key");
   // File nguồn khác (dù cùng nội dung) → key khác (đường dẫn tuyệt đối trong key).
   const src2 = path.join(tmp, "src2.mp4");
-  fs.writeFileSync(src2, Buffer.alloc(1234, 7));
+  writeFileEpermRetry(src2, Buffer.alloc(1234, 7));
   assert.notStrictEqual(computeTrfCacheKey(src2, base, "ffmpeg version 8.1.2"), k1, "src khác path phải đổi key");
   // Ghi đè nguồn (mtime đổi) → key đổi.
-  fs.writeFileSync(src, Buffer.alloc(1234, 8));
+  writeFileEpermRetry(src, Buffer.alloc(1234, 8));
   assert.notStrictEqual(computeTrfCacheKey(src, base, "ffmpeg version 8.1.2"), k1, "ghi đè nguồn (mtime đổi) phải đổi key");
   // File nguồn không tồn tại → throw (caller xử lý thành fail-fast).
   assert.throws(() => computeTrfCacheKey(path.join(tmp, "nope.mp4"), base, ""), /ENOENT/);
@@ -288,7 +297,7 @@ function selfTest() {
   // Store / lookup / miss.
   const cacheDir = path.join(tmp, "cache");
   const trf = path.join(tmp, "a.trf");
-  fs.writeFileSync(trf, "transforms\n");
+  writeFileEpermRetry(trf, "transforms\n");
   assert.strictEqual(lookupTrfCache(cacheDir, k1), null, "cache trống → MISS");
   const stored = storeTrfCache(cacheDir, k1, trf, { maxEntries: 128, maxBytes: 1024 * 1024, graceMs: 0 });
   assert.ok(stored.ok, "store phải ok");
@@ -297,14 +306,14 @@ function selfTest() {
   // Lookup file rỗng → MISS (không trả file hỏng).
   const kEmpty = "e".repeat(64);
   fs.mkdirSync(cacheDir, { recursive: true });
-  fs.writeFileSync(cacheFilePath(cacheDir, kEmpty), "");
+  writeFileEpermRetry(cacheFilePath(cacheDir, kEmpty), "");
   assert.strictEqual(lookupTrfCache(cacheDir, kEmpty), null, "file .trf rỗng → MISS");
 
   // Prune: giới hạn 2 entry → entry cũ nhất bị xoá; file < grace không bị xoá.
   const old = Date.now() - 3600 * 1000;
   for (let i = 0; i < 3; i++) {
     const k = `f${i}`.padEnd(64, "0");
-    fs.writeFileSync(cacheFilePath(cacheDir, k), Buffer.alloc(10, i));
+    writeFileEpermRetry(cacheFilePath(cacheDir, k), Buffer.alloc(10, i));
     fs.utimesSync(cacheFilePath(cacheDir, k), new Date(old + i * 1000), new Date(old + i * 1000));
   }
   const pr = pruneTrfCache(cacheDir, { maxEntries: 2, maxBytes: 1024 * 1024, graceMs: 60 * 1000 });
@@ -312,7 +321,7 @@ function selfTest() {
   assert.strictEqual(fs.existsSync(cacheFilePath(cacheDir, "f0".padEnd(64, "0"))), false, "entry cũ nhất bị xoá");
   // Grace: file vừa chạm (tuổi < 60s) không bị xoá dù vượt giới hạn số lượng.
   const kFresh = "a".repeat(64);
-  fs.writeFileSync(cacheFilePath(cacheDir, kFresh), Buffer.alloc(10, 9));
+  writeFileEpermRetry(cacheFilePath(cacheDir, kFresh), Buffer.alloc(10, 9));
   const pr2 = pruneTrfCache(cacheDir, { maxEntries: 1, maxBytes: 1, graceMs: 60 * 1000 });
   assert.strictEqual(fs.existsSync(cacheFilePath(cacheDir, kFresh)), true, "file < 60s tuổi không bị prune (grace)");
 

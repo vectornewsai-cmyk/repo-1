@@ -32,6 +32,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import net from "node:net";
 import os from "node:os";
@@ -370,7 +371,7 @@ async function main() {
     out.repeat15 = rep;
     log("lặp lại frame15-720p: " + Object.entries(rep).map(([vn, rows]) => `${vn}: ` + rows.map((x) => `s=${x.s}→-${x.reduct}% e${x.edge}`).join(", ")).join(" | "));
     fs.mkdirSync(OUT_DIR, { recursive: true });
-    fs.writeFileSync(path.join(OUT_DIR, "blend-r63-probe.json"), JSON.stringify(out, null, 2));
+    writeFileEpermRetry(path.join(OUT_DIR, "blend-r63-probe.json"), JSON.stringify(out, null, 2));
     log("xong, đã ghi blend-r63-probe.json");
     process.exitCode = 0;
   } catch (e) {

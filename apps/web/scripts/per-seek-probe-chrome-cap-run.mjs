@@ -37,6 +37,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -300,8 +301,8 @@ const main = async () => {
       rangeLog: rangeLog.slice(-40),
       note: "Chrome thật, mạng nhỏ giọt (điều kiện thật) — không phải vm fake, không phải seek local file; số này không claim cho seek không giới hạn mạng.",
     };
-    fs.writeFileSync(path.join(opts.scratch, "cap-evidence.json"), JSON.stringify(evidence, null, 2));
-    fs.writeFileSync(path.join(opts.scratch, "cap-entries.json"), JSON.stringify(entries, null, 2));
+    writeFileEpermRetry(path.join(opts.scratch, "cap-evidence.json"), JSON.stringify(evidence, null, 2));
+    writeFileEpermRetry(path.join(opts.scratch, "cap-entries.json"), JSON.stringify(entries, null, 2));
     console.log(`[cap] entries=${entries.length} maxSamples/entry=${maxSamples} maxDropped=${maxDropped} capHit=${capHit} validateProblems=${validateProblemsTotal}`);
     console.log(`[cap] evidence → ${path.join(opts.scratch, "cap-evidence.json")}`);
   } finally {

@@ -41,6 +41,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -135,7 +136,7 @@ function topBoxes(buf) {
     raw.subarray(mdat.start + mdat.header, mdat.start + mdat.size),
     Buffer.alloc(pad, 0), raw.subarray(moov.start),
   ]);
-  fs.writeFileSync(fixPath, inflated);
+  writeFileEpermRetry(fixPath, inflated);
   const prefixBoxes = topBoxes(inflated.subarray(0, 512 * 1024));
   if (prefixBoxes.some((b) => b.type === "moov")) {
     throw new Error("tiền tố 512 KiB mặc định vẫn thấy moov — fixture không tái hiện được nợ tail-scan ở cỡ wiring");
@@ -254,7 +255,7 @@ window.__b4t3 = async () => {
 };
 window.__b4ready = true;
 </script>`;
-fs.writeFileSync(path.join(pubDir, PAGE_NAME), pageHtml);
+writeFileEpermRetry(path.join(pubDir, PAGE_NAME), pageHtml);
 
 // ---- 3. Xvfb + Chrome headed (công thức X4/Z4/A4) ----
 let xvfb = null;

@@ -24,6 +24,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import net from "node:net";
 import os from "node:os";
@@ -345,7 +346,7 @@ async function main() {
       process.exitCode = 1;
     }
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
-    fs.writeFileSync(OUT, JSON.stringify(out, null, 2));
+    writeFileEpermRetry(OUT, JSON.stringify(out, null, 2));
     log(`đã ghi ${OUT}, load cuối ${loadAvg()}`);
   } catch (e) {
     log(`HARNESS LỖI: ${e && e.message ? e.message : e}`);

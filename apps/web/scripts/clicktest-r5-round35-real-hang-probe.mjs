@@ -39,6 +39,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -215,8 +216,8 @@ async function main() {
     const fixDir = fs.mkdtempSync(path.join(os.tmpdir(), "r5-fixture-dist-"));
     fs.mkdirSync(path.join(fixDir, "assets"), { recursive: true });
     const fixJs = "console.log('r5-fixture');";
-    fs.writeFileSync(path.join(fixDir, "assets", "fixture-abc.js"), fixJs);
-    fs.writeFileSync(path.join(fixDir, "index.html"), '<script type="module" src="/assets/fixture-abc.js"></script>');
+    writeFileEpermRetry(path.join(fixDir, "assets", "fixture-abc.js"), fixJs);
+    writeFileEpermRetry(path.join(fixDir, "index.html"), '<script type="module" src="/assets/fixture-abc.js"></script>');
     const fixBundle = snapshotBundleFromDist(fixDir);
     const fixSha = crypto.createHash("sha256").update(fixJs).digest("hex").slice(0, 16);
     check("t4.fixtureEntryBundle", fixBundle?.bundle === "fixture-abc.js" && fixBundle?.sha === fixSha && fixBundle?.source === "index-entry", JSON.stringify(fixBundle));
@@ -267,7 +268,7 @@ async function main() {
       checks,
     };
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
-    fs.writeFileSync(OUT, JSON.stringify(result, null, 2));
+    writeFileEpermRetry(OUT, JSON.stringify(result, null, 2));
     console.log(`Kết quả: ${OUT} allPass=${result.allPass}`);
     return result.allPass;
   } finally {

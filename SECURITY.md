@@ -83,11 +83,32 @@ Xem chi tiết tại `docs/LICENSES.md`. Tóm tắt:
 (verify lại 08/11, đợt 66 T10: 403 `policy_denied` ở endpoint
 `/-/npm/v1/security/audits/quick` — policy registry nội bộ), nên quét CVE
 npm chưa chạy được local. **OSV API thì KHÔNG bị chặn**: `pip-audit` 2.10.1
-chạy local được 08/11 và đã quét cả 5 requirements (xem §3.5 — tts 39 +
-bgremove 66 lỗ hổng mới phát hiện). Các phiên bản đã cài (express 4.22.3,
+chạy local được 08/11 và đã quét cả 5 requirements (xem §3.5 — snapshot
+08/11: tts 39 + bgremove 66 lỗ hổng; **đính chính 09/11: bgremove đã sạch
+0 sau bump U8, chỉ còn tts 39** — xem §3.5). Các phiên bản đã cài (express 4.22.3,
 multer 2.4.0, js-yaml 4.3.2, jszip 3.10.2, react 18.3.1…) không có CVE
 nghiêm trọng nào được biết tới tại thời điểm audit theo kiến thức hiện có.
 **Khuyến nghị**: bật `npm audit` / osv-scanner trong CI (xem §4).
+
+> **ĐÓNG NỢ — 09/11/2026 (đợt 70 X4, thử lần cuối)**: **không có số CVE npm.**
+> Cả hai đường quét npm đều bị chặn ở tầng egress/proxy của môi trường build,
+> đã thử 4 lần liên tiếp và đều fail:
+> - `npm audit`: 403 `policy_denied` — policy
+>   `zz_managed_internal_spaces_package_registries`, rule
+>   `POST /-/npm/v1/security/audits/quick` (verify lại 09/11, exit 1 sau ~7s).
+> - OSV API (`POST api.osv.dev/v1/querybatch`): timeout hoàn toàn, 0 byte về —
+>   U8 đợt 67 (ReadTimeout 180s), V1 đợt 68 + W1 đợt 69 (ReadTimeout 300s,
+>   batch 1–2/20 fail 3/3 attempt mỗi batch), X4 đợt 70 (curl exit 28,
+>   timeout 25s, 1 batch nhỏ 3 package express/react/multer). Checkpoint
+>   W1: `hidden_files/round69-w1-osv-npm.json` (done 2/20, failed [1,2]).
+>   Không chạy lại toàn bộ 20 batch — đã chứng minh fail hết (≈5 giờ vô ích).
+> - Lưu ý: OSV chỉ bị chặn ở đường **querybatch POST cho npm**; `pip-audit`
+>   (Python, cũng dùng OSV) chạy local được 08/11 — xem §3.5. Hai đường
+>   khác nhau, không mâu thuẫn.
+> Hệ quả: job `npm audit` trong `ci-security.yml` là nơi duy nhất còn có thể
+> cho số CVE npm — nhưng file workflow vẫn local-only (403 quyền App, xem §4);
+> tới khi workflow chạy thật trên GitHub thì CVE npm vẫn là **chưa đo được**,
+> không được đọc con số nào khác vào đây. Không bịa số CVE.
 
 ### 2.7. Asset attribution — ✅ ĐẦY ĐỦ 1:1
 
@@ -179,15 +200,17 @@ release pipeline.
 - tts: `vieneu==3.8.3`, `numpy==2.5.4` (freeze từ venv đang chạy).
 - reframe: `opencv-python-headless==5.0.0.93`, `numpy==2.5.4` (freeze từ
   venv đang chạy).
-- bgremove: `rembg[cpu]==2.0.60`, `onnxruntime==1.23.2`,
-  `opencv-python-headless==5.0.0.93`, `numpy==2.2.6`, `Pillow==10.2.0` —
-  ĐÍNH CHÍNH 07/11 (ROUND53-J8, xem header file requirements): rembg
-  2.0.38 → 2.0.60 vì 2.0.38 không có session BiRefNet thật (gọi
-  `birefnet-general` lặng lẽ trả về U2netSession); 2.0.60 là bản đầu tiên
-  có BiRefNetSessionGeneral; extra `[cpu]` bắt buộc ở 2.0.60 + pin
-  `onnxruntime` tường minh; numpy 2.5.4 → 2.2.6 vì numpy 2.5.4 yêu cầu
-  Python ≥3.12 trong khi venv bgremove chạy Python 3.10. Bộ pin này đã
-  verify chạy thật trên VM (venv Python 3.10.22, ~706M).
+- bgremove: `rembg[cpu]==2.0.87`, `onnxruntime==1.23.2`,
+  `opencv-python-headless==5.0.0.93`, `numpy==2.5.4`, `Pillow==13.0.0` —
+  ĐÍNH CHÍNH 08/11 (ROUND67-U8, xem `docs/PHASE9_ROUND67_U8_DEPS_BUMP_LIMITS.md`):
+  rebuild venv Python 3.10 → 3.12 vì Pillow 13.0.0 và mọi bản vá rembg
+  (2.0.75/2.0.82) đều yêu cầu Python ≥3.11 — venv 3.10 không vá được bất kỳ
+  lỗ hổng rembg nào; rembg 2.0.87 vẫn có BiRefNetSessionGeneral và dùng đúng
+  model BiRefNet-general-epoch_244.onnx cũ (md5 7a35a014…52697, đã cache);
+  opencv 5.0.0.93 dùng wheel cp37-abi3 nên cài được trên 3.12; numpy trở
+  lại 2.5.4 (thỏa rembg ≥2.3.0, đã sạch CVE). Venv cũ giữ lại làm backup
+  `.venv-py310-bak` tới khi verify pipeline xong. pip-audit sau bump:
+  **0 lỗ hổng** (trước đó 66).
 - tracking: `numpy==2.5.4`, `opencv-python-headless==5.0.0.93` (cho
   `track.py`, thêm ở đợt 63 R10).
 - Hash-checking mode (`--require-hashes`) chưa bật: cần hashes cho cả cây
@@ -222,9 +245,21 @@ chủ yếu là lỗi parse ảnh (đọc file ảnh độc hại có thể cras
 2.0.75+ cần đợt riêng verify lại pipeline bgremove (BiRefNet session ở
 2.0.60 là lý do pin này tồn tại — xem §3.3) và cây vieneu/TTS. Hệ quả
 trước mắt: job `pip-audit` trong `ci-security.yml` (fail khi có BẤT KỲ
-lỗ hổng nào) sẽ ĐỎ ở lần chạy CI đầu tiên. `npm audit` local vẫn chưa
-chạy được (403 policy registry nội bộ, verify 08/11) nên CVE npm chưa
-có số mới.
+lỗ hổng nào) sẽ ĐỎ ở lần chạy CI đầu tiên. **CVE npm: không có số — nợ đã
+đóng bằng văn bản 09/11 (đợt 70 X4, xem §2.6)**: `npm audit` local 403
+`policy_denied` và OSV querybatch POST timeout 4 lần liên tiếp (U8/V1/W1/X4),
+nên CVE npm chưa đo được; chỉ CI GitHub (khi workflow được push) mới quét
+được. Không bịa số CVE.
+
+**Đính chính 09/11/2026 (đợt 67 U8 + đợt 69 W1, verify lại đợt 70 X9
+bằng `bash scripts/ci-local.sh`):** bgremove ĐÃ VÁ XONG — rembg 2.0.60 →
+2.0.87, Pillow 10.2.0 → 13.0.0 (venv rebuild Python 3.12), pip-audit
+**0 lỗ hổng** ("No known vulnerabilities found", exit 0 — W1 verify
+pipeline PASS + X9 chạy lại PASS). Bảng trên là snapshot 08/11, giữ
+nguyên để đối chiếu lịch sử. Chỉ còn **tts 39** (toàn Pillow 12.3.0,
+gradio kẹp `pillow<13` — đợt 69 W7 chứng minh không bump được, chờ
+gradio gỡ kẹp; vieneu cũng không import gradio lúc inference). Job
+`pip-audit` lần đầu vẫn ĐỎ vì tts 39; tổng 2 file 105 → 39.
 
 ## 4. Khuyến nghị cho CI/Release
 
@@ -236,12 +271,21 @@ có số mới.
    pip-audit CLI không có cổng severity nên job này fail khi có bất kỳ lỗ
    hổng nào — chặt hơn high/critical, ghi rõ trong workflow. Cộng quét
    định kỳ thứ 2 hàng tuần. YAML đã parse kiểm chứng. LƯU Ý: workflow
-   chưa chạy thật trên GitHub (chưa có push nào sau khi thêm file) — lần
-   push đầu cần theo dõi log. Rà lại 08/11 (đợt 66 T10, xem
-   `docs/PHASE9_ROUND66_T10_DOCS_CI_LIMITS.md`): YAML đúng, 3 lockfile +
-   5 requirements khớp, không lệch; quét `pip-audit` local: caption/
-   reframe/tracking sạch, tts 39 + bgremove 66 lỗ hổng (xem §3.5) — job
-   pip-audit sẽ ĐỎ ở lần chạy CI đầu tiên cho tới khi bump pin.
+   vẫn CHƯA chạy thật trên GitHub — push #4 ngày 08/11 đã gộp Phase 10 +
+   đợt 51–66 nhưng LOẠI cả 5 file `.github/workflows/` (sẽ 403 như
+   ci-security.yml) nên file vẫn local-only; lần thêm file đầu cần theo
+   dõi log. Rà lại 08/11 (đợt 66 T10, xem
+   `docs/PHASE9_ROUND66_T10_DOCS_CI_LIMITS.md`; đợt 67 U9, xem
+   `docs/PHASE9_ROUND67_U9_CI_SECURITY_LIMITS.md`): YAML đúng, 3 lockfile +
+   5 requirements khớp, không lệch; quét `pip-audit` local 08/11:
+   caption/reframe/tracking sạch, tts 39 + bgremove 66 lỗ hổng (xem §3.5) —
+   **đính chính 09/11 (đợt 69 W1 + đợt 70 X9): bgremove đã sạch (66 → 0),
+   chỉ còn tts 39** — job pip-audit sẽ ĐỎ ở lần chạy CI đầu tiên cho tới
+   khi bump pin tts (chờ gradio gỡ kẹp `pillow<13`).
+   Script chạy tương đương local: `bash scripts/ci-local.sh`
+   (npm audit local vẫn bị chặn 403 policy registry nên chưa đo được
+   CVE npm; pip-audit chạy được qua OSV). Hướng dẫn user tự thêm file
+   workflow qua web GitHub khi quyền App vẫn 403: xem LIMITS đợt 67 U9 §5.
 2. ~~Sửa §3.1 (CORS)~~ ✅ đã sửa 2026-10-20; ~~§3.2 (diskStorage)~~ ✅ đã
    sửa 2026-10-21 — cả hai đều xong trước bản release public đầu tiên.
 3. Pin Python dependencies kèm hash cho release pipeline (R1-102) — pin

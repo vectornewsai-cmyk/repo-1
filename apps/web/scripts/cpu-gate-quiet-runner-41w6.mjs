@@ -67,6 +67,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -223,7 +224,7 @@ export async function runNodeProbeRounds({ rounds = 3, windowMs = 2000, sampleFn
 export function diagnoseWithV6Module(probeRounds) {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "w6-diag-"));
   const roundsFile = path.join(tmpDir, "rounds.json");
-  fs.writeFileSync(roundsFile, JSON.stringify(probeRounds, null, 2) + "\n");
+  writeFileEpermRetry(roundsFile, JSON.stringify(probeRounds, null, 2) + "\n");
   const r = spawnSync(process.execPath, ["--experimental-strip-types", DIAG_HELPER, roundsFile], { encoding: "utf8", timeout: 60000 });
   try { fs.unlinkSync(roundsFile); fs.rmdirSync(tmpDir); } catch {}
   if (r.status !== 0) throw new Error(`helper chẩn đoán lỗi: ${(r.stderr || r.stdout || "").slice(0, 500)}`);
@@ -273,7 +274,7 @@ async function main() {
       probeRounds: null,
       diagnosis: null,
     };
-    fs.writeFileSync(outPath, JSON.stringify(report, null, 2) + "\n");
+    writeFileEpermRetry(outPath, JSON.stringify(report, null, 2) + "\n");
     console.log(`${REFUSAL_LINE}: trượt đầu tiên — ${gate.firstFailure} (gate: ${gate.firstFailedGate}); các blocker: ${gate.blockers.join("; ")}`);
     console.log(`Probe KHÔNG chạy. Report: ${outPath}`);
     process.exit(2);
@@ -291,7 +292,7 @@ async function main() {
       probeRounds: null,
       diagnosis: null,
     };
-    fs.writeFileSync(outPath, JSON.stringify(report, null, 2) + "\n");
+    writeFileEpermRetry(outPath, JSON.stringify(report, null, 2) + "\n");
     console.log(`Cổng yên đạt (${samples.length} mẫu). --gate-only: probe chưa chạy. Report: ${outPath}`);
     process.exit(0);
   }
@@ -328,7 +329,7 @@ async function main() {
     probeRounds,
     diagnosis,
   };
-  fs.writeFileSync(outPath, JSON.stringify(report, null, 2) + "\n");
+  writeFileEpermRetry(outPath, JSON.stringify(report, null, 2) + "\n");
   console.log(`Chẩn đoán Node (module V6 gốc): verdict=${diagnosis.node.verdict}`);
   console.log(`  busy: ${diagnosis.node.busy.detail}`);
   console.log(`  idle: ${diagnosis.node.idle.detail}`);

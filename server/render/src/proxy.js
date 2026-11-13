@@ -27,12 +27,22 @@
 
 const fs = require("fs");
 const path = require("path");
-const { execFileSync, spawnSync } = require("child_process");
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (port CJS của
+// apps/web/scripts/eperm-retry.mjs; xem server/eperm-retry.cjs).
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
+const { execFileSync, spawn, spawnSync } = require("child_process");
+// Phase 9 đợt 74 B4: timeout cho mọi lần chạy ffmpeg/ffprobe trong proxy
+// (trước đây run() không timeout — encode proxy treo thì bridge treo theo).
+const {
+  KILL_SIGNAL, encodeTimeoutMs, ffprobeTimeoutMs,
+} = require("./timeouts");
 
 const PROXY_HEIGHTS = [480, 720];
 
 function run(cmd, args, opts = {}) {
-  return execFileSync(cmd, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], ...opts });
+  // Mặc định: timeout probe ffprobe (30s). Lệnh encode truyền timeout
+  // riêng theo độ dài (opts.timeout ghi đè mặc định này).
+  return execFileSync(cmd, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: ffprobeTimeoutMs(), killSignal: KILL_SIGNAL, ...opts });
 }
 
 function parseFps(rateStr) {
@@ -117,13 +127,35 @@ function generateProxy(input, outDir, opts = {}) {
   else args.push("-an");
   args.push("-movflags", "+faststart", outFile);
   try {
-    run(ffmpeg, args);
+    // Đợt 74 B4: timeout encode tỉ lệ với độ dài nguồn (cùng công thức
+    // encodeTimeoutMs như render chính); treo → execFileSync ném ETIMEDOUT.
+    run(ffmpeg, args, { timeout: encodeTimeoutMs(meta.duration || 0) });
   } catch (e) {
     try { fs.rmSync(outFile, { force: true }); } catch {}
     throw new Error(`Tạo proxy thất bại: ${(e.stderr || e.message || "").toString().trim().split("\n").pop()}`);
   }
 
   const pmeta = probeMedia(outFile, opts);
+  const sidecarPath = writeProxySidecar(input, outFile, meta, pmeta, height);
+  return {
+    skipped: false,
+    proxy: outFile,
+    sidecar: sidecarPath,
+    proxyWidth: pmeta.width,
+    proxyHeight: pmeta.height,
+    source: input,
+    sourceWidth: meta.width,
+    sourceHeight: meta.height,
+    fps: meta.fps,
+  };
+}
+
+/**
+ * Đợt 85 M8 — ghi sidecar JSON cho 1 proxy (tách từ generateProxy để
+ * bản đồng bộ và bản có tiến trình dùng chung một định dạng; sidecar cũ
+ * đọc được như trước vì các trường giữ nguyên).
+ */
+function writeProxySidecar(input, outFile, meta, pmeta, height) {
   const st = fs.statSync(input);
   // Đợt 38 U2: ghi kích thước của chính file proxy vào manifest
   // (trường mới, cộng thêm — findProxy không kiểm tra trường này nên
@@ -145,19 +177,139 @@ function generateProxy(input, outDir, opts = {}) {
     height,
     createdAt: new Date().toISOString(),
   };
-  const sidecarPath = path.join(outDir, sidecarFileName(input, height));
-  fs.writeFileSync(sidecarPath, JSON.stringify(sidecar, null, 2));
-  return {
-    skipped: false,
-    proxy: outFile,
-    sidecar: sidecarPath,
-    proxyWidth: pmeta.width,
-    proxyHeight: pmeta.height,
-    source: input,
-    sourceWidth: meta.width,
-    sourceHeight: meta.height,
-    fps: meta.fps,
+  const sidecarPath = path.join(path.dirname(outFile), sidecarFileName(input, height));
+  writeFileEpermRetry(sidecarPath, JSON.stringify(sidecar, null, 2), { label: "render-proxy-sidecar" });
+  return sidecarPath;
+}
+
+/**
+ * Đợt 85 M8 — tạo proxy BẤT ĐỒNG BỘ với tiến trình % THẬT.
+ * Cùng encode args và cùng kết quả trả về như generateProxy đồng bộ,
+ * nhưng chạy ffmpeg bằng spawn + `-progress pipe:2` và gọi
+ * `opts.onProgress(pct)` mỗi khi % đổi (pct = out_time_ms / duration,
+ * làm tròn xuống, kẹp 0..99 trong lúc chạy; 100 chỉ khi encode xong và
+ * sidecar đã ghi — caller tự đặt 100 lúc done, không fake 100 sớm).
+ * - duration <= 0 (probe không đọc được) → không gọi onProgress lần
+ *   nào (caller hiện "Đang tạo…" không %, thay vì % bịa).
+ * - Timeout tỉ lệ độ dài như bản đồng bộ (encodeTimeoutMs); treo →
+ *   kill + reject, file dở bị xóa như bản đồng bộ.
+ * - Trả Promise: resolve cùng shape generateProxy, reject Error cùng
+ *   message "Tạo proxy thất bại: …" khi ffmpeg lỗi/timeout.
+ */
+function generateProxyWithProgress(input, outDir, opts = {}) {
+  const height = opts.height || 720;
+  if (!PROXY_HEIGHTS.includes(height)) {
+    return Promise.reject(new Error(`Proxy height phải là một trong ${PROXY_HEIGHTS.join("/")} (nhận ${height}).`));
+  }
+  if (!fs.existsSync(input)) {
+    return Promise.reject(new Error(`Không tìm thấy file nguồn: ${input}`));
+  }
+  fs.mkdirSync(outDir, { recursive: true });
+
+  let meta;
+  try {
+    meta = probeMedia(input, opts);
+  } catch (e) {
+    return Promise.reject(e);
+  }
+  if (meta.height <= height) {
+    return Promise.resolve({ skipped: true, reason: "source-already-small", sourceHeight: meta.height, targetHeight: height });
+  }
+
+  const outFile = path.join(outDir, proxyFileName(input, height));
+  const ffmpeg = opts.ffmpeg || "ffmpeg";
+  const vf = `scale=-2:${height}`;
+  // Đợt 85 M8: -progress pipe:2 (stderr) thay vì pipe:1 — pipe stdout bị
+  // ffmpeg buffer tới cuối encode nên client chỉ thấy 99% một lần duy
+  // nhất; stderr flush theo từng đợt tiến trình (đo thật: clip 20 s cho
+  // 26 mẫu, mẫu đầu sau 653 ms). out_time_ms của ffmpeg tính bằng
+  // MICRO giây (dù tên có "ms") nên chia cho duration*1e6.
+  const args = ["-y", "-v", "error", "-nostats", "-progress", "pipe:2", "-i", input, "-vf", vf];
+  if (meta.fps > 0) args.push("-r", String(meta.fps));
+  args.push("-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-pix_fmt", "yuv420p");
+  if (meta.hasAudio) args.push("-c:a", "aac", "-b:a", "128k");
+  else args.push("-an");
+  args.push("-movflags", "+faststart", outFile);
+
+  const onProgress = typeof opts.onProgress === "function" ? opts.onProgress : null;
+  // out_time_ms tính bằng micro giây → tổng thời lượng cũng đổi ra µs.
+  const durationUs = (meta.duration || 0) * 1e6;
+  let lastPct = -1;
+  const emit = (pct) => {
+    const p = Math.max(0, Math.min(99, Math.floor(pct)));
+    if (onProgress && p !== lastPct) { lastPct = p; onProgress(p); }
   };
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const fail = (err) => {
+      if (settled) return;
+      settled = true;
+      try { fs.rmSync(outFile, { force: true }); } catch {}
+      reject(err);
+    };
+    let child;
+    try {
+      child = spawn(ffmpeg, args, { stdio: ["ignore", "pipe", "pipe"] });
+    } catch (e) {
+      fail(new Error(`Tạo proxy thất bại: ${(e.message || "").toString().trim().split("\n").pop()}`));
+      return;
+    }
+    // Đợt 74 B4: timeout encode tỉ lệ với độ dài nguồn (cùng công thức
+    // encodeTimeoutMs như bản đồng bộ); treo → kill + reject.
+    const timer = setTimeout(() => {
+      try { child.kill(KILL_SIGNAL); } catch {}
+      fail(new Error("Tạo proxy thất bại: timeout encode (ffmpeg không kết thúc trong giới hạn)"));
+    }, encodeTimeoutMs(meta.duration || 0));
+    if (typeof timer.unref === "function") timer.unref();
+    let stderr = "";
+    let buf = "";
+    // -progress pipe:2 ghi vào stderr cùng với log lỗi: parse từng dòng
+    // out_time_ms=… để lấy % thật, các dòng còn lại giữ làm message lỗi.
+    child.stderr.on("data", (chunk) => {
+      const text = chunk.toString("utf8");
+      stderr += text;
+      buf += text;
+      let idx;
+      while ((idx = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, idx).trim();
+        buf = buf.slice(idx + 1);
+        const m = /^out_time_ms=(\d+)$/.exec(line);
+        if (m && durationUs > 0) emit(Number(m[1]) / durationUs * 100);
+      }
+    });
+    child.on("error", (e) => {
+      clearTimeout(timer);
+      fail(new Error(`Tạo proxy thất bại: ${(e.message || "").toString().trim().split("\n").pop()}`));
+    });
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      if (settled) return;
+      if (code !== 0) {
+        fail(new Error(`Tạo proxy thất bại: ${(stderr || `ffmpeg exit ${code}`).toString().trim().split("\n").pop()}`));
+        return;
+      }
+      settled = true;
+      try {
+        const pmeta = probeMedia(outFile, opts);
+        const sidecarPath = writeProxySidecar(input, outFile, meta, pmeta, height);
+        resolve({
+          skipped: false,
+          proxy: outFile,
+          sidecar: sidecarPath,
+          proxyWidth: pmeta.width,
+          proxyHeight: pmeta.height,
+          source: input,
+          sourceWidth: meta.width,
+          sourceHeight: meta.height,
+          fps: meta.fps,
+        });
+      } catch (e) {
+        try { fs.rmSync(outFile, { force: true }); } catch {}
+        reject(e);
+      }
+    });
+  });
 }
 
 /**
@@ -254,4 +406,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { generateProxy, findProxy, readSidecar, probeMedia, proxyFileName, sidecarFileName, PROXY_HEIGHTS };
+module.exports = { generateProxy, generateProxyWithProgress, findProxy, readSidecar, probeMedia, proxyFileName, sidecarFileName, PROXY_HEIGHTS };

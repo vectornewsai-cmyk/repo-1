@@ -46,6 +46,7 @@
 
 const crypto = require("crypto");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
@@ -102,7 +103,7 @@ const specWith = (tracks, W, H, fps) => ({
 });
 function render(spec, name) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const outPath = path.join(work, `${name}.mp4`);
   const prev = probeVideo(outPath);
   if (fs.existsSync(outPath) && prev.codec === "h264" && prev.width === 1280 && prev.height === 720) {
@@ -212,7 +213,7 @@ for lab, rdir in jobs:
     print("REAL_GHOST " + json.dumps(out))
 `;
 const ghostPy = path.join(work, "ghost_real.py");
-fs.writeFileSync(ghostPy, GHOST_PY);
+writeFileEpermRetry(ghostPy, GHOST_PY);
 
 // --- Đo độ phẳng: gradient không gian trung bình trên frame clean ---------
 const FLAT_PY = `
@@ -230,7 +231,7 @@ print("FLATNESS " + json.dumps({"frames": len(cf), "grad_mean": round(float(np.m
                                  "grad_std": round(float(np.std(gs)), 4)}))
 `;
 const flatPy = path.join(work, "flatness.py");
-fs.writeFileSync(flatPy, FLAT_PY);
+writeFileEpermRetry(flatPy, FLAT_PY);
 
 // --- Đo tốc độ (phase correlation, bản R4) ---------------------------------
 const scanPy = path.join(work, "scan_seg.py");
@@ -374,7 +375,7 @@ for (const nom of [12, 24, 48]) {
   const exT = (x) => (t[x].blendByBand.small - t.ctrl.blendByBand.small).toFixed(3);
   console.log(`   ${nom} px/f: flat 0.5=${exF("d0_5")} 0.7=${exF("d0_7")} 0.8=${exF("d0_8")} | tex 0.5=${exT("d0_5")} 0.7=${exT("d0_7")} 0.8=${exT("d0_8")} | chênh flat-tex ở 0.7 = ${(f.d0_7.blendByBand.small - f.ctrl.blendByBand.small - (t.d0_7.blendByBand.small - t.ctrl.blendByBand.small)).toFixed(3)}`);
 }
-fs.writeFileSync(path.join(work, "summary.json"), JSON.stringify(summary, null, 1));
+writeFileEpermRetry(path.join(work, "summary.json"), JSON.stringify(summary, null, 1));
 console.log(`\n== KẾT QUẢ: ${pass} pass, ${fail} fail ==`);
 console.log(`   WORK=${work} (summary.json + frame .gray trong scratch; footage gốc KHÔNG đưa vào batch)`);
 if (fail > 0) process.exit(1);

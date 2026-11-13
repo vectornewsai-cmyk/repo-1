@@ -45,6 +45,7 @@
  */
 "use strict";
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -305,7 +306,7 @@ function main() {
     }
   }
   if (JSON_OUT) {
-    fs.writeFileSync(JSON_OUT, JSON.stringify(results, null, 2) + "\n");
+    writeFileEpermRetry(JSON_OUT, JSON.stringify(results, null, 2) + "\n");
     console.log(`JSON: ${JSON_OUT}`);
   }
   console.log(`workdir: ${TMP} (giữ lại để đối chứng, không đưa vào batch stage)`);

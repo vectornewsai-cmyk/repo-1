@@ -32,6 +32,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -311,7 +312,7 @@ console.log("[B] render thật qua render.js CLI");
 function renderSpec(s, outName) {
   const specPath = path.join(TMP, `${outName}.json`);
   const outPath = path.join(TMP, `${outName}.mp4`);
-  fs.writeFileSync(specPath, JSON.stringify(s));
+  writeFileEpermRetry(specPath, JSON.stringify(s));
   const r = run("node", [path.join(SRC_DIR, "render.js"), "--spec", specPath,
     "--out", outPath, "--media-dir", MEDIA, "-y", "-q"]);
   return { r, outPath };

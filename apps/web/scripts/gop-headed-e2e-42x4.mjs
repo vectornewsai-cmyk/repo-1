@@ -45,6 +45,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -133,7 +134,7 @@ window.__x4stepDef = async () => {
 };
 window.__x4ready = true;
 </script>`;
-fs.writeFileSync(path.join(SCRATCH, "page.html"), pageHtml);
+writeFileEpermRetry(path.join(SCRATCH, "page.html"), pageHtml);
 
 // ---- 3. HTTP server: page/bundle + fixture 2 path, log mọi request ----
 const reqLog = [];
@@ -313,7 +314,7 @@ try {
       fullGet: pathB.filter((r) => r.method === "GET" && r.range === null).length,
       range206: pathB.filter((r) => r.status === 206).length },
   };
-  fs.writeFileSync(path.join(SCRATCH, "result.json"), JSON.stringify(summary, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "result.json"), JSON.stringify(summary, null, 2));
   console.log(JSON.stringify(summary, null, 2));
 
   // ---- Cổng ----

@@ -3,6 +3,8 @@
 // Đợt 63 R5 mở rộng lên 102 mã (91 đợt 62 + 11 TASK_*): fragment là
 // HỢP của round62-r5 (hidden_files, 91 mã, ĐÃ gộp vào dict đợt 62) +
 // round63-r5.json bridgeErrors.* (11 mã TASK_*, ĐÃ gộp — parent gộp đợt 63).
+// Đợt 84 L8 mở rộng lên 108 mã (+6 TTS_CLONED_VOICE_* giọng đã clone lưu
+// lại được, fragment round84-l8.json, ĐÃ gộp vào dict).
 //
 // Khóa 3 chiều: catalog server (server/bridge/src/errorCodes.js) ==
 // tập mã web (./bridgeErrors) == key `bridgeErrors.*` trong fragment hợp.
@@ -64,13 +66,19 @@ const frag62 = JSON.parse(readFileSync(FRAG_PATH, "utf8")) as { vi: Dict; en: Di
 const frag63 = JSON.parse(
   readFileSync("apps/web/src/i18n/fragments/round63-r5.json", "utf8"),
 ) as { vi: Dict; en: Dict };
+// Đợt 84 L8: 6 mã TTS_CLONED_VOICE_* nằm trong fragment round84-l8 (đã gộp dict).
+const frag84 = JSON.parse(
+  readFileSync("apps/web/src/i18n/fragments/round84-l8.json", "utf8"),
+) as { vi: Dict; en: Dict };
 const FRAG_VI = new Map<string, string>([
   ...flatten(frag62.vi),
   ...flatten(frag63.vi).entries(),
+  ...flatten(frag84.vi).entries(),
 ].filter(([k]) => k.startsWith("bridgeErrors.")));
 const FRAG_EN = new Map<string, string>([
   ...flatten(frag62.en),
   ...flatten(frag63.en).entries(),
+  ...flatten(frag84.en).entries(),
 ].filter(([k]) => k.startsWith("bridgeErrors.")));
 /** 91 mã gốc đợt 62 (đã gộp dict) — để phân biệt với 11 mã R5 chưa gộp. */
 const FRAG62_VI = flatten(frag62.vi);
@@ -89,9 +97,9 @@ function missingKeyT(): (key: string, vars?: Record<string, string>) => string {
   return (key: string): string => key;
 }
 
-ok("fragment: 102 key bridgeErrors.* vi/en (91 đợt 62 + 11 TASK_* đợt 63), placeholder khớp, vi≠en, không rỗng", () => {
-  assert.equal(FRAG_VI.size, 102, `fragment vi phải có 102 key, nhận ${FRAG_VI.size}`);
-  assert.equal(FRAG_EN.size, 102, `fragment en phải có 102 key, nhận ${FRAG_EN.size}`);
+ok("fragment: 108 key bridgeErrors.* vi/en (91 đợt 62 + 11 TASK_* đợt 63 + 6 TTS_CLONED_VOICE_* đợt 84 L8), placeholder khớp, vi≠en, không rỗng", () => {
+  assert.equal(FRAG_VI.size, 108, `fragment vi phải có 108 key, nhận ${FRAG_VI.size}`);
+  assert.equal(FRAG_EN.size, 108, `fragment en phải có 108 key, nhận ${FRAG_EN.size}`);
   assert.equal(FRAG62_VI.size, 91, `phần đợt 62 phải có 91 key, nhận ${FRAG62_VI.size}`);
   for (const k of FRAG_VI.keys()) {
     assert.ok(k.startsWith("bridgeErrors."), `${k}: key phải có tiền tố bridgeErrors.`);
@@ -106,7 +114,7 @@ ok("fragment: 102 key bridgeErrors.* vi/en (91 đợt 62 + 11 TASK_* đợt 63),
   for (const k of FRAG_EN.keys()) assert.ok(FRAG_VI.has(k), `fragment vi thiếu key ${k}`);
 });
 
-ok("fragment: 102 key bridgeErrors.* ĐÃ có trong dict (post-merge đợt 63)", () => {
+ok("fragment: 108 key bridgeErrors.* ĐÃ có trong dict (post-merge đợt 63 + đợt 84 L8)", () => {
   const viDict = flatten(JSON.parse(readFileSync("apps/web/src/i18n/vi.json", "utf8")) as Dict);
   const enDict = flatten(JSON.parse(readFileSync("apps/web/src/i18n/en.json", "utf8")) as Dict);
   for (const k of FRAG62_VI.keys()) {
@@ -136,14 +144,14 @@ ok("fragment: 102 key bridgeErrors.* ĐÃ có trong dict (post-merge đợt 63)"
   }
 });
 
-ok("3 chiều: catalog server == tập mã web == key fragment (102 mã)", () => {
+ok("3 chiều: catalog server == tập mã web == key fragment (108 mã)", () => {
   // Catalog server: parse khối BRIDGE_ERROR_CODES trong errorCodes.js
   // (tránh import cross-package trong tsc — xem LIMITS §2.4).
   const src = readFileSync("server/bridge/src/errorCodes.js", "utf8");
   const block = src.slice(src.indexOf("const BRIDGE_ERROR_CODES = {"), src.indexOf("};", src.indexOf("const BRIDGE_ERROR_CODES = {")));
   const catalog = new Set([...block.matchAll(/^\s{2}([A-Z][A-Z0-9_]*): \[/gm)].map((m) => m[1]));
-  assert.equal(catalog.size, 102, `catalog server phải có 102 mã, nhận ${catalog.size}`);
-  assert.equal(BRIDGE_ERROR_CODES.size, 102, `tập mã web phải có 102 mã, nhận ${BRIDGE_ERROR_CODES.size}`);
+  assert.equal(catalog.size, 108, `catalog server phải có 108 mã, nhận ${catalog.size}`);
+  assert.equal(BRIDGE_ERROR_CODES.size, 108, `tập mã web phải có 108 mã, nhận ${BRIDGE_ERROR_CODES.size}`);
   for (const code of catalog) {
     assert.ok(BRIDGE_ERROR_CODES.has(code), `web thiếu mã ${code}`);
     assert.ok(FRAG_VI.has(`bridgeErrors.${code}`), `fragment thiếu mã ${code}`);
@@ -169,6 +177,7 @@ ok("call site server: mọi mã lỗi đều trong catalog; mọi mã đều có
     "server/bridge/src/caption.js",
     "server/bridge/src/reframe.js",
     "server/bridge/src/tts.js",
+    "server/bridge/src/clonedVoices.js", // Đợt 84 L8: codedError TTS_CLONED_VOICE_*
     "server/bridge/src/bgremove.js",
     "server/bridge/src/silence.js",
     "server/bridge/src/scene.js",
@@ -220,7 +229,7 @@ ok("call site server: mọi mã lỗi đều trong catalog; mọi mã đều có
   for (const code of BRIDGE_ERROR_CODES) {
     assert.ok(used.has(code), `mã ${code} trong catalog nhưng không có call site nào dùng`);
   }
-  assert.equal(used.size, 102, `phải dùng đủ 102 mã, nhận ${used.size}`);
+  assert.equal(used.size, 108, `phải dùng đủ 108 mã, nhận ${used.size}`);
 });
 
 ok("resolver: mã quen thuộc dịch đúng vi/en, đủ tham số", () => {

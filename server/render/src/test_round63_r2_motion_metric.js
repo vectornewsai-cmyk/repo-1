@@ -34,6 +34,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
@@ -81,7 +82,7 @@ const specWith = (tracks, W, H, fps) => ({
 });
 function render(spec, name, extraArgs) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const outPath = path.join(work, `${name}.mp4`);
   const t0 = Date.now();
   const r = spawnSync("node", [path.join(RENDER, "src", "render.js"), "--spec", specPath,
@@ -130,7 +131,7 @@ d = np.array(diffs)
 print(f"n={len(d)} mean={d.mean():.4f} median={np.median(d):.4f} std={d.std():.4f} min={d.min():.4f} max={d.max():.4f}")
 `;
 const jitterPy = path.join(work, "jitter.py");
-fs.writeFileSync(jitterPy, JITTER_PY);
+writeFileEpermRetry(jitterPy, JITTER_PY);
 function jitterOf(framesDir) {
   const r = spawnSync("python3", [jitterPy, framesDir], { encoding: "utf8" });
   const m = /n=(\d+) mean=([\d.]+) median=([\d.]+) std=([\d.]+) min=([\d.]+) max=([\d.]+)/.exec(r.stdout || "");
@@ -177,7 +178,7 @@ out = {
 print("PHASE " + json.dumps(out))
 `;
 const phasePy = path.join(work, "phase_corr.py");
-fs.writeFileSync(phasePy, PHASE_PY);
+writeFileEpermRetry(phasePy, PHASE_PY);
 function phaseOf(framesDir, mode) {
   const r = spawnSync(CV2_PY, [phasePy, framesDir, mode], { encoding: "utf8" });
   if (r.status !== 0) throw new Error(`phase_corr.py lỗi (${mode}): status=${r.status} err=${r.error && r.error.message} out=${r.stdout} err2=${r.stderr}`);
@@ -216,7 +217,7 @@ print("VALIDATE " + json.dumps({
 }))
 `;
 const validatePy = path.join(work, "validate_phase.py");
-fs.writeFileSync(validatePy, VALIDATE_PY);
+writeFileEpermRetry(validatePy, VALIDATE_PY);
 function validatePhase(framesDir) {
   const r = spawnSync(CV2_PY, [validatePy, framesDir], { encoding: "utf8" });
   if (r.status !== 0) throw new Error(`validate_phase.py lỗi: status=${r.status} err=${r.error && r.error.message} out=${r.stdout} err2=${r.stderr}`);

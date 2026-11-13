@@ -324,7 +324,7 @@ export interface TextStyle {
   fontFamily: string;
   fontSize: number;
   color: string;
-  /** Hex, ví dụ "#000000" */
+  /** Hex, ví dụ "#000000". Đợt 74 B9: chấp nhận cả #rrggbbaa (nền mờ). */
   backgroundColor?: string;
   /**
    * Màu tô sáng karaoke (Phase 9 R4, hex). Chỉ dùng khi clip có `karaoke`;

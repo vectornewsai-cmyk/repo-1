@@ -14,6 +14,7 @@
 // đè file bằng chứng nào của O3/N1). KHÔNG push, KHÔNG sửa code sản phẩm.
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import path from "node:path";
 import os from "node:os";
@@ -288,7 +289,7 @@ async function main() {
   }
   const outPath = process.env.P2_OUTFILE || path.join("benchmarks/results/v32-p2-seek-underload.json");
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, JSON.stringify(out, null, 2));
+  writeFileEpermRetry(outPath, JSON.stringify(out, null, 2));
   log("JSON:", outPath);
   process.exit(out.error ? 2 : 0);
 }

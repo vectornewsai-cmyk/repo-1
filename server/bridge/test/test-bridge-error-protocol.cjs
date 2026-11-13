@@ -25,6 +25,7 @@
 
 const { EventEmitter } = require("events");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 
@@ -80,8 +81,8 @@ function fakeProc() {
 
 async function main() {
   console.log("== [1] errorCodes: catalog + helpers ==");
-  eq(BRIDGE_ERROR_CODE_LIST.length, 102, "catalog có 102 mã (91 + 11 TASK_*)");
-  eq(new Set(BRIDGE_ERROR_CODE_LIST).size, 102, "không trùng mã");
+  eq(BRIDGE_ERROR_CODE_LIST.length, 108, "catalog có 108 mã (91 + 11 TASK_* + 6 TTS_CLONED_VOICE_* đợt 84 L8)");
+  eq(new Set(BRIDGE_ERROR_CODE_LIST).size, 108, "không trùng mã");
   ok(isBridgeErrorCode("JOB_NOT_FOUND"), "isBridgeErrorCode nhận mã catalog");
   for (const code of ["TASK_CAPTION_FAILED", "TASK_REFRAME_FAILED", "TASK_REFRAME_ANALYZE_FAILED", "TASK_BEATS_FAILED", "TASK_BGREMOVE_FAILED", "TASK_SILENCE_FAILED", "TASK_SCENE_FAILED", "TASK_TRANSLATE_FAILED", "TASK_TTS_FAILED", "TASK_TTS_CLONE_FAILED", "TASK_PROXY_FAILED"]) {
     ok(isBridgeErrorCode(code), `TASK_* trong catalog: ${code}`);
@@ -214,21 +215,21 @@ async function main() {
   const dirB = path.join(work2, "aabbccddeeff0022");
   fs.mkdirSync(dirA, { recursive: true });
   fs.mkdirSync(dirB, { recursive: true });
-  fs.writeFileSync(path.join(dirA, "job.json"), JSON.stringify({
+  writeFileEpermRetry(path.join(dirA, "job.json"), JSON.stringify({
     id: "aabbccddeeff0011", status: "queued",
     specPath: path.join(dirA, "spec.json"), // không tồn tại
     mediaDir: path.join(dirA, "media"), outPath: path.join(dirA, "output.mp4"),
     totalDuration: 2, createdAt: Date.now(), attempts: 0,
   }));
-  fs.writeFileSync(path.join(dirA, "spec.json"), ""); // (ghi rồi xóa để chắc chắn thiếu)
+  writeFileEpermRetry(path.join(dirA, "spec.json"), ""); // (ghi rồi xóa để chắc chắn thiếu)
   fs.rmSync(path.join(dirA, "spec.json"), { force: true });
-  fs.writeFileSync(path.join(dirB, "job.json"), JSON.stringify({
+  writeFileEpermRetry(path.join(dirB, "job.json"), JSON.stringify({
     id: "aabbccddeeff0022", status: "running",
     specPath: path.join(dirB, "spec.json"),
     mediaDir: path.join(dirB, "media"), outPath: path.join(dirB, "output.mp4"),
     totalDuration: 2, createdAt: Date.now(), attempts: 0,
   }));
-  fs.writeFileSync(path.join(dirB, "spec.json"), "{}");
+  writeFileEpermRetry(path.join(dirB, "spec.json"), "{}");
   const svc2 = new RenderJobService({ spawnJob: () => fakeProc(), enableQA: false });
   const n = svc2.recover(work2);
   eq(n, 2, "recover đếm 2 job");
@@ -253,14 +254,14 @@ async function main() {
   // Job error có spec + noteCode → retry thành công, noteCode bị xóa.
   const dirC = path.join(work2, "aabbccddeeff0033");
   fs.mkdirSync(dirC, { recursive: true });
-  fs.writeFileSync(path.join(dirC, "job.json"), JSON.stringify({
+  writeFileEpermRetry(path.join(dirC, "job.json"), JSON.stringify({
     id: "aabbccddeeff0033", status: "error",
     specPath: path.join(dirC, "spec.json"), mediaDir: path.join(dirC, "media"),
     outPath: path.join(dirC, "output.mp4"), totalDuration: 2, createdAt: Date.now(), attempts: 0,
     error: "Render worker thoát với mã 1.", errorCode: "WORKER_EXIT",
     note: "Phục hồi sau khi server restart — render lại từ đầu.", noteCode: "JOB_RECOVERED_RESTART",
   }));
-  fs.writeFileSync(path.join(dirC, "spec.json"), "{}");
+  writeFileEpermRetry(path.join(dirC, "spec.json"), "{}");
   const svc3 = new RenderJobService({ spawnJob: () => fakeProc(), enableQA: false });
   eq(svc3.recover(work2), 3, "recover đếm 3 job (kèm C)");
   const rc = svc3.get("aabbccddeeff0033");
@@ -308,13 +309,21 @@ async function main() {
     // (E) e null/undefined → coi như không message → TASK_*.
     p = taskErrorPayload(null, "TTS thất bại.", "TASK_TTS_FAILED");
     eq(p.errorCode, "TASK_TTS_FAILED", "(E) e null → TASK_TTS_FAILED");
-    // (F) 11 call site trong index.js dùng đúng 11 mã catalog (khóa
-    // chống lệch mã giữa call site và catalog).
+    // (F) 9 call site literal trong index.js dùng đúng 9 mã catalog (khóa
+    // chống lệch mã giữa call site và catalog). Đợt 80 H8 gộp 2 site TTS
+    // (/api/tts + /api/tts/clone) vào streamTtsResponse với mã tham số
+    // `failCode` nên regex dưới không đếm được chúng — 2 mã đó
+    // (TASK_TTS_FAILED, TASK_TTS_CLONE_FAILED) được khóa riêng ở dưới.
     const indexSrc = fs.readFileSync(path.join(__dirname, "..", "src", "index.js"), "utf8");
     const used = [...indexSrc.matchAll(/taskErrorPayload\(e, "[^"]+", "([A-Z_]+)"\)/g)].map((m) => m[1]);
-    eq(used.length, 11, "(F) index.js có đúng 11 call site taskErrorPayload");
-    eq(new Set(used).size, 11, "(F) 11 call site dùng 11 mã khác nhau");
+    eq(used.length, 9, "(F) index.js có đúng 9 call site taskErrorPayload literal");
+    eq(new Set(used).size, 9, "(F) 9 call site dùng 9 mã khác nhau");
     for (const code of used) ok(isBridgeErrorCode(code), `(F) call site dùng mã catalog: ${code}`);
+    // (F') 2 site TTS tham số qua failCode: mã truyền vào phải có trong catalog.
+    for (const code of ["TASK_TTS_FAILED", "TASK_TTS_CLONE_FAILED"]) {
+      ok(isBridgeErrorCode(code), `(F') mã TTS tham số trong catalog: ${code}`);
+      ok(indexSrc.includes(`failCode: "${code}"`), `(F') route truyền failCode ${code}`);
+    }
   }
 
   console.log(`R5 bridge error protocol (unit): ${pass} pass, ${fail} fail`);

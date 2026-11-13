@@ -68,6 +68,9 @@
 
 const { execFile, spawnSync } = require('node:child_process');
 const fs = require('node:fs');
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (port JS của
+// apps/web/scripts/eperm-retry.mjs; xem services/epermRetry.js).
+const { writeFileEpermRetry } = require('./epermRetry');
 const http = require('node:http');
 const net = require('node:net');
 const path = require('node:path');
@@ -107,7 +110,7 @@ function writeBridgePidfile(userDataDir, record, log) {
   try {
     fs.mkdirSync(userDataDir, { recursive: true });
     const tmp = `${file}.${process.pid}.tmp`;
-    fs.writeFileSync(tmp, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+    writeFileEpermRetry(tmp, `${JSON.stringify(payload, null, 2)}\n`, { label: 'desktop-bridge-pidfile' });
     fs.renameSync(tmp, file);
     return true;
   } catch (e) {

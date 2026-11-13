@@ -44,6 +44,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -121,9 +122,9 @@ async function main() {
   // ---- (2) unit đóng băng: tamper trên fixture → INVALID (hàm mà
   // mobile/check-proxy dùng chung, không cần sửa dist thật) ----
   const fixDir = fs.mkdtempSync(path.join(os.tmpdir(), "t4-fixture-dist-"));
-  fs.writeFileSync(path.join(fixDir, "index.html"), "<script src='/assets/x.js'></script>");
+  writeFileEpermRetry(path.join(fixDir, "index.html"), "<script src='/assets/x.js'></script>");
   fs.mkdirSync(path.join(fixDir, "assets"), { recursive: true });
-  fs.writeFileSync(path.join(fixDir, "assets", "x.js"), "console.log(1);");
+  writeFileEpermRetry(path.join(fixDir, "assets", "x.js"), "console.log(1);");
   const m1 = distManifest(fixDir);
   fs.appendFileSync(path.join(fixDir, "assets", "x.js"), "// tamper\n");
   const vTamper = verifyDistManifest(fixDir, m1);
@@ -250,7 +251,7 @@ async function main() {
     hangResults,
   };
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, JSON.stringify(result, null, 2) + "\n");
+  writeFileEpermRetry(OUT, JSON.stringify(result, null, 2) + "\n");
   console.log(`allPass=${allPass} -> ${OUT}`);
   process.exit(allPass ? 0 : 1);
 }

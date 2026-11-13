@@ -18,8 +18,12 @@
 //   (b) footer `.modal-actions` vẫn là CON TRỰC TIẾP của `.modal`,
 //       ngoài `.modal-body` (không đổi cấu trúc khi sửa class);
 //   (c) mọi key i18n giữ nguyên (không đổi key, không đổi literal):
-//       Caption 49 key / 55 call site, Silence 25 key / 28 call site,
-//       BeatSync 26 key / 29 call site (khớp O4).
+//       Caption 50 key / 57 call site, Silence 25 key / 28 call site,
+//       BeatSync 26 key / 29 call site (khớp O4). Caption 50/57 sau đợt
+//       74 B9: +1 key caption.karaokeStyleLabel + 2 call site t() (nhãn
+//       select + aria-label); 3 key tên template (karaokeStyleYellow/
+//       DimBg/NeonPink) nằm trong lib/captions.ts dạng data nên regex
+//       t("...") của test này (chỉ quét CaptionModal.tsx) không đếm.
 // Bằng chứng động (headed thật, bước config ở 1440x900 + 1280x720):
 // xem docs/PHASE9_ROUND59_P4_MODAL_CLASSES_LIMITS.md.
 //
@@ -190,7 +194,7 @@ checkI18n("Caption", CAPTION, [
   "caption.exportSrt", "caption.exportVtt", "caption.failed",
   "caption.found", "caption.foundPlain", "caption.highlightColor",
   "caption.importFile", "caption.imported", "caption.importedWithErrors",
-  "caption.karaokeHint", "caption.keepSentence", "caption.mediaGone",
+  "caption.karaokeHint", "caption.karaokeStyleLabel", "caption.keepSentence", "caption.mediaGone",
   "caption.noCues", "caption.noCuesInFile", "caption.noMedia",
   "caption.noMediaInLibrary", "caption.noTranslate",
   "caption.noWordTimestamps", "caption.orImport", "caption.processing",
@@ -200,7 +204,7 @@ checkI18n("Caption", CAPTION, [
   "caption.translateWith", "caption.translated", "caption.translatedPlain",
   "caption.translating", "caption.uploading", "common.bridgeConn",
   "common.close",
-], 55);
+], 57);
 
 // ================= SilenceModal =================
 check("Silence: không còn modal-x / modal-label / modal-hint / modal-err trong JSX", () => {

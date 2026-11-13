@@ -38,6 +38,7 @@
 import { spawn, execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -65,7 +66,7 @@ function buildPolicy() {
   fs.mkdirSync(SCRATCH, { recursive: true });
   const content = Buffer.from("hatch-webgl-all-origins-v1\n", "utf8");
   const file = path.join(SCRATCH, "webgl-policy.txt");
-  fs.writeFileSync(file, content);
+  writeFileEpermRetry(file, content);
   const sha = crypto.createHash("sha256").update(content).digest("hex");
   // Validator: cần cả 4 cờ (validate + file + sha256 + --version) —
   // thiếu file/sha thì lỗi "requires both file and SHA-256 switches".

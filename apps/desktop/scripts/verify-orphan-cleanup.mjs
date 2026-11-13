@@ -32,6 +32,7 @@
  */
 import { spawn, execFile } from "node:child_process";
 import { promises as fs } from "node:fs";
+import { writeFileEpermRetryAsync } from "../../web/scripts/eperm-retry.mjs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import os from "node:os";
@@ -336,7 +337,7 @@ async function main() {
   const passed = steps.filter((s) => s.ok).length;
   const failed = steps.filter((s) => !s.ok).length;
   const report = { cdpPort: CDP_PORT, display: DISPLAY, failed, finishedAt: new Date().toISOString(), passed, steps, userData: USER_DATA };
-  await fs.writeFile(REPORT_PATH, JSON.stringify(report, null, 2));
+  await writeFileEpermRetryAsync(REPORT_PATH, JSON.stringify(report, null, 2));
   console.log(`\nSUMMARY: ${passed} passed, ${failed} failed — report: ${REPORT_PATH}`);
   process.exit(failed ? 1 : 0);
 }

@@ -26,6 +26,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
@@ -152,7 +153,7 @@ const BALANCED = { stabilize: { smoothing: 10 }, denoise: { strength: 0.5 } };
 const specBalanced = specWith([{ id: "v0", kind: "video",
   clips: [vclip("c0", "shakynoisy720.mp4", 5, { enhance: BALANCED })] }], 1280, 720);
 const drySpecPath = path.join(work, "dryrun.json");
-fs.writeFileSync(drySpecPath, JSON.stringify(specBalanced));
+writeFileEpermRetry(drySpecPath, JSON.stringify(specBalanced));
 let mainArgs;
 {
   const r = spawnSync("node", [path.join(RENDER, "src", "render.js"), "--spec", drySpecPath,
@@ -179,7 +180,7 @@ const r = probeGpuEncoder("ffmpeg");
 console.log("GPU_PROBE " + JSON.stringify({ tried: r.tried, encoder: r.encoder }));
 `;
 const gpuProbeJs = path.join(work, "gpu-probe.js");
-fs.writeFileSync(gpuProbeJs, GPU_PROBE_JS);
+writeFileEpermRetry(gpuProbeJs, GPU_PROBE_JS);
 const DETECT_ONE_JS = `
 const { runStabilizeDetect } = require(${JSON.stringify(path.join(__dirname, "enhance.js"))});
 const [src, trf] = process.argv.slice(2);
@@ -189,7 +190,7 @@ if (!r.ok) { console.error(r.error); process.exit(1); }
 console.log("DETECT_OK " + trf);
 `;
 const detectOneJs = path.join(work, "detect-one.js");
-fs.writeFileSync(detectOneJs, DETECT_ONE_JS);
+writeFileEpermRetry(detectOneJs, DETECT_ONE_JS);
 const micro = {};
 function microProbe(key, label, argv) {
   const cpus = [], walls = [];
@@ -249,7 +250,7 @@ for (let round = 1; round <= 3; round++) {
   t = timedBash(`H detect mới v${round}`, ["node", detectOneJs, src720, trfH]); macro.H.push(t.cpu); macroWall.H.push(t.wall);
   ok(fs.existsSync(trfH) && fs.statSync(trfH).size > 0, `H v${round}: .trf > 0 byte`);
   const specPathI = path.join(work, `full-balanced-r${round}.json`);
-  fs.writeFileSync(specPathI, JSON.stringify(specBalanced));
+  writeFileEpermRetry(specPathI, JSON.stringify(specBalanced));
   const outI = path.join(work, `full-balanced-r${round}.mp4`);
   t = timedBash(`I full render balanced v${round}`, ["node", path.join(RENDER, "src", "render.js"),
     "--spec", specPathI, "--out", outI, "--media-dir", mediaDir, "-y",

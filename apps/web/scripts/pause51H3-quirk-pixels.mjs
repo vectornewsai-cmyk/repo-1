@@ -29,6 +29,7 @@
 
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -62,7 +63,7 @@ if (!fs.existsSync(path.join(SCRATCH, "var-trunc-gop2.mp4"))) {
   const kf2 = probe.packets.find((p) => Math.abs(parseFloat(p.pts_time) - 2.0) < 1e-6);
   if (!kf2) fail("không tìm thấy packet keyframe pts 2.0");
   const data = fs.readFileSync(base);
-  fs.writeFileSync(path.join(SCRATCH, "var-trunc-gop2.mp4"), data.subarray(0, parseInt(kf2.pos, 10)));
+  writeFileEpermRetry(path.join(SCRATCH, "var-trunc-gop2.mp4"), data.subarray(0, parseInt(kf2.pos, 10)));
   log("rebuild var-trunc-gop2.mp4: cắt ở " + kf2.pos + " (từ " + data.length + " byte)");
 }
 
@@ -115,7 +116,7 @@ const PAGE = "<!doctype html><meta charset=\"utf-8\"><title>H3 pixel probe</titl
   + "}, 3000);\n"
   + "setTimeout(function () { if (!window.__px.done) { window.__px.timeout = true; window.__px.done = true; } }, 20000);\n"
   + "</script>\n";
-fs.writeFileSync(path.join(SCRATCH, "pixel.html"), PAGE);
+writeFileEpermRetry(path.join(SCRATCH, "pixel.html"), PAGE);
 
 class TabCdp {
   constructor(wsUrl) {

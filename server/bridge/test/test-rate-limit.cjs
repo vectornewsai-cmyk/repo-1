@@ -9,6 +9,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { createRateLimiter, parseRateLimitInt, defaultPersistPath } = require("../src/rateLimit");
@@ -287,7 +288,7 @@ console.log("== [11] S5 — persist edge case: file hỏng, không persist, đư
 {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "vcut-r65s5-persist-"));
   const badFile = path.join(tmp, "bad.json");
-  fs.writeFileSync(badFile, "khong phai json {{{", "utf8");
+  writeFileEpermRetry(badFile, "khong phai json {{{", "utf8");
   let now = 0;
   const bad = createRateLimiter({
     windowMs: 60000, now: () => now, sweepIntervalMs: 0,
@@ -297,7 +298,7 @@ console.log("== [11] S5 — persist edge case: file hỏng, không persist, đư
   ok(callMw(bad.rateLimit(4, "general"), "10.4.0.1").next, "file hỏng: limiter vẫn chạy bình thường từ trạng thái rỗng");
   bad.destroy();
   // Sai định dạng (version khác / thiếu global) cũng bỏ qua.
-  fs.writeFileSync(badFile, JSON.stringify({ version: 99, buckets: {}, global: [] }), "utf8");
+  writeFileEpermRetry(badFile, JSON.stringify({ version: 99, buckets: {}, global: [] }), "utf8");
   const wrongVer = createRateLimiter({
     windowMs: 60000, now: () => now, sweepIntervalMs: 0,
     persistPath: badFile, persistIntervalMs: 0,
