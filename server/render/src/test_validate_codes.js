@@ -32,6 +32,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 
@@ -73,8 +74,8 @@ const ph = (s) => [...new Set([...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]))].s
 
 console.log("== [a] khóa 3 chiều: classifier == fragment validation.* ==");
 {
-  eq(VALIDATION_CODE_LIST.length, 108, "classifier có 108 mã");
-  eq(new Set(VALIDATION_CODE_LIST).size, 108, "108 mã không trùng nhau");
+  eq(VALIDATION_CODE_LIST.length, 109, "classifier có 109 mã");
+  eq(new Set(VALIDATION_CODE_LIST).size, 109, "109 mã không trùng nhau");
   const fragCodes = [...FRAG_VI.keys()]
     .filter((k) => k.startsWith("validation.") && k !== "validation.detail")
     .map((k) => k.slice("validation.".length));
@@ -215,6 +216,16 @@ console.log("== [c] validateSpec thật: chuỗi cũ không đổi, mã cụ th�
   s = base(); s.tracks = [{ id: "t", kind: "text", clips: [{ id: "c1", kind: "text", start: 0, duration: 2, text: "x", style: { fontFamily: "A", fontSize: 12, color: "#fff" }, karaoke: [{ word: "a", start: 0, end: 5 }] }] }]; specs.push(s);
   s = base(); s.tracks = [{ id: "t", kind: "text", clips: [{ id: "c1", kind: "text", start: 0, duration: 2, text: "x", style: { fontFamily: "A", fontSize: 12, color: "#fff" }, karaoke: [{ word: "a", start: 0, end: 1 }, { word: "b", start: 0.5, end: 1.5 }] }] }]; specs.push(s);
   s = base(); s.tracks = [{ id: "t", kind: "video", clips: [{ id: "c1", kind: "video", start: 0, duration: 2, src: "a.mp4", in: 0, out: 10, mask: {}, track: { points: [] } }] }]; specs.push(s);
+  // Phase 9 đợt 88 P6: image + track + mask hợp lệ → warn mới TRACK_IMAGE_MASK
+  // (không còn "track sẽ bị bỏ qua"); video + track + transitionOut → warn
+  // TRACK_TRANSITION (khóa regex đã đồng bộ lại với câu warn closing đợt 87).
+  const IMG_MASK = { shape: "ellipse", x: 0.5, y: 0.5, w: 0.4, h: 0.5, feather: 0 };
+  const TRK = { points: [{ t: 0, x: 0.3, y: 0.5 }, { t: 2, x: 0.7, y: 0.5 }] };
+  s = base(); s.tracks = [{ id: "t", kind: "image", clips: [{ id: "c1", kind: "image", start: 0, duration: 2, src: "a.png", mask: IMG_MASK, track: TRK }] }]; specs.push(s);
+  s = base(); s.tracks = [{ id: "t", kind: "video", clips: [
+    { id: "c1", kind: "video", start: 0, duration: 5, src: "a.mp4", in: 0, out: 10, transitionOut: { type: "xfade", duration: 1 }, track: TRK },
+    { id: "c2", kind: "video", start: 5, duration: 5, src: "b.mp4", in: 0, out: 10 },
+  ] }]; specs.push(s);
   s = base(); s.tracks = [{ id: "t", kind: "audio", clips: [{ id: "c1", kind: "audio", start: 0, duration: 2, src: "a.wav", in: 0, out: 10, volumeKeyframes: "x" }] }]; specs.push(s);
   s = base(); s.tracks = [{ id: "t", kind: "audio", clips: [{ id: "c1", kind: "audio", start: 0, duration: 2, src: "a.wav", in: 0, out: 10, speedKeyframes: "x" }] }]; specs.push(s);
   s = base(); s.tracks = [{ id: "t", kind: "audio", clips: [{ id: "c1", kind: "audio", start: 0, duration: 2, src: "a.wav", in: 0, out: 10, volumeKeyframes: { keyframes: Array.from({ length: 129 }, (_, i) => ({ t: 0, v: 1, easing: "linear" })) } }] }]; specs.push(s);
@@ -249,6 +260,33 @@ console.log("== [c] validateSpec thật: chuỗi cũ không đổi, mã cụ th�
   ok(nErr > 40, `bộ spec hỏng tạo ${nErr} lỗi`, nErr);
   ok(nWarn >= 1, `bộ spec hỏng tạo ${nWarn} cảnh báo`, nWarn);
   ok(hitCodes.size >= 70, `phân loại cụ thể ${hitCodes.size} mã khác nhau qua spec thật`, [...hitCodes].sort());
+  // Phase 9 đợt 88 P6: 2 mã mới/khóa lại phải xuất hiện qua spec thật.
+  ok(hitCodes.has("TRACK_IMAGE_MASK"), "image+track+mask phân loại TRACK_IMAGE_MASK", [...hitCodes].sort());
+  ok(hitCodes.has("TRACK_TRANSITION"), "video+track+transition phân loại TRACK_TRANSITION", [...hitCodes].sort());
+  // Câu warn image+track+mask đúng từng chữ, không còn "track sẽ bị bỏ qua".
+  {
+    const im = base();
+    im.tracks = [{ id: "t", kind: "image", clips: [{ id: "c1", kind: "image", start: 0, duration: 2, src: "a.png", mask: { shape: "ellipse", x: 0.5, y: 0.5, w: 0.4, h: 0.5, feather: 0 }, track: { points: [{ t: 0, x: 0.3, y: 0.5 }, { t: 2, x: 0.7, y: 0.5 }] } }] }];
+    const vIm = validateSpec(im);
+    ok(vIm.warnings.some((w) => w.includes("track không dịch chuyển clip image (ảnh giữ vị trí tĩnh), nhưng mask vẫn bám theo track (xem D3_LIMITS.md)")), "image+track+mask: câu warn mới đúng chữ", vIm.warnings);
+    ok(vIm.warningDetails.some((d) => d.code === "TRACK_IMAGE_MASK"), "image+track+mask: mã TRACK_IMAGE_MASK", vIm.warningDetails);
+    ok(!vIm.warnings.some((w) => w.includes("track sẽ bị bỏ qua")), "image+track+mask: không còn câu 'track sẽ bị bỏ qua'", vIm.warnings);
+    // Image có track nhưng KHÔNG mask: giữ warn cũ TRACK_UNSUPPORTED_KIND.
+    const im2 = base();
+    im2.tracks = [{ id: "t", kind: "image", clips: [{ id: "c1", kind: "image", start: 0, duration: 2, src: "a.png", track: { points: [{ t: 0, x: 0.3, y: 0.5 }, { t: 2, x: 0.7, y: 0.5 }] } }] }];
+    const vIm2 = validateSpec(im2);
+    ok(vIm2.warningDetails.some((d) => d.code === "TRACK_UNSUPPORTED_KIND" && d.params.kind === "image"), "image+track không mask: vẫn TRACK_UNSUPPORTED_KIND", vIm2.warningDetails);
+    // Video + track + transition: câu warn closing đợt 87 phân loại đúng mã
+    // (trước khi đồng bộ regex thì rơi về VALIDATION_DETAIL).
+    const tr = base();
+    tr.tracks = [{ id: "t", kind: "video", clips: [
+      { id: "c1", kind: "video", start: 0, duration: 5, src: "a.mp4", in: 0, out: 10, transitionOut: { type: "xfade", duration: 1 }, track: { points: [{ t: 0, x: 0.3, y: 0.5 }, { t: 2, x: 0.7, y: 0.5 }] } },
+      { id: "c2", kind: "video", start: 5, duration: 5, src: "b.mp4", in: 0, out: 10 },
+    ] }];
+    const vTr = validateSpec(tr);
+    ok(vTr.warningDetails.some((d) => d.code === "TRACK_TRANSITION"), "video+track+transition: mã TRACK_TRANSITION", vTr.warningDetails);
+    ok(vTr.warnings.some((w) => w.includes("mask vẫn bám theo track")), "video+track+transition: câu warn nhắc mask vẫn bám", vTr.warnings);
+  }
   // Generic CHỈ được phép từ passthrough sub-validator (không phải chuỗi
   // do chính validate.js tạo): mask/chroma/effects/enhance/image/track/
   // adjustment — liệt kê rõ từng chuỗi.
@@ -314,7 +352,7 @@ console.log("\n== [d2] validateMedia thật với media ffmpeg ==");
       execFileSync("ffmpeg", ["-y", "-v", "error", "-f", "lavfi", "-i", "testsrc=duration=1:size=64x36:rate=30", "-c:v", "libx264", "-pix_fmt", "yuv420p", path.join(tmp, "v.mp4")]);
       execFileSync("ffmpeg", ["-y", "-v", "error", "-f", "lavfi", "-i", "color=c=red:size=64x36:duration=0.1", "-frames:v", "1", path.join(tmp, "still.png")]);
       execFileSync("ffmpeg", ["-y", "-v", "error", "-f", "lavfi", "-i", "sine=frequency=440:duration=1", path.join(tmp, "audio.wav")]);
-      fs.writeFileSync(path.join(tmp, "empty.mp4"), "");
+      writeFileEpermRetry(path.join(tmp, "empty.mp4"), "");
       fs.mkdirSync(path.join(tmp, "adir"));
       const specFor = (kind, src, extraClip = {}) => ({
         version: "0.2.0",

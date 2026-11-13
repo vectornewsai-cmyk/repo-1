@@ -36,6 +36,8 @@ import { BRIDGE_URL } from "./lib/bridgeUrl";
 // Đợt 54 K7 — kiểm tra proxy còn sống khi rehydrate (file proxy mất
 // trên bridge → gỡ URL chết + đánh dấu stale thay vì giữ).
 import { checkProxyAlive } from "./lib/proxy";
+// Đợt 75 C6 — probe lại codec lúc rehydrate (badge cảnh báo sống qua reload).
+import { probeImportedFileCodec } from "./lib/codecProbe";
 import { saveCurrentProject, saveNotesLines } from "./components/project/ProjectMenu";
 // Phase 10 G5 — cầu nối menu Electron (chỉ có tác dụng trong app desktop).
 import { initDesktopMenuBridge, isDesktopMenuShortcut } from "./desktop";
@@ -254,6 +256,17 @@ export default function App() {
               // chỉ 404 chắc chắn mới bị coi là chết (bridge tắt/mất mạng
               // thì giữ proxy như cũ, xem checkProxyAlive).
               checkProxyUrl: checkProxyAlive,
+              // Đợt 75 C6 — probe lại codec cho item khôi phục: cờ
+              // unsupportedCodec chỉ sống trong phiên import nên reload
+              // là mất badge; probe lại từ File đã dựng (fail-open
+              // trong rehydrate: lỗi → không gắn cờ, không hỏng khởi
+              // động). Chỉ verdict "unsupported" mới trả nhãn codec.
+              probeUnsupportedCodec: async (file) => {
+                const probe = await probeImportedFileCodec(file);
+                return probe && probe.verdict === "unsupported"
+                  ? probe.codecLabel
+                  : undefined;
+              },
             },
             auto.spec,
             // Đợt 59 P1 — manifest bin từ envelope autosave (null =

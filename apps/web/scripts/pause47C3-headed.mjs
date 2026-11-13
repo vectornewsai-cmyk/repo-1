@@ -42,6 +42,7 @@
 
 import { spawn, execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -88,7 +89,7 @@ function buildFixtures() {
   // Fixture biến thể: zero packet theo khoảng pts (cùng cách làm của
   // B2/Y2: ffprobe JSON có tên trường, zero đúng byte packet).
   const py = path.join(SCRATCH, "make-variant.py");
-  fs.writeFileSync(py, [
+  writeFileEpermRetry(py, [
     "import json, subprocess, sys",
     "src, dst, lo, hi = sys.argv[1], sys.argv[2], float(sys.argv[3]), float(sys.argv[4])",
     "out = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0',",
@@ -110,7 +111,7 @@ function buildFixtures() {
     "",
   ].join("\n"));
   const truncPy = path.join(SCRATCH, "make-trunc.py");
-  fs.writeFileSync(truncPy, [
+  writeFileEpermRetry(truncPy, [
     "import json, subprocess, sys",
     "src, dst, upto = sys.argv[1], sys.argv[2], float(sys.argv[3])",
     "out = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0',",
@@ -199,7 +200,7 @@ function buildPages() {
     + "  }, 6000);\n"
     + "}, 3000);\n"
     + "</script>\n";
-  fs.writeFileSync(path.join(SCRATCH, "raw.html"), raw);
+  writeFileEpermRetry(path.join(SCRATCH, "raw.html"), raw);
   // seekel.html — seekElement (code mới, có WrongLandingTracker B2)
   // trên element đã load + chờ 3000 ms như probe v3; ghi landings,
   // số seeking-event (proxy cho số lần gán), phân loại từng landing.
@@ -259,7 +260,7 @@ function buildPages() {
     + "window.__c3 = R;\n"
     + "window.__c3Ready = true;\n"
     + "</script>\n";
-  fs.writeFileSync(path.join(SCRATCH, "seekel.html"), seekel);
+  writeFileEpermRetry(path.join(SCRATCH, "seekel.html"), seekel);
   // release.html — đo chênh lệch mock vs Chrome thật về releaseElement
   // (A2 §5.7): đếm createMediaElementSource thật + ghi nó có ném ở lần
   // 2 cho cùng element không, nodes Map còn giữ element không, và gain
@@ -316,7 +317,7 @@ function buildPages() {
     + "window.__c3 = R;\n"
     + "window.__c3Ready = true;\n"
     + "</script>\n";
-  fs.writeFileSync(path.join(SCRATCH, "release.html"), release);
+  writeFileEpermRetry(path.join(SCRATCH, "release.html"), release);
 }
 
 // ---------- CDP qua /json/new + WebSocket (đúng mẫu probe243.mjs) ----------

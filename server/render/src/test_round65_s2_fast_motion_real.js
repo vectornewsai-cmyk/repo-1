@@ -61,6 +61,7 @@
 
 const crypto = require("crypto");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 const {
@@ -148,7 +149,7 @@ const specWith = (tracks, W, H, fps) => ({
 });
 function render(spec, name) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const outPath = path.join(work, `${name}.mp4`);
   const prev = probeVideo(outPath);
   if (fs.existsSync(outPath) && prev.codec === "h264" && prev.width === 1280 && prev.height === 720) {
@@ -256,7 +257,7 @@ for lab, rdir in jobs:
     print("REAL_GHOST " + json.dumps(out))
 `;
 const ghostPy = path.join(work, "ghost_real.py");
-fs.writeFileSync(ghostPy, GHOST_PY);
+writeFileEpermRetry(ghostPy, GHOST_PY);
 
 // --- Script đo tốc độ đoạn (phase correlation, y hệt R4) --------------------
 const SCAN_PY = `
@@ -299,7 +300,7 @@ for f in frames:
 os.rmdir(tmp)
 `;
 const scanPy = path.join(work, "scan_seg.py");
-fs.writeFileSync(scanPy, SCAN_PY);
+writeFileEpermRetry(scanPy, SCAN_PY);
 
 function measureSpeed(segMp4) {
   const r = spawnSync(CV2_PY, [scanPy, segMp4], { encoding: "utf8" });
@@ -342,7 +343,7 @@ function ghostOf(cleanDir, renderJobs, cacheTag, expectN) {
   if (Object.keys(out.results).length !== renderJobs.length) {
     throw new Error(`không parse đủ ghost: ${r.stdout} ${r.stderr}`);
   }
-  if (cachePath) fs.writeFileSync(cachePath, JSON.stringify(out, null, 1));
+  if (cachePath) writeFileEpermRetry(cachePath, JSON.stringify(out, null, 1));
   return out;
 }
 
@@ -505,7 +506,7 @@ const genPy = path.join(work, "gen_texture.py");
 const tex = path.join(work, "texture-wide.png");
 const staticClean = path.join(work, "static-clean.mp4");
 if (!fs.existsSync(staticClean) || probeVideo(staticClean).duration < 4.9) {
-  fs.writeFileSync(genPy, GEN_PY);
+  writeFileEpermRetry(genPy, GEN_PY);
   run("python3", [genPy], "tạo ảnh texture 2200x720 (seed 64)");
   run("ffmpeg", ["-v", "error", "-y", "-loop", "1", "-i", tex,
     "-vf", "crop=1280:720:0:0,format=yuv420p", "-t", "5", "-r", "30",
@@ -595,7 +596,7 @@ ok(FAST_THRESHOLD === 6.0 && MEDIUM_THRESHOLD === 4.0 && DENOISE_WARN_STRENGTH =
 ok(classifyMotion(2.909) === "slow" && classifyMotion(6.471) === "fast",
   "classifyMotion khớp số đo thật trên footage (basgo-fast 2,909 slow; slov-fast 6,471 fast)");
 
-fs.writeFileSync(path.join(work, "summary.json"), JSON.stringify(summary, null, 1));
+writeFileEpermRetry(path.join(work, "summary.json"), JSON.stringify(summary, null, 1));
 console.log(`\n== test_round65_s2_fast_motion_real: ${pass} pass, ${fail} fail (WORK=${work}, loadavg cuối: ${loadAvg()}) ==`);
 console.log("== SUMMARY (JSON) ==");
 console.log(JSON.stringify({ thresholds: { FAST_THRESHOLD, MEDIUM_THRESHOLD, DENOISE_WARN_STRENGTH }, fpFn: summary.fpFn }, null, 1));

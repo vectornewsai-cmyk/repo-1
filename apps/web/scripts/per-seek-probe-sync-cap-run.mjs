@@ -55,6 +55,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -452,7 +453,7 @@ async function main() {
       const raw = await ev(`window.__n2PerSeek.read()`);
       const entries = raw.entries.map((e) => { const { _el, ...rest } = e; return rest; });
       const evidence = { mode: "origin", runAt: stamp(), chrome: chromeBin, display: opts.display, port: opts.port, appBundle: bundle, loadBefore, loadAfter: loadavg(), entryCount: entries.length, entries, counts: raw.counts, droppedOverflow: raw.droppedOverflow, rangeRequests: rangeLog.length };
-      fs.writeFileSync(path.join(opts.scratch, "origin-evidence.json"), JSON.stringify(evidence, null, 2));
+      writeFileEpermRetry(path.join(opts.scratch, "origin-evidence.json"), JSON.stringify(evidence, null, 2));
       console.log(`[c6sync] origin: entries=${entries.length} counts=${JSON.stringify(raw.counts)}`);
       for (const e of entries) console.log(`[c6sync] origin k=${e.k} elId=${e.elementId} target=${e.targetTime} status=${e.status} samples=${(e.decodedSamplesWhileSeeking || []).length} dropped=${e.droppedSeekingSamples} src=${(e.srcAtSeek47C6 || "").slice(0, 60)} stack=${e.stack47C6 || ""}`);
       console.log(`[c6sync] evidence → ${path.join(opts.scratch, "origin-evidence.json")}`);
@@ -564,8 +565,8 @@ async function main() {
       rangeRequests: rangeLog.length, rangeLog: rangeLog.slice(-80),
       scope: "SYNC-LOOP: seek do vòng sync preview lái (scrub .tl-ruler -> store playhead -> Seeker/seekAll -> pool element), src HTTP qua proxyUrl gắn bằng nút Proxy thật trong MediaBin (fake bridge chỉ trả proxyUrl, không transcode). Seed dùng blob stand-in flat 45 KB cho IDB (xem đầu file) — mọi byte phát ra là fixture noise thật qua HTTP nhỏ giọt/treo. Server nhỏ giọt là mô phỏng có nhật ký range, không phải mạng chậm thật.",
     };
-    fs.writeFileSync(path.join(opts.scratch, "sync-cap-evidence.json"), JSON.stringify(evidence, null, 2));
-    fs.writeFileSync(path.join(opts.scratch, "sync-cap-entries.json"), JSON.stringify(entries, null, 2));
+    writeFileEpermRetry(path.join(opts.scratch, "sync-cap-evidence.json"), JSON.stringify(evidence, null, 2));
+    writeFileEpermRetry(path.join(opts.scratch, "sync-cap-entries.json"), JSON.stringify(entries, null, 2));
     console.log(`[c6sync] entries=${entries.length} maxSamples=${evidence.maxSamplesPerEntry} maxDropped=${evidence.maxDroppedSeekingSamples} capHit=${evidence.capHit} counts=${JSON.stringify(raw.counts)}`);
     console.log(`[c6sync] evidence → ${path.join(opts.scratch, "sync-cap-evidence.json")}`);
   } finally {

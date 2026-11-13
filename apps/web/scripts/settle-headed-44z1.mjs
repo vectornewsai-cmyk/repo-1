@@ -38,6 +38,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -75,7 +76,7 @@ console.log(`fixture: ${FIX} size=${fileSize} byte = ${(fileSize / 1048576).toFi
 
 // ---- 1. Bundle entry (reverseWebcodecs + assetStore + rehydrate) ----
 const entryPath = path.join(SCRATCH, "z1-entry.mjs");
-fs.writeFileSync(entryPath, `import {
+writeFileEpermRetry(entryPath, `import {
   getReversePreviewController, reverseDecodeAheadStatus,
   setReverseDecodeAheadWanted, disposeReverseWebcodecsControllers,
 } from ${JSON.stringify(path.join(REPO, "apps/web/src/lib/reverseWebcodecs.ts"))};
@@ -531,7 +532,7 @@ async function main() {
         : `không bắt được SUCCESS sau 2 attempt: ${p3.attempts.map((a) => a.cls).join(", ")}`);
 
   const out = { fileSize, assetSetup, probeReady, phases: { asset: p2, hidden: p3 } };
-  fs.writeFileSync(path.join(SCRATCH, "z1-result.json"), JSON.stringify(out, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "z1-result.json"), JSON.stringify(out, null, 2));
   console.log(`loadavg lúc kết thúc: ${loadavg()}`);
   const failed = results.filter((r) => !r.ok);
   console.log(`\n== Z1 clicktest: ${results.length - failed.length}/${results.length} pass ==`);

@@ -67,6 +67,7 @@
 
 import { spawn, execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -114,7 +115,7 @@ function buildFixtures() {
     out[name] = { file: dst, md5: got, size: fs.statSync(dst).size };
   }
   const py = path.join(SCRATCH, "make-variant.py");
-  fs.writeFileSync(py, [
+  writeFileEpermRetry(py, [
     "import json, subprocess, sys",
     "src, dst, lo, hi = sys.argv[1], sys.argv[2], float(sys.argv[3]), float(sys.argv[4])",
     "out = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0',",
@@ -150,7 +151,7 @@ function buildFixtures() {
   // W13: zero toàn bộ box moov (giữ kích thước/offsets) — parse box
   // ftyp/moov/free/mdat, zero payload của moov (giữ 8 byte header).
   const moovPy = path.join(SCRATCH, "make-moovzero.py");
-  fs.writeFileSync(moovPy, [
+  writeFileEpermRetry(moovPy, [
     "import json, struct, sys",
     "src, dst = sys.argv[1], sys.argv[2]",
     "data = bytearray(open(src, 'rb').read())",
@@ -243,7 +244,7 @@ function buildPages() {
     + "  }, 6000);\n"
     + "}, 3000);\n"
     + "</script>\n";
-  fs.writeFileSync(path.join(SCRATCH, "raw.html"), raw);
+  writeFileEpermRetry(path.join(SCRATCH, "raw.html"), raw);
   // seekel.html — y hệt F6 (seekElement bundle), dùng cho R10 nếu có
   // biến thể đáp sai ở mức raw.
   const seekel = "<!doctype html><meta charset=\"utf-8\"><title>H3 seekElement probe</title>\n"
@@ -300,7 +301,7 @@ function buildPages() {
     + "window.__c3 = R;\n"
     + "window.__c3Ready = true;\n"
     + "</script>\n";
-  fs.writeFileSync(path.join(SCRATCH, "seekel.html"), seekel);
+  writeFileEpermRetry(path.join(SCRATCH, "seekel.html"), seekel);
 }
 
 class TabCdp {

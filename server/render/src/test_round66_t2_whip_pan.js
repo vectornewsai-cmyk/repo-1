@@ -47,6 +47,7 @@
 
 const crypto = require("crypto");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
@@ -113,7 +114,7 @@ const specWith = (tracks, W, H, fps) => ({
 });
 function render(spec, name) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const outPath = path.join(work, `${name}.mp4`);
   const prev = probeVideo(outPath);
   if (fs.existsSync(outPath) && prev.codec === "h264" && prev.width === 1280 && prev.height === 720) {
@@ -243,7 +244,7 @@ for lab, rdir in jobs:
     print("REAL_GHOST " + json.dumps(out))
 `;
 const ghostPy = path.join(work, "ghost_real.py");
-fs.writeFileSync(ghostPy, GHOST_PY);
+writeFileEpermRetry(ghostPy, GHOST_PY);
 
 const FLAT_PY = path.join(S3_WORK, "flatness.py");
 const scanPy = path.join(S3_WORK, "scan_seg.py");
@@ -301,7 +302,7 @@ function ghostOf(cleanDir, renderJobs, cacheTag) {
     for (const [lab, dir] of renderJobs) {
       out.dirCounts[lab] = fs.readdirSync(dir).filter((f) => f.endsWith(".gray")).length;
     }
-    fs.writeFileSync(cachePath, JSON.stringify(out));
+    writeFileEpermRetry(cachePath, JSON.stringify(out));
   }
   return out;
 }
@@ -335,7 +336,7 @@ print("BLURCHECK " + json.dumps({
     "meanAbsDiff": round(float(np.mean(diff)), 4), "nSampled": min(n, 12) - 2}))
 `;
 const blurCheckPy = path.join(work, "blurcheck.py");
-fs.writeFileSync(blurCheckPy, BLURCHECK_PY);
+writeFileEpermRetry(blurCheckPy, BLURCHECK_PY);
 function blurCheck(blurCleanDir, sharpCleanDir) {
   const r = spawnSync("python3", [blurCheckPy, blurCleanDir, sharpCleanDir], { encoding: "utf8" });
   if (r.status !== 0) throw new Error(`blurcheck loi: ${r.stdout} ${r.stderr}`);
@@ -628,7 +629,7 @@ for (const seg of KONCERT_SEGMENTS) {
   row(`${seg.id} (pan thật)`, c.speedMeasured.median_px_per_frame_720p, c.results);
 }
 
-fs.writeFileSync(path.join(work, "summary.json"), JSON.stringify(summary, null, 1));
+writeFileEpermRetry(path.join(work, "summary.json"), JSON.stringify(summary, null, 1));
 console.log(`\n== KẾT QUẢ: ${pass} pass, ${fail} fail ==`);
 console.log(`   WORK=${work} (summary.json + frame .gray trong scratch; footage gốc KHÔNG đưa vào batch)`);
 if (fail > 0) process.exit(1);

@@ -11,6 +11,9 @@
  *
  * Phần E (effect canvas) là phần chính của R6, đo trực tiếp:
  *   - pixelate / mirror / rgb-shift / shake / sharpen: phân loại V6.
+ *     (Đợt 77 E9: sharpen + noise render qua pipeline bt709 tường minh
+ *     — xem renderEffectFrameYuv; renderEffectFrame cũ chạy filter trên
+ *     RGB24 với bt601 mặc định, lệch pipeline thật MAD 2.2–4.9.)
  *   - edgedetect: phân loại V6 (kỳ vọng XẤP XỈ sau R6, xem LIMITS R6).
  *   - noise: thống kê (std preview / std render), KHÔNG phân loại
  *     từng frame — nhiễu thời gian của render không khớp từng frame
@@ -54,6 +57,7 @@
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 const path = require("node:path");
 
@@ -208,9 +212,31 @@ function renderEffectFrame(filter, src, w, h, frames, frameIndex, tag) {
   const out = path.join(TMP, `eff-out-${tag}.raw`);
   const chunks = [];
   for (let i = 0; i < frames; i++) chunks.push(src);
-  fs.writeFileSync(inp, Buffer.concat(chunks));
+  writeFileEpermRetry(inp, Buffer.concat(chunks));
   runFfmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${w}x${h}`, "-r", String(FPS), "-i", inp,
     "-vf", `${filter},format=rgb24`, "-f", "rawvideo", "-pix_fmt", "rgb24", out], `effect ${tag}`);
+  const all = fs.readFileSync(out);
+  const sz = w * h * 3;
+  return Buffer.from(all.subarray(frameIndex * sz, (frameIndex + 1) * sz));
+}
+/** Render filter trong pipeline bt709 tường minh (đợt 77 E9 — đính chính
+ * lỗi R63 R8 đã sửa cho parity test ở đợt 65 S7 nhưng chưa sửa ở V14:
+ * renderEffectFrame chạy filter trực tiếp trên RGB24, FFmpeg tự chèn
+ * convert với ma trận MẶC ĐỊNH bt601 — trong khi render thật (render.js,
+ * nguồn HD) làm việc trên Y bt709. Hai render lệch nhau MAD 2.2–4.9
+ * (probe9). fmt=yuv444p cho sharpen (unsharp chỉ động luma Y; yuv420p
+ * đưa subsampling chroma vào base làm test mất khả năng phân biệt —
+ * xem parity test S7); fmt=yuv420p cho noise (production chạy noise
+ * trên yuv420p, khối chroma 2×2 là một phần hành vi — addYuvNoise mô
+ * phỏng đúng khối đó). Chỉ dùng cho 2 case này; các case khác giữ nguyên. */
+function renderEffectFrameYuv(filter, src, w, h, frames, frameIndex, tag, fmt) {
+  const inp = path.join(TMP, `eff-in-${tag}.raw`);
+  const out = path.join(TMP, `eff-out-${tag}.raw`);
+  const chunks = [];
+  for (let i = 0; i < frames; i++) chunks.push(src);
+  writeFileEpermRetry(inp, Buffer.concat(chunks));
+  runFfmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${w}x${h}`, "-r", String(FPS), "-i", inp,
+    "-vf", `scale=out_color_matrix=bt709,format=${fmt},${filter},scale=in_color_matrix=bt709:out_color_matrix=bt709,format=rgb24`, "-f", "rawvideo", "-pix_fmt", "rgb24", out], `effect ${tag}`);
   const all = fs.readFileSync(out);
   const sz = w * h * 3;
   return Buffer.from(all.subarray(frameIndex * sz, (frameIndex + 1) * sz));
@@ -272,7 +298,7 @@ function renderTransitionFrame(type) {
     const p = path.join(TMP, name);
     const chunks = [];
     for (let i = 0; i < count; i++) chunks.push(frame);
-    fs.writeFileSync(p, Buffer.concat(chunks));
+    writeFileEpermRetry(p, Buffer.concat(chunks));
     return p;
   };
   const a = writeRaw("trA.raw", solidFrame(255, 0, 0, W, H), 60);
@@ -392,7 +418,11 @@ function main() {
           run(`sharpen t=${t}`, () => {
             const src = patternFrame(W, H);
             const filter = buildEffectFilter({ type: "sharpen", intensity: t });
-            const ff = renderEffectFrame(filter, src, W, H, 1, 0, `sharp${t}`);
+            // Đợt 77 E9: render qua yuv444p+bt709 như parity test (S7) —
+            // renderEffectFrame (RGB24 + bt601 mặc định) làm sharpen tụt
+            // XẤP XỈ (MAD 0.618/0.753, le8 98.7%/96.8%) trong khi pipeline
+            // thật + parity test đều KHỚP.
+            const ff = renderEffectFrameYuv(filter, src, W, H, 1, 0, `sharp${t}`, "yuv444p");
             const prev = fromImg(mod.applySharpen(toImg(src, W, H), t), W, H);
             const m = compareFrames(ff, prev, W, H);
             const tier = classify(m);
@@ -413,7 +443,13 @@ function main() {
         run("noise thống kê", () => {
           const src = solidFrame(128, 128, 128, W, H);
           const filter = buildEffectFilter({ type: "noise", intensity: 0.5 });
-          const ff = renderEffectFrame(filter, src, W, H, 1, 0, "noise");
+          // Đợt 77 E9: render qua yuv420p+bt709 như production (render.js
+          // chạy noise trên yuv420p) — renderEffectFrame (RGB24) làm
+          // noise chạy trên plane RGB nên render std ~15.7 đều 3 kênh,
+          // trong khi preview addYuvNoise (YUV, đúng production) cho std
+          // [34, 20, 38] → STAT-LỆCH giả. Qua yuv420p, render cũng bị
+          // khuếch đại chroma (R/B) như preview.
+          const ff = renderEffectFrameYuv(filter, src, W, H, 1, 0, "noise", "yuv420p");
           const prev = fromImg(mod.applyNoise(toImg(src, W, H), 0.5, 42), W, H);
           const sR = channelStd(ff, W, H, 128);
           const sP = channelStd(prev, W, H, 128);

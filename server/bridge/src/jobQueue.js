@@ -32,6 +32,9 @@
 
 const crypto = require("crypto");
 const fs = require("fs");
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (port CJS của
+// apps/web/scripts/eperm-retry.mjs; xem server/eperm-retry.cjs).
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { verifyOutput } = require("./outputQA"); // R1-043: QA output sau render
@@ -90,7 +93,7 @@ function saveJobState(job) {
   try {
     fs.mkdirSync(job.dir, { recursive: true });
     const tmp = path.join(job.dir, `.job.json.tmp-${process.pid}`);
-    fs.writeFileSync(tmp, JSON.stringify(serializeJobState(job)));
+    writeFileEpermRetry(tmp, JSON.stringify(serializeJobState(job)), { label: "bridge-job.json" });
     fs.renameSync(tmp, path.join(job.dir, "job.json"));
   } catch (e) {
     console.error(`[bridge] không ghi được job.json cho job ${job.id}:`, e.message);

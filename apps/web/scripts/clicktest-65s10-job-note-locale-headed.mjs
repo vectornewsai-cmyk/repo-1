@@ -46,6 +46,7 @@
  */
 import { spawn, execSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -163,7 +164,7 @@ class CDP {
   }
   async shot(name) {
     const r = await this.send("Page.captureScreenshot", { format: "png" });
-    fs.writeFileSync(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
+    writeFileEpermRetry(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
     return name;
   }
 }
@@ -386,7 +387,7 @@ async function main() {
     fs.rmSync(BRIDGE_WORK_DIR, { recursive: true, force: true });
     fs.mkdirSync(BRIDGE_WORK_DIR, { recursive: true });
     fs.mkdirSync(VITE_CFG_DIR, { recursive: true });
-    fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, bridge :${BRIDGE_PORT}, DISPLAY=${DISPLAY}, TMPDIR=${TMPDIR}`);
 
     // ---- Bridge lần 1 ------------------------------------------------------
@@ -606,7 +607,7 @@ async function main() {
   } finally {
     killAll();
     await sleep(500);
-    fs.writeFileSync(path.join(SCRATCH, "s10-results.json"), JSON.stringify({ results, logLines }, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "s10-results.json"), JSON.stringify({ results, logLines }, null, 2));
     const nPass = results.filter((r) => r.ok).length;
     log(`KẾT QUẢ: ${nPass}/${results.length} pass`);
     for (const r of results) log(`${r.ok ? "PASS" : "FAIL"} ${r.name} — ${r.detail}`);

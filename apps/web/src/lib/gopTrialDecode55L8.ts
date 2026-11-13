@@ -65,8 +65,38 @@ export interface TrialDecodeConfig {
  * - "unsupported-config" = decoder không hỗ trợ codec/profile của file
  *   (vd High 4:4:4 trên máy không có decoder đó) — KHÔNG phải lỗi file,
  *   caller fail-open (cho qua) thay vì chặn oan.
+ * - { failed: true, reason } = decoder báo lỗi THẬT KÈM lý do chẩn đoán
+ *   (đợt 78 F8 — chỉ worker probe tạo ra dạng này hôm nay, xem
+ *   `GopTrialDecodeProbeFailure`): `runTrialDecode` giữ nguyên lý do
+ *   (không qua dict i18n — giống "decode-ok" / "probe-error", là chuỗi
+ *   log tiếng Anh, không phải UI) để T3 fallback với đúng lý do đó.
  */
-export type GopTrialDecodeProbeOutcome = boolean | "unsupported-config";
+export type GopTrialDecodeProbeOutcome = boolean | "unsupported-config" | GopTrialDecodeProbeFailure;
+
+/**
+ * Đợt 78 F8 — probe failure có kèm lý do chẩn đoán (đóng nợ đợt 77 §4.8).
+ *
+ * VẤN ĐỀ CŨ: protocol worker chỉ mang boolean (`TrialDecodeWorkerResponse`
+ * `{ type: "result", outcome }`) nên lý do quét zero-run trong worker bị
+ * mất — về tới T3 thành `decode-failed` chung chung (đúng hành vi
+ * full-file, sai chẩn đoán). Dạng này là kênh mang lý do đó từ worker
+ * probe qua `runTrialDecode` tới T3 mà KHÔNG đổi chữ ký probe:
+ * probe cũ vẫn trả boolean / "unsupported-config" như trước (tương thích
+ * ngược — xem test F8: worker cũ không gửi `reason` thì vẫn ra
+ * `decode-failed` như cũ).
+ *
+ * QUY ƯỚC: `reason` là chuỗi chẩn đoán tiếng Anh, ngắn (worker cắt 200
+ * ký tự), dạng `<kind>: <detail>` — hôm nay chỉ có `zero-run: ...`
+ * (đúng định dạng T3 tự tổng hợp ở đường main-thread,
+ * `zero-run: ${scan.reason}` — fallback message giống hệt nhau ở cả 2
+ * đường). `runTrialDecode` dùng nguyên văn, không qua dict i18n.
+ */
+export interface GopTrialDecodeProbeFailure {
+  /** Luôn true — phân biệt với boolean false (lỗi không rõ lý do). */
+  failed: true;
+  /** Lý do chẩn đoán, vd "zero-run: zero-run 1048576 bytes at offset ...". */
+  reason: string;
+}
 
 /**
  * Probe trial-decode (inject được): decode thử 1 sample keyframe, trả
@@ -231,6 +261,217 @@ export function isUnsupportedDecoderMessage(message: string): boolean {
 }
 
 /**
+ * Đợt 77 E7 — quét "zero-run" trong sample AVCC (H.264) trước trial-decode.
+ *
+ * LỖ HỔNG (gap analysis O6 §6.6, đo thật đợt này — xem LIMITS E7 §2):
+ * keyframe thật bị zero 1 MiB ở giữa vẫn decode OK qua VideoDecoder
+ * (error concealment của decoder: FFmpeg cũng chỉ báo lỗi MB rồi vẫn
+ * trả frame, exit 0) nên trial-decode không bắt được. Quét này bắt
+ * đúng lớp đó mà không cần decode.
+ *
+ * CƠ SỞ (chắc chắn, không phải heuristic): trong RBSP của H.264, quy
+ * tắc emulation prevention cấm dãy 3 byte 0x00 liên tiếp ở bất kỳ vị
+ * trí byte-aligned nào trong payload NAL (sau `00 00` mà byte tiếp
+ * theo ≤ 0x03 thì encoder phải chèn 0x03). Vì vậy một chạy 0 dài ≥ 3
+ * byte NẰM TRONG payload một NAL là bitstream hỏng chắc chắn — không
+ * thể là dữ liệu hợp lệ. Đo thật trên 11 sample 0 thật (29 KiB …
+ * 64 MiB): maxInterior luôn đúng 2 (đúng biên lý thuyết), 0 false
+ * positive; mẫu zero 1 MiB giữa/25%/cuối đều bị bắt đúng offset.
+ *
+ * NGOẠI LỆ (để không chặn oan):
+ *   - Chạy 0 ở CUỐI payload được miễn theo luật ≥ 3 (có thể là
+ *     cabac_zero_byte hợp lệ) — chỉ vi phạm khi dài ≥ 64 byte
+ *     (`AVCC_ZERO_RUN_TRAILING_THRESHOLD`, heuristic có biên: file
+ *     thật đo được maxTrailing = 0; zero 1 MiB cuối file vẫn bị bắt).
+ *   - Chỉ quét 4 byte length-prefix theo đúng giả định AVCC 4-byte
+ *     của toàn bộ đường demux/decode (xem `validateAvccSample`):
+ *     length-prefix của NAL nhỏ chứa `00 00 00 xx` hợp lệ nên KHÔNG
+ *     bao giờ quét thô toàn sample.
+ *   - Walk gãy (length 0 / vượt sample / thừa byte cuối): chỉ kết
+ *     luận vi phạm khi đúng vị trí gãy bắt đầu một chạy 0 dài ≥ 64
+ *     byte (vùng zero đã nuốt mất length-prefix); còn không thì
+ *     `inconclusive` — để trial-decode quyết (fail-open).
+ *   - Chỉ áp cho codec `avc1*` (H.264 — toàn bộ đường trial-decode
+ *     hiện chỉ xử lý track avc1); codec khác → inconclusive.
+ *
+ * CHI PHÍ (đo thật, LIMITS E7 §2.3): một lần duyệt O(n) bằng
+ * `indexOf(0)` nhảy native; Node: 4,1 MiB ~11 ms, 9,7 MiB ~28 ms,
+ * 30,7 MiB ~180 ms, 64 MiB ~279 ms, 50 MiB lossless (7,5% byte 0)
+ * ~1,0 s. So với decode cùng cỡ (1,2 s / 1,9 s / 5 s / 40 s) là
+ * ~1–3%. Vì vậy quét chạy ở main thread CHỈ cho sample đi đường
+ * main-thread (≤ ~7,7 MiB, ≤ ~25 ms); sample lớn đi worker thì quét
+ * TRONG worker (xem `gopTrialDecodeWorker62R4.worker.ts`) để không
+ * kẹt UI — T3 chỉ gọi hàm này khi `!trialPlan.viaWorker`.
+ */
+export const AVCC_ZERO_RUN_MAX_LEGAL = 2;
+/** Chạy 0 ở cuối payload dài tới đây mới tính vi phạm (heuristic, xem trên). */
+export const AVCC_ZERO_RUN_TRAILING_THRESHOLD = 64;
+/** Chạy 0 tại vị trí walk gãy dài tới đây mới tính vi phạm (xem trên). */
+export const AVCC_ZERO_RUN_BREAK_CORROBORATION = 64;
+
+export interface AvccZeroRunScanResult {
+  /** true = phát hiện chạy 0 bất hợp lệ (bitstream hỏng chắc chắn). */
+  violation: boolean;
+  /** true = không kết luận được (không phải avc1 / walk gãy không có bằng chứng 0 / mẫu rỗng) — caller fail-open. */
+  inconclusive: boolean;
+  /** Short reason for log/fallback (e.g. "zero-run 1048576 bytes at offset 4317235 (NAL 1)"). */
+  reason: string;
+  /** Số NAL đã đi qua trước khi kết luận (0 khi chưa đi được NAL nào). */
+  nals: number;
+  /** Chạy 0 dài nhất trong payload (không tính cuối payload). */
+  maxInteriorRun: number;
+  /** Offset bắt đầu của chạy trong payload dài nhất đó (-1 khi không có). */
+  maxInteriorRunAt: number;
+  /** Chạy 0 dài nhất ở cuối payload. */
+  maxTrailingRun: number;
+  /** Offset bắt đầu của chạy cuối payload dài nhất đó (-1 khi không có). */
+  maxTrailingRunAt: number;
+}
+
+export function scanAvccZeroRun(
+  sample: Uint8Array,
+  codec?: string,
+): AvccZeroRunScanResult {
+  const none = (
+    reason: string,
+    extra: Partial<AvccZeroRunScanResult> = {},
+  ): AvccZeroRunScanResult => ({
+    violation: false,
+    inconclusive: true,
+    reason,
+    nals: 0,
+    maxInteriorRun: 0,
+    maxInteriorRunAt: -1,
+    maxTrailingRun: 0,
+    maxTrailingRunAt: -1,
+    ...extra,
+  });
+  if (codec !== undefined && !codec.startsWith("avc1")) {
+    return none(`not-avc1 (codec ${codec}) — zero-run scan skipped`);
+  }
+  if (sample.length < 5) {
+    return none(`sample too short (${sample.length} bytes) — zero-run scan skipped`);
+  }
+  let off = 0;
+  let nals = 0;
+  let maxInteriorRun = 0;
+  let maxInteriorRunAt = -1;
+  let maxTrailingRun = 0;
+  let maxTrailingRunAt = -1;
+  while (off + 4 <= sample.length) {
+    const len =
+      sample[off] * 0x1000000 +
+      sample[off + 1] * 0x10000 +
+      sample[off + 2] * 0x100 +
+      sample[off + 3];
+    if (!(len > 0) || len > sample.length - off - 4) {
+      // Walk gãy: chỉ kết luận khi đúng vị trí gãy bắt đầu một chạy 0
+      // dài (vùng zero đã nuốt length-prefix) — còn không thì fail-open.
+      let zeroRun = 0;
+      while (
+        zeroRun < AVCC_ZERO_RUN_BREAK_CORROBORATION &&
+        off + zeroRun < sample.length &&
+        sample[off + zeroRun] === 0
+      ) {
+        zeroRun++;
+      }
+      if (zeroRun >= AVCC_ZERO_RUN_BREAK_CORROBORATION) {
+        return {
+          violation: true,
+          inconclusive: false,
+          reason: `broken NAL walk at offset ${off} (len ${len}, NAL ${nals}) + zero-run >= ${AVCC_ZERO_RUN_BREAK_CORROBORATION} bytes at break`,
+          nals,
+          maxInteriorRun,
+          maxInteriorRunAt,
+          maxTrailingRun,
+          maxTrailingRunAt,
+        };
+      }
+      return none(`broken NAL walk at offset ${off} (len ${len}, NAL ${nals}) — inconclusive`, {
+        nals,
+        maxInteriorRun,
+        maxInteriorRunAt,
+        maxTrailingRun,
+        maxTrailingRunAt,
+      });
+    }
+    const pStart = off + 4;
+    const pEnd = off + 4 + len;
+    // Payload < 4 byte không thể chứa chạy 0 dài ≥ 3 (byte đầu là NAL
+    // header, luôn khác 0 ở NAL hợp lệ) nên bỏ qua — đỡ tốn indexOf
+    // cho mẫu có hàng triệu NAL tí hon (chỉ gặp ở fixture tổng hợp).
+    if (len >= 4) {
+      let i = pStart;
+      while (i < pEnd) {
+        const z = sample.indexOf(0, i);
+        if (z === -1 || z >= pEnd) break;
+        let j = z + 1;
+        while (j < pEnd && sample[j] === 0) j++;
+        const run = j - z;
+        if (j >= pEnd) {
+          if (run > maxTrailingRun) {
+            maxTrailingRun = run;
+            maxTrailingRunAt = z;
+          }
+        } else if (run > maxInteriorRun) {
+          maxInteriorRun = run;
+          maxInteriorRunAt = z;
+        }
+        i = j;
+      }
+    }
+    off = pEnd;
+    nals++;
+  }
+  if (off < sample.length) {
+    return none(`${sample.length - off} trailing bytes, not enough for 1 NAL (off ${off}) — inconclusive`, {
+      nals,
+      maxInteriorRun,
+      maxInteriorRunAt,
+      maxTrailingRun,
+      maxTrailingRunAt,
+    });
+  }
+  if (nals === 0) {
+    return none("no NAL read — inconclusive");
+  }
+  if (maxInteriorRun > AVCC_ZERO_RUN_MAX_LEGAL) {
+    return {
+      violation: true,
+      inconclusive: false,
+      reason: `zero-run ${maxInteriorRun} bytes at offset ${maxInteriorRunAt} in NAL payload (emulation-prevention violation)`,
+      nals,
+      maxInteriorRun,
+      maxInteriorRunAt,
+      maxTrailingRun,
+      maxTrailingRunAt,
+    };
+  }
+  if (maxTrailingRun >= AVCC_ZERO_RUN_TRAILING_THRESHOLD) {
+    return {
+      violation: true,
+      inconclusive: false,
+      reason: `zero-run ${maxTrailingRun} bytes at end of NAL payload (offset ${maxTrailingRunAt}) — abnormally long, not cabac_zero_byte`,
+      nals,
+      maxInteriorRun,
+      maxInteriorRunAt,
+      maxTrailingRun,
+      maxTrailingRunAt,
+    };
+  }
+  return {
+    violation: false,
+    inconclusive: false,
+    reason: `no illegal zero-run (${nals} NALs, maxInterior ${maxInteriorRun}, maxTrailing ${maxTrailingRun})`,
+    nals,
+    maxInteriorRun,
+    maxInteriorRunAt,
+    maxTrailingRun,
+    maxTrailingRunAt,
+  };
+}
+
+/**
  * Probe production: VideoDecoder thật của trình duyệt.
  *
  * Trả null khi `typeof VideoDecoder === "undefined"` (Node, Safari cũ
@@ -352,6 +593,10 @@ export function createBrowserTrialDecodeProbe(): GopTrialDecodeProbe | null {
  *   - probe null/undefined → `{passed:true, skipped:true, reason:"no-decoder"}`.
  *   - probe trả true → `{passed:true, skipped:false, reason:"decode-ok"}`.
  *   - probe trả false → `{passed:false, skipped:false, reason:"decode-failed"}`.
+ *   - probe trả `{ failed: true, reason }` (đợt 78 F8 — worker probe báo
+ *     lỗi KÈM lý do, vd zero-run) → `{passed:false, skipped:false,
+ *     reason}` — lý do giữ nguyên văn (cắt 200 ký tự), không qua dict
+ *     i18n; lý do rỗng thì về `decode-failed` như probe-false thường.
  *   - probe trả "unsupported-config" → `{passed:true, skipped:true,
  *     reason:"unsupported-config: ..."}` (fail-open — decoder không hỗ
  *     trợ codec/profile, không phải lỗi file; đợt 56 M10).
@@ -439,6 +684,25 @@ export async function runTrialDecode(
           {},
           "unsupported-config: decoder không hỗ trợ codec/profile này — cho qua (fail-open)",
         ),
+      };
+    }
+    if (typeof outcome.value === "object" && outcome.value !== null && outcome.value.failed === true) {
+      // Đợt 78 F8 — structured failure: worker probe báo lỗi kèm lý do
+      // chẩn đoán (hôm nay chỉ zero-run). Giữ nguyên văn để T3 fallback
+      // với đúng lý do đó; lý do rỗng/vắng → về decode-failed như cũ.
+      const detail = outcome.value.reason.slice(0, 200);
+      return {
+        passed: false,
+        skipped: false,
+        reason:
+          detail.length > 0
+            ? detail
+            : trKey(
+                lookup,
+                "gop.trial.decodeFailed",
+                {},
+                "decode-failed: VideoDecoder không decode được sample 0",
+              ),
       };
     }
     if (outcome.value === false) {

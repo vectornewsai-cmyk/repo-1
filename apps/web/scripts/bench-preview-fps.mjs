@@ -22,6 +22,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -356,7 +357,7 @@ async function main() {
       }
       if (!autoRaw) throw new Error("--dump-autosave: localStorage chưa có autosave sau khi editor sẵn sàng + chờ 15s.");
       fs.mkdirSync(path.dirname(path.resolve(DUMP_AUTOSAVE)), { recursive: true });
-      fs.writeFileSync(path.resolve(DUMP_AUTOSAVE), autoRaw + "\n");
+      writeFileEpermRetry(path.resolve(DUMP_AUTOSAVE), autoRaw + "\n");
       console.log(`[bench] autosave đã dump: ${DUMP_AUTOSAVE}`);
     }
     result.projectCheck = await cdp.evaluate(`(() => { const nameEl = document.querySelector('.project-name'); return { projectName: nameEl ? nameEl.value : null, clips: document.querySelectorAll('.tl-clip, .tl-adj-clip').length }; })()`);
@@ -407,7 +408,7 @@ async function main() {
       cdp.close();
       const frozenInvalid = finishFrozenDist(result);
       fs.mkdirSync(path.dirname(OUT), { recursive: true });
-      fs.writeFileSync(OUT, JSON.stringify(result, null, 2) + "\n");
+      writeFileEpermRetry(OUT, JSON.stringify(result, null, 2) + "\n");
       console.log(`[bench] hang-probe ok=${probeOk} wall=${probeWallMs}ms newSnapshots=${newFiles.length} -> ${OUT}`);
       if (frozenInvalid) console.log(`[bench] FROZEN INVALID: ${result.frozenDist.problems.join("; ")} — exit 3`);
       process.exitCode = probeOk ? (frozenInvalid ? 3 : 0) : 1;
@@ -535,7 +536,7 @@ async function main() {
     const frozenInvalid = finishFrozenDist(result);
     if (frozenInvalid) console.log(`[bench] FROZEN INVALID: ${result.frozenDist.problems.join("; ")} — fps bị loại, exit 3`);
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
-    fs.writeFileSync(OUT, JSON.stringify(result, null, 2) + "\n");
+    writeFileEpermRetry(OUT, JSON.stringify(result, null, 2) + "\n");
     console.log(`[bench] frames=${result.frames} fpsAvg=${result.fpsAvg} fpsMin1s=${result.fpsMin1s} fpsMax1s=${result.fpsMax1s} drops>50ms=${result.dropsOver50ms} maxInterval=${result.maxIntervalMs}ms frameTime p5/p50/p95=${result.frameTimeMs.p5}/${result.frameTimeMs.p50}/${result.frameTimeMs.p95}ms cpuChrome avg/max=${result.cpuChromePct ? `${result.cpuChromePct.avg}/${result.cpuChromePct.max}%` : "n/a"} loadAvg ${result.loadAvg1Before}->${result.loadAvg1After} canvas=${result.diagAfter?.canvas ? `${result.diagAfter.canvas.w}x${result.diagAfter.canvas.h}` : "?"} wrap=${result.diagAfter?.wrapCss ? `${result.diagAfter.wrapCss.w}x${result.diagAfter.wrapCss.h}` : "?"} dpr=${result.diagAfter?.dpr ?? "?"}`);
     console.log(`[bench] overlay FPS button: ${overlayBtn ? "có" : "KHÔNG thấy"}; playing=${result.playing}; time ${result.timeDisplay.before} -> ${result.timeDisplay.after}`);
     console.log(`[bench] kết quả ghi ra ${OUT}`);
@@ -547,7 +548,7 @@ async function main() {
     const frozenInvalidOnError = finishFrozenDist(result);
     if (frozenInvalidOnError) console.log(`[bench] FROZEN INVALID: ${result.frozenDist.problems.join("; ")} — exit 3`);
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
-    fs.writeFileSync(OUT, JSON.stringify(result, null, 2) + "\n");
+    writeFileEpermRetry(OUT, JSON.stringify(result, null, 2) + "\n");
     console.error(`[bench] LỖI: ${result.error}`);
     process.exitCode = frozenInvalidOnError ? 3 : 1;
   } finally {

@@ -75,6 +75,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import { captureCdpHangSnapshot } from "./cdp-snapshot.mjs";
@@ -637,7 +638,7 @@ async function main() {
       doc.bundle = result.bundle;
       doc.runs = doc.runs.filter((r) => r.run !== result.run);
       doc.runs.push(result);
-      fs.writeFileSync(OUT_PATH, JSON.stringify(doc, null, 1) + "\n");
+      writeFileEpermRetry(OUT_PATH, JSON.stringify(doc, null, 1) + "\n");
       log(`đã ghi run ${result.run} vào ${OUT_PATH} (tổng ${doc.runs.length} run)`);
     } catch (e) {
       log(`CẢNH BÁO: không ghi được ${OUT_PATH}: ${e.message} (kết quả vẫn có ở stdout)`);

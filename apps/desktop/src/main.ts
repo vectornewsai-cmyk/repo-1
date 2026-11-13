@@ -18,6 +18,9 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import * as fs from "node:fs";
 import { createRequire } from "node:module";
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (port JS của
+// apps/web/scripts/eperm-retry.mjs; xem services/epermRetry.js).
+import { writeFileEpermRetry } from "./services/epermRetry.js";
 import * as path from "node:path";
 import { wireDesktopUx, type DesktopUx } from "./desktop-ux";
 import {
@@ -279,10 +282,15 @@ interface SmokeResult {
 async function runSmokeCheck(win: BrowserWindow): Promise<void> {
   const shotPath =
     process.env.VCUT_DESKTOP_SMOKE_SHOT ?? "/tmp/vcut-desktop-smoke.png";
+  // ROUND83-K7 — guard 30s → 60s: đường probe xấu nhất (chờ nội dung
+  // 15s + chờ bridgeUrl 5s + chờ manager 10s + fetch/chụp) đã chạm ~30s;
+  // trên máy tải cao / sau relaunch (bridge start chậm do deep probe AI
+  // tranh CPU) guard nổ trước khi kết quả thật in ra — J8 §5.1 đợt 82,
+  // tái hiện ở orphan run2. 60s vẫn fail-fast nếu UI thật sự treo.
   const hardTimeout = setTimeout(() => {
     log("VCUT_SMOKE_RESULT " + JSON.stringify({ error: "timeout", ok: false } satisfies SmokeResult));
     app.quit();
-  }, 30000);
+  }, 60000);
   // Chụp màn hình dưới Xvfb/software GL có thể lỗi Viz (UnknownVizError)
   // dù DOM đã render — tách riêng để lỗi chụp không che kết quả probe.
   let probeError: string | undefined;
@@ -362,7 +370,7 @@ async function runSmokeCheck(win: BrowserWindow): Promise<void> {
     }
     try {
       const image = await win.webContents.capturePage();
-      fs.writeFileSync(shotPath, image.toPNG());
+      writeFileEpermRetry(shotPath, image.toPNG(), { label: "desktop-smoke-screenshot" });
     } catch (err) {
       screenshotError = err instanceof Error ? err.message : String(err);
     }

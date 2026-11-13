@@ -52,6 +52,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("path");
 const crypto = require("crypto");
 const { spawnSync } = require("child_process");
@@ -100,7 +101,7 @@ const specWith = (tracks, W, H, fps) => ({
 });
 function render(spec, name, extraArgs) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const outPath = path.join(work, `${name}.mp4`);
   const t0 = Date.now();
   const r = spawnSync("node", [path.join(RENDER, "src", "render.js"), "--spec", specPath,
@@ -302,7 +303,7 @@ else:
     raise SystemExit(f"mode không biết: {mode}")
 `;
 const motionPy = path.join(work, "motion_metric.py");
-fs.writeFileSync(motionPy, MOTION_PY);
+writeFileEpermRetry(motionPy, MOTION_PY);
 function measure(framesDir) {
   const r = spawnSync(CV2_PY, [motionPy, "measure", framesDir], { encoding: "utf8" });
   if (r.status !== 0) throw new Error(`motion_metric.py measure lỗi: status=${r.status} out=${r.stdout} err2=${r.stderr}`);
@@ -375,7 +376,7 @@ else:
     raise SystemExit(f"mode không biết: {mode}")
 `;
 const trfPy = path.join(work, "trf_analyze.py");
-fs.writeFileSync(trfPy, TRF_PY);
+writeFileEpermRetry(trfPy, TRF_PY);
 function trfScan(trfPath) {
   const r = spawnSync(CV2_PY, [trfPy, "scan", trfPath], { encoding: "utf8" });
   if (r.status !== 0) throw new Error(`trf_analyze scan lỗi: ${r.stdout} ${r.stderr}`);

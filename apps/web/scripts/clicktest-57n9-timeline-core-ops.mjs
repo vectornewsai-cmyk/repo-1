@@ -18,6 +18,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -26,7 +27,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../../..");
 const WEB_DIR = path.join(ROOT, "apps", "web");
 const SCRATCH = process.env.N9_SCRATCH || path.join(os.homedir(), "workspace", "goals", "capcut-clone-video-editor", "hidden_files", "round57-n9", "headed");
-const CHROME = path.join(os.homedir(), ".cache/ms-playwright", "chromium-1248", "chrome-linux64", "chrome");
+const CHROME = path.join(os.homedir(), ".cache/ms-playwright", "chromium-1254", "chrome-linux64", "chrome");
 const VITE_BIN = [path.join(ROOT, "node_modules", ".bin", "vite"), path.join(WEB_DIR, "node_modules", ".bin", "vite")].find((c) => fs.existsSync(c));
 
 const logLines = [];
@@ -118,7 +119,7 @@ class CDP {
   }
   async shot(name) {
     const r = await this.send("Page.captureScreenshot", { format: "png" });
-    fs.writeFileSync(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
+    writeFileEpermRetry(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
     return name;
   }
 }
@@ -620,7 +621,7 @@ async function main() {
     else fail("H9 0 lỗi trang", errs.slice(0, 5).join(" || "));
 
     const nPass = results.filter((r) => r.ok).length;
-    fs.writeFileSync(path.join(SCRATCH, "n9-headed-report.json"), JSON.stringify({ cases: results, pass: nPass, total: results.length }, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "n9-headed-report.json"), JSON.stringify({ cases: results, pass: nPass, total: results.length }, null, 2));
     log(`KẾT QUẢ HEADED N9: ${nPass}/${results.length} pass`);
     process.exitCode = nPass === results.length ? 0 : 1;
   } catch (e) {

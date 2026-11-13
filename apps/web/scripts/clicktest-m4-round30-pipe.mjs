@@ -50,6 +50,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -604,7 +605,7 @@ async function main() {
       run: "v30-m4-clicktest", at: new Date().toISOString(), exitCode,
       dist: snapInfo, results, log: logLines,
     };
-    try { fs.writeFileSync(path.join(SCRATCH, OUT_FILE), JSON.stringify(out, null, 2)); log(`ghi kết quả: ${path.join(SCRATCH, OUT_FILE)}`); } catch {}
+    try { writeFileEpermRetry(path.join(SCRATCH, OUT_FILE), JSON.stringify(out, null, 2)); log(`ghi kết quả: ${path.join(SCRATCH, OUT_FILE)}`); } catch {}
   }
   return exitCode;
 }

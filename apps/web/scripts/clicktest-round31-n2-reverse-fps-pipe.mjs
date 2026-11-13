@@ -50,6 +50,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -556,7 +557,7 @@ async function main() {
     checks: { reversePlaybackCorrect: reverseOk, holdFiredInApp: holdOk, noBlackInReverse: blackRev === 0 },
     verdict: reverseOk && holdOk ? "PASS" : "PARTIAL",
   };
-  fs.writeFileSync(path.join(SCRATCH, "forward-hold.json"), JSON.stringify(result, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "forward-hold.json"), JSON.stringify(result, null, 2));
   log(`KẾT QUẢ: reverseOk=${reverseOk} holdOk=${holdOk} (holdDelta=${revHoldDelta}, drawDelta=${revDrawDelta}, blackRev=${blackRev})`);
   log(`N2: fps ngược=${revFps !== null ? revFps.toFixed(2) : null} (draw ${revDrawDelta} / wall ${revWallSec !== null ? revWallSec.toFixed(2) : null}s); tốc độ xuôi nội suy=${fwdInterpRate !== null ? fwdInterpRate.toFixed(3) : null}; load ${loadAtStart} → ${loadAtEnd}`);
   log(`time ngược: ${revTimes[0]} -> ${revTimes[revTimes.length - 1]}; graySeconds: ${JSON.stringify(revSeconds)}`);

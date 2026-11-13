@@ -59,6 +59,7 @@
 
 const crypto = require("crypto");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("path");
 const { spawnSync, execFileSync } = require("child_process");
 
@@ -106,7 +107,7 @@ const specWith = (tracks, W, H, fps) => ({
 });
 function render(spec, name, extraArgs) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const outPath = path.join(work, `${name}.mp4`);
   const t0 = Date.now();
   const r = spawnSync("node", [path.join(RENDER, "src", "render.js"), "--spec", specPath,
@@ -219,7 +220,7 @@ const BALANCED = { stabilize: { smoothing: 10 }, denoise: { strength: 0.5 } };
 const specBalanced = specWith([{ id: "v0", kind: "video",
   clips: [vclip("c0", "shakynoisy720.mp4", 5, { enhance: BALANCED })] }], 1280, 720);
 const drySpecPath = path.join(work, "dryrun.json");
-fs.writeFileSync(drySpecPath, JSON.stringify(specBalanced));
+writeFileEpermRetry(drySpecPath, JSON.stringify(specBalanced));
 let mainArgs;
 {
   const t0 = Date.now();
@@ -255,7 +256,7 @@ const r = probeGpuEncoder("ffmpeg");
 console.log(JSON.stringify({ secs: (Date.now() - t0) / 1000, tried: r.tried, encoder: r.encoder }));
 `;
 const gpuProbeJs = path.join(work, "gpu-probe.js");
-fs.writeFileSync(gpuProbeJs, GPU_PROBE_JS);
+writeFileEpermRetry(gpuProbeJs, GPU_PROBE_JS);
 const micro = {};
 function microProbe(key, label, fn, parse) {
   const vals = [];
@@ -464,7 +465,7 @@ for lab, rdir in jobs:
     print("PAN_GHOST " + json.dumps(out))
 `;
 const ghostPanPy = path.join(work, "ghost_pan.py");
-fs.writeFileSync(ghostPanPy, GHOST_PAN_PY);
+writeFileEpermRetry(ghostPanPy, GHOST_PAN_PY);
 function ghostPanOf(renderJobs) {
   const args = [ghostPanPy, photoPath, path.join(work, "frames-pan-clean")];
   for (const [lab, dir] of renderJobs) args.push(`${lab}=${dir}`);

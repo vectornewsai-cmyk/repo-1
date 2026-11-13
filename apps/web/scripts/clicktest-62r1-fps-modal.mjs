@@ -44,6 +44,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -135,7 +136,7 @@ class CDP {
   }
   async shot(name) {
     const r = await this.send("Page.captureScreenshot", { format: "png" });
-    fs.writeFileSync(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
+    writeFileEpermRetry(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
     return name;
   }
 }
@@ -376,7 +377,7 @@ async function main() {
     fs.mkdirSync(TMPDIR, { recursive: true });
     fs.rmSync(PROFILE, { recursive: true, force: true });
     fs.mkdirSync(VITE_CFG_DIR, { recursive: true });
-    fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, TMPDIR=${TMPDIR}`);
 
     const viteLogFd = fs.openSync(path.join(SCRATCH, "r1-vite.log"), "w");
@@ -429,7 +430,7 @@ async function main() {
     await setViewport(cdp, 390, 844, true);
     {
       const m = await cdp.evalJs(FPS_FN("Bắt đầu tạo phụ đề"));
-      fs.writeFileSync(path.join(SCRATCH, "r1-measure-f0-baseline-390.json"), JSON.stringify(m, null, 2));
+      writeFileEpermRetry(path.join(SCRATCH, "r1-measure-f0-baseline-390.json"), JSON.stringify(m, null, 2));
       await drainErrors(cdp);
       const hitPill = m.hitAtPillCenter;
       const pillClickable = hitPill && !hitPill.inDialog && (hitPill.text || "").includes("FPS");
@@ -446,7 +447,7 @@ async function main() {
     await openModal(cdp, "Phụ đề", "Tạo phụ đề tự động");
     {
       const m = await cdp.evalJs(FPS_FN("Bắt đầu tạo phụ đề"));
-      fs.writeFileSync(path.join(SCRATCH, "r1-measure-f1-config-390-vi.json"), JSON.stringify(m, null, 2));
+      writeFileEpermRetry(path.join(SCRATCH, "r1-measure-f1-config-390-vi.json"), JSON.stringify(m, null, 2));
       const v = verdictFps(m, "F1");
       if (v.ok) pass("F1 config vi @390×844: pill FPS không đè nút chính, nút bấm được", v.summary);
       else fail("F1 config vi @390×844: pill FPS không đè nút chính, nút bấm được", `${v.why} — ${v.summary}`);
@@ -461,7 +462,7 @@ async function main() {
     await openModal(cdp, "Captions", "Auto-generate captions");
     {
       const m = await cdp.evalJs(FPS_FN("Start generating captions"));
-      fs.writeFileSync(path.join(SCRATCH, "r1-measure-f2-config-390-en.json"), JSON.stringify(m, null, 2));
+      writeFileEpermRetry(path.join(SCRATCH, "r1-measure-f2-config-390-en.json"), JSON.stringify(m, null, 2));
       const v = verdictFps(m, "F2");
       if (v.ok) pass("F2 config en @390×844: pill FPS không đè nút chính, nút bấm được", v.summary);
       else fail("F2 config en @390×844: pill FPS không đè nút chính, nút bấm được", `${v.why} — ${v.summary}`);
@@ -476,7 +477,7 @@ async function main() {
     await openModal(cdp, "Phụ đề", "Tạo phụ đề tự động");
     {
       const m = await cdp.evalJs(FPS_FN("Bắt đầu tạo phụ đề"));
-      fs.writeFileSync(path.join(SCRATCH, "r1-measure-f3-config-1280-vi.json"), JSON.stringify(m, null, 2));
+      writeFileEpermRetry(path.join(SCRATCH, "r1-measure-f3-config-1280-vi.json"), JSON.stringify(m, null, 2));
       const v = verdictFps(m, "F3");
       if (v.ok) pass("F3 config vi @1280×720: pill FPS không đè nút chính, nút bấm được", v.summary);
       else fail("F3 config vi @1280×720: pill FPS không đè nút chính, nút bấm được", `${v.why} — ${v.summary}`);
@@ -502,7 +503,7 @@ async function main() {
         } else {
           await openModal(cdp, "Phụ đề", "Tạo phụ đề tự động");
           const m = await cdp.evalJs(FPS_FN("Bắt đầu tạo phụ đề"));
-          fs.writeFileSync(path.join(SCRATCH, "r1-measure-f4-panel-390-vi.json"), JSON.stringify(m, null, 2));
+          writeFileEpermRetry(path.join(SCRATCH, "r1-measure-f4-panel-390-vi.json"), JSON.stringify(m, null, 2));
           await cdp.shot("r1-panel-390-vi.png");
           const hit = m.hitAtPanelCenter;
           const panelUnder = hit && !hit.inPanel && (hit.isBackdrop || hit.inDialog);
@@ -547,7 +548,7 @@ async function main() {
         await sleep(1200);
         const after = await cdp.evalJs(STATE_FN);
         const m = await cdp.evalJs(FPS_FN("Bắt đầu tạo phụ đề"));
-        fs.writeFileSync(path.join(SCRATCH, "r1-measure-f5-click-390-vi.json"), JSON.stringify({ before, after, fps: m, clickPt }, null, 2));
+        writeFileEpermRetry(path.join(SCRATCH, "r1-measure-f5-click-390-vi.json"), JSON.stringify({ before, after, fps: m, clickPt }, null, 2));
         await cdp.shot("r1-click-390-vi.png");
         await drainErrors(cdp);
         // Trước sửa: click rơi vào pill → panel FPS mở (fpsPanelOpen=true).
@@ -569,7 +570,7 @@ async function main() {
     else fail("H9 0 lỗi trang", phaseErrors.slice(0, 5).join(" || "));
 
     const nPass = results.filter((r) => r.ok).length;
-    fs.writeFileSync(path.join(SCRATCH, "r1-headed-report.json"), JSON.stringify({ cases: results, pass: nPass, total: results.length }, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "r1-headed-report.json"), JSON.stringify({ cases: results, pass: nPass, total: results.length }, null, 2));
     log(`KẾT QUẢ HEADED R1: ${nPass}/${results.length} pass`);
     process.exitCode = nPass === results.length ? 0 : 1;
   } catch (e) {

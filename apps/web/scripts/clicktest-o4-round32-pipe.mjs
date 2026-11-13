@@ -50,6 +50,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -451,7 +452,7 @@ async function buildImportZip() {
   zip.file("media/A.mp4", mediaBytes);
   const buf = await zip.generateAsync({ type: "nodebuffer" });
   const out = path.join(SCRATCH, "o4-import.zip");
-  fs.writeFileSync(out, buf);
+  writeFileEpermRetry(out, buf);
   return out;
 }
 
@@ -493,7 +494,7 @@ async function runViCases(cdp) {
     await realClick(cdp, `[...document.querySelectorAll("button")].find((b) => b.title === "Lưu thành file (Ctrl+S)")`);
     await dismissToasts(cdp);
     const badJson = path.join(SCRATCH, "o4-corrupt.vcut.json");
-    fs.writeFileSync(badJson, "không phải json {{{");
+    writeFileEpermRetry(badJson, "không phải json {{{");
     const hit = await setFileAndWaitToast(cdp, FILE_ACCEPT, badJson, "Không mở được file:", "lỗi mở file vi");
     if (!hit.includes("File không phải JSON hợp lệ.")) throw new Error(`toast lỗi mở file vi thiếu chi tiết, nhận: ${hit}`);
     casePass("V3-open-error-toast-vi", `set file hỏng -> toast: ${hit.slice(0, 200)}`);
@@ -502,7 +503,7 @@ async function runViCases(cdp) {
   try {
     await dismissToasts(cdp);
     const badZip = path.join(SCRATCH, "o4-corrupt.vcut.zip");
-    fs.writeFileSync(badZip, "not a zip file at all");
+    writeFileEpermRetry(badZip, "not a zip file at all");
     const hit = await setFileAndWaitToast(cdp, ARCHIVE_ACCEPT, badZip, "Không nhập được bản nén:", "lỗi nhập bản nén vi");
     casePass("V4-import-error-toast-vi", `set zip hỏng -> toast: ${hit.slice(0, 200)}`);
   } catch (e) { caseFail("V4-import-error-toast-vi", e.message); }
@@ -559,7 +560,7 @@ async function runEnCases(cdp) {
   try {
     await dismissToasts(cdp);
     const badJson = path.join(SCRATCH, "o4-corrupt.vcut.json");
-    fs.writeFileSync(badJson, "không phải json {{{");
+    writeFileEpermRetry(badJson, "không phải json {{{");
     const hit = await setFileAndWaitToast(cdp, FILE_ACCEPT, badJson, "Could not open file:", "lỗi mở file en");
     // Chi tiết lỗi là dữ liệu (giữ tiếng Việt theo mẫu errorDetail) nên
     // chỉ assert tiền tố đã dịch, không assert toàn toast không dấu.
@@ -630,7 +631,7 @@ async function main() {
       run: "v32-o4-clicktest", at: new Date().toISOString(), exitCode,
       dist: snapInfo, results, log: logLines,
     };
-    try { fs.writeFileSync(path.join(SCRATCH, OUT_FILE), JSON.stringify(out, null, 2)); log(`ghi kết quả: ${path.join(SCRATCH, OUT_FILE)}`); } catch {}
+    try { writeFileEpermRetry(path.join(SCRATCH, OUT_FILE), JSON.stringify(out, null, 2)); log(`ghi kết quả: ${path.join(SCRATCH, OUT_FILE)}`); } catch {}
   }
   return exitCode;
 }

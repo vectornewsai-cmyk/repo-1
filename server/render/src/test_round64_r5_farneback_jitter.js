@@ -57,6 +57,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
@@ -107,7 +108,7 @@ const specWith = (tracks, W, H, fps) => ({
 });
 function render(spec, name, extraArgs) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const outPath = path.join(work, `${name}.mp4`);
   const t0 = Date.now();
   const r = spawnSync("node", [path.join(RENDER, "src", "render.js"), "--spec", specPath,
@@ -160,7 +161,7 @@ d = np.array(diffs)
 print(f"n={len(d)} mean={d.mean():.4f} median={np.median(d):.4f} std={d.std():.4f} min={d.min():.4f} max={d.max():.4f}")
 `;
 const jitterPy = path.join(work, "jitter.py");
-fs.writeFileSync(jitterPy, JITTER_PY);
+writeFileEpermRetry(jitterPy, JITTER_PY);
 function jitterOf(framesDir) {
   const r = spawnSync("python3", [jitterPy, framesDir], { encoding: "utf8" });
   const m = /n=(\d+) mean=([\d.]+) median=([\d.]+) std=([\d.]+) min=([\d.]+) max=([\d.]+)/.exec(r.stdout || "");
@@ -206,7 +207,7 @@ out = {
 print("PHASE " + json.dumps(out))
 `;
 const phasePy = path.join(work, "phase_corr.py");
-fs.writeFileSync(phasePy, PHASE_PY);
+writeFileEpermRetry(phasePy, PHASE_PY);
 function phaseOf(framesDir, mode) {
   const r = spawnSync(CV2_PY, [phasePy, framesDir, mode], { encoding: "utf8" });
   if (r.status !== 0) throw new Error(`phase_corr.py lỗi (${mode}): status=${r.status} err=${r.error && r.error.message} out=${r.stdout} err2=${r.stderr}`);
@@ -351,7 +352,7 @@ else:
     raise SystemExit(f"mode không biết: {mode}")
 `;
 const farnebackPy = path.join(work, "farneback.py");
-fs.writeFileSync(farnebackPy, FARNEBACK_PY);
+writeFileEpermRetry(farnebackPy, FARNEBACK_PY);
 function farneback(framesDir, mode, extraArgs) {
   const args = [farnebackPy, mode, framesDir, ...(extraArgs || [])];
   const r = spawnSync(CV2_PY, args, { encoding: "utf8" });
@@ -456,7 +457,7 @@ console.log(`   📊 V0 (median naive w15): corr ${val.V0.corrX}/${val.V0.corrY}
 // --- S2: pan texture — V0 có làm việc trên nội dung giàu texture? --------------
 console.log("\n== S2. Pan texture 24px/frame (nội dung giàu texture, shift đã biết -24,0) ==");
 const panPy = path.join(work, "pan_gen.py");
-fs.writeFileSync(panPy, PAN_PY);
+writeFileEpermRetry(panPy, PAN_PY);
 const panMp4 = path.join(work, "pan-texture.mp4");
 // pan_gen.py cần cv2 (GaussianBlur) nên chạy bằng venv python, không phải python3 hệ thống.
 run(CV2_PY, [panPy, panMp4], "tạo clip pan texture");

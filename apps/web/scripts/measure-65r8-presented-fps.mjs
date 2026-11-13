@@ -41,6 +41,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -161,7 +162,7 @@ class CDP {
   }
   async shot(name) {
     const r = await this.send("Page.captureScreenshot", { format: "png" });
-    fs.writeFileSync(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
+    writeFileEpermRetry(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
     return name;
   }
 }
@@ -417,7 +418,7 @@ async function main() {
     fs.mkdirSync(TMPDIR, { recursive: true });
     fs.rmSync(PROFILE, { recursive: true, force: true });
     fs.mkdirSync(VITE_CFG_DIR, { recursive: true });
-    fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 const require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});
@@ -650,13 +651,13 @@ export default { plugins: [react(), mediaPlugin()], server: { hmr: false } };
       cases: results, pass: nPass, total: results.length,
       slots, aggregate: agg, controlBlankTab: { ...ctrl, load: loadAvg() },
     };
-    fs.writeFileSync(path.join(SCRATCH, "presented-fps.json"), JSON.stringify(report, null, 2));
-    fs.writeFileSync(path.join(SCRATCH, "presented-fps.log"), logLines.join("\n") + "\n");
+    writeFileEpermRetry(path.join(SCRATCH, "presented-fps.json"), JSON.stringify(report, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "presented-fps.log"), logLines.join("\n") + "\n");
     log(`KẾT QUẢ HEADED R8 PRESENTED ${LONG_FILE}: ${nPass}/${results.length} pass (presentedFps không có ngưỡng — xem LIMITS)`);
     process.exitCode = nPass === results.length ? 0 : 1;
   } catch (e) {
     log(`HARNESS LỖI: ${e && e.message ? e.message : e}`);
-    try { fs.mkdirSync(SCRATCH, { recursive: true }); fs.writeFileSync(path.join(SCRATCH, "presented-fps.log"), logLines.join("\n") + "\n"); } catch {}
+    try { fs.mkdirSync(SCRATCH, { recursive: true }); writeFileEpermRetry(path.join(SCRATCH, "presented-fps.log"), logLines.join("\n") + "\n"); } catch {}
     process.exitCode = 2;
   } finally {
     killAll();
