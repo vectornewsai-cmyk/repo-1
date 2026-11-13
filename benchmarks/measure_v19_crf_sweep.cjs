@@ -46,6 +46,7 @@
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../server/eperm-retry.cjs");
 const os = require("node:os");
 const path = require("node:path");
 
@@ -160,7 +161,7 @@ function xfadePipe(type, fileA, fileB, tag) {
 function rgbToYuvFfmpeg(rgb, tag) {
   const rawIn = path.join(TMP, `${tag}-in.raw`);
   const out = path.join(TMP, `${tag}.yuv`);
-  fs.writeFileSync(rawIn, rgb);
+  writeFileEpermRetry(rawIn, rgb);
   ffmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${W}x${H}`, "-i", rawIn, "-f", "rawvideo", "-pix_fmt", "yuv420p", "-y", out]);
   fs.unlinkSync(rawIn);
   return readAndUnlink(out);

@@ -22,6 +22,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -46,7 +47,7 @@ function run(cmd, args, label, cwd) {
 }
 function render(spec, name, extraArgs) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const outPath = path.join(work, `${name}.mp4`);
   const t0 = Date.now();
   const r = spawnSync("node", ["src/render.js", "--spec", specPath, "--out", outPath,
@@ -57,7 +58,7 @@ function render(spec, name, extraArgs) {
 }
 function dryRun(spec, name, extraArgs) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const r = spawnSync("node", ["src/render.js", "--spec", specPath, "--out", path.join(work, `${name}.mp4`),
     "--media-dir", mediaDir, "--dry-run", ...(extraArgs || [])],
     { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"] });
@@ -92,7 +93,7 @@ d = np.abs(a - b)
 print(f"mean={d.mean():.3f} max={d.max()} pctGt8={(d > 8).mean() * 100:.3f}")
 `;
 const comparePy = path.join(work, "compare.py");
-fs.writeFileSync(comparePy, COMPARE_PY);
+writeFileEpermRetry(comparePy, COMPARE_PY);
 function compareFrames(pa, pb) {
   const r = spawnSync("python3", [comparePy, pa, pb], { encoding: "utf8" });
   const m = /mean=([\d.]+) max=(\d+) pctGt8=([\d.]+)/.exec(r.stdout || "");
@@ -107,7 +108,7 @@ g = np.asarray(Image.open(sys.argv[1]).convert("L"), dtype=np.float64)
 print(f"std={g.std():.3f}")
 `;
 const stdPy = path.join(work, "std.py");
-fs.writeFileSync(stdPy, STD_PY);
+writeFileEpermRetry(stdPy, STD_PY);
 function frameStd(p) {
   const r = spawnSync("python3", [stdPy, p], { encoding: "utf8" });
   const m = /std=([\d.]+)/.exec(r.stdout || "");

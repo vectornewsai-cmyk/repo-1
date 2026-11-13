@@ -30,6 +30,7 @@
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -283,7 +284,7 @@ async function main() {
       }
     }
   }
-  fs.writeFileSync(path.join(SCRATCH, "r65-compare-report.json"), JSON.stringify(report, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "r65-compare-report.json"), JSON.stringify(report, null, 2));
   console.log(`JSON kết quả: ${path.join(SCRATCH, "r65-compare-report.json")}`);
   process.exitCode = failCount ? 1 : 0;
 }

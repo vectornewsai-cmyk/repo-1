@@ -16,6 +16,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import net from "node:net";
 import os from "node:os";
@@ -216,7 +217,7 @@ async function main() {
     const agg = { fps: stats(rows.map((r) => r.fps)), mediaRate: stats(rows.map((r) => r.mediaRate)), droppedTotal: rows.reduce((a, r) => a + (r.dropped || 0), 0), presentedTotal: rows.reduce((a, r) => a + (r.presented || 0), 0) };
     log(`DECODE SPREAD ${LONG_FILE}: fps mean ${agg.fps.mean} min ${agg.fps.min} max ${agg.fps.max} std ${agg.fps.std} (n=3 vị trí); dropped tổng ${agg.droppedTotal}/${agg.presentedTotal}`);
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
-    fs.writeFileSync(OUT, JSON.stringify({ res: RES, clip: LONG_FILE, rows, aggregate: agg }, null, 2));
+    writeFileEpermRetry(OUT, JSON.stringify({ res: RES, clip: LONG_FILE, rows, aggregate: agg }, null, 2));
     log(`đã ghi ${OUT}`);
     process.exitCode = 0;
   } catch (e) {

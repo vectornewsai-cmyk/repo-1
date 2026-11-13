@@ -26,6 +26,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -201,7 +202,7 @@ check("A8 audio cắt phải 1s: duration=3 fadeOut=0",
 console.log("[B] render thật qua render.js CLI");
 function writeSpec(name, obj) {
   const p = path.join(TMP, name);
-  fs.writeFileSync(p, JSON.stringify(obj, null, 2));
+  writeFileEpermRetry(p, JSON.stringify(obj, null, 2));
   return p;
 }
 function probeDuration(file) {

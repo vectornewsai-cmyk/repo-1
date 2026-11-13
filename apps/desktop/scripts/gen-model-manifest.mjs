@@ -39,11 +39,13 @@ import {
   readSync,
   readdirSync,
   statSync,
-  writeFileSync,
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Đợt 85 M5: ghi manifest qua helper retry EPERM + verify đủ byte
+// (apps/web/scripts/eperm-retry.mjs).
+import { writeFileEpermRetry } from '../../web/scripts/eperm-retry.mjs';
 
 const desktopDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const repoRoot = resolve(desktopDir, '..', '..');
@@ -274,7 +276,7 @@ if (checkOnly) {
   }
 } else {
   mkdirSync(dirname(outPath), { recursive: true });
-  writeFileSync(outPath, JSON.stringify(manifest, null, 2) + '\n');
+  writeFileEpermRetry(outPath, JSON.stringify(manifest, null, 2) + '\n', { label: 'gen-model-manifest' });
   for (const m of manifest.models) {
     const done = m.files.filter((f) => f.sha256).length;
     console.log(

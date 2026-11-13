@@ -80,6 +80,13 @@ export interface DecodeAheadDecision {
   reasons: string[];
   /** Cảnh báo hiển thị cho user khi verdict là allowed-experiment. */
   warnings: string[];
+  /**
+   * Đợt 80 H7 — key i18n song song với `warnings` (1:1, cùng thứ tự):
+   * UI dịch qua key (reverseGate.*) thay vì hiện nguyên văn chuỗi VI.
+   * `warnings` giữ nguyên (chuỗi VI cũ) làm fallback cho decision cũ
+   * chưa có key + để test T2 khóa nội dung không vỡ.
+   */
+  warningKeys: string[];
 }
 
 /**
@@ -112,8 +119,10 @@ export function resolveDecodeAheadGate(input: DecodeAheadGateInput): DecodeAhead
   const playbackFps = input.playbackFps && input.playbackFps > 0 ? input.playbackFps : 30;
   const reasons: string[] = [];
   const warnings: string[] = [];
+  // Đợt 80 H7 — warningKeys song song 1:1 với warnings (cùng thứ tự).
+  const warningKeys: string[] = [];
   if (!input.optIn) {
-    return { verdict: "blocked", reasons: ["opt-in-off"], warnings: [] };
+    return { verdict: "blocked", reasons: ["opt-in-off"], warnings: [], warningKeys: [] };
   }
   const hwProven = isHardwareDecodeProven(input.hardwareProof);
   const easy = isEasyDecodeFootage(input.softwareMeasurement, playbackFps);
@@ -125,17 +134,20 @@ export function resolveDecodeAheadGate(input: DecodeAheadGateInput): DecodeAhead
     else reasons.push("hardware-decode-unproven");
     if (!input.softwareMeasurement) reasons.push("software-decode-not-measured");
     else reasons.push("software-decode-below-easy-threshold");
-    return { verdict: "blocked", reasons, warnings: [] };
+    return { verdict: "blocked", reasons, warnings: [], warningKeys: [] };
   }
   // Được phép — nhưng CHỈ là thử nghiệm opt-in, phải kèm cảnh báo.
   warnings.push(REVERSE_DECODE_AHEAD_EXPERIMENT_WARNING_VI);
+  warningKeys.push("reverseGate.experimentWarning");
   if (input.softwareMeasurement && input.softwareMeasurement.loadLabel === "under-load") {
     warnings.push(REVERSE_UNDER_LOAD_WARNING_VI);
+    warningKeys.push("reverseGate.underLoadWarning");
   }
   if (!hwProven) {
     warnings.push(REVERSE_NO_HARDWARE_WARNING_VI);
+    warningKeys.push("reverseGate.noHardwareWarning");
   }
-  return { verdict: "allowed-experiment", reasons, warnings };
+  return { verdict: "allowed-experiment", reasons, warnings, warningKeys };
 }
 
 /** Đầu vào cho quyết định "proxy có làm hướng chính cho chiều ngược không". */
@@ -155,27 +167,33 @@ export interface ProxyMainDirectionDecision {
   verdict: "yes" | "no";
   reasons: string[];
   warnings: string[];
+  /** Đợt 80 H7 — key i18n song song với `warnings` (xem DecodeAheadDecision). */
+  warningKeys: string[];
 }
 
 export function resolveProxyMainDirection(input: ProxyMainDirectionInput): ProxyMainDirectionDecision {
   const playbackFps = input.playbackFps && input.playbackFps > 0 ? input.playbackFps : 30;
   const reasons: string[] = [];
   const warnings: string[] = [REVERSE_PROXY_MAIN_DIRECTION_NOTE_VI];
+  // Đợt 80 H7 — key song song với warnings (decision này hiện chưa có
+  // caller production nào — xem LIMITS H7 §2.4 — nhưng key đi kèm để
+  // caller tương lai dịch đúng như resolveDecodeAheadGate).
+  const warningKeys: string[] = ["reverseGate.proxyMainNote"];
   if (input.proxyDisplayedFps === null) {
-    return { verdict: "no", reasons: ["proxy-displayed-fps-not-measured"], warnings };
+    return { verdict: "no", reasons: ["proxy-displayed-fps-not-measured"], warnings, warningKeys };
   }
   if (input.proxyDisplayedFps < playbackFps) {
-    return { verdict: "no", reasons: ["proxy-displayed-below-playback-fps"], warnings };
+    return { verdict: "no", reasons: ["proxy-displayed-below-playback-fps"], warnings, warningKeys };
   }
   if (input.originalDisplayedFps !== null && input.proxyDisplayedFps < input.originalDisplayedFps) {
-    return { verdict: "no", reasons: ["proxy-displayed-worse-than-original"], warnings };
+    return { verdict: "no", reasons: ["proxy-displayed-worse-than-original"], warnings, warningKeys };
   }
   if (input.proxyDecodeFps !== null && input.proxyDecodeFps < playbackFps) {
-    return { verdict: "no", reasons: ["proxy-decode-below-playback-fps"], warnings };
+    return { verdict: "no", reasons: ["proxy-decode-below-playback-fps"], warnings, warningKeys };
   }
   reasons.push("proxy-displayed-at-playback-fps");
   if (input.proxyDecodeFps !== null) reasons.push("proxy-decode-at-playback-fps");
-  return { verdict: "yes", reasons, warnings };
+  return { verdict: "yes", reasons, warnings, warningKeys };
 }
 
 /** Cảnh báo dùng lại cho UI (chuỗi hiển thị, không phải logic). */

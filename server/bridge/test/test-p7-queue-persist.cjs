@@ -23,6 +23,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { EventEmitter } = require("events");
@@ -46,11 +47,11 @@ function fakeProc() {
 }
 function writeJobJson(dir, state) {
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, "job.json"), JSON.stringify(state));
+  writeFileEpermRetry(path.join(dir, "job.json"), JSON.stringify(state));
 }
 function writeSpec(dir, duration) {
   fs.mkdirSync(path.join(dir, "media"), { recursive: true });
-  fs.writeFileSync(path.join(dir, "spec.json"),
+  writeFileEpermRetry(path.join(dir, "spec.json"),
     JSON.stringify({ meta: { duration }, tracks: [] }));
 }
 const JID = (c) => c.repeat(16); // id hex 16 ký tự: "a"*16, "b"*16...
@@ -99,13 +100,13 @@ console.log("== [2] recover sau restart: queued/running/done/error/legacy ==");
   writeJobJson(dr, { id: JID("2"), status: "running", progress: 0.4, totalDuration: 9,
     attempts: 1, createdAt: 2000, startedAt: 2100 });
   writeSpec(dr, 9);
-  fs.writeFileSync(path.join(dr, "output.mp4"), Buffer.alloc(1234));
+  writeFileEpermRetry(path.join(dr, "output.mp4"), Buffer.alloc(1234));
   // D: done + spec + output, KHÔNG có media (đã prune theo R1-040)
   const dd = path.join(w, JID("3"));
   writeJobJson(dd, { id: JID("3"), status: "done", progress: 1, totalDuration: 4,
     attempts: 1, createdAt: 3000, outputName: "vcut-x.mp4", outputSize: 4242 });
-  fs.writeFileSync(path.join(dd, "spec.json"), JSON.stringify({ meta: { duration: 4 }, tracks: [] }));
-  fs.writeFileSync(path.join(dd, "output.mp4"), Buffer.alloc(4242));
+  writeFileEpermRetry(path.join(dd, "spec.json"), JSON.stringify({ meta: { duration: 4 }, tracks: [] }));
+  writeFileEpermRetry(path.join(dd, "output.mp4"), Buffer.alloc(4242));
   // E: error + spec
   const de = path.join(w, JID("4"));
   writeJobJson(de, { id: JID("4"), status: "error", progress: 0.2, totalDuration: 6,
@@ -116,8 +117,8 @@ console.log("== [2] recover sau restart: queued/running/done/error/legacy ==");
   // L (legacy done): spec + output, không có media, không có job.json
   const dl = path.join(w, JID("5"));
   fs.mkdirSync(dl, { recursive: true });
-  fs.writeFileSync(path.join(dl, "spec.json"), JSON.stringify({ meta: { duration: 2 }, tracks: [] }));
-  fs.writeFileSync(path.join(dl, "output.mp4"), Buffer.alloc(777));
+  writeFileEpermRetry(path.join(dl, "spec.json"), JSON.stringify({ meta: { duration: 2 }, tracks: [] }));
+  writeFileEpermRetry(path.join(dl, "output.mp4"), Buffer.alloc(777));
   // L2 (legacy queued): spec + media, không output, không job.json
   const dl2 = path.join(w, JID("6"));
   writeSpec(dl2, 3);
@@ -164,8 +165,8 @@ console.log("== [3] done không bao giờ bị spawn lại + retry từ interrup
   const dd = path.join(w, JID("7"));
   writeJobJson(dd, { id: JID("7"), status: "done", progress: 1, totalDuration: 2,
     attempts: 1, createdAt: 5000, outputName: "vcut-y.mp4", outputSize: 99 });
-  fs.writeFileSync(path.join(dd, "spec.json"), JSON.stringify({ meta: { duration: 2 }, tracks: [] }));
-  fs.writeFileSync(path.join(dd, "output.mp4"), Buffer.alloc(99));
+  writeFileEpermRetry(path.join(dd, "spec.json"), JSON.stringify({ meta: { duration: 2 }, tracks: [] }));
+  writeFileEpermRetry(path.join(dd, "output.mp4"), Buffer.alloc(99));
   const dr = path.join(w, JID("8"));
   writeJobJson(dr, { id: JID("8"), status: "interrupted", progress: 0.3, totalDuration: 2,
     attempts: 1, createdAt: 6000, error: "Bị gián đoạn do bridge restart" });
@@ -192,7 +193,7 @@ console.log("== [4] job done thật → job.json done, restart khôi phục done
   const w = tmpWork();
   const dir = path.join(w, JID("9"));
   fs.mkdirSync(path.join(dir, "media"), { recursive: true });
-  fs.writeFileSync(path.join(dir, "spec.json"), JSON.stringify({ meta: { duration: 1 }, tracks: [] }));
+  writeFileEpermRetry(path.join(dir, "spec.json"), JSON.stringify({ meta: { duration: 1 }, tracks: [] }));
   const svc = new RenderJobService({
     enableQA: false, maxConcurrent: 1,
     spawnJob: () => fakeProc(),
@@ -201,7 +202,7 @@ console.log("== [4] job done thật → job.json done, restart khôi phục done
   ok(job9.status === "running", "job bắt đầu chạy (slot trống)");
   // Handler close đã gắn trong _start → emit đồng bộ là _onDone chạy ngay
   // (nhánh enableQA=false không có await trước _onDone).
-  fs.writeFileSync(path.join(dir, "output.mp4"), Buffer.alloc(512));
+  writeFileEpermRetry(path.join(dir, "output.mp4"), Buffer.alloc(512));
   job9.proc.emit("close", 0, null);
   const done = svc.get(JID("9"));
   ok(done && done.status === "done", "job chạy xong → done");

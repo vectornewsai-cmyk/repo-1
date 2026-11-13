@@ -34,6 +34,7 @@
  */
 "use strict";
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
 
@@ -241,7 +242,7 @@ async function main() {
 
   const idx = process.argv.indexOf("--json");
   if (idx >= 0 && process.argv[idx + 1]) {
-    fs.writeFileSync(process.argv[idx + 1], JSON.stringify(result, null, 2));
+    writeFileEpermRetry(process.argv[idx + 1], JSON.stringify(result, null, 2));
   }
   console.log(JSON.stringify(result, null, 2));
 }

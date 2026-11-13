@@ -26,6 +26,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -101,7 +102,7 @@ class CDP {
   }
   async shot(name) {
     const r = await this.send("Page.captureScreenshot", { format: "png" });
-    fs.writeFileSync(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
+    writeFileEpermRetry(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
     return name;
   }
 }
@@ -157,7 +158,7 @@ async function main() {
     // reload trang đang test. Tạo lại mỗi lần chạy vì /tmp mất sau reboot.
     const VITE_CFG = "/tmp/round58-o1/vite.o1.config.mjs";
     fs.mkdirSync("/tmp/round58-o1", { recursive: true });
-    fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(ROOT, "apps", "web", "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(ROOT, "apps", "web", "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, TMPDIR=${TMPDIR}`);
 
     const viteLogFd = fs.openSync(path.join(SCRATCH, "o1-vite.log"), "w");
@@ -227,12 +228,12 @@ async function main() {
 
     const passCount = results.filter((r) => r.ok).length;
     for (const r of results) log(`${r.ok ? "PASS" : "FAIL"} ${r.name} — ${r.detail}`);
-    fs.writeFileSync(path.join(SCRATCH, "o1-headed-report.json"), JSON.stringify({ pass: passCount, total: results.length, results, log: logLines }, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "o1-headed-report.json"), JSON.stringify({ pass: passCount, total: results.length, results, log: logLines }, null, 2));
     log(`O1 headed Escape: ${passCount}/${results.length} pass`);
     process.exitCode = passCount === results.length ? 0 : 1;
   } catch (e) {
     log(`HARNESS LỖI: ${(e && e.stack) || e}`);
-    try { fs.writeFileSync(path.join(SCRATCH, "o1-headed-report.json"), JSON.stringify({ pass: 0, total: 0, error: String((e && e.message) || e), log: logLines }, null, 2)); } catch {}
+    try { writeFileEpermRetry(path.join(SCRATCH, "o1-headed-report.json"), JSON.stringify({ pass: 0, total: 0, error: String((e && e.message) || e), log: logLines }, null, 2)); } catch {}
     process.exitCode = 2;
   } finally {
     killAll();

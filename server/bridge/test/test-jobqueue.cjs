@@ -9,6 +9,7 @@
 
 const { EventEmitter } = require("events");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawn } = require("child_process");
@@ -83,7 +84,7 @@ async function main() {
 
     // job1 xong → job2 chạy (giả lập output file)
     fs.mkdirSync(w + "/a", { recursive: true });
-    fs.writeFileSync(w + "/a/output.mp4", Buffer.alloc(100));
+    writeFileEpermRetry(w + "/a/output.mp4", Buffer.alloc(100));
     procs[0].p.emit("close", 0, null);
     await sleep(10);
     ok(j1.status === "done" && j1.progress === 1, "job1 done");
@@ -93,11 +94,11 @@ async function main() {
     ok(started[1] === j2.id && started[2] === undefined, "thứ tự FIFO đúng");
 
     fs.mkdirSync(w + "/b", { recursive: true });
-    fs.writeFileSync(w + "/b/output.mp4", Buffer.alloc(100));
+    writeFileEpermRetry(w + "/b/output.mp4", Buffer.alloc(100));
     procs[1].p.emit("close", 0, null);
     await sleep(10);
     fs.mkdirSync(w + "/c", { recursive: true });
-    fs.writeFileSync(w + "/c/output.mp4", Buffer.alloc(100));
+    writeFileEpermRetry(w + "/c/output.mp4", Buffer.alloc(100));
     procs[2].p.emit("close", 0, null);
     await sleep(10);
     ok(j3.status === "done", "job3 done");
@@ -190,7 +191,7 @@ async function main() {
           if (runs.length === 1) p.emit("error", new Error("ffmpeg crash giả lập"));
           else {
             fs.mkdirSync(job.dir, { recursive: true });
-            fs.writeFileSync(path.join(job.dir, "output.mp4"), Buffer.alloc(50));
+            writeFileEpermRetry(path.join(job.dir, "output.mp4"), Buffer.alloc(50));
             p.emit("close", 0, null);
           }
         });
@@ -200,7 +201,7 @@ async function main() {
     const w = tmpWork();
     const d = path.join(w, "j"); fs.mkdirSync(d, { recursive: true });
     const job = svc.enqueue({ dir: d, specPath: path.join(d, "spec.json"), outPath: path.join(d, "output.mp4"), totalDuration: 5 });
-    fs.writeFileSync(path.join(d, "spec.json"), "{}");
+    writeFileEpermRetry(path.join(d, "spec.json"), "{}");
     await sleep(50);
     ok(job.status === "error", "job lỗi sau lần chạy 1");
     ok(job.attempts === 1, "attempts = 1");
@@ -247,13 +248,13 @@ async function main() {
     const w = tmpWork();
     // job A: còn spec.json + media → phục hồi
     const da = path.join(w, "aaa"); fs.mkdirSync(path.join(da, "media"), { recursive: true });
-    fs.writeFileSync(path.join(da, "spec.json"),
+    writeFileEpermRetry(path.join(da, "spec.json"),
       JSON.stringify({ meta: { duration: 4 }, tracks: [] }));
     // job B: có output.mp4 dở dang → vẫn phục hồi (xóa output cũ, render lại)
     const db = path.join(w, "bbb"); fs.mkdirSync(path.join(db, "media"), { recursive: true });
-    fs.writeFileSync(path.join(db, "spec.json"),
+    writeFileEpermRetry(path.join(db, "spec.json"),
       JSON.stringify({ tracks: [{ clips: [{ start: 0, duration: 2 }] }] }));
-    fs.writeFileSync(path.join(db, "output.mp4"), Buffer.alloc(10));
+    writeFileEpermRetry(path.join(db, "output.mp4"), Buffer.alloc(10));
     // dir C: không có spec.json → bỏ qua
     fs.mkdirSync(path.join(w, "ccc"), { recursive: true });
 

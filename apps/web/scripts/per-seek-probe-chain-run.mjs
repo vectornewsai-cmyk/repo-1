@@ -36,6 +36,7 @@
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import path from "node:path";
 import { buildProbeEnv, extractPerSeekReport } from "./seek-ab-solo-run.mjs";
 import { validatePerSeekEntry } from "./per-seek-probe.mjs";
@@ -118,7 +119,7 @@ if (fs.existsSync(q6LogPath)) {
 if (!fs.existsSync(forwardHoldPath)) {
   console.error(`[chain] NO_RESULT: thiếu ${forwardHoldPath} (Q6 exit ${q6.status})`);
   const evidence = { runAt: new Date().toISOString(), layers: { soloEnv, q6: q6Layer, n2: null, soloReport: null }, note: "Q6 không trả forward-hold.json — chuỗi dừng ở tầng N2, không claim perSeek." };
-  fs.writeFileSync(path.join(opts.scratch, "probe-chain-evidence.json"), JSON.stringify(evidence, null, 2));
+  writeFileEpermRetry(path.join(opts.scratch, "probe-chain-evidence.json"), JSON.stringify(evidence, null, 2));
   process.exit(2);
 }
 
@@ -158,7 +159,7 @@ const evidence = {
     : `CHAIN-NOT-PRESENT: soloReport=${soloReport.status}, n2Enabled=${n2Layer.perSeekEnabledInForwardHold} — xem layers để chẩn đoán, không claim present`,
   note: "Lượt probe, under-load (chạy cùng các luồng đợt 42 khác) — không phải baseline quiet, không kết luận cổng solo.",
 };
-fs.writeFileSync(path.join(opts.scratch, "probe-chain-evidence.json"), JSON.stringify(evidence, null, 2));
+writeFileEpermRetry(path.join(opts.scratch, "probe-chain-evidence.json"), JSON.stringify(evidence, null, 2));
 console.log(`[chain] evidence → ${path.join(opts.scratch, "probe-chain-evidence.json")}`);
 console.log(`[chain] ${evidence.chainVerdict}`);
 process.exit(0);

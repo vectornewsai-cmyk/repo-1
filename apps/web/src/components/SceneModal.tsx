@@ -26,9 +26,13 @@ import {
   type SceneDetectResult,
 } from "../lib/scene";
 import { t as i18nT, getLang, useLang } from "../i18n";
-import { resolveBridgeApiError } from "../lib/bridgeErrors"; // Đợt 62 R5: dịch mã lỗi bridge→web
+import { resolveBridgeApiError, type BridgeApiErrorBody } from "../lib/bridgeErrors"; // Đợt 62 R5: dịch mã lỗi bridge→web
 import { resolveScenePhaseLabel } from "../lib/scenePhase63R5"; // Đợt 63 R5: localize phase scene theo locale (nợ R1)
-import type { StructuredErrorDetail } from "../lib/errorDetailSummary"; // Đợt 62 R5: errorDetail trong SSE error
+import {
+  AI_JOB_STREAM_DROPPED,
+  AiJobCancelledError,
+  readAiJobStream,
+} from "../lib/aiJobStream"; // Đợt 80 H8: hủy thật cho job AI dài
 import { BRIDGE_URL } from "../lib/bridgeUrl";
 
 
@@ -38,20 +42,6 @@ interface Props {
   trackId: string;
   clipId: string;
   onClose: () => void;
-}
-
-interface NdjsonEvent {
-  type: "phase" | "done" | "error";
-  phase?: string;
-  message?: string;
-  cuts?: unknown;
-  duration?: number | null;
-  threshold?: number;
-  count?: number;
-  error?: string;
-  errorCode?: string;
-  errorParams?: Record<string, string>;
-  errorDetail?: StructuredErrorDetail | null;
 }
 
 function fmtElapsed(ms: number): string {
@@ -147,50 +137,49 @@ export function SceneModal({ trackId, clipId, onClose }: Props) {
         const j = await res.json().catch(() => ({}));
         throw new Error(resolveBridgeApiError(j, i18nT, i18nT("scene.bridgeErr", { status: String(res.status) })));
       }
-      if (!res.body) throw new Error(i18nT("scene.noStream"));
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      let buf = "";
-      let done = false;
-      while (!done) {
-        const { value, done: d } = await reader.read();
-        done = d;
-        buf += dec.decode(value ?? new Uint8Array(), { stream: !d });
-        let idx: number;
-        while ((idx = buf.indexOf("\n")) >= 0) {
-          const line = buf.slice(0, idx).trim();
-          buf = buf.slice(idx + 1);
-          if (!line) continue;
-          const ev = JSON.parse(line) as NdjsonEvent;
-          if (ev.type === "phase") {
+      // Đợt 80 H8: đọc NDJSON qua helper dùng chung. Nút Hủy (abort fetch)
+      // giờ là hủy THẬT: bridge kill python + ffmpeg con (trước đây job
+      // cứ chạy nền dù UI đã quay về config). Scene CHƯA có progress %:
+      // scene.py chạy ffmpeg blocking nên không in được tiến trình thật.
+      // (Không check !res.body ở đây: readAiJobStream tự throw
+      // AI_JOB_STREAM_DROPPED và catch dưới convert thành scene.noStream
+      // như cũ — giữ đúng 32 call site i18nT() mà test modalCard58O4 pin.)
+      let doneEvt;
+      try {
+        doneEvt = await readAiJobStream(res, {
+          onPhase: (phase, message) => {
             // Đợt 63 R5: localize phase theo locale qua phase KEY (đúng mẫu
             // captionPhase63R1 đợt 63 R1 — bridge gửi kèm message vi, hiển
             // thị nguyên vẹn làm locale en vẫn thấy tiếng Việt). Fallback
             // message bridge → "" khi phase lạ; không bao giờ hiện key thô.
-            setPhase(resolveScenePhaseLabel(ev.phase, ev.message, getLang()));
-          } else if (ev.type === "done") {
-            const cuts = Array.isArray(ev.cuts)
-              ? ev.cuts.filter((c): c is number => typeof c === "number" && Number.isFinite(c))
-              : [];
-            const r: SceneDetectResult = {
-              cuts,
-              duration: ev.duration ?? null,
-              threshold: ev.threshold ?? threshold,
-              count: ev.count ?? cuts.length,
-            };
-            setResult(r);
-            setTimes(cutsToTimelineTimes(clip, cuts));
-            setDropped(new Set());
-            setStep("review");
-            done = true;
-            break;
-          } else if (ev.type === "error") {
-            throw new Error(resolveBridgeApiError(ev, i18nT, i18nT("scene.failed")));
-          }
+            setPhase(resolveScenePhaseLabel(phase, message, getLang()));
+          },
+        });
+      } catch (e) {
+        if (e instanceof AiJobCancelledError) throw e;
+        if ((e as Error).message === AI_JOB_STREAM_DROPPED) {
+          throw new Error(i18nT("scene.noStream"));
         }
+        const body = (e as { bridgeBody?: BridgeApiErrorBody }).bridgeBody;
+        throw new Error(resolveBridgeApiError(body ?? null, i18nT, i18nT("scene.failed")));
       }
+      const cuts = Array.isArray(doneEvt.cuts)
+        ? (doneEvt.cuts as unknown[]).filter((c): c is number => typeof c === "number" && Number.isFinite(c))
+        : [];
+      const r: SceneDetectResult = {
+        cuts,
+        duration: typeof doneEvt.duration === "number" ? doneEvt.duration : null,
+        threshold: typeof doneEvt.threshold === "number" ? doneEvt.threshold : threshold,
+        count: typeof doneEvt.count === "number" ? doneEvt.count : cuts.length,
+      };
+      setResult(r);
+      setTimes(cutsToTimelineTimes(clip, cuts));
+      setDropped(new Set());
+      setStep("review");
     } catch (e) {
-      if ((e as Error).name === "AbortError") return;
+      // Đợt 80 H8: hủy (AbortError của fetch hoặc event "cancelled" của
+      // bridge) thì im lặng quay về config như trước — không hiện lỗi.
+      if ((e as Error).name === "AbortError" || e instanceof AiJobCancelledError) return;
       setError(
         e instanceof Error ? e.message :
         i18nT("common.bridgeConn", { url: BRIDGE_URL })

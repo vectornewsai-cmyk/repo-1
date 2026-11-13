@@ -21,6 +21,7 @@
 
 const { execFileSync, spawnSync } = require("child_process");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 
@@ -42,7 +43,7 @@ function ff(args) {
 }
 function writePy(name, code) {
   const p = path.join(WORK, name);
-  fs.writeFileSync(p, code);
+  writeFileEpermRetry(p, code);
   return p;
 }
 
@@ -218,7 +219,7 @@ const spec = {
   ],
 };
 const specPath = path.join(WORK, "spec.json");
-fs.writeFileSync(specPath, JSON.stringify(spec));
+writeFileEpermRetry(specPath, JSON.stringify(spec));
 const outMp4 = path.join(WORK, "tracked.mp4");
 {
   const r = run("node", [path.join(HERE, "src", "render.js"), "--spec", specPath,

@@ -34,6 +34,13 @@ import {
 } from "../../../../../packages/video-spec/src/sticker";
 // TODO(parent): đổi thành `from "@repo-1/video-spec"` sau khi index.ts re-export ./sticker
 
+/** Nhãn sticker theo locale (đợt 93 U5): data mang labelKey, dịch qua dict;
+ * thiếu key thì rơi về nhãn vi gốc trong data (không lộ key thô ra UI). */
+function stickerLabel(entry: { label: string; labelKey: string }): string {
+  const v = i18nT(entry.labelKey);
+  return v === entry.labelKey ? entry.label : v;
+}
+
 function NumRow({
   label, value, min, max, step, format, onChange,
 }: {
@@ -181,15 +188,16 @@ export function StickerPanel() {
   };
 
   const q = query.trim().toLowerCase();
-  const visible = STICKER_LIBRARY.filter(
-    (s) =>
-      (tab === "all" || s.category === tab) &&
-      (q === "" || s.label.toLowerCase().includes(q)),
-  );
+  const visible = STICKER_LIBRARY.filter((s) => {
+    if (tab !== "all" && s.category !== tab) return false;
+    if (q === "") return true;
+    // Đợt 93 U5: tìm theo cả nhãn đã dịch lẫn nhãn vi gốc (gõ tiếng Việt ở locale EN vẫn ra).
+    return stickerLabel(s).toLowerCase().includes(q) || s.label.toLowerCase().includes(q);
+  });
 
   return (
     <div className="sticker-panel">
-      <div className="panel-head" style={{ marginTop: 12 }}>🌟 Sticker</div>
+      <div className="panel-head" style={{ marginTop: 12 }}>{i18nT("sticker.title")}</div>
 
       {stickerClip && track ? (
         <StickerEditor clip={stickerClip} trackId={track.id} />
@@ -216,7 +224,7 @@ export function StickerPanel() {
                 className={tab === c.id ? "active" : ""}
                 onClick={() => setTab(c.id)}
               >
-                {c.label}
+                {stickerLabel(c)}
               </button>
             ))}
           </div>
@@ -225,11 +233,11 @@ export function StickerPanel() {
               <button
                 key={s.file}
                 className="sticker-cell"
-                title={s.label}
+                title={stickerLabel(s)}
                 onClick={() => pick(s.file)}
               >
-                <img src={stickerUrl(s.file)} alt={s.label} />
-                <span>{s.label}</span>
+                <img src={stickerUrl(s.file)} alt={stickerLabel(s)} />
+                <span>{stickerLabel(s)}</span>
               </button>
             ))}
           </div>

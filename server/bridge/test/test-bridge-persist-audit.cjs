@@ -82,6 +82,20 @@ const INVENTORY = [
   // parent gộp đợt 66: file T8 tạo sau lúc T9 quét xong (audit 75/76) —
   // đã vá persist ở startBridge + đăng ký tại đây.
   "apps/web/scripts/clicktest-66t8-resume-job-headed.mjs",
+  // Đợt 67 U7 tạo sau lúc T9 quét (audit 77/78 trước khi đăng ký — file
+  // đã set BRIDGE_RATE_PERSIST_PATH ở startBridge, chỉ thiếu đăng ký):
+  // V8 đợt 68 đăng ký nốt để audit xanh lại.
+  "apps/web/scripts/clicktest-67u7-job-history-headed.mjs",
+  // Đợt 68 V8 (mới): HEAD download + headed export-dest (cả 2 file đều
+  // set BRIDGE_RATE_PERSIST_PATH riêng). Script Electron
+  // (clicktest-68v8-export-dest-electron.mjs) KHÔNG đăng ký ở đây: nó
+  // chỉ spawn Electron, bridge do ServiceManager của app khởi động
+  // (đã cách ly theo userDataDir) nên không khớp heuristic quét.
+  "server/bridge/test/test-download-head-68v8.cjs",
+  "apps/web/scripts/clicktest-68v8-export-dest-headed.mjs",
+  // Đợt 68 V2 (đăng ký đợt 69 W3 — file đã set BRIDGE_RATE_PERSIST_PATH
+  // ở spawn, chỉ thiếu đăng ký nên audit từng báo 83 pass / 1 fail):
+  "server/bridge/test/test-stab-single-thread-68v2.cjs",
   // desktop (vá đợt 66 T9):
   "apps/desktop/scripts/verify-desktop.mjs",
   // production: ServiceManager suy ra persist từ userDataDir (mỗi app/test

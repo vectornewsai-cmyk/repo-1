@@ -27,6 +27,7 @@
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -231,7 +232,7 @@ async function main() {
     };
     console.log(`  ${v} NOISE-THỐNG-KÊ: std preview [${d.preview.std}] render [${d.render.std}] tỉ lệ [${ratios}] (cần [0.8,1.25]: ${okStd}); kurt preview [${d.preview.kurt}] render [${d.render.kurt}] (${okKurt}); corr preview [${d.preview.corr}] render [${d.render.corr}] (${okCorr}); MAD delta từng pixel=${d.deltaMad} (kỳ vọng LỚN — 2 dãy ngẫu nhiên độc lập, không phải tiêu chí) → ${verdict}`);
   }
-  fs.writeFileSync(path.join(SCRATCH, "r8-compare-report.json"), JSON.stringify(report, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "r8-compare-report.json"), JSON.stringify(report, null, 2));
   console.log(`JSON kết quả: ${path.join(SCRATCH, "r8-compare-report.json")}`);
   process.exitCode = failCount ? 1 : 0;
 }

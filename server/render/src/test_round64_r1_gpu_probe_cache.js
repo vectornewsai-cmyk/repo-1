@@ -27,6 +27,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -157,7 +158,7 @@ const spec = {
   }] }],
 };
 const specPath = path.join(work, "balanced.json");
-fs.writeFileSync(specPath, JSON.stringify(spec));
+writeFileEpermRetry(specPath, JSON.stringify(spec));
 function render(name, envExtra, extraArgs) {
   const outPath = path.join(work, `${name}.mp4`);
   const t0 = Date.now();

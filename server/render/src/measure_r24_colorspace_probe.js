@@ -40,6 +40,7 @@
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 const path = require("node:path");
 
@@ -176,7 +177,7 @@ function main() {
   // (4) Đối chứng đảo: preview chuyển bằng bt709 thì có khớp chuỗi mặc định không?
   // (dùng ffmpeg trực tiếp: rawvideo rgb -> yuv420p với colorspace bt709 qua scale filter)
   const prevRgbPath = path.join(TMP, "prev.rgb");
-  fs.writeFileSync(prevRgbPath, preview);
+  writeFileEpermRetry(prevRgbPath, preview);
   const prevYuv709Path = path.join(TMP, "prev709.yuv");
   ffmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${W}x${H}`, "-i", prevRgbPath,
     "-filter_complex", `[0:v]scale=out_color_matrix=bt709,format=yuv420p[v]`,

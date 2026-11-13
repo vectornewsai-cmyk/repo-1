@@ -43,6 +43,9 @@
  *    khôi phục đúng; mốc hết hạn không hồi sinh sau restart.
  */
 const fs = require("fs");
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (port CJS của
+// apps/web/scripts/eperm-retry.mjs; xem server/eperm-retry.cjs).
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { apiError } = require("./errorCodes");
@@ -146,7 +149,7 @@ function createRateLimiter(opts = {}) {
       });
       fs.mkdirSync(path.dirname(persistPath), { recursive: true });
       const tmp = `${persistPath}.tmp-${process.pid}`;
-      fs.writeFileSync(tmp, payload, "utf8");
+      writeFileEpermRetry(tmp, payload, { label: "bridge-rate-limit-state" });
       fs.renameSync(tmp, persistPath);
       dirty = false;
       return true;

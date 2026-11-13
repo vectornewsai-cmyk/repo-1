@@ -20,6 +20,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { execFileSync, spawnSync } = require("child_process");
@@ -187,7 +188,7 @@ async function main() {
     { id: "t1", kind: "text", clips: [textClip({ track: track2 })] },
   ]);
   const specPath = path.join(dir, "spec.json");
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const out = path.join(dir, "out.mp4");
   const rr = spawnSync("node", ["src/render.js", "--spec", specPath, "--out", out, "--media-dir", mediaDir],
     { cwd: path.join(__dirname, ".."), encoding: "utf8" });
@@ -246,7 +247,7 @@ for t in [1.0, 3.0]:
     })] },
   ]);
   const srPath = path.join(dir, "spec-sr.json");
-  fs.writeFileSync(srPath, JSON.stringify(srSpec));
+  writeFileEpermRetry(srPath, JSON.stringify(srSpec));
   const dr = spawnSync("node", ["src/render.js", "--spec", srPath, "--out", path.join(dir, "sr.mp4"),
     "--media-dir", mediaDir, "--dry-run"],
     { cwd: path.join(__dirname, ".."), encoding: "utf8" });

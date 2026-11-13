@@ -25,6 +25,9 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (port JS của
+// apps/web/scripts/eperm-retry.mjs; xem services/epermRetry.js).
+import { writeFileEpermRetry } from "./services/epermRetry.js";
 import type { ipcMain as ElectronIpcMain } from "electron";
 import { getDesktopLabels, tDesktopVars, type DesktopLang } from "./i18n-desktop";
 
@@ -202,7 +205,7 @@ export class LastDirStore {
     try {
       fs.mkdirSync(path.dirname(this.filePath), { recursive: true });
       const tmp = `${this.filePath}.tmp-${process.pid}`;
-      fs.writeFileSync(tmp, JSON.stringify({ lastDir: this.lastDir }), "utf-8");
+      writeFileEpermRetry(tmp, JSON.stringify({ lastDir: this.lastDir }), { label: "desktop-last-dirs.json" });
       fs.renameSync(tmp, this.filePath);
     } catch {
       // Ghi lỗi thì thôi — dialog lần sau chỉ mở thư mục mặc định.

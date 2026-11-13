@@ -102,8 +102,8 @@ ok("i18n: vi/en parity toàn file, đủ 2 key mới badgeElementFailed/titleEle
   // Parent gộp đợt 63: +131 key fragment (R1 5 + R5 123 + R7 2 + R9 1) − 1 key chết speed.warnTooShort − 1 key jobNote chưa có UI → 2275 mỗi bên (vi == en, 0 key mồ côi); parent gộp đợt 64: +7 key fragment (R2 6 + R8 1) + 1 key parent (projectHistory.migrateVersionsNeedsProjectId) → 2283 mỗi bên.
   // Nếu luồng khác cùng đợt cũng thêm key, parent gộp cập nhật số
   // này — parity (bằng nhau + đủ key mới) mới là khóa cứng.
-  assert.equal(viKeys.size, 2326);
-  assert.equal(enKeys.size, 2326);
+  assert.equal(viKeys.size, 2767);
+  assert.equal(enKeys.size, 2767);
 });
 
 ok("i18n: nội dung key mới đúng từng chữ dict thật, vi khác en, không còn placeholder {api}", () => {

@@ -246,6 +246,10 @@ export function aggregateDecodeAheadDecisions(
 ): DecodeAheadDecision {
   const seenWarnings = new Set<string>();
   const warnings: string[] = [];
+  // Đợt 80 H7 — gộp warningKeys song song với warnings (khử trùng, giữ
+  // thứ tự; decision cũ không có warningKeys → coi như rỗng).
+  const seenWarningKeys = new Set<string>();
+  const warningKeys: string[] = [];
   const seenReasons = new Set<string>();
   const reasons: string[] = [];
   let anyAllowed = false;
@@ -257,6 +261,12 @@ export function aggregateDecodeAheadDecisions(
         warnings.push(w);
       }
     }
+    for (const k of d.warningKeys ?? []) {
+      if (!seenWarningKeys.has(k)) {
+        seenWarningKeys.add(k);
+        warningKeys.push(k);
+      }
+    }
     for (const r of d.reasons) {
       if (!seenReasons.has(r)) {
         seenReasons.add(r);
@@ -265,7 +275,7 @@ export function aggregateDecodeAheadDecisions(
     }
   }
   if (anyAllowed) {
-    return { verdict: "allowed-experiment", reasons, warnings };
+    return { verdict: "allowed-experiment", reasons, warnings, warningKeys };
   }
-  return { verdict: "blocked", reasons, warnings: [] };
+  return { verdict: "blocked", reasons, warnings: [], warningKeys: [] };
 }

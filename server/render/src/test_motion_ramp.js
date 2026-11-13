@@ -30,6 +30,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -80,7 +81,7 @@ const vclip = (extra) => ({
 });
 function render(clip, name, extraArgs) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(specWith(clip)));
+  writeFileEpermRetry(specPath, JSON.stringify(specWith(clip)));
   const outPath = path.join(work, `${name}.mp4`);
   const args = ["src/render.js", "--spec", specPath, "--out", outPath,
     "--media-dir", mediaDir, "--x264-preset", "veryfast", "--crf", "28", "-y"];
@@ -151,7 +152,7 @@ console.log("F: fail-fast đơn vị (buildMotionPostChain / buildSpeedRampVideo
 console.log("G: dry-run filtergraph nhánh ramp có minterpolate");
 {
   const specPath = path.join(work, "g.json");
-  fs.writeFileSync(specPath, JSON.stringify(specWith(vclip({ motion: { interpolation: "minterpolate" } }))));
+  writeFileEpermRetry(specPath, JSON.stringify(specWith(vclip({ motion: { interpolation: "minterpolate" } }))));
   const r = spawnSync("node", ["src/render.js", "--spec", specPath, "--out", path.join(work, "g.mp4"),
     "--media-dir", mediaDir, "--dry-run"], { cwd: path.join(__dirname, ".."), stdio: ["ignore", "pipe", "pipe"] });
   ok(r.status === 0 && /minterpolate=fps=20/.test((r.stdout || "").toString()),

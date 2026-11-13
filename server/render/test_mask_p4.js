@@ -18,6 +18,7 @@
 
 const assert = require("assert");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -72,7 +73,7 @@ function render(specObj, mediaMap, outName) {
   const spec = JSON.parse(JSON.stringify(specObj));
   for (const t of spec.tracks)
     for (const c of t.clips) c.src = mediaMap[c.src] || c.src;
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const out = path.join(WORK, `${outName}.mp4`);
   const r = run("node", [path.join(ROOT, "src", "render.js"), "--spec", specPath,
     "--out", out, "-y", "--media-dir", WORK]);

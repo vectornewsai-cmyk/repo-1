@@ -16,6 +16,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import net from "node:net";
 import os from "node:os";
@@ -204,7 +205,7 @@ async function main() {
     log(`lặp lại frame15-720p: ` + r2.rows.slice(1).map((x) => `f=${x.f}→giảm ${x.reduct}% edge ${x.edge}px`).join(", "));
     out.repeat = r2;
     fs.mkdirSync(OUT_DIR, { recursive: true });
-    fs.writeFileSync(path.join(OUT_DIR, "downscale-probe.json"), JSON.stringify(out, null, 2));
+    writeFileEpermRetry(path.join(OUT_DIR, "downscale-probe.json"), JSON.stringify(out, null, 2));
     log("xong, đã ghi downscale-probe.json");
     process.exitCode = 0;
   } catch (e) {

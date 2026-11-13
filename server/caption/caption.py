@@ -26,6 +26,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 
 DEFAULT_MODEL = "small"
 DEFAULT_LANG = "vi"
@@ -103,14 +104,28 @@ def load_wav_mono16k(wav_path):
 
 
 def transcribe(wav_path, lang, model_name, model_dir):
+    # Đợt 80 H8 (gap N4): báo rõ phase nạp model — lần đầu tải/khởi tạo
+    # model faster-whisper có thể mất vài phút, trước đây UI chỉ hiện
+    # "Đang trích xuất audio…" nên user tưởng app treo.
+    print("[caption] nạp model...", flush=True)
     model = load_model(model_name, model_dir)
     audio = load_wav_mono16k(wav_path)   # mảng numpy -> không qua PyAV
     language = None if lang == "auto" else lang
     print(f"[caption] đang transcribe (lang={lang or 'auto'})...", flush=True)
     segments, info = model.transcribe(audio, language=language,
                                       word_timestamps=True, vad_filter=True)
+    # Đợt 80 H8: tiến trình THẬT — faster-whisper trả segments theo thứ tự
+    # thời gian nên seg.end = vị trí audio đã xử lý. In throttled (tối đa
+    # 1 dòng/giây) để bridge stream % + ETA về UI, không spam stdout.
+    duration = len(audio) / 16000.0
+    last_print = 0.0
     words = []
     for seg in segments:
+        end = getattr(seg, "end", 0.0) or 0.0
+        now = time.time()
+        if end > 0 and duration > 0 and now - last_print >= 1.0:
+            print(f"[caption] progress {end:.1f}/{duration:.1f}", flush=True)
+            last_print = now
         if not seg.words:
             continue
         for w in seg.words:

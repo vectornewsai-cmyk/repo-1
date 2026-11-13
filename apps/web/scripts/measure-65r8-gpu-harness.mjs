@@ -30,6 +30,7 @@
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -208,13 +209,13 @@ document.title = JSON.stringify(out);
     }
     log(`VERDICT: ${report.verdict}`);
     fs.mkdirSync(OUT_DIR, { recursive: true });
-    fs.writeFileSync(OUT, JSON.stringify(report, null, 2));
-    fs.writeFileSync(LOG, logLines.join("\n") + "\n");
+    writeFileEpermRetry(OUT, JSON.stringify(report, null, 2));
+    writeFileEpermRetry(LOG, logLines.join("\n") + "\n");
     log(`đã ghi ${OUT} + ${LOG}`);
     process.exitCode = 0;
   } catch (e) {
     log(`HARNESS LỖI: ${e && e.message ? e.message : e}`);
-    try { fs.mkdirSync(OUT_DIR, { recursive: true }); fs.writeFileSync(LOG, logLines.join("\n") + "\n"); } catch {}
+    try { fs.mkdirSync(OUT_DIR, { recursive: true }); writeFileEpermRetry(LOG, logLines.join("\n") + "\n"); } catch {}
     process.exitCode = 2;
   }
 }

@@ -138,6 +138,13 @@ const BRIDGE_ERROR_CODES = {
   TTS_REF_AUDIO_MISSING: [],
   TTS_REF_AUDIO_TOO_LARGE: ["sizeMb"],
   TTS_REF_AUDIO_TYPE: ["exts"],
+  // Đợt 84 L8 — giọng đã clone LƯU LẠI ĐƯỢC (tạo/dùng/xóa giọng clone).
+  TTS_CLONED_VOICE_NAME_EMPTY: [],
+  TTS_CLONED_VOICE_NAME_TOO_LONG: ["max", "length"],
+  TTS_CLONED_VOICE_NAME_DUP: ["name"],
+  TTS_CLONED_VOICE_LIMIT: ["max"],
+  TTS_CLONED_VOICE_NOT_FOUND: [],
+  TTS_CLONED_VOICE_REGISTRY: [],
   UNSUPPORTED_VOICE: ["voice", "voices"],
   BPM_INVALID: ["value"],
   BPM_RANGE_INVALID: [],

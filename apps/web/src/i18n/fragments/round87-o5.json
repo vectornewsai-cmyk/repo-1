@@ -1,0 +1,30 @@
+{
+  "en": {
+    "mask": {
+      "trackAttachBtn": "🎯 Attach motion track…",
+      "trackAttachHint": "The mask is standing still. Attach a motion track to this clip so the mask follows the object.",
+      "trackDetach": "Detach trajectory from clip",
+      "trackFollow": "🎯 The mask is following the motion track — the mask center moves along the trajectory attached to this clip (detaching the trajectory stops both the clip and the mask)."
+    },
+    "motionTrack": {
+      "assIgnored": "⚠️ This text clip is drawn with ASS ({reason}), so the motion track is ignored at render — the text stays still (see D3_LIMITS.md).",
+      "maskNotFollowing": "The mask does not follow the track either.",
+      "transitionIgnored": "⚠️ This clip has a transition, so the motion track is ignored on the merged unit (see D3_LIMITS.md).",
+      "maskStillFollows": "The mask still follows the track through the transition (only the clip's shift is skipped on the merged unit)."
+    }
+  },
+  "vi": {
+    "mask": {
+      "trackAttachBtn": "🎯 Gắn motion track…",
+      "trackAttachHint": "Mask đang đứng yên. Gắn motion track cho clip để mask bám theo vật thể.",
+      "trackDetach": "Gỡ quỹ đạo khỏi clip",
+      "trackFollow": "🎯 Mask đang bám theo motion track — tâm mask di chuyển theo quỹ đạo gắn trên clip (gỡ quỹ đạo sẽ dừng cả clip lẫn mask)."
+    },
+    "motionTrack": {
+      "assIgnored": "⚠️ Clip chữ vẽ bằng ASS ({reason}) nên motion track bị bỏ qua khi render — chữ giữ vị trí tĩnh (xem D3_LIMITS.md).",
+      "maskNotFollowing": "Mask cũng không bám theo track.",
+      "transitionIgnored": "⚠️ Clip có transition nên motion track bị bỏ qua ở unit đã merge (xem D3_LIMITS.md).",
+      "maskStillFollows": "Mask vẫn bám theo track qua đoạn transition (chỉ phần dịch chuyển của clip bị bỏ qua ở đoạn merge)."
+    }
+  }
+}

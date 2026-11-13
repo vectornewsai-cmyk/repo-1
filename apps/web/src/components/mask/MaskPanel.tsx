@@ -47,6 +47,31 @@ function PctField({
   );
 }
 
+/**
+ * Phase 9 đợt 87 O5 — trạng thái mask bám track (pure, test được không cần
+ * store; render SSR của zustand luôn thấy state khởi tạo nên nhánh phụ thuộc
+ * selection/spec chỉ đo được bằng probe này — mẫu L1 đợt 55):
+ *  - "follow": clip video có mask + track, không transition → mask bám track.
+ *  - "attach": clip video có mask, chưa track → lối vào gắn track.
+ *  - "transition": clip video có mask + track + transition → track bị bỏ qua
+ *    ở unit đã merge (validator cảnh báo, xem D3_LIMITS.md).
+ *  - "none": còn lại (clip ảnh không gắn được track; chưa có mask thì không
+ *    có khối track).
+ */
+export type MaskTrackUiState = "follow" | "attach" | "transition" | "none";
+export function maskTrackUiState(clip: {
+  kind: string;
+  mask?: unknown;
+  track?: unknown;
+  transitionIn?: unknown;
+  transitionOut?: unknown;
+}): MaskTrackUiState {
+  if (clip.kind !== "video" || clip.mask === undefined) return "none";
+  if (clip.track === undefined) return "attach";
+  if (clip.transitionIn !== undefined || clip.transitionOut !== undefined) return "transition";
+  return "follow";
+}
+
 export function MaskPanel() {
   useLang();
   const selection = useStore((s) => s.selection);
@@ -76,7 +101,6 @@ export function MaskPanel() {
       <div className="mask-panel">
         <p className="tips">
           {i18nT("mask.tipUnsupported", { kind: clip.kind === "text" ? i18nT("mask.kindText") : clip.kind === "audio" ? i18nT("mask.kindAudio") : i18nT("mask.kindSticker") })}
-          {" "}— xem <code>server/render/src/MASK_LIMITS.md</code>.
         </p>
       </div>
     );
@@ -89,6 +113,24 @@ export function MaskPanel() {
   const update = (patch: Partial<ClipMask>) => {
     if (!mask) return;
     patchMask({ ...mask, ...patch });
+  };
+
+  // Phase 9 đợt 87 O5: mask bám motion track — tâm mask bám quỹ đạo
+  // clip.track (thiết kế đợt 87). Trạng thái tính bằng maskTrackUiState
+  // (pure, có test probe riêng): chỉ clip video mới gắn được track
+  // (TrackPanel chỉ render cho video/text/sticker; validator bỏ qua track
+  // trên clip ảnh) nên khối này chỉ hiện cho video.
+  const trackUi = maskTrackUiState(clip as { kind: string; mask?: unknown; track?: unknown; transitionIn?: unknown; transitionOut?: unknown });
+  const detachTrack = () => {
+    // "Tắt" mask bám track = gỡ quỹ đạo khỏi clip (cùng cơ chế với nút
+    // "Gỡ quỹ đạo" của TrackPanel) — không có toggle riêng cho mask vì
+    // track gắn ở clip, không gắn ở mask (thiết kế đợt 87).
+    st.patchClip(track.id, clip.id, { track: undefined } as Partial<typeof clip>);
+  };
+  const scrollToTrackPanel = () => {
+    // TrackPanel đã render sẵn trong Inspector (bên dưới panel mask cho
+    // clip video) — chỉ cuộn tới đó, không viết lại flow gắn track.
+    document.querySelector(".track-panel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
 
   if (!mask) {
@@ -125,6 +167,34 @@ export function MaskPanel() {
 
   return (
     <div className="mask-panel">
+      {/* Phase 9 đợt 87 O5: trạng thái mask bám track (maskTrackUiState).
+          Clip video có transition thì track bị bỏ qua ở unit đã merge
+          (validator cảnh báo, xem D3_LIMITS.md) nhưng MASK VẪN bám theo
+          track (closing đợt 87: O6 C6 + parent verify png+transition) nên
+          hiện ghi chú đúng thay vì "mask không bám". */}
+      {trackUi !== "none" && (
+        <>
+          {trackUi === "transition" ? (
+            <p className="tips">
+              {i18nT("motionTrack.transitionIgnored")} {i18nT("motionTrack.maskStillFollows")}
+            </p>
+          ) : trackUi === "follow" ? (
+            <>
+              <p className="tips">{i18nT("mask.trackFollow")}</p>
+              <div className="btn-row">
+                <button onClick={detachTrack}>{i18nT("mask.trackDetach")}</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="tips">{i18nT("mask.trackAttachHint")}</p>
+              <div className="btn-row">
+                <button onClick={scrollToTrackPanel}>{i18nT("mask.trackAttachBtn")}</button>
+              </div>
+            </>
+          )}
+        </>
+      )}
       <label className="field">
         <span>{i18nT("mask.shape")}</span>
         <select

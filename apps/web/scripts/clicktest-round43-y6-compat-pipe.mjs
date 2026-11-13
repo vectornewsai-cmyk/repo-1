@@ -22,6 +22,7 @@
 // buộc fail; bước xóa global thất bại KHÔNG làm exit 1 (xem trên).
 import { spawn, spawnSync, execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -92,7 +93,7 @@ async function main() {
   execFileSync(path.join(REPO, "node_modules", ".bin", "esbuild"),
     [path.join(WEB_DIR, "src", "lib", "reversePlayback.ts"), "--bundle", "--platform=browser", "--format=esm",
      `--outfile=${path.join(SCRATCH, "reversePlayback.mjs")}`], { stdio: "ignore" });
-  fs.writeFileSync(path.join(SCRATCH, "page.html"), `<!doctype html><meta charset="utf-8"><title>Y6 compat</title>
+  writeFileEpermRetry(path.join(SCRATCH, "page.html"), `<!doctype html><meta charset="utf-8"><title>Y6 compat</title>
 <script type="module">
 import { resolveReverseEngine, resolveReverseEngineDetailed, isReverseWebcodecsOptedIn } from "./reversePlayback.mjs";
 window.__y6 = { resolveReverseEngine, resolveReverseEngineDetailed, isReverseWebcodecsOptedIn };

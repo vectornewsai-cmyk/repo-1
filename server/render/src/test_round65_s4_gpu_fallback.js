@@ -35,6 +35,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -92,7 +93,7 @@ run("ffmpeg", ["-f", "lavfi", "-i", "testsrc=size=640x360:rate=30:duration=2",
 
 // --- Fake ffmpeg: fail chỉ khi argv chứa h264_nvenc --------------------------
 const fakeFfmpeg = path.join(work, "fake-ffmpeg.sh");
-fs.writeFileSync(fakeFfmpeg, [
+writeFileEpermRetry(fakeFfmpeg, [
   "#!/bin/sh",
   "# GIẢ LẬP GPU đã tháo: fail đúng encoder h264_nvenc, còn lại chạy ffmpeg thật.",
   'for a in "$@"; do',
@@ -116,7 +117,7 @@ const spec = {
   }] }],
 };
 const specPath = path.join(work, "spec.json");
-fs.writeFileSync(specPath, JSON.stringify(spec));
+writeFileEpermRetry(specPath, JSON.stringify(spec));
 
 function render(name, ffmpegBin, envExtra, extraArgs) {
   const outPath = path.join(work, `${name}.mp4`);
@@ -166,7 +167,7 @@ ok(!/thử lại bằng libx264.*thử lại bằng libx264/s.test(main.combined
 // --- Đối chứng: libx264 fail → KHÔNG retry -----------------------------------
 console.log("\n== Đối chứng: --encoder libx264 + ffmpeg luôn-fail → không retry, exit != 0 ==");
 const alwaysFail = path.join(work, "fake-ffmpeg-always-fail.sh");
-fs.writeFileSync(alwaysFail, [
+writeFileEpermRetry(alwaysFail, [
   "#!/bin/sh",
   'echo "Mock failure: ffmpeg luôn fail (đối chứng — lỗi không phải do GPU)" >&2',
   "exit 1",

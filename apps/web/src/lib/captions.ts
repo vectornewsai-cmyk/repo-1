@@ -79,6 +79,91 @@ export function wordsForSegments(
   return out;
 }
 
+/**
+ * Đợt 74 B9 — template style karaoke có tên (gap A1): 1 template = 1 bộ
+ * TextStyle hoàn chỉnh (màu chữ + màu nền + màu highlight + bold) để user
+ * chọn 1 chạm trong CaptionModal. Template chỉ là dữ liệu style nên dùng
+ * được cả hai đường: preview (canvas đọc style.highlightColor /
+ * backgroundColor) và render (ASS \k: PrimaryColour = highlight,
+ * BackColour = background — kể cả nền 8 ký tự #rrggbbaa, xem LIMITS đợt).
+ * Nền "mờ" (#00000080 = đen 50%) cần validator + hexToAssColor hiểu hex
+ * 8 ký tự (validate.js / render.js đợt này đã mở).
+ */
+export interface KaraokeStyleTemplate {
+  /** id ổn định, lưu trong state modal (không dịch). */
+  id: string;
+  /** Key i18n cho tên hiển thị (vi.json/en.json, caption.karaokeStyle*). */
+  nameKey: string;
+  /** Style áp lên clip phụ đề khi chọn template. */
+  style: Partial<TextStyle>;
+}
+
+export const KARAOKE_STYLE_TEMPLATES: KaraokeStyleTemplate[] = [
+  {
+    id: "vang-noi-bat",
+    nameKey: "caption.karaokeStyleYellow",
+    style: {
+      color: "#ffffff",
+      backgroundColor: "#000000",
+      highlightColor: "#ffff00",
+      bold: true,
+    },
+  },
+  {
+    id: "nen-mo",
+    nameKey: "caption.karaokeStyleDimBg",
+    style: {
+      color: "#ffffff",
+      backgroundColor: "#00000080",
+      highlightColor: "#00e5ff",
+      bold: true,
+    },
+  },
+  {
+    id: "hong-neon",
+    nameKey: "caption.karaokeStyleNeonPink",
+    style: {
+      color: "#ffffff",
+      backgroundColor: "#000000",
+      highlightColor: "#ff4fd8",
+      bold: true,
+    },
+  },
+];
+
+/** Template mặc định = template đầu tiên (Vàng nổi bật = style cũ R4). */
+export const KARAOKE_DEFAULT_TEMPLATE_ID = KARAOKE_STYLE_TEMPLATES[0].id;
+
+/** Tìm template theo id; id lạ → template mặc định (không bao giờ null). */
+export function resolveKaraokeTemplate(
+  id: string | undefined | null,
+): KaraokeStyleTemplate {
+  return (
+    KARAOKE_STYLE_TEMPLATES.find((tpl) => tpl.id === id) ??
+    KARAOKE_STYLE_TEMPLATES[0]
+  );
+}
+
+/**
+ * Đợt 74 B9 — từ karaoke đang được tô sáng tại thời điểm localT (giây, gốc
+ * 0 = clip.start). Trả về index của từ CUỐI CÙNG đã bắt đầu (start <= t),
+ * hoặc -1 khi chưa tới từ nào. Preview tô sáng TÍCH LŨY (mọi từ có
+ * start <= t) nên các từ 0..index đều sáng — khớp drawKaraokeWords cũ
+ * (điều kiện cũ: localT >= words[i].start). words phải đã sắp theo start
+ * (wordsToKaraoke/validateCaptionWords luôn sắp); mảng rỗng → -1.
+ */
+export function karaokeActiveWordIndex(
+  words: readonly { start: number; end: number }[],
+  localT: number,
+): number {
+  let idx = -1;
+  for (let i = 0; i < words.length; i++) {
+    if (localT >= words[i].start) idx = i;
+    else break;
+  }
+  return idx;
+}
+
 /** Đổi words của 1 segment thành karaoke clip-local (gốc 0 = clip.start). */
 export function wordsToKaraoke(
   segment: CaptionSegment,

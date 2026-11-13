@@ -11,7 +11,10 @@
 //       đo trực tiếp High-profile 50–58 MB cần 39,8–58,0 s ở tải
 //       trung bình — trần 45 s không bao được 57,9 MB (fail-open cả
 //       2 rep) và chỉ vừa đủ 49,7–51,8 MB (headroom ~1,03×).
-//       Các test công thức dưới đây đã cập nhật theo trần 60 s;
+//       Đợt 67 U5 nâng trần lên 90 s (xem LIMITS U5 đợt 67 §1): trần
+//       60 s cắt công thức ở 64 MiB (78.536 ms) và biên tải thấp chỉ
+//       ~11,5 s; trần 90 s không cắt bất kỳ sample nào trong dải cho
+//       phép. Các test công thức dưới đây đã cập nhật theo trần 90 s;
 //       tỉ lệ 1,2 giữ nguyên.
 //   (2) Fallback khi không có VideoDecoder: khóa bằng test Node ở đây
 //       (worker báo lỗi → fallback; fallback null → reject để
@@ -106,11 +109,12 @@ function fakeFactory(fake: FakeWorker): () => Worker {
   return () => fake as unknown as Worker;
 }
 
-// ---- (1) Công thức mới: tỉ lệ 1,2 ms/KiB, trần 60 s (đợt 64 R10) ----
+// ---- (1) Công thức mới: tỉ lệ 1,2 ms/KiB, trần 90 s (đợt 67 U5 nâng
+// từ 60 s của đợt 64 R10 — xem LIMITS U5 đợt 67 §1) ----
 
-ok("formula 63: hằng số mới — tỉ lệ 1,2 ms/KiB, trần 60 s (đợt 64 R10 nâng từ 45 s)", () => {
+ok("formula 63: hằng số mới — tỉ lệ 1,2 ms/KiB, trần 90 s (đợt 67 U5 nâng từ 60 s)", () => {
   assert.equal(WORKER_TRIAL_DECODE_TIMEOUT_EXTRA_MS_PER_KIB, 1.2);
-  assert.equal(MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS, 60_000);
+  assert.equal(MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS, 90_000);
 });
 
 ok("formula 63: 30.727.296 B → 35902 ms (chưa chạm trần)", () => {
@@ -123,13 +127,13 @@ ok("formula 63: 37.168.458 B → 43450 ms (chưa chạm trần; công thức cũ
   assert.equal(trialDecodeTimeoutForSampleSizeWorker(37_168_458, 200), 43_450);
 });
 
-ok("formula 63: 42.493.646 B → 49691 ms (không chạm trần 60 s; trần 45 s cũ sẽ cắt)", () => {
+ok("formula 63: 42.493.646 B → 49691 ms (không chạm trần 90 s; trần 45 s cũ sẽ cắt)", () => {
   assert.equal(trialDecodeTimeoutForSampleSizeWorker(42_493_646, 200), 49_691);
 });
 
-ok("formula 63: 50.246.362 B (crf0) → 58776 ms; 64 MiB → trần 60 s", () => {
+ok("formula 63: 50.246.362 B (crf0) → 58776 ms; 64 MiB → 78536 ms (không chạm trần 90 s; đợt 67 U5)", () => {
   assert.equal(trialDecodeTimeoutForSampleSizeWorker(50_246_362, 200), 58_776);
-  assert.equal(trialDecodeTimeoutForSampleSizeWorker(64 * 1024 * 1024, 200), 60_000);
+  assert.equal(trialDecodeTimeoutForSampleSizeWorker(64 * 1024 * 1024, 200), 78_536);
 });
 
 ok("formula 63: timeout đơn điệu theo kích thước (30 MB < 37 MB < 42 MB < 50 MB < trần)", () => {
@@ -143,7 +147,7 @@ ok("formula 63: timeout đơn điệu theo kích thước (30 MB < 37 MB < 42 MB
   assert.ok(t50 < MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS, `t50=${t50}`);
 });
 
-ok("formula 63: routing 42.493.646 B → worker, timeout 49691 ms (trần mới 60 s)", () => {
+ok("formula 63: routing 42.493.646 B → worker, timeout 49691 ms (trần mới 90 s; đợt 67 U5)", () => {
   const fake = new FakeWorker();
   const plan = planTrialDecodeCall({
     sampleBytes: 42_493_646,
@@ -154,7 +158,7 @@ ok("formula 63: routing 42.493.646 B → worker, timeout 49691 ms (trần mới 
   });
   assert.equal(plan.viaWorker, true);
   assert.equal(plan.timeoutMs, 49_691);
-  assert.equal(MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS, 60_000);
+  assert.equal(MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS, 90_000);
 });
 
 // ---- (2) Fallback khi không có VideoDecoder (mức unit) ----

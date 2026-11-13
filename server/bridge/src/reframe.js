@@ -17,6 +17,8 @@ const os = require("os");
 const { spawn } = require("child_process");
 const { redactStderr } = require("./errorDetail"); // Đợt 29 L3
 const { codedError } = require("./errorCodes"); // Đợt 62 R5: mã lỗi bridge→web
+// Đợt 80 H8 (gap N4): hủy job thật.
+const { abortError, killChildOnAbort, killChildTree } = require("./aiProgress");
 
 /** Whitelist aspect đích — reframe.py cũng validate lại phía Python. */
 const REFRAME_ASPECTS = ["9:16", "1:1", "4:5"];
@@ -80,7 +82,7 @@ function progressFromLine(line) {
  * @param {object} [o.config]    override reframeConfigFromEnv() (cho test).
  * @returns {Promise<{aspect:string, outPath:string, bytes:number}>}
  */
-function runReframe({ inputPath, outputPath, aspect, onProgress, config } = {}) {
+function runReframe({ inputPath, outputPath, aspect, onProgress, signal, config } = {}) {
   const cfg = config || reframeConfigFromEnv();
   const a = validateAspect(aspect);
   if (typeof inputPath !== "string" || !path.isAbsolute(inputPath)) {
@@ -91,6 +93,10 @@ function runReframe({ inputPath, outputPath, aspect, onProgress, config } = {}) 
   }
   if (!fs.existsSync(inputPath)) {
     return Promise.reject(new Error("Không tìm thấy file video để reframe."));
+  }
+  // Đợt 80 H8: đã bị hủy trước khi spawn → từ chối ngay.
+  if (signal && signal.aborted) {
+    return Promise.reject(abortError("Job đã bị hủy trước khi chạy."));
   }
 
   return new Promise((resolve, reject) => {
@@ -106,6 +112,8 @@ function runReframe({ inputPath, outputPath, aspect, onProgress, config } = {}) 
       child = spawn(cfg.pythonBin, args, {
         stdio: ["ignore", "pipe", "pipe"],
         shell: false,
+        // Đợt 80 H8: group riêng để hủy diệt được cả process con.
+        detached: process.platform !== "win32",
       });
     } catch (e) {
       reject(new Error(`Không khởi động được reframe.py: ${e.message}`));
@@ -115,11 +123,14 @@ function runReframe({ inputPath, outputPath, aspect, onProgress, config } = {}) 
     let done = false;
     let stderrBuf = "";
     let stderrTail = "";
+    // Khai báo trước để finish() gọi được cả khi spawn throw đồng bộ.
+    let detachAbort = () => {};
 
     const finish = (fn) => {
       if (done) return;
       done = true;
       clearTimeout(timer);
+      detachAbort();
       fn();
     };
     const emitProgress = (pct) => {
@@ -128,13 +139,25 @@ function runReframe({ inputPath, outputPath, aspect, onProgress, config } = {}) 
 
     const timer = setTimeout(() => {
       finish(() => {
-        try { child.kill("SIGKILL"); } catch { /* bỏ qua */ }
+        // Timeout: kill cả cây process thay vì chỉ python.
+        killChildTree(child, 0).catch(() => {});
         reject(new Error(
           `Reframe quá thời gian (${Math.round(cfg.timeoutMs / 60000)} phút) — thử video ngắn hơn.`
         ));
       });
     }, cfg.timeoutMs);
     if (timer.unref) timer.unref();
+
+    // Đợt 80 H8: hủy thật — signal abort → kill cây process, reject lỗi
+    // AI_JOB_ABORTED (route phân biệt để gửi event "cancelled").
+    detachAbort = killChildOnAbort(child, signal, 2000);
+    if (signal) {
+      signal.addEventListener("abort", () => {
+        finish(() => {
+          reject(abortError("Job đã bị hủy."));
+        });
+      }, { once: true });
+    }
 
     child.stderr.on("data", (d) => {
       const s = d.toString();

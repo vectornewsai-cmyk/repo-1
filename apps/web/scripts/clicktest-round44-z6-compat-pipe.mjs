@@ -23,6 +23,7 @@
 // Exit 0 khi mọi kiểm tra bắt buộc pass; exit 1 khi có kiểm tra fail.
 import { spawn, execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -88,7 +89,7 @@ async function main() {
   execFileSync(esbuild, [path.join(WEB_DIR, "src", "store.ts"), "--bundle", "--platform=browser", "--format=esm", `--outfile=${path.join(SCRATCH, "store.mjs")}`], { stdio: "ignore" });
   execFileSync(esbuild, [path.join(WEB_DIR, "src", "lib", "reversePlayback.ts"), "--bundle", "--platform=browser", "--format=esm", `--outfile=${path.join(SCRATCH, "reversePlayback.mjs")}`], { stdio: "ignore" });
   execFileSync(esbuild, [path.join(WEB_DIR, "src", "i18n", "index.ts"), "--bundle", "--platform=browser", "--format=esm", `--outfile=${path.join(SCRATCH, "i18n.mjs")}`], { stdio: "ignore" });
-  fs.writeFileSync(path.join(SCRATCH, "page.html"), `<!doctype html><meta charset="utf-8"><title>Z6 compat</title>
+  writeFileEpermRetry(path.join(SCRATCH, "page.html"), `<!doctype html><meta charset="utf-8"><title>Z6 compat</title>
 <script type="module">
 window.__z6Errors = [];
 window.addEventListener("unhandledrejection", (e) => { window.__z6Errors.push("unhandledrejection:" + (e.reason && e.reason.message ? e.reason.message : String(e.reason))); });

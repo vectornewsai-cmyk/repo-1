@@ -29,6 +29,7 @@
 // Exit 0 khi không có mục FAIL; NOT-MEASURED không làm fail.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -120,7 +121,7 @@ const fixture = {
     tracks: [{ id: "v0", kind: "video", clips: [{ kind: "video", id: "c0", src: "asset:a_probe45a1", start: 0, duration: 8, in: 0, out: 8 }] }],
   },
 };
-fs.writeFileSync(fixturePath, JSON.stringify(fixture, null, 2));
+writeFileEpermRetry(fixturePath, JSON.stringify(fixture, null, 2));
 try {
   const back = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
   const problems = validateShell(back, fixturePath);

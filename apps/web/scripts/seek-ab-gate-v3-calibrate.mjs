@@ -22,6 +22,7 @@
  *   node apps/web/scripts/seek-ab-gate-v3-calibrate.mjs [out.json]
  */
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import { classifyRunV3, classifyLoadV3 } from "./seek-ab-gate-v3.mjs";
@@ -175,6 +176,6 @@ const out = {
 };
 
 const outPath = process.argv[2] ? path.resolve(process.argv[2]) : path.join(RES, "v37-t1-gate-v3-calibration.json");
-fs.writeFileSync(outPath, JSON.stringify(out, null, 2));
+writeFileEpermRetry(outPath, JSON.stringify(out, null, 2));
 console.log(`[calibrate] runs=${rows.length} s2=${s2Rows.length} loadFlips=${loadFlips.length} acceptedFlips=${acceptedFlips.length} decodeMismatchV2=${crossCheck.decodeMismatchV2Published.length} loadMismatch=${crossCheck.loadMismatch.length} v1ToV2=${crossCheck.v1ToV2Reclassification.length}`);
 console.log(`[calibrate] → ${outPath}`);

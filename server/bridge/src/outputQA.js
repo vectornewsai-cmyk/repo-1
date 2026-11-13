@@ -178,7 +178,8 @@ async function selfTest() {
     else { fail++; console.log(`  ❌ ${name}${detail ? " — " + detail : ""}`); }
   };
 
-  const ff = (args) => execFileSync("ffmpeg", ["-y", "-v", "error", ...args], { stdio: "pipe" });
+  // Đợt 74 B4: self-test cũng phải có timeout (không để ffmpeg treo kẹt suite).
+  const ff = (args) => execFileSync("ffmpeg", ["-y", "-v", "error", ...args], { stdio: "pipe", timeout: 120000, killSignal: "SIGKILL" });
 
   console.log("== [1] File đúng → QA pass ==");
   const good = path.join(tmp, "good.mp4");

@@ -8,6 +8,7 @@ import { SPEC_VERSION } from "@repo-1/video-spec";
 import type { MediaItem } from "./media";
 import { uid } from "./lib";
 import { AssetStore } from "./lib/assetStore";
+import { extensionForContainer, recorderContainerType } from "./lib/sampleMime";
 
 const W = 640;
 const H = 360;
@@ -62,7 +63,7 @@ function drawSampleFrame(ctx: CanvasRenderingContext2D, t: number, dur: number, 
   ctx.fillRect(40, H - 34, (W - 80) * p, 6);
 }
 
-/** Ghi canvas thành blob webm trong `seconds` giây. null nếu trình duyệt không hỗ trợ. */
+/** Ghi canvas thành blob video trong `seconds` giây (webm trên Chromium, mp4 trên Safari — xem đuôi tên ở dưới). null nếu trình duyệt không hỗ trợ. */
 async function recordSample(
   variant: 0 | 1,
   seconds: number,
@@ -106,7 +107,11 @@ async function recordSample(
     });
     rec.stop();
     await done;
-    return { blob: new Blob(chunks, { type: "video/webm" }), thumb };
+    // Đợt 73 A7: nhãn Blob theo đúng container recorder thật sự dùng
+    // (rec.mimeType) — Safari ghi mp4 mặc định khi webm không được hỗ trợ;
+    // hard-code "video/webm" sẽ gán nhãn sai khiến <video> không phát được
+    // clip mẫu trên Safari. Chromium vẫn ra "video/webm" như cũ.
+    return { blob: new Blob(chunks, { type: recorderContainerType(rec.mimeType) }), thumb };
   } catch {
     return null;
   }
@@ -134,10 +139,15 @@ export async function buildSampleProject(): Promise<{ spec: VideoSpec; media: Me
     const rec = await recordSample(variant, seconds);
     const isVideo = rec !== null;
     const { blob, thumb } = rec ?? stillSample(variant, seconds);
-    const ext = isVideo ? "webm" : "png";
+    // Đợt 74 B3 — đuôi theo container thật của blob (đợt 73 A7 đã sửa
+    // nhãn MIME nhưng tên vẫn hard-code .webm): Chromium ghi webm →
+    // "mau-1.webm" như cũ; Safari ghi mp4 → "mau-1.mp4", tên khớp bytes
+    // nên <video> + rehydrate không bị lừa bởi đuôi sai. Spec src lấy
+    // từ chính tên này nên liên kết không vỡ.
+    const ext = isVideo ? extensionForContainer(blob.type) : "png";
     // Đợt 36 S5 — bền vững media mẫu qua reload: ingest blob mẫu vào
     // AssetStore (IndexedDB) để bước rehydrate lúc khởi động nạp lại
-    // được media bin từ tên thô `mau-*.webm` (khớp originalName).
+    // được media bin từ tên thô `mau-*` (khớp originalName).
     // Best-effort tuyệt đối: IndexedDB / crypto.subtle không khả dụng
     // (private mode, non-secure context) thì mẫu vẫn chạy trong phiên,
     // chỉ không bền qua reload — không được làm hỏng loadSample.
@@ -146,7 +156,7 @@ export async function buildSampleProject(): Promise<{ spec: VideoSpec; media: Me
     // khác nhau nên dedup theo sha không gom được chúng).
     // Đợt 53 J5 — giữ assetId của manifest mẫu để MediaItem mẫu cũng
     // nối được proxy về manifest khi user tạo proxy tay cho clip mẫu
-    // (mau-*.webm chỉ 640×360 nên auto-proxy bỏ qua, nhưng nút Proxy
+    // (mau-* chỉ 640×360 nên auto-proxy bỏ qua, nhưng nút Proxy
     // tay vẫn hiện vì item có file sau rehydrate).
     let sampleAssetId: string | undefined;
     try {
@@ -160,8 +170,14 @@ export async function buildSampleProject(): Promise<{ spec: VideoSpec; media: Me
       });
       sampleAssetId = kept.assetId;
       const all = await store.list();
+      // Đợt 74 B3 — tỉa cả manifest mẫu cũ mang đuôi còn lại: Safari
+      // trước đợt này lưu "mau-1.webm" cho bytes mp4; nay tên mới là
+      // "mau-1.mp4", không tỉa chéo thì bản cũ nằm lại IDB mãi (mồ côi).
+      const legacyName = kept.originalName.replace(/\.(webm|mp4)$/, (m) =>
+        m === ".webm" ? ".mp4" : ".webm",
+      );
       for (const m of all) {
-        if (m.originalName === kept.originalName && m.assetId !== kept.assetId) {
+        if ((m.originalName === kept.originalName || m.originalName === legacyName) && m.assetId !== kept.assetId) {
           await store.remove(m.assetId);
         }
       }
@@ -170,7 +186,7 @@ export async function buildSampleProject(): Promise<{ spec: VideoSpec; media: Me
     }
     // Đợt 58 O2 — gắn `file` thật cho media mẫu trong phiên: blob mẫu
     // đã có sẵn trong tay, nhưng trước đây MediaItem mẫu không mang
-    // `file` nên ExportPanel.collectMediaFiles coi mau-*.webm là thiếu
+    // `file` nên ExportPanel.collectMediaFiles coi mau-* là thiếu
     // (render báo lỗi missingMedia) và nút Proxy/reframe cũng ẩn cho
     // tới khi user reload trang (lúc đó rehydrate mới dựng File từ
     // IndexedDB). Gắn File tại đây để item trong phiên đồng nhất với

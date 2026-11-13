@@ -18,8 +18,11 @@
  * - (b) Nội dung mẫu BÊN TRONG project (placeholder default, text clip,
  *   tên clip, `spec.meta.name`): KHÔNG localize — đó là dữ liệu người dùng
  *   sau khi tạo project, dịch lén sẽ đổi nội dung họ export.
- * - (c) Tên file media mẫu (`mau-*.webm`, `pack-<id>-*.webm`): KHÔNG đổi —
+ * - (c) Tên file media mẫu (`mau-*`, `pack-<id>-*`): KHÔNG localize —
  *   tên file là định danh, đổi là vỡ liên kết `src` trong spec.
+ *   (Đợt 74 B3: đuôi .webm/.mp4 của tên mẫu ĐƯỢC suy ra từ container
+ *   thật lúc tạo file — `src` trong spec lấy từ chính tên đã tạo nên
+ *   không vỡ liên kết; đây không phải localize, xem sampleMime.ts.)
  *
  * Đợt 57 N5 — 2 thay đổi trên nền M7:
  *

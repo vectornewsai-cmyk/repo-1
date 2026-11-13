@@ -31,7 +31,9 @@
 // checker, không dùng script này.
 
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
+// Đợt 86 N8: ghi qua helper retry EPERM (5×20 s + verify đủ byte).
+import { writeFileEpermRetry } from "../../../apps/web/scripts/eperm-retry.mjs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -260,13 +262,13 @@ function main() {
       // Kiểm tra cả file `.js` parse được trước khi ghi đè (tránh ghi
       // file hỏng khi logic thay thế sai).
       const tmp = join(tmpdir(), `vcut-sync-catalog-${jsFile}.mjs`);
-      writeFileSync(tmp, jsSrc, "utf8");
+      writeFileEpermRetry(tmp, jsSrc, "utf8");
       try {
         execFileSync(process.execPath, ["--check", tmp], { stdio: "pipe" });
       } catch (e) {
         throw new Error(`${jsFile}: file sau đồng bộ không parse được — KHÔNG ghi (lỗi: ${e.message})`);
       }
-      writeFileSync(jsPath, jsSrc, "utf8");
+      writeFileEpermRetry(jsPath, jsSrc, "utf8");
     }
   }
   console.log(

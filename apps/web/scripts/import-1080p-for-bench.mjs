@@ -14,6 +14,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -164,7 +165,7 @@ async function main() {
     if (!mA) throw new Error("Manifest A không có.");
     // Proxy KHÔNG nằm trong manifest: xác nhận qua badge DOM đã thấy ở trên.
     const seedA = makeSeed(template, "FPS-1080p-proxy", nameA);
-    fs.writeFileSync(path.join(SEEDS_DIR, "autosave-fps-1080p-proxy.json"), JSON.stringify(seedA));
+    writeFileEpermRetry(path.join(SEEDS_DIR, "autosave-fps-1080p-proxy.json"), JSON.stringify(seedA));
     console.log(`[import] seed A ghi: ${path.join(SEEDS_DIR, "autosave-fps-1080p-proxy.json")}`);
 
     // Bước B: proxy OFF — file tên khác để thành asset riêng
@@ -185,7 +186,7 @@ async function main() {
     const badgeB = await cdp.evaluate(`(() => { const b = document.querySelector('[aria-label="Tạo proxy cho ${nameB}"]'); return b ? b.textContent.trim() : null; })()`);
     if (badgeB && badgeB.includes("✓ PROXY")) throw new Error("Item B có proxy dù auto-proxy đã tắt.");
     const seedB = makeSeed(template, "FPS-1080p-gốc", nameB);
-    fs.writeFileSync(path.join(SEEDS_DIR, "autosave-fps-1080p-orig.json"), JSON.stringify(seedB));
+    writeFileEpermRetry(path.join(SEEDS_DIR, "autosave-fps-1080p-orig.json"), JSON.stringify(seedB));
     console.log(`[import] seed B ghi: ${path.join(SEEDS_DIR, "autosave-fps-1080p-orig.json")}`);
     console.log("[import] XONG: proxy A ok, orig B ok.");
   } catch (e) {

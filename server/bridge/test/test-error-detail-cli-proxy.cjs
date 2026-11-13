@@ -28,6 +28,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { execFileSync, spawn, spawnSync } = require("child_process");
@@ -100,7 +101,7 @@ function main() {
   try {
     vcut(["create", "--name", "M3", "--width", "1280", "--height", "720",
       "--out", path.join(work, "bad.json")]);
-    fs.writeFileSync(path.join(work, "corrupt.mp4"), "not a video");
+    writeFileEpermRetry(path.join(work, "corrupt.mp4"), "not a video");
     vcut(["add-clip", "--project", path.join(work, "bad.json"),
       "--src", "corrupt.mp4", "--start", "0", "--duration", "2"]);
     const badAbs = path.join(work, "corrupt.mp4");
@@ -159,7 +160,7 @@ function main() {
     ok(ready, "bridge server thật khởi động được (health 200)");
     if (ready) {
       const badFile = path.join(bwork, "upload-bad.mp4");
-      fs.writeFileSync(badFile, "not a video");
+      writeFileEpermRetry(badFile, "not a video");
       const post = (url, file) => run("curl", ["-s", "-F", `file=@${file || badFile}`, url]);
       const noDetail = JSON.parse(post(`http://127.0.0.1:${port}/api/proxy`).stdout || "{}");
       ok(noDetail.errorCode !== undefined, "proxy lỗi (không detail) có errorCode");

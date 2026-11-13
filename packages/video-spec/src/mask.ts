@@ -29,7 +29,16 @@
  * hoá về WxH, trước setpts lên timeline) và với localT của preview.
  * Render: video mask animation (mask_anim.py vẽ PNG từng frame → ffv1
  * gray) dùng chung đường movie+blend nhanh của R2, KHÔNG dùng geq chậm.
+ *
+ * Phase 9 đợt 87 O1 — mask bám motion track: clip vừa có `track` vừa có
+ * `mask` thì tâm mask bám quỹ đạo (maskGeometryAtTrack). Không thêm field
+ * spec mới — dùng `clip.track` đã có (tracking.ts). Quy tắc: track thắng
+ * x/y (cả x/y tĩnh lẫn x/y keyframe), keyframes vẫn thắng w/h; shape /
+ * feather / invert giữ nguyên. Xem docs/PHASE9_ROUND87_O1_MASK_TRACK_SPEC_LIMITS.md.
  */
+
+import { interpolateTrack } from "./tracking.js";
+import type { TrackAttachment } from "./tracking.js";
 
 /** Hình dạng mask. */
 export type MaskShape = "rect" | "ellipse";
@@ -160,6 +169,36 @@ export function interpolateMaskAt(
 export function maskGeometryAt(m: ClipMask, t: number): ClipMask {
   const g = interpolateMaskAt(m, t);
   return { ...m, x: g.x, y: g.y, w: g.w, h: g.h, keyframes: undefined };
+}
+
+/**
+ * Phase 9 đợt 87 O1 — Hình học mask bám motion track tại thời gian cục bộ
+ * t (giây, tương đối từ clip.start — cùng gốc thời gian với `clip.track`
+ * và với mask keyframes).
+ *
+ * - Không có track (undefined/null, hoặc `points` rỗng/không phải mảng)
+ *   → trả về đúng maskGeometryAt(m, t) (đồng nhất, không đổi hành vi cũ).
+ * - Có track → tâm mask (x, y) = vị trí nội suy trên quỹ đạo tại t
+ *   (interpolateTrack: tuyến tính giữa 2 điểm, kẹp ngoài khoảng);
+ *   w/h vẫn lấy từ interpolateMaskAt (keyframes thắng w/h, keyframe x/y
+ *   bị track ghi đè); shape/feather/invert giữ nguyên; keyframes bị bỏ
+ *   khỏi kết quả như maskGeometryAt (hình học tại một thời điểm).
+ * - Track 1 điểm → tâm hằng bằng điểm đó mọi t; track rỗng → fallback
+ *   tĩnh (validateTrackAttachment vẫn báo lỗi track rỗng ở tầng validate,
+ *   hàm này chỉ phòng thủ để render/preview không crash).
+ * - Mirror chính xác ở packages/video-spec/src/mask.js (ESM) và
+ *   server/render/src/mask.js (CJS) — cùng công thức, cùng thứ tự phép
+ *   tính để kết quả số khớp nhau bit-for-bit.
+ */
+export function maskGeometryAtTrack(
+  m: ClipMask,
+  track: TrackAttachment | undefined | null,
+  t: number,
+): ClipMask {
+  const g = maskGeometryAt(m, t);
+  if (!track || !Array.isArray(track.points) || track.points.length === 0) return g;
+  const pos = interpolateTrack(track.points, t);
+  return { ...g, x: pos.x, y: pos.y };
 }
 
 /**
