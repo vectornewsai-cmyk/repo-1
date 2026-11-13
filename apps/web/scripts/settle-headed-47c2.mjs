@@ -50,6 +50,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -89,7 +90,7 @@ console.log(`C2 config: slack=${SLACK} maxAttempts=${MAX_ATTEMPTS} w2probe=${DO_
 
 // ---- 1. Bundle entry (reverseWebcodecs + assetStore + rehydrate + settle47C2) ----
 const entryPath = path.join(SCRATCH, "c2-entry.mjs");
-fs.writeFileSync(entryPath, `import {
+writeFileEpermRetry(entryPath, `import {
   getReversePreviewController, reverseDecodeAheadStatus,
   setReverseDecodeAheadWanted, disposeReverseWebcodecsControllers,
 } from ${JSON.stringify(path.join(REPO, "apps/web/src/lib/reverseWebcodecs.ts"))};
@@ -487,7 +488,7 @@ async function runPhase(cdp, label, newFn, opts = {}) {
     // bị daemon restart giết giữa chừng nên mất cả c2-result.json —
     // chỉ còn stdout log). File này là bằng chứng dự phòng, không thay
     // c2-result.json cuối lượt.
-    try { fs.writeFileSync(path.join(SCRATCH, "c2-result-partial.json"), JSON.stringify({ phase: label, successCount, attempts }, null, 2)); } catch {}
+    try { writeFileEpermRetry(path.join(SCRATCH, "c2-result-partial.json"), JSON.stringify({ phase: label, successCount, attempts }, null, 2)); } catch {}
     console.log(`  [${label} attempt ${a}] ${r.cls} (aim=${r.aim} slack=${opts.slack ?? SLACK} gap=${r.gapMs ?? "?"} ms remainingAtToggle=${r.remainingAtToggle ?? "?"})`);
     for (const l of r.log || []) console.log(`    ${l}`);
     if (r.cls === "SUCCESS") successCount++;
@@ -570,7 +571,7 @@ async function main() {
     const mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
     record("C2(D1) W2 durMs theo mốc trong GOP hỏng (974 vs 989)", true,
       `974: [${d974.map((v) => v.toFixed(1)).join(", ")}] ms (tb ${mean(d974)?.toFixed(1)}); 989: [${d989.map((v) => v.toFixed(1)).join(", ")}] ms (tb ${mean(d989)?.toFixed(1)}); ok=false tất cả: ${w2probeRows.every((r) => r.ok === false)}`);
-    try { fs.writeFileSync(path.join(SCRATCH, "c2-result-partial.json"), JSON.stringify({ phase: "D1", w2probe: w2probeRows }, null, 2)); } catch {}
+    try { writeFileEpermRetry(path.join(SCRATCH, "c2-result-partial.json"), JSON.stringify({ phase: "D1", w2probe: w2probeRows }, null, 2)); } catch {}
   }
 
   // Pha C — capture SUCCESS với aim C2 (slack 3), tối đa 6 attempt,
@@ -605,7 +606,7 @@ async function main() {
   }
 
   const out = { fileSize, assetSetup, probeReady, w2probe: w2probeRows, capture, wave2 };
-  fs.writeFileSync(path.join(SCRATCH, "c2-result.json"), JSON.stringify(out, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "c2-result.json"), JSON.stringify(out, null, 2));
   console.log(`loadavg lúc kết thúc: ${loadavg()}`);
   const w2ObsCount = (capture.attempts || []).filter((a) => a.aim === "remaining-tight" && a.w2obs).length
     + ((wave2?.attempts || []).filter((a) => a.aim === "remaining-tight" && a.w2obs).length);

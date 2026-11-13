@@ -43,6 +43,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -79,7 +80,7 @@ console.log(`D2 config: slack=${SLACK} maxAttempts=${MAX_ATTEMPTS} (không D1 pr
 
 // ---- 1. Bundle entry (reverseWebcodecs + assetStore + rehydrate + settle47C2) ----
 const entryPath = path.join(SCRATCH, "d2-entry.mjs");
-fs.writeFileSync(entryPath, `import {
+writeFileEpermRetry(entryPath, `import {
   getReversePreviewController, reverseDecodeAheadStatus,
   setReverseDecodeAheadWanted, disposeReverseWebcodecsControllers,
 } from ${JSON.stringify(path.join(REPO, "apps/web/src/lib/reverseWebcodecs.ts"))};
@@ -609,7 +610,7 @@ async function runPhase(cdp, label, newFn, opts = {}) {
     // bị daemon restart giết giữa chừng nên mất cả d2-result.json —
     // chỉ còn stdout log). File này là bằng chứng dự phòng, không thay
     // d2-result.json cuối lượt.
-    try { fs.writeFileSync(path.join(SCRATCH, "d2-result-partial.json"), JSON.stringify({ phase: label, successCount, attempts }, null, 2)); } catch {}
+    try { writeFileEpermRetry(path.join(SCRATCH, "d2-result-partial.json"), JSON.stringify({ phase: label, successCount, attempts }, null, 2)); } catch {}
     console.log(`  [${label} attempt ${a}] ${r.cls} (aim=${r.aim} slack=${opts.slack ?? SLACK} gap=${r.gapMs ?? "?"} ms remainingAtToggle=${r.remainingAtToggle ?? "?"})`);
     for (const l of r.log || []) console.log(`    ${l}`);
     if (r.cls === "SUCCESS") successCount++;
@@ -686,7 +687,7 @@ async function main() {
   }
 
   const out = { fileSize, assetSetup, probeReady, capture };
-  fs.writeFileSync(path.join(SCRATCH, "d2-result.json"), JSON.stringify(out, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "d2-result.json"), JSON.stringify(out, null, 2));
   console.log(`loadavg lúc kết thúc: ${loadavg()}`);
   const w2ObsCount = (capture.attempts || []).filter((a) => a.aim === "remaining-tight" && a.w2obs).length;
   const d2OkCount = (capture.attempts || []).filter((a) => a.d2 && a.d2.w2decoded && a.d2.split).length;

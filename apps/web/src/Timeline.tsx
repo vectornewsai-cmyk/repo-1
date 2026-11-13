@@ -359,6 +359,26 @@ function ClipView({
   const kindClass =
     clip.kind === "video" ? "clip-video" : clip.kind === "audio" ? "clip-audio" : clip.kind === "nested" ? "clip-nested" : "clip-text";
   const nested = clip.kind === "nested";
+  // Đợt 76 D8 — badge codec không hỗ trợ trên clip timeline (đóng nợ
+  // đợt 75 C6 §4 mục 8: badge trước đây chỉ có trên thẻ MediaBin, clip
+  // đã kéo lên timeline không có dấu hiệu nào, preview đen lặng).
+  // Tra media theo src như ClipThumb (by name); clip từ file .vcut có
+  // thể trỏ bằng `asset:<assetId>` (xem assetStore.ts) nên khớp thêm
+  // theo assetId. Text/nested không có src nên không badge; sticker
+  // src là URL nên lookup hụt → không badge. Chỉ là dấu hiệu (span,
+  // không phải nút): bấm vào clip vẫn chọn/kéo như cũ; modal giải
+  // thích mở từ badge trên thẻ MediaBin. Dùng lại key
+  // mediabin.codecBadgeTitle nên không thêm key i18n (dict giữ 2419
+  // sau đợt 76 D9 thêm 6 key exportPanel.aspectFit*).
+  const media = useStore((s) => s.media);
+  const unsupportedCodec =
+    clip.kind !== "text" && clip.kind !== "nested"
+      ? media.find(
+          (m) =>
+            m.name === clip.src ||
+            (clip.src.startsWith("asset:") && m.assetId === clip.src.slice("asset:".length)),
+        )?.unsupportedCodec
+      : undefined;
   return (
     <div
       className={`tl-clip ${kindClass}${selected ? " selected" : ""}`}
@@ -379,7 +399,7 @@ function ClipView({
         }}
       />
       <ClipThumb clip={clip} />
-      <div className="clip-label">{nested && <span className="clip-badge">📦</span>}{clip.kind === "video" && clipHasEnhance(clip) && <span className="clip-badge" data-enhance-badge title={enhanceT("enhance.badgeTitle", "Clip có tăng cường — xem mục Tăng cường video trong Inspector")}>✨</span>}{clipLabel(clip)}</div>
+      <div className="clip-label">{nested && <span className="clip-badge">📦</span>}{clip.kind === "video" && clipHasEnhance(clip) && <span className="clip-badge" data-enhance-badge title={enhanceT("enhance.badgeTitle", "Clip có tăng cường — xem mục Tăng cường video trong Inspector")}>✨</span>}{unsupportedCodec && <span className="clip-badge" data-testid="timeline-codec-badge" title={i18nT("mediabin.codecBadgeTitle", { codec: unsupportedCodec })} role="img" aria-label={i18nT("mediabin.codecBadgeTitle", { codec: unsupportedCodec })}>⚠️</span>}{clipLabel(clip)}</div>
       {clip.kind === "audio" && (
         <ClipWaveform clip={clip} pxPerSec={pxPerSec} />
       )}

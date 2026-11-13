@@ -53,6 +53,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -773,8 +774,8 @@ async function main() {
     final.attempts = [r1];
   }
   const out = { attempts: final.attempts.map((a) => ({ results: a.results, harnessError: a.harnessError || null })) };
-  fs.writeFileSync(path.join(SCRATCH, "h6-result.json"), JSON.stringify(out, null, 2));
-  fs.writeFileSync(path.join(SCRATCH, "h6-log.txt"), logLines.join("\n"));
+  writeFileEpermRetry(path.join(SCRATCH, "h6-result.json"), JSON.stringify(out, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "h6-log.txt"), logLines.join("\n"));
   const res = final.results;
   const failed = res.filter((r) => !r.ok);
   console.log(`\n== H6 keyframe clicktest: ${res.length - failed.length}/${res.length} pass ==${final.harnessError ? " (HARNESS ERROR — exit 2)" : ""}`);

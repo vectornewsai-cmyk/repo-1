@@ -58,6 +58,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -96,7 +97,7 @@ console.log(`fixture: ${FIX} size=${fileSize} byte = ${(fileSize / 1048576).toFi
 
 // ---- 1. Bundle entry (reverseWebcodecs + assetStore + rehydrate) ----
 const entryPath = path.join(SCRATCH, "b1-entry.mjs");
-fs.writeFileSync(entryPath, `import {
+writeFileEpermRetry(entryPath, `import {
   getReversePreviewController, reverseDecodeAheadStatus,
   setReverseDecodeAheadWanted, disposeReverseWebcodecsControllers,
 } from ${JSON.stringify(path.join(REPO, "apps/web/src/lib/reverseWebcodecs.ts"))};
@@ -656,7 +657,7 @@ async function main() {
         : `không bắt được SUCCESS sau 1 attempt dwell 300 s: ${p3.attempts.map((a) => a.cls).join(", ")}`);
 
   const out = { fileSize, assetSetup, probeReady, phases: { asset: p2, hidden: p3 } };
-  fs.writeFileSync(path.join(SCRATCH, "b1-result.json"), JSON.stringify(out, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "b1-result.json"), JSON.stringify(out, null, 2));
   console.log(`loadavg lúc kết thúc: ${loadavg()}`);
   // B1 exit theo ĐO LƯỜNG, không theo SUCCESS: 0 khi có ≥1 quan sát W2
   // ultra-tight ở pha asset (kể cả SUCCESS vẫn mở); 1 khi không có.

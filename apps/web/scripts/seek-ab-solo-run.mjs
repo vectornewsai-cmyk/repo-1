@@ -64,6 +64,7 @@
  * không claim cơ chế sụp đoạn — không bịa entry nào.
  */
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -542,7 +543,7 @@ function runOneVariant({ variant, attemptNo, cfg, state }) {
   const gate = waitForQuietGate();
   if (!gate.ok) {
     const rec = { run: runId, variant, attempt: attemptNo, counted: false, status: "gate-timeout", reason: gate.reason };
-    fs.writeFileSync(outPath, JSON.stringify(rec, null, 2));
+    writeFileEpermRetry(outPath, JSON.stringify(rec, null, 2));
     return rec;
   }
   const frozenBefore = distManifest(distDir);
@@ -563,13 +564,13 @@ function runOneVariant({ variant, attemptNo, cfg, state }) {
   const forwardHoldPath = path.join(scratch, "forward-hold.json");
   if (q6.status !== 0 || !fs.existsSync(forwardHoldPath)) {
     const rec = { run: runId, variant, attempt: attemptNo, counted: true, status: "NO_RESULT", q6Exit: q6.status, q6Log: q6.stdout?.slice(-500) ?? "", reason: "probe Q6 không trả forward-hold.json" };
-    fs.writeFileSync(outPath, JSON.stringify(rec, null, 2));
+    writeFileEpermRetry(outPath, JSON.stringify(rec, null, 2));
     return rec;
   }
   if (frozenAfter.manifestSha256 !== frozenBefore.manifestSha256 || bundleAfter !== bundleBefore) {
     console.error(`[${runId}] INVALID: dist đóng băng đổi giữa lượt — lượt bị loại, dừng phiên (exit 3).`);
     const rec = { run: runId, variant, attempt: attemptNo, counted: true, status: "INVALID", reason: "manifest/bundle đóng băng đổi giữa lượt" };
-    fs.writeFileSync(outPath, JSON.stringify(rec, null, 2));
+    writeFileEpermRetry(outPath, JSON.stringify(rec, null, 2));
     process.exit(3);
   }
   const labeled = JSON.parse(fs.readFileSync(path.join(scratch, "q6-labeled.json"), "utf8"));
@@ -598,7 +599,7 @@ function runOneVariant({ variant, attemptNo, cfg, state }) {
     // absent rõ ràng, không bịa entry (xem extractPerSeekReport).
     perSeekProbe: extractPerSeekReport(raw),
   };
-  fs.writeFileSync(outPath, JSON.stringify(rec, null, 2));
+  writeFileEpermRetry(outPath, JSON.stringify(rec, null, 2));
   return rec;
 }
 
@@ -646,7 +647,7 @@ function runSession(cfg) {
     const accS = acceptedOrdered.filter((r) => r.variant === "single").length;
     if (accR >= SOLO.targetPerSide && accS >= SOLO.targetPerSide) {
       const summary = buildSummary(acceptedOrdered, excluded, { session: "solo", completedAt: new Date().toISOString() });
-      fs.writeFileSync(path.join(cfg.outDir, "v38-solo-seek-ab-summary.json"), JSON.stringify(summary, null, 2));
+      writeFileEpermRetry(path.join(cfg.outDir, "v38-solo-seek-ab-summary.json"), JSON.stringify(summary, null, 2));
       console.log(`[solo] đủ 8/phía. locked=${summary.lock.locked} — ${summary.lock.verdict}`);
       process.exit(0);
     }
@@ -667,11 +668,11 @@ function runSession(cfg) {
     if (rec.accepted) acceptedOrdered.push({ run: rec.run, variant: rec.variant, fps: rec.fps });
     else excluded.push({ run: rec.run, variant: rec.variant, reason: (rec.exclusionReasons || [rec.status]).join("; ") });
     const summary = buildSummary(acceptedOrdered, excluded, { session: "solo", runsDone, updatedAt: new Date().toISOString() });
-    fs.writeFileSync(path.join(cfg.outDir, "v38-solo-seek-ab-summary.json"), JSON.stringify(summary, null, 2));
+    writeFileEpermRetry(path.join(cfg.outDir, "v38-solo-seek-ab-summary.json"), JSON.stringify(summary, null, 2));
     console.log(`[solo] ${rec.run} accepted=${rec.accepted} fps=${rec.fps} (accepted retry=${summary.counts.retryAccepted} single=${summary.counts.singleAccepted}, runsDone=${runsDone})`);
   }
   const summary = buildSummary(acceptedOrdered, excluded, { session: "solo", runsDone, completedAt: new Date().toISOString(), note: "hết trần 48 lượt hoặc dừng sớm — xem lock.conditions" });
-  fs.writeFileSync(path.join(cfg.outDir, "v38-solo-seek-ab-summary.json"), JSON.stringify(summary, null, 2));
+  writeFileEpermRetry(path.join(cfg.outDir, "v38-solo-seek-ab-summary.json"), JSON.stringify(summary, null, 2));
   console.log(`[solo] kết thúc: runsDone=${runsDone} locked=${summary.lock.locked} — ${summary.lock.verdict}`);
 }
 

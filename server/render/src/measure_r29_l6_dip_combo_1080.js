@@ -43,6 +43,7 @@
  */
 "use strict";
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -86,8 +87,8 @@ function transpileTs(srcRel, outName) {
   // maskAlphaAt, không đụng các import giá trị khác lúc chạy).
   const stubDir = path.join(TMP, "node_modules", "@repo-1", "video-spec");
   fs.mkdirSync(stubDir, { recursive: true });
-  fs.writeFileSync(path.join(stubDir, "package.json"), JSON.stringify({ name: "@repo-1/video-spec", version: "0.0.0", main: "index.js" }));
-  fs.writeFileSync(path.join(stubDir, "index.js"), "module.exports = { CHROMA_DEFAULTS:{}, EFFECT_TYPES:[], LUT_IDS:[], STICKER_DEFAULTS:{}, interpolateKeyframes:()=>null, sourceTimeAt:()=>0, speedAt:()=>1 };\n");
+  writeFileEpermRetry(path.join(stubDir, "package.json"), JSON.stringify({ name: "@repo-1/video-spec", version: "0.0.0", main: "index.js" }));
+  writeFileEpermRetry(path.join(stubDir, "index.js"), "module.exports = { CHROMA_DEFAULTS:{}, EFFECT_TYPES:[], LUT_IDS:[], STICKER_DEFAULTS:{}, interpolateKeyframes:()=>null, sourceTimeAt:()=>0, speedAt:()=>1 };\n");
   const tsc = path.join(ROOT, "node_modules", ".bin", "tsc");
   spawnSync(tsc, [src, "--outDir", outDir, "--module", "commonjs", "--target", "es2020", "--moduleResolution", "node", "--skipLibCheck"], { encoding: "utf8" });
   const jsFile = path.join(outDir, `${path.basename(src, ".ts")}.js`);
@@ -165,7 +166,7 @@ function ffmpegSingleRef(tp, type, window, p, frameClip, W, H, tagName) {
   const baseRaw = path.join(TMP, `${tagName}-base.raw`);
   const topRaw = path.join(TMP, `${tagName}-top.raw`);
   const outRaw = path.join(TMP, `${tagName}-out.raw`);
-  fs.writeFileSync(clipRaw, frameClip);
+  writeFileEpermRetry(clipRaw, frameClip);
   if (type === "fadewhite") {
     ffmpeg(["-f", "lavfi", "-i", `color=white:s=${W}x${H}:d=1:r=30`,
       "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-y", baseRaw]);
@@ -230,7 +231,7 @@ function xfadeFrames(type, fileA, winA, fileB, winB, indices, W, H, pathName, ta
 function resampleFrame(buf, W, H, tW, tH, tagName) {
   const inp = path.join(TMP, `${tagName}-in.raw`);
   const out = path.join(TMP, `${tagName}-out.raw`);
-  fs.writeFileSync(inp, buf);
+  writeFileEpermRetry(inp, buf);
   ffmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${W}x${H}`, "-i", inp,
     "-vf", `scale=${tW}:${tH}:flags=lanczos,format=rgb24`,
     "-frames:v", "1", "-f", "rawvideo", "-y", out]);
@@ -534,7 +535,7 @@ function maskGeqA(mask, W, H) {
 function ffmpegRefRGBA(combo, frame, W, H, tagName) {
   const inp = path.join(TMP, `${tagName}-in.raw`);
   const out = path.join(TMP, `${tagName}-out.raw`);
-  fs.writeFileSync(inp, frame);
+  writeFileEpermRetry(inp, frame);
   if (combo === "mask-rect" || combo === "mask-ellipse") {
     const mask = combo === "mask-rect" ? MASK_RECT : MASK_ELLIPSE;
     ffmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${W}x${H}`, "-i", inp,
@@ -546,7 +547,7 @@ function ffmpegRefRGBA(combo, frame, W, H, tagName) {
       "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgba", "-y", out]);
   } else if (combo === "track") {
     const bg = path.join(TMP, `${tagName}-bg.raw`);
-    fs.writeFileSync(bg, Buffer.alloc(W * H * 4));
+    writeFileEpermRetry(bg, Buffer.alloc(W * H * 4));
     ffmpeg(["-f", "rawvideo", "-pix_fmt", "rgba", "-s", `${W}x${H}`, "-i", bg,
       "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${W}x${H}`, "-i", inp,
       "-filter_complex", "[0:v]format=rgba[bg];[1:v]format=rgba[fg];[bg][fg]overlay=x=80:y=-40,format=rgba",
@@ -562,7 +563,7 @@ function ffmpegDipOverBlack(type, alpha, rgba, W, H, tagName) {
   const inp = path.join(TMP, `${tagName}-in.raw`);
   const dipRaw = path.join(TMP, `${tagName}-dip.raw`);
   const out = path.join(TMP, `${tagName}-out.raw`);
-  fs.writeFileSync(inp, rgba);
+  writeFileEpermRetry(inp, rgba);
   const a = alpha.toFixed(6);
   const dipExpr = type === "fadewhite"
     ? `r='${a}*r(X,Y)+(1-${a})*255':g='${a}*g(X,Y)+(1-${a})*255':b='${a}*b(X,Y)+(1-${a})*255'`
@@ -582,7 +583,7 @@ function ffmpegDipOverBlack(type, alpha, rgba, W, H, tagName) {
 function ffmpegOverBlack(rgba, W, H, tagName) {
   const inp = path.join(TMP, `${tagName}-in.raw`);
   const out = path.join(TMP, `${tagName}-out.raw`);
-  fs.writeFileSync(inp, rgba);
+  writeFileEpermRetry(inp, rgba);
   ffmpeg(["-f", "lavfi", "-i", `color=black:s=${W}x${H}:d=1:r=30`,
     "-f", "rawvideo", "-pix_fmt", "rgba", "-s", `${W}x${H}`, "-i", inp,
     "-filter_complex", "[0:v][1:v]overlay=0:0,format=rgb24",
@@ -712,7 +713,7 @@ function main() {
   if (MODE_SWEEP) { runSweep(tp, results); runSweepCorrected(tp, results); }
   if (MODE_COMBO) runCombo(tp, pe, results);
   if (JSON_OUT) {
-    fs.writeFileSync(JSON_OUT, JSON.stringify(results, null, 2) + "\n");
+    writeFileEpermRetry(JSON_OUT, JSON.stringify(results, null, 2) + "\n");
     console.log(`JSON: ${JSON_OUT}`);
   }
   console.log(`workdir: ${TMP} (raw đã xoá sau mỗi phép đo)`);

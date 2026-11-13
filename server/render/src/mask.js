@@ -36,6 +36,12 @@
 
 const assert = require("assert");
 
+// Phase 9 đợt 87 O3: geq động bám motion track — dùng buildAxisExpr của
+// tracking.js (nội suy tuyến tính giữa các điểm mẫu theo T) để tâm mask
+// bám quỹ đạo clip.track.
+const { buildAxisExpr } = require("./tracking");
+const { validateTrackAttachment } = require("./tracking_validate"); // O3 (+O2 dùng chung; KHÔNG thêm bản thứ 2)
+
 const EPS = 1e-6;
 
 function num(x) {
@@ -169,12 +175,112 @@ function maskGeometryAt(m, t) {
 }
 
 /**
+ * Phase 9 đợt 87 O1 — Nội suy quỹ đạo track (mirror interpolateTrack của
+ * packages/video-spec/src/tracking.ts và interpolateTrackPoints của
+ * apps/web/src/lib/previewEngine.ts — cùng luật: tuyến tính giữa 2 điểm,
+ * kẹp ngoài khoảng, rỗng → (0.5, 0.5)). Render worker là CJS, không import
+ * được video-spec nên viết lại ở đây; giữ cùng công thức và cùng thứ tự
+ * phép tính để kết quả số khớp bit-for-bit với 2 mirror kia.
+ */
+function interpolateTrackPoints(points, t) {
+  const pts = [...points].sort((a, b) => a.t - b.t);
+  if (pts.length === 0) return { x: 0.5, y: 0.5 };
+  if (t <= pts[0].t) return { x: pts[0].x, y: pts[0].y };
+  const last = pts[pts.length - 1];
+  if (t >= last.t) return { x: last.x, y: last.y };
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i];
+    const b = pts[i + 1];
+    if (t >= a.t && t <= b.t) {
+      const span = b.t - a.t;
+      const p = span <= 0 ? 0 : (t - a.t) / span;
+      return { x: a.x + (b.x - a.x) * p, y: a.y + (b.y - a.y) * p };
+    }
+  }
+  return { x: last.x, y: last.y };
+}
+
+/**
+ * Phase 9 đợt 87 O1 — Hình học mask bám motion track tại thời gian cục bộ
+ * t (giây, tương đối từ clip.start — cùng gốc thời gian với `clip.track`
+ * và với mask keyframes). Mirror maskGeometryAtTrack ở video-spec:
+ * - Không track (undefined/null, points rỗng/không phải mảng) → trả về
+ *   đúng maskGeometryAt(m, t) (đồng nhất, không đổi hành vi cũ).
+ * - Có track → tâm mask (x, y) = vị trí nội suy trên quỹ đạo tại t;
+ *   w/h vẫn lấy từ interpolateMaskAt (keyframes thắng w/h, keyframe x/y
+ *   bị track ghi đè); shape/feather/invert giữ nguyên; keyframes bị bỏ
+ *   khỏi kết quả như maskGeometryAt.
+ * - Track 1 điểm → tâm hằng bằng điểm đó mọi t.
+ * Render/preview (luồng O2/O3) dùng hàm này thay cho maskGeometryAt khi
+ * clip vừa có mask vừa có track; xem
+ * docs/PHASE9_ROUND87_O1_MASK_TRACK_SPEC_LIMITS.md.
+ */
+function maskGeometryAtTrack(mask, track, t) {
+  const g = maskGeometryAt(mask, t);
+  if (!track || !Array.isArray(track.points) || track.points.length === 0) return g;
+  const pos = interpolateTrackPoints(track.points, t);
+  return { ...g, x: pos.x, y: pos.y };
+}
+
+/**
  * Key dedup cho video mask animation (Phase 9 D4): cùng keyframe + khung +
  * fps + duration → cùng 1 file video (số frame = round(duration×fps)).
  */
 function maskAnimKey(mask, W, H, fps, duration) {
   const m = normalizeMask(mask);
   return JSON.stringify([m.shape, m.keyframes, m.feather, m.invert, W, H, fps, duration]);
+}
+
+// ---------------------------------------------------------------------------
+// Phase 9 đợt 87 O2: mask bám motion track — đường render chính (video mask).
+// Dùng helper O1 maskGeometryAtTrack(mask, track, t) (định nghĩa duy nhất
+// ở trên, KHÔNG định nghĩa lại): tâm = vị trí track, w/h theo mask
+// keyframes nếu có (không keyframes → w/h gốc), shape/feather giữ nguyên.
+// Geometry tính trong tọa độ UNIT (khung W×H mà mask video vẽ), giống hệt
+// mask keyframes D4 — mask_anim.py nhận keyframes suy ra từ quỹ đạo rồi
+// nội suy tuyến tính, nên quỹ đạo tái hiện chính xác. KHÔNG thêm field
+// spec mới. Xem docs/PHASE9_ROUND87_O2_MASK_TRACK_RENDER_LIMITS.md.
+// ---------------------------------------------------------------------------
+
+/** Clip có cả track + mask không (điều kiện áp tracked mask). */
+function hasTrackedMask(clip) {
+  return !!clip && !!clip.mask && clip.track !== undefined;
+}
+
+/**
+ * Đổi quỹ đạo track thành keyframes cho mask_anim.py. Keyframe đặt tại
+ * HỢP các mốc thời gian (track points ∪ mask keyframes), mỗi keyframe =
+ * maskGeometryAtTrack(mask, track, t) tại mốc đó. Vì cả track lẫn mask
+ * keyframes đều nội suy tuyến tính từng đoạn (hold ngoài đoạn), keyframe
+ * tại mọi mốc gãy tái hiện CHÍNH XÁC hình học O1 tại mọi frame (t = i/fps):
+ * x/y bám track, w/h theo mask keyframes (không keyframes → w/h gốc).
+ */
+function trackPointsToMaskKeyframes(mask, track) {
+  const errs = validateTrackAttachment(track);
+  if (errs.length > 0) throw new Error(`track không hợp lệ: ${errs.join("; ")}`);
+  const times = new Set();
+  for (const p of track.points) times.add(p.t);
+  const m = normalizeMask(mask);
+  if (Array.isArray(m.keyframes)) for (const k of m.keyframes) times.add(k.t);
+  const out = [];
+  for (const t of [...times].sort((a, b) => a - b)) {
+    const g = maskGeometryAtTrack(mask, track, t);
+    out.push({ t, x: g.x, y: g.y, w: g.w, h: g.h });
+  }
+  return out;
+}
+
+/**
+ * Key dedup cho video tracked mask: cùng track + mask + khung + fps +
+ * duration → cùng 1 file video. Tiền tố "track" để KHÔNG đụng key của
+ * maskAnimKey (cùng map ctx.maskAnim trong render.js).
+ */
+function trackedMaskAnimKey(mask, track, W, H, fps, duration) {
+  const m = normalizeMask(mask);
+  // keyframes tính vào key (ảnh hưởng w/h qua maskGeometryAtTrack); track
+  // points tính vào key; tiền tố "track" để KHÔNG đụng maskAnimKey.
+  const pts = [...track.points].sort((a, b) => a.t - b.t);
+  return JSON.stringify(["track", m.shape, m.w, m.h, m.keyframes, m.feather, m.invert, pts, W, H, fps, duration]);
 }
 
 /**
@@ -331,6 +437,89 @@ function buildMaskChain(inputLabel, mask, W, H, lbl) {
 }
 
 // ---------------------------------------------------------------------------
+// Phase 9 đợt 87 O3 — geq ĐỘNG bám motion track (đường thay thế, sau cờ
+// --mask-mode trackgeq; KHÔNG đụng đường mặc định png).
+//
+// Ngữ nghĩa: tâm mask (cx, cy) = quỹ đạo clip.track tại thời gian clip-local
+// T (giây). Unit đã trim/setpts=PTS-STARTPTS trước khi áp mask nên T trong
+// geq đúng bằng thời gian cục bộ của clip (xem render.js bước 1).
+//
+// Nội suy: dùng buildAxisExpr của tracking.js (cùng pattern overlay sticker
+// Q5/D3 — tuyến tính giữa 2 điểm mẫu kề, kẹp ngoài khoảng). Biểu thức geq
+// không có biến trung gian nên cx/cy (chuỗi if lồng nhau) được thay thế
+// TRỰC TIẾP vào mọi chỗ dùng tâm — rect: 2 lần/trục, ellipse: 4 lần/trục.
+// Vì vậy chi phí tính theo pixel tăng theo số điểm track; tối ưu nhỏ: trục
+// nào mọi điểm cùng giá trị thì dùng hằng số (track ngang y=const là ca
+// thường gặp). Track dày (tối đa 240 điểm theo validator) cho biểu thức dài
+// hàng chục KB và đánh giá if-chain lặp lại mỗi pixel — thực tế chỉ khả thi
+// với track thưa (vài điểm); xem O3_LIMITS để biết số đo.
+// ---------------------------------------------------------------------------
+
+/** Biểu thức fraction 0..1 của 1 trục theo T; hằng số nếu mọi điểm bằng nhau. */
+function buildTrackAxisFracExpr(points, axis) {
+  const first = points[0][axis];
+  if (points.every((p) => p[axis] === first)) return num(first);
+  return buildAxisExpr(points, axis, "T");
+}
+
+/**
+ * Biểu thức geq cho alpha mask động (0..1): tâm = track(T), shape/size/
+ * feather giữ nguyên như buildMaskExpr. Chỉ dùng X, Y, W, H, T và hằng số.
+ * @throws nếu mask hoặc track không hợp lệ
+ */
+function buildMaskTrackGeqExpr(mask, track, W, H) {
+  const errs = validateMask(mask);
+  if (errs.length > 0) throw new Error(errs[0]);
+  const tErrs = validateTrackAttachment(track);
+  if (tErrs.length > 0) throw new Error(`track không hợp lệ: ${tErrs.join("; ")}`);
+  const m = normalizeMask(mask);
+  const pts = [...track.points].sort((a, b) => a.t - b.t);
+  const xFrac = buildTrackAxisFracExpr(pts, "x");
+  const yFrac = buildTrackAxisFracExpr(pts, "y");
+  const cx = `(${num(W)}*(${xFrac}))`;
+  const cy = `(${num(H)}*(${yFrac}))`;
+  const wPx = m.w * W, hPx = m.h * H;
+  const band = m.feather * Math.min(wPx, hPx);
+  let alpha;
+  if (m.shape === "rect") {
+    const x0 = `(${cx}-${num(wPx / 2)})`, x1 = `(${cx}+${num(wPx / 2)})`;
+    const y0 = `(${cy}-${num(hPx / 2)})`, y1 = `(${cy}+${num(hPx / 2)})`;
+    const d = `max(max(${x0}-X,X-${x1}),max(${y0}-Y,Y-${y1}))`;
+    alpha = band <= EPS
+      ? `if(lt(${d},0),1,0)`
+      : `min(1,max(0,0.5-(${d})/${num(band)}))`;
+  } else {
+    const rx = num(wPx / 2), ry = num(hPx / 2);
+    const r = `sqrt(pow((X-${cx})/${rx},2)+pow((Y-${cy})/${ry},2))`;
+    const grad = `sqrt(pow((X-${cx})/(${rx}*${rx}),2)+pow((Y-${cy})/(${ry}*${ry}),2))`;
+    const d = `(${r}-1)/(${grad})`;
+    alpha = band <= EPS
+      ? `if(lt(${r},1),1,0)`
+      : `min(1,max(0,0.5-(${d})/${num(band)}))`;
+  }
+  if (m.invert) alpha = `(1-(${alpha}))`;
+  return alpha;
+}
+
+/**
+ * Dựng các fc entry áp mask ĐỘNG bám track bằng geq (đường O3, sau cờ).
+ * Cùng khung split/alphaextract/geq/alphamerge như buildMaskChain, chỉ khác
+ * biểu thức geq dùng T. Không dùng PNG/video mask.
+ */
+function buildMaskTrackGeqChain(inputLabel, mask, track, W, H, lbl) {
+  const expr = buildMaskTrackGeqExpr(mask, track, W, H);
+  const b = lbl("mskb"), a = lbl("mska"), a2 = lbl("mska2"), o = lbl("msko");
+  return {
+    entries: [
+      `${inputLabel}format=rgba,split=2[${b}][${a}]`,
+      `[${a}]alphaextract,geq=lum='lum(X,Y)*(${expr})'[${a2}]`,
+      `[${b}][${a2}]alphamerge,format=yuva420p[${o}]`,
+    ],
+    outLabel: `[${o}]`,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Self-test: node src/mask.js --self-test
 // ---------------------------------------------------------------------------
 function selfTest() {
@@ -449,6 +638,163 @@ function selfTest() {
   assert.ok(ac.entries[3].includes("blend=all_mode=multiply"), ac.entries[3]);
   assert.ok(ac.entries[4].includes("alphamerge,format=yuva420p"), ac.entries[4]);
 
+  // 10. Phase 9 đợt 87 O2 — tracked mask video: keyframes từ track / key
+  // (hình học dùng helper O1 maskGeometryAtTrack — test ở §11 của O1).
+  const trk = { points: [{ t: 0, x: 0.35, y: 0.5 }, { t: 4, x: 0.65, y: 0.5 }] };
+  const tMask = { shape: "ellipse", x: 0.5, y: 0.5, w: 0.3, h: 0.5, feather: 0 };
+  // keyframes từ track phải nội suy ra đúng hình học O1 tại mọi t
+  // (mirror mask_anim.interpolate qua interpolateMaskAt của mask.js).
+  const tkf = trackPointsToMaskKeyframes(tMask, trk);
+  assert.strictEqual(tkf.length, 2, "2 điểm track → 2 keyframe");
+  assert.deepStrictEqual(tkf[0], { t: 0, x: 0.35, y: 0.5, w: 0.3, h: 0.5 }, "keyframe đầu sai");
+  for (const t of [0, 0.5, 1, 2, 3.5, 4, 5]) {
+    const viaKf = interpolateMaskAt({ ...tMask, keyframes: tkf }, t);
+    const viaGeo = maskGeometryAtTrack(tMask, trk, t);
+    assert.ok(Math.abs(viaKf.x - viaGeo.x) < 1e-9 && Math.abs(viaKf.y - viaGeo.y) < 1e-9 &&
+      Math.abs(viaKf.w - viaGeo.w) < 1e-9 && Math.abs(viaKf.h - viaGeo.h) < 1e-9,
+      `keyframes-track lệch tại t=${t}: ${JSON.stringify(viaKf)} vs ${JSON.stringify(viaGeo)}`);
+  }
+  // mask có keyframes + track: keyframe tại hợp các mốc, w/h theo keyframes
+  // (O1: keyframes thắng w/h, track thắng x/y); mốc keyframe t=2 chen giữa.
+  const trkKfMask = {
+    ...tMask,
+    keyframes: [
+      { t: 0, x: 0.5, y: 0.5, w: 0.2, h: 0.2 },
+      { t: 4, x: 0.5, y: 0.5, w: 0.4, h: 0.6 },
+    ],
+  };
+  const tkf2 = trackPointsToMaskKeyframes(trkKfMask, trk);
+  assert.deepStrictEqual(tkf2.map((k) => k.t), [0, 4], "chỉ 2 mốc track (keyframes trùng mốc)");
+  assert.strictEqual(tkf2[0].w, 0.2, "w tại t=0 theo keyframes");
+  assert.strictEqual(tkf2[1].w, 0.4, "w tại t=4 theo keyframes");
+  const trkKfMask2 = { ...trkKfMask, keyframes: [
+    { t: 0, x: 0.5, y: 0.5, w: 0.2, h: 0.2 },
+    { t: 2, x: 0.5, y: 0.5, w: 0.3, h: 0.4 },
+    { t: 4, x: 0.5, y: 0.5, w: 0.4, h: 0.6 },
+  ] };
+  const tkf3 = trackPointsToMaskKeyframes(trkKfMask2, trk);
+  assert.deepStrictEqual(tkf3.map((k) => k.t), [0, 2, 4], "mốc keyframe t=2 phải chen vào");
+  assert.strictEqual(tkf3[1].x, 0.5, "x tại t=2 bám track (0.35→0.65 giữa → 0.5)");
+  assert.strictEqual(tkf3[1].w, 0.3, "w tại t=2 theo keyframes");
+  for (const t of [0, 1, 2, 3, 4]) {
+    const viaKf = interpolateMaskAt({ ...trkKfMask2, keyframes: tkf3 }, t);
+    const viaGeo = maskGeometryAtTrack(trkKfMask2, trk, t);
+    assert.ok(Math.abs(viaKf.x - viaGeo.x) < 1e-9 && Math.abs(viaKf.w - viaGeo.w) < 1e-9,
+      `keyframes+track lệch tại t=${t}`);
+  }
+  assert.throws(() => trackPointsToMaskKeyframes(tMask, { points: [] }), /không hợp lệ/, "track rỗng phải throw");
+  assert.ok(hasTrackedMask({ mask: tMask, track: trk }), "hasTrackedMask phải true khi đủ cả 2");
+  assert.ok(!hasTrackedMask({ mask: tMask }), "thiếu track → false");
+  assert.ok(!hasTrackedMask({ track: trk }), "thiếu mask → false");
+  assert.ok(!hasTrackedMask(null), "clip null → false");
+  assert.strictEqual(
+    trackedMaskAnimKey(tMask, trk, 1280, 720, 30, 4),
+    trackedMaskAnimKey(tMask, trk, 1280, 720, 30, 4),
+    "tracked key giống nhau phải bằng nhau",
+  );
+  assert.notStrictEqual(
+    trackedMaskAnimKey(tMask, trk, 1280, 720, 30, 4),
+    trackedMaskAnimKey(tMask, { points: [{ t: 0, x: 0.35, y: 0.5 }, { t: 4, x: 0.7, y: 0.5 }] }, 1280, 720, 30, 4),
+    "track khác phải khác key",
+  );
+  assert.notStrictEqual(
+    trackedMaskAnimKey(tMask, trk, 1280, 720, 30, 4),
+    maskAnimKey({ ...tMask, keyframes: tkf }, 1280, 720, 30, 4),
+    "tracked key KHÔNG được đụng maskAnimKey (chung map ctx.maskAnim)",
+  );
+  // keyframes của mask tính vào tracked key (ảnh hưởng w/h qua geometry O1)
+  assert.notStrictEqual(
+    trackedMaskAnimKey(tMask, trk, 1280, 720, 30, 4),
+    trackedMaskAnimKey(trkKfMask, trk, 1280, 720, 30, 4),
+    "keyframes khác w/h phải khác key",
+  );
+
+  // 10b. Phase 9 đợt 87 O3 — geq động bám track
+  const track3 = { points: [
+    { t: 0, x: 0.2, y: 0.5 },
+    { t: 2, x: 0.5, y: 0.5 },
+    { t: 4, x: 0.8, y: 0.5 },
+  ] };
+  const dynRect = buildMaskTrackGeqExpr(
+    { shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0.2 }, track3, 1280, 720);
+  assert.ok(dynRect.includes("T"), `geq động phải dùng biến T: ${dynRect.slice(0, 120)}`);
+  assert.ok(dynRect.includes("if(lt(T,"), `geq động phải nội suy theo T: ${dynRect.slice(0, 200)}`);
+  assert.ok(dynRect.includes("if(lt(T,0),0.2"), `điểm đầu x=0.2 phải có mặt: ${dynRect.slice(0, 200)}`);
+  assert.ok(dynRect.includes("if(gt(T,4),0.8"), `điểm cuối x=0.8 phải có mặt: ${dynRect.slice(0, 200)}`);
+  // y hằng 0.5 mọi điểm → tối ưu hằng số, không if-chain theo T cho y
+  assert.ok(dynRect.includes("(720*(0.5))"), `y hằng phải rút gọn: ${dynRect.slice(0, 300)}`);
+  // ellipse động: tâm xuất hiện dạng (W*(...)), band feather đúng
+  const dynEll = buildMaskTrackGeqExpr(
+    { shape: "ellipse", x: 0.5, y: 0.5, w: 0.3, h: 0.3, feather: 0.2 }, track3, 1280, 720);
+  assert.ok(dynEll.includes("sqrt(") && dynEll.includes("/43.2"), `ellipse động sai band: ${dynEll.slice(0, 200)}`);
+  // track 1 điểm → hằng số, không dùng T
+  const one = buildMaskTrackGeqExpr(
+    { shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0 },
+    { points: [{ t: 0, x: 0.3, y: 0.4 }] }, 640, 360);
+  assert.ok(!one.includes("T"), `track 1 điểm phải là hằng số, không T: ${one}`);
+  assert.ok(one.includes("((640*(0.3))-160)-X") && one.includes("X-((640*(0.3))+160)"), `track 1 điểm x=0.3 trên 640 phải cho biên (640*0.3)±160: ${one}`);
+  // chain động: 3 entry, geq=lum=, alphamerge
+  let n4 = 0;
+  const lbl4 = (p) => `${p}${n4++}`;
+  const dc = buildMaskTrackGeqChain("[cv0]",
+    { shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0.1 }, track3, 640, 360, lbl4);
+  assert.strictEqual(dc.entries.length, 3);
+  assert.ok(dc.entries[1].includes("geq=lum=") && dc.entries[1].includes("T"), dc.entries[1].slice(0, 200));
+  assert.ok(dc.entries[2].includes("alphamerge,format=yuva420p"), dc.entries[2]);
+  // track không hợp lệ → throw rõ ràng
+  assert.throws(() => buildMaskTrackGeqExpr(
+    { shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0 },
+    { points: [] }, 640, 360), /track không hợp lệ/);
+  assert.throws(() => buildMaskTrackGeqExpr(
+    { shape: "rect", x: 0.5, y: 0.5, w: 0.5, h: 0.5, feather: 0 },
+    { points: [{ t: 0, x: 1.5, y: 0.5 }] }, 640, 360), /track không hợp lệ/);
+
+  // 11. Phase 9 đợt 87 O1 — maskGeometryAtTrack (hình học chung, mirror
+  // video-spec mask.ts). Fixture: track tuyến tính 2 điểm
+  // (0, 0.2, 0.3) → (2, 0.8, 0.7); mask có keyframes w/h đổi theo t nhưng
+  // x/y keyframe (0.1,0.9)→(0.3,0.7) KHÁC hẳn tâm track để phân biệt quy tắc.
+  const approx = (a, b) => Math.abs(a - b) < 1e-9;
+  const trTrack = { points: [{ t: 0, x: 0.2, y: 0.3 }, { t: 2, x: 0.8, y: 0.7 }] };
+  const trMask = {
+    shape: "rect", x: 0.5, y: 0.5, w: 1, h: 1, feather: 0.1,
+    keyframes: [
+      { t: 0, x: 0.1, y: 0.9, w: 0.4, h: 0.4 },
+      { t: 2, x: 0.3, y: 0.7, w: 0.6, h: 0.8 },
+    ],
+  };
+  // t=1: track (0.5, 0.5) thắng x/y keyframe (0.2, 0.8); w/h keyframe (0.5, 0.6)
+  const g1 = maskGeometryAtTrack(trMask, trTrack, 1);
+  assert.ok(approx(g1.x, 0.5) && approx(g1.y, 0.5), `track thắng x/y tại t=1: ${g1.x},${g1.y}`);
+  assert.ok(approx(g1.w, 0.5) && approx(g1.h, 0.6), `keyframes thắng w/h tại t=1: ${g1.w},${g1.h}`);
+  assert.strictEqual(g1.shape, "rect", "phải giữ shape");
+  assert.strictEqual(g1.feather, 0.1, "phải giữ feather");
+  assert.ok(!("keyframes" in g1), "geometryAtTrack phải bỏ keyframes");
+  // tại điểm mẫu t=0 và t=2: tâm đúng điểm track, w/h đúng keyframe
+  const gT0 = maskGeometryAtTrack(trMask, trTrack, 0);
+  assert.ok(approx(gT0.x, 0.2) && approx(gT0.y, 0.3) && approx(gT0.w, 0.4) && approx(gT0.h, 0.4), `t=0 sai: ${JSON.stringify(gT0)}`);
+  const gT2 = maskGeometryAtTrack(trMask, trTrack, 2);
+  assert.ok(approx(gT2.x, 0.8) && approx(gT2.y, 0.7) && approx(gT2.w, 0.6) && approx(gT2.h, 0.8), `t=2 sai: ${JSON.stringify(gT2)}`);
+  // t ngoài khoảng track → kẹp điểm đầu/cuối, hold keyframe w/h
+  const gBefore = maskGeometryAtTrack(trMask, trTrack, -1);
+  assert.ok(approx(gBefore.x, 0.2) && approx(gBefore.y, 0.3) && approx(gBefore.w, 0.4) && approx(gBefore.h, 0.4), `kẹp trước sai: ${JSON.stringify(gBefore)}`);
+  const gAfter = maskGeometryAtTrack(trMask, trTrack, 5);
+  assert.ok(approx(gAfter.x, 0.8) && approx(gAfter.y, 0.7) && approx(gAfter.w, 0.6) && approx(gAfter.h, 0.8), `kẹp sau sai: ${JSON.stringify(gAfter)}`);
+  // không track / track rỗng / null → đồng nhất maskGeometryAt
+  assert.deepStrictEqual(maskGeometryAtTrack(trMask, undefined, 1), maskGeometryAt(trMask, 1), "không track phải = maskGeometryAt");
+  assert.deepStrictEqual(maskGeometryAtTrack(trMask, { points: [] }, 1), maskGeometryAt(trMask, 1), "track rỗng phải = maskGeometryAt");
+  assert.deepStrictEqual(maskGeometryAtTrack(trMask, null, 1), maskGeometryAt(trMask, 1), "track null phải = maskGeometryAt");
+  // track 1 điểm → tâm hằng mọi t; w/h vẫn theo keyframes
+  const gOne = maskGeometryAtTrack(trMask, { points: [{ t: 0, x: 0.25, y: 0.75 }] }, 1);
+  assert.ok(approx(gOne.x, 0.25) && approx(gOne.y, 0.75) && approx(gOne.w, 0.5) && approx(gOne.h, 0.6), `track 1 điểm sai: ${JSON.stringify(gOne)}`);
+  // mask tĩnh ellipse (không keyframes) + track → tâm track, w/h tĩnh
+  const gStatic = maskGeometryAtTrack(
+    { shape: "ellipse", x: 0.5, y: 0.5, w: 0.8, h: 0.6, feather: 0.2 }, trTrack, 1);
+  assert.ok(approx(gStatic.x, 0.5) && approx(gStatic.y, 0.5) && approx(gStatic.w, 0.8) && approx(gStatic.h, 0.6) && gStatic.shape === "ellipse", `mask tĩnh + track sai: ${JSON.stringify(gStatic)}`);
+  // interpolateTrackPoints trực tiếp: rỗng → (0.5,0.5); chưa sort → vẫn đúng
+  assert.deepStrictEqual(interpolateTrackPoints([], 1), { x: 0.5, y: 0.5 }, "track rỗng phải về giữa khung");
+  const pUnsorted = interpolateTrackPoints([trTrack.points[1], trTrack.points[0]], 1);
+  assert.ok(approx(pUnsorted.x, 0.5) && approx(pUnsorted.y, 0.5), `chưa sort sai: ${JSON.stringify(pUnsorted)}`);
+
   console.log("✅ mask.js self-test: tất cả assertion pass");
 }
 
@@ -460,4 +806,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { EPS, validateMask, normalizeMask, buildMaskExpr, buildMaskChain, maskKey, buildMaskPngChain, buildMaskChainFor, sortMaskKeyframes, hasMaskKeyframes, interpolateMaskAt, maskGeometryAt, maskAnimKey, buildMaskAnimChain };
+module.exports = { EPS, validateMask, normalizeMask, buildMaskExpr, buildMaskChain, maskKey, buildMaskPngChain, buildMaskChainFor, sortMaskKeyframes, hasMaskKeyframes, interpolateMaskAt, maskGeometryAt, maskAnimKey, buildMaskAnimChain, buildMaskTrackGeqExpr, buildMaskTrackGeqChain, interpolateTrackPoints, maskGeometryAtTrack, hasTrackedMask, trackPointsToMaskKeyframes, trackedMaskAnimKey };

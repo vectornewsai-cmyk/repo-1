@@ -50,6 +50,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -149,7 +150,7 @@ class CDP {
   }
   async shot(name) {
     const r = await this.send("Page.captureScreenshot", { format: "png" });
-    fs.writeFileSync(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
+    writeFileEpermRetry(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
     return name;
   }
 }
@@ -406,7 +407,7 @@ async function main() {
     fs.mkdirSync(VITE_CFG_DIR, { recursive: true });
     // Vite config riêng: react plugin + middleware phục vụ media fixture
     // cùng origin (/r61r3-media/*, kèm ACAO:* cho tab trắng).
-    fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 const require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});
@@ -640,7 +641,7 @@ export default { plugins: [react(), mediaPlugin()], server: { hmr: false } };
     function renderSpec(specObj, name) {
       const specPath = path.join(SCRATCH, `${name}.json`);
       const outPath = path.join(SCRATCH, `${name}.mp4`);
-      fs.writeFileSync(specPath, JSON.stringify(specObj));
+      writeFileEpermRetry(specPath, JSON.stringify(specObj));
       const t0 = Date.now();
       const r = spawnSync("node", [path.join(RENDER_DIR, "src", "render.js"), "--spec", specPath,
         "--out", outPath, "--media-dir", MEDIA_DIR, "-y", "--x264-preset", "veryfast", "--crf", "23"],
@@ -763,7 +764,7 @@ export default { plugins: [react(), mediaPlugin()], server: { hmr: false } };
       idet: { source: idetSrc },
       canvasSize,
     };
-    fs.writeFileSync(path.join(SCRATCH, "r3-fps-cal-report.json"), JSON.stringify(report, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "r3-fps-cal-report.json"), JSON.stringify(report, null, 2));
     log(`KẾT QUẢ HEADED R3 FPS/CAL: ${nPass}/${results.length} pass`);
     process.exitCode = nPass === results.length ? 0 : 1;
   } catch (e) {

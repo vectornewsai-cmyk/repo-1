@@ -337,6 +337,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+    head:
+      tags: [render]
+      summary: Kiểm tra file MP4 còn tải được không (không tải body)
+      operationId: checkRenderDownload
+      description: >
+        Đợt 68 V8 — ExportPanel HEAD endpoint này trước khi hiện nút tải:
+        200 = file output còn đó (kèm Content-Length), 404 = job đã bị
+        dọn, 409 = job chưa xong hoặc file output đã mất.
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: File MP4 còn đó, tải được
+          headers:
+            Content-Length:
+              schema:
+                type: integer
+              description: Dung lượng file MP4 (byte)
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Job chưa xong hoặc file output đã mất
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /api/render/{id}/retry:
     post:
@@ -377,9 +403,15 @@ paths:
         Nhận 1 file video/audio, chạy faster-whisper (100% local), stream tiến
         trình về client dạng NDJSON rồi trả segments.
 
-        Mỗi dòng NDJSON là 1 JSON object:
-        `{"type":"phase","phase":"upload|extract|transcribe|group","message":"..."}`
+        Mỗi dòng NDJSON là 1 JSON object (đợt 80 H8, gap N4 — tiến trình THẬT):
+        `{"type":"phase","phase":"load|upload|extract|transcribe|group","message":"..."}`
+        `{"type":"progress","phase":"transcribe","progress":0.42,"done":12.3,"total":29.1,"etaSeconds":18}`
         … rồi `{"type":"done", ...}` hoặc `{"type":"error","error":"..."}`.
+        `progress` = giây audio đã transcribe / tổng giây audio (null khi chưa
+        biết tổng); `etaSeconds` ước lượng từ tốc độ transcribe thật.
+        Phase `load` báo rõ khi model đang nạp (lần đầu có thể mất vài phút).
+        Hủy thật: client ngắt kết nối (AbortController) → bridge kill
+        subprocess Python; nếu kịp thì bridge gửi `{"type":"cancelled"}`.
         Lỗi validate (chưa stream) → JSON 4xx bình thường.
       requestBody:
         required: true
@@ -433,7 +465,9 @@ paths:
       description: |
         Giống /api/caption nhưng dùng faster-whisper `translate` task để dịch
         mọi ngôn ngữ nguồn sang tiếng Anh. Hiện chỉ hỗ trợ đích `en`.
-        Stream NDJSON: phase `upload|extract|translating|group` → done | error.
+        Stream NDJSON: phase `load|upload|extract|translating|group` →
+        event progress THẬT (`progress` = giây audio đã dịch / tổng giây) →
+        done | error. Hủy thật: ngắt kết nối → bridge kill subprocess.
       requestBody:
         required: true
         content:
@@ -513,8 +547,13 @@ paths:
       operationId: synthesizeSpeech
       description: |
         TTS tiếng Việt local (VieNeu-TTS 0.5B, Apache 2.0, watermark đã tắt).
-        Trả về file WAV qua download; header `X-TTS-Voice` (URL-encoded),
-        `X-TTS-Duration` (giây), `X-TTS-Chars` (số ký tự).
+        Đợt 80 H8 (gap N4): KHÔNG còn trả WAV trực tiếp — stream NDJSON tiến
+        trình THẬT (phase `load|synth`, progress = chunk đã tổng hợp / tổng
+        chunk, kèm `etaSeconds`) rồi event `done` mang `downloadUrl`
+        (`GET /api/ai-download/{token}`, tải 1 lần, TTL 2h) + `durationSec`.
+        Header `X-TTS-Voice` / `X-TTS-Duration` / `X-TTS-Chars` giữ nguyên
+        nhưng nằm trên response download, không còn trên response NDJSON.
+        Hủy thật: ngắt kết nối → bridge kill subprocess Python.
       requestBody:
         required: true
         content:
@@ -534,29 +573,72 @@ paths:
                   description: Tên giọng (xem GET /api/tts/voices)
       responses:
         "200":
-          description: File WAV (48kHz)
+          description: Stream NDJSON tiến trình + done {downloadUrl, durationSec, chunks}
           content:
-            audio/wav:
+            application/x-ndjson:
               schema:
-                type: string
-                format: binary
-          headers:
-            X-TTS-Voice:
-              schema:
-                type: string
-              description: Tên giọng (URL-encoded vì header chỉ cho Latin-1)
-            X-TTS-Duration:
-              schema:
-                type: number
-              description: Độ dài audio (giây)
-            X-TTS-Chars:
-              schema:
-                type: integer
-              description: Số ký tự đã đọc
+                type: object
+                description: Các event phase / progress / done / error / cancelled
+              example:
+                type: done
+                downloadUrl: "/api/ai-download/0123456789abcdef"
+                durationSec: 3.2
+                chunks: 4
+                voice: "Hải Đăng"
+                chars: 42
         "400":
           $ref: "#/components/responses/BadRequest"
         "503":
           description: TTS chưa sẵn sàng (thiếu python/model)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/tts/clone:
+    post:
+      tags: [tts]
+      summary: Đọc văn bản bằng giọng clone từ file mẫu (WAV)
+      operationId: cloneVoiceSpeech
+      description: |
+        Clone giọng từ file mẫu: multipart field "refAudio" (audio) + "text".
+        Chạy tts.py --ref-audio (VieNeu-TTS encode_reference, 100% local,
+        model Apache-2.0). Đợt 80 H8: stream NDJSON giống /api/tts (phase
+        `load|synth`, progress chunk THẬT) rồi event `done` mang `downloadUrl`
+        (`GET /api/ai-download/{token}`, tải 1 lần, TTL 2h). Hủy thật: ngắt
+        kết nối → bridge kill subprocess Python.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [refAudio, text]
+              properties:
+                refAudio:
+                  type: string
+                  format: binary
+                  description: File audio mẫu giọng (wav/mp3/m4a)
+                text:
+                  type: string
+                  maxLength: 2000
+                  description: Văn bản cần đọc (tối đa 2000 ký tự)
+      responses:
+        "200":
+          description: Stream NDJSON tiến trình + done {downloadUrl, durationSec, cloned}
+          content:
+            application/x-ndjson:
+              schema:
+                type: object
+              example:
+                type: done
+                downloadUrl: "/api/ai-download/0123456789abcdef"
+                durationSec: 2.8
+                cloned: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "503":
+          description: TTS clone chưa sẵn sàng (thiếu python/model)
           content:
             application/json:
               schema:
@@ -568,9 +650,16 @@ paths:
       summary: Xóa nền video (AI)
       operationId: removeBackground
       description: |
-        Chạy rembg + BiRefNet-general (MIT, 100% local) theo từng frame, trả về
-        file MOV (PNG codec, giữ kênh alpha) qua download. Đồng bộ, timeout
-        30 phút. Session `bria-rmbg`/`rmbg-2.0` bị cấm (weights non-commercial).
+        Chạy rembg + BiRefNet-general (MIT, 100% local) theo từng frame,
+        stream NDJSON tiến trình THẬT (đợt 80 H8, gap N4): phase
+        `upload|processing|fallback`, event progress với `progress` = frame
+        đã xử lý / tổng frame + `etaSeconds`, rồi event `done` mang
+        `downloadUrl` (`GET /api/ai-download/{token}`, tải 1 lần, TTL 2h)
+        + `sessionUsed` (+ `fallbackFrom` khi đã fallback sang session khác).
+        Header `X-Bgremove-*` cũ nay nằm trên response download.
+        Hủy thật: ngắt kết nối → bridge kill subprocess Python (không
+        fallback retry khi bị hủy). Timeout 30 phút. Session
+        `bria-rmbg`/`rmbg-2.0` bị cấm (weights non-commercial).
       requestBody:
         required: true
         content:
@@ -589,12 +678,17 @@ paths:
                   description: Model session rembg (mặc định birefnet-general)
       responses:
         "200":
-          description: File MOV có kênh alpha (`<tên>_no_bg.mov`)
+          description: Stream NDJSON tiến trình + done {downloadUrl, sessionUsed, outputName}
           content:
-            video/quicktime:
+            application/x-ndjson:
               schema:
-                type: string
-                format: binary
+                type: object
+                description: Các event phase / progress / done / error / cancelled
+              example:
+                type: done
+                downloadUrl: "/api/ai-download/0123456789abcdef"
+                sessionUsed: "u2net"
+                outputName: "video_no_bg.mov"
         "400":
           $ref: "#/components/responses/BadRequest"
         "503":
@@ -611,8 +705,12 @@ paths:
       operationId: reframeVideo
       description: |
         Phát hiện chủ thể (Haar face → motion fallback, OpenCV, 100% local),
-        crop video sang tỉ lệ đích với trajectory mượt, trả MP4 qua download.
-        Đồng bộ, timeout 10 phút.
+        crop video sang tỉ lệ đích với trajectory mượt. Đợt 80 H8 (gap N4):
+        stream NDJSON tiến trình THẬT (phase `upload|processing`, event
+        progress với `progress` = frame đã xử lý / tổng frame + `etaSeconds`)
+        rồi event `done` mang `downloadUrl`
+        (`GET /api/ai-download/{token}`, tải 1 lần, TTL 2h).
+        Hủy thật: ngắt kết nối → bridge kill subprocess Python. Timeout 10 phút.
       requestBody:
         required: true
         content:
@@ -632,12 +730,16 @@ paths:
                   description: Tỉ lệ đích
       responses:
         "200":
-          description: File MP4 đã crop (`<tên>_9x16.mp4`)
+          description: Stream NDJSON tiến trình + done {downloadUrl, outputName}
           content:
-            video/mp4:
+            application/x-ndjson:
               schema:
-                type: string
-                format: binary
+                type: object
+                description: Các event phase / progress / done / error / cancelled
+              example:
+                type: done
+                downloadUrl: "/api/ai-download/0123456789abcdef"
+                outputName: "video_9x16.mp4"
         "400":
           $ref: "#/components/responses/BadRequest"
         "503":
@@ -716,6 +818,9 @@ paths:
         Chạy FFmpeg `select='gt(scene,...)'` (100% local), stream NDJSON:
         phase `upload|scan` → `{"type":"done","cuts":[...],"duration","threshold","count"}`
         hoặc `{"type":"error","error":"..."}`.
+        Đợt 80 H8: HỦY THẬT nhưng KHÔNG có % tiến trình — scene.py chạy
+        ffmpeg blocking qua `subprocess.run` nên không có nguồn progress
+        thật; ngắt kết nối → bridge kill cây process (ffmpeg + python).
       requestBody:
         required: true
         content:
@@ -759,6 +864,50 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "503":
           description: Tách cảnh chưa sẵn sàng
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/ai-download/{token}:
+    get:
+      tags: [ai]
+      summary: Tải file kết quả của job AI dài (1 lần)
+      operationId: downloadAiJobResult
+      description: |
+        Đợt 80 H8 (gap N4): các route AI dài (/api/tts, /api/tts/clone,
+        /api/bgremove, /api/reframe) không trả file trực tiếp nữa — event
+        `done` trong stream NDJSON mang `downloadUrl` dạng
+        `/api/ai-download/<token>` (token 16 ký tự hex). Token dùng 1 lần:
+        tải thành công → file + thư mục token bị xóa ngay; tải lại → 404.
+        Token quá 2h chưa tải → bị sweep xóa (404). Header `X-*` của job
+        gốc (vd `X-TTS-Duration`, `X-TTS-Voice`) được giữ trên response
+        download này. Token sai định dạng → 400.
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9a-f]{16}$"
+          description: Token download 16 ký tự hex từ event done
+          example: "0123456789abcdef"
+      responses:
+        "200":
+          description: File kết quả (WAV / MOV / MP4 tùy job)
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Token sai định dạng
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Token không tồn tại / đã tải rồi / đã hết hạn
           content:
             application/json:
               schema:
@@ -982,6 +1131,51 @@ components:
         text:
           type: string
           example: "Xin chào các bạn"
+
+    AiJobProgressEvent:
+      type: object
+      description: |
+        Event tiến trình THẬT trong stream NDJSON của job AI dài (đợt 80 H8,
+        gap N4). `progress` = done/total (0..1), null khi chưa biết tổng —
+        UI hiện spinner + phase thay vì % bịa. `etaSeconds` ước lượng từ tốc
+        độ hoàn thành thật (cửa sổ trượt 8s), null khi chưa đủ dữ liệu.
+      properties:
+        type:
+          type: string
+          enum: [phase, progress, done, error, cancelled]
+        phase:
+          type: string
+          description: Giai đoạn job (load, upload, extract, transcribe, translating, group, scan, synth, processing, fallback)
+          example: "transcribe"
+        message:
+          type: string
+          description: Thông báo giai đoạn (tiếng Việt)
+        progress:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Tiến trình 0..1 (null khi chưa biết tổng)
+          example: 0.42
+        done:
+          type: number
+          nullable: true
+          description: Đơn vị đã hoàn thành (giây audio / frame / chunk)
+          example: 12.3
+        total:
+          type: number
+          nullable: true
+          description: Tổng đơn vị (giây audio / frame / chunk)
+          example: 29.1
+        etaSeconds:
+          type: number
+          nullable: true
+          description: Số giây còn lại ước lượng (null khi chưa đủ dữ liệu)
+          example: 18
+        downloadUrl:
+          type: string
+          description: Chỉ có ở event done của job có file kết quả — GET 1 lần
+          example: "/api/ai-download/0123456789abcdef"
 
     TtsVoice:
       type: object

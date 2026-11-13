@@ -152,11 +152,20 @@ function currentLoadFactor() {
  * @param {number} [timeoutMs=HEALTH_TIMEOUT_MS] - timeout từng request
  *   (đợt 52 I4: nới theo tải, vì event loop bridge cũng đói CPU khi tải cao)
  * @returns {Promise<{ ok: boolean, connected: boolean, data?: any, error?: string }>}
- *   connected=true nghĩa là bridge đã trả về HTTP response (đang sống, chỉ
- *   chậm) — khác với connection refused/timeout chưa chạm được bridge.
+ *   connected=true nghĩa là TCP đã nối được tới bridge (bridge đang sống,
+ *   chỉ chậm trả response) — khác với connection refused/chưa chạm được
+ *   bridge. ROUND83-K7: trước đây connected chỉ true khi đã nhận xong
+ *   HTTP response; request timeout sau khi TCP nối được vẫn tính
+ *   connected=false nên vòng chờ không được gia hạn đúng lúc cần (run2
+ *   J8 đợt 82: bridge đã listen từ 15:45:43 nhưng mọi check 2000ms đều
+ *   timeout trong 31s vì deep probe tranh CPU → manager kill bridge khỏe).
  */
 function healthCheck(port, timeoutMs = HEALTH_TIMEOUT_MS) {
   return new Promise((resolve) => {
+    // ROUND83-K7 — socketConnected: TCP nối được (kể cả khi HTTP response
+    // chưa về kịp trong timeoutMs). Xem JSDoc ở trên: timeout sau khi nối
+    // vẫn tính connected=true để vòng chờ được gia hạn (bridge sống, chỉ chậm).
+    let socketConnected = false;
     const req = http.get(
       { host: '127.0.0.1', port, path: '/api/health', timeout: timeoutMs },
       (res) => {
@@ -172,8 +181,12 @@ function healthCheck(port, timeoutMs = HEALTH_TIMEOUT_MS) {
         });
       },
     );
+    req.on('socket', (socket) => {
+      if (socket.connecting) socket.once('connect', () => { socketConnected = true; });
+      else socketConnected = true;
+    });
     req.on('timeout', () => req.destroy(new Error('health timeout')));
-    req.on('error', (e) => resolve({ connected: false, ok: false, error: e.message }));
+    req.on('error', (e) => resolve({ connected: socketConnected, ok: false, error: e.message }));
   });
 }
 
@@ -502,13 +515,17 @@ class ServiceManager extends EventEmitter {
     // gần nhất ĐÃ chạm được bridge (bridge đang sống, chỉ chậm) thì gia hạn
     // thêm 30s MỘT lần duy nhất — tránh fail cứng oan trong khi bridge sắp
     // healthy; nếu chưa chạm được lần nào thì fail luôn, không gia hạn.
-    const loadFactor = currentLoadFactor();
     const startTimeoutMs = startTimeoutForLoad(os.loadavg()[0], os.cpus().length || 1);
-    const perHealthTimeoutMs = Math.min(8000, Math.round(HEALTH_TIMEOUT_MS * loadFactor));
+    // ROUND83-K7 — timeout từng health check tính LẠI mỗi vòng từ tải hiện
+    // tại (không chốt một lần lúc spawn): deep probe AI (8 import Python
+    // nặng) chỉ bắt đầu tranh CPU SAU khi spawn, loadavg lúc spawn (3,05 ở
+    // run2 J8 đợt 82) đánh giá thấp tải thật trong lúc chờ → mọi check
+    // 2000ms đều timeout dù bridge đã listen. Trần 8000ms như cũ.
+    let perHealthTimeoutMs = Math.min(8000, Math.round(HEALTH_TIMEOUT_MS * currentLoadFactor()));
     this._logManager(
       `chờ bridge healthy tối đa ${startTimeoutMs / 1000}s trên cổng ${port} ` +
       `(loadavg ${os.loadavg()[0].toFixed(2)} / ${os.cpus().length || 1} CPU, ` +
-      `mỗi health check tối đa ${perHealthTimeoutMs}ms)`,
+      `mỗi health check tối đa ${perHealthTimeoutMs}ms lúc bắt đầu, tính lại theo tải mỗi vòng)`,
     );
     let deadline = Date.now() + startTimeoutMs;
     const spawnStartedAt = Date.now();
@@ -531,6 +548,9 @@ class ServiceManager extends EventEmitter {
             (tail ? `: ${tail.slice(-500)}` : ''),
           );
         }
+        // ROUND83-K7 — tính lại timeout từng check theo tải hiện tại
+        // (xem chú thích ở trên: tải do deep probe chỉ lên sau khi spawn).
+        perHealthTimeoutMs = Math.min(8000, Math.round(HEALTH_TIMEOUT_MS * currentLoadFactor()));
         // eslint-disable-next-line no-await-in-loop
         const h = await healthCheck(port, perHealthTimeoutMs);
         lastConnected = h.connected;
