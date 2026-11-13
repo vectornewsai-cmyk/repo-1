@@ -37,6 +37,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -180,7 +181,7 @@ window.__z4stepMoovlarge = async () => {
 };
 window.__z4ready = true;
 </script>`;
-fs.writeFileSync(path.join(SCRATCH, "bridge44-page.html"), pageHtml);
+writeFileEpermRetry(path.join(SCRATCH, "bridge44-page.html"), pageHtml);
 const server = createServer((req, res) => {
   const u = new URL(req.url, "http://127.0.0.1");
   if (u.pathname === "/bridge44-page.html") {
@@ -373,7 +374,7 @@ try {
       fullGet: pathC.filter((r) => r.method === "GET" && r.range === null).length,
       range206: pathC.filter((r) => r.status === 206).length },
   };
-  fs.writeFileSync(path.join(SCRATCH, "bridge-result-44z4.json"), JSON.stringify(summary, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "bridge-result-44z4.json"), JSON.stringify(summary, null, 2));
   console.log(JSON.stringify(summary, null, 2));
 
   const g = summary.gop;

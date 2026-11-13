@@ -37,6 +37,81 @@ DEFAULT_SESSION = "birefnet-general"
 BIREFNET_SESSIONS = {"birefnet-general", "birefnet-general-lite"}
 FALLBACK_SESSION = "u2net"
 
+# Phase 9 đợt 88 P7 — RAM guard cho session birefnet (nợ N4 đợt 86,
+# xem docs/PHASE9_ROUND86_N4_BIREFNET_SHIP_LIMITS.md §5.2): birefnet-general
+# chưa có lần chạy thành công nào trong gói — 6 lần chết SIGKILL liên tiếp
+# (nghi OOM-kill) vì đỉnh RSS 2,62 GB (standalone, đã tắt ORT arena) tới
+# 3,8 GB (in-app, spike lúc predict frame đầu) trong khi RAM khả dụng của
+# VM trong giờ vòng lặp chỉ 0,6–5,5 GB. Guard đo MemAvailable TRƯỚC khi
+# khởi tạo session; dưới ngưỡng thì chuyển u2net ngay thay vì đợi vài phút
+# rồi chết SIGKILL mới fallback.
+# Ngưỡng mặc định 6144 MB (≈ 6 GB) — cách chọn (ghi rõ để đợt sau đối chiếu):
+#   đỉnh RSS birefnet đã đo ......... 2,62–3,81 GB
+# + Electron + bridge (trong gói) ... ~1 GB
+# + OS + tiến trình khác ............ ~0,5 GB
+# + biên an toàn ................... ~0,5–1 GB (MemAvailable dao động mạnh
+#                                    theo tải các luồng khác trong giờ vòng lặp)
+# ≈ 5,6–6,3 GB → làm tròn 6 GB. Override bằng --min-ram-mb /
+# env BGREMOVE_MIN_RAM_MB; tắt hẳn bằng --no-ram-guard.
+DEFAULT_MIN_RAM_MB = 6144
+
+
+def get_mem_available_mb(meminfo_path="/proc/meminfo"):
+    """Đọc MemAvailable (MB) từ /proc/meminfo (Linux). Trả về int hoặc
+    None nếu không đọc được (không phải Linux, /proc không có, parse lỗi)
+    — caller quyết định: không đo được thì cho chạy tiếp + warn (không
+    chặn oan). MemAvailable đã trừ cache có thể thu hồi nên là số đo đúng
+    cho "còn bao nhiêu RAM thật sự dùng được"."""
+    try:
+        with open(meminfo_path, encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("MemAvailable:"):
+                    parts = line.split()
+                    return int(parts[1]) // 1024
+    except (OSError, ValueError, IndexError):
+        return None
+    return None
+
+
+def ram_guard_decision(session_name, mem_available_mb, min_ram_mb=DEFAULT_MIN_RAM_MB):
+    """Quyết định guard thuần (không đọc /proc — test được trực tiếp).
+    Trả về dict {action, available_mb, min_mb, reason}:
+      - "allow": session không phải birefnet, hoặc đủ RAM.
+      - "allow-unknown": không đo được RAM → cho chạy tiếp, warn.
+      - "fallback": session birefnet + RAM dưới ngưỡng → chuyển u2net ngay.
+    """
+    s = (session_name or "").strip().lower()
+    if s not in BIREFNET_SESSIONS:
+        return {"action": "allow", "available_mb": mem_available_mb,
+                "min_mb": min_ram_mb, "reason": "session không phải birefnet"}
+    if mem_available_mb is None:
+        return {"action": "allow-unknown", "available_mb": None,
+                "min_mb": min_ram_mb,
+                "reason": "không đo được RAM khả dụng — cho chạy tiếp, có thể OOM-kill"}
+    if mem_available_mb >= min_ram_mb:
+        return {"action": "allow", "available_mb": mem_available_mb,
+                "min_mb": min_ram_mb, "reason": "đủ RAM"}
+    return {"action": "fallback", "available_mb": mem_available_mb,
+            "min_mb": min_ram_mb,
+            "reason": f"RAM khả dụng {mem_available_mb} MB < ngưỡng {min_ram_mb} MB"}
+
+
+def resolve_min_ram_mb(args):
+    """Ngưỡng RAM guard hiệu lực (MB): --no-ram-guard hoặc --min-ram-mb 0
+    → 0 (tắt); --min-ram-mb > 0 thắng env BGREMOVE_MIN_RAM_MB; env thắng
+    mặc định. Giá trị env lỗi/không hợp lệ → mặc định (không crash)."""
+    if getattr(args, "no_ram_guard", False):
+        return 0
+    if getattr(args, "min_ram_mb", None) is not None:
+        return max(0, int(args.min_ram_mb))
+    try:
+        v = int(os.environ.get("BGREMOVE_MIN_RAM_MB", ""))
+        if v >= 0:
+            return v
+    except ValueError:
+        pass
+    return DEFAULT_MIN_RAM_MB
+
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description="AI background removal local (rembg)")
@@ -56,6 +131,16 @@ def parse_args(argv=None):
     p.add_argument("--no-fallback", action="store_true",
                    help="Tắt fallback tự động sang u2net khi session birefnet lỗi "
                         "(mặc định: bật — xem BGREMOVE_LIMITS.md)")
+    # Phase 9 đợt 88 P7 — RAM guard (nợ N4 đợt 86): ngưỡng RAM khả dụng
+    # tối thiểu để chạy session birefnet; dưới ngưỡng thì chuyển u2net
+    # ngay thay vì thử rồi chết SIGKILL (xem DEFAULT_MIN_RAM_MB).
+    p.add_argument("--min-ram-mb", type=int, default=None,
+                   help="Ngưỡng RAM khả dụng tối thiểu (MB) để chạy session "
+                        "birefnet (mặc định 6144; env BGREMOVE_MIN_RAM_MB; "
+                        "0 = tắt guard)")
+    p.add_argument("--no-ram-guard", action="store_true",
+                   help="Tắt RAM guard cho session birefnet (chạy thẳng, "
+                        "có thể bị OOM-kill trên máy ít RAM)")
     # Phase 9 đợt 2 — mượt matte theo thời gian (xem BGREMOVE_LIMITS.md §2.5):
     # EMA giữa các frame chống nhấp nháy + feather viền bằng box blur
     # numpy thuần (không cần cv2) để test được mà không cần rembg/model.
@@ -169,8 +254,32 @@ def run_once(args, session_name):
     except ImportError:
         _fail("Thiếu rembg. Cài: pip install \"rembg[cpu]\"  (xem requirements.txt)")
 
+    # N4 đợt 86 — giảm đỉnh RSS cho session birefnet (đo thật, xem
+    # docs/PHASE9_ROUND86_N4_BIREFNET_SHIP_LIMITS.md): birefnet-general cần
+    # ~4,5–4,7 GB RSS đỉnh (model 973 MB + arena ONNX Runtime) và bị kernel
+    # OOM-kill (SIGKILL) trên VM 8 GB khi RAM khả dụng chỉ ~1–2,5 GB — 3 lần
+    # chết liên tiếp (M6 đợt 85 trong gói, N4 attempt 2 trong gói, N4
+    # standalone không Electron). Tắt CPU memory arena + memory pattern của
+    # ONNX Runtime cho session birefnet để RSS bám theo bộ nhớ sống thay vì
+    # giữ lại block đã giải phóng. Chỉ áp cho session birefnet (u2net nhẹ,
+    # giữ nguyên hành vi). rembg.new_session nhận sess_opts (ort 1.23.2).
+    sess_opts = None
+    if session_name in BIREFNET_SESSIONS:
+        try:
+            import onnxruntime as ort
+            sess_opts = ort.SessionOptions()
+            sess_opts.enable_cpu_mem_arena = False
+            sess_opts.enable_mem_pattern = False
+            print("[bgremove] birefnet low-memory: cpu_mem_arena=off, "
+                  "mem_pattern=off", file=sys.stderr, flush=True)
+        except Exception as e:  # noqa: BLE001 — không đặt được thì chạy mặc định
+            print(f"[bgremove] không đặt được session options ({e}) — "
+                  "chạy mặc định", file=sys.stderr, flush=True)
+            sess_opts = None
+
     print(f"[bgremove] khởi tạo session '{session_name}'...", file=sys.stderr, flush=True)
-    session = new_session(session_name)
+    session = (new_session(session_name, sess_opts=sess_opts)
+               if sess_opts is not None else new_session(session_name))
 
     cap = cv2.VideoCapture(args.input)
     if not cap.isOpened():
@@ -304,8 +413,50 @@ def main(argv=None):
     requested = args.session.strip().lower()
     fallback = decide_fallback(requested, fallback_enabled=not args.no_fallback)
 
+    # Phase 9 đợt 88 P7 — RAM guard: chỉ áp cho session birefnet, chạy
+    # TRƯỚC khi khởi tạo session (run_once import rembg + load model 973 MB
+    # nên guard phải chặn ở đây, không phải trong run_once). Không đo được
+    # RAM → warn rồi cho chạy tiếp (không chặn oan).
+    min_ram_mb = resolve_min_ram_mb(args)
+    guard_from = None
+    if requested in BIREFNET_SESSIONS and min_ram_mb > 0:
+        avail = get_mem_available_mb()
+        decision = ram_guard_decision(requested, avail, min_ram_mb)
+        if decision["action"] == "allow-unknown":
+            print(f"[bgremove] RAM_GUARD warn: {decision['reason']} "
+                  f"(ngưỡng {min_ram_mb} MB) — vẫn thử {requested}",
+                  file=sys.stderr, flush=True)
+        elif decision["action"] == "fallback":
+            if not fallback:
+                # --no-fallback: user cấm retry u2net → chặn thẳng, báo rõ,
+                # không chạy birefnet rồi chết SIGKILL sau vài phút.
+                sys.exit(
+                    f"RAM_GUARD: không chạy session {requested} — "
+                    f"{decision['reason']}. "
+                    f"Chạy lại với --session u2net hoặc tăng RAM khả dụng."
+                )
+            print(f"[bgremove] RAM_GUARD session={requested} "
+                  f"avail_mb={avail} min_mb={min_ram_mb} -> {fallback} "
+                  f"(RAM khả dụng thấp, tránh OOM-kill — không thử {requested})",
+                  file=sys.stderr, flush=True)
+            # Marker machine-readable cho bridge/MCP (parseSessionMarkers
+            # đọc ram_guard_* + fallback_from để báo UI lý do thật).
+            print(f"[bgremove] ram_guard_from={requested}",
+                  file=sys.stderr, flush=True)
+            print(f"[bgremove] ram_guard_avail_mb={avail}",
+                  file=sys.stderr, flush=True)
+            print(f"[bgremove] ram_guard_min_mb={min_ram_mb}",
+                  file=sys.stderr, flush=True)
+            guard_from = requested
+            requested = fallback
+            fallback = None
+
     try:
         run_once(args, requested)
+        if guard_from:
+            # Marker fallback cho bridge/MCP (như đường retry sau lỗi).
+            print(f"[bgremove] fallback_from={guard_from}",
+                  file=sys.stderr, flush=True)
         return
     except (Exception, SystemExit) as e:
         first_err = e.code if isinstance(e, SystemExit) else str(e)

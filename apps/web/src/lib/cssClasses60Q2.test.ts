@@ -21,8 +21,8 @@
 //       nào; style inline còn lại của 7 badge chỉ còn `display: "none"`
 //       (JS bật/tắt qua ref), 2 phần tử render có điều kiện không còn
 //       prop `style` nào.
-//   (b) Không đổi key i18n / literal ở 4 file `.tsx` luồng này đụng
-//       (preview.tsx, HistoryPanel, TrackPanel, TtsButton): khóa đúng
+//   (b) Không đổi key i18n / literal ở 5 file `.tsx` luồng này đụng
+//       (preview.tsx, HistoryPanel, TrackPanel, TtsButton, StickerPanel): khóa đúng
 //       số call site + tập key đã đếm trước khi sửa.
 // Bằng chứng động (headed thật): xem
 // docs/PHASE9_ROUND60_Q2_CSS_CLASSES_LIMITS.md.
@@ -358,8 +358,12 @@ check("ExportPanel: \"error\" chỉ là literal so sánh trạng thái, không p
     "className chứa \"error\" phải là phép so sánh shareStatus === \"error\"");
 });
 
-// ============ 7. Quét toàn repo: chỉ còn dương tính giả `.all` ============
-check("Quét toàn repo: không còn class chưa định nghĩa ngoài `.all` (dương tính giả)", () => {
+// ============ 7. Quét toàn repo: chỉ còn dương tính giả `.all` + 2 hook harness H9 ============
+// Parent gộp đợt 80: `.perf-fps-btn` / `.perf-fps-panel` (luồng H9) là
+// hook cho harness sau bắt được, style bằng inline (btnStyle/panelStyle
+// + override vị trí mobile qua useIsMobile — động nên không thể là rule
+// CSS tĩnh). Không phải class thiếu style: khóa chúng phải đi kèm style=.
+check("Quét toàn repo: không còn class chưa định nghĩa ngoài `.all` (dương tính giả) + 2 hook H9", () => {
   const undef = new Map<string, string[]>();
   for (const [rel, classes] of USED) {
     for (const c of new Set(classes)) {
@@ -369,9 +373,14 @@ check("Quét toàn repo: không còn class chưa định nghĩa ngoài `.all` (d
       }
     }
   }
-  const rest = [...undef.keys()].filter((c) => c !== "all");
+  const rest = [...undef.keys()].filter((c) => c !== "all" && c !== "perf-fps-btn" && c !== "perf-fps-panel");
   assert.deepEqual(rest, [], `còn class chưa định nghĩa: ${rest.map((c) => `.${c} (${undef.get(c)!.join(", ")})`).join("; ")}`);
   assert.ok(undef.has("all"), "`.all` phải vẫn xuất hiện (để khóa nó là dương tính giả, không phải đã xóa nhầm code)");
+  const po = read("components/PerfOverlay.tsx");
+  for (const c of ["perf-fps-btn", "perf-fps-panel"]) {
+    assert.ok(po.includes(`className="${c}"`), `PerfOverlay.tsx phải dùng class ${c}`);
+    assert.ok(new RegExp(`className="${c}"[^>]*style=`).test(po), `${c} phải đi kèm inline style (hook harness, không phải class CSS)`);
+  }
 });
 check("`.all` chỉ là literal so sánh cat === \"all\", không phải class", () => {
   for (const rel of ["components/TemplatePicker.tsx", "components/sticker/StickerPanel.tsx"]) {
@@ -382,7 +391,7 @@ check("`.all` chỉ là literal so sánh cat === \"all\", không phải class", 
   }
 });
 
-// ============ 8. i18n không đổi ở 4 file .tsx đụng tới ============
+// ============ 8. i18n không đổi ở 5 file .tsx đụng tới ============
 function checkI18n(rel: string, fnName: string, keys: string[], calls: number): void {
   check(`${rel}: đủ ${keys.length} key i18n, ${calls} call site — không thêm/bớt`, () => {
     const src = read(rel);
@@ -396,6 +405,8 @@ checkI18n("preview.tsx", "i18nT", [
   "decodeahead.badgeRunning", "decodeahead.reason.unknown", "decodeahead.toastBlocked",
   "decodeahead.toastOffNote", "decodeahead.toggleAria", "decodeahead.toggleBlocked",
   "decodeahead.toggleHint", "decodeahead.toggleOff", "decodeahead.toggleOn",
+  "gop.trial.fetching", "gop.trial.others", // Đợt 72 Z5: toast fetch remainder + số run khác (preview.tsx)
+  "gop.trial.running", // Đợt 71 Y5: toast trạng thái trial keyframe (preview.tsx effect mới)
   "preview.curveFallbackHidden", "preview.curveFallbackLinear", "preview.curveFallbackLinearShort",
   "preview.curveToast", "preview.curveWarnFallback", "preview.curveWarnHidden",
   "preview.effectSkippedBadge", "preview.effectSkippedToast", "preview.emptyHint",
@@ -405,25 +416,45 @@ checkI18n("preview.tsx", "i18nT", [
   "preview.lutBadge", "preview.missingMedia", "preview.motionBadge",
   "preview.nestedSkippedBadge", "preview.nestedSkippedToast", "preview.proxyBadge",
   "preview.reverseBadge", "preview.reverseLabel", "preview.volumeTitle",
-], 47);
+  "safeArea.toggleAria", "safeArea.toggleOff", "safeArea.toggleOn",
+  "safeArea.toggleTitle", // Đợt 73 A9: nút toggle overlay vùng an toàn (preview.tsx)
+], 54); // Đợt 73 A9: +4 call site safeArea.toggle* (50 → 54)
 checkI18n("components/project/HistoryPanel.tsx", "t", [
   "history.beforeRestore", "history.colChanges", "history.colLabel", "history.colTime",
   "history.deleteConfirm", "history.duplicate", "history.empty", "history.export",
   "history.import", "history.importFailed", "history.imported", "history.labelPlaceholder",
   "history.notFound", "history.note", "history.readFailed", "history.restore",
   "history.restoreConfirm", "history.restoreFailed", "history.restored", "history.saveFailed",
-  "history.saved", "history.snapshot", "history.title", "topbar.deleteShort",
-], 24);
+  "history.saved", "history.snapshot", "history.title", "legacyAdopt.openDismissed",
+  "topbar.deleteShort",
+], 26);
 checkI18n("components/sticker/TrackPanel.tsx", "t", [
-  "motionTrack.attached", "motionTrack.detach", "motionTrack.followNote", "motionTrack.intro",
+  "motionTrack.assIgnored", "motionTrack.attached", "motionTrack.detach", "motionTrack.followNote", "motionTrack.intro",
   "motionTrack.invalid", "motionTrack.loadJson", "motionTrack.loadOther", "motionTrack.lost",
-  "motionTrack.readFailed",
-], 9);
+  "motionTrack.maskNotFollowing", "motionTrack.maskStillFollows", "motionTrack.readFailed",
+  "motionTrack.title", // Đợt 91 S5: tiêu đề panel theo dõi chuyển động (TrackPanel.tsx:140)
+  "motionTrack.transitionIgnored", // Đợt 87 O5/closing: +4 call site cảnh báo track bị bỏ qua (ASS/transition/mask)
+], 14);
+checkI18n("components/sticker/StickerPanel.tsx", "i18nT", [
+  "sticker.allTab", "sticker.editorSelected", "sticker.editorTip", "sticker.errImageOnly",
+  "sticker.errWebp", "sticker.footTip", "sticker.libTip", "sticker.noResult",
+  "sticker.opacity", "sticker.posX", "sticker.posY", "sticker.rotation",
+  "sticker.searchPlaceholder", "sticker.size", "sticker.title", "sticker.uploadBtn",
+], 16); // Đợt 93 U5: khóa 16 call site sticker.* (đề xuất LIMITS gộp đợt 92 §4 mục 5; nhãn tab/lưới nay qua t(labelKey) động nên regex này không đếm)
 checkI18n("components/TtsButton.tsx", "i18nT", [
+  "aiJob.cancelled", "aiJob.downloadFailed", "aiJob.downloading", // Đợt 80 H8: tiến trình/hủy AI (TtsButton.tsx)
   "common.bridgeConn", "tts.boxTitle", "tts.bridgeEmpty", "tts.bridgeErrorHttp", "tts.busy",
   "tts.busyBtn", "tts.cloneFromSample", "tts.cloneHint", "tts.done", "tts.emptyText",
   "tts.label", "tts.mediaErr", "tts.noRefFile", "tts.refFileLabel", "tts.speakBtn",
   "tts.speakTitle", "tts.voiceTitle",
-], 20);
+  "tts.cloneCreateHint", "tts.clonedGroupLabel", "tts.clonedVoiceMissing", "tts.clonedVoicesEmpty",
+  "tts.clonedVoicesTitle", "tts.createVoiceBtn", "tts.createVoiceTitle", "tts.creatingVoiceBtn",
+  "tts.deleteVoice", "tts.deleteVoiceConfirm", "tts.loadVoicesFailed", "tts.presetGroupLabel",
+  "tts.previewLabel", "tts.voiceCreateFailed", "tts.voiceCreated", "tts.voiceDeleted",
+  "tts.voiceNameLabel", "tts.voiceNamePlaceholder", // Đợt 84 L8: +18 key tts.* voice cloning (TtsButton.tsx)
+  "tts.allVoicesExported", "tts.exportAllVoices", "tts.exportVoice", "tts.importFailedDetail",
+  "tts.importSkipped", "tts.importVoices", "tts.importingVoicesBtn", "tts.voiceExportFailed",
+  "tts.voiceExported", "tts.voiceImportFailed", "tts.voiceImported", // Đợt 85 M7: +11 key tts.* export/import giọng (TtsButton.tsx)
+], 63); // Đợt 85 M7: +11 key tts.* + 4 call site key cũ dùng lại (38 → 49 key, 48 → 63 call site)
 
 console.log(`\nPASS (${pass}/${total})`);

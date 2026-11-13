@@ -67,6 +67,7 @@
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 const path = require("node:path");
 
@@ -281,7 +282,7 @@ function blockPreview(frameA, frameB, bs, w, h) {
 function renderBlockRgb(bs, tag, w, h) {
   const maskPath = path.join(TMP, `${tag}-mask.rgb`);
   const { buf, fracB } = blockMask(bs, w, h);
-  fs.writeFileSync(maskPath, buf);
+  writeFileEpermRetry(maskPath, buf);
   const out = path.join(TMP, `${tag}.raw`);
   const NORM = normChain(w, h);
   ffmpeg(["-ss", String(WIN_A), "-t", "2", "-i", FILE_A, "-ss", String(Math.max(0, WIN_B - 1)), "-t", "3", "-i", FILE_B,
@@ -298,7 +299,7 @@ function renderBlockRgb(bs, tag, w, h) {
 // với preview TRƯỚC KHI encode; vi phạm thì throw, không ghi số rác.
 function renderBlockFramesYuv(bs, tag, crf, w, h, preview) {
   const maskPath = path.join(TMP, `${tag}-mask.rgb`);
-  if (!fs.existsSync(maskPath)) fs.writeFileSync(maskPath, blockMask(bs, w, h).buf);
+  if (!fs.existsSync(maskPath)) writeFileEpermRetry(maskPath, blockMask(bs, w, h).buf);
   const framesDir = path.join(TMP, `blockframes${bs}`);
   fs.mkdirSync(framesDir, { recursive: true });
   const NORM = normChain(w, h);
@@ -316,7 +317,7 @@ function renderBlockFramesYuv(bs, tag, crf, w, h, preview) {
   const parts = [];
   for (let k = 0; k < 60; k++) parts.push(fs.readFileSync(path.join(framesDir, `f${String(k).padStart(2, "0")}.rgb`)));
   const concatPath = path.join(TMP, `${tag}.rgb`);
-  fs.writeFileSync(concatPath, Buffer.concat(parts));
+  writeFileEpermRetry(concatPath, Buffer.concat(parts));
   const mp4 = path.join(TMP, `${tag}-crf${crf}.mp4`);
   ffmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${w}x${h}`, "-framerate", String(FPS), "-i", concatPath,
     "-c:v", "libx264", "-preset", "medium", "-crf", String(crf), "-pix_fmt", "yuv420p", "-y", mp4]);
@@ -396,7 +397,7 @@ function main() {
     }
   }
   if (JSON_ARG) {
-    fs.writeFileSync(JSON_ARG, JSON.stringify(results, null, 2));
+    writeFileEpermRetry(JSON_ARG, JSON.stringify(results, null, 2));
     console.log(`JSON: ${JSON_ARG}`);
   }
   console.log(`scratch: ${TMP} (giữ lại để đối chứng, không đưa vào batch stage)`);

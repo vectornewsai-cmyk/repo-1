@@ -31,6 +31,7 @@
  */
 "use strict";
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -65,8 +66,8 @@ function transpileTs(srcRel, outName) {
   fs.mkdirSync(outDir, { recursive: true });
   const stubDir = path.join(TMP, "node_modules", "@repo-1", "video-spec");
   fs.mkdirSync(stubDir, { recursive: true });
-  fs.writeFileSync(path.join(stubDir, "package.json"), JSON.stringify({ name: "@repo-1/video-spec", version: "0.0.0", main: "index.js" }));
-  fs.writeFileSync(path.join(stubDir, "index.js"), "module.exports = { CHROMA_DEFAULTS:{}, EFFECT_TYPES:[], LUT_IDS:[], STICKER_DEFAULTS:{}, interpolateKeyframes:()=>null, sourceTimeAt:()=>0, speedAt:()=>1 };\n");
+  writeFileEpermRetry(path.join(stubDir, "package.json"), JSON.stringify({ name: "@repo-1/video-spec", version: "0.0.0", main: "index.js" }));
+  writeFileEpermRetry(path.join(stubDir, "index.js"), "module.exports = { CHROMA_DEFAULTS:{}, EFFECT_TYPES:[], LUT_IDS:[], STICKER_DEFAULTS:{}, interpolateKeyframes:()=>null, sourceTimeAt:()=>0, speedAt:()=>1 };\n");
   const tsc = path.join(ROOT, "node_modules", ".bin", "tsc");
   const r = spawnSync(tsc, [src, "--outDir", outDir, "--module", "commonjs", "--target", "es2020", "--moduleResolution", "node", "--skipLibCheck"], { encoding: "utf8" });
   if (r.status !== 0) throw new Error(`tsc thất bại: ${(r.stdout || "") + (r.stderr || "")}`.slice(0, 500));
@@ -431,7 +432,7 @@ if (USE_PRODUCT) {
   if (JSON_OUT) {
     const p = path.isAbsolute(JSON_OUT) ? JSON_OUT : path.join(ROOT, JSON_OUT);
     fs.mkdirSync(path.dirname(p), { recursive: true });
-    fs.writeFileSync(p, JSON.stringify(out, null, 2));
+    writeFileEpermRetry(p, JSON.stringify(out, null, 2));
     console.log(`JSON: ${p}`);
   }
   if (!JSON_OUT) {
@@ -442,7 +443,7 @@ if (USE_PRODUCT) {
 if (JSON_OUT && USE_PRODUCT) {
   const p = path.isAbsolute(JSON_OUT) ? JSON_OUT : path.join(ROOT, JSON_OUT);
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  fs.writeFileSync(p, JSON.stringify({
+  writeFileEpermRetry(p, JSON.stringify({
     grid: "120fps exact-p, 99 cells, product code",
     cur: rowsCUR.map((r) => ({ id: r.id, mad: +r.m.mad.toFixed(4), verdict: classify(r.m) })),
     product: rowsN6.map((r) => ({ id: r.id, mad: +r.m.mad.toFixed(4), verdict: classify(r.m) })),

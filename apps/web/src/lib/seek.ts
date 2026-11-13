@@ -88,10 +88,35 @@ export interface SeekOpts {
   timeoutMs?: number;
   /** Debounce của Seeker khi scrub. Mặc định 80ms. */
   debounceMs?: number;
+  /**
+   * Đợt 89 Q5 — số lần GIA HẠN timeout khi element vẫn đang `seeking`.
+   * Mặc định 0 = hành vi cũ (timeout đúng hẹn, mọi test cũ không đổi).
+   * Mỗi lần gia hạn chờ thêm một `timeoutMs` nữa trước khi kết luận
+   * timedOut — chỉ gia hạn khi `el.seeking === true` (trình duyệt đang
+   * tích cực giải mã), còn seeking false / metadata lỗi thì timeout như
+   * cũ. Căn cứ đo Q5 (probe89q5-seek-latency, clip GOP 250, seek xa
+   * keyframe): Chromium 0,7–2,4s, WebKit 1,6–6,4s — đều vượt timeout
+   * 1200ms nên mỗi seek tốn 2–6 attempt timeout + retry, đốt cap
+   * PAUSE_SEEK_FAILURE_CAP (10) và có thể kẹt khung stale như P5 đợt 88.
+   * Gia hạn làm seek chậm xong trong ĐÚNG 1 attempt thay vì timeout rồi
+   * retry; giới hạn trên = (extensions + 1) × timeoutMs cho mỗi attempt.
+   */
+  timeoutExtensions?: number;
 }
 
 export const DEFAULT_SEEK_TIMEOUT_MS = 1200;
 export const DEFAULT_SEEK_DEBOUNCE_MS = 80;
+/** Đợt 89 Q5 — số lần gia hạn timeout mặc định cho preview (xem SeekOpts):
+ * 5 lần × 1200ms = ngân sách 7,2s/attempt. Căn cứ đo Q5 (clip GOP 250):
+ * Chromium không tải max 2,4s; WebKit không tải max 6,4s → phủ hết trong
+ * ĐÚNG 1 attempt (0 lần timeout, không đốt cap); WebKit DƯỚI TẢI (3x yes,
+ * loadavg 16, RAM khả dụng 745MB) tElement max 9,7s → tối đa 2 attempt
+ * (1 timeout) mỗi seek, còn xa cap 10 (cap chỉ reset khi seek thành công
+ * nên seek chậm vẫn không bao giờ chạm cap). Seek kẹt thật (seeked không
+ * tới) vẫn timeout sau tối đa 7,2s/attempt — chậm hơn 1,2s cũ nhưng là
+ * trường hợp hiếm (file hỏng/metadata lỗi), đánh đổi chấp nhận được.
+ * Chỉ preview truyền giá trị này; seekElement mặc định giữ 0 (test cũ). */
+export const SEEK_TIMEOUT_EXTENSIONS = 5;
 // ROUND44-Z2: số lần gán lại tối đa sau khi `seeked` đáp xuống 0 trong khi
 // target > 0 (quirk Chrome seek-landing-0, xem seekElement bên dưới).
 // Lần đáp 0 thứ 3 (vượt 2 lần thử lại) thì bỏ cuộc thay vì gán mãi.
@@ -300,7 +325,30 @@ export function seekElement(
         finish(true, false);
         return;
       }
-      timer = setTimeout(() => finish(false, true), timeoutMs);
+      // Đợt 89 Q5 — gia hạn timeout khi element vẫn đang seeking (xem
+      // SeekOpts.timeoutExtensions): timer cháy mà seek vẫn đang bay thì
+      // chờ thêm một timeoutMs nữa thay vì kết luận timedOut ngay. Listener
+      // `seeked` giữ nguyên qua các lần gia hạn (không gỡ/gắn lại); chỉ
+      // khi hết lượt gia hạn hoặc element không còn seeking mới finish
+      // timedOut. Mặc định extensions = 0 nên hành vi cũ giữ nguyên.
+      let extensionsLeft = opts.timeoutExtensions ?? 0;
+      const armTimer = () => {
+        timer = setTimeout(() => {
+          let stillSeeking = false;
+          try {
+            stillSeeking = el.seeking === true;
+          } catch {
+            stillSeeking = false;
+          }
+          if (extensionsLeft > 0 && stillSeeking) {
+            extensionsLeft -= 1;
+            armTimer();
+            return;
+          }
+          finish(false, true);
+        }, timeoutMs);
+      };
+      armTimer();
       const listener = () => {
         if (done) return;
         if (timer) clearTimeout(timer);

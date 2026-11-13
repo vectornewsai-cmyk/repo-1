@@ -27,6 +27,7 @@
 
 import { spawn, execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -101,7 +102,7 @@ function buildFixtures() {
   execFileSync("ffmpeg", ["-y", "-v", "error", "-f", "lavfi", "-i", "testsrc2=size=640x360:rate=30:duration=3",
     "-c:v", "libx264", "-g", "30", "-pix_fmt", "yuv420p", "-an", "-movflags", "+faststart", valid], { stdio: "ignore" });
   const py = path.join(SCRATCH, "make-broken-gap.py");
-  fs.writeFileSync(py, [
+  writeFileEpermRetry(py, [
     "import json, subprocess, sys",
     "src, dst = sys.argv[1], sys.argv[2]",
     "out = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0',",
@@ -273,7 +274,7 @@ function buildPage() {
     + "window.__b2Result = R;\n"
     + "window.__b2Ready = true;\n"
     + "</script>\n";
-  fs.writeFileSync(path.join(SCRATCH, "page.html"), page);
+  writeFileEpermRetry(path.join(SCRATCH, "page.html"), page);
 }
 
 async function main() {

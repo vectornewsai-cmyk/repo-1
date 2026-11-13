@@ -138,12 +138,16 @@ export interface RehydrateSkippedBin {
   assetId: string;
   name: string;
   reason: string;
+  /** Đợt 80 H7 — key i18n song song với `reason` (rehydrate.*); `reason` giữ nguyên làm fallback + để test cũ khóa nội dung không vỡ. */
+  reasonKey?: string;
 }
 
 /** Một src không nạp lại được, kèm lý do để App/test đối chiếu. */
 export interface RehydrateSkipped {
   src: string;
   reason: string;
+  /** Đợt 80 H7 — key i18n song song với `reason` (rehydrate.*). */
+  reasonKey?: string;
 }
 
 export interface RehydratePlan {
@@ -215,15 +219,15 @@ export function planRehydrate(srcs: string[], manifests: AssetManifest[]): Rehyd
       const id = assetIdFromSrc(src);
       const m = id !== null ? byId.get(id) : undefined;
       if (m) candidates.push({ src, assetId: m.assetId, manifest: m, via: "asset" });
-      else skipped.push({ src, reason: "asset không còn trong IndexedDB (đã xoá hoặc project mở ở máy khác)." });
+      else skipped.push({ src, reason: "asset không còn trong IndexedDB (đã xoá hoặc project mở ở máy khác).", reasonKey: "rehydrate.reasonAssetGone" });
       continue;
     }
     if (src.startsWith("blob:")) {
-      skipped.push({ src, reason: "blob: URL chỉ sống trong phiên cũ; reload tạo document mới nên URL chết." });
+      skipped.push({ src, reason: "blob: URL chỉ sống trong phiên cũ; reload tạo document mới nên URL chết.", reasonKey: "rehydrate.reasonBlobStale" });
       continue;
     }
     if (/^https?:\/\//i.test(src) || src.startsWith("data:")) {
-      skipped.push({ src, reason: "src tự đủ (http/data), không cần nạp lại qua media bin." });
+      skipped.push({ src, reason: "src tự đủ (http/data), không cần nạp lại qua media bin.", reasonKey: "rehydrate.reasonSelfSufficient" });
       continue;
     }
     if (src !== "" && !src.includes("://") && !src.startsWith("/")) {
@@ -236,12 +240,12 @@ export function planRehydrate(srcs: string[], manifests: AssetManifest[]): Rehyd
         if (aliased) {
           candidates.push({ src, assetId: aliased.assetId, manifest: aliased, via: "alias" });
         } else {
-          skipped.push({ src, reason: "không có manifest cùng originalName trong AssetStore (media chưa từng được ingest)." });
+          skipped.push({ src, reason: "không có manifest cùng originalName trong AssetStore (media chưa từng được ingest).", reasonKey: "rehydrate.reasonNoManifest" });
         }
       }
       continue;
     }
-    skipped.push({ src, reason: "dạng src không nhận diện được để nạp lại." });
+    skipped.push({ src, reason: "dạng src không nhận diện được để nạp lại.", reasonKey: "rehydrate.reasonUnknownSrc" });
   }
   return { candidates, skipped };
 }
@@ -319,6 +323,7 @@ export function planRehydrateBin(
       assetId: e.assetId,
       name: e.name,
       reason: "asset không còn trong IndexedDB (đã xoá bytes hoặc project mở ở máy khác).",
+      reasonKey: "rehydrate.reasonAssetGoneBytes",
     });
   }
   return { candidates, skipped };
@@ -345,6 +350,21 @@ export interface RehydrateDeps {
    * CHỈ "missing" (404 chắc chắn) mới gỡ proxy; "alive"/"unknown" giữ.
    */
   checkProxyUrl?: (url: string) => Promise<ProxyLiveness>;
+  /**
+   * Đợt 75 C6 — probe lại codec không hỗ trợ cho item khôi phục (đóng
+   * nợ đợt 74 B3: cờ `unsupportedCodec` chỉ set lúc import, không lưu
+   * manifest nên reload là badge cảnh báo mất — user mở lại project
+   * không còn thấy file nào không phát được). Dep tùy chọn, theo đúng
+   * mẫu checkProxyUrl: nhận File đã dựng lại, trả codecLabel khi
+   * verdict "unsupported", undefined khi chơi được / chưa probe được.
+   * Không truyền → item khôi phục không gắn cờ (hành vi cũ). Caller
+   * (App.tsx / openProjectFlow.ts) truyền adapter
+   * `probeImportedFileCodec` từ lib/codecProbe — module này KHÔNG
+   * import value từ file anh em (quy ước node strip-types, xem đầu
+   * file) nên probe phải đi qua dep. Probe fail-open: dep throw/trả
+   * undefined thì item vẫn khôi phục bình thường, chỉ thiếu cờ.
+   */
+  probeUnsupportedCodec?: (file: File) => Promise<string | undefined>;
 }
 
 /** Origin bridge mặc định khi caller không truyền proxyBaseUrl. */
@@ -485,6 +505,19 @@ export async function rehydrateMediaItems(
         };
       }
     }
+    // Đợt 75 C6 — probe lại codec cho item khôi phục (xem dep ở
+    // RehydrateDeps): file đã dựng từ blob nên sniff header + hỏi
+    // canPlayType của trình duyệt HIỆN TẠI (đúng cả khi user đổi
+    // trình duyệt giữa hai phiên). Không có dep → bỏ qua như cũ;
+    // dep throw → bỏ qua lặng lẽ (chỉ thiếu cờ, không hỏng rehydrate).
+    let unsupportedCodec: string | undefined;
+    if (file && deps.probeUnsupportedCodec) {
+      try {
+        unsupportedCodec = await deps.probeUnsupportedCodec(file);
+      } catch {
+        unsupportedCodec = undefined;
+      }
+    }
     items.push({
       id: `rehydrated-${c.assetId}-${items.length}`,
       name: c.src,
@@ -495,6 +528,10 @@ export async function rehydrateMediaItems(
       height: c.manifest.height,
       thumbnail: c.manifest.thumbnail,
       file,
+      // Đợt 75 C6 — probe lại codec (xem dep probeUnsupportedCodec ở
+      // trên): badge cảnh báo phải sống qua reload, không chỉ trong
+      // phiên import. Chạy SAU khi file đã dựng xong; fail-open.
+      ...(unsupportedCodec ? { unsupportedCodec } : {}),
       // Đợt 53 J5 — nối assetId (để setMediaProxy lưu bền proxy về đúng
       // manifest) và proxy đã lưu (nợ I9 §5): item khôi phục lại dùng
       // proxy ngay, không cần tạo lại từ gốc. proxyPath chỉ ghép với

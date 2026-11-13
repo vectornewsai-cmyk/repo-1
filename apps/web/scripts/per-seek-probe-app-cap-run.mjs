@@ -47,6 +47,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -397,8 +398,8 @@ const main = async () => {
       rangeRequests: rangeLog.length, rangeLog: rangeLog.slice(-60),
       scope: "app-page-level: element <video> trong trang app thật (dist đóng băng), KHÔNG phải element preview MediaPool — preview chỉ nạp blob local nên seek preview local không thể chậm 40 s (xem đối chứng blob). Mạng chậm là mô phỏng nhỏ giọt có nhật ký range, không phải mạng chậm thật.",
     };
-    fs.writeFileSync(path.join(opts.scratch, "app-cap-evidence.json"), JSON.stringify(evidence, null, 2));
-    fs.writeFileSync(path.join(opts.scratch, "app-cap-entries.json"), JSON.stringify(entries, null, 2));
+    writeFileEpermRetry(path.join(opts.scratch, "app-cap-evidence.json"), JSON.stringify(evidence, null, 2));
+    writeFileEpermRetry(path.join(opts.scratch, "app-cap-entries.json"), JSON.stringify(entries, null, 2));
     console.log(`[appcap] entries=${entries.length} maxSamples=${evidence.maxSamplesPerEntry} maxDropped=${evidence.maxDroppedSeekingSamples} capHit=${evidence.capHit} validateProblems=${validateProblemsTotal}`);
     console.log(`[appcap] evidence → ${path.join(opts.scratch, "app-cap-evidence.json")}`);
   } finally {

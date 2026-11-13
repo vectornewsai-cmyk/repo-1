@@ -7,6 +7,7 @@
 // It never modifies repo code; it only reads, builds (tsc/vite) and launches.
 import { spawn, execFile } from "node:child_process";
 import { promises as fs } from "node:fs";
+import { writeFileEpermRetryAsync } from "../../web/scripts/eperm-retry.mjs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import os from "node:os";
@@ -194,7 +195,7 @@ async function launchElectron({ label, binary, cwd, extraArgs, cdpPort, shotPath
         check(`${label}: renderer fetch to bridge :8787 ok (CORS app://vcut)`, false, String(e.message ?? e));
       }
       const shot = await send("Page.captureScreenshot", { format: "png" });
-      await fs.writeFile(shotPath, Buffer.from(shot.data, "base64"));
+      await writeFileEpermRetryAsync(shotPath, Buffer.from(shot.data, "base64"));
       const st = await fs.stat(shotPath);
       check(`${label}: screenshot captured`, st.size > 1000, `${shotPath} ${st.size} bytes`);
       const v = await shotVariance(shotPath);
@@ -391,6 +392,6 @@ const leftoverFinal = await run("pgrep", ["-f", "electron/dist/electro[n]"], { t
 check("final: no leftover electron processes", leftoverFinal.code !== 0, leftoverFinal.code === 0 ? "orphaned electron still running — see pgrep" : "clean");
 report.passed = results.filter((r) => r.ok).length;
 report.failed = results.filter((r) => !r.ok).length;
-await fs.writeFile("/tmp/g6-verify-report.json", JSON.stringify(report, null, 2));
+await writeFileEpermRetryAsync("/tmp/g6-verify-report.json", JSON.stringify(report, null, 2));
 console.log(`\nSUMMARY: ${report.passed} passed, ${report.failed} failed — report: /tmp/g6-verify-report.json`);
 process.exit(report.failed ? 1 : 0);

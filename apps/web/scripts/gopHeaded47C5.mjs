@@ -38,6 +38,7 @@
 // số frame/GOP là bằng chứng chức năng + wiring, không phải tốc độ.
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -274,7 +275,7 @@ window.__c5t3 = async () => {
 };
 window.__c5ready = true;
 </script>`;
-fs.writeFileSync(path.join(pubDir, PAGE_NAME), pageHtml);
+writeFileEpermRetry(path.join(pubDir, PAGE_NAME), pageHtml);
 
 // ---- 3. Xvfb + Chrome headed (công thức X4/Z4/A4/B4) ----
 let xvfb = null;

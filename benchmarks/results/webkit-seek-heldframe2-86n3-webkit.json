@@ -1,0 +1,1146 @@
+{
+  "startedAt": "2026-11-11T03:55:00.673Z",
+  "engine": "webkit",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15",
+  "loadStart": [
+    1.26,
+    2.13,
+    2.92
+  ],
+  "cases": {
+    "h264_30s_g250_640|clear|cost": {
+      "clip": "h264_30s_g250_640",
+      "variant": "clear",
+      "part": "cost",
+      "raw": {
+        "duration": 30,
+        "ticks": 128,
+        "refs": {
+          "3": {
+            "stable": true
+          },
+          "15": {
+            "stable": true
+          },
+          "27": {
+            "stable": true
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 272,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 3.3,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 609,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 15.333,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 371,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 27.333,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 267,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 3.367,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 484,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 15.367,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 255,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 27.367,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g250_640|heldonce|cost": {
+      "clip": "h264_30s_g250_640",
+      "variant": "heldonce",
+      "part": "cost",
+      "raw": {
+        "duration": 30,
+        "ticks": 157,
+        "refs": {
+          "3": {
+            "stable": true
+          },
+          "15": {
+            "stable": true
+          },
+          "27": {
+            "stable": true
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 479,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 3.467,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 614,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 15.567,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 533,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 27.467,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 468,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 3.533,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 631,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 15.433,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 181,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 27.467,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g30_640|clear|cost": {
+      "clip": "h264_30s_g30_640",
+      "variant": "clear",
+      "part": "cost",
+      "raw": {
+        "duration": 30,
+        "ticks": 111,
+        "refs": {
+          "3": {
+            "stable": true
+          },
+          "15": {
+            "stable": true
+          },
+          "27": {
+            "stable": true
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 589,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 3.833,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 295,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 15.467,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 36,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 27.474,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 802,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 4,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 290,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 15.567,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 261,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 27.567,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g30_640|heldonce|cost": {
+      "clip": "h264_30s_g30_640",
+      "variant": "heldonce",
+      "part": "cost",
+      "raw": {
+        "duration": 30,
+        "ticks": 149,
+        "refs": {
+          "3": {
+            "stable": true
+          },
+          "15": {
+            "stable": true
+          },
+          "27": {
+            "stable": true
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 181,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 3.467,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 258,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 15.567,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 127,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 27.467,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 125,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 3.491,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 142,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 15.46,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 141,
+            "frameReadyMs": null,
+            "timeout": false,
+            "ctAfter": 27.467,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g250_640|draw|pauseAtSeeked": {
+      "clip": "h264_30s_g250_640",
+      "variant": "draw",
+      "part": "pauseAtSeeked",
+      "raw": {
+        "duration": 30,
+        "ticks": 1729,
+        "refs": {
+          "3": {
+            "stable": true
+          },
+          "15": {
+            "stable": true
+          },
+          "27": {
+            "stable": true
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 262,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 3.067,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 582,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 15,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 147,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 27,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 703,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 3.467,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 406,
+            "frameReadyMs": 409,
+            "timeout": false,
+            "frameTimeout": false,
+            "ctAfter": 15,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 392,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 27.133,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g250_640|held|pauseAtSeeked": {
+      "clip": "h264_30s_g250_640",
+      "variant": "held",
+      "part": "pauseAtSeeked",
+      "raw": {
+        "duration": 30,
+        "ticks": 1884,
+        "refs": {
+          "3": {
+            "stable": true
+          },
+          "15": {
+            "stable": true
+          },
+          "27": {
+            "stable": true
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 280,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 3.001,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 465,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 15.001,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 810,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 27.267,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 475,
+            "frameReadyMs": 1166,
+            "timeout": false,
+            "frameTimeout": false,
+            "ctAfter": 3.233,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 248,
+            "frameReadyMs": 577,
+            "timeout": false,
+            "frameTimeout": false,
+            "ctAfter": 15.367,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 369,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 27.167,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g250_640|skip|pauseAtSeeked": {
+      "clip": "h264_30s_g250_640",
+      "variant": "skip",
+      "part": "pauseAtSeeked",
+      "raw": {
+        "duration": 30,
+        "ticks": 2467,
+        "refs": {
+          "3": {
+            "stable": true
+          },
+          "15": {
+            "stable": true
+          },
+          "27": {
+            "stable": true
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 605,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 3.121,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 218,
+            "frameReadyMs": 803,
+            "timeout": false,
+            "frameTimeout": false,
+            "ctAfter": 15.433,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 246,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 27.099,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 201,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 3.022,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 257,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 15.019,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 202,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 27.1,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g30_640|draw|pauseAtSeeked": {
+      "clip": "h264_30s_g30_640",
+      "variant": "draw",
+      "part": "pauseAtSeeked",
+      "raw": {
+        "duration": 30,
+        "ticks": 551,
+        "refs": {
+          "3": {
+            "stable": true
+          },
+          "15": {
+            "stable": true
+          },
+          "27": {
+            "stable": true
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 303,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 3.2,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 2098,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 16.98,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 600,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 27.398,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 469,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 3.333,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 585,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 15.463,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 2795,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 29.419,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g30_640|held|pauseAtSeeked": {
+      "clip": "h264_30s_g30_640",
+      "variant": "held",
+      "part": "pauseAtSeeked",
+      "raw": {
+        "duration": 30,
+        "ticks": 570,
+        "refs": {
+          "3": {
+            "stable": true
+          },
+          "15": {
+            "stable": true
+          },
+          "27": {
+            "stable": true
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 781,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 3.433,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 682,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 15.5,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 344,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 27.233,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 494,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 3.2,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 471,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 15.333,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 302,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 27.167,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g30_640|skip|pauseAtSeeked": {
+      "clip": "h264_30s_g30_640",
+      "variant": "skip",
+      "part": "pauseAtSeeked",
+      "raw": {
+        "duration": 30,
+        "ticks": 1631,
+        "refs": {
+          "3": {
+            "stable": true
+          },
+          "15": {
+            "stable": true
+          },
+          "27": {
+            "stable": true
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 100,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 3.05,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 301,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 15.032,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 309,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 27.067,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 324,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 3.21,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 287,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 15.097,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 159,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "ctAfter": 27.085,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    }
+  },
+  "summary": {
+    "h264_30s_g250_640|clear|cost": {
+      "medianSeekedMs": 322,
+      "medianFrameReadyMs": null,
+      "seekedMs": [
+        272,
+        609,
+        371,
+        267,
+        484,
+        255
+      ],
+      "frameReadyMs": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 0,
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g250_640|heldonce|cost": {
+      "medianSeekedMs": 506,
+      "medianFrameReadyMs": null,
+      "seekedMs": [
+        479,
+        614,
+        533,
+        468,
+        631,
+        181
+      ],
+      "frameReadyMs": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 0,
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g30_640|clear|cost": {
+      "medianSeekedMs": 293,
+      "medianFrameReadyMs": null,
+      "seekedMs": [
+        589,
+        295,
+        36,
+        802,
+        290,
+        261
+      ],
+      "frameReadyMs": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 0,
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g30_640|heldonce|cost": {
+      "medianSeekedMs": 142,
+      "medianFrameReadyMs": null,
+      "seekedMs": [
+        181,
+        258,
+        127,
+        125,
+        142,
+        141
+      ],
+      "frameReadyMs": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 0,
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g250_640|draw|pauseAtSeeked": {
+      "medianSeekedMs": 399,
+      "medianFrameReadyMs": 409,
+      "seekedMs": [
+        262,
+        582,
+        147,
+        703,
+        406,
+        392
+      ],
+      "frameReadyMs": [
+        null,
+        null,
+        null,
+        null,
+        409,
+        null
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 5,
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g250_640|held|pauseAtSeeked": {
+      "medianSeekedMs": 417,
+      "medianFrameReadyMs": 872,
+      "seekedMs": [
+        280,
+        465,
+        810,
+        475,
+        248,
+        369
+      ],
+      "frameReadyMs": [
+        null,
+        null,
+        null,
+        1166,
+        577,
+        null
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 4,
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g250_640|skip|pauseAtSeeked": {
+      "medianSeekedMs": 232,
+      "medianFrameReadyMs": 803,
+      "seekedMs": [
+        605,
+        218,
+        246,
+        201,
+        257,
+        202
+      ],
+      "frameReadyMs": [
+        null,
+        803,
+        null,
+        null,
+        null,
+        null
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 5,
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g30_640|draw|pauseAtSeeked": {
+      "medianSeekedMs": 593,
+      "medianFrameReadyMs": null,
+      "seekedMs": [
+        303,
+        2098,
+        600,
+        469,
+        585,
+        2795
+      ],
+      "frameReadyMs": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 6,
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g30_640|held|pauseAtSeeked": {
+      "medianSeekedMs": 483,
+      "medianFrameReadyMs": null,
+      "seekedMs": [
+        781,
+        682,
+        344,
+        494,
+        471,
+        302
+      ],
+      "frameReadyMs": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 6,
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g30_640|skip|pauseAtSeeked": {
+      "medianSeekedMs": 294,
+      "medianFrameReadyMs": null,
+      "seekedMs": [
+        100,
+        301,
+        309,
+        324,
+        287,
+        159
+      ],
+      "frameReadyMs": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 6,
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    }
+  },
+  "loadEnd": [
+    5.72,
+    3.85,
+    3.29
+  ],
+  "finishedAt": "2026-11-11T04:03:37.190Z"
+}

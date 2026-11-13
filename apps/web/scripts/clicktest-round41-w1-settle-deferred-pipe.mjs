@@ -52,6 +52,7 @@
 // Mỗi bước in PASS/FAIL kèm số đo; exit 1 khi không bắt được DEFERRED.
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -378,7 +379,7 @@ async function main() {
           deferredPass = true;
           finalSample = finalS;
           deferredDetail = `lượt ${attempt}: bắt inFlight=${caught.inFlight} sau ${caught.ms} ms poll; toggle→seek trong ${tSeek - tToggle} ms; ${cls}; settled delta cuối=${finalS.settled - settledBefore}`;
-          fs.writeFileSync(path.join(SCRATCH, "w1-trace.json"), JSON.stringify({ attempt, target, pps: ppsUse, settledBefore, trace }, null, 2));
+          writeFileEpermRetry(path.join(SCRATCH, "w1-trace.json"), JSON.stringify({ attempt, target, pps: ppsUse, settledBefore, trace }, null, 2));
         }
       }
       attemptsLog.push(`lượt ${attempt}: ${cls}`);

@@ -71,6 +71,7 @@
 
 const { execFileSync, spawnSync } = require("child_process");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 
@@ -120,7 +121,7 @@ const nestedClip = (id, start, duration, subSpec, extra = {}) =>
 function renderSpec(specObj, label) {
   const specPath = path.join(WORK, `spec-${label}.json`);
   const outPath = path.join(WORK, `out-${label}.mp4`);
-  fs.writeFileSync(specPath, JSON.stringify(specObj));
+  writeFileEpermRetry(specPath, JSON.stringify(specObj));
   // Cố ý dùng đúng preset/CRF mặc định của render.js (medium/20) như
   // test_adjustment_render.js: ngưỡng "giữ nguyên" mean < 1.5 được đo
   // với setting này; ultrafast + crf 28 làm nhiễu sau đoạn layer lên

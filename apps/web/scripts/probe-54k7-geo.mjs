@@ -25,6 +25,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import net from "node:net";
 import os from "node:os";
@@ -459,8 +460,8 @@ async function main() {
     killAll();
   }
   const out = { results, harnessError: harnessError ? String(harnessError.message || harnessError) : null };
-  fs.writeFileSync(path.join(SCRATCH, "geo-result.json"), JSON.stringify(out, null, 2));
-  fs.writeFileSync(path.join(SCRATCH, "geo-log.txt"), logLines.join("\n") + "\n");
+  writeFileEpermRetry(path.join(SCRATCH, "geo-result.json"), JSON.stringify(out, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "geo-log.txt"), logLines.join("\n") + "\n");
   process.exit(harnessError ? 2 : 0);
 }
 

@@ -32,6 +32,7 @@
 
 const { execFileSync, spawnSync } = require("child_process");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 
@@ -61,7 +62,7 @@ function approx(a, b, tol) { return Math.abs(a - b) <= tol; }
 /** Render 1 spec qua render.js CLI. Trả về { ok, code, stderr }. */
 function renderSpec(spec, outName) {
   const specPath = path.join(WORK, `spec-${outName}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const outPath = path.join(WORK, `${outName}.mp4`);
   const r = spawnSync(process.execPath, [
     path.join(HERE, "src", "render.js"),
@@ -482,7 +483,7 @@ function renderTests() {
       id: "a1", kind: "audio", src: "tone.wav", start: 0, duration: 4, in: 0, out: 4,
     }])]);
     const specPath = path.join(WORK, "spec-norm.json");
-    fs.writeFileSync(specPath, JSON.stringify(spec));
+    writeFileEpermRetry(specPath, JSON.stringify(spec));
     const outPath = path.join(WORK, "norm.mp4");
     const r = spawnSync(process.execPath, [
       path.join(HERE, "src", "render.js"),
@@ -503,7 +504,7 @@ function renderTests() {
       id: "a1", kind: "audio", src: "tone.wav", start: 0, duration: 4, in: 0, out: 4,
     }])]);
     const specPath = path.join(WORK, "spec-dyn.json");
-    fs.writeFileSync(specPath, JSON.stringify(spec));
+    writeFileEpermRetry(specPath, JSON.stringify(spec));
     const outPath = path.join(WORK, "dyn.mp4");
     const r = spawnSync(process.execPath, [
       path.join(HERE, "src", "render.js"),

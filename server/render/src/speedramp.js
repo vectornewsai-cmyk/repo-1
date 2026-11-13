@@ -93,6 +93,9 @@ const { atempoFactors } = require("./speed");
 const {
   buildMotionFpsFilter, buildMotionBlurChain, buildMotionTailFix, validateMotion,
 } = require("./motion");
+// Phase 9 đợt 76 D9: chuỗi fit/crop chuẩn hoá đoạn ramp về khung WxH
+// (dùng chung với render.js nhánh thường — xem fitChain.js).
+const { buildFitChain } = require("./fitChain");
 
 const SPEED_MIN = 0.25;
 const SPEED_MAX = 4;
@@ -399,8 +402,9 @@ function buildSpeedRampVideo(streamRef, clip, opts) {
     lines.push(
       `${streamRef}trim=start=${ffNum(sStart)}:end=${ffNum(sEnd)},` +
         `setpts=PTS-STARTPTS${enh},setpts=PTS/${ffNum(s.speed)}${pre},` +
-        `scale=${opts.W}:${opts.H}:force_original_aspect_ratio=decrease,` +
-        `pad=${opts.W}:${opts.H}:(ow-iw)/2:(oh-ih)/2:color=${opts.padColor},` +
+        // Đợt 76 D9: chuẩn hoá về khung theo opts.aspectFit (fit mặc định,
+        // crop lấp đầy) — cùng ngữ nghĩa với nhánh clip thường (fitChain.js).
+        `${buildFitChain(opts.W, opts.H, opts.padColor, opts.aspectFit)},` +
         `setsar=1${fpsPart},format=${opts.outFormat}[${lab}]`
     );
     labels.push(`[${lab}]`);

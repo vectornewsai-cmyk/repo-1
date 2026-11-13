@@ -37,6 +37,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -367,7 +368,7 @@ async function runReverseSmoke(cdp, label, width, height) {
     const buf = Buffer.from(shot.data, "base64");
     const p = path.join(TMP, `r6-reverse-${label}.png`);
     fs.mkdirSync(TMP, { recursive: true });
-    fs.writeFileSync(p, buf);
+    writeFileEpermRetry(p, buf);
     out.screenshot = { path: p, bytes: buf.length, sha256: crypto.createHash("sha256").update(buf).digest("hex").slice(0, 16) };
   } catch (e) {
     out.screenshot = { error: String(e.message) };
@@ -503,7 +504,7 @@ async function main() {
   }
   result.overallPass = Object.values(result.cases).every((c) => c.pass === true);
   fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true });
-  fs.writeFileSync(OUT_PATH, JSON.stringify(result, null, 2));
+  writeFileEpermRetry(OUT_PATH, JSON.stringify(result, null, 2));
   log("Ghi:", OUT_PATH, "overallPass:", result.overallPass);
   for (const [k, v] of Object.entries(result.cases)) log(`  ${k}: pass=${v.pass}`);
   process.exit(0);

@@ -42,6 +42,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -362,7 +363,7 @@ async function main() {
       checks: checks.map((c) => ({ name: c.name, pass: c.pass })),
       scope: "COMPAT-APP: wiring effect [previewLang] qua nút đổi lang TopBar trong app đầy đủ + badge failed từ controller.failed thật (footage rác 64 KiB) trong app đầy đủ. Badge từng track vẫn 1 badge toàn cục (không tách).",
     };
-    fs.writeFileSync(path.join(opts.scratch, "compat-app-evidence.json"), JSON.stringify(evidence, null, 2));
+    writeFileEpermRetry(path.join(opts.scratch, "compat-app-evidence.json"), JSON.stringify(evidence, null, 2));
     console.log(`[c6compat] evidence → ${path.join(opts.scratch, "compat-app-evidence.json")}`);
     const failed = checks.filter((c) => !c.pass);
     console.log(`[c6compat] ${checks.length - failed.length}/${checks.length} PASS`);

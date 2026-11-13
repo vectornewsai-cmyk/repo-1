@@ -25,6 +25,7 @@
 
 const { spawn, execFileSync } = require("child_process");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 
@@ -140,7 +141,7 @@ async function main() {
   // Stub beat.py: chỉ cần TỒN TẠI để qua avail; BPM validate throw trước
   // khi beat.py chạy nên nội dung không quan trọng (vẫn in JSON hợp lệ).
   const beatStub = path.join(work, "beat-stub.py");
-  fs.writeFileSync(beatStub, "#!/usr/bin/env python3\nimport json\nprint(json.dumps({'bpm': 120.0, 'beats': [0.5], 'duration': 1.0, 'structure': None}))\n");
+  writeFileEpermRetry(beatStub, "#!/usr/bin/env python3\nimport json\nprint(json.dumps({'bpm': 120.0, 'beats': [0.5], 'duration': 1.0, 'structure': None}))\n");
 
   const portA = 18787 + Math.floor(Math.random() * 200);
   const portB = 18987 + Math.floor(Math.random() * 200);

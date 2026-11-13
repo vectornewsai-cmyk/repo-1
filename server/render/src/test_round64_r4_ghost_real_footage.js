@@ -61,6 +61,7 @@
 
 const crypto = require("crypto");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("path");
 const { spawnSync, execFileSync } = require("child_process");
 
@@ -136,7 +137,7 @@ const specWith = (tracks, W, H, fps) => ({
 });
 function render(spec, name) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const outPath = path.join(work, `${name}.mp4`);
   const prev = probeVideo(outPath);
   if (fs.existsSync(outPath) && prev.codec === "h264" && prev.width === 1280 && prev.height === 720) {
@@ -251,7 +252,7 @@ for lab, rdir in jobs:
     print("REAL_GHOST " + json.dumps(out))
 `;
 const ghostPy = path.join(work, "ghost_real.py");
-fs.writeFileSync(ghostPy, GHOST_PY);
+writeFileEpermRetry(ghostPy, GHOST_PY);
 
 // --- Script đo tốc độ đoạn 5s (phase correlation, giong R2 motion metric) --
 const SCAN_PY = `
@@ -294,7 +295,7 @@ for f in frames:
 os.rmdir(tmp)
 `;
 const scanPy = path.join(work, "scan_seg.py");
-fs.writeFileSync(scanPy, SCAN_PY);
+writeFileEpermRetry(scanPy, SCAN_PY);
 
 function measureSpeed(segMp4) {
   const r = spawnSync(CV2_PY, [scanPy, segMp4], { encoding: "utf8" });
@@ -433,7 +434,7 @@ for (const seg of SEGMENTS) {
   const trailExcess08 = (g.d0_8.small.mean - g.d0_8.flat.mean).toFixed(2);
   console.log(`   ${seg.id.padEnd(15)} ${String(s.speedMeasured.median_px_per_frame_720p).padStart(6)} | ${g.ctrl.blendByBand.small.toFixed(3).padStart(9)} | ${g.d0_5.blendByBand.small.toFixed(3)} (${ex("d0_5")}) | ${g.d0_7.blendByBand.small.toFixed(3)} (${ex("d0_7")}) | ${g.d0_8.blendByBand.small.toFixed(3)} (${ex("d0_8")}) | ${jumpEx.padStart(10)} | ${trailExcess05} → ${trailExcess08}`);
 }
-fs.writeFileSync(path.join(work, "summary.json"), JSON.stringify(summary, null, 1));
+writeFileEpermRetry(path.join(work, "summary.json"), JSON.stringify(summary, null, 1));
 console.log(`\n== KẾT QUẢ: ${pass} pass, ${fail} fail ==`);
 console.log(`   WORK=${work} (summary.json + frame .gray trong scratch; footage gốc KHÔNG đưa vào batch)`);
 if (fail > 0) process.exit(1);

@@ -33,6 +33,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -381,7 +382,7 @@ async function main() {
       checks: checks.map((c) => ({ name: c.name, pass: c.pass })),
       scope: "COMPAT-FLIP: mốc trung gian WEBCODECS -> failed của badge reverse trong app đầy đủ, bắt bằng MutationObserver + poll 50 ms TRONG TRANG (cùng đồng hồ performance.now() với cú bấm Phát). Footage hỏng 64 KiB byte rác xác định. Badge từng track vẫn 1 badge toàn cục (không tách).",
     };
-    fs.writeFileSync(path.join(opts.scratch, "compat-flip-evidence.json"), JSON.stringify(evidence, null, 2));
+    writeFileEpermRetry(path.join(opts.scratch, "compat-flip-evidence.json"), JSON.stringify(evidence, null, 2));
     console.log(`[d5flip] evidence → ${path.join(opts.scratch, "compat-app-evidence.json")}`);
     const failed = checks.filter((c) => !c.pass);
     console.log(`[d5flip] ${checks.length - failed.length}/${checks.length} PASS`);

@@ -26,6 +26,7 @@
  */
 "use strict";
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -64,8 +65,8 @@ function transpileTs(srcRel, outName) {
   fs.mkdirSync(outDir, { recursive: true });
   const stubDir = path.join(TMP, "node_modules", "@repo-1", "video-spec");
   fs.mkdirSync(stubDir, { recursive: true });
-  fs.writeFileSync(path.join(stubDir, "package.json"), JSON.stringify({ name: "@repo-1/video-spec", version: "0.0.0", main: "index.js" }));
-  fs.writeFileSync(path.join(stubDir, "index.js"), "module.exports = { CHROMA_DEFAULTS:{}, EFFECT_TYPES:[], LUT_IDS:[], STICKER_DEFAULTS:{}, interpolateKeyframes:()=>null, sourceTimeAt:()=>0, speedAt:()=>1 };\n");
+  writeFileEpermRetry(path.join(stubDir, "package.json"), JSON.stringify({ name: "@repo-1/video-spec", version: "0.0.0", main: "index.js" }));
+  writeFileEpermRetry(path.join(stubDir, "index.js"), "module.exports = { CHROMA_DEFAULTS:{}, EFFECT_TYPES:[], LUT_IDS:[], STICKER_DEFAULTS:{}, interpolateKeyframes:()=>null, sourceTimeAt:()=>0, speedAt:()=>1 };\n");
   const tsc = path.join(ROOT, "node_modules", ".bin", "tsc");
   spawnSync(tsc, [src, "--outDir", outDir, "--module", "commonjs", "--target", "es2020", "--moduleResolution", "node", "--skipLibCheck"], { encoding: "utf8" });
   const jsFile = path.join(outDir, `${path.basename(src, ".ts")}.js`);
@@ -169,7 +170,7 @@ function ffmpegSingleAlphaRef(alpha, mode, frameClip, W, H, tagName) {
   const baseRaw = path.join(TMP, `${tagName}-base.raw`);
   const topRaw = path.join(TMP, `${tagName}-top.raw`);
   const outRaw = path.join(TMP, `${tagName}-out.raw`);
-  fs.writeFileSync(clipRaw, frameClip);
+  writeFileEpermRetry(clipRaw, frameClip);
   if (mode === "white") {
     ffmpeg(["-f", "lavfi", "-i", `color=white:s=${W}x${H}:d=1:r=30`,
       "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-y", baseRaw]);
@@ -331,7 +332,7 @@ function yuvRoundtrip(frame, W, H, tagName) {
   const inp = path.join(TMP, `${tagName}-in.raw`);
   const mid = path.join(TMP, `${tagName}-mid.yuv`);
   const out = path.join(TMP, `${tagName}-out.raw`);
-  fs.writeFileSync(inp, frame);
+  writeFileEpermRetry(inp, frame);
   ffmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${W}x${H}`, "-i", inp,
     "-vf", `format=yuv420p`, "-f", "rawvideo", "-y", mid]);
   ffmpeg(["-f", "rawvideo", "-pix_fmt", "yuv420p", "-s", `${W}x${H}`, "-i", mid,
@@ -465,7 +466,7 @@ function main() {
   if (MODE_SHORT) runShort(tp, results);
   if (MODE_GCHAN) runGchan(tp, results);
   if (JSON_OUT) {
-    fs.writeFileSync(JSON_OUT, JSON.stringify(results, null, 2) + "\n");
+    writeFileEpermRetry(JSON_OUT, JSON.stringify(results, null, 2) + "\n");
     console.log(`JSON: ${JSON_OUT}`);
   }
   console.log(`workdir: ${TMP} (raw đã xoá sau mỗi phép đo)`);

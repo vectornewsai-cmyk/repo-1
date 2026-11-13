@@ -37,6 +37,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawn, spawnSync } = require("child_process");
@@ -360,7 +361,7 @@ function main() {
       ok(ready, "bridge server thật khởi động được (health 200)");
       if (ready) {
         const badFile = path.join(bwork, "upload-bad.mp4");
-        fs.writeFileSync(badFile, "not a video");
+        writeFileEpermRetry(badFile, "not a video");
         const res = run("curl", ["-s", "-F", `file=@${badFile}`,
           `http://127.0.0.1:${port}/api/proxy?detail=1`]);
         let body = null;
@@ -404,7 +405,7 @@ function main() {
     try {
       vcut(["create", "--name", "Q4", "--width", "1280", "--height", "720",
         "--out", path.join(work, "proj.json")]);
-      fs.writeFileSync(path.join(work, "corrupt.mp4"), "not a video");
+      writeFileEpermRetry(path.join(work, "corrupt.mp4"), "not a video");
       vcut(["add-clip", "--project", path.join(work, "proj.json"),
         "--src", "corrupt.mp4", "--start", "0", "--duration", "2"]);
       const bad = vcut(["render", "--project", path.join(work, "proj.json"),

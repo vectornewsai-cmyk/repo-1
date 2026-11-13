@@ -31,6 +31,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import net from "node:net";
 import os from "node:os";
@@ -482,8 +483,8 @@ async function main() {
     killAll();
   }
   result.harnessError = harnessError ? String(harnessError.message || harnessError) : null;
-  fs.writeFileSync(path.join(SCRATCH, `drift-${TAG}-result.json`), JSON.stringify(result, null, 2));
-  fs.writeFileSync(path.join(SCRATCH, `drift-${TAG}-log.txt`), logLines.join("\n") + "\n");
+  writeFileEpermRetry(path.join(SCRATCH, `drift-${TAG}-result.json`), JSON.stringify(result, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, `drift-${TAG}-log.txt`), logLines.join("\n") + "\n");
   log(`đã ghi ${path.join(SCRATCH, `drift-${TAG}-result.json`)}`);
   process.exit(harnessError ? 2 : 0);
 }

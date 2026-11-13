@@ -36,24 +36,36 @@
 //     UI, chỉ làm chậm việc mở file chứa keyframe khổng lồ (hiếm — chỉ
 //     keyframe 0 > ~7,7 MiB). Rác lớn vẫn fail NHANH (decoder lỗi
 //     trong vài ms) nên trần dài không làm rác lọt.
+//   - Đợt 67 U5 — trần 60 s → 90 s (xem LIMITS U5 đợt 67 §1): trần 60 s
+//     cắt công thức ở 64 MiB (không trần 78.536 ms) và biên tải thấp chỉ
+//     ~11,5 s; ngoại suy tải trung bình 64 MiB ≈ 60–66 s (0,92–1,00
+//     ms/KiB, đợt 64 R10) đã ở/quá trần 60 s. Trần 90 s KHÔNG cắt bất kỳ
+//     sample nào trong dải cho phép (tối đa công thức 78.536 ms < 90 s),
+//     chỉ còn là trần an toàn tuyệt đối; biên mới tải thấp 28,2 s, tải
+//     trung bình ~12,5 s. Giá phải trả: fail-open dưới tải nặng chậm
+//     thêm tối đa 18,5 s (78,5 thay vì 60 s) — chỉ với keyframe
+//     ≥ ~50 MiB. Tỉ lệ 1,2 ms/KiB GIỮ NGUYÊN (đã 1,2–1,3× tốc độ đo ở
+//     tải trung bình; ràng buộc cắt là trần, không phải tỉ lệ). Timeout
+//     thích ứng theo tải bị LOẠI (calibration chậm theo tải → timeout
+//     phình đúng lúc cần fail-open nhanh — xem LIMITS U5 §1).
 //   - Hủy chắc: timeout thắng race → `runTrialDecode` abort signal
 //     (cơ chế R7) → probe này `worker.terminate()` ngay — hủy chắc hơn
 //     cả `VideoDecoder.close()` vì terminate giết luôn worker.
 //
-// GIỚI HẠN (xem LIMITS R4 đợt 62 + đợt 63 + R10 đợt 64): trần worker
-// 60 s bao được keyframe High-profile 50–58 MB ở tải trung bình (đo
-// trực tiếp đợt 64 R10: 49,7 MB 39,8–47,1 s; 51,8 MB 42,5–47,0 s;
-// 57,9 MB 53,2–58,0 s), nhưng tải cực nặng (4 spin-loop + luồng khác,
-// 1,6–2,1 ms/KiB) vẫn vượt trần — khi đó vẫn fail-open timeout như cũ,
-// có lý do rõ ràng (kéo trần lên 70–80 s cũng không bao được tải cực
-// nặng mà chỉ làm mở file chậm thêm, nên không kéo). Keyframe 58–64 MiB
-// ở tải trung bình ngoại suy ~60–66 s — chưa đo trực tiếp được (không
-// gen được fixture High-profile 58–64 MB dưới trần trial 64 MiB:
-// ultrafast nhảy vọt lên 74 MiB; xem LIMITS R10 đợt 64 §2.1) nên vẫn có
-// thể fail-open ở dải này. Sample > 64 MiB vẫn bỏ qua trial-decode
-// (cap của T3, đợt 60 Q5). Safari vẫn chưa đo được (không có trên VM);
-// Firefox xem LIMITS đợt 63 §4 (đo thật bằng Playwright firefox-1572
-// nếu chạy được).
+// GIỚI HẠN (xem LIMITS R4 đợt 62 + đợt 63 + R10 đợt 64 + U5 đợt 67):
+// trần worker 90 s (đợt 67 U5 nâng từ 60 s) bao được keyframe
+// High-profile 50–64 MB ở tải thấp và tải trung bình (đo trực tiếp:
+// 49,7 MB 39,8–47,1 s; 51,8 MB 42,5–47,0 s; 57,9 MB 53,2–58,0 s ở tải
+// trung bình, đợt 64 R10; 64,0 MB 40,4–50,3 s ở tải thấp, đợt 66 T6;
+// công thức ở 64 MiB cho timeout 78.536 ms, biên tải thấp 28,2 s),
+// nhưng tải cực nặng (4 spin-loop + luồng khác, 1,6–2,1 ms/KiB) vẫn
+// vượt trần — khi đó vẫn fail-open timeout như cũ, có lý do rõ ràng
+// (kéo trần lên 70–80 s cũng không bao được tải cực nặng mà chỉ làm mở
+// file chậm thêm, nên không kéo; trần 90 s cũng không bao được tải cực
+// nặng — 64 MiB cần ~105–137 s ở đó). Sample > 64 MiB vẫn bỏ qua
+// trial-decode (cap của T3, đợt 60 Q5). Safari vẫn chưa đo được
+// (không có trên VM); Firefox xem LIMITS đợt 63 §4 (đo thật bằng
+// Playwright firefox-1572 nếu chạy được).
 import {
   DEFAULT_TRIAL_DECODE_TIMEOUT_MS,
   MAX_TRIAL_DECODE_TIMEOUT_MS,
@@ -73,19 +85,39 @@ export interface TrialDecodeWorkerRequest {
   sample: ArrayBuffer;
   config: TrialDecodeConfig;
 }
+/**
+ * Đợt 78 F8 — `result` mang thêm `reason` tùy chọn (đóng nợ đợt 77 §4.8):
+ * worker chỉ set khi `outcome === false` VÀ biết rõ lý do (hôm nay chỉ
+ * quét zero-run: `reason: "zero-run: <scan.reason>"` — đúng định dạng
+ * T3 tự tổng hợp ở đường main-thread). Main thread chuyển thành
+ * structured failure `{ failed: true, reason }` để `runTrialDecode`
+ * giữ nguyên lý do tới T3.
+ *
+ * TƯƠNG THÍCH NGƯỢC: trường này tùy chọn — worker cũ (bundle cũ, test
+ * giả cũ) không gửi `reason` thì main thread coi như probe-false
+ * thường → `decode-failed` như trước (xem test F8). Ngược lại, main
+ * thread cũ nhận message có `reason` thì chỉ bỏ qua trường thừa (kiểu
+ * `TrialDecodeWorkerResponse` cũ không khai báo nhưng runtime không lỗi).
+ * `reason` kèm outcome true / "unsupported-config" thì bị bỏ qua (lỗi
+ * mới có lý do).
+ */
 export type TrialDecodeWorkerResponse =
-  | { type: "result"; outcome: GopTrialDecodeProbeOutcome }
+  | { type: "result"; outcome: GopTrialDecodeProbeOutcome; reason?: string }
   | { type: "error"; message: string };
 
 /**
- * Trần timeout trial-decode ở worker: 60 s. Dài gấp 24× trần main-thread
+ * Trần timeout trial-decode ở worker: 90 s (đợt 67 U5 nâng từ 60 s — xem
+ * LIMITS U5 đợt 67 §1: công thức ở 64 MiB cho 78.536 ms nên trần 60 s
+ * cắt keyframe thật; trần 90 s không cắt bất kỳ sample nào trong dải
+ * cho phép vì tối đa công thức ở cap 64 MiB là 78.536 ms < 90 s, chỉ
+ * còn là trần an toàn tuyệt đối). Dài gấp 36× trần main-thread
  * vì decode ở worker không kẹt UI; chỉ áp cho sample lớn (≥ ~7,7 MiB)
  * nên file thường không bao giờ chạm tới. 57,9 MiB High-profile decode
  * 53–58 s ở tải trung bình (đợt 64 R10 §2) nên trần 45 s cũ không đủ —
  * trần này bao được tải trung bình tới ~58 MB, vẫn có thể không đủ lúc
  * tải cực nặng (1,6–2,1 ms/KiB) — xem LIMITS R10 đợt 64 §2–§3.
  */
-export const MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS = 60_000;
+export const MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS = 90_000;
 /**
  * Thêm 1,2 ms timeout worker cho mỗi KiB sample vượt ngưỡng 256 KiB —
  * ≈ 1,2–1,4× tốc độ decode chậm nhất đo được ở keyframe lớn ở tải trung
@@ -100,13 +132,14 @@ export const WORKER_TRIAL_DECODE_TIMEOUT_EXTRA_MS_PER_KIB = 1.2;
 /**
  * Tính timeout trial-decode ở worker cho 1 sample theo kích thước của nó
  * (cùng dạng với `trialDecodeTimeoutForSampleSize` nhưng tỉ lệ 1,2 ms/KiB
- * và trần 45 s). Sample ≤ 256 KiB (hoặc không hợp lệ) → đúng base;
+ * và trần 90 s — đợt 67 U5 nâng từ 60 s, xem LIMITS U5 §1). Sample ≤ 256 KiB (hoặc không hợp lệ) → đúng base;
  * base không hợp lệ → dùng mặc định 200 ms.
  * Ví dụ (base 200): 4.107.475 B → 4707 ms; 9.683.047 B → 11241 ms;
  * 30.727.296 B → 35902 ms; 37.168.458 B → 43450 ms;
- * 42.493.646 B → 49691 ms (không chạm trần 60 s);
- * 49.658.687 B → 58087 ms; 51.821.731 B → 60.000 ms (trần; không trần
- * là 60.622 ms); 57.939.416 B → 60.000 ms (trần; không trần 67.791 ms).
+ * 42.493.646 B → 49691 ms (không chạm trần 90 s);
+ * 49.658.687 B → 58087 ms; 51.821.731 B → 60622 ms;
+ * 57.939.416 B → 67791 ms; 64 MiB → 78536 ms (không chạm trần 90 s —
+ * trần 60 s cũ sẽ cắt ở 60000 ms).
  */
 export function trialDecodeTimeoutForSampleSizeWorker(
   sampleBytes: number,
@@ -222,7 +255,19 @@ export function createWorkerTrialDecodeProbe(
         terminate();
         const data = ev.data as unknown as TrialDecodeWorkerResponse | null;
         if (data?.type === "result") {
-          resolve(data.outcome);
+          // Đợt 78 F8 — worker báo lỗi kèm lý do (hôm nay chỉ zero-run):
+          // chuyển thành structured failure để runTrialDecode giữ nguyên
+          // lý do tới T3. Worker cũ không gửi reason → false thường.
+          // Reason kèm outcome true / "unsupported-config" thì bỏ qua.
+          if (
+            data.outcome === false &&
+            typeof data.reason === "string" &&
+            data.reason.length > 0
+          ) {
+            resolve({ failed: true, reason: data.reason.slice(0, 200) });
+          } else {
+            resolve(data.outcome);
+          }
         } else {
           settleWithFallback();
         }

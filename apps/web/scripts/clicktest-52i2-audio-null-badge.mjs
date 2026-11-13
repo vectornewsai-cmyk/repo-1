@@ -30,6 +30,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -435,8 +436,8 @@ async function main() {
     await sleep(500);
   }
 
-  fs.writeFileSync(path.join(SCRATCH, "i2-result.json"), JSON.stringify({ results, harnessError }, null, 2));
-  fs.writeFileSync(path.join(SCRATCH, "i2-log.txt"), logLines.join("\n"));
+  writeFileEpermRetry(path.join(SCRATCH, "i2-result.json"), JSON.stringify({ results, harnessError }, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "i2-log.txt"), logLines.join("\n"));
   const failed = results.filter((r) => !r.ok);
   console.log(`\n== I2 audio-null/badge clicktest: ${results.length - failed.length}/${results.length} pass ==${harnessError ? " (HARNESS ERROR — exit 2)" : ""}`);
   console.log(`kết quả JSON: ${path.join(SCRATCH, "i2-result.json")}`);

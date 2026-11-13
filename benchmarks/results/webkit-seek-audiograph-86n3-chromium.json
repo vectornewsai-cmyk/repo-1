@@ -1,0 +1,1028 @@
+{
+  "startedAt": "2026-11-11T02:51:21.926Z",
+  "engine": "chromium",
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36",
+  "loadStart": [
+    4.75,
+    8.1,
+    4.52
+  ],
+  "cases": {
+    "audio_10s_g30_640|draw|g0": {
+      "clip": "audio_10s_g30_640",
+      "hasAudio": true,
+      "churn": "draw",
+      "audio": "g0",
+      "raw": {
+        "duration": 10,
+        "ticks": 193,
+        "ctxState": null,
+        "graphError": null,
+        "playErr": null,
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 2,
+            "seekedMs": 28,
+            "timeout": false,
+            "ctAfter": 2.341,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 5,
+            "seekedMs": 81,
+            "timeout": false,
+            "ctAfter": 5.302,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 8,
+            "seekedMs": 104,
+            "timeout": false,
+            "ctAfter": 8.355,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 2,
+            "seekedMs": 106,
+            "timeout": false,
+            "ctAfter": 2.245,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 5,
+            "seekedMs": 89,
+            "timeout": false,
+            "ctAfter": 5.242,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 8,
+            "seekedMs": 88,
+            "timeout": false,
+            "ctAfter": 8.22,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          }
+        ]
+      }
+    },
+    "audio_10s_g30_640|draw|g1": {
+      "clip": "audio_10s_g30_640",
+      "hasAudio": true,
+      "churn": "draw",
+      "audio": "g1",
+      "raw": {
+        "duration": 10,
+        "ticks": 194,
+        "ctxState": "running",
+        "graphError": null,
+        "playErr": null,
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 2,
+            "seekedMs": 283,
+            "timeout": false,
+            "ctAfter": 2.31,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 5,
+            "seekedMs": 81,
+            "timeout": false,
+            "ctAfter": 5.331,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 8,
+            "seekedMs": 190,
+            "timeout": false,
+            "ctAfter": 8.258,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 2,
+            "seekedMs": 88,
+            "timeout": false,
+            "ctAfter": 2.289,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 5,
+            "seekedMs": 73,
+            "timeout": false,
+            "ctAfter": 5.25,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 8,
+            "seekedMs": 35,
+            "timeout": false,
+            "ctAfter": 8.241,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          }
+        ]
+      }
+    },
+    "audio_10s_g30_640|draw|g2": {
+      "clip": "audio_10s_g30_640",
+      "hasAudio": true,
+      "churn": "draw",
+      "audio": "g2",
+      "raw": {
+        "duration": 10,
+        "ticks": 194,
+        "ctxState": "running",
+        "graphError": null,
+        "playErr": null,
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 2,
+            "seekedMs": 98,
+            "timeout": false,
+            "ctAfter": 2.218,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 5,
+            "seekedMs": 272,
+            "timeout": false,
+            "ctAfter": 5.311,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 8,
+            "seekedMs": 100,
+            "timeout": false,
+            "ctAfter": 8.25,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 2,
+            "seekedMs": 98,
+            "timeout": false,
+            "ctAfter": 2.282,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 5,
+            "seekedMs": 89,
+            "timeout": false,
+            "ctAfter": 5.241,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 8,
+            "seekedMs": 108,
+            "timeout": false,
+            "ctAfter": 8.276,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          }
+        ]
+      }
+    },
+    "audio_10s_g30_640|draw|g3": {
+      "clip": "audio_10s_g30_640",
+      "hasAudio": true,
+      "churn": "draw",
+      "audio": "g3",
+      "raw": {
+        "duration": 10,
+        "ticks": 181,
+        "ctxState": null,
+        "graphError": null,
+        "playErr": null,
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 2,
+            "seekedMs": 145,
+            "timeout": false,
+            "ctAfter": 2.329,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 5,
+            "seekedMs": 277,
+            "timeout": false,
+            "ctAfter": 5.354,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 8,
+            "seekedMs": 198,
+            "timeout": false,
+            "ctAfter": 8.31,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 2,
+            "seekedMs": 109,
+            "timeout": false,
+            "ctAfter": 2.227,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 5,
+            "seekedMs": 170,
+            "timeout": false,
+            "ctAfter": 5.269,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 8,
+            "seekedMs": 169,
+            "timeout": false,
+            "ctAfter": 8.282,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          }
+        ]
+      }
+    },
+    "audio_10s_g30_640|nochurn|g0": {
+      "clip": "audio_10s_g30_640",
+      "hasAudio": true,
+      "churn": "nochurn",
+      "audio": "g0",
+      "raw": {
+        "duration": 10,
+        "ticks": 0,
+        "ctxState": null,
+        "graphError": null,
+        "playErr": null,
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 2,
+            "seekedMs": 120,
+            "timeout": false,
+            "ctAfter": 2.262,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 5,
+            "seekedMs": 87,
+            "timeout": false,
+            "ctAfter": 5.237,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 8,
+            "seekedMs": 205,
+            "timeout": false,
+            "ctAfter": 8.303,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 2,
+            "seekedMs": 181,
+            "timeout": false,
+            "ctAfter": 2.273,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 5,
+            "seekedMs": 123,
+            "timeout": false,
+            "ctAfter": 5.241,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 8,
+            "seekedMs": 96,
+            "timeout": false,
+            "ctAfter": 8.32,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          }
+        ]
+      }
+    },
+    "audio_10s_g30_640|nochurn|g1": {
+      "clip": "audio_10s_g30_640",
+      "hasAudio": true,
+      "churn": "nochurn",
+      "audio": "g1",
+      "raw": {
+        "duration": 10,
+        "ticks": 0,
+        "ctxState": "running",
+        "graphError": null,
+        "playErr": null,
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 2,
+            "seekedMs": 40,
+            "timeout": false,
+            "ctAfter": 2.322,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 5,
+            "seekedMs": 136,
+            "timeout": false,
+            "ctAfter": 5.36,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 8,
+            "seekedMs": 128,
+            "timeout": false,
+            "ctAfter": 8.258,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 2,
+            "seekedMs": 190,
+            "timeout": false,
+            "ctAfter": 2.25,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 5,
+            "seekedMs": 196,
+            "timeout": false,
+            "ctAfter": 5.241,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 8,
+            "seekedMs": 38,
+            "timeout": false,
+            "ctAfter": 8.319,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          }
+        ]
+      }
+    },
+    "noaudio_10s_g30_640|draw|g0": {
+      "clip": "noaudio_10s_g30_640",
+      "hasAudio": false,
+      "churn": "draw",
+      "audio": "g0",
+      "raw": {
+        "duration": 10,
+        "ticks": 136,
+        "ctxState": null,
+        "graphError": null,
+        "playErr": null,
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 2,
+            "seekedMs": 117,
+            "timeout": false,
+            "ctAfter": 2.552,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 5,
+            "seekedMs": 182,
+            "timeout": false,
+            "ctAfter": 5.503,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 8,
+            "seekedMs": 96,
+            "timeout": false,
+            "ctAfter": 8.564,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 2,
+            "seekedMs": 86,
+            "timeout": false,
+            "ctAfter": 2.492,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 5,
+            "seekedMs": 126,
+            "timeout": false,
+            "ctAfter": 5.599,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 8,
+            "seekedMs": 93,
+            "timeout": false,
+            "ctAfter": 8.544,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          }
+        ]
+      }
+    },
+    "noaudio_10s_g30_640|draw|g1": {
+      "clip": "noaudio_10s_g30_640",
+      "hasAudio": false,
+      "churn": "draw",
+      "audio": "g1",
+      "raw": {
+        "duration": 10,
+        "ticks": 150,
+        "ctxState": "running",
+        "graphError": null,
+        "playErr": null,
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 2,
+            "seekedMs": 144,
+            "timeout": false,
+            "ctAfter": 2.566,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 5,
+            "seekedMs": 108,
+            "timeout": false,
+            "ctAfter": 5.502,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 8,
+            "seekedMs": 83,
+            "timeout": false,
+            "ctAfter": 8.508,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 2,
+            "seekedMs": 85,
+            "timeout": false,
+            "ctAfter": 2.513,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 5,
+            "seekedMs": 77,
+            "timeout": false,
+            "ctAfter": 5.503,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 8,
+            "seekedMs": 254,
+            "timeout": false,
+            "ctAfter": 8.552,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          }
+        ]
+      }
+    },
+    "noaudio_10s_g30_640|draw|g2": {
+      "clip": "noaudio_10s_g30_640",
+      "hasAudio": false,
+      "churn": "draw",
+      "audio": "g2",
+      "raw": {
+        "duration": 10,
+        "ticks": 158,
+        "ctxState": "running",
+        "graphError": null,
+        "playErr": null,
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 2,
+            "seekedMs": 88,
+            "timeout": false,
+            "ctAfter": 2.485,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 5,
+            "seekedMs": 132,
+            "timeout": false,
+            "ctAfter": 5.574,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 8,
+            "seekedMs": 110,
+            "timeout": false,
+            "ctAfter": 8.518,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 2,
+            "seekedMs": 96,
+            "timeout": false,
+            "ctAfter": 2.514,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 5,
+            "seekedMs": 102,
+            "timeout": false,
+            "ctAfter": 5.588,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 8,
+            "seekedMs": 103,
+            "timeout": false,
+            "ctAfter": 8.503,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          }
+        ]
+      }
+    },
+    "noaudio_10s_g30_640|draw|g3": {
+      "clip": "noaudio_10s_g30_640",
+      "hasAudio": false,
+      "churn": "draw",
+      "audio": "g3",
+      "raw": {
+        "duration": 10,
+        "ticks": 163,
+        "ctxState": null,
+        "graphError": null,
+        "playErr": null,
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 2,
+            "seekedMs": 180,
+            "timeout": false,
+            "ctAfter": 2.503,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 5,
+            "seekedMs": 166,
+            "timeout": false,
+            "ctAfter": 5.509,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 8,
+            "seekedMs": 109,
+            "timeout": false,
+            "ctAfter": 8.524,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 2,
+            "seekedMs": 21,
+            "timeout": false,
+            "ctAfter": 2.6,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 5,
+            "seekedMs": 227,
+            "timeout": false,
+            "ctAfter": 5.482,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 8,
+            "seekedMs": 84,
+            "timeout": false,
+            "ctAfter": 8.51,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          }
+        ]
+      }
+    },
+    "noaudio_10s_g30_640|nochurn|g0": {
+      "clip": "noaudio_10s_g30_640",
+      "hasAudio": false,
+      "churn": "nochurn",
+      "audio": "g0",
+      "raw": {
+        "duration": 10,
+        "ticks": 0,
+        "ctxState": null,
+        "graphError": null,
+        "playErr": null,
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 2,
+            "seekedMs": 82,
+            "timeout": false,
+            "ctAfter": 2.511,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 5,
+            "seekedMs": 87,
+            "timeout": false,
+            "ctAfter": 5.5,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 8,
+            "seekedMs": 106,
+            "timeout": false,
+            "ctAfter": 8.481,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 2,
+            "seekedMs": 21,
+            "timeout": false,
+            "ctAfter": 2.501,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 5,
+            "seekedMs": 80,
+            "timeout": false,
+            "ctAfter": 5.553,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 8,
+            "seekedMs": 113,
+            "timeout": false,
+            "ctAfter": 8.501,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          }
+        ]
+      }
+    },
+    "noaudio_10s_g30_640|nochurn|g1": {
+      "clip": "noaudio_10s_g30_640",
+      "hasAudio": false,
+      "churn": "nochurn",
+      "audio": "g1",
+      "raw": {
+        "duration": 10,
+        "ticks": 0,
+        "ctxState": "running",
+        "graphError": null,
+        "playErr": null,
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 2,
+            "seekedMs": 23,
+            "timeout": false,
+            "ctAfter": 2.501,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 5,
+            "seekedMs": 13,
+            "timeout": false,
+            "ctAfter": 5.501,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 0,
+            "target": 8,
+            "seekedMs": 92,
+            "timeout": false,
+            "ctAfter": 8.502,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 2,
+            "seekedMs": 94,
+            "timeout": false,
+            "ctAfter": 2.501,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 5,
+            "seekedMs": 105,
+            "timeout": false,
+            "ctAfter": 5.509,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          },
+          {
+            "rep": 1,
+            "target": 8,
+            "seekedMs": 94,
+            "timeout": false,
+            "ctAfter": 8.501,
+            "seekingAfter": false,
+            "readyStateAfter": 4
+          }
+        ]
+      }
+    }
+  },
+  "summary": {
+    "audio_10s_g30_640|draw|g0": {
+      "medianSeekedMs": 89,
+      "seekedMs": [
+        28,
+        81,
+        104,
+        106,
+        89,
+        88
+      ],
+      "timeouts": 0,
+      "ctxState": null,
+      "graphError": null,
+      "playErr": null
+    },
+    "audio_10s_g30_640|draw|g1": {
+      "medianSeekedMs": 85,
+      "seekedMs": [
+        283,
+        81,
+        190,
+        88,
+        73,
+        35
+      ],
+      "timeouts": 0,
+      "ctxState": "running",
+      "graphError": null,
+      "playErr": null
+    },
+    "audio_10s_g30_640|draw|g2": {
+      "medianSeekedMs": 99,
+      "seekedMs": [
+        98,
+        272,
+        100,
+        98,
+        89,
+        108
+      ],
+      "timeouts": 0,
+      "ctxState": "running",
+      "graphError": null,
+      "playErr": null
+    },
+    "audio_10s_g30_640|draw|g3": {
+      "medianSeekedMs": 170,
+      "seekedMs": [
+        145,
+        277,
+        198,
+        109,
+        170,
+        169
+      ],
+      "timeouts": 0,
+      "ctxState": null,
+      "graphError": null,
+      "playErr": null
+    },
+    "audio_10s_g30_640|nochurn|g0": {
+      "medianSeekedMs": 122,
+      "seekedMs": [
+        120,
+        87,
+        205,
+        181,
+        123,
+        96
+      ],
+      "timeouts": 0,
+      "ctxState": null,
+      "graphError": null,
+      "playErr": null
+    },
+    "audio_10s_g30_640|nochurn|g1": {
+      "medianSeekedMs": 132,
+      "seekedMs": [
+        40,
+        136,
+        128,
+        190,
+        196,
+        38
+      ],
+      "timeouts": 0,
+      "ctxState": "running",
+      "graphError": null,
+      "playErr": null
+    },
+    "noaudio_10s_g30_640|draw|g0": {
+      "medianSeekedMs": 107,
+      "seekedMs": [
+        117,
+        182,
+        96,
+        86,
+        126,
+        93
+      ],
+      "timeouts": 0,
+      "ctxState": null,
+      "graphError": null,
+      "playErr": null
+    },
+    "noaudio_10s_g30_640|draw|g1": {
+      "medianSeekedMs": 97,
+      "seekedMs": [
+        144,
+        108,
+        83,
+        85,
+        77,
+        254
+      ],
+      "timeouts": 0,
+      "ctxState": "running",
+      "graphError": null,
+      "playErr": null
+    },
+    "noaudio_10s_g30_640|draw|g2": {
+      "medianSeekedMs": 103,
+      "seekedMs": [
+        88,
+        132,
+        110,
+        96,
+        102,
+        103
+      ],
+      "timeouts": 0,
+      "ctxState": "running",
+      "graphError": null,
+      "playErr": null
+    },
+    "noaudio_10s_g30_640|draw|g3": {
+      "medianSeekedMs": 138,
+      "seekedMs": [
+        180,
+        166,
+        109,
+        21,
+        227,
+        84
+      ],
+      "timeouts": 0,
+      "ctxState": null,
+      "graphError": null,
+      "playErr": null
+    },
+    "noaudio_10s_g30_640|nochurn|g0": {
+      "medianSeekedMs": 85,
+      "seekedMs": [
+        82,
+        87,
+        106,
+        21,
+        80,
+        113
+      ],
+      "timeouts": 0,
+      "ctxState": null,
+      "graphError": null,
+      "playErr": null
+    },
+    "noaudio_10s_g30_640|nochurn|g1": {
+      "medianSeekedMs": 93,
+      "seekedMs": [
+        23,
+        13,
+        92,
+        94,
+        105,
+        94
+      ],
+      "timeouts": 0,
+      "ctxState": "running",
+      "graphError": null,
+      "playErr": null
+    }
+  },
+  "loadEnd": [
+    3.07,
+    6.78,
+    4.33
+  ],
+  "finishedAt": "2026-11-11T02:52:39.422Z"
+}

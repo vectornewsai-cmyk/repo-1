@@ -11,6 +11,7 @@
 //  KHÔNG push, KHÔNG sửa code sản phẩm.
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import path from "node:path";
 import os from "node:os";
@@ -336,7 +337,7 @@ async function main() {
   }
   const outPath = path.join("benchmarks/results/v32-o3-browser-discover.json");
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, JSON.stringify(out, null, 2));
+  writeFileEpermRetry(outPath, JSON.stringify(out, null, 2));
   log("JSON:", outPath);
   process.exit(out.error ? 2 : 0);
 }

@@ -1,0 +1,1081 @@
+{
+  "date": "2026-11-11T15:41:23.681Z",
+  "cases": [
+    {
+      "name": "P1-run1",
+      "date": "2026-11-11T15:14:39.114Z",
+      "mode": "P1",
+      "clip": "http://127.0.0.1:8897/d.mp4",
+      "clipBytes": 1320168,
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 895,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 5,
+      "totalFrames": 350,
+      "droppedFrames": 6,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 669,
+      "poolInfoMode": "blob",
+      "finalSrcKind": "blob",
+      "bufferedAtFirstPlay": {
+        "t": 1.33,
+        "ct": 0.125,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0.625,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 25.82
+    },
+    {
+      "name": "B0-run1",
+      "date": "2026-11-11T15:15:48.635Z",
+      "mode": "B0",
+      "clip": "http://127.0.0.1:8897/d.mp4",
+      "clipBytes": 1320168,
+      "targetLoops": 5,
+      "loopsCompleted": 4,
+      "pass": false,
+      "resumeMsMedian": 1102,
+      "resumeNull": 0,
+      "seekedCount": 4,
+      "restarts": 4,
+      "totalFrames": 385,
+      "droppedFrames": 2,
+      "stalls": [
+        {
+          "fromT": 25.11,
+          "durS": 16.83,
+          "ct": 3.958
+        }
+      ],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": {
+        "t": 1.6,
+        "ct": 0.083,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 3.958,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 41.94
+    },
+    {
+      "name": "B0-run2",
+      "date": "2026-11-11T15:16:32.468Z",
+      "mode": "B0",
+      "clip": "http://127.0.0.1:8897/d.mp4",
+      "clipBytes": 1320168,
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 9,
+      "droppedFrames": 0,
+      "stalls": [
+        {
+          "fromT": 1.8,
+          "durS": 40.13,
+          "ct": 0.667
+        }
+      ],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": {
+        "t": 1.14,
+        "ct": 0.083,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0.667,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 41.93
+    },
+    {
+      "name": "B0-run3",
+      "date": "2026-11-11T15:16:55.407Z",
+      "mode": "B0",
+      "clip": "http://127.0.0.1:8897/d.mp4",
+      "clipBytes": 1320168,
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 328,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 5,
+      "totalFrames": 476,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": {
+        "t": 0.43,
+        "ct": 0.16,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0.518,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 22.03
+    },
+    {
+      "name": "P2-run1",
+      "date": "2026-11-11T15:17:19.762Z",
+      "mode": "P2",
+      "clip": "http://127.0.0.1:8897/d.mp4",
+      "clipBytes": 1320168,
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 278,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 5,
+      "totalFrames": 494,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 77,
+      "poolInfoMode": "blob",
+      "finalSrcKind": "blob",
+      "bufferedAtFirstPlay": {
+        "t": 0.33,
+        "ct": 0.059,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0.553,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 21.67
+    },
+    {
+      "name": "P2-run2",
+      "date": "2026-11-11T15:17:42.916Z",
+      "mode": "P2",
+      "clip": "http://127.0.0.1:8897/d.mp4",
+      "clipBytes": 1320168,
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 289,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 5,
+      "totalFrames": 501,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 78,
+      "poolInfoMode": "blob",
+      "finalSrcKind": "blob",
+      "bufferedAtFirstPlay": {
+        "t": 0.32,
+        "ct": 0.145,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0.602,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 21.89
+    },
+    {
+      "name": "P4-run1",
+      "date": "2026-11-11T15:18:37.337Z",
+      "mode": "P4",
+      "clip": "http://127.0.0.1:8897/d32.mp4",
+      "clipBytes": 34870677,
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": false,
+      "resumeMsMedian": 1584,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 5,
+      "totalFrames": 131,
+      "droppedFrames": 8,
+      "stalls": [
+        {
+          "fromT": 3.39,
+          "durS": 1.61,
+          "ct": 0.083
+        },
+        {
+          "fromT": 5,
+          "durS": 7.5,
+          "ct": 0.25
+        }
+      ],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": "skipped",
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": {
+        "t": 3.39,
+        "ct": 0.083,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0.583,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 36.01
+    },
+    {
+      "name": "P4-run2",
+      "date": "2026-11-11T15:19:06.412Z",
+      "mode": "P4",
+      "clip": "http://127.0.0.1:8897/d32.mp4",
+      "clipBytes": 34870677,
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 1457,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 5,
+      "totalFrames": 133,
+      "droppedFrames": 10,
+      "stalls": [],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": "skipped",
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": {
+        "t": 0.9,
+        "ct": 0.083,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0.792,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 27.87
+    },
+    {
+      "name": "P5-run1",
+      "date": "2026-11-11T15:19:51.042Z",
+      "mode": "P5",
+      "clip": "http://127.0.0.1:8897/missing-404.mp4",
+      "clipBytes": 1320168,
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": "skipped",
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": null,
+      "playErr": "The operation is not supported.",
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalEnded": false,
+      "wallS": 41.99
+    },
+    {
+      "name": "P1-run2",
+      "date": "2026-11-11T15:20:15.310Z",
+      "mode": "P1",
+      "clip": "http://127.0.0.1:8897/d.mp4",
+      "clipBytes": 1320168,
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 230,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 5,
+      "totalFrames": 500,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 70,
+      "poolInfoMode": "blob",
+      "finalSrcKind": "blob",
+      "bufferedAtFirstPlay": {
+        "t": 0.33,
+        "ct": 0.163,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0.602,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 21.41
+    },
+    {
+      "name": "P1-run3",
+      "date": "2026-11-11T15:20:38.426Z",
+      "mode": "P1",
+      "clip": "http://127.0.0.1:8897/d.mp4",
+      "clipBytes": 1320168,
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 291,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 5,
+      "totalFrames": 493,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 79,
+      "poolInfoMode": "blob",
+      "finalSrcKind": "blob",
+      "bufferedAtFirstPlay": {
+        "t": 0.31,
+        "ct": 0.132,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0.583,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 22.15
+    },
+    {
+      "name": "P1-run4",
+      "date": "2026-11-11T15:21:05.507Z",
+      "mode": "P1",
+      "clip": "http://127.0.0.1:8897/d.mp4",
+      "clipBytes": 1320168,
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 736,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 5,
+      "totalFrames": 390,
+      "droppedFrames": 1,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 109,
+      "poolInfoMode": "blob",
+      "finalSrcKind": "blob",
+      "bufferedAtFirstPlay": {
+        "t": 0.42,
+        "ct": 0.183,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0.607,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 25.01
+    },
+    {
+      "name": "P1-run5",
+      "date": "2026-11-11T15:21:37.709Z",
+      "mode": "P1",
+      "clip": "http://127.0.0.1:8897/d.mp4",
+      "clipBytes": 1320168,
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 1089,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 5,
+      "totalFrames": 313,
+      "droppedFrames": 11,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 595,
+      "poolInfoMode": "blob",
+      "finalSrcKind": "blob",
+      "bufferedAtFirstPlay": {
+        "t": 1.47,
+        "ct": 0.083,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0.7,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 26.71
+    },
+    {
+      "name": "P3a-run1",
+      "date": "2026-11-11T15:22:43.015Z",
+      "mode": "P3a",
+      "clip": "http://127.0.0.1:8897/d8.mp4",
+      "clipBytes": 10861619,
+      "targetLoops": 5,
+      "loopsCompleted": 1,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 1,
+      "seekedCount": 0,
+      "restarts": 1,
+      "totalFrames": 75,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 182,
+      "poolInfoMode": "blob",
+      "finalSrcKind": "blob",
+      "bufferedAtFirstPlay": {
+        "t": 0.81,
+        "ct": 0.083,
+        "dur": 4,
+        "bufEndMax": 2.538,
+        "buf": [
+          [
+            0,
+            2.538
+          ]
+        ],
+        "full": false
+      },
+      "playErr": null,
+      "finalCt": 0,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 42
+    },
+    {
+      "name": "P3a-run2",
+      "date": "2026-11-11T15:23:32.809Z",
+      "mode": "P3a",
+      "clip": "http://127.0.0.1:8897/d8.mp4",
+      "clipBytes": 10861619,
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 779,
+      "poolInfoMode": "skipped",
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": null,
+      "playErr": "The operation is not supported.",
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalEnded": false,
+      "wallS": 41.98
+    },
+    {
+      "name": "P3b-run1",
+      "date": "2026-11-11T15:24:29.306Z",
+      "mode": "P3b",
+      "clip": "http://127.0.0.1:8897/d16.mp4",
+      "clipBytes": 14273788,
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 6,
+      "droppedFrames": 3,
+      "stalls": [
+        {
+          "fromT": 6.23,
+          "durS": 35.76,
+          "ct": 2.375
+        }
+      ],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 895,
+      "poolInfoMode": "blob",
+      "finalSrcKind": "blob",
+      "bufferedAtFirstPlay": {
+        "t": 3.61,
+        "ct": 0.542,
+        "dur": 4,
+        "bufEndMax": 2.053,
+        "buf": [
+          [
+            0,
+            2.053
+          ]
+        ],
+        "full": false
+      },
+      "playErr": null,
+      "finalCt": 2.375,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 41.99
+    },
+    {
+      "name": "P3b-run2",
+      "date": "2026-11-11T15:25:13.220Z",
+      "mode": "P3b",
+      "clip": "http://127.0.0.1:8897/d16.mp4",
+      "clipBytes": 14273788,
+      "targetLoops": 5,
+      "loopsCompleted": 1,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 1,
+      "seekedCount": 1,
+      "restarts": 1,
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 389,
+      "poolInfoMode": "skipped",
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": {
+        "t": 0.76,
+        "ct": 0.083,
+        "dur": 4,
+        "bufEndMax": 1.897,
+        "buf": [
+          [
+            0,
+            1.897
+          ]
+        ],
+        "full": false
+      },
+      "playErr": null,
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalEnded": false,
+      "wallS": 41.98
+    },
+    {
+      "name": "B8-run1",
+      "date": "2026-11-11T15:27:02.223Z",
+      "mode": "B8",
+      "clip": "http://127.0.0.1:8897/d8.mp4",
+      "clipBytes": 10861619,
+      "targetLoops": 5,
+      "loopsCompleted": 3,
+      "pass": false,
+      "resumeMsMedian": 3733,
+      "resumeNull": 1,
+      "seekedCount": 3,
+      "restarts": 3,
+      "totalFrames": 36,
+      "droppedFrames": 11,
+      "stalls": [
+        {
+          "fromT": 23.51,
+          "durS": 18.33,
+          "ct": 0
+        }
+      ],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": {
+        "t": 3.51,
+        "ct": 0.083,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 41.84
+    },
+    {
+      "name": "B8-run2",
+      "date": "2026-11-11T15:27:50.412Z",
+      "mode": "B8",
+      "clip": "http://127.0.0.1:8897/d8.mp4",
+      "clipBytes": 10861619,
+      "targetLoops": 5,
+      "loopsCompleted": 1,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 1,
+      "seekedCount": 1,
+      "restarts": 1,
+      "totalFrames": 11,
+      "droppedFrames": 4,
+      "stalls": [
+        {
+          "fromT": 8.57,
+          "durS": 33.41,
+          "ct": 0
+        }
+      ],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": {
+        "t": 2.78,
+        "ct": 0.083,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 41.98
+    },
+    {
+      "name": "B8-run3",
+      "date": "2026-11-11T15:32:58.286Z",
+      "mode": "B8",
+      "clip": "http://127.0.0.1:8897/d8.mp4",
+      "clipBytes": 10761335,
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 1153,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 5,
+      "totalFrames": 441,
+      "droppedFrames": 1,
+      "stalls": [],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": {
+        "t": 0.98,
+        "ct": 0.125,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 1.101,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 28.19
+    },
+    {
+      "name": "B16-run1",
+      "date": "2026-11-11T15:33:30.573Z",
+      "mode": "B16",
+      "clip": "http://127.0.0.1:8897/d16.mp4",
+      "clipBytes": 14270605,
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 1486,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 5,
+      "totalFrames": 294,
+      "droppedFrames": 7,
+      "stalls": [],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": {
+        "t": 1.26,
+        "ct": 0.083,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0.577,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 27.69
+    },
+    {
+      "name": "B16-run2",
+      "date": "2026-11-11T15:34:14.471Z",
+      "mode": "B16",
+      "clip": "http://127.0.0.1:8897/d16.mp4",
+      "clipBytes": 14270605,
+      "targetLoops": 5,
+      "loopsCompleted": 1,
+      "pass": false,
+      "resumeMsMedian": 1299,
+      "resumeNull": 0,
+      "seekedCount": 1,
+      "restarts": 1,
+      "totalFrames": 129,
+      "droppedFrames": 0,
+      "stalls": [
+        {
+          "fromT": 10.38,
+          "durS": 31.61,
+          "ct": 3.833
+        }
+      ],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": {
+        "t": 1.58,
+        "ct": 0.167,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 3.833,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 41.99
+    },
+    {
+      "name": "B16-run3",
+      "date": "2026-11-11T15:34:57.336Z",
+      "mode": "B16",
+      "clip": "http://127.0.0.1:8897/d16.mp4",
+      "clipBytes": 14270605,
+      "targetLoops": 5,
+      "loopsCompleted": 2,
+      "pass": false,
+      "resumeMsMedian": 1019,
+      "resumeNull": 1,
+      "seekedCount": 2,
+      "restarts": 2,
+      "totalFrames": 164,
+      "droppedFrames": 1,
+      "stalls": [
+        {
+          "fromT": 10.33,
+          "durS": 31.62,
+          "ct": 0
+        }
+      ],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": {
+        "t": 0.93,
+        "ct": 0.083,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 41.95
+    },
+    {
+      "name": "P3a-run3",
+      "date": "2026-11-11T15:35:41.896Z",
+      "mode": "P3a",
+      "clip": "http://127.0.0.1:8897/d8.mp4",
+      "clipBytes": 10761335,
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 173,
+      "poolInfoMode": "skipped",
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": null,
+      "playErr": "The operation is not supported.",
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalEnded": false,
+      "wallS": 41.98
+    },
+    {
+      "name": "P3a-run4",
+      "date": "2026-11-11T15:36:25.346Z",
+      "mode": "P3a",
+      "clip": "http://127.0.0.1:8897/d8.mp4",
+      "clipBytes": 10761335,
+      "targetLoops": 5,
+      "loopsCompleted": 1,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 1,
+      "seekedCount": 1,
+      "restarts": 1,
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 222,
+      "poolInfoMode": "skipped",
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": {
+        "t": 0.94,
+        "ct": 0.167,
+        "dur": 4,
+        "bufEndMax": 2.59,
+        "buf": [
+          [
+            0,
+            2.59
+          ]
+        ],
+        "full": false
+      },
+      "playErr": null,
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalEnded": false,
+      "wallS": 41.93
+    },
+    {
+      "name": "P1-run6",
+      "date": "2026-11-11T15:41:21.881Z",
+      "mode": "P1",
+      "clip": "http://127.0.0.1:8897/d.mp4",
+      "clipBytes": 1320168,
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 211,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 5,
+      "totalFrames": 496,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 115,
+      "poolInfoMode": "blob",
+      "finalSrcKind": "blob",
+      "bufferedAtFirstPlay": {
+        "t": 0.49,
+        "ct": 0.147,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0.574,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 21.94
+    },
+    {
+      "name": "P3a-run5",
+      "date": "2026-11-11T15:41:56.605Z",
+      "mode": "P3a",
+      "clip": "http://127.0.0.1:8897/d8.mp4",
+      "clipBytes": 10761335,
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 1513,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 5,
+      "totalFrames": 382,
+      "droppedFrames": 1,
+      "stalls": [],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": "skipped",
+      "finalSrcKind": "http",
+      "bufferedAtFirstPlay": {
+        "t": 1.05,
+        "ct": 0.167,
+        "dur": 4,
+        "bufEndMax": 4,
+        "buf": [
+          [
+            0,
+            4
+          ]
+        ],
+        "full": true
+      },
+      "playErr": null,
+      "finalCt": 0.714,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 27.89
+    }
+  ],
+  "env": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15",
+    "mediaRecorder": "undefined",
+    "hardwareConcurrency": 4,
+    "rvfc": "function"
+  }
+}
