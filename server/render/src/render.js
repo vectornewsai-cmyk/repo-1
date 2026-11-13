@@ -24,6 +24,9 @@
 
 const fs = require("fs");
 const os = require("os");
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (port CJS của
+// apps/web/scripts/eperm-retry.mjs; xem server/eperm-retry.cjs).
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 const {
@@ -58,7 +61,7 @@ const { buildImageChain } = require("./image");
 // R1-011: opacity/alpha cho video clip.
 const { buildOpacityFilter, buildOpacityKeyframesChain } = require("./opacity");
 // Phase 7 P4: mask cho clip video/image.
-const { buildMaskChain, buildMaskChainFor, buildMaskAnimChain, buildMaskPngChain, maskKey, maskAnimKey, hasMaskKeyframes, maskGeometryAt, normalizeMask } = require("./mask");
+const { buildMaskChain, buildMaskChainFor, buildMaskAnimChain, buildMaskPngChain, buildMaskTrackGeqChain, maskKey, maskAnimKey, hasMaskKeyframes, maskGeometryAt, maskGeometryAtTrack, trackedMaskAnimKey, trackPointsToMaskKeyframes, normalizeMask } = require("./mask");
 // Phase 9 D3: motion tracking cho video/text (cùng biểu thức sticker Q5).
 const { buildAxisExpr, buildTrackOverlayExprs } = require("./tracking");
 // Batch J plugin wiring: nối PluginRegistry vào pipeline (chỉ khi spec có `plugins`).
@@ -66,13 +69,15 @@ const { createPluginHost } = require("./plugins");
 // Phase 7 P2: clip enhancement (deinterlace/stabilize/denoise) + encode GPU.
 const {
   hasStabilize, buildEnhancePreChain, buildEnhancePostChain,
-  probeFilterSupport,
+  probeFilterSupport, STAB_DETECT_SINGLE_THREAD,
 } = require("./enhance");
 // Phase 9 đợt 62 R2: cache .trf vidstabdetect (khỏi detect lại khi render
 // lại cùng clip/src/trim/tham số — detect là pass đắt nhất của stabilize).
 const { ffmpegVersionLine, resolveStabilizeTrf } = require("./trfCache");
 // Phase 7 P3: speed ramp (đường cong tốc độ) + audio mixer (gain expr, normalize).
 const { buildSpeedRampVideo, buildSpeedRampAudio, buildMotionPostChain } = require("./speedramp");
+// Phase 9 đợt 76 D9: chuỗi fit/crop chuẩn hoá clip video về khung WxH.
+const { buildFitChain } = require("./fitChain");
 // Phase 9 đợt 8 S2: slow-mo mượt / nội suy frame / motion blur (chỉ nhánh thường).
 const { buildMotionChain } = require("./motion");
 const { buildGainFilter, buildNormalizeFilter } = require("./audiomix");
@@ -80,6 +85,18 @@ const { buildGainFilter, buildNormalizeFilter } = require("./audiomix");
 // đợt 49 E4) — xem keyframeSanitize.js; nối vào main() trước flatten + validate.
 const { sanitizeKeyframeArrays } = require("./keyframeSanitize");
 const { probeGpuEncoder, probeGpuEncoderCached, buildVideoEncodeArgs, tryEncode, clearGpuProbeCache, GPU_CANDIDATES } = require("./gpuencode");
+// Phase 9 đợt 74 B4: timeout cho mọi spawnSync trong pipeline (đợt 73 §4
+// mục 8 — render.js:1805 spawnSync ffmpeg không timeout, ffmpeg treo thì
+// job treo theo, fallback GPU→CPU không kích hoạt). Công thức + env xem
+// timeouts.js; --ffmpeg-timeout là override tuyệt đối cho bước encode.
+const {
+  KILL_SIGNAL, encodeTimeoutMs, retryTimeoutMs, helperTimeoutMs, isTimeoutResult,
+} = require("./timeouts");
+// Phase 9 đợt 74 B4: mã thoát riêng cho timeout (ffmpeg treo quá hạn).
+// Khác mã 2 (lỗi render thường) để job cha/bridge/CLI nhận diện được:
+// tiến trình con tự timeout thì thoát mã này, spawnSync của cha chỉ thấy
+// status=3 (r.error=null). CLI/bridge chỉ check status !== 0 nên an toàn.
+const EXIT_TIMEOUT = 3;
 // Phase 9 N2: nested sequence — làm phẳng clip lồng nhau thành spec phẳng
 // (xem nested.js + NESTED_RENDER_LIMITS.md). Chỉ một điểm nối có cờ ở main().
 const { hasNestedClips, flattenSpecForRender } = require("./nested");
@@ -113,12 +130,20 @@ function escapeFilterPath(p) {
   return p.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/:/g, "\\:");
 }
 
-/** #rrggbb → &H00BBGGRR (màu ASS/libass, AA=00 là đục hoàn toàn). */
+/**
+ * #rrggbb → &H00BBGGRR (màu ASS/libass, AA=00 là đục hoàn toàn).
+ * Đợt 74 B9: #rrggbbaa → &HAABBGGRR với AA đảo (alpha ASS: 00 = đục,
+ * FF = trong suốt — ngược alpha CSS). Vd: #00000080 (đen 50%) →
+ * &H7F000000. Hex 3 ký tự nở thành 6 như cũ.
+ */
 function hexToAssColor(hex) {
   let h = hex.replace("#", "");
   if (h.length === 3) h = h.split("").map((c) => c + c).join("");
   const r = h.slice(0, 2), g = h.slice(2, 4), b = h.slice(4, 6);
-  return `&H00${b}${g}${r}`.toUpperCase();
+  const aa = h.length === 8
+    ? (255 - parseInt(h.slice(6, 8), 16)).toString(16).padStart(2, "0")
+    : "00";
+  return `&H${aa}${b}${g}${r}`.toUpperCase();
 }
 
 /** Giây → "H:MM:SS.cc" cho file ASS. */
@@ -153,9 +178,19 @@ Tùy chọn:
   --ffmpeg <path>     Đường dẫn ffmpeg (mặc định: ffmpeg trên PATH)
   --ffprobe <path>    Đường dẫn ffprobe (mặc định: ffprobe trên PATH)
   --crf <0..51>       Chất lượng H.264 (CRF; số càng nhỏ càng đẹp, mặc định 20)
+  --maxrate <kbps>    Đợt 80 H10 (S4): trần bitrate video VBV (500..100000 kbps,
+                      mặc định không trần) — render kèm "-maxrate <n>k
+                      -bufsize <2n>k" BÊN CẠNH CRF cho preset mạng xã hội
+                      (vd YouTube khuyến nghị 8 Mbps cho 1080p SDR @30fps);
+                      chỉ áp cho libx264, encoder GPU bỏ qua (xem LIMITS)
   --x264-preset <p>   ultrafast|superfast|veryfast|faster|fast|medium|slow|slower|veryslow
                       (mặc định medium)
   --audio-bitrate <b> Bitrate audio AAC, vd 128k (32k..512k, mặc định 128k)
+  --aspect-fit <m>    Đợt 76 D9: fit|crop (mặc định fit) — cách lấp khung khi
+                      tỉ lệ nguồn lệch khung xuất: fit = giữ tỉ lệ +
+                      letterbox/pillarbox nền đen (hành vi cũ, không mất
+                      hình); crop = phóng to lấp đầy rồi crop giữa (không
+                      còn viền đen nhưng mất phần hình ngoài khung)
   --encoder <e>     auto|libx264|h264_nvenc|h264_qsv|h264_vaapi (mặc định auto:
                       probe encode GPU thật, fail → fallback libx264, không fail job)
   --normalize <m>   P3: off|loudnorm|dynaudnorm (mặc định off) — chuẩn hoá loudness
@@ -167,17 +202,31 @@ Tùy chọn:
                       render lại cùng clip/src/trim/tham số thì khỏi detect
                       lại; thư mục cache ~/.cache/vcut/vidstab-cache, đổi
                       bằng env VCUT_TRF_CACHE_DIR, tắt hẳn bằng VCUT_TRF_CACHE=0)
+  --no-stab-single-thread  Đợt 67 U1: TẮT decode đơn luồng cho stabilize
+                      (mặc định BẬT: render có clip stabilize thì ffmpeg nhận
+                      "-threads 1" TRƯỚC "-i" của đúng input clip đó — khử
+                      spread vidstabtransform, xem docs/PHASE9_ROUND67_U1_THREADS1_LIMITS.md;
+                      tắt hẳn bằng env VCUT_STAB_SINGLE_THREAD=0; chỉ ảnh
+                      hưởng bước transform, KHÔNG đổi detect/encode hay các
+                      clip không stabilize)
   --reprobe-gpu       Đợt 64 R1: bỏ qua cache probe GPU, probe lại thật
                       (dùng khi vừa gắn/tháo GPU; mặc định dùng cache đĩa
                       ~/.cache/vcut/gpu-probe.json, TTL 30 ngày)
   --no-gpu-probe-cache Đợt 64 R1: tắt cache đĩa probe GPU (probe lại mỗi lần
                       render như trước đợt 64; tắt hẳn bằng VCUT_GPU_PROBE_CACHE=0)
+  --ffmpeg-timeout <s> Đợt 74 B4: timeout tuyệt đối cho bước encode ffmpeg,
+                      tính bằng giây (5..86400; mặc định theo độ dài output:
+                      120s + 60s cho mỗi giây video — đủ biên cho 4K + filter
+                      nặng theo benchmark; ffmpeg treo quá hạn thì bị kill
+                      SIGKILL rồi fallback GPU→CPU như fail thường, xem
+                      docs/PHASE9_ROUND74_B4_RENDER_TIMEOUT_LIMITS.md; tinh
+                      chỉnh bằng env VCUT_ENCODE_TIMEOUT_MS / _FACTOR / _BASE_MS)
   -y, --overwrite     Ghi đè file output nếu đã tồn tại
   -q, --quiet         Ẩn log chi tiết của ffmpeg
   --dry-run           Chỉ in câu lệnh ffmpeg, không chạy
   -h, --help          Hiện trợ giúp này
 
-Mã thoát: 0 = thành công, 1 = spec/media không hợp lệ, 2 = lỗi tham số hoặc lỗi render.`);
+Mã thoát: 0 = thành công, 1 = spec/media không hợp lệ, 2 = lỗi tham số hoặc lỗi render, 3 = timeout (ffmpeg treo quá hạn, đợt 74 B4).`);
 }
 
 /** x264 preset hợp lệ cho --x264-preset (whitelist chống injection). */
@@ -192,10 +241,18 @@ function parseArgs(argv) {
     spec: null, out: null, mediaDir: null, assetMapPath: null,
     ffmpeg: "ffmpeg", ffprobe: "ffprobe",
     crf: 20, x264Preset: "medium", audioBitrate: "128k",
+    // Đợt 80 H10 (S4): trần bitrate video (kbps) cho preset mạng xã hội
+    // — VBV maxrate kẹp bên cạnh CRF (xem gpuencode.buildVideoEncodeArgs);
+    // null = chỉ CRF, không trần (hành vi cũ).
+    maxrateKbps: null,
+    // Phase 9 đợt 76 D9: cách lấp khung khi tỉ lệ nguồn lệch khung xuất
+    // ("fit" = giữ tỉ lệ + letterbox, mặc định; "crop" = lấp đầy + crop giữa).
+    aspectFit: "fit",
     encoder: "auto",
     // Phase 7 P3: normalize export (mặc định off).
     normalize: "off", normalizeTarget: -14, normalizeTp: -1.5, normalizeLra: 11,
-    // Phase 9 R2: đường mask — png (mặc định, vẽ PNG 1 lần) hoặc geq (cũ).
+    // Phase 9 R2: đường mask — png (mặc định, vẽ PNG 1 lần), geq (cũ), hoặc
+    // trackgeq (đợt 87 O3: geq động, tâm mask bám clip.track theo T).
     maskMode: "png",
     // Phase 9 đợt 62 R2: cache .trf vidstabdetect (mặc định BẬT; tắt bằng
     // --no-trf-cache hoặc env VCUT_TRF_CACHE=0). Xoá cache chỉ làm chậm
@@ -204,6 +261,16 @@ function parseArgs(argv) {
     // Phase 9 đợt 64 R1: cache đĩa probe GPU (mặc định BẬT; --reprobe-gpu
     // ép probe lại, --no-gpu-probe-cache tắt cache đĩa hẳn).
     gpuProbeCache: true, reprobeGpu: false,
+    // Phase 9 đợt 74 B4: timeout tuyệt đối cho bước encode ffmpeg (ms,
+    // null = tính theo độ dài output: 120s + 60s/giây, xem timeouts.js).
+    // Đặt bằng --ffmpeg-timeout <giây>; truyền xuống lần retry qua argv.
+    ffmpegTimeoutMs: null,
+    // Phase 9 đợt 67 U1: decode đơn luồng cho clip stabilize (mặc định BẬT;
+    // tắt bằng --no-stab-single-thread hoặc env VCUT_STAB_SINGLE_THREAD=0).
+    // Chỉ áp cho bước transform (vidstabtransform trong graph chính), không
+    // áp cho detect (xem STAB_DETECT_SINGLE_THREAD ở enhance.js) và không
+    // áp cho clip không stabilize.
+    stabSingleThread: process.env.VCUT_STAB_SINGLE_THREAD !== "0",
     overwrite: false, quiet: false, dryRun: false,
   };
   const needInt = (name, raw, min, max) => {
@@ -244,8 +311,17 @@ function parseArgs(argv) {
     else if (a === "--ffmpeg") args.ffmpeg = need();
     else if (a === "--ffprobe") args.ffprobe = need();
     else if (a === "--crf") args.crf = needInt("--crf", need(), 0, 51);
+    else if (a === "--maxrate") args.maxrateKbps = needInt("--maxrate", need(), 500, 100000); // đợt 80 H10
     else if (a === "--x264-preset") args.x264Preset = needX264Preset(need());
     else if (a === "--audio-bitrate") args.audioBitrate = needAudioBitrate(need());
+    else if (a === "--aspect-fit") { // đợt 76 D9: fit|crop, xem fitChain.js
+      const m = need();
+      if (!["fit", "crop"].includes(m)) {
+        console.error(`❌ --aspect-fit phải là fit|crop (nhận: ${m})`);
+        process.exit(2);
+      }
+      args.aspectFit = m;
+    }
     else if (a === "--encoder") {
       const e = need();
       if (!ENCODERS.includes(e)) {
@@ -288,8 +364,8 @@ function parseArgs(argv) {
     }
     else if (a === "--mask-mode") {
       const m = need();
-      if (!["png", "geq"].includes(m)) {
-        console.error(`❌ --mask-mode phải là png|geq (nhận: ${m})`);
+      if (!["png", "geq", "trackgeq"].includes(m)) {
+        console.error(`❌ --mask-mode phải là png|geq|trackgeq (nhận: ${m})`);
         process.exit(2);
       }
       args.maskMode = m;
@@ -297,8 +373,13 @@ function parseArgs(argv) {
     else if (a === "-y" || a === "--overwrite") args.overwrite = true;
     else if (a === "-q" || a === "--quiet") args.quiet = true;
     else if (a === "--no-trf-cache") args.trfCache = false; // đợt 62 R2: tắt cache .trf vidstabdetect
+    else if (a === "--no-stab-single-thread") args.stabSingleThread = false; // đợt 67 U1: tắt decode đơn luồng cho stabilize
     else if (a === "--reprobe-gpu") args.reprobeGpu = true; // đợt 64 R1: ép probe GPU lại
     else if (a === "--no-gpu-probe-cache") args.gpuProbeCache = false; // đợt 64 R1: tắt cache đĩa probe GPU
+    else if (a === "--ffmpeg-timeout") { // đợt 74 B4: timeout tuyệt đối bước encode, giây (5..86400); null = theo độ dài
+      const s = needInt("--ffmpeg-timeout", need(), 5, 86400);
+      args.ffmpegTimeoutMs = s * 1000;
+    }
     else if (a === "--dry-run") args.dryRun = true;
     else if (a === "-h" || a === "--help") { printHelp(); process.exit(0); }
     else { console.error(`Tham số không rõ: ${a} (dùng --help để xem)`); process.exit(2); }
@@ -352,7 +433,7 @@ function buildTypewriterAss(clips, meta) {
     }
   });
   const file = path.join(os.tmpdir(), `repo1-typewriter-${process.pid}.ass`);
-  fs.writeFileSync(file, L.join("\n") + "\n", "utf8");
+  writeFileEpermRetry(file, L.join("\n") + "\n", { label: "render-typewriter-ass" });
   return file;
 }
 
@@ -413,7 +494,7 @@ function buildKaraokeAss(clips, meta) {
     L.push(`Dialogue: 0,${assTime(t0)},${assTime(t1)},KA${ci},,0,0,0,,{\\pos(${x},${y})}${body}`);
   });
   const file = path.join(os.tmpdir(), `repo1-karaoke-${process.pid}.ass`);
-  fs.writeFileSync(file, L.join("\n") + "\n", "utf8");
+  writeFileEpermRetry(file, L.join("\n") + "\n", { label: "render-karaoke-ass" });
   return file;
 }
 
@@ -426,7 +507,36 @@ function buildKaraokeAss(clips, meta) {
 // - Mask có keyframes → video animation (đường nhanh, không geq); nếu vẽ
 //   video thất bại → PNG tĩnh tại t=0; nếu cả PNG cũng thất bại hoặc
 //   --mask-mode geq → geq tĩnh tại t=0. Không fail job vì mask animation.
-function maskChainForSite(unitLabel, mask, W, H, fps, duration, lbl, ctx) {
+//   Phase 9 đợt 90 R4: nhánh keyframes có warn cấp site khi rơi về geq
+//   tĩnh (mirror nhánh tracked); mode geq/trackgeq cũng warn rõ keyframes
+//   không chạy (xem LIMITS Q4 quan sát 1–2).
+// - Phase 9 đợt 87 O3: --mask-mode trackgeq + clip có track → geq động,
+//   tâm mask = track(T); track thắng keyframes (keyframes bị bỏ qua ở mode
+//   này, xem O3_LIMITS). Không track → geq tĩnh như mode geq.
+// - Phase 9 đợt 87 O2: clip có track + mask (mode png mặc định) → video
+//   mask bám track (đường video animation tái dùng của D4, keyframes suy ra
+//   từ quỹ đạo qua trackPointsToMaskKeyframes); vẽ thất bại → PNG tĩnh
+//   tại t=0 (hình học track), cả 2 thất bại → geq tĩnh tại t=0. KHÔNG
+//   fail job. Mode geq: KHÔNG lấy đường tracked (giữ hành vi cũ — mask
+//   tĩnh cưỡi theo shift D3, đã đúng với mask tâm 0.5; xem O2_LIMITS §2).
+//   Tracked clip đứng yên (bỏ shift D3 ở bước đặt timeline, giống O3) nên
+//   tâm mask cuối trên canvas = đúng điểm track, không double-shift.
+function maskChainForSite(unitLabel, mask, W, H, fps, duration, lbl, ctx, track) {
+  if (ctx.maskMode === "trackgeq" && track) {
+    return buildMaskTrackGeqChain(unitLabel, mask, track, W, H, lbl);
+  }
+  if (track && ctx.maskMode === "png") {
+    const tKey = trackedMaskAnimKey(mask, track, W, H, fps, duration);
+    if (ctx.maskAnim && ctx.maskAnim.has(tKey)) {
+      return buildMaskAnimChain(unitLabel, ctx.maskAnim.get(tKey), duration * fps, lbl);
+    }
+    if (ctx.maskAnimFallback && ctx.maskAnimFallback.has(tKey)) {
+      return buildMaskPngChain(unitLabel, ctx.maskAnimFallback.get(tKey), lbl);
+    }
+    console.error(`⚠️  mask bám track: không vẽ được video mask (xem log pre-pass) → ` +
+      `mask tĩnh tại t=0 (KHÔNG bám track, clip đứng yên theo thiết kế O2/O3)`);
+    return buildMaskChain(unitLabel, maskGeometryAtTrack(mask, track, 0), W, H, lbl);
+  }
   if (hasMaskKeyframes(mask)) {
     const aKey = maskAnimKey(mask, W, H, fps, duration);
     if (ctx.maskAnim && ctx.maskAnim.has(aKey)) {
@@ -435,14 +545,108 @@ function maskChainForSite(unitLabel, mask, W, H, fps, duration, lbl, ctx) {
     if (ctx.maskAnimFallback && ctx.maskAnimFallback.has(aKey)) {
       return buildMaskPngChain(unitLabel, ctx.maskAnimFallback.get(aKey), lbl);
     }
+    // Phase 9 đợt 90 R4: warn cấp site cho nhánh keyframes fallback (đóng
+    // quan sát 1 LIMITS Q4) — mirror warn site của nhánh tracked: chỉ khi
+    // cả 2 helper đều thất bại mới rơi về geq tĩnh t=0; tầng PNG fallback
+    // chỉ có warn pre-pass, giống nhánh tracked (IMG-A / P1-A không có warn
+    // site ở tầng PNG). Wording cố tình KHÔNG chứa "không vẽ được video
+    // mask" ở nhánh geq để không phá assert absence của Q4 GEQ-B.
+    if (ctx.maskMode === "png") {
+      console.error(`⚠️  mask keyframes: không vẽ được video mask (xem log pre-pass) → ` +
+        `mask tĩnh tại t=0 (KHÔNG chạy keyframes, mask đứng yên theo thiết kế D4)`);
+    } else {
+      // mode geq/trackgeq: pre-pass không chạy theo thiết kế nên keyframes
+      // không có đường video — mask tĩnh t=0 là hành vi có chủ đích, báo
+      // rõ để người dùng không ngạc nhiên (quan sát 2 LIMITS Q4).
+      console.error(`⚠️  mask keyframes: --mask-mode ${ctx.maskMode} không chạy keyframes → ` +
+        `mask tĩnh tại t=0 (hành vi theo thiết kế, xem LIMITS)`);
+    }
     return buildMaskChain(unitLabel, maskGeometryAt(mask, 0), W, H, lbl);
   }
   return buildMaskChainFor(unitLabel, mask, W, H, lbl,
     ctx.maskPng ? ctx.maskPng.get(maskKey(mask, W, H)) : undefined);
 }
 
+// Phase 9 đợt 92 T4: cổng fail fast adjustment-layer tách clip — tách ra
+// khỏi buildFilterGraph thành hàm thuần (chỉ đọc spec + transitions) để
+// main() gọi SỚM, ngay sau validate (trước mọi pre-pass tốn thời gian:
+// vidstab detect 3b, GPU probe 3c, font 4, text SR PNG, mask PNG R2,
+// mask anim D4). Nợ S4 §3 mục 3: job cắt keyframes từng vẽ video mask
+// ~5–10s rồi mới chết ở cổng trong buildFilterGraph (bước 6); nay chết
+// ngay sau validate, cùng thông điệp + exit 1, không đổi hành vi đúng
+// của case khác (layer bao trọn, mask tĩnh bị cắt, hồi quy không shim).
+// buildFilterGraph vẫn gọi lại hàm này ở đầu để giữ phòng thủ khi dựng
+// graph trực tiếp; main() gọi sớm chỉ là đường nhanh hơn, không thay
+// điều kiện cổng. Lỗi throw không catch — Node in stack ra stderr,
+// exit 1, giống hệt hành vi cũ khi cổng ném trong buildFilterGraph.
+function checkAdjLayerSplitConflicts(spec, transitions) {
+  // Bản đồ transition: "trackId:fromClipId" -> { to, duration } (giống
+  // buildFilterGraph — validateSpec đã dựng sẵn ở v.transitions).
+  const transMap = new Map();
+  for (const t of transitions) transMap.set(`${t.trackId}:${t.from}`, t);
+  const adjLayers = Array.isArray(spec.adjustmentLayers) ? spec.adjustmentLayers : [];
+  // Đợt 7 U2: lặp theo chỉ số track gốc (giống buildFilterGraph) vì scope
+  // tracks của adjustment layer là chỉ số trong spec.tracks đã flatten.
+  for (let trackIndex = 0; trackIndex < spec.tracks.length; trackIndex++) {
+    const track = spec.tracks[trackIndex];
+    if (track.kind !== "video" || track.hidden) continue;
+    const clips = [...track.clips].sort((a, b) => a.start - b.start);
+    const mergeInvolved = new Set();
+    for (let i = 0; i + 1 < clips.length; i++) {
+      const tr = transMap.get(`${track.id}:${clips[i].id}`);
+      if (tr && tr.to === clips[i + 1].id && tr.duration > EPS) {
+        mergeInvolved.add(clips[i].id);
+        mergeInvolved.add(clips[i + 1].id);
+      }
+    }
+    for (const clip of clips) {
+      // Đợt 7 U2: truyền trackIndex để split chỉ xét layer trong scope;
+      // clip ngoài scope trả về 1 đoạn nguyên vẹn, không dính cổng fail fast.
+      const parts = splitClipByLayers(clip, adjLayers, trackIndex);
+      const overlapsAdj = parts.some((p) => p.layers.length > 0);
+      // Cổng 1 — transition: clip dính xfade mà giao layer thì fail fast.
+      // Xfade gộp 2 clip thành 1 unit; tách sẽ phá cặp transition, còn áp
+      // adj cho cả unit thì sai ở vùng crossfade (vùng đó chứa nội dung
+      // của cả 2 clip nhưng chưa chắc cả 2 đều giao layer).
+      // Wording giữ nguyên 100% để test cũ (S4-F) và log bridge không đổi.
+      if (overlapsAdj && mergeInvolved.has(clip.id)) {
+        throw new Error(`clip "${clip.id}": adjustment layer giao với clip dính transition ` +
+          `(xfade) — chưa hỗ trợ; tách clip hoặc dời layer khỏi vùng transition`);
+      }
+      if (parts.length > 1) {
+        // Cổng 2 — các thứ gắn theo thời gian cục bộ của clip: tách sẽ làm
+        // chúng chạy lại từ đầu đoạn / lệch trf detect, nên fail fast thay
+        // vì render sai lặng lẽ. Layer bao trọn clip (parts == 1) không bị
+        // cổng này vì không tách.
+        if (clip.speedKeyframes !== undefined) {
+          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có speedKeyframes ` +
+            `(keyframe tốc độ gắn theo thời gian clip — chưa hỗ trợ tách)`);
+        }
+        if (clip.animations !== undefined) {
+          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có animations keyframes ` +
+            `(keyframe gắn theo thời gian clip — chưa hỗ trợ tách)`);
+        }
+        if (clip.track !== undefined) {
+          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có motion track ` +
+            `(điểm track gắn theo thời gian clip — chưa hỗ trợ tách)`);
+        }
+        if (hasStabilize(clip.enhance)) {
+          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có enhance.stabilize ` +
+            `(vidstab detect theo trim gốc — chưa hỗ trợ tách)`);
+        }
+        if (clip.mask && hasMaskKeyframes(clip.mask)) {
+          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có mask keyframes ` +
+            `(mask animation gắn theo thời gian clip — chưa hỗ trợ tách)`);
+        }
+      }
+    }
+  }
+}
+
 function buildFilterGraph(spec, ctx) {
   const { W, H, fps, D, mediaIndex, absOf, transitions, fontFiles, assetsDir, mediaProbes } = ctx;
+  // Đợt 76 D9: cách lấp khung của clip video (fit = mặc định, crop = lấp đầy).
+  const aspectFit = ctx.aspectFit ?? "fit";
   const fc = [];
   let n = 0;
   const lbl = (p) => `${p}${n++}`;
@@ -450,6 +654,12 @@ function buildFilterGraph(spec, ctx) {
   // Bản đồ transition: "trackId:fromClipId" -> { to, duration } (đã validate ở validateSpec)
   const transMap = new Map();
   for (const t of transitions) transMap.set(`${t.trackId}:${t.from}`, t);
+
+  // Phase 9 đợt 92 T4: cổng fail fast adjustment-layer tách clip — đã
+  // chạy sớm ở main() (sau validate, trước pre-pass); gọi lại ở đây để
+  // giữ phòng thủ khi dựng graph trực tiếp (không tốn gì: chỉ split
+  // lại, không chạy pre-pass). Xem checkAdjLayerSplitConflicts.
+  checkAdjLayerSplitConflicts(spec, transitions);
 
   // R1-084: phát hiện video nguồn đã có kênh alpha (VD: output của bgremove.py).
   // Dựa trên pix_fmt từ ffprobe (validateMedia đã lưu vào mediaProbes).
@@ -501,42 +711,10 @@ function buildFilterGraph(spec, ctx) {
     for (const clip of clips) {
       // Đợt 7 U2: truyền trackIndex để split chỉ xét layer trong scope;
       // clip ngoài scope trả về 1 đoạn nguyên vẹn, không dính cổng fail fast.
+      // Đợt 92 T4: cổng fail fast đã tách ra checkAdjLayerSplitConflicts
+      // (gọi ở đầu buildFilterGraph + sớm ở main()) — ở đây chỉ split
+      // để mở rộng clip, không kiểm tra lại.
       const parts = splitClipByLayers(clip, adjLayers, trackIndex);
-      const overlapsAdj = parts.some((p) => p.layers.length > 0);
-      // Cổng 1 — transition: clip dính xfade mà giao layer thì fail fast.
-      // Xfade gộp 2 clip thành 1 unit; tách sẽ phá cặp transition, còn áp
-      // adj cho cả unit thì sai ở vùng crossfade (vùng đó chứa nội dung
-      // của cả 2 clip nhưng chưa chắc cả 2 đều giao layer).
-      if (overlapsAdj && mergeInvolved.has(clip.id)) {
-        throw new Error(`clip "${clip.id}": adjustment layer giao với clip dính transition ` +
-          `(xfade) — chưa hỗ trợ; tách clip hoặc dời layer khỏi vùng transition`);
-      }
-      if (parts.length > 1) {
-        // Cổng 2 — các thứ gắn theo thời gian cục bộ của clip: tách sẽ làm
-        // chúng chạy lại từ đầu đoạn / lệch trf detect, nên fail fast thay
-        // vì render sai lặng lẽ. Layer bao trọn clip (parts == 1) không bị
-        // cổng này vì không tách.
-        if (clip.speedKeyframes !== undefined) {
-          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có speedKeyframes ` +
-            `(keyframe tốc độ gắn theo thời gian clip — chưa hỗ trợ tách)`);
-        }
-        if (clip.animations !== undefined) {
-          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có animations keyframes ` +
-            `(keyframe gắn theo thời gian clip — chưa hỗ trợ tách)`);
-        }
-        if (clip.track !== undefined) {
-          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có motion track ` +
-            `(điểm track gắn theo thời gian clip — chưa hỗ trợ tách)`);
-        }
-        if (hasStabilize(clip.enhance)) {
-          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có enhance.stabilize ` +
-            `(vidstab detect theo trim gốc — chưa hỗ trợ tách)`);
-        }
-        if (clip.mask && hasMaskKeyframes(clip.mask)) {
-          throw new Error(`clip "${clip.id}": adjustment layer cắt giữa clip có mask keyframes ` +
-            `(mask animation gắn theo thời gian clip — chưa hỗ trợ tách)`);
-        }
-      }
       const spd = clip.speed ?? 1;
       for (const p of parts) {
         expandedClips.push({
@@ -637,7 +815,7 @@ function buildFilterGraph(spec, ctx) {
           ? buildMotionPostChain(clip.motion, fps, clip.duration)
           : "";
         const { lines, label } = buildSpeedRampVideo(`[${idx}:v]`, clip, {
-          W, H, fps, outFormat, padColor, lbl,
+          W, H, fps, outFormat, padColor, lbl, aspectFit,
           enhPreChain: enhPre,
           preScaleChain: chromaChain,
           postChain: `${colorChain}${lutChain}${effectsChain}${enhPost}${pluginChain}${adjSuffix}`,
@@ -646,7 +824,7 @@ function buildFilterGraph(spec, ctx) {
         fc.push(...lines);
         let unitLabel = label;
         if (clip.mask) {
-          const mc = maskChainForSite(unitLabel, clip.mask, W, H, fps, clip.duration, lbl, ctx);
+          const mc = maskChainForSite(unitLabel, clip.mask, W, H, fps, clip.duration, lbl, ctx, clip.track);
           fc.push(...mc.entries);
           unitLabel = mc.outLabel;
         }
@@ -668,9 +846,9 @@ function buildFilterGraph(spec, ctx) {
         `[${idx}:v]` +
         `trim=start=${num(clip.in)}:end=${num(clip.in + clip.duration * (clip.speed ?? 1))},` +
         `setpts=PTS-STARTPTS${enhPre}${speedChain}${chromaChain},` +
-        // Giữ tỉ lệ gốc, letterbox bằng nền đen (hoặc trong suốt nếu chroma) cho vừa khít khung hình output.
-        `scale=${W}:${H}:force_original_aspect_ratio=decrease,` +
-        `pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=${padColor},` +
+        // Đợt 76 D9: chuẩn hoá về khung WxH theo aspectFit — fit giữ tỉ lệ
+        // + letterbox nền đen (hành vi cũ), crop lấp đầy + crop giữa.
+        `${buildFitChain(W, H, padColor, aspectFit)},` +
         `setsar=1,${motionChain.preFilter ? `${motionChain.preFilter},` : ""}${motionChain.fpsFilter}${motionChain.blurChain}${motionChain.tailFilter},format=${outFormat}${colorChain}${lutChain}${effectsChain}${enhPost}${pluginChain}${adjSuffix}` +
         `[${v}]`
       );
@@ -680,7 +858,7 @@ function buildFilterGraph(spec, ctx) {
       // composite đúng); alpha gốc được giữ, không ghi đè.
       let unitLabel = `[${v}]`;
       if (clip.mask) {
-        const mc = maskChainForSite(unitLabel, clip.mask, W, H, fps, clip.duration, lbl, ctx);
+        const mc = maskChainForSite(unitLabel, clip.mask, W, H, fps, clip.duration, lbl, ctx, clip.track);
         fc.push(...mc.entries);
         unitLabel = mc.outLabel;
       }
@@ -780,7 +958,15 @@ function buildFilterGraph(spec, ctx) {
     // có SR thì tâm hình bao đã biến đổi bám điểm track. Track thắng
     // keyframes x/y về vị trí; SR/opacity vẫn áp dụng bình thường. Unit đã
     // merge (dính transition) thì bỏ qua track (validator đã cảnh báo).
-    if (!u.merged && u.clip.track) {
+    // Phase 9 đợt 87 O3: --mask-mode trackgeq + clip có mask → track LÁI
+    // MASK (tâm mask = track(T) trong unit), video đứng yên — nên BỎ QUA
+    // shift D3 ở đây, nếu không mask bị double-shift: tâm cuối trên canvas
+    // = track + (track - 0.5) = 2*track - 0.5 (đã đo, xem O3_LIMITS §2).
+    // Phase 9 đợt 87 O2: cùng luật cho đường video mask mặc định (png):
+    // clip track+mask → video mask đã mang tâm = track trong unit, clip
+    // phải đứng yên thì tâm cuối mới = đúng điểm track. Mask tĩnh (không
+    // track) và mode geq giữ nguyên hành vi cũ (mask cưỡi theo shift D3).
+    if (!u.merged && u.clip.track && !((ctx.maskMode === "trackgeq" || ctx.maskMode === "png") && u.clip.mask)) {
       const te = buildTrackOverlayExprs(u.clip.track, u.clip.start);
       ox = te.x; oy = te.y;
     } else if (!u.merged && u.clip.animations &&
@@ -811,7 +997,7 @@ function buildFilterGraph(spec, ctx) {
       // trước setpts/overlay (giống pattern video unit).
       let imgLabel = `[${v}]`;
       if (clip.mask) {
-        const mc = maskChainForSite(imgLabel, clip.mask, W, H, fps, clip.duration, lbl, ctx);
+        const mc = maskChainForSite(imgLabel, clip.mask, W, H, fps, clip.duration, lbl, ctx, clip.track);
         fc.push(...mc.entries);
         imgLabel = mc.outLabel;
       }
@@ -1009,12 +1195,14 @@ function buildFilterGraph(spec, ctx) {
         console.error(`   ⚠️ parity "${clip.id}": không tìm được font "${clip.style.fontFamily}" để đo hộp chữ — fallback quét khung hình`);
         continue;
       }
+      // Đợt 74 B4: timeout helper (treo → pr.error ETIMEDOUT → fallback
+      // quét khung hình ở dưới, không treo job).
       const mr = spawnSync("python3", [
         path.join(__dirname, "measure_text.py"),
         "--font", fontFile,
         "--size", String(clip.style.fontSize),
         "--text", clip.text,
-      ], { stdio: ["ignore", "pipe", "pipe"] });
+      ], { stdio: ["ignore", "pipe", "pipe"], timeout: helperTimeoutMs(0), killSignal: KILL_SIGNAL });
       try {
         const box = JSON.parse((mr.stdout || "").toString());
         if (box && box.width > 0 && box.height > 0) boxById.set(clip.id, { w: box.width, h: box.height });
@@ -1394,6 +1582,19 @@ function main() {
     process.exit(1);
   }
 
+  // Phase 9 đợt 92 T4: cổng fail fast adjustment-layer tách clip — chạy
+  // SỚM, ngay sau validateSpec + validateMedia (spec + media đã hợp lệ),
+  // TRƯỚC mọi pre-pass tốn thời gian (vidstab detect 3b, GPU probe 3c,
+  // font 4, text SR PNG, mask PNG R2, mask anim D4). Cổng chỉ đọc spec +
+  // v.transitions nên kết quả giống hệt khi chạy trong buildFilterGraph
+  // (bước 6); job xung đột chết ngay thay vì vẽ mask ~5–10s rồi mới
+  // chết (nợ S4 §3 mục 3). Thứ tự lỗi giữ nguyên với validate/plugin/
+  // media (2/2b/3 vẫn trước cổng, như cũ); chỉ các bước sau 3 (3b/3c/4
+  // và pre-pass) mới bị cổng vượt mặt — các bước đó đều fail exit 1
+  // nên không đổi mã thoát của job xung đột kép. buildFilterGraph vẫn
+  // gọi lại cổng ở đầu để giữ phòng thủ.
+  checkAdjLayerSplitConflicts(spec, v.transitions);
+
   // 3b. Phase 7 P2: enhancement — kiểm tra filter có sẵn + pass 1 vidstabdetect.
   // Detect phân tích đúng đoạn nguồn mà graph chính sẽ dùng (cùng trim), nên
   // phải chạy TRƯỚC khi dựng graph. Fail fast (không lặng lẽ bỏ stabilize):
@@ -1409,6 +1610,12 @@ function main() {
     const needsDenoise = videoClips.some((c) => c.enhance && c.enhance.denoise !== undefined);
     if (needsStab.length > 0 || needsYadif || needsDenoise) {
       const sup = probeFilterSupport(args.ffmpeg);
+      // Đợt 74 B4: probe filter treo quá 15s → fail fast với đúng nguyên nhân
+      // (không báo nhầm "thiếu filter" như khi out rỗng do timeout).
+      if (sup.timedOut) {
+        console.error("❌ ffmpeg treo khi probe filter (timeout 15s) — không render được enhance/stabilize/denoise");
+        process.exit(1);
+      }
       if (needsYadif && !sup.yadif) {
         console.error("❌ FFmpeg build này thiếu filter yadif — không render được deinterlace");
         process.exit(1);
@@ -1441,6 +1648,10 @@ function main() {
             enabled: args.trfCache,
             ffmpegVersion: ffmpegVersion,
             runTmpPath: trfPath,
+            // Đợt 67 U1: detect có ép -threads 1 không do STAB_DETECT_SINGLE_THREAD
+            // ở enhance.js quyết (mặc định false — xem const đó; chỉ đổi khi
+            // số đo chứng minh detect threads1 cho .trf byte-identical).
+            singleThread: STAB_DETECT_SINGLE_THREAD,
           });
           if (!r.ok) {
             console.error(`❌ vidstabdetect cho clip "${clip.id}" thất bại: ${r.error}`);
@@ -1486,7 +1697,7 @@ function main() {
       encoderNote = `libx264 (CPU — ${args.encoder} probe thất bại, fallback)`;
     }
   }
-  const encArgs = buildVideoEncodeArgs(videoEncoder, { crf: args.crf, preset: args.x264Preset });
+  const encArgs = buildVideoEncodeArgs(videoEncoder, { crf: args.crf, preset: args.x264Preset, maxrateKbps: args.maxrateKbps });
   log(`   🎥 encoder video: ${encoderNote}`);
 
   // 4. Resolve font cho các text clip dùng drawtext (fail fast trước khi render)
@@ -1532,7 +1743,9 @@ function main() {
         "--pad", String(pad),
       ];
       if (clip.style.backgroundColor) pyArgs.push("--bg", clip.style.backgroundColor);
-      const pr = spawnSync("python3", pyArgs, { stdio: ["ignore", "pipe", "pipe"] });
+      // Đợt 74 B4: timeout helper (treo → pr.error ETIMEDOUT → fallback
+      // drawtext ở dưới, không treo job).
+      const pr = spawnSync("python3", pyArgs, { stdio: ["ignore", "pipe", "pipe"], timeout: helperTimeoutMs(0), killSignal: KILL_SIGNAL });
       if (pr.error || pr.status !== 0) {
         console.error(`⚠️  text clip "${clip.id}": không vẽ được PNG cho scale/rotation ` +
           `(${(pr.stderr || "").toString().trim().slice(-200) || (pr.error && pr.error.message) || "lỗi không rõ"} — ` +
@@ -1556,6 +1769,20 @@ function main() {
     for (const track of spec.tracks.filter((t) => (t.kind === "video" || t.kind === "image") && !t.hidden)) {
       for (const clip of track.clips) {
         if (!clip.mask) continue;
+        // Phase 9 đợt 88 P2: clip tracked KHÔNG vẽ PNG tĩnh R2 — đường
+        // tracked (maskChainForSite, mode png) chỉ dùng video mask trong
+        // maskAnim (hoặc PNG fallback t=0 trong maskAnimFallback, vẽ ở
+        // pre-pass D4), không bao giờ đọc ctx.maskPng (chỉ nhánh mask tĩnh
+        // mới dùng tới). Vẽ ở đây là thừa: 1 lần mask_png.py + 1 file tạm
+        // mỗi mask tracked phân biệt (đo trước sửa: ~0,5 s/PNG 720p).
+        // Bỏ qua TRƯỚC seen.add để maskKey trùng với clip tĩnh khác vẫn
+        // được vẽ cho clip tĩnh đó.
+        // Phase 9 đợt 89 Q1: mask có keyframes (không track) CŨNG không vẽ
+        // PNG tĩnh R2 — nhánh keyframes của maskChainForSite chỉ dùng
+        // maskAnim / maskAnimFallback / geq t=0, không bao giờ đọc
+        // ctx.maskPng. Cùng điều kiện, cùng vị trí trước seen.add.
+        if (clip.track !== undefined) continue;
+        if (hasMaskKeyframes(clip.mask)) continue;
         const key = maskKey(clip.mask, meta.width, meta.height);
         if (seen.has(key)) continue;
         seen.add(key);
@@ -1571,7 +1798,8 @@ function main() {
           "--out", pngPath,
         ];
         if (m.invert) pyArgs.push("--invert");
-        const pr = spawnSync("python3", pyArgs, { stdio: ["ignore", "pipe", "pipe"] });
+        // Đợt 74 B4: timeout helper (treo → pr.error ETIMEDOUT → fallback geq).
+        const pr = spawnSync("python3", pyArgs, { stdio: ["ignore", "pipe", "pipe"], timeout: helperTimeoutMs(0), killSignal: KILL_SIGNAL });
         if (pr.error || pr.status !== 0) {
           console.error(`⚠️  mask "${clip.id}": không vẽ được PNG mask ` +
             `(${(pr.stderr || "").toString().trim().slice(-200) || (pr.error && pr.error.message) || "lỗi không rõ"}) → fallback về geq`);
@@ -1589,18 +1817,33 @@ function main() {
   // Vẽ thất bại → fallback PNG tĩnh tại t=0 (hình học nội suy); cả 2 thất
   // bại → site dùng geq tĩnh tại t=0, không fail job. --mask-mode geq →
   // bỏ qua cả 2 (site dùng geq t=0 trực tiếp).
-  const maskAnim = new Map(); // maskAnimKey -> videoPath
-  const maskAnimFallback = new Map(); // maskAnimKey -> pngPath (t=0)
+  // Phase 9 đợt 87 O2: cùng vòng này vẽ video TRACKED mask cho clip có
+  // track + mask (dedup theo trackedMaskAnimKey, keyframes suy ra từ quỹ
+  // đạo qua trackPointsToMaskKeyframes — track thắng x/y, keyframes thắng
+  // w/h theo helper O1). Cùng map maskAnim/maskAnimFallback (key có tiền
+  // tố "track" nên không đụng key D4) và cùng cơ chế dọn file tạm.
+  const maskAnim = new Map(); // maskAnimKey | trackedMaskAnimKey -> videoPath
+  const maskAnimFallback = new Map(); // ... -> pngPath (t=0)
   const maskAnimPaths = [];
   if (args.maskMode === "png") {
     const seenAnim = new Set();
     for (const track of spec.tracks.filter((t) => (t.kind === "video" || t.kind === "image") && !t.hidden)) {
       for (const clip of track.clips) {
-        if (!clip.mask || !hasMaskKeyframes(clip.mask)) continue;
-        const aKey = maskAnimKey(clip.mask, meta.width, meta.height, meta.fps, clip.duration);
+        if (!clip.mask) continue;
+        // O2: tracked thắng keyframes về x/y (O1); clip không track không
+        // keyframes thì không có video mask để vẽ.
+        const isTracked = clip.track !== undefined;
+        const isAnim = hasMaskKeyframes(clip.mask);
+        if (!isTracked && !isAnim) continue;
+        const aKey = isTracked
+          ? trackedMaskAnimKey(clip.mask, clip.track, meta.width, meta.height, meta.fps, clip.duration)
+          : maskAnimKey(clip.mask, meta.width, meta.height, meta.fps, clip.duration);
         if (seenAnim.has(aKey)) continue;
         seenAnim.add(aKey);
         const m = clip.mask;
+        const kfs = isTracked
+          ? trackPointsToMaskKeyframes(m, clip.track)
+          : normalizeMask(m).keyframes;
         const vidPath = path.join(os.tmpdir(), `repo1-maskan-${process.pid}-${seenAnim.size}.mkv`);
         const pyArgs = [
           path.join(__dirname, "mask_anim.py"),
@@ -1608,15 +1851,20 @@ function main() {
           "--feather", String(m.feather ?? 0),
           "--width", String(meta.width), "--height", String(meta.height),
           "--fps", String(meta.fps), "--duration", String(clip.duration),
-          "--keyframes", JSON.stringify(normalizeMask(m).keyframes),
+          "--keyframes", JSON.stringify(kfs),
           "--out", vidPath,
         ];
         if (m.invert) pyArgs.push("--invert");
-        const pr = spawnSync("python3", pyArgs, { stdio: ["ignore", "pipe", "pipe"] });
+        // Đợt 74 B4: timeout helper tỉ lệ với độ dài clip (mask_anim vẽ
+        // từng frame; treo → pr.error ETIMEDOUT → thử PNG tĩnh t=0).
+        const pr = spawnSync("python3", pyArgs, { stdio: ["ignore", "pipe", "pipe"], timeout: helperTimeoutMs(clip.duration), killSignal: KILL_SIGNAL });
         if (pr.error || pr.status !== 0) {
-          console.error(`⚠️  mask anim "${clip.id}": không vẽ được video mask ` +
+          const tag = isTracked ? "mask track" : "mask anim";
+          console.error(`⚠️  ${tag} "${clip.id}": không vẽ được video mask ` +
             `(${(pr.stderr || "").toString().trim().slice(-200) || (pr.error && pr.error.message) || "lỗi không rõ"}) → thử PNG tĩnh tại t=0`);
-          const g0 = maskGeometryAt(m, 0);
+          // O2: fallback PNG tại hình học track t=0 (maskGeometryAtTrack),
+          // không phải hình học tĩnh của mask gốc.
+          const g0 = isTracked ? maskGeometryAtTrack(m, clip.track, 0) : maskGeometryAt(m, 0);
           const fbPath = path.join(os.tmpdir(), `repo1-maskfb-${process.pid}-${seenAnim.size}.png`);
           const fbArgs = [
             path.join(__dirname, "mask_png.py"),
@@ -1628,19 +1876,20 @@ function main() {
             "--out", fbPath,
           ];
           if (m.invert) fbArgs.push("--invert");
-          const fb = spawnSync("python3", fbArgs, { stdio: ["ignore", "pipe", "pipe"] });
+          // Đợt 74 B4: timeout helper (treo → fb.error ETIMEDOUT → geq tĩnh t=0).
+          const fb = spawnSync("python3", fbArgs, { stdio: ["ignore", "pipe", "pipe"], timeout: helperTimeoutMs(0), killSignal: KILL_SIGNAL });
           if (fb.error || fb.status !== 0) {
-            console.error(`⚠️  mask anim "${clip.id}": PNG fallback cũng thất bại → geq tĩnh tại t=0`);
+            console.error(`⚠️  ${tag} "${clip.id}": PNG fallback cũng thất bại → geq tĩnh tại t=0`);
             continue;
           }
           maskAnimFallback.set(aKey, fbPath);
           maskAnimPaths.push(fbPath);
-          log(`   mask anim fallback PNG t=0 "${clip.id}" → ${fbPath}`);
+          log(`   ${tag} fallback PNG t=0 "${clip.id}" → ${fbPath}`);
           continue;
         }
         maskAnim.set(aKey, vidPath);
         maskAnimPaths.push(vidPath);
-        log(`   mask anim "${clip.id}" → ${vidPath}`);
+        log(`   ${isTracked ? "mask track" : "mask anim"} "${clip.id}" → ${vidPath}`);
       }
     }
   }
@@ -1689,6 +1938,9 @@ function main() {
     // Phase 9 D4: map maskAnimKey -> video mask / PNG fallback t=0.
     maskAnim,
     maskAnimFallback,
+    // Phase 9 đợt 87 O3: mode mask — cần cho maskChainForSite (trackgeq)
+    // và cho việc bỏ qua D3 shift khi track lái mask (xem dưới).
+    maskMode: args.maskMode,
     vaapi: videoEncoder === "h264_vaapi",
     // Phase 7 P3: normalize export (áp sau amix; off = không đổi).
     normalize: {
@@ -1697,6 +1949,8 @@ function main() {
       tp: args.normalizeTp,
       lra: args.normalizeLra,
     },
+    // Đợt 76 D9: cách lấp khung của clip video (fit mặc định, crop lấp đầy).
+    aspectFit: args.aspectFit,
   });
 
   // Plugin: lỗi hook onClipRender gom được khi dựng graph — in ra stderr
@@ -1719,7 +1973,32 @@ function main() {
   ffArgs.push("-stats");
   // Phase 7 P2: VA-API cần device trước inputs.
   if (videoEncoder === "h264_vaapi") ffArgs.push("-vaapi_device", "/dev/dri/renderD128");
-  for (const m of orderedMedia) ffArgs.push("-i", m);
+  // Đợt 67 U1: decode đơn luồng cho clip stabilize — "-threads 1" là option
+  // của INPUT nên phải đứng ngay TRƯỚC "-i" của đúng file đó (đặt sau "-i"
+  // sẽ thành option output, vô tác dụng với decode). Chỉ áp cho file media
+  // của clip video có enhance.stabilize (T1 E4 chứng minh đây là cách duy
+  // nhất khử spread vidstabtransform: 0/150 frame khác, byte-identical ×3).
+  // Các input khác (clip thường, ảnh, mask, audio...) giữ decode đa luồng
+  // mặc định — không chậm cả render vì một clip stabilize. Tắt bằng
+  // --no-stab-single-thread hoặc env VCUT_STAB_SINGLE_THREAD=0.
+  // Lưu ý: cùng 1 file media dùng chung cho clip stabilize + clip thường
+  // thì input đó vẫn nhận -threads 1 (đăng ký -i 1 lần) — vô hại, chỉ decode
+  // file đó đơn luồng.
+  let stabSingleThreadCount = 0;
+  if (args.stabSingleThread && stabTrf.size > 0) {
+    const stabMedia = new Set();
+    for (const track of spec.tracks.filter((t) => t.kind === "video" && !t.hidden))
+      for (const clip of track.clips)
+        if (hasStabilize(clip.enhance) && clip.src) stabMedia.add(absOf(clip.src));
+    for (const m of orderedMedia) {
+      if (stabMedia.has(m)) { ffArgs.push("-threads", "1"); stabSingleThreadCount++; }
+      ffArgs.push("-i", m);
+    }
+    if (stabSingleThreadCount > 0)
+      log(`   🧵 stabilize single-thread decode: -threads 1 trước ${stabSingleThreadCount}/${orderedMedia.length} input (khử spread vidstabtransform, đợt 67 U1)`);
+  } else {
+    for (const m of orderedMedia) ffArgs.push("-i", m);
+  }
   ffArgs.push(
     "-filter_complex", filterComplex,
     "-map", vout, "-map", aout,
@@ -1744,7 +2023,8 @@ function main() {
   log(`🎬 Render "${meta.name}" → ${outAbs}`);
   log(`   ${meta.width}x${meta.height} @ ${meta.fps}fps, thời lượng ${num(D)}s, ` +
     `${orderedMedia.length} file media, ${v.transitions.length} transition, ` +
-    `encoder=${videoEncoder} crf=${args.crf} preset=${args.x264Preset} audio=${args.audioBitrate}`);
+    `encoder=${videoEncoder} crf=${args.crf} preset=${args.x264Preset} audio=${args.audioBitrate}` +
+    (args.maxrateKbps ? ` maxrate=${args.maxrateKbps}k` : ""));
   const t0 = Date.now();
   // Plugin: onExportStart (quan sát, ngay trước khi ffmpeg chạy; dry-run đã
   // return ở trên nên hook không cháy khi không export thật). Lỗi hook chỉ
@@ -1759,8 +2039,25 @@ function main() {
     for (const [name, msg] of Object.entries(rep.hookErrors))
       console.error(`⚠️  plugin "${name}" (onExportStart): ${msg}`);
   }
+  // Đợt 74 B4: timeout encode tỉ lệ với độ dài output (nợ đợt 73 §4 mục 8:
+  // trước đây spawnSync KHÔNG timeout — ffmpeg treo thì job treo theo,
+  // fallback không kích hoạt). Timeout tính bằng timeouts.js
+  // (mặc định 120s + 60s/giây video; --ffmpeg-timeout ghi đè tuyệt đối).
+  // Hết hạn → Node kill SIGKILL (SIGTERM bị tiến trình treo bỏ qua được)
+  // → r.error.code ETIMEDOUT → rơi vào nhánh fallback như fail thường.
+  const ffmpegTimeoutMs = encodeTimeoutMs(D, args.ffmpegTimeoutMs);
+  // Đợt 74 B4: hạn timeout của lần chạy ĐANG giữ trong r (encode, rồi
+  // retry nếu có fallback) — để thông điệp lỗi cuối in đúng con số.
+  let lastTimeoutMs = ffmpegTimeoutMs;
+  // Đợt 74 B4: đã qua nhánh fallback retry chưa (để thông điệp lỗi cuối
+  // phân biệt "timeout ở lần đầu" với "cha kill lần retry vì quá hạn chờ").
+  let retried = false;
+  log(`   ⏱️  timeout encode: ${(ffmpegTimeoutMs / 1000).toFixed(0)}s ` +
+    `(120s + 60s/giây × ${num(D)}s${args.ffmpegTimeoutMs ? " — ghi đè --ffmpeg-timeout" : ""})`);
   let r = spawnSync(args.ffmpeg, ffArgs, {
     stdio: ["ignore", "ignore", args.quiet ? "ignore" : "inherit"],
+    timeout: ffmpegTimeoutMs,
+    killSignal: KILL_SIGNAL,
   });
   // Đợt 65 S4 — fallback libx264 khi encoder GPU fail LÚC ENCODE THẬT.
   // Kịch bản (nợ đợt 64 R1 §1/§8.4): cache đĩa probe (TTL 30 ngày) nói GPU
@@ -1776,8 +2073,19 @@ function main() {
   // khi kết quả cuối thành công (r.status === 0).
   if ((r.error || r.status !== 0) && videoEncoder !== "libx264"
     && GPU_CANDIDATES.includes(videoEncoder)) {
+    // Đợt 72 Z6 — log r.signal khi ffmpeg bị kill (nợ đợt 67 §7 mục 6):
+    // spawnSync trả status=null + signal="SIGSEGV" khi process bị kill bởi
+    // signal; trước đây chỉ in "thoát mã null" nên không phân biệt được
+    // crash (SIGSEGV) với OOM-kill (SIGKILL) hay SIGTERM.
+    // Đợt 74 B4: timeout cũng là 1 dạng fail — failDetail nói rõ để log
+    // phân biệt được "treo quá hạn" với crash (SIGSEGV) hay OOM (SIGKILL).
+    const failDetail = isTimeoutResult(r)
+      ? `treo quá timeout ${(ffmpegTimeoutMs / 1000).toFixed(0)}s (ETIMEDOUT, đã kill ${KILL_SIGNAL})`
+      : r.error ? r.error.message
+      : r.signal ? `bị kill bởi signal ${r.signal} (status=null)`
+      : `thoát mã ${r.status}`;
     console.error(`⚠️  encoder GPU ${videoEncoder} encode thất bại ` +
-      `(${r.error ? r.error.message : `thoát mã ${r.status}`}) → thử lại bằng libx264 (không fail job)`);
+      `(${failDetail}) → thử lại bằng libx264 (không fail job)`);
     const cleared = clearGpuProbeCache();
     console.error(`   cache probe GPU ${cleared ? "đã xoá (lần render sau probe lại thật)" : "không xoá được (để lần sau probe lại khi hết TTL)"}`);
     const retryArgv = [...process.argv.slice(2)];
@@ -1788,11 +2096,21 @@ function main() {
     // không kẹt ở bước kiểm tra "file đã tồn tại" (dòng 1708).
     if (!retryArgv.includes("-y") && !retryArgv.includes("--overwrite")) retryArgv.push("-y");
     const rt0 = Date.now();
+    // Đợt 74 B4: retry re-exec cũng phải có timeout — nếu không, chính lần
+    // retry treo sẽ treo luôn job cha. Hạn = encode timeout của con +
+    // 300s biên khởi động (xem retryTimeoutMs); cờ --ffmpeg-timeout đã
+    // nằm trong retryArgv nên con tính cùng hạn encode với cha.
+    const retryMs = retryTimeoutMs(D);
     const rr = spawnSync(process.execPath, [__filename, ...retryArgv], {
       stdio: ["ignore", "ignore", args.quiet ? "ignore" : "inherit"],
+      timeout: retryMs,
+      killSignal: KILL_SIGNAL,
     });
+    lastTimeoutMs = retryMs;
+    const retrySecs = (Date.now() - rt0) / 1000;
+    retried = true;
     console.error(`   fallback libx264 ${rr.error || rr.status !== 0 ? "THẤT BẠI" : "thành công"} ` +
-      `(${((Date.now() - rt0) / 1000).toFixed(1)}s)`);
+      `(${retrySecs.toFixed(1)}s)`);
     r = rr;
     videoEncoder = "libx264";
   }
@@ -1856,11 +2174,57 @@ function main() {
   }
 
   if (r.error) {
-    console.error(`\n❌ Không chạy được ffmpeg: ${r.error.message}`);
+    // Đợt 74 B4: timeout có thông điệp riêng — phân biệt "ffmpeg treo quá
+    // hạn" với "không chạy được ffmpeg" (lỗi spawn), kèm cách nâng hạn.
+    // Timeout thoát mã 3 (riêng, xem EXIT_TIMEOUT): để job cha (lần retry)
+    // và bridge/CLI nhận diện được "chết vì timeout" thay vì nhầm với
+    // lỗi render thường (mã 2) — tiến trình con thoát mã 3 thì spawnSync
+    // của cha chỉ thấy status=3, r.error=null, không có cách nào khác
+    // để cha biết con chết vì timeout.
+    if (isTimeoutResult(r)) {
+      // Đợt 74 B4: 3 trường hợp, 3 con số khác nhau — đừng in nhầm hạn chờ
+      // retry (encode + 300s) thành hạn encode của lần retry. Trường hợp
+      // "cha kill con vì quá hạn chờ" chỉ xảy ra khi r.error ETIMEDOUT
+      // ở lần retry (con tự timeout thì con tự thoát mã 3, r.error=null).
+      if (retried) {
+        console.error(`\n❌ lần retry libx264 treo quá hạn chờ ${(lastTimeoutMs / 1000).toFixed(0)}s ` +
+          `của job cha — render thất bại (đã kill ${KILL_SIGNAL}; ` +
+          `nâng hạn bằng --ffmpeg-timeout <giây> hoặc env VCUT_RETRY_TIMEOUT_MS)`);
+      } else {
+        console.error(`\n❌ ffmpeg treo quá timeout — render thất bại ` +
+          `(đã kill ${KILL_SIGNAL} sau ${(lastTimeoutMs / 1000).toFixed(0)}s; ` +
+          `nâng hạn bằng --ffmpeg-timeout <giây> hoặc env VCUT_ENCODE_TIMEOUT_MS)`);
+      }
+      process.exit(EXIT_TIMEOUT);
+    } else {
+      console.error(`\n❌ Không chạy được ffmpeg: ${r.error.message}`);
+    }
     process.exit(2);
   }
+  if (r.status === EXIT_TIMEOUT) {
+    // Đợt 74 B4: lần retry tự timeout theo hạn encode của nó (con thoát
+    // mã 3) — job cha báo đúng con số của con, không nhầm với hạn chờ.
+    console.error(`\n❌ lần retry libx264 cũng treo quá timeout — render thất bại ` +
+      `(hạn encode của lần retry: ${(ffmpegTimeoutMs / 1000).toFixed(0)}s, ` +
+      `xem dòng 'treo quá timeout' của lần retry ở trên; ` +
+      `nâng hạn bằng --ffmpeg-timeout <giây> hoặc env VCUT_ENCODE_TIMEOUT_MS)`);
+    process.exit(EXIT_TIMEOUT);
+  }
   if (r.status !== 0) {
-    console.error(`\n❌ ffmpeg thoát với mã ${r.status} — render thất bại`);
+    // Đợt 72 Z6 — log r.signal khi ffmpeg bị kill (nợ đợt 67 §7 mục 6 /
+    // đợt 71 Y6 §5 mục 5): spawnSync trả status=null + signal="SIGSEGV"
+    // khi process bị kill bởi signal; trước đây chỉ in "thoát mã null".
+    // Không đổi hành vi: vẫn exit 2, vẫn giữ file tạm để debug.
+    if (r.signal) {
+      console.error(`\n❌ ffmpeg bị kill bởi signal ${r.signal} (status=null) — render thất bại`);
+      if (r.signal === "SIGSEGV") {
+        console.error(`   (gợi ý: crash SIGSEGV trong filter graph — nếu clip có stabilize, ` +
+          `xem docs/PHASE9_ROUND71_Y6_VIDSTAB_SEGFAULT_LIMITS.md; stack trace cần core dump, ` +
+          `xem docs/PHASE9_ROUND72_Z6_VIDSTAB_SEGFAULT_LIMITS.md)`);
+      }
+    } else {
+      console.error(`\n❌ ffmpeg thoát với mã ${r.status} — render thất bại`);
+    }
     process.exit(2);
   }
   log(`\n✅ Xong trong ${dt}s → ${outAbs}`);

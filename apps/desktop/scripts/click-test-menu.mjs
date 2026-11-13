@@ -22,6 +22,7 @@
 // click-test phát hiện bug thật — xem LIMITS H9).
 import { spawn, execFile } from "node:child_process";
 import { promises as fs } from "node:fs";
+import { writeFileEpermRetryAsync } from "../../web/scripts/eperm-retry.mjs";
 import net from "node:net";
 import path from "node:path";
 import os from "node:os";
@@ -714,13 +715,13 @@ class AppSession {
   async shotRoot(file) {
     const img = await this.x11.getImage(this.x11.root, 0, 0, this.x11.rootWidth, this.x11.rootHeight);
     await fs.mkdir(SHOTS, { recursive: true });
-    await fs.writeFile(file, rgbaToPng(img.width, img.height, img.data));
+    await writeFileEpermRetryAsync(file, rgbaToPng(img.width, img.height, img.data));
     return img;
   }
   async shotWindow(win, file) {
     const img = await this.shotWindowRaw(win);
     await fs.mkdir(SHOTS, { recursive: true });
-    await fs.writeFile(file, rgbaToPng(img.width, img.height, img.data));
+    await writeFileEpermRetryAsync(file, rgbaToPng(img.width, img.height, img.data));
     return img;
   }
   // Chụp tới khi 2 frame liên tiếp giống hệt nhau (cùng kích thước + cùng
@@ -742,7 +743,7 @@ class AppSession {
     if (!img) throw new Error("không chụp được cửa sổ");
     if (!stable && imageStddev(img) <= 5) throw new Error("popup không vẽ xong (ảnh trơn) sau 6s");
     await fs.mkdir(SHOTS, { recursive: true });
-    await fs.writeFile(file, rgbaToPng(img.width, img.height, img.data));
+    await writeFileEpermRetryAsync(file, rgbaToPng(img.width, img.height, img.data));
     return { img, stable };
   }
   async closeAppClean() {
@@ -1506,7 +1507,7 @@ async function ensureFixtures() {
       ok = j?.meta?.name === name && Array.isArray(j.tracks) && j.tracks.length > 0;
     } catch { ok = false; }
     if (!ok) {
-      await fs.writeFile(file, JSON.stringify(fixtureSpec(name), null, 2));
+      await writeFileEpermRetryAsync(file, JSON.stringify(fixtureSpec(name), null, 2));
       const j = JSON.parse(await fs.readFile(file, "utf8"));
       if (j?.meta?.name !== name || !Array.isArray(j.tracks) || j.tracks.length === 0) {
         throw new Error(`fixture ${file} ghi xong nhưng đọc lại không khớp (meta.name/tracks)`);
@@ -3583,7 +3584,7 @@ async function main() {
     for (let attempt = 1; attempt <= 3 && !seeded; attempt++) {
       try {
         await fs.mkdir(USERDATA, { recursive: true });
-        await fs.writeFile(seedPath, seedContent);
+        await writeFileEpermRetryAsync(seedPath, seedContent);
         const back = JSON.parse(await fs.readFile(seedPath, "utf8"));
         seeded = Array.isArray(back.recentProjects) && back.recentProjects[0] === FIXTURE1;
         if (!seeded) throw new Error("đọc lại không khớp recentProjects đã seed");
@@ -3718,7 +3719,7 @@ async function main() {
   // Lưu bằng chứng settings.json + file .vcut test vào OUT (không stage vào repo).
   try {
     const sj = await fs.readFile(path.join(USERDATA, "settings.json"), "utf8").catch(() => null);
-    if (sj) await fs.writeFile(path.join(OUT, "settings-after.json"), sj);
+    if (sj) await writeFileEpermRetryAsync(path.join(OUT, "settings-after.json"), sj);
     for (const f of [VCUT1, VCUT2]) if (await exists(f)) await fs.copyFile(f, path.join(OUT, path.basename(f)));
   } catch {}
   // ROUND53-J3: copy log app (/tmp, mất sau reboot) về OUT làm bằng chứng
@@ -3743,7 +3744,7 @@ async function main() {
   // lượt đo lại 00:50 gặp EPERM thoáng qua ở writeFile này, cả report
   // mất (file 0 byte) dù stdout đã có đủ PASS/FAIL. Bọc try/catch.
   try {
-    await fs.writeFile(path.join(OUT, "h9-report.json"), JSON.stringify(report, null, 2));
+    await writeFileEpermRetryAsync(path.join(OUT, "h9-report.json"), JSON.stringify(report, null, 2));
     console.log(`\nSUMMARY: ${report.passed} passed, ${report.failed} failed — report: ${path.join(OUT, "h9-report.json")}`);
   } catch (e) {
     console.log(`\nSUMMARY: ${report.passed} passed, ${report.failed} failed — KHÔNG GHI ĐƯỢC report: ${e.message} (kết quả đã in ở trên)`);
