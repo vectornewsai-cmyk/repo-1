@@ -28,6 +28,9 @@
 
 const assert = require("assert");
 const fs = require("fs");
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (port CJS của
+// apps/web/scripts/eperm-retry.mjs; xem server/eperm-retry.cjs).
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -61,7 +64,9 @@ function tryEncode(ffmpeg, encoder) {
     args = [...base, "-c:v", encoder, "-frames:v", "1", "-f", "null", "-"];
   }
   try {
-    const r = spawnSync(ffmpeg, args, { stdio: ["ignore", "ignore", "pipe"], timeout: 15000 });
+    // Đợt 74 B4: thêm killSignal SIGKILL cho nhất quán (timeout đã có từ
+    // đợt 64; SIGTERM mặc định có thể bị tiến trình treo bỏ qua).
+    const r = spawnSync(ffmpeg, args, { stdio: ["ignore", "ignore", "pipe"], timeout: 15000, killSignal: "SIGKILL" });
     return !r.error && r.status === 0;
   } catch {
     return false;
@@ -226,7 +231,7 @@ function writeGpuProbeCache(cachePath, result, ffmpeg) {
     };
     fs.mkdirSync(path.dirname(cachePath), { recursive: true });
     const tmp = `${cachePath}.tmp-${process.pid}`;
-    fs.writeFileSync(tmp, JSON.stringify(data, null, 2), "utf8");
+    writeFileEpermRetry(tmp, JSON.stringify(data, null, 2), { label: "render-gpu-probe-cache" });
     fs.renameSync(tmp, cachePath);
     return true;
   } catch {
@@ -310,11 +315,23 @@ function buildVideoEncodeArgs(encoder, opts) {
         pixFmt: null, needsHwupload: true,
       };
     case "libx264":
-    default:
+    default: {
+      // Đợt 80 H10 (S4): trần bitrate video (VBV maxrate) cho preset
+      // mạng xã hội — CRF giữ chất lượng, maxrate kẹp trần (bufsize =
+      // 2× maxrate, tỉ lệ chuẩn cho VBV 1-pass). Chỉ libx264: NVENC
+      // dùng -cq (không có VBV tương đương trong hàm này), QSV/VAAPI
+      // dùng quality/qp riêng — các encoder GPU BỎ QUA maxrate (ghi rõ
+      // trong LIMITS đợt 80 H10; preset xã hội render CPU là chủ yếu).
+      const args = ["-c:v", "libx264", "-preset", preset, "-crf", String(crf)];
+      const maxrate = opts.maxrateKbps;
+      if (typeof maxrate === "number" && Number.isInteger(maxrate) && maxrate > 0) {
+        args.push("-maxrate", `${maxrate}k`, "-bufsize", `${maxrate * 2}k`);
+      }
       return {
-        args: ["-c:v", "libx264", "-preset", preset, "-crf", String(crf)],
+        args,
         pixFmt: "yuv420p", needsHwupload: false,
       };
+    }
   }
 }
 
@@ -327,6 +344,17 @@ function selfTest() {
   assert.deepStrictEqual(x.args, ["-c:v", "libx264", "-preset", "medium", "-crf", "20"]);
   assert.strictEqual(x.pixFmt, "yuv420p");
   assert.strictEqual(x.needsHwupload, false);
+
+  // Đợt 80 H10 (S4): maxrate kẹp VBV bên cạnh CRF (bufsize = 2× maxrate).
+  const xMax = buildVideoEncodeArgs("libx264", { crf: 20, preset: "medium", maxrateKbps: 8000 });
+  assert.deepStrictEqual(xMax.args, ["-c:v", "libx264", "-preset", "medium", "-crf", "20", "-maxrate", "8000k", "-bufsize", "16000k"]);
+  // maxrate vắng / sai kiểu / <= 0 → không thêm cờ (CRF-only như trước).
+  assert.deepStrictEqual(buildVideoEncodeArgs("libx264", { crf: 20, preset: "medium", maxrateKbps: null }).args, x.args);
+  assert.deepStrictEqual(buildVideoEncodeArgs("libx264", { crf: 20, preset: "medium", maxrateKbps: "8000" }).args, x.args);
+  assert.deepStrictEqual(buildVideoEncodeArgs("libx264", { crf: 20, preset: "medium", maxrateKbps: 0 }).args, x.args);
+  // Encoder GPU bỏ qua maxrate (chưa có VBV tương đương trong hàm này).
+  const nvMax = buildVideoEncodeArgs("h264_nvenc", { crf: 20, preset: "medium", maxrateKbps: 8000 });
+  assert.deepStrictEqual(nvMax.args, ["-c:v", "h264_nvenc", "-preset", "p5", "-cq", "20"]);
 
   const nv = buildVideoEncodeArgs("h264_nvenc", { crf: 20, preset: "medium" });
   assert.deepStrictEqual(nv.args, ["-c:v", "h264_nvenc", "-preset", "p5", "-cq", "20"]);

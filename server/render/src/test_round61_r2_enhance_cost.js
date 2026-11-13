@@ -42,6 +42,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -89,7 +90,7 @@ const specWith = (tracks, W, H, fps) => ({
 });
 function render(spec, name) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const outPath = path.join(work, `${name}.mp4`);
   const t0 = Date.now();
   const r = spawnSync("node", [path.join(RENDER, "src", "render.js"), "--spec", specPath,
@@ -134,7 +135,7 @@ d = np.array(diffs)
 print(f"n={len(d)} mean={d.mean():.4f} median={np.median(d):.4f} std={d.std():.4f} min={d.min():.4f} max={d.max():.4f}")
 `;
 const jitterPy = path.join(work, "jitter.py");
-fs.writeFileSync(jitterPy, JITTER_PY);
+writeFileEpermRetry(jitterPy, JITTER_PY);
 function jitterOf(framesDir) {
   const r = spawnSync("python3", [jitterPy, framesDir], { encoding: "utf8" });
   const m = /n=(\d+) mean=([\d.]+) median=([\d.]+) std=([\d.]+) min=([\d.]+) max=([\d.]+)/.exec(r.stdout || "");
@@ -174,7 +175,7 @@ for name, v in [("trail", trail), ("lead", lead), ("static", stat)]:
     print(f"{name} n={len(a)} mean={a.mean():.4f} median={np.median(a):.4f} p90={np.percentile(a, 90):.4f} max={a.max():.4f}")
 `;
 const ghostPy = path.join(work, "ghost.py");
-fs.writeFileSync(ghostPy, GHOST_PY);
+writeFileEpermRetry(ghostPy, GHOST_PY);
 function ghostOf(origDir, rendDir) {
   const r = spawnSync("python3", [ghostPy, origDir, rendDir], { encoding: "utf8" });
   if (r.status !== 0) throw new Error(`ghost.py lỗi: ${r.stdout} ${r.stderr}`);

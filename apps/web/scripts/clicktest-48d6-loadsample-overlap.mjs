@@ -57,6 +57,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -97,7 +98,7 @@ const envelope = {
     ] }],
   },
 };
-fs.writeFileSync(projectFilePath, JSON.stringify(envelope, null, 2));
+writeFileEpermRetry(projectFilePath, JSON.stringify(envelope, null, 2));
 log(`ghi project file: ${projectFilePath} (1 clip chữ 10 s, tên "${PROJECT_NAME}")`);
 
 // ---- 1. Build app mới ra scratch (không đụng apps/web/dist) ----
@@ -374,7 +375,7 @@ try {
   if (results.length === 0) { console.log("\n== D6 clicktest: HARNESS ERROR =="); killAll(); process.exit(2); }
   log(`(ghi tiếp các case đã chạy, exit 2 vì harness lỗi — không được đọc thành pass đủ)`);
 }
-fs.writeFileSync(path.join(SCRATCH, "d6-result.json"), JSON.stringify({ results, logLines }, null, 2));
+writeFileEpermRetry(path.join(SCRATCH, "d6-result.json"), JSON.stringify({ results, logLines }, null, 2));
 const failed = results.filter((r) => !r.ok);
 console.log(`\n== D6 clicktest: ${results.length - failed.length}/${results.length} pass ==` + (harnessError ? " (HARNESS ERROR — exit 2)" : ""));
 killAll();

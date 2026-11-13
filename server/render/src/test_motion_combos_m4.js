@@ -47,6 +47,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -87,7 +88,7 @@ function probeDur(mp4) {
 }
 function renderSpec(specObj, name) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(specObj, null, 2));
+  writeFileEpermRetry(specPath, JSON.stringify(specObj, null, 2));
   const out = path.join(work, `${name}.mp4`);
   const r = runNoFail("node", [RENDER, "--spec", specPath, "--out", out,
     "--media-dir", mediaDir, "--x264-preset", "veryfast", "--crf", "28", "-y", "-q"]);
@@ -99,7 +100,7 @@ function renderSpec(specObj, name) {
 }
 function dryRunGraph(specObj, name) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(specObj, null, 2));
+  writeFileEpermRetry(specPath, JSON.stringify(specObj, null, 2));
   const r = runNoFail("node", [RENDER, "--spec", specPath, "--out", path.join(work, `${name}.mp4`),
     "--media-dir", mediaDir, "--dry-run", "-q"]);
   if (r.status !== 0) {
@@ -338,7 +339,7 @@ function main() {
   ok(vOk3.ok, `control pass: ramp+motion (targetFps vắng) + transition`);
   // E4: render.js E2E với cặp xấu → thoát lỗi, thông báo nhắc targetFps.
   const badPath = path.join(work, "e-badpair.json");
-  fs.writeFileSync(badPath, JSON.stringify(pairSpec(
+  writeFileEpermRetry(badPath, JSON.stringify(pairSpec(
     { transitionOut: { type: "fade", duration: 0.5 } },
     { motion: { interpolation: "minterpolate", targetFps: 60 } })));
   const badRun = runNoFail("node", [RENDER, "--spec", badPath,

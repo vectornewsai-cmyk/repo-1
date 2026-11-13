@@ -13,10 +13,19 @@ import assert from "node:assert/strict";
 import {
   MOTION_BLUR_GHOST_ALPHA,
   MOTION_BLUR_PREVIEW_ENABLED,
+  maskAlphaArray,
+  maskAlphaAt,
+  maskAlphaCacheKey,
+  applyMask,
   motionBadgeText,
+  motionBlurBlendPlan,
+  motionBlurPadGhostCount,
   normalizeMotion,
   resolveMotionBlurGhost,
+  rvfcFrameDecision,
+  rvfcSupported,
   videoClipVisual,
+  videoFrameIndex,
   type MotionVisual,
 } from "./previewEngine.ts";
 import { buildPreviewSpec } from "./nestedPreview.ts";
@@ -247,6 +256,181 @@ ok("buildPreviewSpec giữ motion của clip lá trong nested đã phẳng", () 
   const m = motionOf(nestedTrack.clips[0]);
   assert.equal(m.interpolation, "minterpolate");
   assert.equal(m.motionBlur, true);
+});
+
+// Phase 9 đợt 92 T2: maskAlphaArray / maskAlphaCacheKey — cache canvas
+// alpha mask (tránh vòng lặp pixel mỗi tick). Khóa đúng: mảng alpha phải
+// khớp maskAlphaAt từng pixel, và khớp đúng alpha mà applyMask ghi.
+console.log("== previewEngine: maskAlphaArray / maskAlphaCacheKey (T2 đợt 92) ==");
+ok("maskAlphaArray khớp maskAlphaAt từng pixel (ellipse/rect, feather, invert)", () => {
+  const masks = [
+    { shape: "ellipse", x: 0.5, y: 0.5, w: 0.4, h: 0.5, feather: 0 },
+    { shape: "ellipse", x: 0.5, y: 0.5, w: 0.4, h: 0.5, feather: 0.2 },
+    { shape: "rect", x: 0.3, y: 0.6, w: 0.5, h: 0.4, feather: 0.1 },
+    { shape: "ellipse", x: 0.5, y: 0.5, w: 0.4, h: 0.5, feather: 0.2, invert: true },
+    { shape: "rect", x: 0.5, y: 0.5, w: 1, h: 1, feather: 0 },
+  ] as never[];
+  for (const mask of masks) {
+    const W = 16;
+    const H = 12;
+    const arr = maskAlphaArray(mask as never, W, H);
+    assert.equal(arr.length, W * H);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const expected = Math.round(maskAlphaAt(mask as never, W, H, x, y) * 255);
+        assert.equal(arr[y * W + x], expected, `mask ${JSON.stringify(mask)} tại (${x},${y})`);
+      }
+    }
+  }
+});
+ok("maskAlphaArray khớp alpha mà applyMask ghi (alpha nguồn 255)", () => {
+  const mask = { shape: "ellipse", x: 0.5, y: 0.5, w: 0.4, h: 0.5, feather: 0.2 } as never;
+  const W = 16;
+  const H = 12;
+  const data = new Uint8ClampedArray(W * H * 4);
+  for (let i = 0; i < W * H; i++) {
+    data[i * 4] = 200;
+    data[i * 4 + 1] = 100;
+    data[i * 4 + 2] = 50;
+    data[i * 4 + 3] = 255;
+  }
+  applyMask({ width: W, height: H, data } as never, mask);
+  const arr = maskAlphaArray(mask, W, H);
+  for (let i = 0; i < W * H; i++) {
+    assert.equal(data[i * 4 + 3], arr[i], `alpha pixel ${i}`);
+    assert.equal(data[i * 4], 200, "RGB không đổi");
+  }
+});
+ok("maskAlphaArray: ellipse viền cứng — trong 255, ngoài 0", () => {
+  const mask = { shape: "ellipse", x: 0.5, y: 0.5, w: 0.4, h: 0.5, feather: 0 } as never;
+  const arr = maskAlphaArray(mask, 16, 12);
+  assert.equal(arr[6 * 16 + 8], 255); // tâm
+  assert.equal(arr[0], 0); // góc
+  assert.equal(arr[11 * 16 + 15], 0);
+});
+ok("maskAlphaCacheKey: cùng hình học → cùng khoá; khác x/feather/invert/kích thước → khác khoá", () => {
+  const base = { shape: "ellipse", x: 0.5, y: 0.5, w: 0.4, h: 0.5, feather: 0 } as never;
+  const k = maskAlphaCacheKey(base, 640, 360);
+  assert.equal(maskAlphaCacheKey({ ...base, x: 0.5 } as never, 640, 360), k);
+  assert.notEqual(maskAlphaCacheKey({ ...base, x: 0.51 } as never, 640, 360), k);
+  assert.notEqual(maskAlphaCacheKey({ ...base, feather: 0.2 } as never, 640, 360), k);
+  assert.notEqual(maskAlphaCacheKey({ ...base, invert: true } as never, 640, 360), k);
+  assert.notEqual(maskAlphaCacheKey({ ...base, shape: "rect" } as never, 640, 360), k);
+  assert.notEqual(maskAlphaCacheKey(base, 320, 180), k);
+  // Keyframes KHÔNG nằm trong khoá (caller đã resolve thành x/y/w/h tĩnh).
+  assert.equal(maskAlphaCacheKey({ ...base, keyframes: [{ t: 0, x: 0.1, y: 0.1, w: 0.2, h: 0.2 }] } as never, 640, 360), k);
+});
+
+console.log(`\n${pass} test passed`);
+
+// Phase 9 đợt 90 R1: videoFrameIndex — gate snapshot motion blur theo
+// frame video (hướng (iii) Q2 §7.1).
+console.log("== previewEngine: videoFrameIndex (R1 đợt 90) ==");
+ok("videoFrameIndex: floor(t·fps), 2 tick trong cùng frame cho cùng chỉ số", () => {
+  assert.equal(videoFrameIndex(0.5, 30), 15);
+  assert.equal(videoFrameIndex(0.5, 60), 30);
+  // 60fps tick: t=0.5167 và t=0.5333 đều nằm trong frame 15 (30fps) —
+  // cùng chỉ số → snapshot thứ 2 bị gate chặn (không trùng).
+  assert.equal(videoFrameIndex(0.5167, 30), 15);
+  assert.equal(videoFrameIndex(0.5333, 30), 15);
+  assert.equal(videoFrameIndex(0.5334, 30), 16);
+  assert.equal(videoFrameIndex(0, 30), 0);
+  assert.equal(videoFrameIndex(2.999, 30), 89);
+});
+ok("videoFrameIndex: fps 24/25/60 + biên frame (epsilon chống sai số float)", () => {
+  assert.equal(videoFrameIndex(1.0, 24), 24);
+  assert.equal(videoFrameIndex(1.0, 25), 25);
+  // Đợt 93 U1: epsilon nay là 1µs THỜI GIAN (cộng trước khi nhân fps)
+  // để hấp thụ lượng tử hoá µs của mediaTime/currentTime Chromium —
+  // thời điểm cách biên < 1µs tròn lên frame sau (0.9999999 → 30, đổi
+  // từ 29 của R1: giá trị này nhỏ hơn 1 bước lượng tử nên không phân
+  // biệt được với đúng biên 1.0s); cách biên 10µs vẫn ở frame trước.
+  assert.equal(videoFrameIndex(0.9999999, 30), 30);
+  assert.equal(videoFrameIndex(0.99999, 30), 29);
+  assert.equal(videoFrameIndex(0.4999, 30), 14);
+  // Epsilon 1µs (đơn vị thời gian): thời điểm cách biên < 1µs vẫn tính
+  // vào frame sau — chống lượng tử hoá µs của đầu vào, không ảnh hưởng
+  // thời gian thật (1µs/33ms ≈ 0,003% khung hình ở 30fps).
+  assert.equal(videoFrameIndex(0.5 - 1e-9, 30), 15);
+});
+ok("videoFrameIndex: mediaTime lượng tử hoá µs của Chromium (đợt 93 U1)", () => {
+  // PTS k/30s tròn về µs gần nhất: k≡1 mod 3 tròn XUỐNG 0,33µs
+  // (0.033333, 0.133333, 0.233333, 0.333333, …) — epsilon cũ 1e-6
+  // đơn vị frame không đủ nên các frame này floor về k−1 và pump bỏ
+  // qua ("duplicate" giả, ~33% callback). Với epsilon 1µs thời gian,
+  // mọi giá trị lượng tử hoá đều về đúng frame của nó.
+  assert.equal(videoFrameIndex(0.033333, 30), 1);
+  assert.equal(videoFrameIndex(0.066667, 30), 2);
+  assert.equal(videoFrameIndex(0.1, 30), 3);
+  assert.equal(videoFrameIndex(0.133333, 30), 4);
+  assert.equal(videoFrameIndex(0.166667, 30), 5);
+  assert.equal(videoFrameIndex(0.2, 30), 6);
+  assert.equal(videoFrameIndex(0.233333, 30), 7);
+  assert.equal(videoFrameIndex(0.266667, 30), 8);
+  assert.equal(videoFrameIndex(0.3, 30), 9);
+  assert.equal(videoFrameIndex(0.333333, 30), 10);
+  assert.equal(videoFrameIndex(0.966667, 30), 29);
+  assert.equal(videoFrameIndex(1.033333, 30), 31);
+  assert.equal(videoFrameIndex(2.966667, 30), 89);
+  // 60fps: bước lượng tử 1µs = 6e-5 frame — cùng quy tắc.
+  assert.equal(videoFrameIndex(0.016667, 60), 1);
+  assert.equal(videoFrameIndex(0.033333, 60), 2);
+  assert.equal(videoFrameIndex(0.05, 60), 3);
+});
+ok("videoFrameIndex: đầu vào không hợp lệ → -1 (không gate, giữ hành vi cũ)", () => {
+  assert.equal(videoFrameIndex(NaN, 30), -1);
+  assert.equal(videoFrameIndex(1.0, 0), -1);
+  assert.equal(videoFrameIndex(1.0, -30), -1);
+  assert.equal(videoFrameIndex(1.0, NaN), -1);
+  assert.equal(videoFrameIndex(-0.5, 30), -1);
+});
+
+// Phase 9 đợt 91 S1: rvfcFrameDecision / rvfcSupported — pump
+// requestVideoFrameCallback snapshot đúng mỗi frame video trình chiếu.
+console.log("== previewEngine: rvfcFrameDecision / rvfcSupported (S1 đợt 91) ==");
+ok("rvfcFrameDecision: frame mới / trùng / lùi 1 / nhảy lùi > 1 / chưa có frame trước", () => {
+  assert.equal(rvfcFrameDecision(-1, 10), "capture"); // chưa có frame trước
+  assert.equal(rvfcFrameDecision(10, 11), "capture"); // tiến 1 frame
+  assert.equal(rvfcFrameDecision(10, 13), "capture"); // tiến nhảy (speed 2x / tick thưa)
+  assert.equal(rvfcFrameDecision(10, 10), "duplicate"); // cùng frame trình chiếu lại
+  assert.equal(rvfcFrameDecision(10, 9), "capture"); // lùi đúng 1 (phát ngược từng bước)
+  assert.equal(rvfcFrameDecision(10, 8), "reset-capture"); // nhảy lùi > 1 (seek/loop)
+  assert.equal(rvfcFrameDecision(10, 0), "reset-capture"); // loop về đầu
+  assert.equal(rvfcFrameDecision(0, 0), "duplicate");
+});
+ok("rvfcFrameDecision: frameIndex không hợp lệ → duplicate (không capture, không đổi ring)", () => {
+  assert.equal(rvfcFrameDecision(10, -1), "duplicate");
+  assert.equal(rvfcFrameDecision(-1, -1), "duplicate");
+});
+ok("rvfcSupported: duck-typed, không cần DOM thật", () => {
+  assert.equal(rvfcSupported(null), false);
+  assert.equal(rvfcSupported(undefined), false);
+  assert.equal(rvfcSupported(42), false);
+  assert.equal(rvfcSupported("video"), false);
+  assert.equal(rvfcSupported({}), false);
+  assert.equal(rvfcSupported({ requestVideoFrameCallback: "yes" }), false);
+  assert.equal(rvfcSupported({ requestVideoFrameCallback: () => 1 }), true);
+  assert.equal(rvfcSupported({ requestVideoFrameCallback: () => 1, cancelVideoFrameCallback: () => {} }), true);
+});
+
+ok("motionBlurPadGhostCount (đợt 101 C4): ring đói → pad đủ frames-1 ghost; đủ/rỗng → 0", () => {
+  assert.equal(motionBlurPadGhostCount(3, 1), 1); // tmix-3, pool 1 → clone ghost cũ nhất 1 lần
+  assert.equal(motionBlurPadGhostCount(3, 2), 0); // đủ ghost, không pad
+  assert.equal(motionBlurPadGhostCount(3, 0), 0); // pool rỗng → vẽ trực tiếp, không pad
+  assert.equal(motionBlurPadGhostCount(4, 1), 2); // tmix-4, pool 1 → clone 2 lần
+  assert.equal(motionBlurPadGhostCount(2, 1), 0); // frames=2 chỉ cần 1 ghost
+  assert.equal(motionBlurPadGhostCount(1, 0), 0); // không blur
+});
+ok("motionBlurBlendPlan (đợt 101 C4): pool 1 đói → pair [0.5,0.5] (dải D); pad lên 2 → triple đều (dải A)", () => {
+  const w = [1 / 3, 1 / 3, 1 / 3];
+  const pair = motionBlurBlendPlan(w, 1);
+  assert.equal(pair.length, 2);
+  assert.deepEqual(pair.map((p) => p.weight), [0.5, 0.5]);
+  const triple = motionBlurBlendPlan(w, 2);
+  assert.equal(triple.length, 3);
+  assert.deepEqual(triple.map((p) => p.weight), [1 / 3, 1 / 3, 1 / 3]);
+  assert.deepEqual(triple.map((p) => p.blendAlpha), [1, 0.5, 1 / 3]);
+  assert.equal(motionBlurBlendPlan(w, 0).length, 1); // không ghost → chỉ frame hiện tại
 });
 
 console.log(`\n${pass} test passed`);

@@ -317,7 +317,9 @@ async function main(): Promise<void> {
     const legacy = "file-abcdef123456-P_vcut_json";
     const f = fakeDeps(store, legacy);
     const m = await adoptLegacyFragmentManually(UUID_A, legacy, f.deps);
-    eq(m, { moved: 0, reason: "manual-adopted-empty" });
+    // Đợt 67 U6 — kết quả nay kèm movedVersions (rỗng) + wasPointerChain
+    // (chuỗi này là con trỏ nên khóa bị dọn) để hoàn tác được.
+    eq(m, { moved: 0, reason: "manual-adopted-empty", movedVersions: [], wasPointerChain: true });
     assert(f.cleared());
   });
 

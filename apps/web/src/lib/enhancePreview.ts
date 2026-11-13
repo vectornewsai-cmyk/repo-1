@@ -42,10 +42,78 @@
  *   render.js chặn hẳn, exit 1) và với panel (đợt 61 R2 chặn preset ở UI):
  *   trạng thái lỗi cũ (tạo trước khi chặn, qua MCP/CLI/file project)
  *   không còn hiện gợi ý zoom mà render từ chối.
- * - deinterlace (yadif) → KHÔNG có xấp xỉ trực quan: không đóng góp gì
- *   vào blur/zoom/offscreen. Preview hiện frame như trình duyệt giải mã
- *   (khung progressive đã giải mã), răng cưa của nguồn interlaced có thể
- *   vẫn thấy hoặc không tùy decoder — yadif CHỈ chạy ở render.
+ * - deinterlace (yadif) → XẤP XỈ BẰNG TAP DỌC 1 LẦN VẼ (đợt 75 C8,
+ *   probe-75c8-deint): vẽ khung lệch dọc +0.5px output (bilinear →
+ *   trung bình 2 dòng kề, hạt nhân [1,1]/2) — KHÔNG thêm lần vẽ nào
+ *   (cùng 1 drawImage, chỉ đổi offset). Đo thật trên interlaced720
+ *   1280×720, 3 mốc: R combing 1.12 → 0.67 (progressive đối chứng
+ *   0.69, yadif render thật 0.57); giữ 73% độ sắc nét dọc trên
+ *   footage progressive (vgrad 0.677/0.928). Các biến thể đã thử và
+ *   LOẠI (cùng metric): tap2 ±0.5px alpha 0.5 (R 0.58 ≈ yadif nhưng
+ *   tốn thêm 1 lần vẽ, chỉ giữ 62% vgrad), SVG feGaussianBlur σy
+ *   0.8/1.2 (R 0.54 — mờ quá, chỉ giữ 52% vgrad; σ 0.8 vs 1.2 cho
+ *   số giống hệt nhau — Chromium lượng tử hoá; chi phí raster của
+ *   filter là điểm nghẽn FPS đã biết), ctx.filter blur(0.5px)
+ *   (NO-OP hoàn toàn, MAD = 0 — blur <0.8px bị lượng tử hoá, khớp
+ *   bài học đợt 61 R3 §2.1).
+ *   Đợt 76 D4 — TAP ĐƠN LẺ QUA HALF-RES INTERMEDIATE: đợt 75 C8 đo FPS
+ *   deint-only chỉ 0.65–0.71× (FAIL ngưỡng 0.75×) vì tap đi qua
+ *   enhanceCanvas (2 lần vẽ full-res thay vì 1). Đợt 76 thử trước
+ *   NỘI TUYẾN offset +0.5px vào lần vẽ cuối (deintInlineDy) — FPS
+ *   0.99× nhưng R combing KHÔNG giảm ở tỉ lệ vẽ upscale (headed G2:
+ *   R 0.74 → 0.74, MAD 0.82; probe-b: shift chỉ có tác dụng ở s≈1.0,
+ *   vì ở upscale mỗi hàng đích đã nội suy 2 hàng nguồn với trọng số
+ *   thay đổi đều nên lệch pha 0.5 hàng không đổi biên độ combing
+ *   trung bình). Phương án CHỐT: vẽ drawSrc xuống canvas trung gian
+ *   dw×(dh/2) (downscale dọc 2× — mỗi hàng đích đã là trung bình ~2
+ *   hàng nguồn, tức khử xen kẽ — hạt nhân [1,1]/2 như tap) rồi vẽ
+ *   canvas đó lên khổ đích (preview.tsx, deintHalfResSource). Vẫn 2
+ *   lần vẽ nhưng lần 1 chỉ 1/4 pixel và lần 2 lấy mẫu từ canvas rẻ
+ *   hơn video: probe-c ở s=1.13 cho R 0.85 → 0.66 (clean đối chứng
+ *   0.63 — về băng progressive) với thông lượng 0.49× chi phí vẽ
+ *   thường; ở s=1.0/1.5 R 0.43 (clean 0.45/0.44). Đánh đổi: mềm dọc
+ *   hơn tap C8 (vgrad clean giữ 73% ở s=1.13, 37% ở s=1.0 — xem
+ *   docs/PHASE9_ROUND76_D4_DEINT_FPS_LIMITS.md §3). Khi tap đi KÈM
+ *   denoise/stabilize thì vẫn qua offscreen enhanceCanvas như cũ.
+ *   plan.needsOffscreen = false + deinterlaceTap = true là tín hiệu
+ *   cho preview.tsx biết phải qua half-res (xem drawVideoClip).
+ *   Đợt 77 E1 — INTERMEDIATE THU HẸP DỌC 4× (dw×dh/4 thay dw×dh/2):
+ *   FPS half-res headed vẫn 0.72–0.73× (FAIL ngưỡng 0.75×, D4). Probe
+ *   E1 (probe-77e1-deint-fast.mjs) chứng minh inline 1 lần vẽ KHÔNG
+ *   đạt: shift +0.5px R 0.85 → 0.88 ở s=1.13 (xác nhận probe-b D4);
+ *   tap2 (2 lần vẽ từ video, lệch +1 hàng nguồn, alpha 0.5) R 0.58 ở
+ *   1.13 nhưng FAIL tiêu chí 1:1 (0.67 > 0.55) và thông lượng 1.66–
+ *   2.4×; ctx.filter blur(1px) R 0.52–0.53 nhưng thông lượng 2.3–61×
+ *   và vgrad chỉ 20–41% — cả ba LOẠI. Ứng viên chốt: thu hẹp dọc 4×
+ *   (lần 1 chỉ 1/2 pixel của half-res): probe R 0.58 ở s=1.13 / 0.54
+ *   ở s=1.0 (≤ 0.55 ✓), hgrad giữ 91% như half-res, đổi lại vgrad
+ *   38% (half-res 59%). Divisor phải CHẴN: mỗi hàng intermediate lấy
+ *   mẫu đúng giữa 2 hàng nguồn kề (một hàng mỗi field) nên triệt tiêu
+ *   xen kẽ; divisor lẻ (vd. 3) lấy mẫu đúng trên 1 hàng nguồn và
+ *   combing sống lại. Probe cũng chứng minh smoothing "low"/"medium"/
+ *   "high" cho pixel Y HỆT nhau ở downscale đúng 2× nên giữ "high".
+ *   KẾT QUẢ HEADED (xem docs/PHASE9_ROUND77_E1_DEINT_FPS_LIMITS.md
+ *   §3): divisor 4 KHÔNG chứng minh được nhanh hơn half-res — G5 lần
+ *   1 0.83× PASS, lần 2 0.64× FAIL (gộp 10 tỉ lệ mean 0.735, không
+ *   tách được khỏi half-res 0.72–0.73 của D4 / 0.78 baseline cùng ngày
+ *   trong nhiễu tải; baseline chỉ 1.5–2.4 fps, mỗi slot 3s chỉ ~2–8
+ *   lần vẽ), và G7b FAIL hệ thống cả 2 lần (mask MAD 0.6396 so với
+ *   0.0036 của half-res — intermediate dh/4 phải upscale 2× trong mask
+ *   unit 640×360 trong khi dh/2 khớp đúng 1:1). Vì không có lợi FPS đo
+ *   được mà chất lượng tệ hơn (vgrad 38% vs 59%, G7b FAIL), E1
+ *   QUAY VỀ divisor 2 (half-res D4) — hằng dưới giữ = 2. Tín hiệu plan
+ *   không đổi (needsOffscreen=false + tap=true).
+ *   CỔNG THEO TỈ LỆ VẼ THẬT: tap chỉ áp khi drawScaleY ≥ 0.9, với
+ *   drawScaleY = (dh/mh) × S (dh = chiều cao vẽ theo tọa độ project,
+ *   S = tỉ lệ viewport = min(Wc/W, Hc/H) của canvas preview thật —
+ *   preview.tsx tính từ canvas thật, KHÔNG phải dh/mh thuần vì dh
+ *   là tọa độ project). Sweep probe (chênh R inter−clean theo tỉ lệ):
+ *   0.38→0.06, 0.50→0.12, 0.68→0.08, 0.75→0.12, 0.80→0.11, 0.85→0.15,
+ *   0.90→0.17, 0.95→0.18, 1.00→0.43 — gap ≤0.18 tới 0.95 rồi nhảy
+ *   lên 0.43 ở 1.0 nên tap chỉ bật ở ≥0.9 (nơi răng cưa thấy rõ);
+ *   dưới ngưỡng, downscale đã giấu răng cưa nên không áp — và hành vi
+ *   letterbox cũ giữ nguyên (Q1 B5 + 61R3 C6 vẫn xanh: clip 360p ở
+ *   letterbox có tỉ lệ thật 0.76 < 0.9).
  *
  * QUY TẮC SHAPE (cứng): CHỈ đọc field đã tồn tại trong `ClipEnhance`
  * (packages/video-spec/src/enhance.ts) — deinterlace / stabilize /
@@ -67,6 +135,22 @@ import {
  * (đợt 62 R3 — xem comment đầu file: blur 3.0px cho -84% ở a=1, khớp
  * hqdn3d s=1.0; alpha mới là biến điều khiển, không phải bán kính). */
 export const ENHANCE_PREVIEW_BLUR_RADIUS_PX = 3.0;
+/** Tỉ lệ vẽ dọc tối thiểu (tỉ lệ vẽ thật, xem comment đầu file) để áp
+ * tap khử răng cưa (đợt 75 C8 — sweep probe-75c8-deint: gap R inter−clean
+ * ≤0.18 tới 0.95 rồi nhảy lên 0.43 ở 1.0; dưới 0.9 downscale đã giấu
+ * răng cưa). */
+export const ENHANCE_PREVIEW_DEINT_MIN_SCALE_Y = 0.9;
+/** Độ lệch dọc (px output) của tap khử răng cưa: +0.5px → bilinear
+ * trung bình 2 dòng kề (đợt 75 C8 — probe-75c8-deint). */
+export const ENHANCE_PREVIEW_DEINT_TAP_OFFSET_PX = 0.5;
+/** Hệ số thu hẹp dọc của canvas trung gian deint-only (đợt 76 D4 = 2;
+ * đợt 77 E1 đã THỬ 4 rồi QUAY VỀ 2 — xem comment đầu file + LIMITS E1
+ * §3: divisor 4 không chứng minh được nhanh hơn (G5 0.83× rồi 0.64×,
+ * gộp 0.735 ≈ half-res 0.72–0.73) mà làm mềm hơn (vgrad 38% vs 59%)
+ * và làm FAIL G7b mask (MAD 0.6396 vs 0.0036). PHẢI CHẴN (xem comment
+ * đầu file): mỗi hàng intermediate lấy mẫu đúng giữa 2 hàng nguồn kề,
+ * một hàng mỗi field. */
+export const ENHANCE_PREVIEW_DEINT_INTERMEDIATE_DIVISOR = 2;
 /** Zoom tối đa (crop gợi ý) ở stabilize smoothing 100. */
 export const ENHANCE_PREVIEW_ZOOM_MAX = 1.05;
 /** Zoom tối thiểu (crop gợi ý) ở stabilize smoothing 1. */
@@ -156,6 +240,14 @@ export function stabilizeZoomOf(enh: ClipEnhance | undefined): number {
   return 1.02 + (clamped / 100) * 0.03;
 }
 
+/**
+ * Clip có bật deinterlace không (đợt 75 C8 — true/false/object đều tính
+ * là bật; render coi `false` là lỗi nên không xuất hiện ở trạng thái hợp lệ).
+ */
+export function deinterlaceOf(enh: ClipEnhance | undefined): boolean {
+  return enh?.deinterlace !== undefined;
+}
+
 /** Kế hoạch áp enhance lên 1 frame preview (đã tính xong, preview.tsx chỉ việc vẽ theo). */
 export interface EnhancePreviewPlan {
   /** Toggle UI "xem trước enhance" có bật không. */
@@ -172,23 +264,37 @@ export interface EnhancePreviewPlan {
   denoiseBlendAlpha: number;
   /** Zoom crop gợi ý stabilize (1 = không zoom). */
   stabilizeZoom: number;
+  /** true khi tap khử răng cưa được áp (đợt 75 C8 — deinterlace bật
+   * và drawScaleY ≥ ENHANCE_PREVIEW_DEINT_MIN_SCALE_Y = 0.9; vẽ lệch dọc
+   * +0.5px, không thêm lần vẽ). */
+  deinterlaceTap: boolean;
   /** true khi stabilize bị chặn vì clip có speedKeyframes (đợt 62 R3 —
    * đồng bộ với render chặn hẳn + panel chặn preset ở UI). */
   stabilizeBlockedBySpeedRamp: boolean;
-  /** true khi cần vẽ qua offscreen (blend alpha > 0 hoặc zoom != 1). */
+  /** true khi cần vẽ qua offscreen (blend alpha > 0 hoặc zoom != 1
+   * — đợt 76 D4: tap đơn lẻ KHÔNG cần offscreen enhanceCanvas nữa,
+   * preview.tsx đưa qua intermediate thu hẹp dọc dw×dh/2 (xem
+   * deintIntermediateSource; đợt 77 E1 đã thử dw×dh/4 rồi quay về);
+   * tap kèm alpha/zoom vẫn qua offscreen). */
   needsOffscreen: boolean;
-  /** Tính năng enhance ĐÃ được xấp xỉ trong preview (chỉ denoise/stabilize). */
+  /** Tính năng enhance ĐÃ được xấp xỉ trong preview (denoise/stabilize,
+   * và deinterlace khi tap được áp — đợt 75 C8). */
   applied: EnhanceFeature[];
-  /** Tính năng enhance KHÔNG thể hiện trong preview (deinterlace luôn ở đây; toggle tắt thì tất cả). */
+  /** Tính năng enhance KHÔNG thể hiện trong preview (deinterlace khi
+   * tap không áp — toggle tắt hoặc vẽ ở tỉ lệ nhỏ; toggle tắt thì tất cả). */
   notApproximated: EnhanceFeature[];
 }
 
 /**
  * Tính kế hoạch preview cho 1 clip.enhance + toggle UI.
- * - enabled=false → không áp gì (blur 0, alpha 0, zoom 1), mọi tính năng đang bật
- *   đều vào notApproximated (preview hiện khung gốc).
- * - enabled=true → denoise/stabilize vào applied; deinterlace LUÔN vào
- *   notApproximated (không có CSS tương đương yadif).
+ * - enabled=false → không áp gì (blur 0, alpha 0, zoom 1, tap false),
+ *   mọi tính năng đang bật đều vào notApproximated (preview hiện khung gốc).
+ * - enabled=true → denoise/stabilize vào applied; deinterlace vào
+ *   applied CHỈ khi tap được áp (đợt 75 C8: deinterlace bật và
+ *   drawScaleY ≥ ENHANCE_PREVIEW_DEINT_MIN_SCALE_Y = 0.9 — dưới ngưỡng
+ *   này downscale đã giấu răng cưa nên không áp; mặc định drawScaleY=0
+ *   để lời gọi cũ (không truyền tỉ lệ) giữ hành vi cũ: deinterlace ở
+ *   notApproximated).
  * - hasSpeedKeyframes=true (đợt 62 R3) → stabilize bị chặn: zoom 1,
  *   stabilize vào notApproximated, cờ stabilizeBlockedBySpeedRamp = true
  *   (đồng bộ với render chặn hẳn + panel chặn preset ở UI — clip có cả
@@ -201,6 +307,7 @@ export function enhancePreviewPlan(
   enh: ClipEnhance | undefined,
   enabled: boolean,
   hasSpeedKeyframes = false,
+  drawScaleY = 0,
 ): EnhancePreviewPlan {
   const active = enhanceActiveFeatures(enh);
   if (!enabled) {
@@ -210,6 +317,7 @@ export function enhancePreviewPlan(
       denoiseBlurPx: 0,
       denoiseBlendAlpha: 0,
       stabilizeZoom: 1,
+      deinterlaceTap: false,
       stabilizeBlockedBySpeedRamp: false,
       needsOffscreen: false,
       applied: [],
@@ -221,21 +329,32 @@ export function enhancePreviewPlan(
   const alpha = denoiseBlendAlpha(strength);
   const stabBlocked = hasSpeedKeyframes && stabilizeSmoothingOf(enh) !== null;
   const zoom = stabBlocked ? 1 : stabilizeZoomOf(enh);
+  const deintTap =
+    deinterlaceOf(enh) && clampNum(drawScaleY, 0, Number.POSITIVE_INFINITY) >= ENHANCE_PREVIEW_DEINT_MIN_SCALE_Y;
   const applied: EnhanceFeature[] = [];
   const notApproximated: EnhanceFeature[] = [];
   for (const f of active) {
-    if (f === "deinterlace") notApproximated.push(f);
+    if (f === "deinterlace" && !deintTap) notApproximated.push(f);
     else if (f === "stabilize" && stabBlocked) notApproximated.push(f);
     else applied.push(f);
   }
+  // Đợt 76 D4: tap đơn lẻ qua intermediate thu hẹp dọc ở preview.tsx
+  // (deintIntermediateSource: downscale dọc ENHANCE_PREVIEW_DEINT_
+  // INTERMEDIATE_DIVISOR lần rồi vẽ lên khổ đích — 2× từ D4, 4× từ
+  // đợt 77 E1) nên không cần offscreen enhanceCanvas; chỉ blend alpha
+  // hoặc zoom mới cần offscreen (tap đi kèm đã nằm trong lần vẽ gốc
+  // của enhanceCanvas). needsOffscreen=false + deinterlaceTap=true là
+  // tín hiệu cho preview.tsx biết phải qua intermediate (xem drawVideoClip).
+  const needsOffscreen = alpha > 0 || zoom !== 1;
   return {
     enabled: true,
     hasEnhance: active.length > 0,
     denoiseBlurPx: blur,
     denoiseBlendAlpha: alpha,
     stabilizeZoom: zoom,
+    deinterlaceTap: deintTap,
     stabilizeBlockedBySpeedRamp: stabBlocked,
-    needsOffscreen: alpha > 0 || zoom !== 1,
+    needsOffscreen,
     applied,
     notApproximated,
   };
@@ -254,11 +373,13 @@ export interface EnhancePreviewDebug {
   /** Alpha blend denoise (0..1) của frame vừa vẽ (đợt 62 R3). */
   denoiseBlendAlpha: number;
   stabilizeZoom: number;
+  /** true khi tap khử răng cưa được áp ở frame vừa vẽ (đợt 75 C8). */
+  deinterlaceTap: boolean;
   /** true khi stabilize bị chặn vì clip có speedKeyframes (đợt 62 R3). */
   stabilizeBlockedBySpeedRamp: boolean;
   applied: EnhanceFeature[];
   notApproximated: EnhanceFeature[];
-  /** true khi frame vừa vẽ đã qua offscreen enhance (blur/zoom đã áp). */
+  /** true khi frame vừa vẽ đã qua offscreen enhance (blur/zoom/tap đã áp). */
   offscreenApplied: boolean;
 }
 
@@ -275,6 +396,7 @@ export function enhancePreviewDebug(
     denoiseBlurPx: plan.denoiseBlurPx,
     denoiseBlendAlpha: plan.denoiseBlendAlpha,
     stabilizeZoom: plan.stabilizeZoom,
+    deinterlaceTap: plan.deinterlaceTap,
     stabilizeBlockedBySpeedRamp: plan.stabilizeBlockedBySpeedRamp,
     applied: [...plan.applied],
     notApproximated: [...plan.notApproximated],

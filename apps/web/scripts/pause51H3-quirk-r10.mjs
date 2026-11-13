@@ -31,6 +31,7 @@
 
 import { spawn, execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -118,7 +119,7 @@ function buildSeekelPage() {
     + "window.__c3 = R;\n"
     + "window.__c3Ready = true;\n"
     + "</script>\n";
-  fs.writeFileSync(path.join(SCRATCH, "seekel.html"), seekel);
+  writeFileEpermRetry(path.join(SCRATCH, "seekel.html"), seekel);
   for (const [src, out] of [["seek.ts", "seek.mjs"], ["pause45A2.ts", "pause45A2.mjs"]]) {
     const dst = path.join(SCRATCH, out);
     if (!fs.existsSync(dst)) {

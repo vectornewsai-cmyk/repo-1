@@ -18,6 +18,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import type { Track, VideoSpec } from "../../packages/video-spec/src/index.js";
 import { projectDuration, SPEC_VERSION, TRANSITION_TYPES } from "../../packages/video-spec/src/index.js";
+import { writeFileEpermRetryAsync } from "./epermRetry.js";
 import {
   ValidationError,
   validateAddClipInput,
@@ -447,7 +448,7 @@ server.tool(
       const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "repo1-render-"));
       const tmpSpec = path.join(tmpDir, "spec.json");
       try {
-        await fs.writeFile(tmpSpec, JSON.stringify(spec), "utf8");
+        await writeFileEpermRetryAsync(tmpSpec, JSON.stringify(spec), { label: "mcp-render-tmp-spec" });
         // CHỈ gọi đúng render worker, argv cố định — không shell, không lệnh tuỳ ý
         const r = spawnSync(
           process.execPath,

@@ -54,6 +54,7 @@
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 const path = require("node:path");
 
@@ -153,7 +154,7 @@ function genScene(w, h, pal, seed) {
 
 function rawToPng(raw, w, h, pngPath) {
   const rawPath = pngPath.replace(/\.png$/, ".raw");
-  fs.writeFileSync(rawPath, raw);
+  writeFileEpermRetry(rawPath, raw);
   ffmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${w}x${h}`, "-i", rawPath, "-frames:v", "1", "-y", pngPath]);
   fs.unlinkSync(rawPath);
   return pngPath;

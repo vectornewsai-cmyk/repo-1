@@ -5,6 +5,10 @@
  *   <ten>.vcut.zip
  *   ├── project.json   (ProjectEnvelope từ projectRepo.ts — spec đầy đủ)
  *   ├── manifest.json  (danh sách file media + SHA-256 + kích thước)
+ *   ├── history.json   (TÙY CHỌN, đợt 67 U6: HistoryExport `vcut-history`
+ *   │                   v1 — lịch sử phiên bản của project, để nhập sang
+ *   │                   máy khác mang theo chuỗi lịch sử; archive cũ
+ *   │                   không có file này vẫn nhập bình thường)
  *   └── media/<ten-file>  (file media gốc, giữ nguyên tên = `src` trong spec)
  *
  * Module này thuần (không chạm DOM) nên test được bằng Node.
@@ -20,10 +24,15 @@ import JSZip from "jszip";
 import { archiveMissingNote, parseProjectText, serializeProject } from "./projectRepo";
 import { t } from "../i18n";
 import type { VideoSpec } from "@repo-1/video-spec";
+// Đợt 67 U6 — chỉ import TYPE (bị xóa lúc biên dịch) nên archive.ts vẫn
+// chạy được bằng Node type-stripping/esbuild như cũ.
+import type { HistoryExport } from "./projectHistory";
 
 export const ARCHIVE_EXT = ".vcut.zip";
 export const ARCHIVE_PROJECT_FILE = "project.json";
 export const ARCHIVE_MANIFEST_FILE = "manifest.json";
+/** Đợt 67 U6 — file lịch sử tùy chọn trong archive (xem history.json ở đầu file). */
+export const ARCHIVE_HISTORY_FILE = "history.json";
 export const ARCHIVE_MEDIA_DIR = "media/";
 
 /** Giới hạn chống zip-bomb / archive quá lớn. */
@@ -86,6 +95,26 @@ export interface ImportArchiveResult {
   projectId: string;
   /** File media đã giải nén — caller import vào store qua importFiles(). */
   mediaFiles: File[];
+  /**
+   * Đợt 67 U6 — lịch sử kèm trong archive (`history.json`, CHƯA kiểm
+   * chứng ở đây — caller (openProjectFlow) kiểm qua
+   * HistoryStore.importArchiveHistory rồi mới nhập; null/vắng khi
+   * archive cũ không có history.json). Đặt `unknown` ở tầng transport
+   * để archive lỗi định dạng không làm hỏng cả lần nhập archive.
+   */
+  history?: HistoryExport | null;
+  /**
+   * Đợt 67 U6 — lỗi khi đọc `history.json` (parse JSON hỏng / không
+   * phải object): lịch sử bị bỏ qua nhưng archive vẫn nhập bình thường.
+   * Chuỗi tiếng Việt trực tiếp (không qua key i18n) để panel/toast
+   * hiện đúng nghĩa ngay cả trước khi parent gộp fragment.
+   * Đợt 79 G9 — kèm mã `historyErrorCode` để caller dịch qua key
+   * `openProject.archiveHistory*`; `historyError` giữ nguyên để test
+   * A4/A5 (khóa nhắc "history.json") và archive cũ không vỡ.
+   */
+  historyError?: string;
+  /** Đợt 79 G9 — mã lỗi history.json, song hành với `historyError`. */
+  historyErrorCode?: "notObject" | "badJson";
   errors: string[];
   warnings: string[];
   /**
@@ -183,9 +212,11 @@ export function isSafeEntryName(name: string): boolean {
   return true;
 }
 
-/** Entry có thuộc archive hợp lệ không (project.json | manifest.json | media/*). */
+/** Entry có thuộc archive hợp lệ không (project.json | manifest.json | history.json | media/*). */
 export function isAllowedEntry(name: string): boolean {
   if (name === ARCHIVE_PROJECT_FILE || name === ARCHIVE_MANIFEST_FILE) return true;
+  // Đợt 67 U6 — history.json là entry tùy chọn (lịch sử mang theo archive).
+  if (name === ARCHIVE_HISTORY_FILE) return true;
   if (name.startsWith(ARCHIVE_MEDIA_DIR)) {
     const rest = name.slice(ARCHIVE_MEDIA_DIR.length);
     // không cho thư mục con trong media/ và không cho tên rỗng
@@ -217,6 +248,13 @@ export async function exportArchive(
    * sinh id mới). Không truyền = hành vi cũ (project.json thiếu id).
    */
   projectId?: string,
+  /**
+   * Đợt 67 U6 — lịch sử của project (HistoryExport `vcut-history` v1,
+   * caller dựng bằng HistoryStore.exportHistory) để ghi kèm thành
+   * `history.json` — nhập sang máy khác mang theo chuỗi lịch sử.
+   * Không truyền / rỗng version → archive như cũ (không có history.json).
+   */
+  history?: HistoryExport | null,
 ): Promise<ExportArchiveResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -227,7 +265,7 @@ export async function exportArchive(
     stats: { mediaFiles: 0, mediaBytes: 0, zipBytes: 0 },
   });
 
-  const { json, warnings: projWarnings, structuredNotes: projNotes } = serializeProject(spec, name, undefined, undefined, projectId);
+  const { json, warnings: projWarnings, structuredNotes: projNotes } = serializeProject(spec, name, undefined, undefined, projectId, (k, vars) => t(k, vars));
   warnings.push(...projWarnings);
 
   const srcs = collectMediaSrcs(spec);
@@ -242,6 +280,15 @@ export async function exportArchive(
   let mediaBytes = 0;
 
   zip.file(ARCHIVE_PROJECT_FILE, json, { compression: "DEFLATE" });
+
+  // Đợt 67 U6 — lịch sử đi kèm archive (để nhập sang máy khác mang theo
+  // chuỗi lịch sử — đóng nợ đợt 66 T7 §5.2: trước đây lịch sử của file
+  // gốc không đi theo `.vcut.zip`). Chỉ ghi khi có version thật; nội
+  // dung file do caller dựng bằng HistoryStore.exportHistory nên đúng
+  // định dạng `vcut-history` v1 (import kiểm chứng lại trước khi nhập).
+  if (history && history.versions.length > 0) {
+    zip.file(ARCHIVE_HISTORY_FILE, JSON.stringify(history, null, 2), { compression: "DEFLATE" });
+  }
 
   for (const src of srcs) {
     const data = byName.get(src);
@@ -398,6 +445,28 @@ export async function importArchive(zipBlob: Blob): Promise<ImportArchiveResult>
   }
   warnings.push(...parsed.warnings);
 
+  // 3b. Đợt 67 U6 — đọc lịch sử kèm theo (TÙY CHỌN, không chặn import):
+  // history.json hỏng / sai dạng thì chỉ ghi historyError để caller bỏ
+  // qua lịch sử; kiểm chứng đầy đủ (định dạng + projectId + hash từng
+  // version) nằm ở HistoryStore.importArchiveHistory bên caller.
+  let parsedHistory: HistoryExport | null = null;
+  let historyError: string | undefined;
+  let historyErrorCode: "notObject" | "badJson" | undefined;
+  const historyEntry = zip.file(ARCHIVE_HISTORY_FILE);
+  if (historyEntry) {
+    try {
+      const raw: unknown = JSON.parse(await historyEntry.async("string"));
+      if (isRecord(raw) && !Array.isArray(raw)) parsedHistory = raw as unknown as HistoryExport;
+      else {
+        historyError = "File history.json trong bản nén không phải JSON object — bỏ qua lịch sử.";
+        historyErrorCode = "notObject";
+      }
+    } catch {
+      historyError = "File history.json trong bản nén không phải JSON hợp lệ — bỏ qua lịch sử.";
+      historyErrorCode = "badJson";
+    }
+  }
+
   // 4. Verify + giải nén media.
   const expected = new Map<string, ArchiveFileEntry>();
   for (const f of manifest.files) expected.set(f.path, f);
@@ -444,7 +513,7 @@ export async function importArchive(zipBlob: Blob): Promise<ImportArchiveResult>
     importNotes.push(note);
   }
 
-  return { ok: true, spec: parsed.spec, name: parsed.name, projectId: parsed.projectId, mediaFiles, errors: [], warnings, speedCurveWarnings: parsed.speedCurveWarnings, structuredNotes: importNotes };
+  return { ok: true, spec: parsed.spec, name: parsed.name, projectId: parsed.projectId, mediaFiles, history: parsedHistory, historyError, historyErrorCode, errors: [], warnings, speedCurveWarnings: parsed.speedCurveWarnings, structuredNotes: importNotes };
 }
 
 /** Đoán MIME type từ đuôi file (đủ cho preview local). */

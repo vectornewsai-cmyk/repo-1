@@ -1,0 +1,1000 @@
+{
+  "date": "2026-11-11T13:34:31.941Z",
+  "cases": [
+    {
+      "name": "B0-run1",
+      "date": "2026-11-11T12:19:46.247Z",
+      "mode": "B0",
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 7,
+      "droppedFrames": 2,
+      "stalls": [
+        {
+          "fromT": 4.29,
+          "durS": 37.67,
+          "ct": 0.708
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": null,
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.708,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.96
+    },
+    {
+      "name": "B0-run2",
+      "date": "2026-11-11T12:20:35.361Z",
+      "mode": "B0",
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 8,
+      "droppedFrames": 3,
+      "stalls": [
+        {
+          "fromT": 5.22,
+          "durS": 36.69,
+          "ct": 1.375
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": null,
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 1.375,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.91
+    },
+    {
+      "name": "B0-run3",
+      "date": "2026-11-11T12:59:04.920Z",
+      "mode": "B0",
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 3,
+      "droppedFrames": 1,
+      "stalls": [
+        {
+          "fromT": 5.67,
+          "durS": 36.32,
+          "ct": 0.25
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": null,
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.25,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.99
+    },
+    {
+      "name": "B0-run4",
+      "date": "2026-11-11T13:00:07.347Z",
+      "mode": "B0",
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 3,
+      "droppedFrames": 1,
+      "stalls": [
+        {
+          "fromT": 6.71,
+          "durS": 35.21,
+          "ct": 0.167
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": null,
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.167,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.92
+    },
+    {
+      "name": "B0-run5",
+      "date": "2026-11-11T13:01:00.226Z",
+      "mode": "B0",
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 3,
+      "droppedFrames": 0,
+      "stalls": [
+        {
+          "fromT": 2.81,
+          "durS": 39.18,
+          "ct": 0.125
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": null,
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.125,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.99
+    },
+    {
+      "name": "F1-run1",
+      "date": "2026-11-11T13:03:22.740Z",
+      "mode": "F1",
+      "targetLoops": 5,
+      "loopsCompleted": 3,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 2,
+      "seekedCount": 3,
+      "restarts": 3,
+      "totalFrames": 57,
+      "droppedFrames": 15,
+      "stalls": [],
+      "gates": [
+        {
+          "restart": 1,
+          "seekedOk": true,
+          "method": "timeout",
+          "waitMs": 5001,
+          "framesBefore": 20,
+          "framesAfter": 20,
+          "gateTotalMs": 6482
+        },
+        {
+          "restart": 2,
+          "seekedOk": true,
+          "method": "timeout",
+          "waitMs": 5001,
+          "framesBefore": 42,
+          "framesAfter": 42,
+          "gateTotalMs": 6390
+        }
+      ],
+      "firstPlayGate": {
+        "method": "timeout",
+        "waitMs": 5001,
+        "framesBefore": 0,
+        "framesAfter": 0
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.93
+    },
+    {
+      "name": "F1-run2",
+      "date": "2026-11-11T13:04:20.636Z",
+      "mode": "F1",
+      "targetLoops": 5,
+      "loopsCompleted": 3,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 3,
+      "seekedCount": 3,
+      "restarts": 3,
+      "totalFrames": 74,
+      "droppedFrames": 20,
+      "stalls": [],
+      "gates": [
+        {
+          "restart": 1,
+          "seekedOk": true,
+          "method": "timeout",
+          "waitMs": 5000,
+          "framesBefore": 17,
+          "framesAfter": 17,
+          "gateTotalMs": 5909
+        },
+        {
+          "restart": 2,
+          "seekedOk": true,
+          "method": "timeout",
+          "waitMs": 5006,
+          "framesBefore": 48,
+          "framesAfter": 48,
+          "gateTotalMs": 6421
+        },
+        {
+          "restart": 3,
+          "seekedOk": true,
+          "method": "timeout",
+          "waitMs": 5000,
+          "framesBefore": 64,
+          "framesAfter": 64,
+          "gateTotalMs": 6320
+        }
+      ],
+      "firstPlayGate": {
+        "method": "timeout",
+        "waitMs": 5001,
+        "framesBefore": 0,
+        "framesAfter": 0
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 1.625,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.87
+    },
+    {
+      "name": "F1-run3",
+      "date": "2026-11-11T13:05:16.835Z",
+      "mode": "F1",
+      "targetLoops": 5,
+      "loopsCompleted": 3,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 3,
+      "seekedCount": 3,
+      "restarts": 3,
+      "totalFrames": 64,
+      "droppedFrames": 13,
+      "stalls": [
+        {
+          "fromT": 11.97,
+          "durS": 1.69,
+          "ct": 0.167
+        },
+        {
+          "fromT": 13.66,
+          "durS": 1.5,
+          "ct": 2.375
+        }
+      ],
+      "gates": [
+        {
+          "restart": 1,
+          "seekedOk": true,
+          "method": "timeout",
+          "waitMs": 5000,
+          "framesBefore": 5,
+          "framesAfter": 5,
+          "gateTotalMs": 6298
+        },
+        {
+          "restart": 2,
+          "seekedOk": true,
+          "method": "timeout",
+          "waitMs": 5067,
+          "framesBefore": 29,
+          "framesAfter": 29,
+          "gateTotalMs": 6107
+        }
+      ],
+      "firstPlayGate": {
+        "method": "timeout",
+        "waitMs": 5007,
+        "framesBefore": 0,
+        "framesAfter": 0
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.97
+    },
+    {
+      "name": "F1-run4",
+      "date": "2026-11-11T13:06:14.741Z",
+      "mode": "F1",
+      "targetLoops": 5,
+      "loopsCompleted": 3,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 3,
+      "seekedCount": 3,
+      "restarts": 3,
+      "totalFrames": 53,
+      "droppedFrames": 15,
+      "stalls": [],
+      "gates": [
+        {
+          "restart": 1,
+          "seekedOk": true,
+          "method": "timeout",
+          "waitMs": 5001,
+          "framesBefore": 21,
+          "framesAfter": 21,
+          "gateTotalMs": 6428
+        },
+        {
+          "restart": 2,
+          "seekedOk": true,
+          "method": "timeout",
+          "waitMs": 5100,
+          "framesBefore": 36,
+          "framesAfter": 36,
+          "gateTotalMs": 6825
+        },
+        {
+          "restart": 3,
+          "seekedOk": true,
+          "method": "timeout",
+          "waitMs": 5001,
+          "framesBefore": 42,
+          "framesAfter": 42,
+          "gateTotalMs": 5676
+        }
+      ],
+      "firstPlayGate": {
+        "method": "timeout",
+        "waitMs": 5001,
+        "framesBefore": 0,
+        "framesAfter": 0
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 3.583,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.61
+    },
+    {
+      "name": "F1-run5",
+      "date": "2026-11-11T13:07:25.331Z",
+      "mode": "F1",
+      "targetLoops": 5,
+      "loopsCompleted": 3,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 3,
+      "seekedCount": 3,
+      "restarts": 3,
+      "totalFrames": 79,
+      "droppedFrames": 10,
+      "stalls": [],
+      "gates": [
+        {
+          "restart": 1,
+          "seekedOk": true,
+          "method": "timeout",
+          "waitMs": 5003,
+          "framesBefore": 12,
+          "framesAfter": 12,
+          "gateTotalMs": 6309
+        },
+        {
+          "restart": 2,
+          "seekedOk": true,
+          "method": "timeout",
+          "waitMs": 5066,
+          "framesBefore": 67,
+          "framesAfter": 67,
+          "gateTotalMs": 5790
+        }
+      ],
+      "firstPlayGate": {
+        "method": "timeout",
+        "waitMs": 5001,
+        "framesBefore": 0,
+        "framesAfter": 0
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.9
+    },
+    {
+      "name": "F2-run1",
+      "date": "2026-11-11T13:10:05.922Z",
+      "mode": "F2",
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 2,
+      "droppedFrames": 1,
+      "stalls": [
+        {
+          "fromT": 8.21,
+          "durS": 33.75,
+          "ct": 0.083
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": null,
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.083,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.96
+    },
+    {
+      "name": "F2-run2",
+      "date": "2026-11-11T13:11:00.341Z",
+      "mode": "F2",
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 3,
+      "droppedFrames": 1,
+      "stalls": [
+        {
+          "fromT": 4.09,
+          "durS": 37.9,
+          "ct": 0.699
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": null,
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.699,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.99
+    },
+    {
+      "name": "F2-run3",
+      "date": "2026-11-11T13:11:56.826Z",
+      "mode": "F2",
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 6,
+      "droppedFrames": 3,
+      "stalls": [
+        {
+          "fromT": 6.27,
+          "durS": 35.62,
+          "ct": 2.208
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": null,
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 2.208,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.89
+    },
+    {
+      "name": "F2-run4",
+      "date": "2026-11-11T13:12:54.833Z",
+      "mode": "F2",
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 6,
+      "droppedFrames": 3,
+      "stalls": [
+        {
+          "fromT": 6.1,
+          "durS": 35.88,
+          "ct": 1.625
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": null,
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 1.625,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.98
+    },
+    {
+      "name": "F2-run5",
+      "date": "2026-11-11T13:13:54.319Z",
+      "mode": "F2",
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "restarts": 0,
+      "totalFrames": 3,
+      "droppedFrames": 1,
+      "stalls": [
+        {
+          "fromT": 6.13,
+          "durS": 35.81,
+          "ct": 0.125
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": null,
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.125,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.94
+    },
+    {
+      "name": "F4-run1",
+      "date": "2026-11-11T13:27:18.623Z",
+      "mode": "F4-blob",
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 1084,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": null,
+      "totalFrames": 210,
+      "droppedFrames": 15,
+      "stalls": [],
+      "gates": null,
+      "firstPlayGate": null,
+      "rvfcSupported": null,
+      "fetchedBytes": 1320168,
+      "finalCt": 0.522,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 28.23
+    },
+    {
+      "name": "F4-run2",
+      "date": "2026-11-11T13:27:52.514Z",
+      "mode": "F4-blob",
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 1133,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": null,
+      "totalFrames": 255,
+      "droppedFrames": 18,
+      "stalls": [],
+      "gates": null,
+      "firstPlayGate": null,
+      "rvfcSupported": null,
+      "fetchedBytes": 1320168,
+      "finalCt": 0.694,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 27.51
+    },
+    {
+      "name": "F3-run1",
+      "date": "2026-11-11T13:31:30.319Z",
+      "mode": "F3",
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 1399,
+      "resumeNull": 0,
+      "seekedCount": 6,
+      "restarts": 5,
+      "totalFrames": 264,
+      "droppedFrames": 13,
+      "stalls": [],
+      "gates": [],
+      "firstPlayGate": {
+        "prime": true,
+        "primedCt": 0.083,
+        "seekedOk": true,
+        "primedMs": 722
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.875,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 33.83
+    },
+    {
+      "name": "F3-run2",
+      "date": "2026-11-11T13:32:19.011Z",
+      "mode": "F3",
+      "targetLoops": 5,
+      "loopsCompleted": 2,
+      "pass": false,
+      "resumeMsMedian": 1218,
+      "resumeNull": 0,
+      "seekedCount": 3,
+      "restarts": 2,
+      "totalFrames": 129,
+      "droppedFrames": 6,
+      "stalls": [
+        {
+          "fromT": 14.49,
+          "durS": 27.42,
+          "ct": 0.576
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": {
+        "prime": true,
+        "primedCt": 0.083,
+        "seekedOk": true,
+        "primedMs": 1097
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.576,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.91
+    },
+    {
+      "name": "F3-run3",
+      "date": "2026-11-11T13:32:48.729Z",
+      "mode": "F3",
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 410,
+      "resumeNull": 0,
+      "seekedCount": 6,
+      "restarts": 5,
+      "totalFrames": 398,
+      "droppedFrames": 2,
+      "stalls": [],
+      "gates": [],
+      "firstPlayGate": {
+        "prime": true,
+        "primedCt": 0.083,
+        "seekedOk": true,
+        "primedMs": 300
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.625,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 25.39
+    },
+    {
+      "name": "F3-run4",
+      "date": "2026-11-11T13:33:12.808Z",
+      "mode": "F3",
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 256,
+      "resumeNull": 0,
+      "seekedCount": 6,
+      "restarts": 5,
+      "totalFrames": 500,
+      "droppedFrames": 0,
+      "stalls": [],
+      "gates": [],
+      "firstPlayGate": {
+        "prime": true,
+        "primedCt": 0.065,
+        "seekedOk": true,
+        "primedMs": 101
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.557,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 21.94
+    },
+    {
+      "name": "F3-run5",
+      "date": "2026-11-11T13:33:55.633Z",
+      "mode": "F3",
+      "targetLoops": 5,
+      "loopsCompleted": 4,
+      "pass": false,
+      "resumeMsMedian": 225,
+      "resumeNull": 1,
+      "seekedCount": 5,
+      "restarts": 4,
+      "totalFrames": 390,
+      "droppedFrames": 0,
+      "stalls": [
+        {
+          "fromT": 16.8,
+          "durS": 25.2,
+          "ct": 0
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": {
+        "prime": true,
+        "primedCt": 0.069,
+        "seekedOk": true,
+        "primedMs": 109
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 42
+    },
+    {
+      "name": "F5-run1",
+      "date": "2026-11-11T13:35:20.556Z",
+      "mode": "F5",
+      "targetLoops": 5,
+      "loopsCompleted": 4,
+      "pass": false,
+      "resumeMsMedian": 1588,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "restarts": 4,
+      "totalFrames": 319,
+      "droppedFrames": 2,
+      "stalls": [
+        {
+          "fromT": 27.89,
+          "durS": 14.03,
+          "ct": 4
+        }
+      ],
+      "gates": [
+        {
+          "restart": 1,
+          "seekedOk": true,
+          "method": "delay1s",
+          "gateTotalMs": 1516
+        },
+        {
+          "restart": 2,
+          "seekedOk": true,
+          "method": "delay1s",
+          "gateTotalMs": 1387
+        },
+        {
+          "restart": 3,
+          "seekedOk": true,
+          "method": "delay1s",
+          "gateTotalMs": 1374
+        },
+        {
+          "restart": 4,
+          "seekedOk": true,
+          "method": "delay1s",
+          "gateTotalMs": 1323
+        }
+      ],
+      "firstPlayGate": {
+        "method": "delay1s",
+        "seekedOk": true
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 4,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.92
+    },
+    {
+      "name": "F5-run2",
+      "date": "2026-11-11T13:36:04.011Z",
+      "mode": "F5",
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 1,
+      "restarts": 0,
+      "totalFrames": 5,
+      "droppedFrames": 0,
+      "stalls": [
+        {
+          "fromT": 1.56,
+          "durS": 40.44,
+          "ct": 0.176
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": {
+        "method": "delay1s",
+        "seekedOk": true
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.176,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 42
+    },
+    {
+      "name": "F5-run3",
+      "date": "2026-11-11T13:36:36.210Z",
+      "mode": "F5",
+      "targetLoops": 5,
+      "loopsCompleted": 5,
+      "pass": true,
+      "resumeMsMedian": 1389,
+      "resumeNull": 0,
+      "seekedCount": 6,
+      "restarts": 5,
+      "totalFrames": 414,
+      "droppedFrames": 1,
+      "stalls": [],
+      "gates": [
+        {
+          "restart": 1,
+          "seekedOk": true,
+          "method": "delay1s",
+          "gateTotalMs": 1275
+        },
+        {
+          "restart": 2,
+          "seekedOk": true,
+          "method": "delay1s",
+          "gateTotalMs": 1310
+        },
+        {
+          "restart": 3,
+          "seekedOk": true,
+          "method": "delay1s",
+          "gateTotalMs": 1138
+        },
+        {
+          "restart": 4,
+          "seekedOk": true,
+          "method": "delay1s",
+          "gateTotalMs": 1217
+        },
+        {
+          "restart": 5,
+          "seekedOk": true,
+          "method": "delay1s",
+          "gateTotalMs": 1386
+        }
+      ],
+      "firstPlayGate": {
+        "method": "delay1s",
+        "seekedOk": true
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.583,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 28.69
+    },
+    {
+      "name": "F5-run4",
+      "date": "2026-11-11T13:37:23.013Z",
+      "mode": "F5",
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 1,
+      "restarts": 0,
+      "totalFrames": 4,
+      "droppedFrames": 0,
+      "stalls": [
+        {
+          "fromT": 2.5,
+          "durS": 39.49,
+          "ct": 0.25
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": {
+        "method": "delay1s",
+        "seekedOk": true
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.25,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.99
+    },
+    {
+      "name": "F5-run5",
+      "date": "2026-11-11T13:38:08.413Z",
+      "mode": "F5",
+      "targetLoops": 5,
+      "loopsCompleted": 0,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 1,
+      "restarts": 0,
+      "totalFrames": 4,
+      "droppedFrames": 1,
+      "stalls": [
+        {
+          "fromT": 2.09,
+          "durS": 39.89,
+          "ct": 0.208
+        }
+      ],
+      "gates": [],
+      "firstPlayGate": {
+        "method": "delay1s",
+        "seekedOk": true
+      },
+      "rvfcSupported": true,
+      "fetchedBytes": null,
+      "finalCt": 0.208,
+      "finalPaused": false,
+      "finalEnded": false,
+      "playErr": null,
+      "wallS": 41.98
+    }
+  ],
+  "env": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15",
+    "mediaRecorder": "undefined",
+    "hardwareConcurrency": 4,
+    "rvfc": "function"
+  }
+}

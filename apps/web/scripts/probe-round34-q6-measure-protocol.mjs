@@ -110,6 +110,7 @@
 import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -334,7 +335,7 @@ function modeRun() {
     labeled.validity = "UNVERIFIED — không đặt Q6_DIST, chạy trên dist trên đĩa như đợt 34; không claim 'cùng bundle' cho batch này.";
     labeled.usableAsBaseline = false;
   }
-  fs.writeFileSync(out, JSON.stringify(labeled, null, 2));
+  writeFileEpermRetry(out, JSON.stringify(labeled, null, 2));
   console.log(`[Q6] loadLabel=${labeled.loadLabel} fps ngược=${labeled.reverse.fps} (draw ${labeled.reverse.drawDelta}/${labeled.reverse.wallSec}s) xuôi=${labeled.forward.interpRate} lý do=${JSON.stringify(labeled.labelReasons)}`);
   console.log(`[Q6] labeled → ${out}`);
   if (frozenValid && !frozenValid.valid) process.exit(3);
@@ -351,7 +352,7 @@ function modeClassify() {
     : { processSnapshot: "provided", chromePre: chromePreArg };
   const labeled = buildLabeled(n2, proc, { classifiedFrom: input });
   const out = input.replace(/\.json$/, "") + ".labeled.json";
-  fs.writeFileSync(out, JSON.stringify(labeled, null, 2));
+  writeFileEpermRetry(out, JSON.stringify(labeled, null, 2));
   console.log(`[Q6] ${input} → loadLabel=${labeled.loadLabel} fps=${labeled.reverse.fps} lý do=${JSON.stringify(labeled.labelReasons)}`);
   console.log(`[Q6] labeled → ${out}`);
 }

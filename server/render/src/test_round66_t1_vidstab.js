@@ -67,6 +67,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("path");
 const crypto = require("crypto");
 const { spawnSync } = require("child_process");
@@ -107,7 +108,7 @@ const harnessSrc = fs.readFileSync(S1_HARNESS, "utf8");
 const mMot = /const MOTION_PY = `([\s\S]*?)`;\nconst motionPy/.exec(harnessSrc);
 if (!mMot) { console.error("không trích được MOTION_PY từ harness S1"); process.exit(2); }
 const motionPy = path.join(work, "motion_metric.py");
-fs.writeFileSync(motionPy, mMot[1]);
+writeFileEpermRetry(motionPy, mMot[1]);
 function measure(framesDir) {
   const r = spawnSync(CV2_PY, [motionPy, "measure", framesDir], { encoding: "utf8" });
   if (r.status !== 0) throw new Error(`motion_metric.py measure lỗi: ${r.stdout} ${r.stderr}`);
@@ -137,7 +138,7 @@ print("FRAMEDIFF " + json.dumps({
 }))
 `;
 const frameDiffPy = path.join(work, "framediff.py");
-fs.writeFileSync(frameDiffPy, FRAMEDIFF_PY);
+writeFileEpermRetry(frameDiffPy, FRAMEDIFF_PY);
 function frameDiff(dirA, dirB) {
   const r = spawnSync(CV2_PY, [frameDiffPy, dirA, dirB], { encoding: "utf8" });
   if (r.status !== 0) throw new Error(`framediff lỗi: ${r.stdout} ${r.stderr}`);
@@ -153,7 +154,7 @@ function outOk(p) { try { return fs.statSync(p).size > 0; } catch { return false
 // --- Biên dịch .so khóa srand cho E3 (tự chứa trong harness) ---
 const SEED_C = `#include <stdlib.h>\n__attribute__((constructor)) static void r66t1_seed(void) { srand(12345); }\n`;
 const seedC = path.join(work, "seed.c");
-fs.writeFileSync(seedC, SEED_C);
+writeFileEpermRetry(seedC, SEED_C);
 const seedSo = path.join(work, "seed.so");
 let seedSoOk = false;
 {
@@ -395,5 +396,5 @@ console.log(`\n== E13. debug=1 ×3 — so file global_motions.trf đã fit (load
 console.log(`\n== test_round66_t1_vidstab: ${pass} pass, ${fail} fail (WORK=${work}, loadavg cuối: ${loadAvg()}) ==`);
 console.log("== SUMMARY (JSON) ==");
 console.log(JSON.stringify(summary, null, 1));
-fs.writeFileSync(path.join(work, "summary.json"), JSON.stringify(summary, null, 1));
+writeFileEpermRetry(path.join(work, "summary.json"), JSON.stringify(summary, null, 1));
 if (fail > 0) process.exit(1);

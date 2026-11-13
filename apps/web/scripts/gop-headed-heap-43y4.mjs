@@ -51,6 +51,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -88,7 +89,7 @@ import { fetchVideoTrackByGopRange } from ${JSON.stringify(path.join(REPO, "apps
 import { resolveGopRangeWiring } from ${JSON.stringify(path.join(REPO, "apps/web/src/lib/gopCache40V2.ts"))};
 export { ReversePreviewController, fetchVideoTrackByGopRange, resolveGopRangeWiring };
 `;
-fs.writeFileSync(path.join(SCRATCH, "heap-entry.ts"), entry);
+writeFileEpermRetry(path.join(SCRATCH, "heap-entry.ts"), entry);
 const esbuild = path.join(REPO, "node_modules/.bin/esbuild");
 const bundleOut = path.join(SCRATCH, "heap-bundle.mjs");
 const b = spawnSync(esbuild, [
@@ -162,7 +163,7 @@ window.__y4ctrlDefault = async (url, t) => {
 };
 window.__y4ready = true;
 </script>`;
-fs.writeFileSync(path.join(SCRATCH, "heap-page.html"), pageHtml);
+writeFileEpermRetry(path.join(SCRATCH, "heap-page.html"), pageHtml);
 
 // ---- 3. HTTP server: page/bundle + fixture 3 path, log mọi request ----
 const reqLog = [];
@@ -354,7 +355,7 @@ try {
       range206: arr.filter((r) => r.status === 206).length };
   };
   summary.paths = { t3: pathSum("/big-t3.mp4"), ctrlOverride: pathSum("/big-ctrl.mp4"), ctrlDefault: pathSum("/big-def.mp4") };
-  fs.writeFileSync(path.join(SCRATCH, "heap-result.json"), JSON.stringify(summary, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "heap-result.json"), JSON.stringify(summary, null, 2));
   console.log(JSON.stringify(summary, null, 2));
 
   const t = summary.t3;

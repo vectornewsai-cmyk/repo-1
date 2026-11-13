@@ -55,6 +55,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -93,7 +94,7 @@ log("vite build → " + distDir);
 
 // ---- 2. Seed bundle (AssetStore thật) + file .vcut.json sẽ ghi sau khi có assetId ----
 const seedEntry = path.join(SCRATCH, "seed-entry.mjs");
-fs.writeFileSync(seedEntry, `import { AssetStore } from ${JSON.stringify(path.join(ROOT, "apps/web/src/lib/assetStore.ts"))};
+writeFileEpermRetry(seedEntry, `import { AssetStore } from ${JSON.stringify(path.join(ROOT, "apps/web/src/lib/assetStore.ts"))};
 window.__b1cseed = {
   ingestFromUrl: async (url, name) => {
     const CH = 8 * 1024 * 1024; const parts = []; const size = ${fileBuf.length};
@@ -243,7 +244,7 @@ try {
     format: "vcut-project", formatVersion: 1, appVersion: "0.1.0",
     specVersion: "0.2.0", savedAt: new Date().toISOString(), name: "B1 asset project", spec,
   };
-  fs.writeFileSync(projectFilePath, JSON.stringify(envelope, null, 2));
+  writeFileEpermRetry(projectFilePath, JSON.stringify(envelope, null, 2));
   log(`ghi project file: ${projectFilePath} (clip src asset:${seed.assetId})`);
 
   // Chờ sample load xong TRƯỚC khi mở file (tránh race loadSample
@@ -341,7 +342,7 @@ try {
   if (results.length === 0) { console.log("\n== B1C clicktest: HARNESS ERROR =="); killAll(); process.exit(2); }
   log(`(ghi tiếp các case đã chạy, exit 2 vì harness lỗi — không được đọc thành pass đủ)`);
 }
-fs.writeFileSync(path.join(SCRATCH, "b1c-result.json"), JSON.stringify({ results, logLines }, null, 2));
+writeFileEpermRetry(path.join(SCRATCH, "b1c-result.json"), JSON.stringify({ results, logLines }, null, 2));
 const failed = results.filter((r) => !r.ok);
 console.log(`\n== B1C clicktest: ${results.length - failed.length}/${results.length} pass ==` + (harnessError ? " (HARNESS ERROR — exit 2)" : ""));
 killAll();

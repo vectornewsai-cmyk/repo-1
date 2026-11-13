@@ -56,6 +56,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -133,7 +134,7 @@ function measureFrames(pngDirs) {
     "",
   ].join("\n");
   const scriptPath = path.join(pngDirs.__scriptDir, "measure_motion.py");
-  fs.writeFileSync(scriptPath, script);
+  writeFileEpermRetry(scriptPath, script);
   const argv = Object.entries(pngDirs)
     .filter(([k]) => k !== "__scriptDir")
     .map(([k, v]) => `${k}=${v}`);
@@ -329,7 +330,7 @@ function main() {
         path.join(repoRoot, "packages/video-spec/src/index.ts"),
       ],
     };
-    fs.writeFileSync(path.join(buildDir, "tsconfig.json"), JSON.stringify(tsconfig));
+    writeFileEpermRetry(path.join(buildDir, "tsconfig.json"), JSON.stringify(tsconfig));
     const tscBin = path.join(repoRoot, "node_modules", ".bin", "tsc");
     const tsc = spawnSync(tscBin, ["-p", path.join(buildDir, "tsconfig.json")],
       { encoding: "utf8" });
@@ -341,7 +342,7 @@ function main() {
     let previewSrc = fs.readFileSync(builtPreview, "utf8");
     previewSrc = previewSrc.replace('require("@repo-1/video-spec")',
       'require("../../../../packages/video-spec/src/index.js")');
-    fs.writeFileSync(builtPreview, previewSrc);
+    writeFileEpermRetry(builtPreview, previewSrc);
     const preview = require(builtPreview);
     const renderMotion = require(motionPath);
     const parity = (spec, label) => {

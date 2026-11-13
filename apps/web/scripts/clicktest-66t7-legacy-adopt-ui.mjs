@@ -40,6 +40,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -114,7 +115,7 @@ class CDP {
   }
   async shot(name) {
     const r = await this.send("Page.captureScreenshot", { format: "png" });
-    fs.writeFileSync(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
+    writeFileEpermRetry(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
     return name;
   }
 }
@@ -276,7 +277,7 @@ async function main() {
     fs.mkdirSync(TMPDIR, { recursive: true });
     fs.rmSync(PROFILE, { recursive: true, force: true });
     fs.mkdirSync(VITE_CFG_DIR, { recursive: true });
-    fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, TMPDIR=${TMPDIR}`);
 
     const viteLogFd = fs.openSync(path.join(SCRATCH, "t66-vite.log"), "w");
@@ -420,13 +421,13 @@ async function main() {
     else fail("T6", `${errs.length} lỗi trang: ${errs.slice(0, 3).join(" || ")}`);
 
     const failed = results.filter((r) => !r.ok);
-    fs.writeFileSync(path.join(SCRATCH, "report.json"), JSON.stringify({ at: new Date().toISOString(), results, phaseErrors }, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "report.json"), JSON.stringify({ at: new Date().toISOString(), results, phaseErrors }, null, 2));
     log(`== KẾT QUẢ: ${results.filter((r) => r.ok).length}/${results.length} PASS ==`);
     killAll();
     process.exit(failed.length > 0 ? 1 : 0);
   } catch (e) {
     log(`HARNESS LỖI: ${e.message}`);
-    try { fs.mkdirSync(SCRATCH, { recursive: true }); fs.writeFileSync(path.join(SCRATCH, "report.json"), JSON.stringify({ at: new Date().toISOString(), harnessError: e.message, results }, null, 2)); } catch {}
+    try { fs.mkdirSync(SCRATCH, { recursive: true }); writeFileEpermRetry(path.join(SCRATCH, "report.json"), JSON.stringify({ at: new Date().toISOString(), harnessError: e.message, results }, null, 2)); } catch {}
     killAll();
     process.exit(2);
   }

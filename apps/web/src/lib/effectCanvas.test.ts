@@ -4,6 +4,7 @@
 // (chạy từ gốc repo để alias @repo-1/video-spec resolve qua node_modules).
 import assert from "node:assert/strict";
 import {
+  addYuvNoise,
   applyCanvasEffects,
   applyEdgeDetect,
   applyGlitch,
@@ -15,6 +16,7 @@ import {
   applySharpen,
   canvasEffectOps,
   shakeOffsetAt,
+  yuvMatrixForSourceWidth,
   type CanvasEffectOp,
   type ImageDataLike,
 } from "./effectCanvas.ts";
@@ -294,6 +296,79 @@ ok("noise lặp lại được với cùng seed, đổi với seed khác, thốn
   assert.ok(maxDev > 28, `nhiễu Gauss phải có pixel vượt strength, max lệch chỉ ${maxDev}`);
   // Alpha không đổi.
   assert.ok(s.data.every((v, i) => i % 4 !== 3 || v === 255));
+});
+
+console.log("== effectCanvas: noise bt601 cho nguồn SD (đợt 80 H3, probe b) ==");
+ok("yuvMatrixForSourceWidth: ≤640 → bt601, còn lại → bt709 (cùng quy tắc render chain)", () => {
+  assert.equal(yuvMatrixForSourceWidth(640), "bt601");
+  assert.equal(yuvMatrixForSourceWidth(360), "bt601");
+  assert.equal(yuvMatrixForSourceWidth(641), "bt709");
+  assert.equal(yuvMatrixForSourceWidth(1280), "bt709");
+  assert.equal(yuvMatrixForSourceWidth(1920), "bt709");
+});
+ok("noise bt601: thống kê Gauss YUV đúng strength với hệ số convert bt601 (đợt 80 H3)", () => {
+  // Lý thuyết bt601 (hệ số convert limited-range, sigma = strength/√3):
+  // std RGB = [1.98, 1.47, 2.33]×sigma; corr [RG 0.02, RB 0.29, GB 0.16].
+  // Khác bt709 ([2.14, 1.30, 2.41] / [0.15, 0.26, 0.30]) đủ để test phân
+  // biệt: dùng đúng ngưỡng bt601 thì bản bt709 rớt corr RG (0.15 vs 0.02,
+  // lệch 0.13 > 0.12) và std G (1.30 vs 1.47, lệch 13% > band 15%? —
+  // band std [0.85,1.15]×1.47 = [1.25,1.69] vẫn chứa 1.30 nên corr RG
+  // là chỉ số phân biệt chính; ngược lại test bt709 bắt bản bt601 ở
+  // corr GB (0.16 vs 0.30, lệch 0.14 > 0.12).
+  const s = img(64, 64, () => [128, 128, 128, 255]);
+  applyNoise(s, 0.5, 7, "bt601");
+  const sigma = 27.5 / Math.sqrt(3);
+  const theoryStd = [1.98, 1.47, 2.33].map((k) => k * sigma);
+  const theoryCorr = [0.02, 0.29, 0.16]; // RG, RB, GB
+  const vals: number[][] = [[], [], []];
+  for (let ch = 0; ch < 3; ch++) {
+    for (let i = ch; i < s.data.length; i += 4) vals[ch].push(s.data[i] - 128);
+  }
+  const stats = vals.map((vs) => {
+    const n = vs.length;
+    const mu = vs.reduce((a2, v) => a2 + v, 0) / n;
+    const std = Math.sqrt(vs.reduce((a2, v) => a2 + (v - mu) ** 2, 0) / n);
+    const kurt = vs.reduce((a2, v) => a2 + ((v - mu) / std) ** 4, 0) / n - 3;
+    return { mu, std, kurt };
+  });
+  const corr = (x: number[], y: number[]) => {
+    const n = x.length;
+    const mx = x.reduce((a2, v) => a2 + v, 0) / n;
+    const my = y.reduce((a2, v) => a2 + v, 0) / n;
+    let sxy = 0, sxx = 0, syy = 0;
+    for (let i = 0; i < n; i++) { const dx = x[i] - mx, dy = y[i] - my; sxy += dx * dy; sxx += dx * dx; syy += dy * dy; }
+    return sxy / Math.sqrt(sxx * syy);
+  };
+  const corrs = [corr(vals[0], vals[1]), corr(vals[0], vals[2]), corr(vals[1], vals[2])];
+  for (let ch = 0; ch < 3; ch++) {
+    assert.ok(Math.abs(stats[ch].mu) < 4, `kênh ${ch}: trung bình ${stats[ch].mu.toFixed(2)} lệch khỏi 0`);
+    assert.ok(
+      stats[ch].std >= 0.85 * theoryStd[ch] && stats[ch].std <= 1.15 * theoryStd[ch],
+      `kênh ${ch}: std ${stats[ch].std.toFixed(2)} ngoài [0.85,1.15]×${theoryStd[ch].toFixed(2)} (mô hình YUV bt601)`,
+    );
+    assert.ok(stats[ch].kurt >= -0.6 && stats[ch].kurt <= 0.6, `kênh ${ch}: kurtosis ${stats[ch].kurt.toFixed(2)} ngoài [-0.6,0.6]`);
+    assert.ok(
+      Math.abs(corrs[ch] - theoryCorr[ch]) <= 0.12,
+      `corr ${["RG", "RB", "GB"][ch]} ${corrs[ch].toFixed(3)} lệch lý thuyết YUV bt601 ${theoryCorr[ch]} quá 0.12`,
+    );
+  }
+  // Alpha không đổi.
+  assert.ok(s.data.every((v, i) => i % 4 !== 3 || v === 255));
+});
+ok("noise mặc định vẫn bt709 (hành vi cũ cho HD) và applyCanvasEffects truyền matrix", () => {
+  const mk = () => img(32, 32, () => [128, 128, 128, 255]);
+  const a = mk(), b = mk();
+  applyNoise(a, 0.5, 7);
+  applyNoise(b, 0.5, 7, "bt709");
+  assert.deepEqual([...a.data], [...b.data], "mặc định phải giống bt709 tường minh");
+  const c = mk();
+  applyNoise(c, 0.5, 7, "bt601");
+  assert.notDeepEqual([...c.data], [...a.data], "bt601 phải khác bt709 với cùng seed");
+  // addYuvNoise trực tiếp + qua applyCanvasEffects phải cho cùng kết quả.
+  const d = mk(), e = mk();
+  addYuvNoise(d, 27.5, 7, "bt601");
+  applyCanvasEffects(e, [{ type: "noise", intensity: 0.5, seed: 7 }], "bt601");
+  assert.deepEqual([...d.data], [...e.data]);
 });
 
 console.log("== effectCanvas: điều phối ==");

@@ -7,10 +7,15 @@
 //       qua đúng 128 chunk remainder; cap+1 (67.108.865) thì trial bỏ
 //       qua, probe không gọi. Builder MP4 tối thiểu sao từ Q5 (đã chuẩn
 //       bị sẵn đuôi marker cho đúng cap/cap+1 nhưng Q5 chưa test).
-//   (b) Routing planTrialDecodeCall ở đúng 67.108.864 B → worker, 60000 ms.
+//   (b) Routing planTrialDecodeCall ở đúng 67.108.864 B → worker,
+//       timeout 78536 ms (công thức, dưới trần 90 s — đợt 67 U5 nâng
+//       trần từ 60 s; xem LIMITS U5 đợt 67 §1).
 //   (c) Ghi chú timeout `trialDecodeTimeoutNote` với lookup từ dict ĐÃ
 //       GỘP (vi.json/en.json — S6 test bằng fragment tiền-gộp): chuỗi
-//       đúng "64.0 MiB ... 60000 ms" cho fixture 64,0 MiB đo headed.
+//       đúng "64.0 MiB ... 60000 ms" cho input timeout 60000 (hàm note
+//       nhận timeout làm tham số — test khóa hàm, không khóa hằng số
+//       trần; chuỗi toast thật ở 64,0 MiB nay là "... 78536 ms", xem
+//       test 67U5).
 // Không đo decode thật ở đây (đo headed — xem LIMITS đợt 66 T6).
 //
 // Chạy bằng esbuild bundle (mẫu Q5/R4/S6, chạy từ gốc repo):
@@ -109,7 +114,7 @@ ok("(const) cap trial-decode = đúng 67.108.864 B, tối đa đúng 128 chunk r
 // ---------------------------------------------------------------------------
 // B. Routing ở đúng cap.
 // ---------------------------------------------------------------------------
-ok("(routing) sample đúng 67.108.864 B → worker, timeout 60000 ms (trần)", () => {
+ok("(routing) sample đúng 67.108.864 B → worker, timeout 78536 ms (công thức, dưới trần 90 s — đợt 67 U5)", () => {
   const fake = new FakeWorker();
   const plan = planTrialDecodeCall({
     sampleBytes: 67_108_864,
@@ -119,8 +124,9 @@ ok("(routing) sample đúng 67.108.864 B → worker, timeout 60000 ms (trần)",
     workerFactory: fakeFactory(fake),
   });
   assert.equal(plan.viaWorker, true);
-  assert.equal(plan.timeoutMs, 60_000);
-  assert.equal(plan.timeoutMs, MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS);
+  assert.equal(plan.timeoutMs, 78_536);
+  assert.ok(plan.timeoutMs < MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS);
+  assert.equal(MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS, 90_000);
 });
 
 // ---------------------------------------------------------------------------

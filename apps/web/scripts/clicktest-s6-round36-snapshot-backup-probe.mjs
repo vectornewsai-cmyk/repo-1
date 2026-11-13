@@ -50,6 +50,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -127,8 +128,8 @@ async function main() {
   // ---- (b) unit đóng băng dist trên fixture ----
   const fixDir = fs.mkdtempSync(path.join(os.tmpdir(), "s6-fixture-dist-"));
   fs.mkdirSync(path.join(fixDir, "assets"), { recursive: true });
-  fs.writeFileSync(path.join(fixDir, "index.html"), '<script type="module" src="/assets/fixture-s6.js"></script>');
-  fs.writeFileSync(path.join(fixDir, "assets", "fixture-s6.js"), "console.log('s6-fixture');");
+  writeFileEpermRetry(path.join(fixDir, "index.html"), '<script type="module" src="/assets/fixture-s6.js"></script>');
+  writeFileEpermRetry(path.join(fixDir, "assets", "fixture-s6.js"), "console.log('s6-fixture');");
   const m1 = distManifest(fixDir);
   const m2 = distManifest(fixDir);
   check("u1.manifestDeterministic", m1.manifestSha256 === m2.manifestSha256 && m1.fileCount === 2, `manifest=${m1.manifestSha256} files=${m1.fileCount}`);
@@ -151,8 +152,8 @@ async function main() {
   fs.mkdirSync(path.join(fakeSrc, "seek-o3-browser-probe"), { recursive: true });
   const snapA = JSON.stringify({ method: "Runtime.evaluate", bundle: { status: "captured" } }, null, 2);
   const snapB = JSON.stringify({ method: "Target.getTargets", bundle: { status: "not-captured" } }, null, 2);
-  fs.writeFileSync(path.join(fakeSrc, "bench-preview-fps", "snap-a.json"), snapA);
-  fs.writeFileSync(path.join(fakeSrc, "seek-o3-browser-probe", "snap-b.json"), snapB);
+  writeFileEpermRetry(path.join(fakeSrc, "bench-preview-fps", "snap-a.json"), snapA);
+  writeFileEpermRetry(path.join(fakeSrc, "seek-o3-browser-probe", "snap-b.json"), snapB);
   const backupEnv = { ...process.env, CDP_SNAP_SRC: fakeSrc, CDP_SNAP_BACKUP_ROOT: fakeBackupRoot };
   const backupRun = spawnSync("node", [path.join(SCRIPTS_DIR, "cdp-snapshot-backup.mjs")], { env: backupEnv, encoding: "utf8" });
   const backupDirs = fs.readdirSync(fakeBackupRoot).filter((d) => d !== "index.json");
@@ -342,7 +343,7 @@ async function main() {
     hangResults,
   };
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, JSON.stringify(result, null, 2) + "\n");
+  writeFileEpermRetry(OUT, JSON.stringify(result, null, 2) + "\n");
   console.log(`allPass=${allPass} -> ${OUT}`);
   process.exit(allPass ? 0 : 1);
 }

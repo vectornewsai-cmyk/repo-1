@@ -160,9 +160,18 @@ const VALIDATION_PATTERNS = [
   { code: "SPEED_RAMP_STABILIZE", re: /^speedKeyframes không dùng chung được với enhance\.stabilize \(vidstab detect theo trim gốc, không khớp các đoạn ramp\)$/, params: [] },
   { code: "SOURCE_AUDIO_DETACH", re: /^sourceAudioMode="detach" chưa được hỗ trợ \(render worker chỉ hỗ trợ "inherit" \| "mute"\)$/, params: [] },
   { code: "MASK_UNSUPPORTED_KIND", re: /^mask chưa hỗ trợ cho clip (\S+) — mask sẽ bị bỏ qua \(chỉ video\/image render mask, xem MASK_LIMITS\.md\)$/, params: ["kind"] },
-  { code: "TRACK_TRANSITION", re: /^clip video có track nhưng dính transition — track bị bỏ qua ở unit đã merge \(keyframes cũng vậy, xem D3_LIMITS\.md\)$/, params: [] },
+  // Phase 9 đợt 88 P6: regex TRACK_TRANSITION đã lệch với validate.js từ
+  // closing đợt 87 — closing đổi câu warn thành "(chỉ phần dịch chuyển của
+  // unit; mask vẫn bám theo track, ...)" nhưng regex/fragment vẫn giữ câu cũ
+  // "(keyframes cũng vậy, ...)" nên warn thật rơi về VALIDATION_DETAIL
+  // (kiểm chứng bằng classifyValidationMessage trước khi sửa). Đồng bộ lại
+  // regex + template vi/en theo đúng chuỗi validate.js hiện tại.
+  { code: "TRACK_TRANSITION", re: /^clip video có track nhưng dính transition — track bị bỏ qua ở unit đã merge \(chỉ phần dịch chuyển của unit; mask vẫn bám theo track, xem D3_LIMITS\.md\)$/, params: [] },
   { code: "TRACK_TEXT_ASS", re: /^clip text có track nhưng vẽ bằng ASS \(typewriter\/karaoke\/parity\) — track bị bỏ qua, chữ giữ vị trí tĩnh \(xem D3_LIMITS\.md\)$/, params: [] },
   { code: "TRACK_UNSUPPORTED_KIND", re: /^track chưa hỗ trợ cho clip (\S+) — track sẽ bị bỏ qua \(chỉ video\/text\/sticker bám quỹ đạo, xem D3_LIMITS\.md\)$/, params: ["kind"] },
+  // Phase 9 đợt 88 P6: clip image có mask — track không dịch chuyển ảnh
+  // nhưng mask vẫn bám track (validate.js tách nhánh riêng, xem trên).
+  { code: "TRACK_IMAGE_MASK", re: /^track không dịch chuyển clip image \(ảnh giữ vị trí tĩnh\), nhưng mask vẫn bám theo track \(xem D3_LIMITS\.md\)$/, params: [] },
   // ---- media (validateMedia; where đã tách khỏi chuỗi trước khi vào đây) ----
   { code: "MEDIA_ASSET_INVALID", re: /^asset "([^"]*)" không hợp lệ \(id rỗng hoặc thoát khỏi media-dir\)$/, params: ["asset"] },
   { code: "MEDIA_PATH_TRAVERSAL", re: /^đường dẫn thoát khỏi media-dir \(không cho phép "\.\.\/"\)$/, params: [] },

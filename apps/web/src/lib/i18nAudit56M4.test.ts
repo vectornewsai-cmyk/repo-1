@@ -157,7 +157,12 @@ const WIRED: Array<[string, string[]]> = [
     "exportPreset.720pLabel", "exportPreset.720pDesc",
     "exportPreset.1080pLabel", "exportPreset.1080pDesc",
     "exportPreset.4kLabel", "exportPreset.4kDesc",
-    "exportPreset.tiktokDesc", "exportPreset.youtubeDesc",
+    "exportPreset.tiktokLabel", "exportPreset.tiktokDesc",
+    // Đợt 80 H10 (S4): preset Reels/Shorts + trần bitrate video.
+    "exportPreset.reelsLabel", "exportPreset.reelsDesc",
+    "exportPreset.shortsLabel", "exportPreset.shortsDesc",
+    "exportPreset.sizeSummaryMax", "exportPreset.errVideoBitrate",
+    "exportPreset.youtubeDesc",
     "exportPreset.instaLabel", "exportPreset.instaDesc",
     "exportPreset.customLabel", "exportPreset.customDesc", "exportPreset.customLabelPlain",
     "exportPreset.errNotObject", "exportPreset.errWidth", "exportPreset.errHeight",
@@ -223,6 +228,9 @@ const GONE: Array<[string, string[]]> = [
     '"720p · Nhanh"', '"4K · Chất lượng cao"',
     '"Tùy chỉnh…"', '"Tùy chỉnh"', '"Preset phải là object."',
     'width phải là số nguyên ${', 'crf phải là số nguyên ${',
+    // Đợt 80 H10: nhãn gộp cũ "TikTok / Reels 9:16" đã thay bằng key
+    // i18n exportPreset.tiktokLabel ("TikTok 9:16").
+    '"TikTok / Reels 9:16"',
   ]],
   ["lib/sharePage.ts", [
     '"(Project trống, chưa có clip)"', '<html lang="vi">',

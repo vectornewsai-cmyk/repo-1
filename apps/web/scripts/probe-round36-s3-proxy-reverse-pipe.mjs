@@ -19,6 +19,7 @@
 // Chạy: node apps/web/scripts/probe-round36-s3-proxy-reverse-pipe.mjs
 import { spawn, spawnSync, execSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -205,7 +206,7 @@ async function main() {
   let revJs = fs.readFileSync(revOut, "utf8");
   const before = revJs.includes('"./mp4Demux"');
   revJs = revJs.replaceAll('"./mp4Demux"', '"./mp4Demux.js"');
-  fs.writeFileSync(revOut, revJs);
+  writeFileEpermRetry(revOut, revJs);
   result.build = { mp4DemuxTsSha256: sha256File(mp4Src), reverseWebcodecsTsSha256: sha256File(revSrc), mp4DemuxJsSha256: sha256File(mp4Out), reverseWebcodecsJsSha256: sha256File(revOut), importSpecifierRewritten: before };
   // Fixture gốc symlink vào scratch (không copy file 210MB); proxy đã nằm
   // sẵn trong scratch (tạo bằng generateProxy Q8 thật).
@@ -223,7 +224,7 @@ async function main() {
     if (fs.realpathSync(src) !== link) fs.symlinkSync(src, link);
     result.fixtures[key] = { servedAs: name, srcRealpath: fs.realpathSync(src), bytes: fs.statSync(src).size };
   }
-  fs.writeFileSync(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>s3 proxy reverse probe</title><body>probe</body><script type="module" src="/page.js"></script>`);
+  writeFileEpermRetry(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>s3 proxy reverse probe</title><body>probe</body><script type="module" src="/page.js"></script>`);
   const server = serveDir(SCRATCH);
   await new Promise((r) => server.listen(PORT, "127.0.0.1", r));
   log(`phục vụ probe tại ${ORIGIN}, scratch ${SCRATCH}`);
@@ -258,7 +259,7 @@ async function main() {
   const SKIP_WC = process.env.S3_SKIP_WC === "1";
   const SKIP_ELEMENT = process.env.S3_SKIP_ELEMENT === "1";
   const ELEMENT_ATTEMPT = Number(process.env.S3_ELEMENT_ATTEMPT || 1);
-  const save = () => { result.session.finishedAt = stamp(); fs.writeFileSync(outJson, JSON.stringify(result, null, 2)); fs.writeFileSync(path.join(SCRATCH, "s3-proxy-reverse.json"), JSON.stringify(result, null, 2)); };
+  const save = () => { result.session.finishedAt = stamp(); writeFileEpermRetry(outJson, JSON.stringify(result, null, 2)); writeFileEpermRetry(path.join(SCRATCH, "s3-proxy-reverse.json"), JSON.stringify(result, null, 2)); };
   try {
     const version = await cdp.send("Browser.getVersion", {}, undefined, 30000);
     result.session.chrome = { product: version.product, userAgent: version.userAgent };

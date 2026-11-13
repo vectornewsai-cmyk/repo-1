@@ -11,6 +11,7 @@
 //   T6_SKIP_SRC4K=1 (bỏ lượt decode nguồn 4K nặng).
 import { spawn, spawnSync, execSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -221,7 +222,7 @@ async function main() {
   revJs = revJs.replaceAll('"./mp4Demux"', '"./mp4Demux.js"')
     .replaceAll('"./reversePreviewGate"', '"./reversePreviewGate.js"')
     .replaceAll('"./reverseDecodeAhead"', '"./reverseDecodeAhead.js"');
-  fs.writeFileSync(revOut, revJs);
+  writeFileEpermRetry(revOut, revJs);
   // Kiểm tra cứng: bundle trong scratch không còn import trần nào trỏ
   // tới file không có trong scratch (lỗi đã làm chết 3 lượt reorder).
   for (const f of [mp4Out, revOut, gateOut, aheadOut]) {
@@ -241,7 +242,7 @@ async function main() {
     if (fs.realpathSync(src) !== link) fs.symlinkSync(src, link);
     result.fixtures[key] = { servedAs: name, srcRealpath: fs.realpathSync(src), bytes: fs.statSync(src).size };
   }
-  fs.writeFileSync(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>t6 proxy4k ctts probe</title><body>probe</body><script type="module" src="/page.js"></script>`);
+  writeFileEpermRetry(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>t6 proxy4k ctts probe</title><body>probe</body><script type="module" src="/page.js"></script>`);
   const server = serveDir(SCRATCH);
   await new Promise((r) => server.listen(PORT, "127.0.0.1", r));
   log(`phục vụ probe tại ${ORIGIN}, scratch ${SCRATCH}`);
@@ -273,7 +274,7 @@ async function main() {
   const cleanup = () => { try { chrome.kill("SIGKILL"); } catch {} try { xvfb?.kill("SIGKILL"); } catch {} server.close(); };
   process.on("exit", cleanup);
   const outJson = path.join(REPO, "benchmarks/results", process.env.T6_OUT || "v37-t6-proxy4k-ctts.json");
-  const save = () => { result.session.finishedAt = stamp(); fs.writeFileSync(outJson, JSON.stringify(result, null, 2)); fs.writeFileSync(path.join(SCRATCH, "t6-proxy4k-ctts.json"), JSON.stringify(result, null, 2)); };
+  const save = () => { result.session.finishedAt = stamp(); writeFileEpermRetry(outJson, JSON.stringify(result, null, 2)); writeFileEpermRetry(path.join(SCRATCH, "t6-proxy4k-ctts.json"), JSON.stringify(result, null, 2)); };
   try {
     const version = await cdp.send("Browser.getVersion", {}, undefined, 30000);
     result.session.chrome = { product: version.product, userAgent: version.userAgent };

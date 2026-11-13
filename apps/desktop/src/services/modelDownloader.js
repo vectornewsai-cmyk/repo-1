@@ -37,6 +37,9 @@
 
 const crypto = require('node:crypto');
 const fs = require('node:fs');
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (port JS của
+// apps/web/scripts/eperm-retry.mjs; xem services/epermRetry.js).
+const { writeFileEpermRetry } = require('./epermRetry');
 const http = require('node:http');
 const https = require('node:https');
 const os = require('node:os');
@@ -497,7 +500,7 @@ async function downloadModel(rootInfo, modelOrId, opts = {}) {
   }
   // Ghi marker để tts.py khỏi tự tải lại bằng snapshot_download.
   if (model.completeMarker) {
-    try { fs.writeFileSync(path.join(targetDir, model.completeMarker), 'ok\n'); } catch { /* không chặn */ }
+    try { writeFileEpermRetry(path.join(targetDir, model.completeMarker), 'ok\n', { label: 'desktop-model-complete-marker' }); } catch { /* không chặn */ }
   }
   return { id: model.id, downloadedBytes, skippedBytes, files: filesDone };
 }

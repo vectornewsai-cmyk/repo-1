@@ -22,6 +22,7 @@
 
 import { spawn, execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -64,7 +65,7 @@ function buildFixtures() {
   }
   // Zero packet theo khoảng pts (cùng cách làm B2/Y2/C3).
   const py = path.join(SCRATCH, "make-variant.py");
-  fs.writeFileSync(py, [
+  writeFileEpermRetry(py, [
     "import json, subprocess, sys",
     "src, dst, lo, hi = sys.argv[1], sys.argv[2], float(sys.argv[3]), float(sys.argv[4])",
     "out = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0',",
@@ -133,7 +134,7 @@ function buildPages() {
     + "  }, 6000);\n"
     + "}, 3000);\n"
     + "</script>\n";
-  fs.writeFileSync(path.join(SCRATCH, "raw.html"), raw);
+  writeFileEpermRetry(path.join(SCRATCH, "raw.html"), raw);
   const seekel = "<!doctype html><meta charset=\"utf-8\"><title>E4 seekElement probe</title>\n"
     + "<script type=\"module\">\n"
     + "window.__c3Uncaught = [];\n"
@@ -188,7 +189,7 @@ function buildPages() {
     + "window.__c3 = R;\n"
     + "window.__c3Ready = true;\n"
     + "</script>\n";
-  fs.writeFileSync(path.join(SCRATCH, "seekel.html"), seekel);
+  writeFileEpermRetry(path.join(SCRATCH, "seekel.html"), seekel);
 }
 
 class TabCdp {

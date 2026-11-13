@@ -29,6 +29,7 @@
 // (từ gốc repo hoặc bằng đường dẫn tuyệt đối; env xem dưới).
 import { spawn, spawnSync, execSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -207,7 +208,7 @@ async function main() {
   let revJs = fs.readFileSync(revOut, "utf8");
   const before = revJs.includes('"./mp4Demux"');
   revJs = revJs.replaceAll('"./mp4Demux"', '"./mp4Demux.js"');
-  fs.writeFileSync(revOut, revJs);
+  writeFileEpermRetry(revOut, revJs);
   result.build = {
     mp4DemuxTsSha256: sha256File(mp4Src), reverseWebcodecsTsSha256: sha256File(revSrc),
     mp4DemuxJsSha256: sha256File(mp4Out), reverseWebcodecsJsSha256: sha256File(revOut),
@@ -220,7 +221,7 @@ async function main() {
     fs.symlinkSync(src, link);
     result.fixtures[name] = { srcRealpath: fs.realpathSync(src), bytes: fs.statSync(src).size, sha256: sha256File(src) };
   }
-  fs.writeFileSync(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>r4 webcodecs gpu probe</title><body>probe</body><script type="module" src="/page.js"></script>`);
+  writeFileEpermRetry(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>r4 webcodecs gpu probe</title><body>probe</body><script type="module" src="/page.js"></script>`);
   const server = serveDir(SCRATCH);
   await new Promise((r) => server.listen(PORT, "127.0.0.1", r));
   log(`phục vụ probe tại ${ORIGIN}, scratch ${SCRATCH}`);
@@ -359,15 +360,15 @@ async function main() {
     result.quietSummary = summary;
     const outPath = path.join(REPO, "benchmarks", "results", "v35-r4-webcodecs-gpu.json");
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
-    fs.writeFileSync(outPath, JSON.stringify(result, null, 2));
-    fs.writeFileSync(path.join(SCRATCH, "r4-webcodecs-gpu.json"), JSON.stringify(result, null, 2));
+    writeFileEpermRetry(outPath, JSON.stringify(result, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "r4-webcodecs-gpu.json"), JSON.stringify(result, null, 2));
     log(`KẾT QUẢ: ${outPath}`);
     log(`quietSummary: ${JSON.stringify(summary)}`);
     cleanup();
     process.exit(0);
   } catch (e) {
     console.error("FATAL", e);
-    try { fs.writeFileSync(path.join(SCRATCH, "r4-webcodecs-gpu-partial.json"), JSON.stringify(result, null, 2)); } catch {}
+    try { writeFileEpermRetry(path.join(SCRATCH, "r4-webcodecs-gpu-partial.json"), JSON.stringify(result, null, 2)); } catch {}
     cleanup();
     process.exit(2);
   }

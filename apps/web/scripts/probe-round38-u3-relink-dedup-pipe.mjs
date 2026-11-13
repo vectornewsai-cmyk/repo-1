@@ -36,6 +36,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -415,7 +416,7 @@ async function runBrowser(serverProc) {
 
     const allPass = Object.values(results).every((r) => r.pass);
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
-    fs.writeFileSync(OUT, JSON.stringify({ allPass, results }, null, 2));
+    writeFileEpermRetry(OUT, JSON.stringify({ allPass, results }, null, 2));
     log(`\nallPass=${allPass} → ${OUT}`);
     cdp.close();
   } finally {

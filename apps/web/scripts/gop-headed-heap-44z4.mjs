@@ -35,6 +35,7 @@
 import { spawn, spawnSync, execSync } from "node:child_process";
 import { createServer } from "node:http";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -79,7 +80,7 @@ import { fetchVideoTrackByGopRange } from ${JSON.stringify(path.join(REPO, "apps
 import { resolveGopRangeWiring } from ${JSON.stringify(path.join(REPO, "apps/web/src/lib/gopCache40V2.ts"))};
 export { ReversePreviewController, fetchVideoTrackByGopRange, resolveGopRangeWiring };
 `;
-fs.writeFileSync(path.join(SCRATCH, "heap44-entry.ts"), entry);
+writeFileEpermRetry(path.join(SCRATCH, "heap44-entry.ts"), entry);
 const esbuild = path.join(REPO, "node_modules/.bin/esbuild");
 const bundleOut = path.join(SCRATCH, "heap44-bundle.mjs");
 const b = spawnSync(esbuild, [
@@ -150,7 +151,7 @@ window.__z4ctrlDefault = async (url, t) => {
 };
 window.__z4ready = true;
 </script>`;
-fs.writeFileSync(path.join(SCRATCH, "heap44-page.html"), pageHtml);
+writeFileEpermRetry(path.join(SCRATCH, "heap44-page.html"), pageHtml);
 
 // ---- 3. HTTP server stream từ đĩa (không load cả file vào RAM) ----
 const reqLog = [];
@@ -387,7 +388,7 @@ try {
   };
   summary.paths = { t3: pathSum("/big-t3.mp4"), ctrlOverride: pathSum("/big-ctrl.mp4"), ctrlDefault: pathSum("/big-def.mp4") };
   const outJson = path.join(SCRATCH, `heap-result-${label}.json`);
-  fs.writeFileSync(outJson, JSON.stringify(summary, null, 2));
+  writeFileEpermRetry(outJson, JSON.stringify(summary, null, 2));
   console.log(JSON.stringify(summary, null, 2));
 
   const t = summary.t3;

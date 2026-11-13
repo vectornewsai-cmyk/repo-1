@@ -46,6 +46,7 @@
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 const path = require("node:path");
 
@@ -117,7 +118,7 @@ function writeRaw(name, frame, count) {
   const p = path.join(TMP, name);
   const chunks = [];
   for (let i = 0; i < count; i++) chunks.push(frame);
-  fs.writeFileSync(p, Buffer.concat(chunks));
+  writeFileEpermRetry(p, Buffer.concat(chunks));
   return p;
 }
 

@@ -43,6 +43,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -376,7 +377,7 @@ async function main() {
     checks: { reversePlaybackCorrect: reverseOk, holdFiredInApp: holdOk, noBlackInReverse: blackRev === 0 },
     verdict: reverseOk && holdOk ? "PASS" : "PARTIAL",
   };
-  fs.writeFileSync(path.join(SCRATCH, "reverse-hold.json"), JSON.stringify(result, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "reverse-hold.json"), JSON.stringify(result, null, 2));
   log(`KẾT QUẢ: reverseOk=${reverseOk} holdOk=${holdOk} (holdDelta=${revHoldDelta}, drawDelta=${revDrawDelta}, blackRev=${blackRev})`);
   log(`time ngược: ${revTimes[0]} -> ${revTimes[revTimes.length - 1]}; graySeconds: ${JSON.stringify(revSeconds)}`);
   log(`stats cuối: ${JSON.stringify(revStats)}; badge ngược thấy: ${result.reverse.reverseBadgeSeen}, badge giữ thấy: ${result.reverse.holdBadgeSeen}`);
