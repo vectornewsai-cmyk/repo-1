@@ -1,0 +1,3046 @@
+{
+  "date": "2026-11-12T02:43:57.356Z",
+  "round": "phase9-round93-u2-bundle",
+  "clips": {
+    "c2": {
+      "file": "c2.mp4",
+      "dur": 8,
+      "bytes": 2139973
+    },
+    "c4": {
+      "file": "c4.mp4",
+      "dur": 16,
+      "bytes": 4158929
+    },
+    "c6": {
+      "file": "c6.mp4",
+      "dur": 24,
+      "bytes": 6165909
+    },
+    "c8": {
+      "file": "c8.mp4",
+      "dur": 32,
+      "bytes": 8182985
+    },
+    "c10": {
+      "file": "c10.mp4",
+      "dur": 40,
+      "bytes": 10166837
+    }
+  },
+  "cases": [
+    {
+      "name": "Lc2-blob-run1",
+      "date": "2026-11-11T23:54:43.877Z",
+      "mode": "blob",
+      "clip": "c2.mp4",
+      "clipBytes": 2139973,
+      "clipDurS": 8,
+      "playDelayMs": 0,
+      "run": 1,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 273,
+      "poolInfoMode": "skipped",
+      "playDelayAppliedMs": 0,
+      "playOk": false,
+      "playErr": "The operation is not supported.",
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalSrcKind": "http",
+      "ctReached": 0,
+      "evs": [
+        "waiting@0.29",
+        "loadstart@0.29",
+        "progress@0.64",
+        "loadstart@0.87",
+        "progress@1.18",
+        "progress@1.18",
+        "suspend@1.18",
+        "loadeddata@1.18",
+        "canplay@1.18",
+        "canplaythrough@1.18"
+      ],
+      "firstSample": {
+        "t": 0.82,
+        "ct": 0,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 0,
+        "dur": null,
+        "buf": [],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 9.96,
+        "ct": 0,
+        "paused": true,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 8,
+        "buf": [
+          [
+            0,
+            8
+          ]
+        ],
+        "frames": 0
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.28,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.29,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.82,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.82,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.82,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 10.06,
+          "src": "http",
+          "ct": 0
+        }
+      ],
+      "errEvents": [
+        {
+          "t": 0.82,
+          "src": "http",
+          "code": null,
+          "msg": null
+        }
+      ]
+    },
+    {
+      "name": "Lc2-prog-run1",
+      "date": "2026-11-11T23:54:57.633Z",
+      "mode": "progressive",
+      "clip": "c2.mp4",
+      "clipBytes": 2139973,
+      "clipDurS": 8,
+      "playDelayMs": 0,
+      "run": 1,
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 112,
+      "droppedFrames": 4,
+      "finalCt": 8,
+      "finalPaused": true,
+      "finalSrcKind": "http",
+      "ctReached": 8,
+      "evs": [
+        "waiting@0.28",
+        "loadstart@0.28",
+        "progress@0.47",
+        "progress@1.11",
+        "suspend@1.11",
+        "loadeddata@1.11",
+        "canplay@1.11",
+        "playing@1.11",
+        "canplaythrough@1.11",
+        "pause@9.19"
+      ],
+      "firstSample": {
+        "t": 1.11,
+        "ct": 0.001,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 8,
+        "buf": [
+          [
+            0,
+            8
+          ]
+        ],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 9.98,
+        "ct": 8,
+        "paused": true,
+        "ended": true,
+        "seeking": false,
+        "rs": 4,
+        "dur": 8,
+        "buf": [],
+        "frames": 112
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.11,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 10.09,
+          "src": "http",
+          "ct": 8
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc2-blob-run2",
+      "date": "2026-11-11T23:55:57.962Z",
+      "mode": "blob",
+      "clip": "c2.mp4",
+      "clipBytes": 2139973,
+      "clipDurS": 8,
+      "playDelayMs": 0,
+      "run": 2,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 472,
+      "poolInfoMode": "skipped",
+      "playDelayAppliedMs": 0,
+      "playOk": false,
+      "playErr": "The operation is not supported.",
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalSrcKind": "http",
+      "ctReached": 0,
+      "evs": [
+        "waiting@0.49",
+        "loadstart@0.5",
+        "progress@0.87",
+        "loadstart@2.19",
+        "progress@2.51",
+        "progress@2.51",
+        "suspend@2.51",
+        "loadeddata@2.51",
+        "canplay@2.51",
+        "canplaythrough@2.51"
+      ],
+      "firstSample": {
+        "t": 2.1,
+        "ct": 0,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 0,
+        "dur": null,
+        "buf": [],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 9.9,
+        "ct": 0,
+        "paused": true,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 8,
+        "buf": [
+          [
+            0,
+            8
+          ]
+        ],
+        "frames": 0
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.48,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.48,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 2.1,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 2.1,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 2.1,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 10,
+          "src": "http",
+          "ct": 0
+        }
+      ],
+      "errEvents": [
+        {
+          "t": 2.1,
+          "src": "http",
+          "code": null,
+          "msg": null
+        }
+      ]
+    },
+    {
+      "name": "Lc2-prog-run2",
+      "date": "2026-11-11T23:56:10.239Z",
+      "mode": "progressive",
+      "clip": "c2.mp4",
+      "clipBytes": 2139973,
+      "clipDurS": 8,
+      "playDelayMs": 0,
+      "run": 2,
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 71,
+      "droppedFrames": 5,
+      "finalCt": 8,
+      "finalPaused": true,
+      "finalSrcKind": "http",
+      "ctReached": 8,
+      "evs": [
+        "waiting@0.39",
+        "loadstart@0.39",
+        "progress@0.78",
+        "progress@1.49",
+        "suspend@1.49",
+        "loadeddata@1.49",
+        "canplay@1.49",
+        "playing@1.49",
+        "canplaythrough@1.49",
+        "pause@9.41"
+      ],
+      "firstSample": {
+        "t": 1.49,
+        "ct": 0.125,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 8,
+        "buf": [
+          [
+            0,
+            8
+          ]
+        ],
+        "frames": 2
+      },
+      "lastSample": {
+        "t": 9.91,
+        "ct": 8,
+        "paused": true,
+        "ended": true,
+        "seeking": false,
+        "rs": 4,
+        "dur": 8,
+        "buf": [],
+        "frames": 71
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.49,
+          "src": "http",
+          "ct": 0.12
+        },
+        {
+          "t": 10.08,
+          "src": "http",
+          "ct": 8
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc2-blob-run3",
+      "date": "2026-11-11T23:56:26.454Z",
+      "mode": "blob",
+      "clip": "c2.mp4",
+      "clipBytes": 2139973,
+      "clipDurS": 8,
+      "playDelayMs": 0,
+      "run": 3,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 1398,
+      "poolInfoMode": "skipped",
+      "playDelayAppliedMs": 0,
+      "playOk": false,
+      "playErr": "The operation is not supported.",
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalSrcKind": "http",
+      "ctReached": 0,
+      "evs": [
+        "waiting@1.59",
+        "loadstart@1.59",
+        "progress@1.99",
+        "loadstart@2.99",
+        "progress@3.28",
+        "progress@3.67",
+        "progress@4.5",
+        "suspend@4.5",
+        "loadeddata@4.51",
+        "canplay@4.51",
+        "canplaythrough@4.51"
+      ],
+      "firstSample": {
+        "t": 2,
+        "ct": 0,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 0,
+        "dur": null,
+        "buf": [],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 9.9,
+        "ct": 0,
+        "paused": true,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 8,
+        "buf": [
+          [
+            0,
+            8
+          ]
+        ],
+        "frames": 0
+      },
+      "srcTrace": [
+        {
+          "t": 0.17,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.58,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 1.58,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 2,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 2.88,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 2.88,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 10,
+          "src": "http",
+          "ct": 0
+        }
+      ],
+      "errEvents": [
+        {
+          "t": 2.88,
+          "src": "http",
+          "code": null,
+          "msg": null
+        }
+      ]
+    },
+    {
+      "name": "Lc2-prog-run3",
+      "date": "2026-11-11T23:56:40.537Z",
+      "mode": "progressive",
+      "clip": "c2.mp4",
+      "clipBytes": 2139973,
+      "clipDurS": 8,
+      "playDelayMs": 0,
+      "run": 3,
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 47,
+      "droppedFrames": 9,
+      "finalCt": 7.599,
+      "finalPaused": false,
+      "finalSrcKind": "http",
+      "ctReached": 7.25,
+      "evs": [
+        "waiting@0.33",
+        "loadstart@0.33",
+        "progress@0.79",
+        "progress@2.59",
+        "suspend@2.59",
+        "loadeddata@2.59",
+        "canplay@2.59",
+        "playing@2.59",
+        "canplaythrough@2.6"
+      ],
+      "firstSample": {
+        "t": 2.6,
+        "ct": 0.083,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 8,
+        "buf": [
+          [
+            0,
+            8
+          ]
+        ],
+        "frames": 1
+      },
+      "lastSample": {
+        "t": 9.81,
+        "ct": 7.25,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 8,
+        "buf": [
+          [
+            0,
+            8
+          ]
+        ],
+        "frames": 45
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 2.59,
+          "src": "http",
+          "ct": 0.08
+        },
+        {
+          "t": 10.01,
+          "src": "http",
+          "ct": 7.6
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc4-blob-run1",
+      "date": "2026-11-11T23:57:00.856Z",
+      "mode": "blob",
+      "clip": "c4.mp4",
+      "clipBytes": 4158929,
+      "clipDurS": 16,
+      "playDelayMs": 0,
+      "run": 1,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 306,
+      "poolInfoMode": "skipped",
+      "playDelayAppliedMs": 0,
+      "playOk": false,
+      "playErr": "The operation is not supported.",
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalSrcKind": "http",
+      "ctReached": 0,
+      "evs": [
+        "waiting@0.33",
+        "loadstart@0.33",
+        "loadstart@0.62",
+        "progress@0.99",
+        "progress@1.62",
+        "suspend@1.62",
+        "loadeddata@1.62",
+        "canplay@1.62",
+        "canplaythrough@1.62"
+      ],
+      "firstSample": {
+        "t": 0.61,
+        "ct": 0,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 0,
+        "dur": null,
+        "buf": [],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 9.93,
+        "ct": 0,
+        "paused": true,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 16,
+        "buf": [
+          [
+            0,
+            16
+          ]
+        ],
+        "frames": 0
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.32,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.32,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.61,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.61,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.61,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 10.03,
+          "src": "http",
+          "ct": 0
+        }
+      ],
+      "errEvents": [
+        {
+          "t": 0.61,
+          "src": "http",
+          "code": null,
+          "msg": null
+        }
+      ]
+    },
+    {
+      "name": "Lc4-prog-run1",
+      "date": "2026-11-11T23:57:19.987Z",
+      "mode": "progressive",
+      "clip": "c4.mp4",
+      "clipBytes": 4158929,
+      "clipDurS": 16,
+      "playDelayMs": 0,
+      "run": 1,
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 40,
+      "droppedFrames": 9,
+      "finalCt": 6.25,
+      "finalPaused": false,
+      "finalSrcKind": "http",
+      "ctReached": 6.125,
+      "evs": [
+        "waiting@1.28",
+        "loadstart@1.28",
+        "progress@1.67",
+        "progress@2.07",
+        "progress@3.5",
+        "suspend@3.5",
+        "loadeddata@3.5",
+        "canplay@3.5",
+        "playing@3.5",
+        "canplaythrough@3.5"
+      ],
+      "firstSample": {
+        "t": 3.5,
+        "ct": 0.001,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 16,
+        "buf": [
+          [
+            0,
+            16
+          ]
+        ],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 9.88,
+        "ct": 6.125,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 16,
+        "buf": [
+          [
+            0,
+            16
+          ]
+        ],
+        "frames": 38
+      },
+      "srcTrace": [
+        {
+          "t": 0.1,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 3.5,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 10.17,
+          "src": "http",
+          "ct": 6.25
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc4-blob-run2",
+      "date": "2026-11-11T23:57:44.938Z",
+      "mode": "blob",
+      "clip": "c4.mp4",
+      "clipBytes": 4158929,
+      "clipDurS": 16,
+      "playDelayMs": 0,
+      "run": 2,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 2004,
+      "poolInfoMode": "blob",
+      "playDelayAppliedMs": 0,
+      "playOk": false,
+      "playErr": "play-timeout-10s",
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "finalCt": 0,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "ctReached": null,
+      "evs": [
+        "waiting@2.3",
+        "loadstart@2.3",
+        "progress@2.66",
+        "progress@3.46",
+        "stalled@6.57"
+      ],
+      "firstSample": null,
+      "lastSample": null,
+      "srcTrace": [
+        {
+          "t": 0.17,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 2.17,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 2.17,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 12.18,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 12.18,
+          "src": "blob",
+          "ct": 0
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc4-prog-run2",
+      "date": "2026-11-11T23:57:59.537Z",
+      "mode": "progressive",
+      "clip": "c4.mp4",
+      "clipBytes": 4158929,
+      "clipDurS": 16,
+      "playDelayMs": 0,
+      "run": 2,
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 130,
+      "droppedFrames": 3,
+      "finalCt": 8.833,
+      "finalPaused": false,
+      "finalSrcKind": "http",
+      "ctReached": 8.612,
+      "evs": [
+        "waiting@0.19",
+        "loadstart@0.19",
+        "progress@0.39",
+        "progress@1.4",
+        "suspend@1.4",
+        "loadeddata@1.4",
+        "canplay@1.4",
+        "playing@1.4",
+        "canplaythrough@1.4"
+      ],
+      "firstSample": {
+        "t": 1.4,
+        "ct": 0.083,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 16,
+        "buf": [
+          [
+            0,
+            16
+          ]
+        ],
+        "frames": 1
+      },
+      "lastSample": {
+        "t": 9.92,
+        "ct": 8.612,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 16,
+        "buf": [
+          [
+            0,
+            16
+          ]
+        ],
+        "frames": 126
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.4,
+          "src": "http",
+          "ct": 0.08
+        },
+        {
+          "t": 10.2,
+          "src": "http",
+          "ct": 8.83
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc4-blob-run3",
+      "date": "2026-11-11T23:58:13.244Z",
+      "mode": "blob",
+      "clip": "c4.mp4",
+      "clipBytes": 4158929,
+      "clipDurS": 16,
+      "playDelayMs": 0,
+      "run": 3,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 396,
+      "poolInfoMode": "blob",
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 82,
+      "droppedFrames": 7,
+      "finalCt": 8,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "ctReached": 7.458,
+      "evs": [
+        "waiting@0.51",
+        "loadstart@0.51",
+        "progress@1.29",
+        "progress@2.21",
+        "suspend@2.21",
+        "loadeddata@2.21",
+        "canplay@2.21",
+        "playing@2.21",
+        "canplaythrough@2.21"
+      ],
+      "firstSample": {
+        "t": 2.21,
+        "ct": 0.001,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 16,
+        "buf": [
+          [
+            0,
+            9.02
+          ]
+        ],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 9.99,
+        "ct": 7.458,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 16,
+        "buf": [
+          [
+            0,
+            16
+          ]
+        ],
+        "frames": 80
+      },
+      "srcTrace": [
+        {
+          "t": 0.02,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.41,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.41,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 2.21,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 10.49,
+          "src": "blob",
+          "ct": 8
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc4-prog-run3",
+      "date": "2026-11-11T23:58:28.749Z",
+      "mode": "progressive",
+      "clip": "c4.mp4",
+      "clipBytes": 4158929,
+      "clipDurS": 16,
+      "playDelayMs": 0,
+      "run": 3,
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 87,
+      "droppedFrames": 6,
+      "finalCt": 8.286,
+      "finalPaused": false,
+      "finalSrcKind": "http",
+      "ctReached": 8.167,
+      "evs": [
+        "waiting@0.31",
+        "loadstart@0.31",
+        "progress@0.77",
+        "progress@2",
+        "suspend@2",
+        "loadeddata@2",
+        "canplay@2",
+        "playing@2",
+        "canplaythrough@2"
+      ],
+      "firstSample": {
+        "t": 2,
+        "ct": 0.125,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 16,
+        "buf": [
+          [
+            0,
+            16
+          ]
+        ],
+        "frames": 2
+      },
+      "lastSample": {
+        "t": 9.97,
+        "ct": 8.167,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 16,
+        "buf": [
+          [
+            0,
+            16
+          ]
+        ],
+        "frames": 84
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 2,
+          "src": "http",
+          "ct": 0.12
+        },
+        {
+          "t": 10.08,
+          "src": "http",
+          "ct": 8.29
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc6-blob-run1",
+      "date": "2026-11-11T23:59:01.053Z",
+      "mode": "blob",
+      "clip": "c6.mp4",
+      "clipBytes": 6165909,
+      "clipDurS": 24,
+      "playDelayMs": 0,
+      "run": 1,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 1015,
+      "poolInfoMode": "skipped",
+      "playDelayAppliedMs": 0,
+      "playOk": false,
+      "playErr": "The operation is not supported.",
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalSrcKind": "http",
+      "ctReached": 0,
+      "evs": [
+        "waiting@1.3",
+        "loadstart@1.3",
+        "progress@1.69",
+        "progress@2.1",
+        "loadstart@2.59",
+        "progress@2.89",
+        "progress@3.8",
+        "progress@4.69",
+        "suspend@4.69",
+        "loadeddata@4.69",
+        "canplay@4.69",
+        "canplaythrough@4.69"
+      ],
+      "firstSample": {
+        "t": 2.48,
+        "ct": 0,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 0,
+        "dur": null,
+        "buf": [],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 9.9,
+        "ct": 0,
+        "paused": true,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 24,
+        "buf": [
+          [
+            0,
+            24
+          ]
+        ],
+        "frames": 0
+      },
+      "srcTrace": [
+        {
+          "t": 0.18,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.21,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 1.21,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 2.48,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 2.49,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 2.49,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 10.01,
+          "src": "http",
+          "ct": 0
+        }
+      ],
+      "errEvents": [
+        {
+          "t": 2.49,
+          "src": "http",
+          "code": null,
+          "msg": null
+        }
+      ]
+    },
+    {
+      "name": "Lc6-prog-run1",
+      "date": "2026-11-11T23:59:17.738Z",
+      "mode": "progressive",
+      "clip": "c6.mp4",
+      "clipBytes": 6165909,
+      "clipDurS": 24,
+      "playDelayMs": 0,
+      "run": 1,
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 85,
+      "droppedFrames": 7,
+      "finalCt": 8.458,
+      "finalPaused": false,
+      "finalSrcKind": "http",
+      "ctReached": 8.292,
+      "evs": [
+        "waiting@0.39",
+        "loadstart@0.39",
+        "progress@0.86",
+        "progress@1.88",
+        "suspend@1.88",
+        "loadeddata@1.88",
+        "canplay@1.88",
+        "playing@1.88",
+        "canplaythrough@1.88"
+      ],
+      "firstSample": {
+        "t": 1.88,
+        "ct": 0.125,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 24,
+        "buf": [
+          [
+            0,
+            24
+          ]
+        ],
+        "frames": 2
+      },
+      "lastSample": {
+        "t": 9.99,
+        "ct": 8.292,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 24,
+        "buf": [
+          [
+            0,
+            24
+          ]
+        ],
+        "frames": 82
+      },
+      "srcTrace": [
+        {
+          "t": 0.08,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.88,
+          "src": "http",
+          "ct": 0.12
+        },
+        {
+          "t": 10.3,
+          "src": "http",
+          "ct": 8.46
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc6-blob-run2",
+      "date": "2026-11-11T23:59:31.660Z",
+      "mode": "blob",
+      "clip": "c6.mp4",
+      "clipBytes": 6165909,
+      "clipDurS": 24,
+      "playDelayMs": 0,
+      "run": 2,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 433,
+      "poolInfoMode": "blob",
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 139,
+      "droppedFrames": 3,
+      "finalCt": 8.702,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "ctReached": 8.458,
+      "evs": [
+        "waiting@0.59",
+        "loadstart@0.59",
+        "progress@0.98",
+        "progress@1.3",
+        "suspend@1.3",
+        "loadeddata@1.3",
+        "canplay@1.3",
+        "playing@1.3",
+        "canplaythrough@1.31"
+      ],
+      "firstSample": {
+        "t": 1.31,
+        "ct": 0,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 24,
+        "buf": [
+          [
+            0,
+            9.136
+          ]
+        ],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 9.9,
+        "ct": 8.458,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 24,
+        "buf": [
+          [
+            0,
+            17.567
+          ]
+        ],
+        "frames": 137
+      },
+      "srcTrace": [
+        {
+          "t": 0.07,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.51,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.51,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 1.3,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 10.01,
+          "src": "blob",
+          "ct": 8.7
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc6-prog-run2",
+      "date": "2026-11-11T23:59:45.648Z",
+      "mode": "progressive",
+      "clip": "c6.mp4",
+      "clipBytes": 6165909,
+      "clipDurS": 24,
+      "playDelayMs": 0,
+      "run": 2,
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 133,
+      "droppedFrames": 3,
+      "finalCt": 8.583,
+      "finalPaused": false,
+      "finalSrcKind": "http",
+      "ctReached": 8.505,
+      "evs": [
+        "waiting@0.21",
+        "loadstart@0.21",
+        "progress@0.39",
+        "progress@0.8",
+        "progress@1.4",
+        "suspend@1.4",
+        "loadeddata@1.4",
+        "canplay@1.4",
+        "playing@1.4",
+        "canplaythrough@1.4"
+      ],
+      "firstSample": {
+        "t": 1.4,
+        "ct": 0.001,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 24,
+        "buf": [
+          [
+            0,
+            24
+          ]
+        ],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 9.9,
+        "ct": 8.505,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 24,
+        "buf": [
+          [
+            0,
+            24
+          ]
+        ],
+        "frames": 132
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.4,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 10.01,
+          "src": "http",
+          "ct": 8.58
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc6-blob-run3",
+      "date": "2026-11-12T00:00:01.667Z",
+      "mode": "blob",
+      "clip": "c6.mp4",
+      "clipBytes": 6165909,
+      "clipDurS": 24,
+      "playDelayMs": 0,
+      "run": 3,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 1493,
+      "poolInfoMode": "blob",
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 162,
+      "droppedFrames": 0,
+      "finalCt": 7.375,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "ctReached": 7.207,
+      "evs": [
+        "loadstart@1.6",
+        "waiting@1.6",
+        "progress@2.38",
+        "progress@2.71",
+        "suspend@2.71",
+        "loadeddata@2.71",
+        "canplay@2.71",
+        "playing@2.71",
+        "canplaythrough@2.71"
+      ],
+      "firstSample": {
+        "t": 2.71,
+        "ct": 0.001,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 24,
+        "buf": [
+          [
+            0,
+            9.136
+          ]
+        ],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 9.91,
+        "ct": 7.207,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 24,
+        "buf": [
+          [
+            0,
+            16.384
+          ]
+        ],
+        "frames": 159
+      },
+      "srcTrace": [
+        {
+          "t": 0.11,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.6,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 2.71,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 10.08,
+          "src": "blob",
+          "ct": 7.37
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc6-prog-run3",
+      "date": "2026-11-12T00:00:14.059Z",
+      "mode": "progressive",
+      "clip": "c6.mp4",
+      "clipBytes": 6165909,
+      "clipDurS": 24,
+      "playDelayMs": 0,
+      "run": 3,
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 156,
+      "droppedFrames": 2,
+      "finalCt": 9.277,
+      "finalPaused": false,
+      "finalSrcKind": "http",
+      "ctReached": 9.159,
+      "evs": [
+        "waiting@0.1",
+        "loadstart@0.1",
+        "progress@0.47",
+        "progress@0.89",
+        "suspend@0.89",
+        "loadeddata@0.89",
+        "canplay@0.89",
+        "playing@0.89",
+        "canplaythrough@0.89"
+      ],
+      "firstSample": {
+        "t": 0.89,
+        "ct": 0.083,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 24,
+        "buf": [
+          [
+            0,
+            24
+          ]
+        ],
+        "frames": 1
+      },
+      "lastSample": {
+        "t": 9.96,
+        "ct": 9.159,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 24,
+        "buf": [
+          [
+            0,
+            24
+          ]
+        ],
+        "frames": 152
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.89,
+          "src": "http",
+          "ct": 0.08
+        },
+        {
+          "t": 10.08,
+          "src": "http",
+          "ct": 9.28
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc8-blob-run1",
+      "date": "2026-11-12T00:00:32.750Z",
+      "mode": "blob",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "run": 1,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 878,
+      "poolInfoMode": "blob",
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 120,
+      "droppedFrames": 3,
+      "finalCt": 8.616,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "ctReached": 8.375,
+      "evs": [
+        "loadstart@0.9",
+        "waiting@0.9",
+        "progress@1.29",
+        "progress@1.42",
+        "suspend@1.42",
+        "loadeddata@1.42",
+        "canplay@1.42",
+        "playing@1.42",
+        "canplaythrough@1.42"
+      ],
+      "firstSample": {
+        "t": 1.42,
+        "ct": 0.026,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            9.24
+          ]
+        ],
+        "frames": 1
+      },
+      "lastSample": {
+        "t": 9.9,
+        "ct": 8.375,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            17.54
+          ]
+        ],
+        "frames": 118
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.9,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 1.42,
+          "src": "blob",
+          "ct": 0.03
+        },
+        {
+          "t": 10.01,
+          "src": "blob",
+          "ct": 8.62
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc8-prog-run1",
+      "date": "2026-11-12T00:00:48.135Z",
+      "mode": "progressive",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "run": 1,
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 57,
+      "droppedFrames": 10,
+      "finalCt": 8,
+      "finalPaused": false,
+      "finalSrcKind": "http",
+      "ctReached": 7.958,
+      "evs": [
+        "waiting@0.4",
+        "loadstart@0.4",
+        "progress@1.48",
+        "progress@1.98",
+        "suspend@1.98",
+        "loadeddata@1.98",
+        "canplay@1.98",
+        "playing@1.98",
+        "canplaythrough@1.98"
+      ],
+      "firstSample": {
+        "t": 1.98,
+        "ct": 0.001,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 10,
+        "ct": 7.958,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 57
+      },
+      "srcTrace": [
+        {
+          "t": 0.09,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.98,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 10.19,
+          "src": "http",
+          "ct": 8
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc8-blob-run2",
+      "date": "2026-11-12T00:01:08.044Z",
+      "mode": "blob",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "run": 2,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 1194,
+      "poolInfoMode": "blob",
+      "playDelayAppliedMs": 0,
+      "playOk": false,
+      "playErr": "play-timeout-10s",
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "finalCt": 0,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "ctReached": null,
+      "evs": [
+        "waiting@1.71",
+        "loadstart@1.71",
+        "progress@3",
+        "progress@3.41",
+        "stalled@6.58"
+      ],
+      "firstSample": null,
+      "lastSample": null,
+      "srcTrace": [
+        {
+          "t": 0.09,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.28,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 1.29,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 11.29,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 11.29,
+          "src": "blob",
+          "ct": 0
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc8-prog-run2",
+      "date": "2026-11-12T00:01:24.839Z",
+      "mode": "progressive",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "run": 2,
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 98,
+      "droppedFrames": 3,
+      "finalCt": 7.75,
+      "finalPaused": false,
+      "finalSrcKind": "http",
+      "ctReached": 7.542,
+      "evs": [
+        "waiting@0.63",
+        "loadstart@0.63",
+        "progress@1",
+        "progress@1.41",
+        "progress@1.8",
+        "progress@2.23",
+        "progress@2.23",
+        "suspend@2.23",
+        "loadeddata@2.23",
+        "canplay@2.23",
+        "playing@2.23",
+        "canplaythrough@2.23"
+      ],
+      "firstSample": {
+        "t": 2.23,
+        "ct": 0.001,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 9.91,
+        "ct": 7.542,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 96
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 2.23,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 10.11,
+          "src": "http",
+          "ct": 7.75
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc8-blob-run3",
+      "date": "2026-11-12T00:01:38.532Z",
+      "mode": "blob",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "run": 3,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 1042,
+      "poolInfoMode": "blob",
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 122,
+      "droppedFrames": 2,
+      "finalCt": 8.105,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "ctReached": 7.667,
+      "evs": [
+        "waiting@1.23",
+        "loadstart@1.23",
+        "progress@1.9",
+        "progress@2.03",
+        "suspend@2.03",
+        "loadeddata@2.03",
+        "canplay@2.03",
+        "playing@2.03",
+        "canplaythrough@2.03"
+      ],
+      "firstSample": {
+        "t": 2.03,
+        "ct": 0.001,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            9.181
+          ]
+        ],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 9.94,
+        "ct": 7.667,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            17.03
+          ]
+        ],
+        "frames": 119
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.05,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 1.06,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 2.03,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 10.14,
+          "src": "blob",
+          "ct": 8.11
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc8-prog-run3",
+      "date": "2026-11-12T00:01:51.333Z",
+      "mode": "progressive",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "run": 3,
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "playDelayAppliedMs": 0,
+      "playOk": true,
+      "playErr": null,
+      "totalFrames": 172,
+      "droppedFrames": 0,
+      "finalCt": 8.833,
+      "finalPaused": false,
+      "finalSrcKind": "http",
+      "ctReached": 8.792,
+      "evs": [
+        "waiting@0.18",
+        "loadstart@0.18",
+        "progress@0.37",
+        "progress@0.77",
+        "progress@1.28",
+        "suspend@1.28",
+        "loadeddata@1.28",
+        "canplay@1.28",
+        "playing@1.28",
+        "canplaythrough@1.28"
+      ],
+      "firstSample": {
+        "t": 1.28,
+        "ct": 0.125,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 3
+      },
+      "lastSample": {
+        "t": 9.98,
+        "ct": 8.792,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 171
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.28,
+          "src": "http",
+          "ct": 0.12
+        },
+        {
+          "t": 10.09,
+          "src": "http",
+          "ct": 8.83
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "LOOPc2-blob-run1",
+      "date": "2026-11-12T00:03:15.640Z",
+      "mode": "blob",
+      "clip": "c2.mp4",
+      "clipBytes": 2139973,
+      "clipDurS": 8,
+      "run": 1,
+      "loopsCompleted": 0,
+      "targetLoops": 5,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "stalls": [
+        {
+          "fromT": 10.42,
+          "durS": 63.48,
+          "ct": 0
+        }
+      ],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 391,
+      "poolInfoMode": "blob",
+      "finalSrcKind": "blob",
+      "playErr": "play-timeout-10s",
+      "finalCt": 0,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 73.9,
+      "srcTrace": [
+        {
+          "t": 0.02,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.41,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.41,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 10.41,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 74,
+          "src": "blob",
+          "ct": 0
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "LOOPc2-prog-run1",
+      "date": "2026-11-12T00:04:10.462Z",
+      "mode": "progressive",
+      "clip": "c2.mp4",
+      "clipBytes": 2139973,
+      "clipDurS": 8,
+      "run": 1,
+      "loopsCompleted": 5,
+      "targetLoops": 5,
+      "pass": true,
+      "resumeMsMedian": 1472,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "totalFrames": 459,
+      "droppedFrames": 26,
+      "stalls": [],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "playErr": null,
+      "finalCt": 0.583,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 48.39,
+      "srcTrace": [
+        {
+          "t": 0.07,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.78,
+          "src": "http",
+          "ct": 0.09
+        },
+        {
+          "t": 48.39,
+          "src": "http",
+          "ct": 0.58
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "LOOPc2-blob-run2",
+      "date": "2026-11-12T00:05:35.142Z",
+      "mode": "blob",
+      "clip": "c2.mp4",
+      "clipBytes": 2139973,
+      "clipDurS": 8,
+      "run": 2,
+      "loopsCompleted": 0,
+      "targetLoops": 5,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 884,
+      "poolInfoMode": "skipped",
+      "finalSrcKind": "http",
+      "playErr": "The operation is not supported.",
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalEnded": false,
+      "wallS": 73.99,
+      "srcTrace": [
+        {
+          "t": 0.09,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.97,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.98,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 1.58,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 1.58,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.61,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 74.09,
+          "src": "http",
+          "ct": 0
+        }
+      ],
+      "errEvents": [
+        {
+          "t": 1.58,
+          "src": "http",
+          "code": null,
+          "msg": null
+        }
+      ]
+    },
+    {
+      "name": "LOOPc2-prog-run2",
+      "date": "2026-11-12T00:06:31.841Z",
+      "mode": "progressive",
+      "clip": "c2.mp4",
+      "clipBytes": 2139973,
+      "clipDurS": 8,
+      "run": 2,
+      "loopsCompleted": 5,
+      "targetLoops": 5,
+      "pass": true,
+      "resumeMsMedian": 1509,
+      "resumeNull": 0,
+      "seekedCount": 5,
+      "totalFrames": 549,
+      "droppedFrames": 18,
+      "stalls": [],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "playErr": null,
+      "finalCt": 0.583,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 49.61,
+      "srcTrace": [
+        {
+          "t": 0.08,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 2.48,
+          "src": "http",
+          "ct": 0.1
+        },
+        {
+          "t": 49.61,
+          "src": "http",
+          "ct": 0.58
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "LOOPc4-blob-run1",
+      "date": "2026-11-12T00:08:14.035Z",
+      "mode": "blob",
+      "clip": "c4.mp4",
+      "clipBytes": 4158929,
+      "clipDurS": 16,
+      "run": 1,
+      "loopsCompleted": 0,
+      "targetLoops": 3,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 812,
+      "poolInfoMode": "skipped",
+      "finalSrcKind": "http",
+      "playErr": "The operation is not supported.",
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalEnded": false,
+      "wallS": 86.7,
+      "srcTrace": [
+        {
+          "t": 0.07,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.89,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.9,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 2.49,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 2.49,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 2.49,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 86.8,
+          "src": "http",
+          "ct": 0
+        }
+      ],
+      "errEvents": [
+        {
+          "t": 2.49,
+          "src": "http",
+          "code": null,
+          "msg": null
+        }
+      ]
+    },
+    {
+      "name": "LOOPc4-prog-run1",
+      "date": "2026-11-12T00:09:09.233Z",
+      "mode": "progressive",
+      "clip": "c4.mp4",
+      "clipBytes": 4158929,
+      "clipDurS": 16,
+      "run": 1,
+      "loopsCompleted": 3,
+      "targetLoops": 3,
+      "pass": true,
+      "resumeMsMedian": 908,
+      "resumeNull": 0,
+      "seekedCount": 3,
+      "totalFrames": 763,
+      "droppedFrames": 7,
+      "stalls": [],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "playErr": null,
+      "finalCt": 0.609,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 51.62,
+      "srcTrace": [
+        {
+          "t": 0.07,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.91,
+          "src": "http",
+          "ct": 0.02
+        },
+        {
+          "t": 51.62,
+          "src": "http",
+          "ct": 0.61
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "LOOPc4-blob-run2",
+      "date": "2026-11-12T00:10:37.867Z",
+      "mode": "blob",
+      "clip": "c4.mp4",
+      "clipBytes": 4158929,
+      "clipDurS": 16,
+      "run": 2,
+      "loopsCompleted": 0,
+      "targetLoops": 3,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 158,
+      "poolInfoMode": "skipped",
+      "finalSrcKind": "http",
+      "playErr": "The operation is not supported.",
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalEnded": false,
+      "wallS": 86.78,
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.17,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.17,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.33,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.33,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.33,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 86.88,
+          "src": "http",
+          "ct": 0
+        }
+      ],
+      "errEvents": [
+        {
+          "t": 0.33,
+          "src": "http",
+          "code": null,
+          "msg": null
+        }
+      ]
+    },
+    {
+      "name": "LOOPc4-prog-run2",
+      "date": "2026-11-12T00:11:34.717Z",
+      "mode": "progressive",
+      "clip": "c4.mp4",
+      "clipBytes": 4158929,
+      "clipDurS": 16,
+      "run": 2,
+      "loopsCompleted": 3,
+      "targetLoops": 3,
+      "pass": true,
+      "resumeMsMedian": 902,
+      "resumeNull": 0,
+      "seekedCount": 3,
+      "totalFrames": 731,
+      "droppedFrames": 13,
+      "stalls": [],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "playErr": null,
+      "finalCt": 0.765,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 52.59,
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.03,
+          "src": "http",
+          "ct": 0.03
+        },
+        {
+          "t": 52.6,
+          "src": "http",
+          "ct": 0.76
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "LOOPc6-blob-run1",
+      "date": "2026-11-12T00:13:11.242Z",
+      "mode": "blob",
+      "clip": "c6.mp4",
+      "clipBytes": 6165909,
+      "clipDurS": 24,
+      "run": 1,
+      "loopsCompleted": 1,
+      "targetLoops": 2,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 1,
+      "seekedCount": 0,
+      "totalFrames": 384,
+      "droppedFrames": 2,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 620,
+      "poolInfoMode": "blob",
+      "finalSrcKind": "blob",
+      "playErr": null,
+      "finalCt": 0,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 86.8,
+      "srcTrace": [
+        {
+          "t": 0.08,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.7,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.7,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 2.89,
+          "src": "blob",
+          "ct": 0.08
+        },
+        {
+          "t": 86.97,
+          "src": "blob",
+          "ct": 0
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "LOOPc6-prog-run1",
+      "date": "2026-11-12T00:14:06.536Z",
+      "mode": "progressive",
+      "clip": "c6.mp4",
+      "clipBytes": 6165909,
+      "clipDurS": 24,
+      "run": 1,
+      "loopsCompleted": 2,
+      "targetLoops": 2,
+      "pass": true,
+      "resumeMsMedian": 1082,
+      "resumeNull": 0,
+      "seekedCount": 2,
+      "totalFrames": 818,
+      "droppedFrames": 4,
+      "stalls": [],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "playErr": null,
+      "finalCt": 0.599,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 51.23,
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 1.24,
+          "src": "http",
+          "ct": 0.03
+        },
+        {
+          "t": 51.23,
+          "src": "http",
+          "ct": 0.6
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "LOOPc6-blob-run2",
+      "date": "2026-11-12T00:15:35.799Z",
+      "mode": "blob",
+      "clip": "c6.mp4",
+      "clipBytes": 6165909,
+      "clipDurS": 24,
+      "run": 2,
+      "loopsCompleted": 0,
+      "targetLoops": 2,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 271,
+      "poolInfoMode": "skipped",
+      "finalSrcKind": "http",
+      "playErr": "The operation is not supported.",
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalEnded": false,
+      "wallS": 86.7,
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.28,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.28,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.67,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.67,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.67,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 86.81,
+          "src": "http",
+          "ct": 0
+        }
+      ],
+      "errEvents": [
+        {
+          "t": 0.67,
+          "src": "http",
+          "code": null,
+          "msg": null
+        }
+      ]
+    },
+    {
+      "name": "LOOPc6-prog-run2",
+      "date": "2026-11-12T00:16:26.709Z",
+      "mode": "progressive",
+      "clip": "c6.mp4",
+      "clipBytes": 6165909,
+      "clipDurS": 24,
+      "run": 2,
+      "loopsCompleted": 2,
+      "targetLoops": 2,
+      "pass": true,
+      "resumeMsMedian": 399,
+      "resumeNull": 0,
+      "seekedCount": 2,
+      "totalFrames": 1170,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "playErr": null,
+      "finalCt": 0.515,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 49.58,
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.64,
+          "src": "http",
+          "ct": 0.04
+        },
+        {
+          "t": 49.58,
+          "src": "http",
+          "ct": 0.52
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "LOOPc8-blob-run1",
+      "date": "2026-11-12T00:18:21.756Z",
+      "mode": "blob",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "run": 1,
+      "loopsCompleted": 0,
+      "targetLoops": 2,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 0,
+      "seekedCount": 0,
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 285,
+      "poolInfoMode": "skipped",
+      "finalSrcKind": "http",
+      "playErr": "The operation is not supported.",
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalEnded": false,
+      "wallS": 112.38,
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.29,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.3,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.51,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.51,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.51,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 112.49,
+          "src": "http",
+          "ct": 0
+        }
+      ],
+      "errEvents": [
+        {
+          "t": 0.51,
+          "src": "http",
+          "code": null,
+          "msg": null
+        }
+      ]
+    },
+    {
+      "name": "LOOPc8-prog-run1",
+      "date": "2026-11-12T00:19:28.347Z",
+      "mode": "progressive",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "run": 1,
+      "loopsCompleted": 2,
+      "targetLoops": 2,
+      "pass": true,
+      "resumeMsMedian": 409,
+      "resumeNull": 0,
+      "seekedCount": 2,
+      "totalFrames": 1553,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "playErr": null,
+      "finalCt": 0.56,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 65.5,
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.39,
+          "src": "http",
+          "ct": 0.03
+        },
+        {
+          "t": 65.5,
+          "src": "http",
+          "ct": 0.56
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "LOOPc8-blob-run2",
+      "date": "2026-11-12T00:21:22.062Z",
+      "mode": "blob",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "run": 2,
+      "loopsCompleted": 1,
+      "targetLoops": 2,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 1,
+      "seekedCount": 1,
+      "totalFrames": 0,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 135,
+      "poolInfoMode": "skipped",
+      "finalSrcKind": "http",
+      "playErr": null,
+      "finalCt": 0,
+      "finalPaused": true,
+      "finalEnded": false,
+      "wallS": 112.38,
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.14,
+          "src": "blob",
+          "ct": 0
+        },
+        {
+          "t": 0.42,
+          "src": "blob",
+          "ct": 0.02
+        },
+        {
+          "t": 32.56,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 32.56,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 112.48,
+          "src": "http",
+          "ct": 0
+        }
+      ],
+      "errEvents": [
+        {
+          "t": 32.56,
+          "src": "http",
+          "code": null,
+          "msg": null
+        }
+      ]
+    },
+    {
+      "name": "LOOPc8-prog-run2",
+      "date": "2026-11-12T00:22:29.288Z",
+      "mode": "progressive",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "run": 2,
+      "loopsCompleted": 2,
+      "targetLoops": 2,
+      "pass": true,
+      "resumeMsMedian": 505,
+      "resumeNull": 0,
+      "seekedCount": 2,
+      "totalFrames": 1554,
+      "droppedFrames": 0,
+      "stalls": [],
+      "srcAtPlay": "http",
+      "blobReadyMs": null,
+      "poolInfoMode": null,
+      "finalSrcKind": "http",
+      "playErr": null,
+      "finalCt": 0.559,
+      "finalPaused": false,
+      "finalEnded": false,
+      "wallS": 65.83,
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0
+        },
+        {
+          "t": 0.59,
+          "src": "http",
+          "ct": 0.02
+        },
+        {
+          "t": 65.83,
+          "src": "http",
+          "ct": 0.56
+        }
+      ],
+      "errEvents": []
+    }
+  ],
+  "env": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15",
+    "mediaRecorder": "undefined",
+    "hardwareConcurrency": 4,
+    "uptimeS": 564.34,
+    "loadavg": [
+      11.68,
+      4.46,
+      1.86
+    ]
+  }
+}

@@ -31,6 +31,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -137,7 +138,7 @@ class CDP {
   }
   async shot(name) {
     const r = await this.send("Page.captureScreenshot", { format: "png" });
-    fs.writeFileSync(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
+    writeFileEpermRetry(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
     return name;
   }
 }
@@ -504,7 +505,7 @@ async function main() {
       if (fs.existsSync(src) && !fs.existsSync(dst)) fs.copyFileSync(src, dst);
     }
     fs.rmSync(PROFILE, { recursive: true, force: true });
-    fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, bridge :${bridgePort}, static :${STATIC_PORT}`);
 
     // ---- Static server (phục vụ mp4/webp test, CORS *) ----------------
@@ -596,7 +597,7 @@ async function main() {
       // 1440 trước (viewport thật qua metrics override).
       await setViewport(cdp, 1440, 900, false);
       const m1440 = await cdp.evalJs(TBTN_FN);
-      fs.writeFileSync(path.join(SCRATCH, "r10-measure-tbtn-1440.json"), JSON.stringify(m1440, null, 2));
+      writeFileEpermRetry(path.join(SCRATCH, "r10-measure-tbtn-1440.json"), JSON.stringify(m1440, null, 2));
       await cdp.shot("r10-tbtn-1440.png");
       const vis1440 = m1440.labels.filter((l) => l.display !== "none" && l.w > 0).length;
       if (m1440.count >= 1 && vis1440 === m1440.count) pass("C1 .tbtn-label @1440×900: nhãn HIỆN", `${m1440.count} nhãn, display=${[...new Set(m1440.labels.map((l) => l.display))].join(",")}, rộng ${m1440.labels.map((l) => l.w).join("/")}px`);
@@ -605,7 +606,7 @@ async function main() {
 
       await setViewport(cdp, 1280, 720, false);
       const m1280 = await cdp.evalJs(TBTN_FN);
-      fs.writeFileSync(path.join(SCRATCH, "r10-measure-tbtn-1280.json"), JSON.stringify(m1280, null, 2));
+      writeFileEpermRetry(path.join(SCRATCH, "r10-measure-tbtn-1280.json"), JSON.stringify(m1280, null, 2));
       await cdp.shot("r10-tbtn-1280.png");
       const hid1280 = m1280.labels.filter((l) => l.display === "none").length;
       if (m1280.count >= 1 && hid1280 === m1280.count) pass("C2 .tbtn-label @1280×720: nhãn ẨN (display none)", `${m1280.count} nhãn đều display:none (media query 769–1360px)`);
@@ -660,7 +661,7 @@ async function main() {
         const st = await cdp.evalJs(STATE_FN).catch(() => ({}));
         fail(`${tag} running en: spinner + Cancel hiển thị đúng`, `không bắt được bước running sau ${elapsedMs}ms (captionStep=${st.captionStep}, modal mở=${st.captionOpen})`);
       } else {
-        fs.writeFileSync(path.join(SCRATCH, `r10-measure-running-${tag}.json`), JSON.stringify(run, null, 2));
+        writeFileEpermRetry(path.join(SCRATCH, `r10-measure-running-${tag}.json`), JSON.stringify(run, null, 2));
         await cdp.shot(shotName);
         const problems = [];
         if (!run.spinnerVisible) problems.push("spinner không hiển thị (0×0)");
@@ -720,7 +721,7 @@ async function main() {
         } else {
           fail("E1 speed warnOverlap: preset 0.5× đè clip kề", `warn=${JSON.stringify(w0)} (kỳ vọng exact "${EXPECT.warnOverlap}"), speed clip=${st.v1clips[0].speed}`);
         }
-        fs.writeFileSync(path.join(SCRATCH, "r10-measure-speed-overlap.json"), JSON.stringify(sp, null, 2));
+        writeFileEpermRetry(path.join(SCRATCH, "r10-measure-speed-overlap.json"), JSON.stringify(sp, null, 2));
         await cdp.shot("r10-speed-overlap.png");
       }
       await drainErrors(cdp);
@@ -751,7 +752,7 @@ async function main() {
         } else {
           fail("E2 speed warnResetOverlap: Reset 1× đè clip kề", `warn=${JSON.stringify(w0)} (kỳ vọng exact "${EXPECT.warnResetOverlap}"), speed clip=${st.v1clips[0].speed}`);
         }
-        fs.writeFileSync(path.join(SCRATCH, "r10-measure-speed-reset-overlap.json"), JSON.stringify(sp, null, 2));
+        writeFileEpermRetry(path.join(SCRATCH, "r10-measure-speed-reset-overlap.json"), JSON.stringify(sp, null, 2));
         await cdp.shot("r10-speed-reset-overlap.png");
       }
       await drainErrors(cdp);
@@ -791,7 +792,7 @@ async function main() {
         } else {
           fail("E3 speed warnTooShort: NHÁNH CHẾT qua UI (đã chứng minh)", `kết quả=${JSON.stringify(tooShortResult)}`);
         }
-        fs.writeFileSync(path.join(SCRATCH, "r10-measure-speed-tooshort.json"), JSON.stringify(tooShortResult, null, 2));
+        writeFileEpermRetry(path.join(SCRATCH, "r10-measure-speed-tooshort.json"), JSON.stringify(tooShortResult, null, 2));
       } else {
         fail("E3 speed warnTooShort: NHÁNH CHẾT qua UI (đã chứng minh)", `setup không như kỳ vọng: sliderMax=${sliderMax} (cần 2.5), preset4=${JSON.stringify(preset4)}`);
       }
@@ -834,7 +835,7 @@ async function main() {
           } else {
             fail("E4 speed warnNoGap: thêm điểm khi không còn khoảng trống", `warn=${JSON.stringify(w0)} (kỳ vọng exact "${EXPECT.warnNoGap}")`);
           }
-          fs.writeFileSync(path.join(SCRATCH, "r10-measure-speed-nogap.json"), JSON.stringify(sp, null, 2));
+          writeFileEpermRetry(path.join(SCRATCH, "r10-measure-speed-nogap.json"), JSON.stringify(sp, null, 2));
           await cdp.shot("r10-speed-nogap.png");
         }
         }
@@ -858,7 +859,7 @@ async function main() {
         } else {
           fail("E5 speed warnStabilizeRamp (bonus): chống rung + curve", `warns=${JSON.stringify(sp ? sp.warns : null)} (kỳ vọng exact "${EXPECT.warnStabilizeRamp}")`);
         }
-        fs.writeFileSync(path.join(SCRATCH, "r10-measure-speed-stabilize.json"), JSON.stringify(sp, null, 2));
+        writeFileEpermRetry(path.join(SCRATCH, "r10-measure-speed-stabilize.json"), JSON.stringify(sp, null, 2));
         await cdp.shot("r10-speed-stabilize.png");
       } catch (e) {
         fail("E5 speed warnStabilizeRamp (bonus): chống rung + curve", `ERROR: ${String((e && e.stack) || e).slice(0, 400)}`);
@@ -902,7 +903,7 @@ async function main() {
         } else {
           fail("E6 sticker errWebp: upload WebP động thật", `warn=${JSON.stringify(w)} (kỳ vọng exact "${EXPECT.errWebp}")`);
         }
-        fs.writeFileSync(path.join(SCRATCH, "r10-measure-sticker-webp.json"), JSON.stringify(w, null, 2));
+        writeFileEpermRetry(path.join(SCRATCH, "r10-measure-sticker-webp.json"), JSON.stringify(w, null, 2));
         await cdp.shot("r10-sticker-webp.png");
       }
       await drainErrors(cdp);
@@ -956,7 +957,7 @@ async function main() {
             try { const r = await fetch(done.proxyUrl, { method: "HEAD" }); headOk = r.ok; } catch { headOk = false; }
           }
           const toast = await cdp.evalJs(`(() => { const t = [...document.querySelectorAll(".toast")].map((e) => e.textContent || ""); return t; })()`).catch(() => []);
-          fs.writeFileSync(path.join(SCRATCH, "r10-measure-proxy.json"), JSON.stringify({ done, cardAfter: card1, newFiles, headOk, toast, elapsedMs }, null, 2));
+          writeFileEpermRetry(path.join(SCRATCH, "r10-measure-proxy.json"), JSON.stringify({ done, cardAfter: card1, newFiles, headOk, toast, elapsedMs }, null, 2));
           await cdp.shot("r10-proxy-after.png");
           const problems = [];
           if (!done) problems.push("proxyUrl không xuất hiện sau 120s");
@@ -1009,7 +1010,7 @@ async function main() {
               await sleep(500);
             }
             const elapsedMs = Date.now() - t0;
-            fs.writeFileSync(path.join(SCRATCH, "r10-measure-pack-timeout.json"), JSON.stringify({ elapsedMs, packErr, expectedErr }, null, 2));
+            writeFileEpermRetry(path.join(SCRATCH, "r10-measure-pack-timeout.json"), JSON.stringify({ elapsedMs, packErr, expectedErr }, null, 2));
             await cdp.shot("r10-pack-timeout.png");
             const problems = [];
             if (!packErr) problems.push("không thấy lỗi trong modal sau 60s");
@@ -1049,8 +1050,8 @@ async function main() {
 
     // ---- H9: 0 lỗi trang trong phiên -------------------------------------
     const allErrs = phaseErrors;
-    fs.writeFileSync(path.join(SCRATCH, "r10-report.json"), JSON.stringify({ results, phaseErrors: allErrs, at: new Date().toISOString() }, null, 2));
-    fs.writeFileSync(path.join(SCRATCH, "r10-log.txt"), logLines.join("\n") + "\n");
+    writeFileEpermRetry(path.join(SCRATCH, "r10-report.json"), JSON.stringify({ results, phaseErrors: allErrs, at: new Date().toISOString() }, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "r10-log.txt"), logLines.join("\n") + "\n");
     if (allErrs.length === 0) pass("H9 0 lỗi trang trong phiên", "window.onerror / unhandledrejection = 0 trong toàn bộ phiên đo");
     else fail("H9 0 lỗi trang trong phiên", `${allErrs.length} lỗi: ${allErrs.slice(0, 5).join(" | ")}`);
 
@@ -1061,7 +1062,7 @@ async function main() {
     process.exit(failed.length ? 1 : 0);
   } catch (e) {
     log("HARNESS ERROR: " + (e && e.stack || e));
-    try { fs.writeFileSync(path.join(SCRATCH, "r10-log.txt"), logLines.join("\n") + "\n"); } catch {}
+    try { writeFileEpermRetry(path.join(SCRATCH, "r10-log.txt"), logLines.join("\n") + "\n"); } catch {}
     killAll();
     process.exit(2);
   }

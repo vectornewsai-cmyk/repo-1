@@ -61,6 +61,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -1182,7 +1183,7 @@ async function main() {
       const outPath = path.join(ROOT, "benchmarks", "results",
         (process.env.R30M1_ONLY ? "v30-m1-seek-probe-v2.json" : "v30-m1-seek-probe.json"));
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
-      fs.writeFileSync(outPath, JSON.stringify(outJson, null, 2));
+      writeFileEpermRetry(outPath, JSON.stringify(outJson, null, 2));
       log(`JSON kết quả: ${outPath}`);
     } finally {
       try { holder.chrome.kill("SIGKILL"); } catch {}

@@ -18,6 +18,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -1208,7 +1209,7 @@ async function main() {
     const outPath = path.join(ROOT, "benchmarks", "results", OUT_FILE);
     try {
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
-      fs.writeFileSync(outPath, JSON.stringify(out, null, 2));
+      writeFileEpermRetry(outPath, JSON.stringify(out, null, 2));
       console.log(`results JSON: ${outPath}`);
     } catch (e) { console.log(`không ghi được results JSON: ${e.message}`); }
   }

@@ -35,10 +35,15 @@
  * sửa .m-sheet-backdrop 80→350; M11/M13 dùng file giọng nói TTS (mau-1.webm
  * không có track audio → caption lỗi FFMPEG_ERROR) + SPEECH_FN chờ media
  * rehydrate trước khi tổng hợp lại (tránh CDP timeout 60s ở lần chạy 3).
+ * Đợt 81 I8: SPEECH_FN đọc NDJSON /api/tts (đợt 80 H8 đổi API sang stream +
+ * done {downloadUrl}) rồi fetch WAV qua downloadUrl — blob trực tiếp từ
+ * POST /api/tts giờ chỉ là NDJSON text (~640 byte) nên caption báo
+ * MAGIC_MISMATCH "fake file" (M11/M13 fail ở lần chạy lại 10/11).
  * Exit 0 mọi case PASS, 1 có FAIL, 2 harness lỗi. KHÔNG push/tag/binary.
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -154,7 +159,7 @@ class CDP {
   }
   async shot(name) {
     const r = await this.send("Page.captureScreenshot", { format: "png" });
-    fs.writeFileSync(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
+    writeFileEpermRetry(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
     return name;
   }
 }
@@ -437,7 +442,21 @@ const SPEECH_FN = (bridgeUrl) => `(async () => {
     body: JSON.stringify({ text: "Xin chào các bạn, đây là video thử nghiệm phụ đề tự động của VCut Studio.", voice: "Hải Đăng" }),
   });
   if (!res.ok) { const t = await res.text().catch(() => ""); return { ok: false, why: "TTS HTTP " + res.status + " " + t.slice(0, 200) }; }
-  const blob = await res.blob();
+  // Đợt 80 H8: /api/tts đổi sang NDJSON stream (progress thật + done
+  // {downloadUrl}) — res.blob() trực tiếp sẽ lấy NDJSON text, không phải
+  // WAV (đo đợt 81 I8: blob chỉ 640 byte → caption báo MAGIC_MISMATCH
+  // "fake file"). Đọc NDJSON, lấy done.downloadUrl rồi fetch file WAV.
+  const ndjson = await res.text();
+  let doneEv = null, errEv = null;
+  for (const line of ndjson.split("\\n")) {
+    if (!line.trim()) continue;
+    try { const o = JSON.parse(line); if (o.type === "done") doneEv = o; if (o.type === "error") errEv = o; } catch {}
+  }
+  if (errEv) return { ok: false, why: "TTS NDJSON error: " + JSON.stringify(errEv).slice(0, 200) };
+  if (!doneEv || !doneEv.downloadUrl) return { ok: false, why: "TTS NDJSON không có done/downloadUrl: " + ndjson.slice(0, 200) };
+  const wavRes = await fetch(${JSON.stringify(bridgeUrl)} + doneEv.downloadUrl);
+  if (!wavRes.ok) return { ok: false, why: "TTS download HTTP " + wavRes.status };
+  const blob = await wavRes.blob();
   if (!blob || blob.size === 0) return { ok: false, why: "TTS trả blob rỗng" };
   const file = new File([blob], "r63-speech.wav", { type: "audio/wav" });
   await st.importFiles([file]);
@@ -669,7 +688,7 @@ async function main() {
     fs.mkdirSync(BRIDGE_WORK_DIR, { recursive: true });
     fs.rmSync(PROFILE, { recursive: true, force: true });
     fs.mkdirSync(VITE_CFG_DIR, { recursive: true });
-    fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, bridge :${BRIDGE_PORT}, DISPLAY=${DISPLAY}, TMPDIR=${TMPDIR}`);
 
     // ---- Bridge (caption + translate thật, faster-whisper local) ---------
@@ -756,7 +775,7 @@ async function main() {
         if (neededScroll) await scrollPrimaryIntoView(cdp, titleSubstr, primarySubstr, nth);
         await sleep(300);
         const m = await cdp.evalJs(MODAL_FN(titleSubstr, primarySubstr, nth));
-        fs.writeFileSync(path.join(SCRATCH, `r1-measure-${tag}.json`), JSON.stringify({ before, after: m }, null, 2));
+        writeFileEpermRetry(path.join(SCRATCH, `r1-measure-${tag}.json`), JSON.stringify({ before, after: m }, null, 2));
         const v = verdictModal(m, tag);
         await cdp.shot(shotName);
         await drainErrors(cdp);
@@ -890,7 +909,7 @@ async function main() {
       const toastRes = await pushToast(cdp, "R63-R1 đo toast: thông báo mẫu trong lúc modal mở", "info");
       await sleep(800);
       const m = await cdp.evalJs(MODAL_FN("Tạo phụ đề tự động", "Bắt đầu tạo phụ đề", 0));
-      fs.writeFileSync(path.join(SCRATCH, "r1-measure-m9-toast-tour.json"), JSON.stringify(m, null, 2));
+      writeFileEpermRetry(path.join(SCRATCH, "r1-measure-m9-toast-tour.json"), JSON.stringify(m, null, 2));
       await cdp.shot("r1-m9-toast-tour-390-vi.png");
       await drainErrors(cdp);
       const hit = m.hitAtPrimaryCenter;
@@ -904,7 +923,7 @@ async function main() {
       const m2 = await cdp.evalJs(MODAL_FN("Tạo phụ đề tự động", "Bắt đầu tạo phụ đề", 0));
       const hit2 = m2.hitAtPrimaryCenter;
       const afterToastGone = m2.toastRects.length === 0 && hit2 && hit2.inTargetDlg;
-      fs.writeFileSync(path.join(SCRATCH, "r1-measure-m9-after-toast.json"), JSON.stringify(m2, null, 2));
+      writeFileEpermRetry(path.join(SCRATCH, "r1-measure-m9-after-toast.json"), JSON.stringify(m2, null, 2));
       await drainErrors(cdp);
       // Verdict M9 (sửa sau lần chạy 2): case này ĐO hiện tượng, không phải
       // khóa "nút phải bấm được" — tour (z 450) và toast (z 500) vốn TRÊN
@@ -932,7 +951,7 @@ async function main() {
       await openFpsPanel(cdp);
       await openModalTopBar(cdp, "Cắt lặng", "Cắt khoảng lặng");
       const m = await cdp.evalJs(MODAL_FN("Cắt khoảng lặng", "Phân tích khoảng lặng", 0));
-      fs.writeFileSync(path.join(SCRATCH, "r1-measure-m10-panel-open.json"), JSON.stringify(m, null, 2));
+      writeFileEpermRetry(path.join(SCRATCH, "r1-measure-m10-panel-open.json"), JSON.stringify(m, null, 2));
       if (!m.primaryRect) throw new Error("không tìm thấy nút 'Phân tích khoảng lặng'");
       // Điểm click: tâm vùng giao nhau panel∩nút (nếu có) — chính là vùng
       // user chạm vào nút sẽ rơi vào panel nếu panel còn trên backdrop.
@@ -965,7 +984,7 @@ async function main() {
       const after = await cdp.evalJs(STATE_FN);
       await cdp.shot("r1-m10-click-panel-open-390-vi.png");
       await drainErrors(cdp);
-      fs.writeFileSync(path.join(SCRATCH, "r1-measure-m10-click.json"), JSON.stringify({ measure: m, clickPt, observed, after }, null, 2));
+      writeFileEpermRetry(path.join(SCRATCH, "r1-measure-m10-click.json"), JSON.stringify({ measure: m, clickPt, observed, after }, null, 2));
       const clickedButton = observed && (observed.step === "running" || observed.step === "config-error");
       if (clickedButton && after.fpsPanelOpen) {
         pass("M10 click thật nút chính khi panel FPS đang mở: click tới nút", `click tại ${clickPt.where}; sau click: ${observed.step === "running" ? "modal sang buoc running (Dang phan tich…)" : `loi hien trong modal config ("${observed.error}")`} — start() da chay; panel FPS van mo phia duoi (fpsPanelOpen=true), click khong roi vao panel`);
@@ -1048,7 +1067,7 @@ async function main() {
         if (caught) {
           await sleep(1500);
           finalState = await cdp.evalJs(STATE_FN);
-          fs.writeFileSync(path.join(SCRATCH, "r1-measure-m11-escape-translate.json"), JSON.stringify({ attempt, escapeMs, phaseAtEscape, seenPhases, finalState }, null, 2));
+          writeFileEpermRetry(path.join(SCRATCH, "r1-measure-m11-escape-translate.json"), JSON.stringify({ attempt, escapeMs, phaseAtEscape, seenPhases, finalState }, null, 2));
           await cdp.shot("r1-m11-escape-translate-390-en.png");
           await drainErrors(cdp);
           if (!finalState.captionOpen) {
@@ -1112,7 +1131,7 @@ async function main() {
       if (!err) {
         fail("M12 lỗi timeout pack: lỗi vào vùng nhìn thấy (auto-scroll), Escape đóng được", `khong thay loi trong modal sau ${errMs}ms (ky vong ~20000ms)`);
       } else {
-        fs.writeFileSync(path.join(SCRATCH, "r1-measure-m12-pack-timeout.json"), JSON.stringify({ errMs, scrollBefore, err }, null, 2));
+        writeFileEpermRetry(path.join(SCRATCH, "r1-measure-m12-pack-timeout.json"), JSON.stringify({ errMs, scrollBefore, err }, null, 2));
         // Escape sau lỗi (R10 A2): modal phải đóng được.
         await cdp.key("Escape", "Escape");
         await sleep(1200);
@@ -1171,7 +1190,7 @@ async function main() {
         await sleep(500);
       }
       const seenArr = [...seen];
-      fs.writeFileSync(path.join(SCRATCH, "r1-measure-m13-phase-en.json"), JSON.stringify({ seen: seenArr, endStep, endError, ms: Date.now() - t0 }, null, 2));
+      writeFileEpermRetry(path.join(SCRATCH, "r1-measure-m13-phase-en.json"), JSON.stringify({ seen: seenArr, endStep, endError, ms: Date.now() - t0 }, null, 2));
       await cdp.shot("r1-m13-phase-en-390.png");
       await drainErrors(cdp);
       const seenEn = seenArr.filter((p) => EN_PHASES.includes(p));
@@ -1194,7 +1213,7 @@ async function main() {
     else fail("H9 0 lỗi trang", phaseErrors.slice(0, 5).join(" || "));
 
     const nPass = results.filter((r) => r.ok).length;
-    fs.writeFileSync(path.join(SCRATCH, "r1-headed-report.json"), JSON.stringify({ cases: results, pass: nPass, total: results.length, at: new Date().toISOString() }, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "r1-headed-report.json"), JSON.stringify({ cases: results, pass: nPass, total: results.length, at: new Date().toISOString() }, null, 2));
     log(`KẾT QUẢ HEADED R1: ${nPass}/${results.length} pass`);
     process.exitCode = nPass === results.length ? 0 : 1;
   } catch (e) {

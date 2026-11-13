@@ -43,6 +43,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -82,7 +83,7 @@ console.log(`D2 config: slack=${SLACK} maxAttempts=${MAX_ATTEMPTS} (không D1 pr
 
 // ---- 1. Bundle entry (reverseWebcodecs + assetStore + rehydrate + settle47C2) ----
 const entryPath = path.join(SCRATCH, "e3-entry.mjs");
-fs.writeFileSync(entryPath, `import {
+writeFileEpermRetry(entryPath, `import {
   getReversePreviewController, reverseDecodeAheadStatus,
   setReverseDecodeAheadWanted, disposeReverseWebcodecsControllers,
   ReverseFrameCache,
@@ -954,7 +955,7 @@ async function runPhase(cdp, label, newFn, opts = {}) {
     // (lượt trước bị daemon restart giết giữa chừng nên mất cả
     // e3-result.json — chỉ còn stdout log). File partial chỉ là
     // bằng chứng dự phòng; e3-result.json cuối lượt vẫn ghi đủ.
-    try { fs.writeFileSync(path.join(SCRATCH, `e3-result-partial-${label}.json`), JSON.stringify({ phase: label, successCount, attempts }, null, 2)); } catch {}
+    try { writeFileEpermRetry(path.join(SCRATCH, `e3-result-partial-${label}.json`), JSON.stringify({ phase: label, successCount, attempts }, null, 2)); } catch {}
     console.log(`  [${label} attempt ${a}] ${r.cls} (aim=${r.aim} slack=${opts.slack ?? SLACK} gap=${r.gapMs ?? "?"} ms remainingAtToggle=${r.remainingAtToggle ?? "?"})`);
     for (const l of r.log || []) console.log(`    ${l}`);
     if (r.cls === "SUCCESS" || r.cls === "SUCCESS-early-settle") successCount++;
@@ -1059,7 +1060,7 @@ async function main() {
   }
 
   const out = { fileSize, assetSetup, probeReady, probe, captureBase, captureEarly };
-  fs.writeFileSync(path.join(SCRATCH, "e3-result.json"), JSON.stringify(out, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "e3-result.json"), JSON.stringify(out, null, 2));
   console.log(`loadavg lúc kết thúc: ${loadavg()}`);
   const allAttempts = [...(captureBase.attempts || []), ...(captureEarly.attempts || [])];
   const w2ObsCount = allAttempts.filter((a) => a.aim === "remaining-tight" && a.w2obs).length;

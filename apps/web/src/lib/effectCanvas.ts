@@ -623,6 +623,40 @@ function yuv709ToRgb(y: number, cb: number, cr: number): [number, number, number
 }
 
 /**
+ * Ma trận màu YUV cho effect noise (đợt 80 H3 — probe b).
+ * Chuỗi render cộng nhiễu trong không gian YUV của nguồn đã decode:
+ * nguồn SD (≤640 rộng) decode bt601, nguồn HD decode bt709 (cùng quy
+ * ước Chrome/x264 mặc định theo độ phân giải — xem LIMITS G5 §7b).
+ * Bản cũ của addYuvNoise dùng bt709 CỐ ĐỊNH cho mọi nguồn nên nhiễu
+ * preview ở project 640 bị trộn sai ma trận so với render: std ratio G
+ * 0,81–0,86 (LỆCH) trên cả 4 nội dung 640, trong khi render lại bằng
+ * bt709 cho [0,95–1,01] KHỚP hết (probe b M1 — xem LIMITS H3 §2).
+ * Quy tắc chọn (cùng render chain): chiều rộng NGUỒN ≤ 640 → bt601,
+ * còn lại → bt709. Chỉ áp cho noise (effect duy nhất cộng nhiễu trong
+ * không gian YUV); sharpen dùng Y nên không đổi ở luồng này (nợ kề).
+ */
+export type YuvMatrix = "bt709" | "bt601";
+export function yuvMatrixForSourceWidth(w: number): YuvMatrix {
+  return w <= 640 ? "bt601" : "bt709";
+}
+
+function rgbToYuv601(r: number, g: number, b: number): [number, number, number] {
+  const yl = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  const y = 16 + 219 * yl;
+  const cb = 128 + (224 * 0.5 * (b / 255 - yl)) / (1 - 0.114);
+  const cr = 128 + (224 * 0.5 * (r / 255 - yl)) / (1 - 0.299);
+  return [y, cb, cr];
+}
+
+function yuv601ToRgb(y: number, cb: number, cr: number): [number, number, number] {
+  const yy = 1.164383 * (y - 16);
+  const r = yy + 1.59603 * (cr - 128);
+  const g = yy - 0.39176 * (cb - 128) - 0.81297 * (cr - 128);
+  const b = yy + 2.01723 * (cb - 128);
+  return [r, g, b];
+}
+
+/**
  * Ước lượng base YUV native từ base RGB-derived (đợt 65 S7, mô phỏng
  * chiếu gamut). Base YUV native của nguồn bão hoà nằm ngoài khối RGB:
  * khi decode về RGB, các giá trị ngoài gamut bị kẹp vào mặt khối, rồi
@@ -693,19 +727,28 @@ function estimateNativeY(yDerived: number, cbEst: number, crEst: number): number
   return yDerived + (o1 + o2) / 2;
 }
 
-/** Cộng nhiễu Gauss không gian YUV vào ảnh (in-place). strength = alls. */
-export function addYuvNoise(img: ImageDataLike, strength: number, seed: number): ImageDataLike {
+/**
+ * Cộng nhiễu Gauss không gian YUV vào ảnh (in-place). strength = alls.
+ * matrix: ma trận YUV của nguồn đã decode — bt709 mặc định (HD, hành vi
+ * cũ); bt601 cho nguồn SD (đợt 80 H3 — xem yuvMatrixForSourceWidth).
+ * Hằng số giãn chroma native (1.04/1.12, hiệu chuẩn cho bt709) giữ
+ * nguyên cho cả 2 ma trận: nó chỉ dịch base chroma (triệt tiêu trong
+ * delta noise, chỉ ảnh hưởng qua kẹp [0,255] vốn hiếm chạm).
+ */
+export function addYuvNoise(img: ImageDataLike, strength: number, seed: number, matrix: YuvMatrix = "bt709"): ImageDataLike {
   const { width: w, height: h, data: d } = img;
   const sigma = strength / Math.sqrt(3);
   const gauss = gaussianGenerator(mulberry32(seed));
   const cw = (w + 1) >> 1;
   const ch = (h + 1) >> 1;
+  const rgbToYuv = matrix === "bt601" ? rgbToYuv601 : rgbToYuv709;
+  const yuvToRgb = matrix === "bt601" ? yuv601ToRgb : yuv709ToRgb;
   // Base YUV từng pixel (derived từ RGB đã decode).
   const Y = new Float64Array(w * h);
   const CB = new Float64Array(w * h);
   const CR = new Float64Array(w * h);
   for (let i = 0; i < w * h; i++) {
-    const [yy, cb, cr] = rgbToYuv709(d[i * 4], d[i * 4 + 1], d[i * 4 + 2]);
+    const [yy, cb, cr] = rgbToYuv(d[i * 4], d[i * 4 + 1], d[i * 4 + 2]);
     Y[i] = yy;
     CB[i] = cb;
     CR[i] = cr;
@@ -749,7 +792,7 @@ export function addYuvNoise(img: ImageDataLike, strength: number, seed: number):
       const ny = Math.min(255, Math.max(0, Y[i] + gauss() * sigma));
       const ncb = Math.min(255, Math.max(0, estCb[ci] + cbNoise[ci]));
       const ncr = Math.min(255, Math.max(0, estCr[ci] + crNoise[ci]));
-      const [r, g, b] = yuv709ToRgb(ny, ncb, ncr);
+      const [r, g, b] = yuvToRgb(ny, ncb, ncr);
       d[p] = r;
       d[p + 1] = g;
       d[p + 2] = b;
@@ -932,17 +975,18 @@ export function applyNoise(
   img: ImageDataLike,
   intensity: number,
   seed: number,
+  matrix: YuvMatrix = "bt709",
 ): ImageDataLike {
   const strength = 5 + clamp01(intensity) * 45;
-  return addYuvNoise(img, strength, seed);
+  return addYuvNoise(img, strength, seed, matrix);
 }
 
 // ---------------------------------------------------------------------------
 // Điều phối
 // ---------------------------------------------------------------------------
 
-/** Áp một op lên ảnh (in-place). */
-export function applyCanvasEffect(img: ImageDataLike, op: CanvasEffectOp): ImageDataLike {
+/** Áp một op lên ảnh (in-place). matrix: ma trận YUV của nguồn (chỉ noise dùng). */
+export function applyCanvasEffect(img: ImageDataLike, op: CanvasEffectOp, matrix: YuvMatrix = "bt709"): ImageDataLike {
   switch (op.type) {
     case "mirror":
       return applyMirror(img);
@@ -959,16 +1003,17 @@ export function applyCanvasEffect(img: ImageDataLike, op: CanvasEffectOp): Image
     case "glitch":
       return applyGlitch(img, op.intensity, op.seed ?? 0);
     case "noise":
-      return applyNoise(img, op.intensity, op.seed ?? 0);
+      return applyNoise(img, op.intensity, op.seed ?? 0, matrix);
   }
 }
 
-/** Áp lần lượt các op theo đúng thứ tự mảng (in-place). */
+/** Áp lần lượt các op theo đúng thứ tự mảng (in-place). matrix: ma trận YUV của nguồn (chỉ noise dùng). */
 export function applyCanvasEffects(
   img: ImageDataLike,
   ops: readonly CanvasEffectOp[],
+  matrix: YuvMatrix = "bt709",
 ): ImageDataLike {
-  for (const op of ops) applyCanvasEffect(img, op);
+  for (const op of ops) applyCanvasEffect(img, op, matrix);
   return img;
 }
 

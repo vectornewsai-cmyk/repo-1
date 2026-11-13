@@ -4,13 +4,38 @@
 > đang có trong repo (không phải tài liệu cũ hay lời hứa).
 >
 > **Mốc kiểm chứng:** 08/11/2026 (đợt 60 Q9, docs-only — cập nhật đợt 64–65
-> + đợt 66 T10 docs-only) — ma trận dưới đã cập nhật toàn bộ theo code thật
+> + đợt 66 T10 docs-only + đợt 67 docs-only 09/11) — ma trận dưới đã cập nhật toàn bộ theo code thật
 > trên đĩa + các file `*_LIMITS.md` đợt 51–59. Mốc cũ 19/10/2026 (commit
 > `1844e2cc`) giữ lại trong lịch sử ở cuối file. Mọi số kho đếm lại 08/11
 > bằng script (xem `docs/PHASE9_ROUND60_Q9_DOCS_LIMITS.md` §0). Đợt 61 R10
 > (08/11) thêm 6 hàng nested/adjustment/motion track/karaoke/ducking/downbeat
 > theo LIMITS các đợt 1–10 + đồng bộ sounds index (1013 → 1043) và sticker
 > manifest (214 → 244); xem `docs/PHASE9_ROUND61_R10_DOCS_INDEX_LIMITS.md`.
+>
+> **Cập nhật 09/11/2026 — đợt 67 (docs-only, luồng V9 đợt 68):** ma trận dưới
+> cập nhật theo LIMITS đợt 67 (U1–U9, xem `docs/PHASE9_ROUND67_LIMITS.md`);
+> đối chiếu trên đĩa ở luồng V9 đợt 68 (xem
+> `docs/PHASE9_ROUND68_V9_DOCS_CI_LIMITS.md`). Đổi so với mốc đợt 66 T10:
+> i18n **2297 → 2369 key lá** (đợt 67 U6 +28 key + U7 +15 key, parent gộp
+> muộn 09/11, 0 collision, vi==en; đếm lại trên đĩa 09/11: vi == en ==
+> 2369). Trần trial-decode GOP **60 s → 90 s** (đợt 67 U5: công thức
+> 78.536 ms ở 64 MiB; probe treo đợt 66 không tái hiện). Sharpen headed
+> nay **KHỚP trong chính decoder của preview** (đợt 67 U3: MAD 0,000,
+> le8 100%, 4 cảnh × 2 mức; còn lại ocean sharp10 XẤP XỈ, basgo sharp10
+> w1440/1:1 chưa KHỚP-trừ-sàn). Noise Chrome mô hình 2-stage (đợt 67 U2:
+> w1440 noise05 chỉ còn lệch Δcorr R-G 0,199; ngưỡng halve 0,45–0,63 chưa
+> đo). Stabilize ép `-threads 1` vào code + CLI/env (đợt 67 U1). Save/Load
+> thêm modal nhận mảnh legacy thủ công + lịch sử job/resume (đợt 67 U6/U7).
+> **Mask E1 đã làm xong** (đường PNG pre-render mặc định từ Phase 9 R2 —
+> đính chính note 6 cũ ghi "chưa làm"; số 0,97 fps là đường geq cũ, chưa đo
+> lại đường PNG). **TTS voice cloning ĐÃ expose UI + bridge** (Phase 9 R4:
+> checkbox clone trong TtsButton + `POST /api/tts/clone`, test clone thật
+> 24/10 — đính chính note 7 cũ ghi "chưa expose"; còn thiếu clone +
+> đa-chunk kết hợp). Thêm hàng mới: **app desktop Electron Linux**
+> (Phase 10, G6 43/43). Số audit CVE (tts 39 / bgremove 66) trong mục
+> "Những gì CHƯA có" CHƯA cập nhật trong đợt này — V1 đợt 68 sở hữu số
+> audit (U8 đã bump bgremove sạch 66 → 0, xem ghi chú trong LIMITS V9 §5);
+> không tự sửa số audit ở đây.
 >
 > **Cập nhật 08/11/2026 — đợt 64–65 + đợt 66 T10 (docs-only):** ma trận dưới
 > cập nhật theo LIMITS đợt 64 (R1–R10) và đợt 65 (S1–S10), xem
@@ -108,20 +133,21 @@
 | Speed / Reverse | ✅ speed.ts + speed curve | ✅ SpeedPanel đã mount | ✅ speed ramp + playbackRate đồng bộ (reverse vẫn giật từng frame) | ✅ buildSpeedFilter | ❌ | speed-demo.js 7/7 + R10 E1–E6 headed vi/en (warnOverlap/warnResetOverlap/warnNoGap đo thật; nhánh cảnh báo "clip quá ngắn" đã XÓA ở đợt 63 R10 vì chết qua UI — xem LIMITS R10 §1) | **VERIFIED** |
 | Chroma key | ✅ chroma.ts | ✅ ChromaPanel đã mount | ✅ pixel shader canvas (xấp xỉ YUV) | ✅ buildChromaFilter | ❌ | demo_chroma.js (pixel-level) + preview-engine | **VERIFIED** |
 | LUT (174) | ✅ lut.ts | ✅ LutPicker đã mount | ✅ WebGL LUT thật (`applyWebglLut`, preview.tsx:1389) + CSS approx fallback (RMSE ~16) | ✅ buildLutFilter (lut3d) | ❌ | demo_lut.js 3/3 + webglLut.test.ts 7/7 | **VERIFIED** |
-| Video effects (16) | ✅ effects.ts (7 gốc + 9 Q4) | ✅ EffectPanel đã mount | ✅ đường vẽ cho cả 16 type (previewEngine.ts:471-490); sharpen XẤP XỈ (đợt 65 S7: MAD 0,194→0,161; le8 tốt nhất 98,3% < 99%); noise: parity Node KHỚP thống kê yuv420p (đợt 63 R8: tỉ lệ std 1.01, Δcorr ≤0.007); noise KHỚP-THỐNG-KÊ ở full-res pre-encode (đợt 65 S7, lần đầu, 4/4 seed — cơ chế lệch là chiếu gamut, không phải kẹp plane); noise headed vẫn LỆCH, phần dư là resample (x264 chỉ ~7–8%, xem LIMITS đợt 64 R9); glitch render thật chạy noise trên plane RGB (đã sửa `applyGlitch`, đợt 65 S7) | ✅ buildEffectsChain | ❌ | demo_effects.js + preview-engine | **VERIFIED** |
+| Video effects (16) | ✅ effects.ts (7 gốc + 9 Q4) | ✅ EffectPanel đã mount | ✅ đường vẽ cho cả 16 type (previewEngine.ts:471-490); sharpen: đợt 65 S7 XẤP XỈ (MAD 0,194→0,161; le8 tốt nhất 98,3% < 99%) — đợt 67 U3 đính chính: sharpen headed KHỚP trong chính decoder của preview (MAD 0,000, le8 100%, 4 cảnh × 2 mức); còn lại ocean sharp10 XẤP XỈ, basgo sharp10 w1440/1:1 chưa KHỚP-trừ-sàn; noise: parity Node KHỚP thống kê yuv420p (đợt 63 R8: tỉ lệ std 1.01, Δcorr ≤0.007); noise KHỚP-THỐNG-KÊ ở full-res pre-encode (đợt 65 S7, lần đầu, 4/4 seed — cơ chế lệch là chiếu gamut, không phải kẹp plane); noise headed vẫn LỆCH, phần dư là resample (x264 chỉ ~7–8%, xem LIMITS đợt 64 R9) — đợt 67 U2 mô hình 2-stage: w1440 noise05 chỉ còn lệch Δcorr R-G 0,199, ngưỡng halve 0,45–0,63 chưa đo; glitch render thật chạy noise trên plane RGB (đã sửa `applyGlitch`, đợt 65 S7) | ✅ buildEffectsChain | ❌ | demo_effects.js + preview-engine | **VERIFIED** |
 | Sticker overlay | ✅ sticker.ts | ✅ StickerPanel **đã mount** (Inspector.tsx:122, 486) | ✅ vị trí/tỉ lệ/xoay/opacity | ✅ buildStickerOverlay | ❌ | demo_sticker.js + preview-engine | **VERIFIED**³ |
 | Audio waveform | n/a | ✅ waveform.ts + ClipWaveform | ✅ (trên timeline) | n/a | n/a | 16/16 test | **VERIFIED** |
 | Auto-caption (faster-whisper) | ✅ caption track JSON | ✅ CaptionModal (App.tsx:586) + track dịch song ngữ | ✅ track phụ đề trên timeline | ✅ pipeline local (bridge /api/caption) | ❌ | O5 12/12 + P5 7/7 vi+en, headed SRT/VTT byte-exact | **VERIFIED**⁴ |
 | MCP tools (29) | ✅ schema theo kịp video-spec qua 23 tool Batch I | n/a | n/a | ✅ via render_video | ✅ 29 tools (6 gốc + 23 Batch I) | demo 28/28 (6 gốc) + roundtrip tests | **VERIFIED**⁵ |
-| Mask (rect/ellipse/feather/invert) | ✅ mask.ts | ✅ MaskPanel đã mount (video + image) | ✅ mask + keyframes (Phase 7 P4) | ✅ geq per-pixel — **0.97 fps ở 720p** (RESULTS §7.1), chỉ dùng clip ngắn | ❌ | render thật MP4 | **IMPLEMENTED-PARTIAL**⁶ |
+| Mask (rect/ellipse/feather/invert) | ✅ mask.ts | ✅ MaskPanel đã mount (video + image) | ✅ mask + keyframes (Phase 7 P4) | ✅ đường PNG pre-render mặc định (Phase 9 R2: `maskMode: "png"`, vẽ PNG 1 lần bằng `mask_png.py`, fallback geq khi vẽ lỗi; xem note 6) — số 0,97 fps là đường geq cũ (RESULTS §7.1), chưa đo lại đường PNG | ❌ | render thật MP4 + mask.js self-test | **IMPLEMENTED-PARTIAL**⁶ |
 | TTS tiếng Việt (VieNeu 0.5B, 25 giọng) | ✅ TTS bridge + preset giọng | ✅ TtsButton (Inspector.tsx:315) | n/a | ✅ bridge /api/tts (job queue, giữ model sống) | ✅ ai tools | F3 đợt 50: 72 lần đo | **IMPLEMENTED-PARTIAL**⁷ |
 | Xoá nền AI (rembg u2net + birefnet) | ✅ bgremove bridge | ✅ BgRemovePanel (Inspector.tsx:361) | ❌ (chưa có preview mask) | ✅ 0.43 fps CPU; birefnet OOM ≤8GB; không temporal smoothing | ✅ ai tools | BGREMOVE_LIMITS | **IMPLEMENTED-PARTIAL**⁸ |
 | Enhance (stabilize/denoise/deinterlace) | ✅ clip.enhance | ✅ EnhancePanel từ Phase 9 R2 + preset 1 chạm (đợt 59 P8) | ✅ xấp xỉ ở preview (denoise→blend/blur, stabilize→zoom crop, bật mặc định — đợt 60 Q1; render vẫn đường thật); cảnh báo denoise ≥0,7 áp với mọi mức đo được, không cổng theo tốc độ (đợt 65 S2+S3, mở rộng tới ~49 px/f) | ✅ hqdn3d/yadif/vidstab (P9: 52/52) | ❌ | P9 harness 52/52 + Q1 16/16 vi+en; FPS blend đo lại đợt 64 R3 (thang piecewise KHỚP, maxErr 1,5; denoise clip 20 s: 720p 0,46× / 1080p 0,433×); S2 harness 87/87 + R2 36/36; S3 harness 96/96 | **IMPLEMENTED-PARTIAL**⁹ |
 | i18n (vi/en) | ✅ vi.json/en.json | ✅ các panel chính đã nối key | ✅ | ✅ | n/a | dict parity + audit L2/M2/N8 | **IMPLEMENTED-PARTIAL**¹⁰ |
-| Save / Load project (.vcut.json + autosave + history) | ✅ projectRepo envelope | ✅ TopBar/menu + dialog native (Phase 10 G4) | n/a | n/a | ❌ | projectRepo 10/10, rehydrate 27/27, loadProject K1 + sổ tham chiếu liên project R7 28/28 (lib) + headed 5/5; registry tên project (đợt 65 S9): nhận chuỗi legacy cần bằng chứng hash nội dung + tự nhận chuỗi phân mảnh ≤200 chuỗi, test 43/43 (trước sửa 28 pass/12 fail); mảnh mơ hồ chưa có UI nhận thủ công | **VERIFIED** |
-| Export MP4 từ UI | ✅ ExportPanel preset | ✅ ExportPanel.startRender → bridge /api/render | n/a | ✅ render worker qua bridge (retry/download); fallback GPU probe (đợt 65 S4: encoder GPU cache lỗi → render lại đúng 1 lần bằng libx264 + xóa cache; `GET /api/gpu-probe` + `POST /api/gpu-probe/reprobe`; nút "Probe lại GPU" trong ExportPanel; fallback 18/18, bridge 13/13, lib UI 9/9, hồi quy R1 30/30; chưa test GPU thật) | ✅ render_video | render tests | **VERIFIED** |
+| Save / Load project (.vcut.json + autosave + history) | ✅ projectRepo envelope | ✅ TopBar/menu + dialog native (Phase 10 G4) | n/a | n/a | ❌ | projectRepo 10/10, rehydrate 27/27, loadProject K1 + sổ tham chiếu liên project R7 28/28 (lib) + headed 5/5; registry tên project (đợt 65 S9): nhận chuỗi legacy cần bằng chứng hash nội dung + tự nhận chuỗi phân mảnh ≤200 chuỗi, test 43/43 (trước sửa 28 pass/12 fail); mảnh mơ hồ nay có UI nhận thủ công (đợt 67 U6: `LegacyHistoryAdoptModal`, 27 key `legacyAdopt.*`, hoàn tác 1 mức); lịch sử job + resume khi mở ExportPanel (đợt 67 U7: fragment `jobHistory.*` 15 key) | **VERIFIED** |
+| Export MP4 từ UI | ✅ ExportPanel preset | ✅ ExportPanel.startRender → bridge /api/render | n/a | ✅ render worker qua bridge (retry/download); fallback GPU probe (đợt 65 S4: encoder GPU cache lỗi → render lại đúng 1 lần bằng libx264 + xóa cache; `GET /api/gpu-probe` + `POST /api/gpu-probe/reprobe`; nút "Probe lại GPU" trong ExportPanel; fallback 18/18, bridge 13/13, lib UI 9/9, hồi quy R1 30/30; chưa test GPU thật); lịch sử job + resume khi mở lại ExportPanel (đợt 67 U7) | ✅ render_video | render tests | **VERIFIED** |
 | Proxy workflow | ✅ proxy sidecar | ✅ badge PROXY + checkbox tự tạo | ✅ proxy 720p nhanh hơn ~25–40% | ✅ export luôn dùng file gốc | ❌ | Q8 + R3 §8.3, I9 + nút proxy bấm thật headed (đợt 62 R10: tạo proxy 720p sau 2509 ms, ffprobe 1280×720 đúng) | **VERIFIED** |
 | Mobile-web / PWA | ✅ responsive + touch | ✅ layout mobile | ✅ | n/a | n/a | Q6 58/58 | **IMPLEMENTED-PARTIAL**¹¹ |
+| Desktop app (Electron, Linux) | ✅ Electron shell + preload | ✅ menu vi/en + dialog native | ✅ editor thật render trong app | n/a (dùng chung render worker qua bridge) | n/a | G6 harness 43/43, smoke production ok:true | **IMPLEMENTED-PARTIAL**¹⁹ |
 | Modal / Escape | n/a | ✅ Escape đóng WelcomeModal, TourCard, TemplatePackModal/Picker (đợt 58–59) | n/a | n/a | n/a | O1 9/9, P2 26/26, headed | **IMPLEMENTED-PARTIAL**¹² |
 | Nested / compound clip | ✅ nested.ts (kind "nested", subSpec, sâu tối đa 8, chặn vòng lặp) | ✅ NestedClipPanel (Timeline) — gom/rã qua execCommand (undo/redo) | ✅ flatten + preview (nestedPreview 44/44) | ✅ flatten + render MP4 thật (N2 24/24) | ❌ | N1 37/37, N2 24/24, N5 14/14, R7 unify 55/55 + E2E 43 PROVEN | **VERIFIED**¹³ |
 | Adjustment layer | ✅ adjustment.ts (`spec.adjustmentLayers`, scope `tracks?`) | ✅ AdjustmentLayerPanel (Timeline) + normalize legacy → layer chuẩn | ✅ áp layer theo trackStack (nestedPreview 44/44) | ✅ tách clip theo biên layer + adjChain (R1 39/39 pixel-verified) | ❌ | R1 39/39, N3 46/46, R7 unify 55/55 | **VERIFIED**¹⁴ |
@@ -151,17 +177,30 @@
    6 `server.tool(` trong index.ts + 23 trong `tools/*.ts`). REST bridge:
    `/api/render`, `/api/tts`, `/api/proxy`, `/api/luts`, `/api/health`,
    `/api/openapi.json` (+ route AI caption/bgremove/reframe/…).
-6. **Mask:** render đúng nhưng quá chậm (0.97 fps ở 720p 5s, RESULTS §7.1)
-   vì `geq` tính alpha từng pixel mỗi frame — hướng sửa E1 (pre-render
-   PNG mask) chưa làm. Chưa đạt VERIFIED vì không dùng được cho clip dài.
+6. **Mask:** render đúng nhưng đường geq cũ quá chậm (0.97 fps ở 720p 5s, RESULTS §7.1)
+   vì `geq` tính alpha từng pixel mỗi frame. **E1 ĐÃ LÀM từ Phase 9 R2**
+   (đính chính dòng cũ ghi "chưa làm"): render nay mặc định vẽ PNG mask 1 lần
+   (`maskMode: "png"` ở `render.js:206`, `mask_png.py` vẽ theo shape/x/y/w/h/feather,
+   `movie=` + `format=gray` thay cho `geq`; fallback geq khi vẽ lỗi, không fail job;
+   mask keyframes có đường video mask riêng qua `mask_anim.py`, xem `render.js:1570-1610`
+   + `mask.js:240-310`; `mask.js --self-test` pass 09/11). **Chưa đo lại fps đường
+   PNG** — không mạo nhận đã nhanh hơn; 0,97 fps chỉ còn đúng cho đường geq cũ.
+   Chưa đạt VERIFIED vì chưa có số fps mới + chưa đo clip dài.
 7. **TTS:** VieNeu-TTS 0.5B v3 Turbo, 25 giọng preset
    (`server/bridge/src/tts.js:22-24`); tốc độ **0,12–0,75× realtime,
    median 0,32× (đợt 49) / 0,44× (đợt 50), 72 lần đo** — đính chính 06/11,
-   số cũ ~1,5–2,5× đã bị bác bỏ (xem RESULTS §3 + §9). Voice cloning có
-   trong engine nhưng **chưa expose UI/bridge** (chưa có LIMITS nào xác
-   nhận đã expose — xem ROUND59_P10 §3).
+   số cũ ~1,5–2,5× đã bị bác bỏ (xem RESULTS §3 + §9). Voice cloning **ĐÃ expose
+   UI + bridge** (đính chính dòng cũ ghi "chưa expose"): engine `tts.py`
+   hỗ trợ `--ref-audio` (clone qua `encode_reference`), bridge
+   `POST /api/tts/clone` (`server/bridge/src/index.js:1634`, multipart
+   `refAudio` + `text`), UI checkbox "🎭 Clone giọng từ file mẫu (local)"
+   trong `TtsButton.tsx:48-88` (chọn file mẫu → clone → đưa vào media pool);
+   test clone thật 24/10 (Phase 9 R4, xem `apps/web/src/lib/R4_LIMITS.md`
+   §3.5: mẫu mono 2,64 s → JSON `cloned: true`, tổng hợp 5,3 s). Còn thiếu:
+   clone + đa-chunk cùng lúc chưa test kết hợp; chất lượng clone phụ thuộc
+   mẫu (mẫu nhiễu/ngắn <3 s cho giọng kém, engine không báo lỗi).
 8. **Xoá nền AI:** rembg u2net + birefnet-general fallback tự động; 0.43 fps
-   CPU 2 vCPU; birefnet OOM trên RAM ≤8GB; không temporal smoothing, viền
+   (máy thế hệ 1: CPU 2 vCPU 7D13, đo 20/10 — xem RESULTS.md §4); birefnet OOM trên RAM ≤8GB; không temporal smoothing, viền
    cứng (gap A4). Chưa đạt VERIFIED vì chậm + OOM + thiếu smoothing.
 9. **Enhance:** UI đã có từ Phase 9 R2 (đính chính brief E3 đợt 59 P10);
    preset 1 chạm + badge ✨ timeline thêm ở đợt 59 P8 (headed 6/6);
@@ -175,14 +214,19 @@
    KHỚP, maxErr 1,5 — không sửa code; denoise clip 20 s ×3: 720p 0,46× /
    1080p 0,433×). Cảnh báo denoise ≥0,7 nay áp với mọi mức đo được,
    không cổng theo tốc độ (đợt 65 S2+S3, mở rộng tới ~49 px/f; cổng
-   FAST=6,0/MEDIUM=4,0 chỉ còn là thông tin hiển thị). Còn thiếu:
+   FAST=6,0/MEDIUM=4,0 chỉ còn là thông tin hiển thị). Stabilize đợt 67 U1:
+   ép `-threads 1` chỉ cho bước transform của vidstab (code `render.js` /
+   `enhance.js` / `trfCache.js` + CLI `--no-stab-single-thread` + env
+   `VCUT_STAB_SINGLE_THREAD=0`; dry-run harness xác nhận vị trí cờ đúng);
+   chưa có toggle trên UI; cơ chế vì sao threads1 khử hết lệch ở 720p nhưng
+   chỉ cải thiện ở 1080p h264 / không cải thiện trên VP9 thật vẫn chưa rõ.
+   Còn thiếu:
    preview enhance chỉ là xấp xỉ (không phải đường render thật).
-10. **i18n:** `vi.json` == `en.json` == **2297 key lá** (đếm lại trên đĩa
-    đợt 66 T10; 2146 ở đợt 63 R10 → 2275 đợt 63 closing (+131 key, −2 key
-    xóa: `speed.warnTooShort` + `jobNote.recoveredRestart`) → 2283 đợt 64
-    (+8) → 2297 đợt 65 (+14 key: S2 1 + S4 10 + S6 1 + S8 2, 0 collision,
-    0 lệch tập key; key vi==en giống hệt: 51 — xem
-    `docs/PHASE9_ROUND65_LIMITS.md` §0/§2). 41 key mồ côi đợt 59 + 26 key
+10. **i18n:** `vi.json` == `en.json` == **2369 key lá** (đếm lại trên đĩa
+    đợt 68 V9 09/11; 2297 ở đợt 65 → 2326 sau gộp đợt 67 closing (fragment
+    U6/U7 chưa vào dict) → 2369 sau khi parent gộp muộn fragment U6 28 key
+    + U7 15 key vào dict (+43 key, 0 collision, key vi==en giống hệt — xem
+    `docs/PHASE9_ROUND67_LIMITS.md` §0/§6). 41 key mồ côi đợt 59 + 26 key
     diagnostic GOP đã đóng ở đợt 60 Q4 (nối thật/xóa, 0 key mồ côi sau
     gộp). `i18nAudit56M3.test.ts` nay xanh **13/13** (chạy lại đợt 63
     R10 — đính chính dòng cũ "đỏ sẵn 7/13"). Chưa đạt VERIFIED: bản dịch
@@ -281,6 +325,23 @@
     tổng hợp, chưa kiểm chứng nhạc thật; chưa click-test BeatSyncModal;
     combo downbeat-only + clip có speed curve dùng công thức tốc độ 1
     (xem `server/beats/D5_LIMITS.md`).
+19. **Desktop app (Electron, Linux — Phase 10, 06/11):** shell thật
+    (`apps/desktop`): main process TS, single instance, window-state persist,
+    preload contextIsolation + sandbox, menu tiếng Việt, load production qua
+    scheme `app://vcut/` (giữ secure context cho IndexedDB/crypto), dev load
+    Vite :5173; app tự khởi động/tắt bridge (G2 8/8), bridge URL động qua
+    preload (chọn 8788 khi 8787 bận); file native `.vcut` (dialog hệ thống,
+    recent 1 nguồn `settings.json`), import/export dialog; đóng gói Linux
+    AppImage 128.102.744 byte + .deb 103.006.396 byte (xem
+    `docs/PHASE10_LIMITS.md` §2); harness G6 **43/43 PASS** trên cây đã gộp
+    + gói rebuild; CORS `app://vcut` OK. Chưa đạt VERIFIED: app đóng gói
+    CHƯA tự chạy đủ services (bridge/render/Python AI không nằm trong gói —
+    render/caption/TTS/bgremove trong app đóng gói chưa chạy được); bridge
+    mồ côi khi app bị kill -9/crash (thoát bình thường thì sạch); .deb chưa
+    chạy được binary đã cài trên VM này (thiếu 5 lib hệ thống — giới hạn VM);
+    chưa click-test menu/dialog, chưa test double-click `.vcut`, chưa có
+    macOS/Windows/arm64. Chạy: `npm run dev:desktop` / `npm run start:desktop`
+    (xem `docs/DESKTOP.md`).
 
 ## Chi tiết tích hợp đã kiểm chứng (mốc 08/11/2026)
 
@@ -341,9 +402,8 @@
   exit 2 (xem LIMITS đợt 63 R8 §5). Chưa có code nào trong app đọc kho
   sound này (không UI picker, không đường render) — file thiếu không gây
   lỗi runtime ở đâu, chỉ là kho chưa được nối.
-- i18n: **2297 key lá** vi == en (đếm trực tiếp đợt 66 T10; 2146 ở đợt 63
-  R10 → 2275 đợt 63 closing → 2283 đợt 64 → 2297 đợt 65, xem
-  `docs/PHASE9_ROUND65_LIMITS.md` §0/§2).
+- i18n: **2369 key lá** vi == en (đếm trực tiếp đợt 68 V9 09/11; 2297 ở đợt 65
+  → 2369 đợt 67, xem `docs/PHASE9_ROUND67_LIMITS.md` §0/§6).
 - MCP: **29 tools** (6 trong `mcp-server/src/index.ts` + 23 trong
   `mcp-server/src/tools/*.ts`; `mcp-server/TOOLS.md`).
 
@@ -357,13 +417,19 @@
 - ✅ TtsButton (`:315`)
 - ✅ CaptionModal mount tại `App.tsx:586`
 
-### GOP trial-decode (phát ngược) — trần 60 s (đợt 64 R10 + đợt 65 S6)
+### GOP trial-decode (phát ngược) — trần 90 s (đợt 64 R10 + đợt 65 S6 + đợt 67 U5)
 - Trần worker `MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS` **45.000 → 60.000 ms**
   (`apps/web/src/lib/gopTrialDecodeWorker62R4.ts:88`); tỉ lệ 1,2 ms/KiB
   giữ nguyên. Lý do: đo trực tiếp High-profile 49,7–57,9 MB — 57,9 MB
   fail-open cả 2 rep dưới trần 45 s cũ (xem
   `docs/PHASE9_ROUND64_R10_KEYFRAME_CAP_LIMITS.md`); test 11/11 + hồi quy
   62R4 19/19 + 63R4 13/13.
+- **Đợt 67 U5 nâng trần 60 s → 90 s** (công thức ở 64 MiB cho 78.536 ms <
+  90.000 ms — trần chỉ còn là trần an toàn tuyệt đối; biên mới: tải thấp
+  28,2 s; tải trung bình ngoại suy ~12,5 s; giá: fail-open dưới tải nặng
+  chậm thêm tối đa 18,5 s, chỉ keyframe ≥ ~50 MiB). Probe treo đợt 66 không
+  tái hiện (lần sạch thứ 2 liên tiếp); watchdog nay ghi chẩn đoán đầy đủ
+  nếu tái hiện. Xem `docs/PHASE9_ROUND67_U5_KEYFRAME_MARGIN_LIMITS.md`.
 - Đo thêm keyframe 58–64 MiB (đợt 65 S6): 8 fixture High 53,1–63,5 MiB —
   tải thấp decode 11–22 s (0,17–0,37 ms/KiB), không chạm trần 60 s; tải
   nặng 63,54 MiB chạm timeout 60 s (58,5 s vừa đủ trần, rồi timeout ở lần
@@ -420,7 +486,9 @@
 - **Tách nền AI:** ✅ ĐÃ CÓ (rembg + birefnet) — nhưng chậm (0.43 fps),
   birefnet OOM ≤8GB, không temporal smoothing.
 - **Masking:** ✅ ĐÃ CÓ (rect/ellipse/feather/invert, render + preview) —
-  nhưng render 0.97 fps (E1 chưa sửa).
+  E1 (đường PNG pre-render) đã làm từ Phase 9 R2 (mặc định `maskMode: "png"`,
+  fallback geq); số 0,97 fps là đường geq cũ (RESULTS §7.1), chưa đo lại
+  đường PNG nên chưa kết luận tốc độ mới.
 - **CI/CD:** ❌ VẪN CHƯA CÓ — 5 file workflow tồn tại local
   (`.github/workflows/ci-build.yml`, `ci-e2e.yml`, `ci-integration.yml`,
   `ci-security.yml`, `release.yml`) nhưng **chưa lên được GitHub**
@@ -441,7 +509,11 @@
   tới khi bump pin (chưa bump trong đợt này — cần đợt riêng verify lại
   pipeline tts/bgremove). File vẫn LOCAL-ONLY, vẫn chờ user cấp quyền
   workflows.
-- **App native / cloud / nhạc có bản quyền / AI avatar:** vẫn không có
+- **App desktop Electron (Linux):** ✅ ĐÃ CÓ (Phase 10 — xem hàng mới trong
+  ma trận + note 19; AppImage + .deb, G6 43/43; app đóng gói chưa tự chạy đủ
+  services, bridge mồ côi khi kill -9). **App mobile native:** vẫn không có
+  theo chủ trương (mobile-web/PWA dùng được, chưa test máy thật).
+- **Cloud / collab nhiều người / nhạc có bản quyền / AI avatar:** vẫn không có
   theo chủ trương (xem gap analysis §4 — các hướng không làm).
 
 ## Lịch sử mốc cũ (giữ làm hồ sơ, không dùng làm trạng thái hiện tại)

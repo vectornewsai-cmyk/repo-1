@@ -18,6 +18,9 @@ const { SPEED_MIN, SPEED_MAX } = require("./speed");
 const { validateAnimations, SCALE_MIN, SCALE_MAX } = require("./keyframes");
 const { validateChroma } = require("./chroma");
 const { isTextFxAnimation } = require("./textfx");
+// Phase 9 đợt 74 B4: timeout ffprobe (trước đây execFileSync không timeout
+// — ffprobe treo thì validate treo theo, job không bao giờ bắt đầu/kết thúc).
+const { KILL_SIGNAL, ffprobeTimeoutMs, probeTimeoutMs } = require("./timeouts");
 // Phase 9 đợt 63 R5: phân loại thông điệp validator thành mã có cấu trúc
 // (xem validateCodes.js) — err()/warn() giữ nguyên chuỗi cũ từng chữ,
 // đồng thời ghi thêm entry { where, code, params } vào errorDetails /
@@ -73,8 +76,12 @@ function isVideoSpec(v) {
   );
 }
 
+// Đợt 74 B9: chấp nhận cả #rrggbbaa (alpha CSS: FF = đục, 00 = trong
+// suốt) để template karaoke "Nền mờ" (#00000080) qua được validator.
+// hexToAssColor (render.js) + drawtext + render_text_png.py đều đã hiểu
+// alpha; 7 ký tự (#rrggbb + 1) và các độ dài khác vẫn bị từ chối.
 function isHexColor(s) {
-  return typeof s === "string" && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(s);
+  return typeof s === "string" && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(s);
 }
 
 function isFiniteNumber(x) {
@@ -720,8 +727,12 @@ function validateClip(track, clip, where, err, warn, projectFps) {
       err(where, `track: ${m}`);
     if (track.kind === "video" &&
         (clip.transitionIn !== undefined || clip.transitionOut !== undefined)) {
+      // Đợt 87 closing (O6 C6 + parent verify png+transition): mask vẫn bám
+      // theo track qua transition — mask chain áp theo unit, trước xfade; chỉ
+      // phần dịch chuyển của unit (D3) bị bỏ qua ở unit đã merge.
       warn(where, `clip video có track nhưng dính transition — track bị bỏ qua ` +
-        `ở unit đã merge (keyframes cũng vậy, xem D3_LIMITS.md)`);
+        `ở unit đã merge (chỉ phần dịch chuyển của unit; mask vẫn bám theo ` +
+        `track, xem D3_LIMITS.md)`);
     }
     if (track.kind === "text" &&
         (clip.style?.animation === "typewriter" ||
@@ -731,8 +742,19 @@ function validateClip(track, clip, where, err, warn, projectFps) {
         `track bị bỏ qua, chữ giữ vị trí tĩnh (xem D3_LIMITS.md)`);
     }
   } else if (clip.track !== undefined && track.kind !== "sticker") {
-    warn(where, `track chưa hỗ trợ cho clip ${track.kind} — track sẽ bị bỏ qua ` +
-      `(chỉ video/text/sticker bám quỹ đạo, xem D3_LIMITS.md)`);
+    // Phase 9 đợt 88 P6: clip image CÓ mask thì track KHÔNG bị bỏ qua hoàn
+    // toàn — ảnh giữ vị trí tĩnh (không có shift D3, overlay 0:0) nhưng mask
+    // vẫn bám theo track (render png/trackgeq đã đo ở đợt 87 O2 §4: tâm mask
+    // image = điểm track, sai số < 0.0001). Câu warn cũ "track sẽ bị bỏ qua"
+    // sai với trường hợp này nên tách nhánh riêng; image không mask thì
+    // track thật sự không có tác dụng (giữ warn cũ).
+    if (track.kind === "image" && clip.mask !== undefined) {
+      warn(where, `track không dịch chuyển clip image (ảnh giữ vị trí tĩnh), ` +
+        `nhưng mask vẫn bám theo track (xem D3_LIMITS.md)`);
+    } else {
+      warn(where, `track chưa hỗ trợ cho clip ${track.kind} — track sẽ bị bỏ qua ` +
+        `(chỉ video/text/sticker bám quỹ đạo, xem D3_LIMITS.md)`);
+    }
   }
 
   if (track.kind === "audio") {
@@ -900,7 +922,9 @@ function resolveSrc(src, mediaDir, assetMap) {
   return abs;
 }
 
-/** Chạy ffprobe lấy thông tin streams + duration của 1 file. */
+/** Chạy ffprobe lấy thông tin streams + duration của 1 file.
+ * Đợt 74 B4: timeout 30s (ffprobe chỉ đọc header; treo → execFileSync
+ * ném lỗi ETIMEDOUT → validateMedia bắt thành lỗi validation, exit 1). */
 function probeFile(ffprobeBin, absPath) {
   const raw = execFileSync(
     ffprobeBin,
@@ -908,7 +932,7 @@ function probeFile(ffprobeBin, absPath) {
      "-show_entries", "stream=codec_type,codec_name,width,height,nb_frames,avg_frame_rate,pix_fmt",
      "-show_entries", "format=duration",
      "-of", "json", absPath],
-    { encoding: "utf8", maxBuffer: 16 * 1024 * 1024 }
+    { encoding: "utf8", maxBuffer: 16 * 1024 * 1024, timeout: ffprobeTimeoutMs(), killSignal: KILL_SIGNAL }
   );
   return JSON.parse(raw);
 }
@@ -1076,9 +1100,13 @@ function resolveFontFile(fontFamily, { bold = false, italic = false } = {}) {
   ];
   for (const c of candidates) {
     try {
+      // Đợt 74 B4: timeout 15s (fc-match treo thì resolve font treo theo;
+      // timeout → thử candidate tiếp theo, hết candidate → null như cũ).
       const out = execFileSync("fc-match", ["-f", "%{file}\n", c], {
         encoding: "utf8",
         stdio: ["ignore", "pipe", "ignore"],
+        timeout: probeTimeoutMs(),
+        killSignal: KILL_SIGNAL,
       }).trim().split("\n")[0];
       if (out && fs.existsSync(out)) return out;
     } catch {

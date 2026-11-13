@@ -314,7 +314,12 @@ export type StructuredNoteCode =
   | "textStyleFixed"
   | "archiveMissingExport"
   | "archiveMissingImport"
-  | "projectIdMigrated";
+  | "projectIdMigrated"
+  // Đợt 67 U6 — kết quả nhập lịch sử kèm trong archive `.vcut.zip`
+  // (history.json): nhập được bao nhiêu / bỏ qua bao nhiêu / xung đột
+  // bao nhiêu, hoặc bỏ qua lịch sử vì lỗi (xem openProjectFlow).
+  | "archiveHistoryImported"
+  | "archiveHistorySkipped";
 
 export interface StructuredNote {
   code: StructuredNoteCode;
@@ -1483,6 +1488,12 @@ export function serializeProject(
    * không truyền thì envelope thiếu field như trước.
    */
   projectId?: string,
+  /**
+   * Đợt 80 H7 — lookup i18n tùy chọn (mẫu M5): tên mặc định khi `name`
+   * rỗng dịch theo locale qua key projectRepo.untitledProject; không
+   * truyền lookup → fallback VI cũ (hành vi cũ, test cũ không vỡ).
+   */
+  lookup?: I18nLookup,
 ): {
   json: string;
   envelope: ProjectEnvelope;
@@ -1498,7 +1509,10 @@ export function serializeProject(
     appVersion: APP_VERSION,
     specVersion: SPEC_VERSION,
     savedAt: new Date().toISOString(),
-    name: name && name.trim().length > 0 ? name : "Dự án không tên",
+    name:
+      name && name.trim().length > 0
+        ? name
+        : trKey(lookup, "projectRepo.untitledProject", {}, "Dự án không tên"),
     spec,
   };
   // Đợt 63 R7 — chỉ ghi projectId khi hợp lệ; id lạ/không truyền thì

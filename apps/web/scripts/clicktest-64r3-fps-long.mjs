@@ -47,6 +47,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -165,7 +166,7 @@ class CDP {
   }
   async shot(name) {
     const r = await this.send("Page.captureScreenshot", { format: "png" });
-    fs.writeFileSync(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
+    writeFileEpermRetry(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
     return name;
   }
 }
@@ -454,7 +455,7 @@ async function main() {
     fs.mkdirSync(TMPDIR, { recursive: true });
     fs.rmSync(PROFILE, { recursive: true, force: true });
     fs.mkdirSync(VITE_CFG_DIR, { recursive: true });
-    fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 const require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});
@@ -796,7 +797,7 @@ export default { plugins: [react(), mediaPlugin()], server: { hmr: false } };
       slots: allSlots, repSummaries, aggregate,
       decode: { rows: decodeRows, aggregate: decodeAgg },
     };
-    fs.writeFileSync(path.join(SCRATCH, `r3-fps-long-${RES}.json`), JSON.stringify(report, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, `r3-fps-long-${RES}.json`), JSON.stringify(report, null, 2));
     log(`KẾT QUẢ HEADED R3 FPS LONG ${RES}p: ${nPass}/${results.length} pass`);
     process.exitCode = nPass === results.length ? 0 : 1;
   } catch (e) {

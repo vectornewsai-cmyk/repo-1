@@ -41,6 +41,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -1019,8 +1020,8 @@ function extractSingleClipDip() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "vcut-m6-ts-"));
   const stubDir = path.join(tmp, "node_modules", "@repo-1", "video-spec");
   fs.mkdirSync(stubDir, { recursive: true });
-  fs.writeFileSync(path.join(stubDir, "package.json"), JSON.stringify({ name: "@repo-1/video-spec", version: "0.0.0", main: "index.js" }));
-  fs.writeFileSync(path.join(stubDir, "index.js"), "module.exports = {};\n");
+  writeFileEpermRetry(path.join(stubDir, "package.json"), JSON.stringify({ name: "@repo-1/video-spec", version: "0.0.0", main: "index.js" }));
+  writeFileEpermRetry(path.join(stubDir, "index.js"), "module.exports = {};\n");
   const src = path.join(ROOT, "apps", "web", "src", "lib", "transitionPreview.ts");
   const outDir = path.join(tmp, "out");
   const r = spawnSync(path.join(ROOT, "node_modules", ".bin", "tsc"), [src, "--outDir", outDir, "--module", "commonjs", "--target", "es2020", "--moduleResolution", "node", "--skipLibCheck"], { encoding: "utf8" });
@@ -1089,7 +1090,7 @@ async function main() {
       const outJson = { run: RUN_LABEL, date: new Date().toISOString(), bundle: snap.bundle, bundleSha256_16: snap.sha, display: DISPLAY, port: PORT, origin: ORIGIN, cases: caseRecords, pureLoop, exceptions: cdp.exceptions, log: logLines };
       const outPath = path.join(ROOT, "benchmarks", "results", OUT);
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
-      fs.writeFileSync(outPath, JSON.stringify(outJson, null, 2));
+      writeFileEpermRetry(outPath, JSON.stringify(outJson, null, 2));
       log(`JSON kết quả: ${outPath}`);
     } finally {
       try { holder.chrome.kill("SIGKILL"); } catch {}

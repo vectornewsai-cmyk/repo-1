@@ -76,6 +76,8 @@ export const HISTORY_DB_VERSION = 1;
 export const HISTORY_STORE = "versions";
 export const HISTORY_KEEP_DEFAULT = 50;
 export const HISTORY_PROJECT_KEY = "vcut-studio:history-project-id:v1";
+/** Đợt 67 U6 — giới hạn version trong `history.json` của archive (chống archive chế tay phình kho). */
+export const ARCHIVE_HISTORY_MAX_VERSIONS = 500;
 
 export interface ProjectVersion {
   /** id duy nhất: `${projectId}@${createdAtMs}-${rand}`. */
@@ -102,6 +104,34 @@ export interface HistoryExport {
   projectId: string;
   exportedAt: string;
   versions: ProjectVersion[];
+}
+
+/** Đợt 67 U6 — kết quả nhập lịch sử có đếm chi tiết (xem importHistoryDetailed). */
+export interface HistoryImportDetail {
+  /** Số version mới đã nhập vào kho. */
+  imported: number;
+  /** Số version đã có sẵn với cùng nội dung — bỏ qua, không nhập lại. */
+  skipped: number;
+  /** Số version cùng id nhưng nội dung khác — giữ bản local, không ghi đè. */
+  conflicts: number;
+  /** Tổng số version trong file lịch sử. */
+  total: number;
+}
+
+/**
+ * Đợt 67 U6 — kết quả nhập lịch sử kèm archive (xem importArchiveHistory):
+ * thêm lý do bỏ qua toàn bộ lịch sử khi không nhập version nào vì
+ * lịch sử không thuộc về project của archive / quá giới hạn.
+ */
+export interface ArchiveHistoryImportResult extends HistoryImportDetail {
+  /** Lý do bỏ qua toàn bộ lịch sử; null khi nhập bình thường. */
+  skippedReason: "project-mismatch" | "too-many" | "version-project-mismatch" | null;
+  /**
+   * Chi tiết cho skippedReason: projectId của lịch sử (project-mismatch),
+   * số version trong file (too-many), projectId của version lẻ
+   * (version-project-mismatch); "" khi skippedReason null.
+   */
+  skippedDetail: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -571,6 +601,60 @@ export class HistoryStore {
     return { moved: versions.length };
   }
 
+  /**
+   * Đợt 67 U6 — đổi khóa CHỌN LỌC một số version (ngược với
+   * migrateVersions vốn chuyển toàn bộ chuỗi): chỉ version nào có id
+   * trong `idMap` mới chuyển từ `fromProjectId` sang `toProjectId`
+   * với id mới trong map; version khác trong chuỗi nguồn ở nguyên.
+   * `parentId` trong tập chuyển được remap theo cùng bảng (cha ngoài
+   * tập — đã bị prune / thuộc chuỗi khác — giữ nguyên, dangling như
+   * hành vi prune cũ). Hàng cũ chỉ bị xóa SAU khi hàng mới đã put
+   * xong nên lỗi giữa chừng không mất version. Dùng cho HOÀN TÁC lần
+   * nhận thủ công (trả đúng các version đã nhận về chuỗi legacy gốc
+   * với id gốc — id gốc không suy ra được từ id đã migrate vì
+   * makeVersionId dùng hậu tố ngẫu nhiên, nên caller phải giữ bảng
+   * id gốc → id migrate từ lúc nhận).
+   */
+  async rekeyVersions(
+    fromProjectId: string,
+    toProjectId: string,
+    idMap: ReadonlyMap<string, string>,
+  ): Promise<{ moved: number }> {
+    // Đợt 67 U6 — đích có thể là id envelope (UUID/proj-) HOẶC id
+    // legacy (file-/proj- — hướng hoàn tác trả version về chuỗi gốc);
+    // migrateVersions chỉ chấp nhận đích envelope nên không dùng được
+    // cho undo (đây chính là lỗi đã bắt ở test O1 đợt này). Dùng lại
+    // key dict `projectHistory.migrateVersionsNeedsProjectId` (đã có
+    // trong dict) với fallback là phần đuôi của đúng giá trị dict đó —
+    // KHÔNG tạo key trKey mới trong file này vì audit i18n P7 chỉ chấp
+    // nhận trKey trỏ key đã có trong dict (xem LIMITS đợt 67 U6 §5).
+    if (!isValidEnvelopeProjectId(toProjectId) && !isLegacyHistoryId(toProjectId)) {
+      throw new Error(
+        trKey(
+          this.lookup,
+          "projectHistory.migrateVersionsNeedsProjectId",
+          {},
+          "cần projectId đích hợp lệ (UUID hoặc proj-<time>-<rand>).",
+        ),
+      );
+    }
+    if (idMap.size === 0) return { moved: 0 };
+    if (!fromProjectId || fromProjectId === toProjectId) return { moved: 0 };
+    const versions = await this.backend.list(fromProjectId);
+    const targets = versions.filter((v) => idMap.has(v.id));
+    for (const v of targets) {
+      const nv: ProjectVersion = {
+        ...v,
+        id: idMap.get(v.id) ?? v.id,
+        projectId: toProjectId,
+        parentId: v.parentId ? (idMap.get(v.parentId) ?? v.parentId) : "",
+      };
+      await this.backend.put(nv);
+    }
+    for (const v of targets) await this.backend.delete(v.id);
+    return { moved: targets.length };
+  }
+
   exportHistory(projectId: string, versions: ProjectVersion[]): HistoryExport {
     return {
       format: "vcut-history",
@@ -629,13 +713,76 @@ export class HistoryStore {
   }
 
   async importHistory(data: unknown, lookup?: I18nLookup): Promise<number> {
+    return (await this.importHistoryDetailed(data, lookup)).imported;
+  }
+
+  /**
+   * Đợt 67 U6 — nhập lịch sử có đếm chi tiết để caller xử lý xung đột
+   * CÓ KIỂM SOÁT: version mới (chưa có id) thì nhập; version đã có
+   * với cùng nội dung (cùng hash + spec) thì bỏ qua; version cùng id
+   * nhưng nội dung KHÁC (máy khác sửa cùng một version, hoặc file bị
+   * sửa tay) thì XUNG ĐỘT — giữ bản local, không ghi đè, chỉ đếm.
+   * `validateImport` vẫn kiểm hash từng version trước khi nhập nên
+   * version trong file không tự khớp hash của chính nó sẽ throw.
+   */
+  async importHistoryDetailed(
+    data: unknown,
+    lookup?: I18nLookup,
+  ): Promise<HistoryImportDetail> {
     const exp = this.validateImport(data, lookup);
-    let count = 0;
+    let imported = 0;
+    let skipped = 0;
+    let conflicts = 0;
     for (const v of exp.versions) {
       const existing = await this.backend.get(v.id);
-      if (!existing) { await this.backend.put(v); count++; }
+      if (!existing) {
+        await this.backend.put(v);
+        imported++;
+        continue;
+      }
+      if (existing.hash === v.hash && stableStringify(existing.spec) === stableStringify(v.spec)) {
+        skipped++;
+        continue;
+      }
+      conflicts++;
     }
-    return count;
+    return { imported, skipped, conflicts, total: exp.versions.length };
+  }
+
+  /**
+   * Đợt 67 U6 — nhập lịch sử KÈM THEO archive `.vcut.zip` (chuỗi mới
+   * từ máy khác — xem archive.ts `history.json`). Khác importHistory
+   * thường: lịch sử trong archive PHẢI thuộc đúng project của archive
+   * (`expectedProjectId` = projectId trong project.json của archive) —
+   * lệch projectId (kể cả một version lẻ trong file) hoặc quá 500
+   * version thì KHÔNG throw mà trả về `skippedReason` để caller bỏ
+   * qua lịch sử mà KHÔNG hỏng cả lần nhập archive (chuỗi VI giải
+   * thích lý do do caller dựng — file này nằm trong 36 file audit i18n
+   * P7 quét nên không được thêm literal/trKey mới ở đây; xem LIMITS
+   * đợt 67 U6 §5). Chỉ lỗi định dạng (validateImport) mới throw.
+   */
+  async importArchiveHistory(
+    data: unknown,
+    expectedProjectId: string,
+    lookup?: I18nLookup,
+  ): Promise<ArchiveHistoryImportResult> {
+    const exp = this.validateImport(data, lookup);
+    const skipped = (reason: ArchiveHistoryImportResult["skippedReason"], detail: string): ArchiveHistoryImportResult => ({
+      imported: 0, skipped: 0, conflicts: 0, total: exp.versions.length, skippedReason: reason, skippedDetail: detail,
+    });
+    if (exp.projectId !== expectedProjectId) {
+      return skipped("project-mismatch", exp.projectId);
+    }
+    if (exp.versions.length > ARCHIVE_HISTORY_MAX_VERSIONS) {
+      return skipped("too-many", String(exp.versions.length));
+    }
+    for (const v of exp.versions) {
+      if (v.projectId !== exp.projectId) {
+        return skipped("version-project-mismatch", v.projectId);
+      }
+    }
+    const detail = await this.importHistoryDetailed(exp, lookup);
+    return { ...detail, skippedReason: null, skippedDetail: "" };
   }
 }
 
@@ -704,11 +851,29 @@ export function clearLegacyHistoryProjectId(): void {
   } catch { /* bỏ qua */ }
 }
 
+/**
+ * Đợt 67 U6 — ghi lại khóa lịch sử legacy (để HOÀN TÁC lần nhận thủ
+ * công: chuỗi con trỏ vừa nhận tay thì khóa đã bị dọn, undo phải trả
+ * khóa về đúng chuỗi đó để lần mở sau còn nhận/quyết định lại được).
+ */
+export function writeLegacyHistoryProjectId(id: string): void {
+  try {
+    const g = globalThis as unknown as { window?: { localStorage?: Storage }; localStorage?: Storage };
+    const ls = g.window?.localStorage ?? g.localStorage;
+    ls?.setItem(HISTORY_PROJECT_KEY, id);
+  } catch { /* bỏ qua */ }
+}
+
 /** Phụ thuộc của adoptLegacyHistoryChain — inject được để test bằng MemoryBackend + localStorage giả. */
 export interface AdoptLegacyHistoryDeps {
   store: HistoryStore;
   readLegacyId: () => string | null;
   clearLegacyId: () => void;
+  /**
+   * Đợt 67 U6 — ghi khóa legacy (tùy chọn; test cũ không truyền thì
+   * undo chỉ trả version mà không khôi phục khóa con trỏ).
+   */
+  writeLegacyId?: (id: string) => void;
 }
 
 export function defaultAdoptDeps(): AdoptLegacyHistoryDeps {
@@ -716,6 +881,7 @@ export function defaultAdoptDeps(): AdoptLegacyHistoryDeps {
     store: getHistoryStore(),
     readLegacyId: readLegacyHistoryProjectId,
     clearLegacyId: clearLegacyHistoryProjectId,
+    writeLegacyId: writeLegacyHistoryProjectId,
   };
 }
 
@@ -959,7 +1125,7 @@ export async function adoptLegacyHistoryChain(
   }
 }
 
-/** Kết quả nhận thủ công một chuỗi legacy mơ hồ (đợt 66 T7). */
+/** Kết quả nhận thủ công một chuỗi legacy mơ hồ (đợt 66 T7, mở rộng đợt 67 U6). */
 export interface ManualAdoptResult {
   /** Số version đã chuyển về id envelope (0 khi chuỗi nguồn rỗng). */
   moved: number;
@@ -972,6 +1138,19 @@ export interface ManualAdoptResult {
   reason: string;
   /** Thông báo lỗi khi reason === "error". */
   error?: string;
+  /**
+   * Đợt 67 U6 — các version đã chuyển: id GỐC trong chuỗi legacy →
+   * id đã migrate trong envelope. Id gốc KHÔNG suy ra được từ id
+   * migrate (makeVersionId dùng hậu tố ngẫu nhiên) nên phải ghi lại
+   * lúc nhận để HOÀN TÁC trả đúng version về đúng id gốc. Rỗng khi
+   * chuỗi nguồn rỗng / bị từ chối / lỗi.
+   */
+  movedVersions: Array<{ fromId: string; toId: string }>;
+  /**
+   * Đợt 67 U6 — true khi chuỗi vừa nhận là chuỗi CON TRỎ (khóa legacy
+   * đã bị dọn). Undo dùng cờ này để khôi phục lại khóa về chuỗi đó.
+   */
+  wasPointerChain: boolean;
 }
 
 /**
@@ -985,11 +1164,14 @@ export interface ManualAdoptResult {
  * dọn để lần mở sau khỏi hỏi lại. Lỗi kho → reason "error", không throw
  * (UI hiện toast lỗi, mục ở lại hàng đợi để thử lại).
  *
- * Giới hạn trung thực: nhận thủ công là quyết định không hoàn tác được
- * bằng một nút bấm — version đã chuyển sang chuỗi envelope (nội dung
- * version giữ nguyên, chỉ đổi khóa); muốn tách lại phải xóa tay từng
- * version trong HistoryPanel. UI phải hiện đủ bằng chứng trước khi user
- * bấm Nhận (xem LIMITS đợt 66 T7 §2).
+ * Đợt 67 U6 — nhận thủ công nay HOÀN TÁC được bằng `undoManualAdopt`
+ * (xem dưới): hàm này ghi lại bảng id gốc → id migrate + cờ con trỏ
+ * trong kết quả trả về; UI giữ bản ghi đó cho tới khi user bấm Hoàn
+ * tác hoặc đóng modal. Giới hạn: hoàn tác chỉ trả đúng các version đã
+ * nhận trong LẦN NHẬN ĐÓ (một mức — lần nhận gần nhất); version lưu
+ * mới vào envelope sau khi nhận mà trỏ cha tới version đã nhận thì
+ * parentId của nó vẫn trỏ id đã migrate (dangling, cùng hành vi prune
+ * cũ — xem LIMITS đợt 67 U6 §5).
  */
 export async function adoptLegacyFragmentManually(
   envelopeId: string,
@@ -998,22 +1180,242 @@ export async function adoptLegacyFragmentManually(
 ): Promise<ManualAdoptResult> {
   try {
     if (!isValidEnvelopeProjectId(envelopeId)) {
-      return { moved: 0, reason: "invalid-envelope-id" };
+      return { moved: 0, reason: "invalid-envelope-id", movedVersions: [], wasPointerChain: false };
     }
     if (fragmentId === envelopeId) {
-      return { moved: 0, reason: "same-as-envelope" };
+      return { moved: 0, reason: "same-as-envelope", movedVersions: [], wasPointerChain: false };
     }
     if (!isLegacyHistoryId(fragmentId)) {
-      return { moved: 0, reason: "not-legacy" };
+      return { moved: 0, reason: "not-legacy", movedVersions: [], wasPointerChain: false };
     }
+    // Đợt 67 U6 — chụp danh sách version GỐC trước khi migrate để
+    // hoàn tác trả đúng id gốc (id gốc mang hậu tố ngẫu nhiên, không
+    // suy ra được từ id đã migrate).
+    const before = await deps.store.listVersions(fragmentId);
+    const wasPointerChain = deps.readLegacyId() === fragmentId;
     const { moved } = await deps.store.migrateVersions(fragmentId, envelopeId);
+    const movedVersions = before.map((v) => ({
+      fromId: v.id,
+      toId: migratedVersionId(envelopeId, v),
+    }));
     // Chuỗi con trỏ vừa được nhận thủ công → dọn khóa để lần mở sau
     // khỏi hỏi lại (y hệt đường tự nhận trong adoptLegacyHistoryChain).
-    if (deps.readLegacyId() === fragmentId) deps.clearLegacyId();
-    return { moved, reason: moved > 0 ? "manual-adopted" : "manual-adopted-empty" };
+    if (wasPointerChain) deps.clearLegacyId();
+    return { moved, reason: moved > 0 ? "manual-adopted" : "manual-adopted-empty", movedVersions, wasPointerChain };
   } catch (e) {
-    return { moved: 0, reason: "error", error: (e as Error).message };
+    return { moved: 0, reason: "error", error: (e as Error).message, movedVersions: [], wasPointerChain: false };
   }
+}
+
+/** Kết quả hoàn tác một lần nhận thủ công (đợt 67 U6). */
+export interface UndoManualAdoptResult {
+  /** Số version đã trả về chuỗi legacy gốc (0 khi chuỗi đã rỗng / không còn version nào). */
+  movedBack: number;
+  /**
+   * Lý do: "undone" (đã trả version về chuỗi gốc),
+   * "undone-empty" (không còn version nào để trả — chỉ khôi phục khóa
+   * con trỏ nếu có), "nothing-to-undo" (không có version đã nhận và
+   * không có khóa con trỏ để khôi phục), "invalid-envelope-id" /
+   * "not-legacy" / "same-as-envelope" (từ chối), "error" (lỗi kho).
+   */
+  reason: string;
+  /** true khi khóa con trỏ đã được ghi lại về chuỗi gốc. */
+  pointerRestored: boolean;
+  /** Thông báo lỗi khi reason === "error". */
+  error?: string;
+}
+
+/**
+ * Đợt 67 U6 — HOÀN TÁC một lần nhận thủ công (`adoptLegacyFragmentManually`).
+ *
+ * Trả các version đã nhận về chuỗi legacy gốc với ĐÚNG id gốc
+ * (`movedVersions` do lần nhận trả về — id gốc không suy ra được từ
+ * id đã migrate), qua `HistoryStore.rekeyVersions` (chỉ chuyển đúng
+ * các id trong bảng; version lưu mới vào envelope sau khi nhận thì ở
+ * nguyên). Nếu chuỗi đã nhận là chuỗi con trỏ (`restorePointer`)
+ * thì ghi lại khóa legacy về chuỗi đó để lần mở sau còn nhận/quyết
+ * định lại được. Lỗi kho → reason "error", không throw. Version nào
+ * đã bị xóa/prune khỏi envelope sau khi nhận thì không còn để trả
+ * (movedBack nhỏ hơn số đã nhận — caller báo đúng số thật).
+ */
+export async function undoManualAdopt(
+  envelopeId: string,
+  fragmentId: string,
+  movedVersions: ReadonlyArray<{ fromId: string; toId: string }>,
+  opts: { restorePointer?: boolean } = {},
+  deps: AdoptLegacyHistoryDeps = defaultAdoptDeps(),
+): Promise<UndoManualAdoptResult> {
+  try {
+    if (!isValidEnvelopeProjectId(envelopeId)) {
+      return { movedBack: 0, reason: "invalid-envelope-id", pointerRestored: false };
+    }
+    if (fragmentId === envelopeId) {
+      return { movedBack: 0, reason: "same-as-envelope", pointerRestored: false };
+    }
+    if (!isLegacyHistoryId(fragmentId)) {
+      return { movedBack: 0, reason: "not-legacy", pointerRestored: false };
+    }
+    const restorePointer = opts.restorePointer === true;
+    if (movedVersions.length === 0 && !restorePointer) {
+      return { movedBack: 0, reason: "nothing-to-undo", pointerRestored: false };
+    }
+    const idMap = new Map(movedVersions.map((m) => [m.toId, m.fromId] as const));
+    const { moved } = await deps.store.rekeyVersions(envelopeId, fragmentId, idMap);
+    let pointerRestored = false;
+    if (restorePointer && deps.writeLegacyId) {
+      deps.writeLegacyId(fragmentId);
+      pointerRestored = true;
+    }
+    if (moved > 0) return { movedBack: moved, reason: "undone", pointerRestored };
+    if (pointerRestored) return { movedBack: 0, reason: "undone-empty", pointerRestored };
+    return { movedBack: 0, reason: "nothing-to-undo", pointerRestored: false };
+  } catch (e) {
+    return { movedBack: 0, reason: "error", pointerRestored: false, error: (e as Error).message };
+  }
+}
+
+/**
+ * Đợt 68 V6 — STACK HOÀN TÁC NHIỀU MỨC cho nhận legacy thủ công.
+ *
+ * Nợ đóng (đợt 67 U6 §5.2): hoàn tác chỉ một mức — nhận lần 2 ghi đè
+ * bản ghi hoàn tác của lần 1; nhận "tất cả" cũng chỉ hoàn tác được lần
+ * nhận cuối trong loạt. Nay mỗi lần nhận (từng mảnh hoặc từng mảnh
+ * trong loạt "nhận tất cả") push một `ManualAdoptRecord` lên stack;
+ * hoàn tác pop từng mức theo thứ tự ngược (LIFO — mức nhận sau cùng
+ * được hoàn tác trước, đúng thứ tự đảo ngược của thao tác).
+ *
+ * Bất biến (dựa trên hàng đợi khử trùng theo `from` của legacyAdoptUi):
+ * một chuỗi chỉ có tối đa MỘT bản ghi đang sống trong stack — nhận
+ * xong mục rời khỏi hàng đợi, hoàn tác mới trả mục về hàng đợi và pop
+ * bản ghi; nên không thể nhận cùng chuỗi 2 lần mà không hoàn tác ở
+ * giữa. Vì vậy mỗi `fragmentId` xuất hiện tối đa 1 lần trong stack.
+ *
+ * Giới hạn: tối đa `LEGACY_ADOPT_UNDO_MAX_LEVELS` mức; push vượt
+ * giới hạn thì mức CŨ NHẤT bị bỏ (FIFO) và `push` trả về bản ghi đã
+ * bỏ để caller báo cho user — các version của mức bị bỏ KHÔNG còn
+ * hoàn tác được nữa. Stack chỉ sống trong phiên modal (không persist
+ * localStorage/IndexedDB): đổi project hoặc tải lại trang thì stack
+ * rỗng; modal dọn stack khi projectId đổi (xem LegacyHistoryAdoptModal).
+ */
+
+/** Một mức hoàn tác: đủ thông tin để trả đúng version về đúng id gốc. */
+export interface ManualAdoptRecord {
+  /** Id envelope (project hiện tại) lúc nhận — undo kiểm tra khớp. */
+  envelopeId: string;
+  /** Id chuỗi legacy đã nhận. */
+  fragmentId: string;
+  /** Số version đã chuyển vào envelope trong lần nhận này. */
+  moved: number;
+  /** Bảng id gốc → id migrate (để undo trả đúng id gốc). */
+  movedVersions: Array<{ fromId: string; toId: string }>;
+  /** true khi chuỗi đã nhận là chuỗi con trỏ (undo khôi phục khóa). */
+  wasPointerChain: boolean;
+  /** Mốc nhận (ms epoch) — chỉ để hiển thị/sắp xếp, không dùng undo. */
+  adoptedAt: number;
+}
+
+/** Số mức hoàn tác tối đa giữ trong stack (đợt 68 V6). */
+export const LEGACY_ADOPT_UNDO_MAX_LEVELS = 20;
+
+/** Dựng một bản ghi hoàn tác từ kết quả `adoptLegacyFragmentManually`. */
+export function makeManualAdoptRecord(
+  envelopeId: string,
+  fragmentId: string,
+  result: ManualAdoptResult,
+  adoptedAt: number = Date.now(),
+): ManualAdoptRecord {
+  return {
+    envelopeId,
+    fragmentId,
+    moved: result.moved,
+    movedVersions: result.movedVersions.map((m) => ({ fromId: m.fromId, toId: m.toId })),
+    wasPointerChain: result.wasPointerChain,
+    adoptedAt,
+  };
+}
+
+/**
+ * Stack hoàn tác nhận legacy (LIFO, tối đa
+ * `LEGACY_ADOPT_UNDO_MAX_LEVELS` mức). Lớp thuần — không chạm kho,
+ * test được bằng Node; modal giữ một instance trong ref.
+ */
+export class LegacyAdoptUndoStack {
+  private records: ManualAdoptRecord[] = [];
+
+  /**
+   * Push một mức mới lên đỉnh. Vượt giới hạn thì bỏ mức CŨ NHẤT
+   * (đáy stack) và trả về bản ghi đã bỏ (null khi không bỏ mức nào).
+   */
+  push(record: ManualAdoptRecord): { dropped: ManualAdoptRecord | null } {
+    let dropped: ManualAdoptRecord | null = null;
+    if (this.records.length >= LEGACY_ADOPT_UNDO_MAX_LEVELS) {
+      dropped = this.records.shift() ?? null;
+    }
+    this.records.push(record);
+    return { dropped };
+  }
+
+  /** Xem mức trên đỉnh mà không pop (undefined khi stack rỗng). */
+  peek(): ManualAdoptRecord | undefined {
+    return this.records[this.records.length - 1];
+  }
+
+  /** Pop mức trên đỉnh (undefined khi stack rỗng). */
+  pop(): ManualAdoptRecord | undefined {
+    return this.records.pop();
+  }
+
+  /** Số mức còn lại trong stack. */
+  get size(): number {
+    return this.records.length;
+  }
+
+  /** Ảnh chụp các mức theo thứ tự nhận (cũ → mới). */
+  list(): readonly ManualAdoptRecord[] {
+    return [...this.records];
+  }
+
+  /** Dọn toàn bộ stack (đổi project / user bấm Ẩn — xem modal). */
+  clear(): void {
+    this.records = [];
+  }
+}
+
+/**
+ * Đợt 68 V6 — HOÀN TÁC MỨC GẦN NHẤT trong stack: pop đỉnh stack rồi
+ * gọi `undoManualAdopt` với đúng bản ghi đó (trả version về đúng id
+ * gốc + khôi phục khóa con trỏ nếu chuỗi là con trỏ).
+ *
+ * Trả về null khi stack rỗng (không pop, không đụng kho). Bản ghi đã
+ * pop thì coi như ĐÃ DÙNG kể cả khi kết quả là "nothing-to-undo"
+ * (version đã bị xóa/prune sau khi nhận nên không còn gì để trả —
+ * caller báo đúng số thật, không pop thêm mức khác trong cùng một lần
+ * bấm). Envelope của bản ghi lệch với envelope hiện tại thì bản ghi
+ * được đẩy TRỞ LẠI stack (không mất) và kết quả mang reason
+ * "envelope-mismatch" — modal dọn stack vì phiên đã cũ.
+ */
+export async function undoLastManualAdopt(
+  stack: LegacyAdoptUndoStack,
+  envelopeId: string,
+  deps: AdoptLegacyHistoryDeps = defaultAdoptDeps(),
+): Promise<{ record: ManualAdoptRecord; result: UndoManualAdoptResult } | null> {
+  const record = stack.pop();
+  if (!record) return null;
+  if (record.envelopeId !== envelopeId) {
+    stack.push(record);
+    return {
+      record,
+      result: { movedBack: 0, reason: "envelope-mismatch", pointerRestored: false },
+    };
+  }
+  const result = await undoManualAdopt(
+    envelopeId,
+    record.fragmentId,
+    record.movedVersions,
+    { restorePointer: record.wasPointerChain },
+    deps,
+  );
+  return { record, result };
 }
 
 /** Singleton cho UI trình duyệt (lazy để không chạm IndexedDB khi test Node).
@@ -1031,4 +1433,37 @@ export function getHistoryStore(lookup?: I18nLookup): HistoryStore {
     singleton.setLookup(lookup);
   }
   return singleton;
+}
+
+// ---------------------------------------------------------------------------
+// Đợt 67 U6 — tín hiệu "lịch sử đã đổi" cho HistoryPanel tự làm mới.
+//
+// Vấn đề: HistoryPanel chỉ đọc lại danh sách khi projectId đổi. Nhập
+// archive mang lịch sử mới (openProjectFlow) hoặc nhận/hoàn tác legacy
+// (modal) đều thêm/xóa version của CÙNG projectId đang mở — panel đang
+// mở sẽ hiện danh sách cũ cho tới khi user đóng/mở lại. Caller gọi
+// notifyHistoryChanged() sau khi kho đổi thật; panel subscribe số thứ
+// tự này và đọc lại. Cùng mẫu subscribe/getSnapshot của loadReport.
+// ---------------------------------------------------------------------------
+
+let historyChangedSeq = 0;
+const historyChangedListeners = new Set<() => void>();
+
+/** Báo lịch sử đã đổi (gọi sau khi nhập/xóa version thành công). */
+export function notifyHistoryChanged(): void {
+  historyChangedSeq++;
+  historyChangedListeners.forEach((fn) => fn());
+}
+
+/** Đăng ký nhận thay đổi lịch sử. Trả về hàm hủy đăng ký. */
+export function subscribeHistoryChanged(cb: () => void): () => void {
+  historyChangedListeners.add(cb);
+  return () => {
+    historyChangedListeners.delete(cb);
+  };
+}
+
+/** Số thứ tự thay đổi lịch sử (cho useSyncExternalStore). */
+export function getHistoryChangedSeq(): number {
+  return historyChangedSeq;
 }

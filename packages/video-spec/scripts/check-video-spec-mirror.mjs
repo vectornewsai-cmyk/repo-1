@@ -77,7 +77,28 @@ const KNOWN_EXPORT_GAPS = {};
  * (không còn knownGap) kèm guard try/catch ở mọi caller preview (xem
  * LIMITS đợt 52 I7 §2). Map giữ lại (rỗng) cho lệch mới trong tương lai.
  */
-const KNOWN_BEHAVIOR_GAPS = {};
+const KNOWN_BEHAVIOR_GAPS = {
+  // Đợt 87 O1 — maskGeometryAtTrack TS ↔ render CJS: bản TS (qua
+  // maskGeometryAt) trả `keyframes: undefined` — key có mặt, giá trị
+  // undefined (quy ước video-spec từ D4); bản render CJS `delete` key đó
+  // (quy ước render từ D4, maskGeometryAt ở server/render/src/mask.js).
+  // Hai bên cho cùng JSON và cùng mọi giá trị số — chỉ lệch tập key.
+  // Hình dạng lệch CHỈ chấp nhận khi JSON giống hệt nhau và tập key chỉ
+  // lệch đúng key "keyframes": số lệch dù 1 bit cũng FAIL để có người xem.
+  "mask-keyframes-undefined-vs-absent": {
+    reason:
+      "TS đặt keyframes: undefined, render CJS delete key — JSON và số giống hệt, chỉ lệch key (quy ước D4 hai bên)",
+    shape: (a, b) => {
+      if (a.threw || b.threw) return false;
+      if (JSON.stringify(a.value) !== JSON.stringify(b.value)) return false;
+      const ka = Object.keys(a.value ?? {}).sort();
+      const kb = Object.keys(b.value ?? {}).sort();
+      const onlyKeyframes = (x, y) =>
+        x.length === y.length + 1 && x.filter((k) => !y.includes(k)).join() === "keyframes";
+      return onlyKeyframes(ka, kb) || onlyKeyframes(kb, ka);
+    },
+  },
+};
 
 // ---------------------------------------------------------------------------
 // So sánh kết quả (NaN-aware, đệ quy)
@@ -899,6 +920,12 @@ const PROBE_GROUPS = [
       { fn: "interpolateMaskAt", name: "sau kf cuối → hold kf cuối", args: [MASK_KF, 5] },
       { fn: "interpolateMaskAt", name: "không keyframes → giá trị tĩnh", args: [MASK_STATIC, 1] },
       { fn: "maskGeometryAt", name: "t=1 → nội suy + keyframes undefined", args: [MASK_KF, 1] },
+      // Đợt 87 O1 — mask bám motion track (maskGeometryAtTrack).
+      { fn: "maskGeometryAtTrack", name: "track 2 điểm, t=1 → tâm (0.4,0.5), w/h keyframe 0.5", args: [MASK_KF, { points: TRACK_PTS }, 1] },
+      { fn: "maskGeometryAtTrack", name: "không track → giống maskGeometryAt", args: [MASK_KF, undefined, 1] },
+      { fn: "maskGeometryAtTrack", name: "track rỗng → fallback maskGeometryAt", args: [MASK_KF, { points: [] }, 1] },
+      { fn: "maskGeometryAtTrack", name: "t sau điểm cuối → kẹp điểm cuối (0.6,0.7)", args: [MASK_KF, { points: TRACK_PTS }, 5] },
+      { fn: "maskGeometryAtTrack", name: "mask tĩnh + track → tâm track, w/h tĩnh", args: [MASK_STATIC, { points: TRACK_PTS }, 1] },
       { fn: "validateMask", name: "mask tĩnh hợp lệ → []", args: [MASK_STATIC] },
       { fn: "validateMask", name: "mask có keyframes → []", args: [MASK_KF] },
       { fn: "validateMask", name: "shape lạ → 1 lỗi", args: [{ ...MASK_STATIC, shape: "circle" }] },
@@ -906,6 +933,22 @@ const PROBE_GROUPS = [
       { fn: "validateMask", name: "w = 0 → 1 lỗi", args: [{ ...MASK_STATIC, w: 0 }] },
       { fn: "validateMask", name: "keyframe t âm → 1 lỗi", args: [{ ...MASK_STATIC, keyframes: [{ t: -1, x: 0.5, y: 0.5, w: 0.5, h: 0.5 }] }] },
       { fn: "validateMask", name: "chuỗi → 1 lỗi", args: ["x"] },
+    ],
+  },
+  {
+    // Đợt 87 O1 — mask bám track: TS canonical ↔ render worker CJS
+    // (server/render/src/mask.js). Cùng fixture với nhóm mask trên để 3
+    // implementation (TS, JS mirror, CJS render) cho cùng kết quả số.
+    label: "mask-track: mask.ts ↔ render mask.js",
+    a: "ts:mask.ts",
+    b: "render:mask.js",
+    probes: [
+      { fn: "maskGeometryAtTrack", name: "track 2 điểm, t=1 → tâm (0.4,0.5), w/h keyframe 0.5", args: [MASK_KF, { points: TRACK_PTS }, 1], knownGap: "mask-keyframes-undefined-vs-absent" },
+      { fn: "maskGeometryAtTrack", name: "không track → giống maskGeometryAt", args: [MASK_KF, undefined, 1], knownGap: "mask-keyframes-undefined-vs-absent" },
+      { fn: "maskGeometryAtTrack", name: "track rỗng → fallback maskGeometryAt", args: [MASK_KF, { points: [] }, 1], knownGap: "mask-keyframes-undefined-vs-absent" },
+      { fn: "maskGeometryAtTrack", name: "t sau điểm cuối → kẹp điểm cuối (0.6,0.7)", args: [MASK_KF, { points: TRACK_PTS }, 5], knownGap: "mask-keyframes-undefined-vs-absent" },
+      { fn: "maskGeometryAtTrack", name: "mask tĩnh + track → tâm track, w/h tĩnh", args: [MASK_STATIC, { points: TRACK_PTS }, 1], knownGap: "mask-keyframes-undefined-vs-absent" },
+      { fn: "maskGeometryAtTrack", name: "track 1 điểm → tâm hằng (0.25,0.75)", args: [MASK_KF, { points: [{ t: 0, x: 0.25, y: 0.75 }] }, 1], knownGap: "mask-keyframes-undefined-vs-absent" },
     ],
   },
   {
