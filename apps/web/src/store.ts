@@ -29,7 +29,6 @@ import {
 } from "@repo-1/video-spec";
 import {
   CAPTION_DEFAULT_STYLE,
-  CAPTION_TRACK_LABEL,
   segmentsToTextClips,
   type CaptionSegment,
   wordsForSegments,
@@ -46,6 +45,9 @@ import {
   unlinkCaptionInSpec,
 } from "./lib/captionFollow";
 import { LoadSampleQueue } from "./lib/loadSampleQueue";
+// Đợt 76 D8 — merge thay vì ghi đè khi loadSample resolve (đóng nợ race
+// đợt 75 C6 §4 mục 7: xem lib/sampleLoadMerge76D8.ts).
+import { mergeSampleLoad } from "./lib/sampleLoadMerge76D8";
 import { markSaved } from "./lib/projectRepo";
 // Đợt 63 R7 — projectId ổn định (module thuần; store sinh id mới khi
 // tạo/mở project, xem newProject/replaceProject/loadSample).
@@ -95,6 +97,7 @@ import { syncAssetRefCounts } from "./lib/idbCleanup61R9";
 // (xem setMediaProxy + assetStore.setProxy).
 import { proxyPathFromUrl } from "./lib/proxy";
 import { ingestImportedItem, ingestImportedItemWithProgress } from "./lib/importAsset37T3";
+import { formatUnsupportedNameList, probeImportedFileCodec } from "./lib/codecProbe";
 import type {
   ImportFileProgressCallback,
   IngestProgressCallback,
@@ -1011,9 +1014,23 @@ export const useStore = create<EditorState>()((set, get) => {
 
   importFiles: async (files, onProgress) => {
     const items: MediaItem[] = [];
+    // Đợt 74 B3 — codec-probe lúc import (đóng nợ đợt 73 §4 mục 7, A7 S5):
+    // file VP9/WebM/AV1/HEVC có thể không phát được trên trình duyệt
+    // hiện tại (đặc biệt Safari cũ) nhưng fileToMediaItem chỉ nuốt lỗi
+    // probe → clip chết lặng lúc preview. Probe trước bằng canPlayType
+    // (+ sniff header để biết codec thật); file nào verdict
+    // "unsupported" thì gắn cờ lên item + báo toast ngay sau khi import
+    // xong — file vẫn import được (export FFmpeg phía server không
+    // ảnh hưởng). Probe không bao giờ throw nên không làm hỏng import.
+    const unsupported: Array<{ id: string; name: string; codecLabel: string }> = [];
     for (const f of files) {
       try {
+        const probe = await probeImportedFileCodec(f);
         const item = await fileToMediaItem(f);
+        if (probe && probe.verdict === "unsupported") {
+          item.unsupportedCodec = probe.codecLabel;
+          unsupported.push({ id: item.id, name: item.name, codecLabel: probe.codecLabel });
+        }
         items.push(item);
       } catch {
         // file không hỗ trợ -> bỏ qua lặng lẽ (đã lọc ở accept của input)
@@ -1036,6 +1053,36 @@ export const useStore = create<EditorState>()((set, get) => {
       }
       return { media: [...s.media, ...items] };
     });
+    // Đợt 74 B3 — báo codec không phát được NGAY lúc import (tên đã
+    // chốt duy nhất ở trên nên toast nêu đúng tên trong bin).
+    // Đợt 75 C6 — gộp toast khi nhiều file cùng không hỗ trợ (đóng nợ
+    // LIMITS đợt 74 B3 §4 mục 4: trước đây một toast mỗi file, import
+    // nhiều file là toast chồng nhau): 1 file → toast cũ nêu tên +
+    // codec; nhiều file → MỘT toast tổng nêu số lượng + tối đa 3 tên
+    // đầu (+N). Badge trên thẻ media (MediaBin) vẫn đánh dấu từng file
+    // nên gộp toast không làm mất thông tin từng file.
+    if (unsupported.length === 1) {
+      const finalNames = new Map(get().media.map((m) => [m.id, m.name]));
+      const u = unsupported[0]!;
+      pushToast(
+        i18nT("mediabin.codecUnsupported", {
+          name: finalNames.get(u.id) ?? u.name,
+          codec: u.codecLabel,
+        }),
+        "error",
+      );
+    } else if (unsupported.length > 1) {
+      const finalNames = new Map(get().media.map((m) => [m.id, m.name]));
+      pushToast(
+        i18nT("mediabin.codecUnsupportedMany", {
+          count: String(unsupported.length),
+          names: formatUnsupportedNameList(
+            unsupported.map((u) => finalNames.get(u.id) ?? u.name),
+          ),
+        }),
+        "error",
+      );
+    }
     // Đợt 37 T3: ingest bytes vào AssetStore SAU khi tên đã chốt duy
     // nhất (rehydrate khớp tên thô theo originalName) và SAU set() để
     // giữ nguyên tính nguyên tử của bước làm duy nhất tên ở trên.
@@ -1293,7 +1340,11 @@ export const useStore = create<EditorState>()((set, get) => {
     const id = nextTrackId("text");
     const count = get().spec.tracks.filter((t) => t.kind === "text").length + 1;
     // R1-080: track dịch có label riêng (vd: "Phụ đề (EN)"); tránh trùng label.
-    let label = opts?.label ?? `${CAPTION_TRACK_LABEL} ${count}`;
+    // Đợt 79 G9: track phụ đề thường cũng theo locale (key captions.trackLabel)
+    // thay vì hardcode "Phụ đề N" mọi locale; nhận diện track vẫn khớp cả hai
+    // tiền tố "Phụ đề"/"Subtitles" (xem subtitles.ts), hằng CAPTION_TRACK_LABEL
+    // giữ nguyên làm label legacy + khóa test M4.
+    let label = opts?.label ?? i18nT("captions.trackLabel", { n: String(count) });
     const taken = new Set(get().spec.tracks.map((t) => t.label));
     if (taken.has(label)) label = `${label} ${count}`;
     const track: Track = {
@@ -2971,6 +3022,13 @@ export const useStore = create<EditorState>()((set, get) => {
     // Đợt 47 C1: chụp thế hệ trước await — set cuối chỉ chạy khi không
     // có lần đổi project nào xen vào trong lúc buildSampleProject bay.
     const genAtStart = projectGeneration;
+    // Đợt 76 D8 — chụp spec trước await để merge thay vì ghi đè (đóng
+    // nợ race đợt 75 C6 §4 mục 7: buildSampleProject bay ~8 s ghi 2
+    // clip mẫu; user import trong lúc đó thì set() cuối của lượt này
+    // xóa file vừa import khỏi bin, kéo clip lên timeline thì mất cả
+    // clip — guard thế hệ không cứu được vì import không tăng
+    // projectGeneration). Xem mergeSampleLoad (lib/sampleLoadMerge76D8).
+    const specAtStart = get().spec;
     // Đợt 48 D6: lượt này có set thành công không (để quyết định retry).
     let didSet = false;
     try {
@@ -2979,29 +3037,51 @@ export const useStore = create<EditorState>()((set, get) => {
       projectGeneration += 1; // set này tự nó là một lần đổi project
       trackSeq = 10; // tránh trùng id track mẫu (v1, t1)
       clipboard = null; // K2: đổi project -> clipboard cũ không còn ý nghĩa
-      set({
-        spec,
-        // Đợt 63 R7 — project mẫu vừa load là một project mới (không
-        // phải file user đã lưu): sinh id riêng để sổ tham chiếu của
-        // phiên mẫu không đè lên bản ghi của project user cùng tên.
-        projectId: generateProjectId(),
-        media,
-        playhead: 0,
-        playing: false,
-        selection: [],
-        ready: true,
-        clipboardSize: 0,
+      // Đợt 76 D8 — merge thay vì ghi đè: media mẫu + item user thêm
+      // lúc bay (import trong lúc mẫu đang build được giữ lại); spec
+      // chỉ thay bằng mẫu khi user không sửa timeline lúc bay, còn
+      // không thì giữ nguyên spec/projectId/playhead/history của họ.
+      const merged = mergeSampleLoad({
+        sampleSpec: spec,
+        sampleMedia: media,
+        specAtStart,
+        curSpec: get().spec,
+        curMedia: get().media,
       });
+      if (merged.specPreserved) {
+        // Chỉ gộp media mẫu vào bin — KHÔNG markSaved (spec của user
+        // chưa lưu, autosave sẽ ghi sau) và KHÔNG clearHistory (undo
+        // của user còn nguyên). NHƯNG vẫn phải bật ready: true — lượt
+        // mẫu đã xong, không thì splash "Đang mở dự án..." đè màn hình
+        // mãi (ready khởi đầu false) và WelcomeModal không bao giờ
+        // hiện (nó chỉ render khi ready). Lỗi này đã bắt được ở lần
+        // headed đầu (screenshot R2 chỉ có splash).
+        set({ media: merged.media, ready: true });
+      } else {
+        set({
+          spec: merged.spec,
+          // Đợt 63 R7 — project mẫu vừa load là một project mới (không
+          // phải file user đã lưu): sinh id riêng để sổ tham chiếu của
+          // phiên mẫu không đè lên bản ghi của project user cùng tên.
+          projectId: generateProjectId(),
+          media: merged.media,
+          playhead: 0,
+          playing: false,
+          selection: [],
+          ready: true,
+          clipboardSize: 0,
+        });
+        // ROUND54-K2: project mẫu vừa load chưa có thay đổi nào của user —
+        // đánh dấu đã-lưu để isDirty() = false. Trước đây lastSavedHash còn
+        // null nên isDirty() trả true (sample có tracks) ngay từ lúc sinh ra,
+        // khiến mọi lần mở file ngoài (double-click .vcut / recent / argv)
+        // đều bật window.confirm chặn renderer (xem D4c đợt 53). Autosave
+        // vẫn chạy như cũ (subscribe theo spec-thay-đổi, không phụ thuộc
+        // lastSavedHash); user sửa gì thì hash lệch → dirty trở lại.
+        markSaved(merged.spec);
+        clearHistory(); // đổi project -> không undo xuyên project
+      }
       didSet = true;
-      // ROUND54-K2: project mẫu vừa load chưa có thay đổi nào của user —
-      // đánh dấu đã-lưu để isDirty() = false. Trước đây lastSavedHash còn
-      // null nên isDirty() trả true (sample có tracks) ngay từ lúc sinh ra,
-      // khiến mọi lần mở file ngoài (double-click .vcut / recent / argv)
-      // đều bật window.confirm chặn renderer (xem D4c đợt 53). Autosave
-      // vẫn chạy như cũ (subscribe theo spec-thay-đổi, không phụ thuộc
-      // lastSavedHash); user sửa gì thì hash lệch → dirty trở lại.
-      markSaved(spec);
-      clearHistory(); // đổi project -> không undo xuyên project
     } finally {
       // Đợt 47 C1: guard chỉ chống gọi trùng, không phải cờ một-lần:
       // trước đây sampleLoading không bao giờ reset nên nút "Dự án mẫu"

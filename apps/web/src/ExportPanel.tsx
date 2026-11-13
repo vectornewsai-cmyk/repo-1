@@ -32,12 +32,42 @@ import {
   type ResumableRenderJob,
 } from "./lib/resumeRenderJob66T8"; // Đợt 66 T8: resume job đang chạy khi mở lại panel (đóng nợ S10 đợt 65)
 import {
+  UPLOAD_JOB_MATCH_TOLERANCE_MS,
+  UPLOAD_WAIT_TIMEOUT_MS,
+  beginUploadSession,
+  clearUploadSession,
+  findJobCreatedAfter,
+  historyEntryFromJob,
+  historyStatusLabel,
+  isUploadSessionStale,
+  jobHistoryStrings,
+  loadJobHistory,
+  persistJobHistory,
+  readUploadSession,
+  recordJobHistory,
+  removeJobHistory,
+  upsertHistoryEntry,
+  type JobHistoryEntry,
+  type UploadSession,
+} from "./lib/jobHistory67U7"; // Đợt 67 U7: lịch sử job + nhánh interrupted trong poll + resume upload khi đóng panel (đóng nợ T8 đợt 66)
+import {
   gpuProbeDoneText,
   gpuProbeErrorText,
   gpuProbeStatusText,
   gpuProbeStrings,
   type GpuProbeStatus,
 } from "./lib/gpuProbe65S4"; // Đợt 65 S4: trạng thái probe GPU + nút "Probe lại GPU" (đóng nợ cache probe đợt 64 R1)
+import {
+  checkDownloadAvailable,
+  exportDestStrings,
+  findHistoryExportDest,
+  type DownloadAvailability,
+} from "./lib/exportDest68V8"; // Đợt 68 V8: đích export bền qua reopen + kiểm tra download trước khi hiện nút (đóng nợ U7 đợt 67 §5.1–5.2)
+import {
+  loadStabSingleThread,
+  saveStabSingleThread,
+  stabSingleThreadStrings,
+} from "./lib/stabSingleThread68V2"; // Đợt 68 V2: toggle stabilize single-thread decode (đợt 67 U1)
 // Phase 10 G4 — trong Electron, chọn đích .mp4 trước khi render rồi
 // lưu MP4 đã render xong ra đó (thay vì tải xuống qua trình duyệt).
 import { isNativeDesktop, pickExportDestinationNative, saveExportNative } from "./lib/nativeFiles";
@@ -58,6 +88,28 @@ import {
   type X264Preset,
 } from "./lib/exportPresets";
 import { BRIDGE_URL } from "./lib/bridgeUrl";
+// Đợt 73 A9 (S4): publish preset đang chọn để preview vẽ overlay
+// safe-area đúng nền tảng (pub/sub module, không qua store).
+import { setSelectedExportPreset } from "./lib/exportPresetSelection";
+// Đợt 76 D9: cảnh báo letterbox + lựa chọn crop khi preset lệch tỉ lệ nguồn.
+import {
+  aspectMismatch,
+  aspectRatioLabel,
+  loadAspectFit,
+  normalizeAspectFit,
+  saveAspectFit,
+  type AspectFit,
+} from "./lib/aspectFit76D9";
+import {
+  AI_JOB_STREAM_DROPPED,
+  AiJobCancelledError,
+  formatAiJobEta,
+  readAiJobStream,
+  resolveAiJobPhaseLabel,
+  type AiJobProgressState,
+} from "./lib/aiJobStream"; // Đợt 80 H8: progress + hủy thật cho job AI dài
+import { AiJobProgress } from "./components/AiJobProgress"; // Đợt 80 H8: thanh tiến trình AI dùng chung
+import type { BridgeApiErrorBody } from "./lib/bridgeErrors";
 
 
 type RenderStatus = "idle" | "uploading" | "rendering" | "done" | "error" | "cancelled";
@@ -114,6 +166,9 @@ function ReframeSection({ media, bridgeUrl }: { media: import("./media").MediaIt
   const [aspect, setAspect] = useState<string>("9:16");
   const [status, setStatus] = useState<"idle" | "working" | "done" | "error">("idle");
   const [message, setMessage] = useState<string>("");
+  // Đợt 80 H8: tiến trình THẬT của job đang chạy (% + ETA) + nút Hủy thật.
+  const [jobProgress, setJobProgress] = useState<AiJobProgressState | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
   // Đợt 41 W3 — tiến trình importFiles của file reframe (như MediaBin V5).
   const [importProgress, setImportProgress] = useState<ImportFileProgressEvent | null>(null);
   // Phase 7 P6: trajectory preview — xem trước quỹ đạo crop trước khi render.
@@ -212,16 +267,50 @@ function ReframeSection({ media, bridgeUrl }: { media: import("./media").MediaIt
     if (!item?.file || status === "working") return;
     setStatus("working");
     setMessage(t("exportPanel.reframeAnalyzing"));
+    setJobProgress(null);
+    // Đợt 80 H8: AbortController cho nút Hủy — abort fetch → bridge kill
+    // python thật (trước đây reframe không hủy được).
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     try {
       const form = new FormData();
       form.append("media", item.file, item.file.name);
       form.append("aspect", aspect);
-      const res = await fetch(`${bridgeUrl}/api/reframe`, { method: "POST", body: form });
+      const res = await fetch(`${bridgeUrl}/api/reframe`, { method: "POST", body: form, signal: ctrl.signal });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(resolveBridgeApiError(body, t, t("exportPanel.bridgeError", { status: String(res.status) })));
       }
-      const blob = await res.blob();
+      // Đợt 80 H8: /api/reframe giờ stream NDJSON (progress % thật →
+      // done { downloadUrl }) thay vì trả MP4 trực tiếp.
+      let doneEvt;
+      try {
+        doneEvt = await readAiJobStream(res, {
+          onPhase: (phase) => {
+            setMessage(resolveAiJobPhaseLabel(phase, (k, vars) => t(k, vars)));
+          },
+          onProgress: (p) => {
+            setMessage(resolveAiJobPhaseLabel(p.phase, (k, vars) => t(k, vars)));
+            setJobProgress(p);
+          },
+        });
+      } catch (e) {
+        if (e instanceof AiJobCancelledError) throw e;
+        if ((e as Error).message === AI_JOB_STREAM_DROPPED) {
+          throw new Error(t("exportPanel.bridgeServerDown", { url: bridgeUrl }));
+        }
+        const body = (e as { bridgeBody?: BridgeApiErrorBody }).bridgeBody;
+        throw new Error(resolveBridgeApiError(body ?? null, t, t("exportPanel.bridgeError", { status: "?" })));
+      }
+      const downloadUrl = typeof doneEvt.downloadUrl === "string" ? doneEvt.downloadUrl : "";
+      if (!downloadUrl) throw new Error(t("exportPanel.bridgeServerDown", { url: bridgeUrl }));
+      setMessage(t("aiJob.downloading"));
+      const dlRes = await fetch(`${bridgeUrl}${downloadUrl}`, { signal: ctrl.signal });
+      if (!dlRes.ok) {
+        throw new Error(t("aiJob.downloadFailed", { status: String(dlRes.status) }));
+      }
+      const blob = await dlRes.blob();
+      if (!blob || blob.size === 0) throw new Error(t("aiJob.downloadEmpty"));
       const dot = item.name.lastIndexOf(".");
       const base = dot > 0 ? item.name.slice(0, dot) : item.name;
       const outName = `${base}_${aspect.replace(":", "x")}.mp4`;
@@ -231,12 +320,19 @@ function ReframeSection({ media, bridgeUrl }: { media: import("./media").MediaIt
       setStatus("done");
       setMessage(t("exportPanel.reframeAdded", { name: outName }));
     } catch (e) {
+      if ((e as Error).name === "AbortError" || e instanceof AiJobCancelledError) {
+        setStatus("idle");
+        setMessage(t("aiJob.cancelled"));
+        return;
+      }
       setStatus("error");
       setMessage(
         e instanceof Error
           ? `❌ ${e.message}`
           : `❌ ${t("exportPanel.bridgeServerDown", { url: bridgeUrl })}`,
       );
+    } finally {
+      abortRef.current = null;
     }
   };
 
@@ -276,6 +372,14 @@ function ReframeSection({ media, bridgeUrl }: { media: import("./media").MediaIt
         </button>
       </div>
       {message && <p className="tips">{message}</p>}
+      {/* Đợt 80 H8: tiến trình THẬT (% + ETA) + nút Hủy thật cho reframe. */}
+      {status === "working" && (
+        <AiJobProgress
+          progress={jobProgress?.progress ?? null}
+          etaText={formatAiJobEta(jobProgress?.etaSeconds ?? null, (k, vars) => t(k, vars))}
+          onCancel={() => abortRef.current?.abort()}
+        />
+      )}
       {importProgress && (
         <p className="tips" role="status" data-import-progress={importProgress.phase}>
           ⏳ {formatImportProgressText(importProgress, (k, vars) => t(k, vars))}
@@ -434,6 +538,50 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
   // render vừa bấm Xuất trong lúc fetch danh sách job còn bay.
   const activeJobIdRef = useRef<string | null>(null);
   const resumeStrings = resumeJobStrings(lang);
+  // Đợt 67 U7 — lịch sử job xuất (persist localStorage, nạp lúc mount)
+  // + cờ "đang chờ job của phiên upload" (mở lại panel giữa lúc upload
+  // đang bay). Lịch sử là của user: chỉ user xoá từng mục, mount hợp
+  // nhất trạng thái mới nhất từ bridge chứ không tự xoá mục cũ.
+  const [jobHistory, setJobHistory] = useState<JobHistoryEntry[]>(() => loadJobHistory());
+  const [uploadWaiting, setUploadWaiting] = useState(false);
+  const historyStrings = jobHistoryStrings(lang);
+  // Đợt 68 V8 — chuỗi cụm đích export (fragment round68-v8, đọc trực
+  // tiếp như mẫu U7 — không chờ gộp dict).
+  const exportDestStringsForLang = exportDestStrings(lang);
+  // Đợt 68 V8 — kết quả kiểm tra download của job đang done: null = chưa
+  // kiểm tra / không rõ (lỗi mạng — UI giữ hành vi cũ, hiện nút); true =
+  // file còn đó → hiện nút tải; false = output đã mất → ẩn nút, báo rõ.
+  const [downloadAvailable, setDownloadAvailable] = useState<boolean | null>(null);
+  const [downloadChecking, setDownloadChecking] = useState(false);
+
+  /** Đợt 68 V8 — khôi phục đích .mp4 đã chọn của một job từ lịch sử đã
+   *  persist (đọc lại từ kho mỗi lần nên không kẹt state cũ trong
+   *  closure): mở lại từ lịch sử / resume lúc mount thì "Tải MP4" trong
+   *  Electron ghi thẳng ra đích cũ thay vì rớt về anchor download. */
+  const restoreExportDest = (id: string | null) => {
+    if (!id) return;
+    const dest = findHistoryExportDest(loadJobHistory(), id);
+    if (dest) setExportDest(dest);
+  };
+
+  /** Đợt 67 U7 — ghi một job bridge vào lịch sử local + cập nhật state.
+   *  Đọc lại từ kho mỗi lần nên không kẹt state cũ trong closure poll.
+   *  Đợt 68 V8 — tham số exportDest (đích .mp4 đã chọn trong Electron):
+   *  chỉ startRender truyền vào (lúc POST xong, jobId đã có); poll/mount
+   *  không truyền thì upsert giữ đích cũ (không xoá). */
+  const recordHistoryFromJob = (job: {
+    id: string;
+    status: string;
+    progress?: number;
+    createdAt?: number;
+    outputName?: string | null;
+    outputSize?: number | null;
+    error?: string | null;
+    note?: string | null;
+  }, exportDest?: string | null) => {
+    const e = historyEntryFromJob(job, spec.meta.name, activePreset.label, exportDest);
+    if (e) setJobHistory(recordJobHistory(e));
+  };
   // Phase 10 G4 — đích .mp4 đã chọn trước khi render (chỉ Electron).
   const [exportDest, setExportDest] = useState<string | null>(null);
   const [shareStatus, setShareStatus] = useState<"idle" | "working" | "done" | "error">("idle");
@@ -442,14 +590,38 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
 
   // --- R1-042: export preset ---
   const [presetId, setPresetId] = useState<string>("1080p");
+  // Đợt 73 A9 (S4): preset đổi thì báo cho preview (overlay safe-area)
+  // qua exportPresetSelection; mount lần đầu cũng publish giá trị mặc định.
+  useEffect(() => {
+    setSelectedExportPreset(presetId);
+  }, [presetId]);
   const [custom, setCustom] = useState<ExportPreset>(() => defaultCustomPreset());
+  // Đợt 76 D9: cách lấp khung khi tỉ lệ nguồn lệch khung preset — "fit"
+  // (giữ tỉ lệ + viền đen, mặc định) hoặc "crop" (lấp đầy + crop giữa).
+  // Persist localStorage (vcut-export-aspect-fit), đọc lúc mount.
+  const [aspectFit, setAspectFit] = useState<AspectFit>(() => loadAspectFit());
   // --- Phase 7 P3: normalize loudness (tùy chọn export, áp sau amix) ---
   const [normalize, setNormalize] = useState<"off" | "loudnorm" | "dynaudnorm">("off");
   const [normalizeTarget, setNormalizeTarget] = useState<number>(-14);
+  // --- Đợt 68 V2: stabilize single-thread decode (đợt 67 U1) ---
+  // Toggle render-time (global, không phải per-clip): BẬT = ffmpeg decode
+  // clip chống rung bằng 1 luồng (mặc định U1, output ổn định hơn);
+  // TẮT = decode đa luồng. Persist localStorage, gửi qua preset whitelist
+  // của bridge → render.js --no-stab-single-thread khi tắt.
+  const [stabSingleThread, setStabSingleThread] = useState<boolean>(() => loadStabSingleThread());
+  const stabStrings = stabSingleThreadStrings(lang);
 
   /** Preset đang có hiệu lực (custom lấy từ form tay). */
   const activePreset: ExportPreset =
     presetId === "custom" ? { ...custom, id: "custom" } : getPreset(presetId) ?? getPreset("1080p")!;
+  // Đợt 76 D9 — lệch tỉ lệ nguồn (meta project) vs khung preset: null =
+  // khớp (không cảnh báo thừa), "letterbox" = nguồn rộng hơn → viền đen
+  // trên/dưới, "pillarbox" = nguồn hẹp hơn → viền đen hai bên.
+  const fitMismatch = useMemo(
+    () => aspectMismatch(spec.meta.width, spec.meta.height, activePreset.width, activePreset.height),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [spec.meta.width, spec.meta.height, activePreset],
+  );
   const presetIssues = useMemo(() => validateExportPreset(activePreset), [activePreset]);
   const presetOk = presetIssues.length === 0;
 
@@ -580,12 +752,17 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
     // Phase 10 G4 — trong Electron, hỏi đích .mp4 TRƯỚC khi render;
     // user huỷ dialog thì không bắt đầu render (không tốn công render
     // rồi mới hỏi). Ngoài Electron, đích là tải xuống qua trình duyệt.
+    // Đợt 68 V8 — giữ đích đã chọn trong biến cục bộ để ghi vào lịch sử
+    // cùng jobId khi POST xong (state setExportDest chưa chắc đã flush
+    // trong closure này — ghi sai đích là mất đích).
+    let pickedDest: string | null = null;
     if (isNativeDesktop()) {
       const dest = await pickExportDestinationNative();
       if (!dest) {
         pushToast(t("nativeFiles.exportCancelled"), "info");
         return;
       }
+      pickedDest = dest;
       setExportDest(dest);
     } else {
       setExportDest(null);
@@ -606,7 +783,18 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
     }
 
     setRenderStatus("uploading");
+    // Đợt 67 U7 — phiên upload persist: ghi TRƯỚC khi POST để đóng
+    // panel giữa lúc upload thì lần mở sau vẫn chờ được job (không POST
+    // lại, không nhân đôi). Xoá ở 2 đầu ra dưới đây (POST xong / lỗi).
+    let uploadSession: UploadSession | null = null;
     try {
+      // Đợt 67 U7 — bắt đầu phiên upload (ghi localStorage ngay).
+      uploadSession = beginUploadSession({
+        startedAt: Date.now(),
+        projectName: spec.meta.name || null,
+        presetLabel: activePreset.label,
+        mediaNames: files.map((f) => f.name),
+      });
       // R1-042: clone spec, override meta theo preset (project gốc không đổi).
       const renderSpec: VideoSpec = {
         ...spec,
@@ -623,9 +811,19 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
         crf: activePreset.crf,
         x264Preset: activePreset.x264Preset,
         audioBitrateKbps: activePreset.audioBitrateKbps,
+        // Đợt 80 H10 (S4): trần bitrate video của preset mạng xã hội
+        // (bridge whitelist kiểm tra lại; undefined → JSON bỏ field,
+        // render.js chỉ CRF như trước).
+        videoBitrateKbps: activePreset.videoBitrateKbps,
         // Phase 7 P3: normalize export (bridge whitelist kiểm tra lại).
         normalize,
         normalizeTarget,
+        // Đợt 68 V2: stabilize single-thread decode (bridge whitelist kiểm
+        // tra lại; false → render.js --no-stab-single-thread).
+        stabSingleThread,
+        // Đợt 76 D9: cách lấp khung (bridge whitelist kiểm tra lại;
+        // crop → render.js --aspect-fit crop, fit là mặc định).
+        aspectFit,
       }));
       for (const f of files) form.append("media", f, f.name);
 
@@ -643,11 +841,50 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
         ));
       }
       const { jobId: id } = await res.json();
+      // Đợt 67 U7 — POST xong, job đã có trên bridge: xoá session (kẻo
+      // lần mở sau chờ job mới nữa) + ghi lịch sử (đang xếp hàng). Ghi
+      // localStorage TRƯỚC setState để kể cả khi panel đã đóng giữa lúc
+      // upload thì lịch sử vẫn có job (fetch không bị huỷ khi unmount).
+      clearUploadSession();
+      uploadSession = null;
+      // Đợt 68 V8 — ghi đích đã chọn cùng jobId vào lịch sử (bền qua
+      // reopen): mở lại từ lịch sử thì tải MP4 ghi thẳng ra đích này.
+      recordHistoryFromJob({ id, status: "queued", progress: 0, createdAt: Date.now() }, pickedDest);
       setJobId(id);
       activeJobIdRef.current = id; // Đợt 66 T8: chặn resume đè lên job mới
       setRenderStatus("rendering");
       pollStatus(id);
     } catch (e) {
+      // Đợt 67 U7 — POST upload thất bại (kể cả khi panel đã đóng giữa
+      // lúc upload — catch vẫn chạy vì fetch không bị huỷ khi unmount):
+      // xoá session + ghi mục lỗi upload vào lịch sử để lần mở sau thấy
+      // rõ thay vì lặng lẽ về idle.
+      if (uploadSession) {
+        const failedAt = uploadSession.startedAt;
+        const failedProject = uploadSession.projectName;
+        const failedPreset = uploadSession.presetLabel;
+        const uploadError =
+          e instanceof Error
+            ? e.message
+            : t("exportPanel.bridgeConnHint", { url: BRIDGE_URL });
+        clearUploadSession();
+        uploadSession = null;
+        setJobHistory(recordJobHistory({
+          id: `upload-${failedAt}`,
+          jobId: null,
+          kind: "upload",
+          status: "error",
+          progress: 0,
+          createdAt: failedAt,
+          updatedAt: Date.now(),
+          projectName: failedProject,
+          presetLabel: failedPreset,
+          outputName: null,
+          outputSize: null,
+          error: uploadError,
+          note: null,
+        }));
+      }
       setRenderStatus("error");
       setRenderError(
         e instanceof Error
@@ -680,6 +917,7 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
         if (data.status === "done") {
           stopPolling();
           setRenderStatus("done");
+          recordHistoryFromJob(data); // Đợt 67 U7: job xong → lịch sử
         } else if (data.status === "error") {
           stopPolling();
           setRenderStatus("error");
@@ -694,9 +932,28 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
               ? (data.errorDetail as RenderErrorDetail)
               : null,
           );
+          recordHistoryFromJob(data); // Đợt 67 U7: job lỗi → lịch sử
+        } else if (data.status === "interrupted") {
+          // Đợt 67 U7 — nhánh terminal cho `interrupted` (nợ T8 §5.3):
+          // trước đây poll không xử lý trạng thái này nên kẹt poll mãi
+          // với note cũ trong khi bridge đã đánh dấu job gián đoạn sau
+          // restart. Nay dừng poll, hiện lỗi + note phục hồi + nút
+          // "Render lại" (như job lỗi khi mở lại panel, T8) + ghi lịch sử.
+          // resolveBridgeApiError dịch sẵn mã JOB_INTERRUPTED_BY_RESTART
+          // (dict bridgeErrors.*); errorDetail kèm khi poll ?detail=1.
+          stopPolling();
+          setRenderStatus("error");
+          setRenderError(resolveBridgeApiError(data, t, t("errorDetail.summary.unknown"), { useErrorDetailSummary: false }));
+          setRenderErrorDetail(
+            data.errorDetail && typeof data.errorDetail.summary === "string"
+              ? (data.errorDetail as RenderErrorDetail)
+              : null,
+          );
+          recordHistoryFromJob(data);
         } else if (data.status === "cancelled") {
           stopPolling();
           setRenderStatus("cancelled");
+          recordHistoryFromJob(data); // Đợt 67 U7: job huỷ → lịch sử
         }
       } catch {
         // giữ polling, có thể bridge lag tạm thời
@@ -753,10 +1010,108 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
         const res = await fetch(`${BRIDGE_URL}/api/render?limit=10`);
         if (!res.ok || cancelled) return;
         const data = await res.json();
-        const candidate = pickResumeCandidate(
-          Array.isArray(data?.jobs) ? (data.jobs as ResumableRenderJob[]) : [],
-        );
-        if (!candidate || cancelled) return;
+        const jobs = Array.isArray(data?.jobs) ? (data.jobs as ResumableRenderJob[]) : [];
+        // Đợt 67 U7 — hợp nhất danh sách bridge vào lịch sử local (job
+        // done cũ vẫn hiện để mở lại kết quả; trạng thái mới nhất thắng;
+        // mục local không còn trên bridge thì giữ nguyên — lịch sử là của
+        // user, chỉ user xoá).
+        if (jobs.length > 0 && !cancelled) {
+          let merged = loadJobHistory();
+          for (const j of jobs) {
+            const e = historyEntryFromJob(j, spec.meta.name, activePreset.label);
+            if (e) merged = upsertHistoryEntry(merged, e);
+          }
+          persistJobHistory(merged);
+          setJobHistory(merged);
+        }
+        const candidate = pickResumeCandidate(jobs);
+        if (!candidate) {
+          // Đợt 67 U7 — không có job nối được nhưng còn phiên upload
+          // đang bay (đóng panel giữa lúc upload): chờ job xuất hiện
+          // trên bridge rồi nối tiếp, KHÔNG POST lại (không nhân đôi
+          // upload; nút Xuất bị disable trong lúc chờ vì renderStatus
+          // đang "uploading").
+          if (cancelled) return;
+          if (activeJobIdRef.current !== null || pollRef.current !== null) return;
+          const session = readUploadSession();
+          if (!session) return;
+          if (isUploadSessionStale(session)) { clearUploadSession(); return; }
+          setRenderStatus("uploading");
+          setUploadWaiting(true);
+          const deadline = Date.now() + UPLOAD_WAIT_TIMEOUT_MS;
+          while (Date.now() < deadline) {
+            if (cancelled) return;
+            try {
+              const listRes = await fetch(`${BRIDGE_URL}/api/render?limit=10`);
+              if (listRes.ok) {
+                const listData = await listRes.json();
+                const found = findJobCreatedAfter(
+                  Array.isArray(listData?.jobs) ? listData.jobs : [],
+                  session.startedAt,
+                );
+                if (found) {
+                  clearUploadSession();
+                  setUploadWaiting(false);
+                  const detailRes = await fetch(`${BRIDGE_URL}/api/render/${found.id}?detail=1`);
+                  if (!detailRes.ok || cancelled) return;
+                  const job = (await detailRes.json()) as ResumableRenderJob;
+                  if (cancelled) return;
+                  if (activeJobIdRef.current !== null || pollRef.current !== null) return;
+                  if (job.status === "done") {
+                    // Upload xong + render xong luôn trong lúc chờ:
+                    // mở thẳng kết quả thay vì nối tiến trình.
+                    recordHistoryFromJob(job);
+                    // Đợt 68 V8 — khôi phục đích đã chọn (Electron) để
+                    // tải MP4 ghi thẳng ra đích cũ sau reopen.
+                    restoreExportDest(job.id);
+                    setJobId(job.id);
+                    activeJobIdRef.current = job.id;
+                    setRenderStatus("done");
+                    setRenderProgress(1);
+                    setRenderEta(null);
+                    setQueuePos(null);
+                    setRenderError(null);
+                    setRenderErrorDetail(null);
+                    setRenderNote(resolveJobNote(job.noteCode, job.note, getLang()) || null);
+                    setResumedJob(false);
+                  } else if (job.status === "running" || job.status === "queued" || job.status === "error" || job.status === "interrupted") {
+                    // Đợt 68 V8 — khôi phục đích đã chọn để khi job xong,
+                    // tải MP4 ghi thẳng ra đích cũ (Electron).
+                    restoreExportDest(job.id);
+                    applyResumedJob(job);
+                  } else {
+                    // cancelled: job đã bị huỷ trước khi nối — ghi lịch
+                    // sử rồi về idle, không hiện banner done giả.
+                    recordHistoryFromJob(job);
+                    setRenderStatus("idle");
+                  }
+                  return;
+                }
+              }
+            } catch {
+              // bridge chưa lên lại — chờ tiếp tới hạn
+            }
+            await new Promise((r) => setTimeout(r, 2000));
+          }
+          // Hết 120s không thấy job: phiên upload coi như chết (tab đã
+          // đóng giữa lúc upload / bridge mất job) → xoá session, về idle.
+          clearUploadSession();
+          setUploadWaiting(false);
+          if (!cancelled) setRenderStatus("idle");
+          return;
+        }
+        if (cancelled) return;
+        // Phiên upload của chính job ứng viên này (POST đã xong nhưng
+        // panel đóng trước khi handler kịp xoá): dọn session để lần mở
+        // sau không chờ job mới nữa.
+        const session = readUploadSession();
+        if (
+          session &&
+          typeof candidate.job.createdAt === "number" &&
+          candidate.job.createdAt >= session.startedAt - UPLOAD_JOB_MATCH_TOLERANCE_MS
+        ) {
+          clearUploadSession();
+        }
         // User đã bấm Xuất trong lúc fetch còn bay → render mới đã có
         // chủ, không đè bằng job cũ (pollStatus của render mới clear
         // interval cũ nên cuối cùng vẫn đúng — chặn ở đây để khỏi nháy UI).
@@ -770,6 +1125,9 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
         if (cancelled) return;
         if (activeJobIdRef.current !== null || pollRef.current !== null) return;
         if (job.status !== "running" && job.status !== "queued" && job.status !== "error" && job.status !== "interrupted") return;
+        // Đợt 68 V8 — khôi phục đích đã chọn (Electron) để khi job xong,
+        // tải MP4 ghi thẳng ra đích cũ thay vì rớt về anchor download.
+        restoreExportDest(job.id);
         applyResumedJob(job);
       } catch {
         // bridge chưa chạy / mất mạng lúc mở panel: mở idle như cũ,
@@ -795,6 +1153,23 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
     target?.scrollIntoView({ block: "center" });
   }, [resumedJob]);
 
+  /** Đợt 67 U7 — phần chung sau khi POST retry thành công (dùng cho
+   *  cả retryRender T8 lẫn retryHistoryJob): lấy trạng thái mới của job
+   *  rồi poll tiếp như render thường. */
+  const refreshJobAfterRetry = async (id: string) => {
+    const fresh = await fetch(`${BRIDGE_URL}/api/render/${id}?detail=1`);
+    if (!fresh.ok) throw new Error(`status ${fresh.status}`);
+    const job = (await fresh.json()) as ResumableRenderJob;
+    setRenderError(null);
+    setRenderErrorDetail(null);
+    setRenderStatus("rendering");
+    setRenderProgress(typeof job.progress === "number" ? job.progress : 0);
+    setRenderEta(typeof job.etaSeconds === "number" ? job.etaSeconds : null);
+    setQueuePos(typeof job.queuePosition === "number" ? job.queuePosition : null);
+    setRenderNote(resolveJobNote(job.noteCode, job.note, getLang()) || null);
+    pollStatus(job.id);
+  };
+
   /** Đợt 66 T8 — chạy lại job lỗi/gián đoạn (endpoint bridge đã có):
    *  POST retry → job về queued → lấy trạng thái mới rồi poll tiếp
    *  như render thường. Lỗi retry (vd thư mục job đã bị dọn → 409
@@ -812,17 +1187,7 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
           t("exportPanel.bridgeError", { status: String(res.status) }),
         ));
       }
-      const fresh = await fetch(`${BRIDGE_URL}/api/render/${jobId}?detail=1`);
-      if (!fresh.ok) throw new Error(`status ${fresh.status}`);
-      const job = (await fresh.json()) as ResumableRenderJob;
-      setRenderError(null);
-      setRenderErrorDetail(null);
-      setRenderStatus("rendering");
-      setRenderProgress(typeof job.progress === "number" ? job.progress : 0);
-      setRenderEta(typeof job.etaSeconds === "number" ? job.etaSeconds : null);
-      setQueuePos(typeof job.queuePosition === "number" ? job.queuePosition : null);
-      setRenderNote(resolveJobNote(job.noteCode, job.note, getLang()) || null);
-      pollStatus(job.id);
+      await refreshJobAfterRetry(jobId);
     } catch (e) {
       setRenderError(
         e instanceof Error
@@ -834,12 +1199,111 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
     }
   };
 
+  /** Đợt 67 U7 — chạy lại job lỗi/gián đoạn từ một mục lịch sử (nút
+   *  "Render lại" trên dòng lịch sử). Tách khỏi retryRender để giữ
+   *  nguyên literal `${jobId}` mà test T8 khóa; URL dựng bằng nối chuỗi
+   *  (cùng endpoint retry của bridge) rồi dùng chung
+   *  refreshJobAfterRetry. Lỗi retry (vd job đã bị dọn → 409 JOB_GONE)
+   *  hiện như lỗi render thường, không crash. */
+  const retryHistoryJob = async (entry: JobHistoryEntry) => {
+    if (!entry.jobId || retrying) return;
+    setRetrying(true);
+    try {
+      const res = await fetch(BRIDGE_URL + "/api/render/" + entry.jobId + "/retry", { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(resolveBridgeApiError(
+          body,
+          t,
+          t("exportPanel.bridgeError", { status: String(res.status) }),
+        ));
+      }
+      setJobId(entry.jobId);
+      activeJobIdRef.current = entry.jobId;
+      setResumedJob(false);
+      await refreshJobAfterRetry(entry.jobId);
+    } catch (e) {
+      setRenderError(
+        e instanceof Error
+          ? e.message
+          : t("exportPanel.bridgeError", { status: "?" }),
+      );
+    } finally {
+      setRetrying(false);
+    }
+  };
+
+  /** Đợt 67 U7 — mở một job từ lịch sử: lấy trạng thái THẬT từ bridge
+   *  rồi hiện đúng trạng thái đó (không idle mù như T8 §5.1):
+   *  done → banner tải MP4; running/queued/error/interrupted → nối tiếp
+   *  như resume (T8); cancelled → tip đã huỷ. Job không còn trên bridge
+   *  (404) thì xoá khỏi lịch sử + báo rõ (đã bị dọn), không hiện banner
+   *  done giả. */
+  const openHistoryEntry = async (entry: JobHistoryEntry) => {
+    if (!entry.jobId) return;
+    try {
+      const res = await fetch(`${BRIDGE_URL}/api/render/${entry.jobId}?detail=1`);
+      if (!res.ok) {
+        if (res.status === 404) {
+          setJobHistory(removeJobHistory(entry.id));
+          setRenderError(historyStrings.gone || t("exportPanel.bridgeError", { status: "404" }));
+          setRenderStatus("error");
+          return;
+        }
+        throw new Error(`status ${res.status}`);
+      }
+      const job = (await res.json()) as ResumableRenderJob;
+      recordHistoryFromJob(job);
+      // Đợt 68 V8 — khôi phục đích .mp4 đã chọn của job này (Electron):
+      // mở lại từ lịch sử thì "Tải MP4" ghi thẳng ra đích cũ thay vì
+      // rớt về anchor download. Web thường: entry.exportDest null → về null.
+      setExportDest(entry.exportDest ?? null);
+      if (job.status === "done") {
+        setJobId(job.id);
+        activeJobIdRef.current = job.id;
+        setRenderStatus("done");
+        setRenderProgress(1);
+        setRenderEta(null);
+        setQueuePos(null);
+        setRenderError(null);
+        setRenderErrorDetail(null);
+        setRenderNote(resolveJobNote(job.noteCode, job.note, getLang()) || null);
+        setResumedJob(false);
+        setUploadWaiting(false);
+        setTimeout(() => document.querySelector(".mp4-export .valid-banner.ok")?.scrollIntoView({ block: "center" }), 50);
+      } else if (job.status === "running" || job.status === "queued" || job.status === "error" || job.status === "interrupted") {
+        applyResumedJob(job);
+      } else {
+        // cancelled (hoặc trạng thái lạ): hiện đúng trạng thái, không
+        // banner done giả; jobId giữ để user vẫn thấy dòng lịch sử.
+        setJobId(job.id);
+        activeJobIdRef.current = job.id;
+        setRenderStatus("cancelled");
+        setRenderNote(null);
+      }
+    } catch (e) {
+      setRenderError(
+        e instanceof Error
+          ? e.message
+          : t("exportPanel.bridgeError", { status: "?" }),
+      );
+    }
+  };
+
+  /** Đợt 67 U7 — xoá một mục khỏi lịch sử (persist ngay). */
+  const deleteHistoryJob = (entry: JobHistoryEntry) => {
+    setJobHistory(removeJobHistory(entry.id));
+  };
+
   const cancelRender = async () => {
     stopPolling();
     setRenderNote(null); // Đợt 64 R8: huỷ render thì dọn note cùng job
     activeJobIdRef.current = null; // Đợt 66 T8: job đã huỷ, không resume
     setResumedJob(false);
     if (jobId) {
+      // Đợt 67 U7 — ghi lịch sử huỷ (kể cả khi DELETE tới bridge lỗi;
+      // upsert giữ createdAt gốc nếu job đã có trong lịch sử).
+      recordHistoryFromJob({ id: jobId, status: "cancelled", progress: renderProgress, createdAt: Date.now() });
       try { await fetch(`${BRIDGE_URL}/api/render/${jobId}`, { method: "DELETE" }); } catch {}
     }
     setRenderStatus("cancelled");
@@ -850,6 +1314,8 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
     if (!jobId) return;
     // Phase 10 G4 — trong Electron, main stream MP4 đã render về đích
     // đã chọn trước đó (không qua anchor download của trình duyệt).
+    // Đợt 68 V8 — exportDest ở đây có thể là đích đã KHÔI PHỤC từ lịch
+    // sử (mở lại sau reopen), không chỉ đích vừa chọn trong phiên này.
     if (isNativeDesktop() && exportDest) {
       void saveExportNative(jobId, exportDest);
       return;
@@ -862,6 +1328,42 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
     a.click();
     a.remove();
   };
+
+  /** Đợt 68 V8 — job done nhưng file output đã mất: xoá mục khỏi lịch sử
+   *  (persist ngay) rồi về idle; không hiện anchor lỗi nữa. */
+  const deleteMissingDownload = () => {
+    if (!jobId) return;
+    setJobHistory(removeJobHistory(jobId));
+    setJobId(null);
+    activeJobIdRef.current = null;
+    setRenderStatus("idle");
+    setDownloadAvailable(null);
+    setDownloadChecking(false);
+    setExportDest(null);
+  };
+
+  // Đợt 68 V8 — kiểm tra download được TRƯỚC khi hiện nút tải: job vừa
+  // về done thì HEAD endpoint download; chỉ khi file còn đó mới hiện
+  // nút (tránh anchor nhận JSON lỗi 409 khi output đã mất). Reset mỗi
+  // khi job/trạng thái đổi để lần done sau kiểm tra lại từ đầu.
+  // "unknown" (lỗi mạng thoáng qua) → giữ hành vi cũ, hiện nút.
+  useEffect(() => {
+    if (renderStatus !== "done" || !jobId) {
+      setDownloadAvailable(null);
+      setDownloadChecking(false);
+      return;
+    }
+    let cancelled = false;
+    setDownloadChecking(true);
+    setDownloadAvailable(null);
+    void checkDownloadAvailable(BRIDGE_URL, jobId).then((res: DownloadAvailability) => {
+      if (cancelled) return;
+      setDownloadChecking(false);
+      setDownloadAvailable(res === "available" ? true : res === "missing" ? false : null);
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [renderStatus, jobId]);
 
   /** Q7: Xuất trang chia sẻ HTML tĩnh từ video vừa render xong. */
   const doExportSharePage = async () => {
@@ -1052,6 +1554,45 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
               )}
             </p>
           )}
+          {/* --- Đợt 76 D9: cảnh báo letterbox + chọn cách lấp khung ---
+              Chỉ hiện khi tỉ lệ nguồn lệch khung preset (fitMismatch !==
+              null): nguồn đã khớp tỉ lệ (vd 4:5 → 4:5) thì không cảnh báo
+              thừa. Mặc định "fit" (giữ hành vi cũ, có viền đen); user đổi
+              sang "crop" thì render lấp đầy khung, mất phần hình ngoài. */}
+          {fitMismatch !== null && (
+            <div data-testid="aspect-fit-warning" role="alert">
+              <p className="tips">
+                {t(
+                  fitMismatch === "letterbox"
+                    ? "exportPanel.aspectFitWarnLetterbox"
+                    : "exportPanel.aspectFitWarnPillarbox",
+                  {
+                    src: aspectRatioLabel(spec.meta.width, spec.meta.height),
+                    dst: aspectRatioLabel(activePreset.width, activePreset.height),
+                  },
+                )}
+              </p>
+              <div className="preset-row">
+                <label htmlFor="export-aspect-fit">{t("exportPanel.aspectFitLabel")}</label>
+                <select
+                  id="export-aspect-fit"
+                  value={aspectFit}
+                  onChange={(e) => {
+                    const v = normalizeAspectFit(e.target.value);
+                    setAspectFit(v);
+                    saveAspectFit(v);
+                  }}
+                  disabled={renderStatus === "uploading" || renderStatus === "rendering"}
+                >
+                  <option value="fit">{t("exportPanel.aspectFitFit")}</option>
+                  <option value="crop">{t("exportPanel.aspectFitCrop")}</option>
+                </select>
+              </div>
+              {aspectFit === "crop" && (
+                <p className="tips">{t("exportPanel.aspectFitCropHint")}</p>
+              )}
+            </div>
+          )}
           {/* --- R1-064: ước tính dung lượng file xuất --- */}
           {presetOk && ok && (
             <p className="tips preset-desc">
@@ -1086,6 +1627,35 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
               />
               <p className="tips preset-desc">{t("exportPanel.ebruNote")}</p>
             </div>
+          )}
+
+          {/* --- Đợt 68 V2: Stabilize single-thread decode (đợt 67 U1) ---
+              Toggle render-time, đặt cạnh normalize vì cùng là tùy chọn lúc
+              xuất (không phải thuộc tính per-clip như EnhancePanel): BẬT =
+              ffmpeg decode clip chống rung bằng 1 luồng (mặc định U1,
+              output ổn định hơn giữa các lần render); TẮT = decode đa luồng.
+              Persist localStorage (vcut-stab-single-thread), gửi qua preset
+              whitelist của bridge → render.js --no-stab-single-thread. */}
+          <div className="preset-row">
+            {/* Đợt 69 W3: bỏ class mask-check — class này chỉ có rule scoped
+                `.mask-panel .mask-check` (mask.css) nên ở ExportPanel (ngoài
+                .mask-panel) nó không áp dụng style nào; bỏ đi không đổi hiển thị. */}
+            <label className="field">
+              <input
+                type="checkbox"
+                data-testid="export-stab-single-thread-toggle"
+                checked={stabSingleThread}
+                onChange={(e) => {
+                  setStabSingleThread(e.target.checked);
+                  saveStabSingleThread(e.target.checked);
+                }}
+                disabled={renderStatus === "uploading" || renderStatus === "rendering"}
+              />
+              <span>{stabStrings.label}</span>
+            </label>
+          </div>
+          {stabStrings.hint && (
+            <p className="tips preset-desc">{stabStrings.hint}</p>
           )}
 
           {/* --- Đợt 65 S4: Encoder GPU — trạng thái probe + nút probe lại.
@@ -1138,6 +1708,12 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
               {resumedJob && resumeStrings.resumedJob && (
                 <p className="tips">{resumeStrings.resumedJob}</p>
               )}
+              {/* Đợt 67 U7 — mở lại panel giữa lúc upload đang bay: báo rõ
+                  panel đang chờ job xuất hiện trên bridge (không POST
+                  lại, không mất tiến trình). */}
+              {uploadWaiting && historyStrings.uploadWaiting && (
+                <p className="tips">{historyStrings.uploadWaiting}</p>
+              )}
               {/* Đợt 64 R8 — ghi chú của job (vd "Phục hồi sau khi server
                   restart — render lại từ đầu."): chỉ hiện khi job CÓ note;
                   job thường không có note thì khối này không render gì. */}
@@ -1148,11 +1724,40 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
             </div>
           )}
           {renderStatus === "done" && (
-            <div className="valid-banner ok">
-              ✅ Render xong! <button className="primary" onClick={downloadMp4}>{t("exportPanel.downloadMp4")}</button>{" "}
-              <button onClick={() => void doExportSharePage()} disabled={shareStatus === "working"}>
-                {t("exportPanel.exportShare")}
-              </button>
+            <div
+              className="valid-banner ok"
+              data-download-state={downloadChecking ? "checking" : downloadAvailable === false ? "missing" : downloadAvailable === true ? "available" : "unknown"}
+            >
+              ✅ Render xong!{" "}
+              {downloadChecking ? (
+                // Đợt 68 V8 — đang HEAD kiểm tra output: chưa hiện nút tải
+                // (tránh anchor nhận JSON lỗi khi file đã mất).
+                <span className="tips">{exportDestStringsForLang.checking}</span>
+              ) : downloadAvailable === false ? (
+                // Đợt 68 V8 — file output đã mất: KHÔNG hiện nút tải nữa,
+                // báo rõ + cho xoá khỏi lịch sử (nút chia sẻ cũng cần
+                // file nên ẩn cùng).
+                <>
+                  <span>{exportDestStringsForLang.missing}</span>{" "}
+                  <button onClick={deleteMissingDownload}>
+                    {exportDestStringsForLang.deleteFromHistory}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="primary" onClick={downloadMp4}>{t("exportPanel.downloadMp4")}</button>{" "}
+                  <button onClick={() => void doExportSharePage()} disabled={shareStatus === "working"}>
+                    {t("exportPanel.exportShare")}
+                  </button>
+                </>
+              )}
+              {/* Đợt 68 V8 — Electron: cho thấy đích đã chọn/khôi phục để
+                  user biết MP4 sẽ ghi ra đâu (không phải tải trình duyệt). */}
+              {downloadAvailable !== false && isNativeDesktop() && exportDest && exportDestStringsForLang.savedTo && (
+                <span className="tips" data-export-dest={exportDest}>
+                  {exportDestStringsForLang.savedTo.replace("{path}", exportDest)}
+                </span>
+              )}
               {shareMsg && (
                 <div className={shareStatus === "error" ? "valid-banner bad" : "tips"}>{shareMsg}</div>
               )}
@@ -1251,6 +1856,61 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
               })}
             </button>
           )}
+
+          {/* --- Đợt 67 U7: Lịch sử xuất (persist localStorage) — job done
+              mở lại không còn về idle mù (nợ T8 §5.1): bấm "Xem kết quả"
+              để hiện lại banner tải MP4, job đang chạy thì "Theo dõi
+              tiếp", job lỗi/gián đoạn thì "Render lại", mục nào cũng xoá
+              được. Mục lỗi upload (chưa có job) chỉ xoá được, không mở. */}
+          <div className="job-history" data-history-count={jobHistory.length}>
+            <div className="panel-head">{historyStrings.title}</div>
+            {jobHistory.length === 0 ? (
+              <p className="tips">{historyStrings.empty}</p>
+            ) : (
+              <ul className="job-history-list">
+                {jobHistory.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="job-history-row"
+                    data-job-id={entry.jobId ?? undefined}
+                    data-status={entry.status}
+                  >
+                    <span className="job-history-status" data-status={entry.status}>
+                      {historyStatusLabel(entry, lang)}
+                    </span>
+                    <span className="job-history-meta">
+                      {entry.projectName || entry.outputName || entry.id}
+                      {entry.outputSize ? ` · ${formatBytes(entry.outputSize)}` : ""}
+                      {` · ${new Date(entry.createdAt).toLocaleTimeString()}`}
+                    </span>
+                    {entry.error && (
+                      <span className="job-history-error" title={entry.error}>
+                        {entry.error}
+                      </span>
+                    )}
+                    {entry.status === "done" && entry.jobId && (
+                      <button onClick={() => void openHistoryEntry(entry)}>
+                        {historyStrings.openResult}
+                      </button>
+                    )}
+                    {(entry.status === "running" || entry.status === "queued") && entry.jobId && (
+                      <button onClick={() => void openHistoryEntry(entry)}>
+                        {historyStrings.resume}
+                      </button>
+                    )}
+                    {(entry.status === "error" || entry.status === "interrupted") && entry.jobId && (
+                      <button onClick={() => void retryHistoryJob(entry)} disabled={retrying}>
+                        {resumeStrings.retryRender}
+                      </button>
+                    )}
+                    <button onClick={() => deleteHistoryJob(entry)}>
+                      {historyStrings.delete}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
         <pre className="json-preview">{json}</pre>

@@ -15,6 +15,7 @@
 // h9-report.json của harness chung). Screenshot: hidden_files/h9/shots/j1-*.
 import { spawn, execFile } from "node:child_process";
 import { promises as fs } from "node:fs";
+import { writeFileEpermRetryAsync } from "../../web/scripts/eperm-retry.mjs";
 import net from "node:net";
 import path from "node:path";
 import os from "node:os";
@@ -735,13 +736,13 @@ class AppSession {
   async shotRoot(file) {
     const img = await this.x11.getImage(this.x11.root, 0, 0, this.x11.rootWidth, this.x11.rootHeight);
     await fs.mkdir(SHOTS, { recursive: true });
-    await fs.writeFile(file, rgbaToPng(img.width, img.height, img.data));
+    await writeFileEpermRetryAsync(file, rgbaToPng(img.width, img.height, img.data));
     return img;
   }
   async shotWindow(win, file) {
     const img = await this.shotWindowRaw(win);
     await fs.mkdir(SHOTS, { recursive: true });
-    await fs.writeFile(file, rgbaToPng(img.width, img.height, img.data));
+    await writeFileEpermRetryAsync(file, rgbaToPng(img.width, img.height, img.data));
     return img;
   }
   // Chụp tới khi 2 frame liên tiếp giống hệt nhau (cùng kích thước + cùng
@@ -763,7 +764,7 @@ class AppSession {
     if (!img) throw new Error("không chụp được cửa sổ");
     if (!stable && imageStddev(img) <= 5) throw new Error("popup không vẽ xong (ảnh trơn) sau 6s");
     await fs.mkdir(SHOTS, { recursive: true });
-    await fs.writeFile(file, rgbaToPng(img.width, img.height, img.data));
+    await writeFileEpermRetryAsync(file, rgbaToPng(img.width, img.height, img.data));
     return { img, stable };
   }
   async closeAppClean() {
@@ -1147,7 +1148,7 @@ async function ensureFixtures() {
       ok = j?.meta?.name === name && Array.isArray(j.tracks) && j.tracks.length > 0;
     } catch { ok = false; }
     if (!ok) {
-      await fs.writeFile(file, JSON.stringify(fixtureSpec(name), null, 2));
+      await writeFileEpermRetryAsync(file, JSON.stringify(fixtureSpec(name), null, 2));
       const j = JSON.parse(await fs.readFile(file, "utf8"));
       if (j?.meta?.name !== name || !Array.isArray(j.tracks) || j.tracks.length === 0) {
         throw new Error(`fixture ${file} ghi xong nhưng đọc lại không khớp (meta.name/tracks)`);
@@ -1522,13 +1523,13 @@ async function main() {
   // Copy log app về OUT (persistent — /tmp mất sau reboot).
   try {
     const logTxt = await fs.readFile("/tmp/h9-j1-j1.log", "utf8").catch(() => null);
-    if (logTxt) await fs.writeFile(path.join(OUT, "h9-j1-app.log"), logTxt);
+    if (logTxt) await writeFileEpermRetryAsync(path.join(OUT, "h9-j1-app.log"), logTxt);
   } catch {}
 
   report.finishedAt = new Date().toISOString();
   report.passed = report.cases.filter((c) => c.ok).length;
   report.failed = report.cases.filter((c) => !c.ok).length;
-  await fs.writeFile(path.join(OUT, "h9-report-gtk-save-53j1.json"), JSON.stringify(report, null, 2));
+  await writeFileEpermRetryAsync(path.join(OUT, "h9-report-gtk-save-53j1.json"), JSON.stringify(report, null, 2));
   console.log(`\nJ1 SUMMARY: ${report.passed} passed, ${report.failed} failed — report: ${path.join(OUT, "h9-report-gtk-save-53j1.json")}`);
   process.exit(report.failed ? 1 : 0);
 }

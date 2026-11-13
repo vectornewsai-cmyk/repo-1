@@ -148,6 +148,8 @@ import {
   type GopRangeFetchFn,
   type GopSegment,
 } from "./gopRangeFetch39T3";
+// Đợt 67 U5 — type probe trial-decode cho option ghi đè của test.
+import type { GopTrialDecodeProbe } from "./gopTrialDecode55L8";
 // Đợt 41 W4 — phát hiện size cho proxy chưa biết size (HEAD /
 // Content-Range) để đường GOP có thể kích hoạt khi size đã biết;
 // probe hỏng thì rơi về full-file cũ, không throw, không bypass S4.
@@ -609,6 +611,14 @@ export type ReversePreviewControllerOptions = {
    *  để trống để dùng global fetch qua module T3 / adapter bên dưới). */
   gopFetchImpl?: GopRangeFetchFn;
   /**
+   * Đợt 67 U5 — probe trial-decode ghi đè cho test (mẫu gopFetchImpl):
+   * production để trống để T3 dùng probe mặc định (đi worker nền khi
+   * sample lớn). Chỉ test truyền probe treo/lỗi để ép đường timeout
+   * fail-open mà không cần VideoDecoder thật; KHÔNG đổi hành vi
+   * production (undefined → T3 dùng probe mặc định như cũ).
+   */
+  trialDecodeProbe?: GopTrialDecodeProbe | null;
+  /**
    * Đợt 60 Q4 — lookup i18n tùy chọn cho lý do fallback GOP
    * (`gopFallbackReason`, chỉ test/diagnostics đọc, không phải chuỗi
    * UI): preview truyền `t()` để lý do đi qua key `gop.*` trong dict;
@@ -641,6 +651,9 @@ export class ReversePreviewController {
   // sổ cũ đã nhả nên không prefetch ngược được cho cửa sổ đang giữ).
   private decodeAheadEnabled = false;
   private decodeAheadWarnings: string[] = [];
+  // Đợt 80 H7 — key i18n song song với decodeAheadWarnings (1:1, cùng
+  // thứ tự); UI dịch qua key, warnings giữ nguyên làm fallback.
+  private decodeAheadWarningKeys: string[] = [];
   private decodeAhead: ReverseDecodeAhead | null = null;
   private aheadRange: { from: number; to: number } | null = null;
   // Đợt 39 T4: decision cổng gần nhất của RIÊNG controller này (để
@@ -667,6 +680,8 @@ export class ReversePreviewController {
   private gopEnabled = false;
   private gopThresholdBytes?: number;
   private gopFetchImpl?: GopRangeFetchFn;
+  // Đợt 67 U5 — probe trial-decode ghi đè cho test (xem options).
+  private gopTrialDecodeProbeOverride?: GopTrialDecodeProbe | null;
   // Đợt 60 Q4 — lookup i18n cho lý do fallback GOP (xem options).
   private gopI18nLookup?: (key: string, vars?: Record<string, string>) => string;
   private gopCache: GopSegmentCache;
@@ -710,6 +725,8 @@ export class ReversePreviewController {
     this.gopEnabled = options.gopRangeEnabled ?? false;
     this.gopThresholdBytes = options.gopThresholdBytes;
     this.gopFetchImpl = options.gopFetchImpl;
+    // Đợt 67 U5 — probe trial-decode ghi đè cho test (xem options).
+    this.gopTrialDecodeProbeOverride = options.trialDecodeProbe;
     // Đợt 60 Q4 — lookup i18n cho lý do fallback GOP (preview truyền t()).
     this.gopI18nLookup = options.i18nLookup;
     this.gopCache = new GopSegmentCache(options.gopCacheMaxBytes);
@@ -856,9 +873,11 @@ export class ReversePreviewController {
     if (decision.verdict === "allowed-experiment") {
       this.decodeAheadEnabled = true;
       this.decodeAheadWarnings = [...decision.warnings];
+      this.decodeAheadWarningKeys = [...decision.warningKeys];
     } else {
       this.decodeAheadEnabled = false;
       this.decodeAheadWarnings = [];
+      this.decodeAheadWarningKeys = [];
     }
     // Đợt 38 U1: ghi decision gần nhất để UI toggle hiện đúng lý do
     // chặn (kể cả khi caller là probe trực tiếp, không qua toggle).
@@ -882,6 +901,7 @@ export class ReversePreviewController {
   disableDecodeAhead(): void {
     this.decodeAheadEnabled = false;
     this.decodeAheadWarnings = [];
+    this.decodeAheadWarningKeys = [];
     this.aheadRange = null;
     this.lastGateDecision = null;
     this.mirrorDecodeAheadWarnings();
@@ -977,6 +997,7 @@ export class ReversePreviewController {
           ...this.lastGateDecision,
           reasons: [...this.lastGateDecision.reasons],
           warnings: [...this.lastGateDecision.warnings],
+          warningKeys: [...(this.lastGateDecision.warningKeys ?? [])],
         }
       : null;
   }
@@ -996,6 +1017,11 @@ export class ReversePreviewController {
   /** Cảnh báo UI đi kèm lần bật gần nhất (rỗng khi chưa bật / bị chặn). */
   get decodeAheadWarningList(): string[] {
     return [...this.decodeAheadWarnings];
+  }
+
+  /** Đợt 80 H7 — key i18n song song với decodeAheadWarningList. */
+  get decodeAheadWarningKeyList(): string[] {
+    return [...this.decodeAheadWarningKeys];
   }
 
   /** Đoạn decode-ahead đang giữ (null khi chưa prefetch / đã tắt). */
@@ -1470,6 +1496,9 @@ export class ReversePreviewController {
               knownSizeBytes: this.knownFileSize,
               fetchImpl: this.gopFetchImpl,
               sharedSizeProbe,
+              // Đợt 67 U5 — probe trial-decode ghi đè cho test (undefined
+              // = probe mặc định như cũ; chỉ test truyền probe treo/lỗi).
+              trialDecodeProbe: this.gopTrialDecodeProbeOverride,
               // Đợt 60 Q4 — lookup i18n: lý do fallback GOP đi qua key
               // gop.* trong dict (preview truyền t() lúc tạo controller).
               lookup: this.gopI18nLookup,
@@ -1488,7 +1517,18 @@ export class ReversePreviewController {
               this.gopMeta = outcome.gopMeta;
               // Đợt 65 S6 — giữ ghi chú timeout fail-open (nếu có) để UI
               // báo user lý do keyframe chưa kịp kiểm chứng.
+              // Đợt 67 U5 — note mới (null → có giá trị / đổi giá trị)
+              // thì báo subscriber ngay để toast hiện KHÔNG chờ tick
+              // rAF hay bấm toggle (nợ T6 §3: clip ngắn thì vòng lặp
+              // ngủ, toast không bao giờ hiện trong lúc phát).
+              const prevTrialNote = this.gopTrialDecodeNoteValue;
               this.gopTrialDecodeNoteValue = outcome.trialDecodeNote ?? null;
+              if (
+                this.gopTrialDecodeNoteValue !== null &&
+                this.gopTrialDecodeNoteValue !== prevTrialNote
+              ) {
+                notifyTrialDecodeTimeoutNotesChanged();
+              }
               transientGops = outcome.gops;
             } else {
               this.gopActive = false;
@@ -1762,6 +1802,7 @@ export class ReversePreviewController {
     // không mang trạng thái thử nghiệm cũ.
     this.decodeAheadEnabled = false;
     this.decodeAheadWarnings = [];
+    this.decodeAheadWarningKeys = [];
     this.decodeAhead = null;
     this.aheadRange = null;
     // Đợt 38 U1: số đo của controller đã dispose không còn dùng cho
@@ -1785,6 +1826,10 @@ export function getReversePreviewController(
     gopRangeEnabled?: boolean;
     // Đợt 60 Q4 — lookup i18n cho lý do fallback GOP (preview truyền t()).
     i18nLookup?: (key: string, vars?: Record<string, string>) => string;
+    // Đợt 67 U5 — ghi đè cho test (mẫu i18nLookup): ngưỡng GOP dưới +
+    // probe trial-decode; production không truyền → mặc định như cũ.
+    gopThresholdBytes?: number;
+    trialDecodeProbe?: GopTrialDecodeProbe | null;
   },
 ): ReversePreviewController {
   let c = previewControllers.get(url);
@@ -1797,6 +1842,9 @@ export function getReversePreviewController(
       // giữ nguyên (không bật lén giữa chừng).
       gopRangeEnabled: options?.gopRangeEnabled ?? false,
       i18nLookup: options?.i18nLookup,
+      // Đợt 67 U5 — forward ghi đè test (undefined = mặc định như cũ).
+      gopThresholdBytes: options?.gopThresholdBytes,
+      trialDecodeProbe: options?.trialDecodeProbe,
     });
     previewControllers.set(url, c);
   } else if (knownFileSizeBytes !== undefined) {
@@ -1826,6 +1874,20 @@ export function reverseDecodeAheadWarnings(): string[] {
 }
 
 /**
+ * Đợt 80 H7 — key i18n song song với `reverseDecodeAheadWarnings`
+ * (1:1 theo từng controller, khử trùng, cùng thứ tự); UI dịch qua key.
+ */
+export function reverseDecodeAheadWarningKeys(): string[] {
+  const out: string[] = [];
+  for (const c of previewControllers.values()) {
+    for (const k of c.decodeAheadWarningKeyList) {
+      if (!out.includes(k)) out.push(k);
+    }
+  }
+  return out;
+}
+
+/**
  * Đợt 65 S6 — ghi chú trial-decode timeout (fail-open) đang bật trên mọi
  * controller trong registry (preview.tsx đọc mỗi tick, mẫu
  * `reverseDecodeAheadWarnings` đợt 37 T2): mỗi controller tối đa 1 ghi
@@ -1839,6 +1901,37 @@ export function reverseTrialDecodeTimeoutNotes(): string[] {
     if (n !== null && !out.includes(n)) out.push(n);
   }
   return out;
+}
+
+/**
+ * Đợt 67 U5 — subscriber cho ghi chú trial-decode timeout mới (mẫu
+ * `subscribeToasts` của toast.ts): preview.tsx đăng ký 1 lần lúc mount
+ * để toast hiện NGAY khi note được set, kể cả khi vòng lặp rAF đang ngủ
+ * (clip ngắn / không phát ngược — nợ T6 §3). Listener chỉ được gọi khi
+ * có note MỚI (null → có giá trị / đổi giá trị); dispose/xóa note không
+ * gọi. Callback không nhận tham số — caller đọc lại
+ * `reverseTrialDecodeTimeoutNotes()` (keyed như cũ nên không toast trùng).
+ * Trả về hàm hủy đăng ký.
+ */
+type TrialDecodeTimeoutNotesListener = () => void;
+const trialDecodeTimeoutNotesListeners = new Set<TrialDecodeTimeoutNotesListener>();
+export function subscribeTrialDecodeTimeoutNotes(
+  fn: TrialDecodeTimeoutNotesListener,
+): () => void {
+  trialDecodeTimeoutNotesListeners.add(fn);
+  return () => {
+    trialDecodeTimeoutNotesListeners.delete(fn);
+  };
+}
+/** Gọi khi 1 controller vừa set ghi chú timeout mới (nội bộ). */
+function notifyTrialDecodeTimeoutNotesChanged(): void {
+  for (const fn of [...trialDecodeTimeoutNotesListeners]) {
+    try {
+      fn();
+    } catch {
+      // 1 listener lỗi không được chặn các listener khác / đường GOP.
+    }
+  }
 }
 
 // Đợt 38 U1 — cờ "muốn bật" của toggle UI (mức registry, sống qua
@@ -1866,6 +1959,8 @@ export interface ReverseDecodeAheadStatus {
   prefetchFrames: number;
   /** Cảnh báo cổng đang bật (nguyên văn chuỗi cổng, rỗng khi tắt). */
   warnings: string[];
+  /** Đợt 80 H7 — key i18n song song với `warnings` (UI dịch qua key). */
+  warningKeys: string[];
   /** Lý do chặn của decision gần nhất (rỗng khi chưa thử / đang chạy). */
   reasons: string[];
   /** Decision cổng gần nhất (null = chưa từng thử). */
@@ -1972,9 +2067,10 @@ export function reverseDecodeAheadStatus(): ReverseDecodeAheadStatus {
     uiStatus: resolveDecodeAheadUiStatus(decodeAheadWanted, active),
     prefetchFrames,
     warnings: reverseDecodeAheadWarnings(),
+    warningKeys: reverseDecodeAheadWarningKeys(),
     reasons,
     decision: decodeAheadLastDecision
-      ? { ...decodeAheadLastDecision, reasons: [...decodeAheadLastDecision.reasons], warnings: [...decodeAheadLastDecision.warnings] }
+      ? { ...decodeAheadLastDecision, reasons: [...decodeAheadLastDecision.reasons], warnings: [...decodeAheadLastDecision.warnings], warningKeys: [...(decodeAheadLastDecision.warningKeys ?? [])] }
       : null,
     measurementFps,
     measurementResolution,

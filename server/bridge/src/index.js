@@ -32,9 +32,13 @@
  *  DELETE /api/render/:id        → huỷ job (kill cả process group) + xóa thư mục tạm
  *  POST   /api/render/:id/retry  → chạy lại job bị lỗi
  *  POST   /api/caption           multipart: field "media" (video/audio) → NDJSON segments
+ *                                (đợt 80 H8: thêm event progress THẬT + cancelled)
  *  POST   /api/reframe           multipart: field "media" (video), field "aspect"
- *                                → download MP4 đã crop theo chủ thể (9:16 | 1:1 | 4:5)
- *  POST   /api/tts               JSON { text, voice? } → download file WAV giọng đọc (ZeroTTS, local)
+ *                                → NDJSON progress → done { downloadUrl } (MP4 đã crop)
+ *  POST   /api/tts               JSON { text, voice? } → NDJSON progress → done { downloadUrl }
+ *                                (WAV giọng đọc, ZeroTTS local; đợt 80 H8 đổi từ download trực tiếp)
+ *  POST   /api/tts/clone         multipart: field "refAudio" + "text" → NDJSON như /api/tts
+ *  GET    /api/ai-download/:token → file kết quả dùng 1 lần của job AI stream (đợt 80 H8)
  *  GET    /api/tts/voices        → { voices: [...], default }
  *  GET    /api/openapi.json      → OpenAPI 3.0 spec dạng JSON (R1-092, dùng cho Swagger UI)
  *  GET    /api/health            → { ok: true, version, ffmpeg, runningJobs, queuedJobs }
@@ -45,6 +49,9 @@
 
 const path = require("path");
 const fs = require("fs");
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (port CJS của
+// apps/web/scripts/eperm-retry.mjs; xem server/eperm-retry.cjs).
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const { spawn, execFile } = require("child_process");
 const express = require("express");
@@ -78,7 +85,40 @@ const {
   validateRefAudio,
   ttsAvailable,
   runTts,
+  TTS_PHASE_LABELS, // Đợt 80 H8: nhãn phase cho stream NDJSON
 } = require("./tts");
+// Đợt 80 H8 (gap N4): tiến trình + hủy thật cho job AI dài.
+const {
+  attachClientAbort,
+  createProgressSender,
+  isAbortError,
+} = require("./aiProgress");
+const {
+  registerAiDownload,
+  serveAiDownload,
+  startAiDownloadSweep,
+} = require("./aiDownload");
+// Đợt 84 L8: giọng đã clone LƯU LẠI ĐƯỢC (tạo/dùng/xóa giọng clone).
+const {
+  clonedVoicesRootFromEnv,
+  validateClonedVoiceName,
+  validateClonedVoiceId,
+  listClonedVoices,
+  getClonedVoice,
+  clonedVoiceRefPath,
+  probeAudioDurationSec,
+  prepareClonedVoice,
+  commitClonedVoice,
+  discardClonedVoiceDir,
+  deleteClonedVoice,
+  buildVoiceBackup,
+  buildAllVoicesBackup,
+  backupExportFilename,
+  parseVoiceBackup,
+  writeBackupRefAudio,
+  MAX_CLONED_VOICES,
+  PROBE_TEXT,
+} = require("./clonedVoices");
 // R1-083/R1-085: auto-reframe (OpenCV, chạy local qua reframe.py)
 const {
   runReframe,
@@ -129,6 +169,11 @@ const MAX_UPLOAD_BYTES = parseInt(process.env.BRIDGE_MAX_UPLOAD || String(2 * 10
 const JOB_TTL_MS = parseInt(process.env.BRIDGE_JOB_TTL || String(60 * 60 * 1000), 10); // 1h
 const WORK_ROOT = process.env.BRIDGE_WORK_DIR ||
   path.join(os.tmpdir(), "vcut-bridge-jobs");
+// Đợt 84 L8: kho giọng clone LƯU LẠI ĐƯỢC — KHÔNG nằm dưới WORK_ROOT
+// (tmpdir, VM từng reboot 2 lần đợt 83) mà ở ~/.vcut/cloned-voices để
+// giọng user tạo sống qua lần khởi động bridge sau; override bằng env
+// BRIDGE_CLONED_VOICES_DIR (test/e2e dùng thư mục tạm riêng).
+const CLONED_VOICES_ROOT = clonedVoicesRootFromEnv();
 
 // --- R1-040 hardening: giới hạn & chính sách ---------------------------------
 const SPEC_MAX_BYTES = parseInt(process.env.BRIDGE_SPEC_MAX || String(10 * 1024 * 1024), 10); // 10MB
@@ -406,13 +451,19 @@ const X264_PRESETS = [
 
 /**
  * Parse + validate field "preset" (JSON string, optional).
- * Trả về { crf, x264Preset, audioBitrate, normalize... } đã sanitize, hoặc throw Error → 400.
+ * Trả về { crf, x264Preset, audioBitrate, videoBitrateKbps, normalize..., stabSingleThread, aspectFit } đã sanitize, hoặc throw Error → 400.
  * Phase 7 P3: thêm normalize export (whitelist giống các field khác).
+ * Đợt 68 V2: thêm stabSingleThread (boolean, mặc định true).
  */
 function parsePreset(raw) {
   const defaults = {
     crf: 20, x264Preset: "medium", audioBitrate: "128k",
     normalize: "off", normalizeTarget: -14, normalizeTp: -1.5, normalizeLra: 11,
+    // Đợt 68 V2: stabilize single-thread decode (đợt 67 U1) — mặc định BẬT.
+    stabSingleThread: true,
+    // Đợt 76 D9: cách lấp khung khi tỉ lệ nguồn lệch khung xuất —
+    // "fit" (giữ tỉ lệ + letterbox, mặc định) | "crop" (lấp đầy + crop giữa).
+    aspectFit: "fit",
   };
   if (raw === undefined || raw === null || raw === "") return defaults;
   let p;
@@ -439,6 +490,16 @@ function parsePreset(raw) {
       throw codedError("PRESET_BITRATE_RANGE", "preset.audioBitrateKbps phải là số nguyên 32..512.");
     out.audioBitrate = `${p.audioBitrateKbps}k`;
   }
+  // Đợt 80 H10 (S4): trần bitrate video của preset mạng xã hội (kbps) —
+  // render.js dùng làm VBV maxrate kẹp bên cạnh CRF. Vắng = CRF-only
+  // (hành vi cũ). Tái dùng mã PRESET_BITRATE_RANGE (catalog bridge khóa
+  // 102 mã, xem test-bridge-error-protocol.cjs — không thêm mã mới);
+  // message nêu rõ field videoBitrateKbps để phân biệt với audio.
+  if (p.videoBitrateKbps !== undefined) {
+    if (!Number.isInteger(p.videoBitrateKbps) || p.videoBitrateKbps < 500 || p.videoBitrateKbps > 100000)
+      throw codedError("PRESET_BITRATE_RANGE", "preset.videoBitrateKbps phải là số nguyên 500..100000.");
+    out.videoBitrateKbps = p.videoBitrateKbps;
+  }
   // Phase 7 P3: normalize export — whitelist chặt như các field khác.
   if (p.normalize !== undefined) {
     if (typeof p.normalize !== "string" || !["off", "loudnorm", "dynaudnorm"].includes(p.normalize))
@@ -463,6 +524,19 @@ function parsePreset(raw) {
       throw codedError("PRESET_NORMALIZE_LRA_RANGE", "preset.normalizeLra phải trong 1..20.");
     out.normalizeLra = p.normalizeLra;
   }
+  // Đợt 68 V2: stabilize single-thread decode (đợt 67 U1) — chỉ nhận boolean
+  // thật. Giá trị sai kiểu KHÔNG throw: test bridgeErrors62R5 khóa catalog
+  // bridge ở đúng 102 mã nên không được thêm mã mới (PRESET_*_INVALID) —
+  // muốn mã riêng thì parent bump đồng bộ 102→103 (xem LIMITS V2 §2).
+  // Bỏ qua = về mặc định BẬT. An toàn: field này không nội suy vào argv
+  // (chỉ chọn giữa 2 argv cố định) nên không thể inject như crf/x264.
+  if (typeof p.stabSingleThread === "boolean") out.stabSingleThread = p.stabSingleThread;
+  // Đợt 76 D9: aspectFit — cùng mẫu V2 (không throw, không thêm mã lỗi):
+  // chỉ nhận "fit" | "crop", giá trị khác → giữ mặc định "fit". An toàn:
+  // render.js whitelist lại lần nữa ở parseArgs (--aspect-fit exit 2 khi
+  // lạ) nên giá trị này không thể thành argv tùy ý.
+  if (typeof p.aspectFit === "string" && (p.aspectFit === "fit" || p.aspectFit === "crop"))
+    out.aspectFit = p.aspectFit;
   return out;
 }
 
@@ -493,12 +567,18 @@ const service = new RenderJobService({
     const jobAssetMap = path.join(job.dir, "asset-map.json");
     if (fs.existsSync(jobAssetMap)) args.push("--asset-map", jobAssetMap);
     // R1-042: quality params đã sanitize ở parsePreset (job recover → dùng default).
-    const preset = job.preset || { crf: 20, x264Preset: "medium", audioBitrate: "128k" };
+    const preset = job.preset || { crf: 20, x264Preset: "medium", audioBitrate: "128k", stabSingleThread: true };
     args.push(
       "--crf", String(preset.crf),
       "--x264-preset", preset.x264Preset,
       "--audio-bitrate", preset.audioBitrate,
     );
+    // Đợt 80 H10 (S4): trần bitrate video (VBV maxrate) của preset mạng
+    // xã hội — chỉ push khi preset có field (job cũ recover không có
+    // field → CRF-only như trước).
+    if (typeof preset.videoBitrateKbps === "number" && preset.videoBitrateKbps > 0) {
+      args.push("--maxrate", String(preset.videoBitrateKbps));
+    }
     // Phase 7 P3: normalize export (chỉ push khi khác default để log gọn).
     if (preset.normalize && preset.normalize !== "off") {
       args.push("--normalize", preset.normalize);
@@ -510,6 +590,13 @@ const service = new RenderJobService({
         );
       }
     }
+    // Đợt 68 V2: stabilize single-thread decode (đợt 67 U1) — chỉ push cờ
+    // TẮT khi preset là false rõ ràng. undefined (job cũ recover trước V2)
+    // → giữ mặc định BẬT của render.js, giống parsePreset default true.
+    if (preset.stabSingleThread === false) args.push("--no-stab-single-thread");
+    // Đợt 76 D9: aspectFit crop — chỉ push khi crop rõ ràng; fit là mặc
+    // định của render.js nên không cần cờ (job cũ recover → fit như trước).
+    if (preset.aspectFit === "crop") args.push("--aspect-fit", "crop");
     // detached: true → process group riêng, để cancel kill được cả ffmpeg con.
     // (xem killProcessTree trong jobQueue.js)
     return spawn(process.execPath, args, {
@@ -533,6 +620,8 @@ try {
   console.error("⚠️  Không phục hồi được job cũ:", e.message);
 }
 service.startJanitor();
+// Đợt 80 H8: dọn file kết quả AI chờ tải quá 2h (client đóng tab sau `done`).
+startAiDownloadSweep(WORK_ROOT);
 
 // ---------------------------------------------------------------------------
 // Express app
@@ -646,7 +735,7 @@ function moveUploadTo(f, dest) {
     }
   }
   // Fallback memoryStorage (không dùng trong bridge hiện tại, giữ để tương thích).
-  fs.writeFileSync(dest, f.buffer);
+  writeFileEpermRetry(dest, f.buffer, { label: "bridge-moveUploadTo" });
 }
 
 /** Xoá file tạm multer còn sót (an toàn khi gọi nhiều lần / file đã move). */
@@ -838,9 +927,9 @@ app.post("/api/render",
   // 4. Ghi spec.json (+ asset-map.json nếu có — P7)
   const specPath = path.join(dir, "spec.json");
   try {
-    fs.writeFileSync(specPath, JSON.stringify(spec));
+    writeFileEpermRetry(specPath, JSON.stringify(spec), { label: "bridge-spec.json" });
     if (assetMap) {
-      fs.writeFileSync(path.join(dir, "asset-map.json"), JSON.stringify(assetMap));
+      writeFileEpermRetry(path.join(dir, "asset-map.json"), JSON.stringify(assetMap), { label: "bridge-asset-map.json" });
     }
   } catch (e) {
     console.error(`[bridge] không ghi được spec:`, e.message);
@@ -927,18 +1016,26 @@ app.post(
       return res.status(500).json(apiError("SAVE_FILE_FAILED", "Lỗi máy chủ khi lưu file — thử lại sau."));
     }
 
-    // 3. Stream NDJSON: phase... → done | error
+    // 3. Stream NDJSON: phase... → progress... → done | error | cancelled
+    // Đợt 80 H8 (gap N4): stream thêm event "progress" (tiến trình THẬT
+    // từ caption.py: giây audio đã transcribe / tổng giây) kèm ETA; client
+    // ngắt kết nối → attachClientAbort hủy job thật (kill python).
     res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
     res.setHeader("Cache-Control", "no-cache");
     const send = (obj) => {
       try { res.write(JSON.stringify(obj) + "\n"); } catch { /* client đã ngắt */ }
     };
     send({ type: "phase", phase: "upload", message: PHASE_LABELS.upload });
+    const ctrl = new AbortController();
+    const detachAbort = attachClientAbort(res, ctrl);
+    const sendProgress = createProgressSender(send);
     try {
       const result = await runCaption({
         inputPath,
         lang,
+        signal: ctrl.signal,
         onPhase: (p) => send({ type: "phase", phase: p, message: PHASE_LABELS[p] || p }),
+        onProgress: (pr) => sendProgress(pr.phase || "transcribe", pr.done, pr.total),
       });
       send({
         type: "done",
@@ -951,8 +1048,13 @@ app.post(
         words: result.words || [],
       });
     } catch (e) {
-      send({ type: "error", ...taskErrorPayload(e, "Caption thất bại.", "TASK_CAPTION_FAILED") });
+      if (isAbortError(e)) {
+        send({ type: "cancelled" });
+      } else {
+        send({ type: "error", ...taskErrorPayload(e, "Caption thất bại.", "TASK_CAPTION_FAILED") });
+      }
     } finally {
+      detachAbort();
       cleanupJobDir(dir);
       try { res.end(); } catch { /* bỏ qua */ }
     }
@@ -1014,17 +1116,38 @@ app.post(
       return res.status(500).json(apiError("SAVE_FILE_FAILED", "Lỗi máy chủ khi lưu file — thử lại sau."));
     }
 
+    // Stream NDJSON: phase/progress → done | error | cancelled.
+    // Đợt 80 H8 (gap N4): progress THẬT theo % frame (reframe.py in
+    // "[reframe] done/total (pct%)" ra stderr — runReframe đã parse sẵn
+    // từ R1-085) + hủy thật. File MP4 đích lấy qua downloadUrl (tải 1 lần).
+    res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache");
+    const send = (obj) => {
+      try { res.write(JSON.stringify(obj) + "\n"); } catch { /* client đã ngắt */ }
+    };
+    send({ type: "phase", phase: "upload", message: "Đã nhận file, chuẩn bị…" });
+    const ctrl = new AbortController();
+    const detachAbort = attachClientAbort(res, ctrl);
+    const sendProgress = createProgressSender(send);
     try {
-      const result = await runReframe({ inputPath, outputPath, aspect });
-      console.log(`[bridge] reframe xong: ${outName} (${result.bytes} bytes, ${aspect})`);
-      res.download(result.outPath, outName, (err) => {
-        if (err) console.error(`[bridge] lỗi download reframe:`, err.message);
-        cleanupJobDir(dir);
+      const result = await runReframe({
+        inputPath, outputPath, aspect,
+        signal: ctrl.signal,
+        onProgress: (pct) => sendProgress("processing", pct, 100),
       });
+      console.log(`[bridge] reframe xong: ${outName} (${result.bytes} bytes, ${aspect})`);
+      const dl = registerAiDownload(WORK_ROOT, result.outPath, outName);
+      send({ type: "done", downloadUrl: dl.url, aspect, bytes: result.bytes });
     } catch (e) {
+      if (isAbortError(e)) {
+        send({ type: "cancelled" });
+      } else {
+        send({ type: "error", ...taskErrorPayload(e, "Reframe thất bại.", "TASK_REFRAME_FAILED") });
+      }
+    } finally {
+      detachAbort();
       cleanupJobDir(dir);
-      // Chưa gửi header nào → trả JSON lỗi bình thường.
-      return res.status(500).json(taskErrorPayload(e, "Reframe thất bại.", "TASK_REFRAME_FAILED"));
+      try { res.end(); } catch { /* bỏ qua */ }
     }
   }
 );
@@ -1171,8 +1294,15 @@ app.post(
 
 // --- POST /api/bgremove (R1-084) ------------------------------------------------
 // Nhận 1 file VIDEO (multipart field "media") + field "session" (optional).
-// Chạy bgremove.py (rembg MIT + birefnet-general MIT, 100% local) rồi trả về
-// file MOV PNG có kênh alpha qua res.download. Đồng bộ (timeout 30 phút).
+// Chạy bgremove.py (rembg MIT + birefnet-general MIT, 100% local) rồi stream
+// tiến trình về client dạng NDJSON (đợt 80 H8, gap N4):
+//   {"type":"phase", phase:"upload"|"fallback", ...}
+//   {"type":"progress", phase:"processing", progress, done, total, etaSeconds}
+//   {"type":"done", downloadUrl, sessionUsed, fallbackFrom, fallbackReason}
+//   {"type":"error"|"cancelled", ...}
+// Client fetch downloadUrl để lấy file MOV PNG có kênh alpha (tải 1 lần,
+// xem GET /api/ai-download/:token). Nút Hủy của UI = abort fetch → bridge
+// kill python thật (không còn chạy nền). Timeout 30 phút.
 app.post(
   "/api/bgremove",
   rateLimit(RATE_MAX_RENDER, "render"), // R1-040: tác vụ nặng, giới hạn như render
@@ -1226,27 +1356,60 @@ app.post(
       return res.status(500).json(apiError("SAVE_FILE_FAILED", "Lỗi máy chủ khi lưu file — thử lại sau."));
     }
 
+    // Stream NDJSON: phase/progress → done | error | cancelled.
+    // Đợt 80 H8 (gap N4): progress THẬT theo frame (bgremove.py in
+    // "[bgremove] done/total (pct)" sau mỗi frame) + hủy thật.
+    res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache");
+    const send = (obj) => {
+      try { res.write(JSON.stringify(obj) + "\n"); } catch { /* client đã ngắt */ }
+    };
+    send({ type: "phase", phase: "upload", message: "Đã nhận file, chuẩn bị…" });
+    const ctrl = new AbortController();
+    const detachAbort = attachClientAbort(res, ctrl);
+    const sendProgress = createProgressSender(send);
     try {
-      // Phase 7 P6: runBgremove tự fallback u2net khi birefnet chết — báo
-      // cho UI qua header để user thấy rõ session thực sự đã dùng.
-      const result = await runBgremove({ inputPath, outputPath, session, temporal, feather });
+      const result = await runBgremove({
+        inputPath, outputPath, session, temporal, feather,
+        signal: ctrl.signal,
+        onPhase: (ev) => {
+          if (ev.phase === "processing") {
+            sendProgress("processing", ev.done, ev.total, ev.message);
+          } else if (ev.phase === "fallback") {
+            // Phase 7 P6: session birefnet chết → tự chuyển sang u2net.
+            send({ type: "phase", phase: "fallback", message: ev.message });
+          }
+        },
+      });
       console.log(
         `[bridge] bgremove xong: ${outName} (yêu cầu=${session}, ` +
         `thực dùng=${result.sessionUsed}${result.fallbackFrom ? `, fallback từ ${result.fallbackFrom}` : ""})`
       );
-      res.setHeader("X-Bgremove-Session-Used", result.sessionUsed || session);
+      // Đăng ký download 1 lần; giữ lại header X-Bgremove-* để client nào
+      // đọc header (như trước) vẫn thấy session thực sự đã dùng.
+      const dlHeaders = { "X-Bgremove-Session-Used": result.sessionUsed || session };
       if (result.fallbackFrom) {
-        res.setHeader("X-Bgremove-Fallback-From", result.fallbackFrom);
-        res.setHeader("X-Bgremove-Fallback-Reason", encodeURIComponent(result.fallbackReason || ""));
+        dlHeaders["X-Bgremove-Fallback-From"] = result.fallbackFrom;
+        dlHeaders["X-Bgremove-Fallback-Reason"] = encodeURIComponent(result.fallbackReason || "");
       }
-      res.download(outputPath, outName, (err) => {
-        if (err) console.error(`[bridge] lỗi download bgremove:`, err.message);
-        cleanupJobDir(dir);
+      const dl = registerAiDownload(WORK_ROOT, outputPath, outName, dlHeaders);
+      send({
+        type: "done",
+        downloadUrl: dl.url,
+        sessionUsed: result.sessionUsed,
+        fallbackFrom: result.fallbackFrom || null,
+        fallbackReason: result.fallbackReason || null,
       });
     } catch (e) {
+      if (isAbortError(e)) {
+        send({ type: "cancelled" });
+      } else {
+        send({ type: "error", ...taskErrorPayload(e, "Xóa nền thất bại.", "TASK_BGREMOVE_FAILED") });
+      }
+    } finally {
+      detachAbort();
       cleanupJobDir(dir);
-      // Chưa gửi header nào → trả JSON lỗi bình thường.
-      return res.status(500).json(taskErrorPayload(e, "Xóa nền thất bại.", "TASK_BGREMOVE_FAILED"));
+      try { res.end(); } catch { /* bỏ qua */ }
     }
   }
 );
@@ -1383,7 +1546,11 @@ app.post(
       return res.status(500).json(apiError("SAVE_FILE_FAILED", "Lỗi máy chủ khi lưu file — thử lại sau."));
     }
 
-    // 3. Stream NDJSON: phase... → done | error
+    // 3. Stream NDJSON: phase... → done | error | cancelled
+    // Đợt 80 H8 (gap N4): client ngắt kết nối → hủy job thật (kill python
+    // + ffmpeg con). Progress % CHƯA có: scene.py chạy ffmpeg blocking
+    // (subprocess.run) nên không in được tiến trình theo thời gian — ghi
+    // trong PHASE9_ROUND80_H8_AI_PROGRESS_CANCEL_LIMITS.md.
     const SCENE_PHASE_LABELS = {
       upload: "Đã nhận file, chuẩn bị…",
       scan: "Đang quét chuyển cảnh (video dài có thể mất vài phút)…",
@@ -1394,12 +1561,15 @@ app.post(
       try { res.write(JSON.stringify(obj) + "\n"); } catch { /* client đã ngắt */ }
     };
     send({ type: "phase", phase: "upload", message: SCENE_PHASE_LABELS.upload });
+    const ctrl = new AbortController();
+    const detachAbort = attachClientAbort(res, ctrl);
     try {
       const result = await runSceneDetect({
         inputPath,
         threshold,
         start,
         end,
+        signal: ctrl.signal,
         onPhase: (p) => send({ type: "phase", phase: p, message: SCENE_PHASE_LABELS[p] || p }),
       });
       send({
@@ -1410,8 +1580,13 @@ app.post(
         count: result.cuts.length,
       });
     } catch (e) {
-      send({ type: "error", ...taskErrorPayload(e, "Tách cảnh thất bại.", "TASK_SCENE_FAILED") });
+      if (isAbortError(e)) {
+        send({ type: "cancelled" });
+      } else {
+        send({ type: "error", ...taskErrorPayload(e, "Tách cảnh thất bại.", "TASK_SCENE_FAILED") });
+      }
     } finally {
+      detachAbort();
       cleanupJobDir(dir);
       try { res.end(); } catch { /* bỏ qua */ }
     }
@@ -1473,19 +1648,25 @@ app.post(
       return res.status(500).json(apiError("SAVE_FILE_FAILED", "Lỗi máy chủ khi lưu file — thử lại sau."));
     }
 
-    // 3. Stream NDJSON: phase... → done | error
+    // 3. Stream NDJSON: phase... → progress... → done | error | cancelled
+    // Đợt 80 H8 (gap N4): như /api/caption — progress thật + hủy thật.
     res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
     res.setHeader("Cache-Control", "no-cache");
     const send = (obj) => {
       try { res.write(JSON.stringify(obj) + "\n"); } catch { /* client đã ngắt */ }
     };
     send({ type: "phase", phase: "upload", message: TRANSLATE_PHASE_LABELS.upload });
+    const ctrl = new AbortController();
+    const detachAbort = attachClientAbort(res, ctrl);
+    const sendProgress = createProgressSender(send);
     try {
       const result = await runTranslate({
         inputPath,
         lang,
         target,
+        signal: ctrl.signal,
         onPhase: (p) => send({ type: "phase", phase: p, message: TRANSLATE_PHASE_LABELS[p] || p }),
+        onProgress: (pr) => sendProgress(pr.phase || "translating", pr.done, pr.total),
       });
       send({
         type: "done",
@@ -1497,8 +1678,13 @@ app.post(
         segments: result.segments,
       });
     } catch (e) {
-      send({ type: "error", ...taskErrorPayload(e, "Dịch phụ đề thất bại.", "TASK_TRANSLATE_FAILED") });
+      if (isAbortError(e)) {
+        send({ type: "cancelled" });
+      } else {
+        send({ type: "error", ...taskErrorPayload(e, "Dịch phụ đề thất bại.", "TASK_TRANSLATE_FAILED") });
+      }
     } finally {
+      detachAbort();
       cleanupJobDir(dir);
       try { res.end(); } catch { /* bỏ qua */ }
     }
@@ -1524,6 +1710,27 @@ app.get("/api/render/:id", validateJobIdParam, (req, res) => {
   if (!job) return res.status(404).json(apiError("JOB_NOT_FOUND", "Không tìm thấy job."));
   const includeDetail = req.query.detail === "1" || req.query.error_detail === "1";
   res.json(publicJob(job, includeDetail));
+});
+
+// --- HEAD /api/render/:id/download -------------------------------------------
+// Đợt 68 V8 — kiểm tra download được TRƯỚC khi hiện nút tải (nợ U7 đợt 67
+// §5.2): ExportPanel HEAD endpoint này khi job done; 200 = file output còn
+// đó (kèm Content-Length để UI hiện dung lượng nếu cần), 404 = job đã bị
+// dọn, 409 = job chưa xong HOẶC file output đã mất. KHÔNG stream body:
+// Express tự map HEAD sang handler GET nếu không có handler HEAD riêng,
+// lúc đó stream MP4 sẽ bị đẩy ra đường truyền vô ích — nên cần handler
+// HEAD tường minh này. Cùng mã lỗi với GET để UI dùng chung logic.
+app.head("/api/render/:id/download", validateJobIdParam, (req, res) => {
+  const job = service.get(req.params.id);
+  if (!job) return res.status(404).json(apiError("JOB_NOT_FOUND", "Không tìm thấy job."));
+  if (job.status !== "done" || !fs.existsSync(job.outPath)) {
+    return res.status(409).json(apiError("JOB_NOT_DONE", `Job chưa xong (status=${job.status}).`, { status: job.status }));
+  }
+  let size = null;
+  try { size = fs.statSync(job.outPath).size; } catch { /* không đo được: vẫn 200, thiếu Content-Length */ }
+  res.setHeader("Content-Type", "video/mp4");
+  if (size != null) res.setHeader("Content-Length", String(size));
+  res.status(200).end();
 });
 
 // --- GET /api/render/:id/download --------------------------------------------
@@ -1580,6 +1787,14 @@ app.post("/api/render/:id/retry", validateJobIdParam, (req, res) => {
   }
 });
 
+// --- GET /api/ai-download/:token (Đợt 80 H8, gap N4) --------------------------
+// File kết quả dùng 1 lần của job AI stream (TTS/bgremove/reframe): event
+// `done` của stream NDJSON mang downloadUrl trỏ tới đây. Token 16 hex,
+// sai định dạng → 400, đã tải/hết hạn → 404, tải xong → xóa file ngay.
+app.get("/api/ai-download/:token", (req, res) => {
+  serveAiDownload(WORK_ROOT, req, res);
+});
+
 // --- GET /api/tts/voices + POST /api/tts (R1-083) --------------------------------
 // TTS local tiếng Việt (ZeroTTS, MIT). Nhận JSON {text, voice?}, trả về file WAV.
 // Tác vụ nặng (model ~0.86GB, CPU ~2x realtime) → rate-limit như render.
@@ -1587,13 +1802,126 @@ app.get("/api/tts/voices", (req, res) => {
   res.json({ voices: TTS_VOICES, default: DEFAULT_VOICE });
 });
 
+// --- POST /api/tts + /api/tts/clone (Đợt 80 H8, gap N4) --------------------------
+// Stream NDJSON dùng chung cho cả 2 route TTS (giọng preset + clone):
+//   {"type":"phase", phase:"load"|"synth", ...}
+//   {"type":"progress", phase:"synth", progress, done, total, etaSeconds}
+//     (progress THẬT theo chunk: tts.py log "chunk i/N xong" sau mỗi lần infer)
+//   {"type":"done", downloadUrl, voice, chars, durationSec, chunks, cloned}
+//   {"type":"error"|"cancelled", ...}
+// Client fetch downloadUrl để lấy file WAV (tải 1 lần, xem
+// GET /api/ai-download/:token). Nút Hủy của UI = abort fetch → bridge kill
+// python thật. Lỗi validate (4xx/503) vẫn trả JSON thường như cũ vì chưa
+// stream (xử lý ở từng route trước khi gọi helper này).
+// Đợt 84 L8: thêm hook tùy chọn cho route tạo giọng clone — `onSuccess(result)`
+// chạy sau khi synth xong (vd ghi registry) và có thể trả thêm field gộp vào
+// event `done`; `onFailure()` chạy khi synth lỗi/hủy/ghi registry lỗi (vd
+// xóa file mẫu tạm của giọng chưa commit). Hook lỗi → gửi event `error`.
+async function streamTtsResponse(res, { text, voice, refAudioPath, dir, downloadName, failCode, onSuccess, onFailure, extraDone }) {
+  res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache");
+  const send = (obj) => {
+    try { res.write(JSON.stringify(obj) + "\n"); } catch { /* client đã ngắt */ }
+  };
+  const ctrl = new AbortController();
+  const detachAbort = attachClientAbort(res, ctrl);
+  const sendProgress = createProgressSender(send);
+  // Báo rõ phase nạp model ngay từ đầu — model VieNeu-TTS ~0.86GB, lần đầu
+  // nạp mất ~10-12s nên user cần thấy "đang nạp model" thay vì im lặng.
+  send({ type: "phase", phase: "load", message: TTS_PHASE_LABELS.load });
+  let result;
+  try {
+    result = await runTts({
+      text, voice, refAudioPath, outDir: dir,
+      signal: ctrl.signal,
+      onPhase: (p) => send({ type: "phase", phase: p, message: TTS_PHASE_LABELS[p] || p }),
+      onProgress: (pr) => sendProgress("synth", pr.done, pr.total),
+    });
+  } catch (e) {
+    if (isAbortError(e)) {
+      send({ type: "cancelled" });
+    } else {
+      send({ type: "error", ...taskErrorPayload(e, "TTS thất bại.", failCode || "TASK_TTS_FAILED") });
+    }
+    try { onFailure && await onFailure(); } catch { /* dọn tạm đã cố hết sức */ }
+    cleanupJobDir(dir);
+    detachAbort();
+    try { res.end(); } catch { /* bỏ qua */ }
+    return;
+  }
+  const wavPath = result.outPath;
+  if (!fs.existsSync(wavPath)) {
+    send({ type: "error", ...taskErrorPayload(new Error("TTS xong nhưng không thấy file WAV đầu ra."), "TTS thất bại.", failCode || "TASK_TTS_FAILED") });
+    try { onFailure && await onFailure(); } catch { /* bỏ qua */ }
+    cleanupJobDir(dir);
+    detachAbort();
+    try { res.end(); } catch { /* bỏ qua */ }
+    return;
+  }
+  // Đợt 84 L8: hook sau synth thành công — lỗi ở đây vẫn trả event `error`,
+  // WAV chưa đăng ký download nên không rò rỉ file.
+  let successExtra = {};
+  if (onSuccess) {
+    try {
+      const extra = await onSuccess(result);
+      if (extra && typeof extra === "object") successExtra = extra;
+    } catch (e) {
+      send({ type: "error", ...taskErrorPayload(e, "TTS thất bại.", failCode || "TASK_TTS_FAILED") });
+      try { onFailure && await onFailure(); } catch { /* bỏ qua */ }
+      cleanupJobDir(dir);
+      detachAbort();
+      try { res.end(); } catch { /* bỏ qua */ }
+      return;
+    }
+  }
+  // Đăng ký download 1 lần; giữ lại header X-TTS-* để client nào đọc
+  // header (như trước) vẫn thấy duration/chars/chunks/cloned.
+  const dl = registerAiDownload(WORK_ROOT, wavPath, downloadName, {
+    "X-TTS-Voice": encodeURIComponent(voice || "clone"),
+    "X-TTS-Duration": String(result.durationSec || 0),
+    "X-TTS-Chars": String(result.chars || text.length),
+    "X-TTS-Chunks": String(result.chunks ?? 1),
+    "X-TTS-Cloned": result.cloned ? "1" : "0",
+  });
+  send({
+    type: "done",
+    downloadUrl: dl.url,
+    voice: voice || "clone",
+    chars: result.chars || text.length,
+    durationSec: result.durationSec || 0,
+    chunks: result.chunks ?? 1,
+    cloned: !!result.cloned,
+    ...(extraDone || {}),
+    ...successExtra,
+  });
+  cleanupJobDir(dir); // WAV đã move sang ai-downloads, dir chỉ còn trống
+  detachAbort();
+  try { res.end(); } catch { /* bỏ qua */ }
+}
+
 app.post("/api/tts", rateLimit(RATE_MAX_RENDER, "render"), async (req, res) => {
-  let text, voice;
+  let text, voice, clonedVoiceId, refAudioPath;
   try {
     text = validateText(req.body && req.body.text);
-    voice = validateVoice(req.body && req.body.voice);
+    // Đợt 84 L8: dùng giọng đã clone đã lưu — body { text, clonedVoiceId }
+    // thay cho { text, voice }. Gửi cả 2 → 400 (không đoán ý user).
+    const rawClonedId = req.body && req.body.clonedVoiceId;
+    if (rawClonedId !== undefined && rawClonedId !== null && String(rawClonedId).trim() !== "") {
+      if (req.body && req.body.voice !== undefined && req.body.voice !== null && String(req.body.voice).trim() !== "") {
+        return res.status(400).json(apiError("TTS_CLONED_VOICE_NOT_FOUND", "Chỉ chọn một: giọng preset (voice) hoặc giọng đã clone (clonedVoiceId)."));
+      }
+      const stored = getClonedVoice(CLONED_VOICES_ROOT, rawClonedId);
+      refAudioPath = clonedVoiceRefPath(CLONED_VOICES_ROOT, stored);
+      if (!refAudioPath) {
+        return res.status(404).json(apiError("TTS_CLONED_VOICE_NOT_FOUND", `Giọng đã clone "${stored.name}" mất file mẫu — xóa rồi tạo lại.`));
+      }
+      clonedVoiceId = stored.id;
+      voice = stored.name; // tên hiển thị trong event done + header X-TTS-Voice
+    } else {
+      voice = validateVoice(req.body && req.body.voice);
+    }
   } catch (e) {
-    return res.status(400).json(apiErrorFrom(e));
+    return res.status(e && e.code === "TTS_CLONED_VOICE_NOT_FOUND" ? 404 : 400).json(apiErrorFrom(e));
   }
   const avail = ttsAvailable();
   if (!avail.available) {
@@ -1609,25 +1937,10 @@ app.post("/api/tts", rateLimit(RATE_MAX_RENDER, "render"), async (req, res) => {
     console.error(`[bridge] không tạo được thư mục tts:`, e.message);
     return res.status(500).json(apiError("TTS_PREPARE_FAILED", "Lỗi máy chủ khi chuẩn bị TTS — thử lại sau."));
   }
-  let result;
-  try {
-    result = await runTts({ text, voice, outDir: dir });
-  } catch (e) {
-    cleanupJobDir(dir);
-    return res.status(500).json(taskErrorPayload(e, "TTS thất bại.", "TASK_TTS_FAILED"));
-  }
-  const wavPath = result.outPath;
-  if (!fs.existsSync(wavPath)) {
-    cleanupJobDir(dir);
-    return res.status(500).json(apiError("TTS_NO_WAV", "TTS xong nhưng không thấy file WAV."));
-  }
-  const downloadName = `tts-${voice}-${Date.now()}.wav`;
-  res.setHeader("X-TTS-Voice", encodeURIComponent(voice)); // Unicode → %encoded (header chỉ cho phép Latin-1)
-  res.setHeader("X-TTS-Duration", String(result.durationSec || 0));
-  res.setHeader("X-TTS-Chars", String(result.chars || text.length));
-  res.download(wavPath, downloadName, (err) => {
-    cleanupJobDir(dir); // xóa file tạm sau khi gửi xong (kể cả lỗi)
-    if (err) console.error(`[bridge] lỗi gửi file TTS:`, err.message);
+  await streamTtsResponse(res, {
+    text, voice, refAudioPath, dir,
+    downloadName: `tts-${clonedVoiceId ? `clone-${clonedVoiceId}` : voice}-${Date.now()}.wav`,
+    failCode: "TASK_TTS_FAILED",
   });
 });
 
@@ -1662,30 +1975,271 @@ app.post(
       console.error(`[bridge] không tạo được thư mục tts-clone:`, e.message);
       return res.status(500).json(apiError("TTS_PREPARE_FAILED", "Lỗi máy chủ khi chuẩn bị TTS — thử lại sau."));
     }
-    let result;
-    try {
-      result = await runTts({ text, voice: undefined, refAudioPath: refPath, outDir: dir });
-    } catch (e) {
-      cleanupJobDir(dir);
-      return res.status(500).json(taskErrorPayload(e, "TTS clone thất bại.", "TASK_TTS_CLONE_FAILED"));
-    }
-    const wavPath = result.outPath;
-    if (!fs.existsSync(wavPath)) {
-      cleanupJobDir(dir);
-      return res.status(500).json(apiError("TTS_NO_WAV", "TTS xong nhưng không thấy file WAV."));
-    }
-    res.setHeader("X-TTS-Voice", "clone");
-    res.setHeader("X-TTS-Duration", String(result.durationSec || 0));
-    res.setHeader("X-TTS-Chars", String(result.chars || text.length));
-    // Phase 9 D2: để client/UI kiểm chứng được đường clone + đa-chunk từ
-    // ngoài (runTts đã spread JSON của tts.py gồm chunks + cloned).
-    res.setHeader("X-TTS-Chunks", String(result.chunks ?? 1));
-    res.setHeader("X-TTS-Cloned", result.cloned ? "1" : "0");
-    res.download(wavPath, `tts-clone-${Date.now()}.wav`, (err) => {
-      cleanupJobDir(dir);
-      if (err) console.error(`[bridge] lỗi gửi file TTS clone:`, err.message);
+    await streamTtsResponse(res, {
+      text, voice: undefined, refAudioPath: refPath, dir,
+      downloadName: `tts-clone-${Date.now()}.wav`,
+      failCode: "TASK_TTS_CLONE_FAILED",
     });
   }
+);
+
+// --- GET/POST/DELETE /api/tts/cloned-voices (Phase 9 đợt 84 L8) ------------
+// Giọng đã clone LƯU LẠI ĐƯỢC: tạo 1 lần (upload mẫu + đặt tên → bridge chạy
+// câu thăm dò bằng tts.py --ref-audio để verify mẫu thật sự tổng hợp được,
+// rồi mới ghi registry) → dùng lại như giọng preset qua POST /api/tts
+// { text, clonedVoiceId } → xóa khi không cần nữa.
+// Mẫu + registry lưu ở ~/.vcut/cloned-voices (env BRIDGE_CLONED_VOICES_DIR),
+// 100% local, không rời khỏi máy. Tạo giọng stream NDJSON như /api/tts
+// (phase/progress chunk thật + ETA + hủy thật qua AbortController) và event
+// `done` mang thêm `clonedVoice` + `downloadUrl` là bản đọc thử để nghe.
+app.get("/api/tts/cloned-voices", (req, res) => {
+  try {
+    res.json({ voices: listClonedVoices(CLONED_VOICES_ROOT) });
+  } catch (e) {
+    res.status(500).json(apiErrorFrom(e, "Không tải được danh sách giọng đã clone.", "TTS_CLONED_VOICE_REGISTRY"));
+  }
+});
+
+app.post(
+  "/api/tts/cloned-voices",
+  rateLimit(RATE_MAX_RENDER, "render"),
+  uploadMiddleware(upload.single("refAudio")),
+  async (req, res) => {
+    let name;
+    let refPath;
+    try {
+      // Validate tên trước (kèm trùng tên) để fail nhanh, khỏi tốn upload.
+      name = validateClonedVoiceName(req.body && req.body.name,
+        listClonedVoices(CLONED_VOICES_ROOT).map((v) => v.name));
+      refPath = validateRefAudio(req.file);
+    } catch (e) {
+      const code = e && e.code;
+      const status = code === "TTS_CLONED_VOICE_NOT_FOUND" || code === "TTS_CLONED_VOICE_REGISTRY" ? 500 : 400;
+      return res.status(status).json(apiErrorFrom(e));
+    }
+    const avail = ttsAvailable();
+    if (!avail.available) {
+      return res.status(503).json(apiError("TTS_NOT_READY", `TTS chưa sẵn sàng: ${avail.reason}`, { reason: avail.reason }));
+    }
+    // Bước 1: dời mẫu vào kho (CHƯA ghi registry) — hủy/lỗi ở bước thăm dò
+    // sẽ xóa thư mục này qua onFailure, không để lại giọng dở dang.
+    let prepared;
+    try {
+      prepared = prepareClonedVoice(CLONED_VOICES_ROOT, {
+        name,
+        tmpUploadPath: refPath,
+        ext: path.extname(req.file.originalname || "").toLowerCase(),
+      });
+    } catch (e) {
+      return res.status(400).json(apiErrorFrom(e));
+    }
+    const dir = path.join(
+      WORK_ROOT,
+      `tts-clone-voice-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+    );
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch (e) {
+      console.error(`[bridge] không tạo được thư mục tts-clone-voice:`, e.message);
+      discardClonedVoiceDir(prepared.dir);
+      return res.status(500).json(apiError("TTS_PREPARE_FAILED", "Lỗi máy chủ khi chuẩn bị TTS — thử lại sau."));
+    }
+    const refDurationSec = probeAudioDurationSec(prepared.refPath);
+    await streamTtsResponse(res, {
+      text: PROBE_TEXT,
+      voice: prepared.name,
+      refAudioPath: prepared.refPath,
+      dir,
+      downloadName: `tts-clone-voice-${prepared.id}-preview.wav`,
+      failCode: "TASK_TTS_CLONE_FAILED",
+      // Bước 2: câu thăm dò xong → ghi registry, giọng chính thức tồn tại.
+      // Trả clonedVoice trong event done để UI chọn ngay giọng mới.
+      onSuccess: async () => {
+        const voice = commitClonedVoice(CLONED_VOICES_ROOT, {
+          id: prepared.id,
+          dir: prepared.dir,
+          name: prepared.name,
+          refFile: prepared.refFile,
+          refExt: prepared.refExt,
+          refDurationSec,
+        });
+        return { clonedVoice: voice };
+      },
+      onFailure: async () => { discardClonedVoiceDir(prepared.dir); },
+    });
+  }
+);
+
+app.delete("/api/tts/cloned-voices/:id", (req, res) => {
+  try {
+    validateClonedVoiceId(req.params.id);
+    const removed = deleteClonedVoice(CLONED_VOICES_ROOT, req.params.id);
+    res.json({ ok: true, id: removed.id, name: removed.name });
+  } catch (e) {
+    const status = e && e.code === "TTS_CLONED_VOICE_NOT_FOUND" ? 404 : 400;
+    res.status(status).json(apiErrorFrom(e));
+  }
+});
+
+// --- GET /api/tts/cloned-voices/:id/export + /export (Phase 9 đợt 85 M7) --
+// Xuất 1 giọng (hoặc toàn bộ kho) thành file JSON backup: { voice, refAudio
+// base64, sha256 } — import lại được qua POST .../import (verify sha +
+// chạy câu thăm dò bằng tts.py trước khi ghi registry, như lúc tạo giọng).
+// KHÔNG zip (bridge không có dep zip; JSON base64 đủ cho round-trip).
+// Backup chứa file mẫu gốc của user — chỉ tải theo yêu cầu, không log nội dung.
+app.get("/api/tts/cloned-voices/export", (req, res) => {
+  try {
+    const backup = buildAllVoicesBackup(CLONED_VOICES_ROOT);
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader("Content-Disposition",
+      `attachment; filename="vcut-voices-backup-${new Date().toISOString().slice(0, 10)}.json"`);
+    res.json(backup);
+  } catch (e) {
+    res.status(500).json(apiErrorFrom(e, "Không xuất được bản backup giọng đã clone.", "TTS_CLONED_VOICE_REGISTRY"));
+  }
+});
+
+app.get("/api/tts/cloned-voices/:id/export", (req, res) => {
+  try {
+    validateClonedVoiceId(req.params.id);
+    const voice = getClonedVoice(CLONED_VOICES_ROOT, req.params.id);
+    const backup = buildVoiceBackup(CLONED_VOICES_ROOT, voice);
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader("Content-Disposition",
+      `attachment; filename="${backupExportFilename(voice.name, voice.id)}"`);
+    res.json(backup);
+  } catch (e) {
+    const status = e && e.code === "TTS_CLONED_VOICE_NOT_FOUND" ? 404 : 500;
+    res.status(status).json(apiErrorFrom(e));
+  }
+});
+
+// --- POST /api/tts/cloned-voices/import (Phase 9 đợt 85 M7) ----------------
+// Nhập file backup JSON (1 giọng hoặc backup toàn bộ) — field "backup".
+// Body "name" (tùy chọn) đổi tên khi nhập đúng 1 giọng. Mỗi giọng: validate
+// (sha, đuôi, ≤20MB) → ghi file mẫu vào thư mục mới → chạy câu thăm dò
+// PROBE_TEXT bằng tts.py (verify mẫu thật sự tổng hợp được, như lúc tạo)
+// → ghi registry. Giọng trùng tên: nhập 1 giọng → 400 NAME_DUP; nhập
+// nhiều giọng → bỏ qua giọng đó, nhập tiếp các giọng còn lại (ghi trong
+// `skipped`). Hủy/lỗi ở câu thăm dò → xóa thư mục giọng đó, không để lại
+// giọng dở dang. Trả JSON { imported, skipped, failed } — LUÔN 200 khi
+// file backup parse được (kể cả khi 1 giọng probe lỗi); lỗi parse / TTS
+// chưa sẵn sàng → 400 / 503 như các endpoint clone khác.
+// NOTE: import chạy probe tuần tự, mỗi giọng ~10–50s trên VM này (model
+// nạp lại mỗi lần) — backup nhiều giọng sẽ lâu, UI báo "đang nhập" chung.
+app.post(
+  "/api/tts/cloned-voices/import",
+  rateLimit(RATE_MAX_RENDER, "render"),
+  uploadMiddleware(upload.single("backup")),
+  async (req, res) => {
+    let parsed;
+    try {
+      if (!req.file || !req.file.path) {
+        throw codedError("TTS_REF_AUDIO_MISSING", "Thiếu file backup giọng (field 'backup').");
+      }
+      const raw = fs.readFileSync(req.file.path, "utf8");
+      parsed = parseVoiceBackup(raw);
+    } catch (e) {
+      const code = e && e.code;
+      const status = code === "TTS_REF_AUDIO_TOO_LARGE" ? 413 : 400;
+      return res.status(status).json(apiErrorFrom(e));
+    }
+    const renameTo = String((req.body && req.body.name) || "").trim();
+    if (renameTo && parsed.kind === "multi") {
+      return res.status(400).json(apiError("TTS_CLONED_VOICE_REGISTRY",
+        "Không đổi tên khi nhập nhiều giọng cùng lúc — bỏ trống tên hoặc nhập file backup 1 giọng."));
+    }
+    // Kiểm tra sớm (trước probe tốn ~10–50s/giọng): tên đổi hợp lệ + còn chỗ.
+    try {
+      if (renameTo) {
+        validateClonedVoiceName(renameTo,
+          listClonedVoices(CLONED_VOICES_ROOT).map((v) => v.name));
+      }
+      if (listClonedVoices(CLONED_VOICES_ROOT).length >= MAX_CLONED_VOICES) {
+        throw codedError("TTS_CLONED_VOICE_LIMIT",
+          `Đã lưu tối đa ${MAX_CLONED_VOICES} giọng clone — xóa bớt giọng cũ rồi nhập.`,
+          { max: MAX_CLONED_VOICES });
+      }
+    } catch (e) {
+      return res.status(400).json(apiErrorFrom(e));
+    }
+    const avail = ttsAvailable();
+    if (!avail.available) {
+      return res.status(503).json(apiError("TTS_NOT_READY", `TTS chưa sẵn sàng: ${avail.reason}`, { reason: avail.reason }));
+    }
+    const imported = [];
+    const skipped = [];
+    const failed = [];
+    const existingNames = listClonedVoices(CLONED_VOICES_ROOT).map((v) => v.name);
+    for (const entry of parsed.entries) {
+      const name = renameTo && parsed.entries.length === 1 ? renameTo : entry.name;
+      // Trùng tên: nhập 1 giọng → lỗi rõ; nhập nhiều → bỏ qua giọng đó.
+      if (existingNames.some((n) => String(n).trim().toLowerCase() === name.toLowerCase())
+        || imported.some((v) => String(v.name).trim().toLowerCase() === name.toLowerCase())) {
+        if (parsed.entries.length === 1) {
+          return res.status(400).json(apiError("TTS_CLONED_VOICE_NAME_DUP",
+            `Đã có giọng tên "${name}" — chọn tên khác.`, { name }));
+        }
+        skipped.push({ name, reason: "dup" });
+        continue;
+      }
+      // Ghi file mẫu vào thư mục giọng mới (CHƯA ghi registry).
+      const id = newJobId();
+      const dir = path.join(CLONED_VOICES_ROOT, id);
+      let refFile;
+      try {
+        fs.mkdirSync(dir, { recursive: true });
+        refFile = writeBackupRefAudio(dir, entry);
+      } catch (e) {
+        discardClonedVoiceDir(dir);
+        failed.push({ name, reason: (e && e.message) || "không ghi được file mẫu" });
+        continue;
+      }
+      const refPath = path.join(dir, refFile);
+      const workDir = path.join(
+        WORK_ROOT,
+        `tts-clone-import-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
+      );
+      try {
+        fs.mkdirSync(workDir, { recursive: true });
+      } catch (e) {
+        discardClonedVoiceDir(dir);
+        failed.push({ name, reason: `không tạo được thư mục làm việc: ${e.message}` });
+        continue;
+      }
+      // Câu thăm dò: verify mẫu nhập vào thật sự tổng hợp được.
+      try {
+        await runTts({
+          text: PROBE_TEXT,
+          voice: name,
+          refAudioPath: refPath,
+          outDir: workDir,
+        });
+      } catch (e) {
+        discardClonedVoiceDir(dir);
+        failed.push({ name, reason: (e && e.message) || "câu thăm dò thất bại" });
+        cleanupJobDir(workDir);
+        continue;
+      }
+      cleanupJobDir(workDir);
+      try {
+        const voice = commitClonedVoice(CLONED_VOICES_ROOT, {
+          id,
+          dir,
+          name,
+          refFile,
+          refExt: entry.refExt,
+          refDurationSec: entry.refDurationSec,
+        });
+        imported.push(voice);
+        existingNames.push(name);
+      } catch (e) {
+        discardClonedVoiceDir(dir);
+        failed.push({ name, reason: (e && e.message) || "không ghi được registry" });
+      }
+    }
+    res.json({ imported, skipped, failed });
+  },
 );
 
 // --- GET /api/openapi.json (R1-092) -------------------------------------------
@@ -1721,7 +2275,35 @@ app.get("/api/openapi.json", (req, res) => {
 // GET /api/proxy/file/:name: stream file proxy (chỉ .mp4 trong thư mục
 // proxies, chặn traversal bằng whitelist ký tự + kiểm tra prefix).
 const PROXY_DIR = path.join(WORK_ROOT, "proxies");
-const { generateProxy } = require("../../render/src/proxy");
+const { generateProxy, generateProxyWithProgress } = require("../../render/src/proxy");
+
+// Đợt 85 M8 — registry job proxy bất đồng bộ (tiến trình % thật):
+// POST /api/proxy?async=1 trả 202 + jobId ngay, encode chạy nền và cập
+// nhật job.progress từ ffmpeg (generateProxyWithProgress); client poll
+// GET /api/proxy/jobs/:id. Chỉ giữ trong bộ nhớ (restart bridge mất job
+// đang chạy — client poll sẽ 404 và coi như thất bại, thử lại được).
+// - Dedupe: cùng (tên file nguồn + height) đang processing → trả lại
+//   jobId cũ thay vì encode trùng (2 tab import cùng file 1 lúc).
+// - Dọn: job xong/quá 15 phút bị xóa khi có job mới (cap 100 job).
+const proxyJobs = new Map();
+let proxyJobSeq = 0;
+const PROXY_JOB_TTL_MS = 15 * 60 * 1000;
+const PROXY_JOB_MAX = 100;
+function pruneProxyJobs(now = Date.now()) {
+  for (const [id, j] of proxyJobs) {
+    if (now - j.createdAt > PROXY_JOB_TTL_MS) proxyJobs.delete(id);
+  }
+  while (proxyJobs.size > PROXY_JOB_MAX) {
+    const oldest = proxyJobs.keys().next().value;
+    proxyJobs.delete(oldest);
+  }
+}
+function publicProxyJob(j) {
+  const out = { jobId: j.jobId, status: j.status, progress: j.progress };
+  if (j.result) Object.assign(out, j.result);
+  if (j.error) { out.error = j.error; out.errorCode = j.errorCode; }
+  return out;
+}
 app.post("/api/proxy",
   uploadMiddleware(upload.single("file")),
   async (req, res) => {
@@ -1735,6 +2317,58 @@ app.post("/api/proxy",
       const safe = sanitizeFilename(req.file.originalname);
       const srcPath = path.join(PROXY_DIR, safe);
       moveUploadTo(req.file, srcPath);
+      // Đợt 85 M8 — chế độ async: trả job ngay, encode nền + % thật.
+      // Kích hoạt bằng ?async=1 hoặc field form "async"=1. Bridge cũ
+      // không có nhánh này sẽ trả 400/404 → client fallback sang sync.
+      const wantAsync = req.query.async === "1" || req.body.async === "1";
+      if (wantAsync) {
+        pruneProxyJobs();
+        const jobKey = `${safe}:${height}`;
+        for (const j of proxyJobs.values()) {
+          if (j.jobKey === jobKey && j.status === "processing") {
+            return res.status(202).json({ jobId: j.jobId, status: "processing", progress: j.progress });
+          }
+        }
+        const jobId = `proxy-${Date.now().toString(36)}-${(++proxyJobSeq).toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+        const job = { jobId, jobKey, status: "processing", progress: 0, createdAt: Date.now() };
+        proxyJobs.set(jobId, job);
+        // Encode nền: không await — client poll job. Lỗi encode → job
+        // failed với payload TASK_PROXY_FAILED như đường sync.
+        generateProxyWithProgress(srcPath, PROXY_DIR, {
+          height,
+          onProgress: (pct) => { job.progress = pct; },
+        }).then((r) => {
+          if (r.skipped) {
+            job.status = "skipped";
+            job.progress = 100;
+            job.result = { skipped: true, reason: r.reason, sourceHeight: r.sourceHeight, file: safe };
+            return;
+          }
+          let proxySizeBytes;
+          try { proxySizeBytes = fs.statSync(r.proxy).size; } catch {}
+          job.status = "done";
+          job.progress = 100;
+          job.result = {
+            skipped: false,
+            file: safe,
+            proxy: path.basename(r.proxy),
+            proxyUrl: `/api/proxy/file/${encodeURIComponent(path.basename(r.proxy))}`,
+            ...(typeof proxySizeBytes === "number" ? { proxySizeBytes } : {}),
+            sourceWidth: r.sourceWidth,
+            sourceHeight: r.sourceHeight,
+            proxyWidth: r.proxyWidth,
+            proxyHeight: r.proxyHeight,
+            fps: r.fps,
+          };
+        }).catch((e) => {
+          console.error("[bridge] /api/proxy job lỗi:", e.message);
+          const payload = taskErrorPayload(e, "Tạo proxy thất bại.", "TASK_PROXY_FAILED");
+          job.status = "failed";
+          job.error = payload.error;
+          job.errorCode = payload.errorCode;
+        });
+        return res.status(202).json({ jobId, status: "processing", progress: 0 });
+      }
       const r = generateProxy(srcPath, PROXY_DIR, { height });
       if (r.skipped) {
         return res.json({ skipped: true, reason: r.reason, sourceHeight: r.sourceHeight, file: safe });
@@ -1773,6 +2407,18 @@ app.post("/api/proxy",
       );
     }
   });
+// Đợt 85 M8 — poll tiến trình job proxy async: {jobId, status:
+// "processing"|"done"|"failed"|"skipped", progress 0..100, + result
+// khi done/skipped, + error/errorCode khi failed}. Job không thấy
+// (bridge restart / quá TTL 15 phút) → 404 PROXY_JOB_NOT_FOUND —
+// client coi như thất bại và cho thử lại, không treo chờ mãi.
+app.get("/api/proxy/jobs/:id", (req, res) => {
+  const job = proxyJobs.get(req.params.id || "");
+  if (!job) {
+    return res.status(404).json(apiError("PROXY_JOB_NOT_FOUND", "Không tìm thấy job proxy (có thể bridge đã khởi động lại)."));
+  }
+  return res.json(publicProxyJob(job));
+});
 app.get("/api/proxy/file/:name", (req, res) => {
   const name = req.params.name || "";
   if (!/^[A-Za-z0-9._-]+\.mp4$/.test(name)) {

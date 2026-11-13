@@ -194,10 +194,23 @@ import {
   DEFAULT_TRIAL_DECODE_TIMEOUT_MS,
   isTrialDecodeTimeoutReason,
   runTrialDecode,
+  scanAvccZeroRun,
   trialDecodeConfigFromTrack,
 } from "./gopTrialDecode55L8";
-import type { GopTrialDecodeProbe } from "./gopTrialDecode55L8";
+import type { GopTrialDecodeProbe, TrialDecodeResult } from "./gopTrialDecode55L8";
 import { planTrialDecodeCall } from "./gopTrialDecodeWorker62R4";
+// Đợt 71 Y5 — registry run trial-decode đang chạy (cho toast trạng
+// thái khi trial lâu): begin trước runTrialDecode, end trong finally.
+// Đợt 72 Z5 — thêm begin/update/mark cho GIAI ĐOẠN FETCH remainder:
+// run nay bắt đầu TỪ LÚC fetch (toast "đang tải keyframe…" với tiến
+// độ thật theo chunk), rồi chuyển sang phase decode khi fetch xong.
+import {
+  beginTrialDecodeRun,
+  beginTrialFetchRun,
+  endTrialDecodeRun,
+  markTrialDecodeStarted,
+  updateTrialFetchProgress,
+} from "./trialDecodeRunning71Y5";
 
 /**
  * Đợt 60 Q4 — lookup i18n tùy chọn (mẫu projectRepo.ts đợt 56 M5: file
@@ -366,8 +379,10 @@ export const MAX_TRIAL_DECODE_SAMPLE_BYTES = 64 * 1024 * 1024;
  * dưới giới hạn độ dài Range của hầu hết server/proxy (một request
  * Range 8 MiB duy nhất có thể bị server kẹp/clamp → 416 hoặc trả
  * thiếu → fetchRangeChecked ném lỗi, trong khi chunk 512 KiB đi qua
- * được), đủ lớn để sample tối đa 32 MiB chỉ cần ≤ 64 request; mỗi
+ * được), đủ lớn để sample tối đa 64 MiB chỉ cần ≤ 128 request; mỗi
  * chunk qua đúng kiểm chứng 206 + Content-Range như mọi range khác.
+ * (Đợt 77 E7 sửa comment: cap nay là 64 MiB / 128 request sau đợt
+ * 60 Q5, câu cũ ghi 32 MiB / 64 request từ thời P6.)
  */
 export const TRIAL_DECODE_SAMPLE_CHUNK_BYTES = 512 * 1024;
 
@@ -499,9 +514,11 @@ export interface GopRangeFetchOptions {
    * dưới đây — keyframe 4K nhiễu 4,1 MiB decode ~623 ms (median,
    * LIMITS O6 §1) nên không còn bị cắt ở 200 ms.
    * Đợt 62 R4 — sample mà timeout main-thread chạm trần 2500 ms thì
-   * `planTrialDecodeCall` đưa sang worker nền với trần riêng 60 s
-   * (đợt 63 R4 nâng từ 30 s lên 45 s; đợt 64 R10 nâng lên 60 s —
-   * xem gopTrialDecodeWorker62R4.ts);
+   * `planTrialDecodeCall` đưa sang worker nền với trần riêng 90 s
+   * (đợt 63 R4 nâng từ 30 s lên 45 s; đợt 64 R10 nâng lên 60 s; đợt 67 U5
+   * nâng lên 90 s — xem gopTrialDecodeWorker62R4.ts; đợt 73 A7 xác nhận
+   * trần 90 s không bao giờ ràng buộc vì công thức ở cap 64 MiB chỉ
+   * 78.536 ms < 90.000 ms);
    * timeout gốc này vẫn là base cho cả 2 đường.
    */
   trialDecodeTimeoutMs?: number;
@@ -824,12 +841,18 @@ async function fetchRangeChecked(
  *     tiền tố đã qua nên phần còn lại chỉ phục vụ probe, không đáng
  *     fallback file thật vì lỗi mạng giữa chừng.
  *   - Vòng lặp chặn bởi `MAX_TRIAL_DECODE_SAMPLE_CHUNK_FETCHES`
- *     (64): quá giới hạn thì throw `sample-chunk-limit` thay vì
- *     fetch tiếp — phòng thủ, T3 không bao giờ chạm tới vì cap 32 MiB
- *     đã chặn trước (remainder tối đa cần đúng 64 chunk).
+ *     (128): quá giới hạn thì throw `sample-chunk-limit` thay vì
+ *     fetch tiếp — phòng thủ, T3 không bao giờ chạm tới vì cap 64 MiB
+ *     đã chặn trước (remainder tối đa cần đúng 128 chunk).
+ *     (Đợt 77 E7 sửa comment: giới hạn nay là 128 sau đợt 60 Q5, câu
+ *     cũ ghi 64 chunk / cap 32 MiB từ thời P6.)
  *   - Trả buffer sample ĐẦY ĐỦ (không phải chỉ phần còn lại) để
  *     caller đưa thẳng vào probe; `prefix.length > size` hoặc
  *     `size <= 0` là lỗi lập trình của caller → throw TypeError.
+ *   - Đợt 72 Z5 — `onProgress` tùy chọn: gọi sau mỗi chunk về với
+ *     tổng số byte sample ĐÃ CÓ (prefix + các chunk đã fetch) — tiến
+ *     độ THẬT theo chunk, không ước lượng; T3 truyền vào để registry
+ *     trial cập nhật toast "đang tải keyframe…". Vắng thì không gọi.
  */
 export async function fetchSampleRemainderChunked(
   fetchImpl: GopRangeFetchFn,
@@ -840,6 +863,7 @@ export async function fetchSampleRemainderChunked(
   knownSize: number | null,
   requests: GopRangeRequestLog[],
   lookup?: I18nLookup,
+  onProgress?: (fetchedBytes: number) => void,
 ): Promise<Uint8Array> {
   if (!(sampleSize > 0) || prefix.length > sampleSize) {
     throw new TypeError(
@@ -882,6 +906,15 @@ export async function fetchSampleRemainderChunked(
     );
     full.set(chunk, fetched);
     fetched += chunk.length;
+    // Đợt 72 Z5 — báo tiến độ thật sau mỗi chunk (prefix + chunk đã
+    // về); callback lỗi không được làm hỏng đường fetch (try/catch).
+    if (onProgress) {
+      try {
+        onProgress(fetched);
+      } catch {
+        /* tiến độ chỉ phục vụ toast — không chặn fetch */
+      }
+    }
   }
   return full;
 }
@@ -1712,10 +1745,30 @@ export async function fetchVideoTrackByGopRange(
       // Kiểm AVCC trên tiền tố ở trên KHÔNG bị ảnh hưởng: vẫn chạy và
       // vẫn chặn moov giả trỏ lệch dù probe null (xem test Q5 AVCC).
       let trialSample: Uint8Array | null = null;
+      // Đợt 72 Z5 — run fetch remainder (chỉ khi thật sự fetch):
+      // đăng ký TRƯỚC khi fetch để toast "đang tải keyframe…" hiện
+      // ngay sau ngưỡng 5 s (trước đây user chờ mù ~48 s); null khi
+      // sample nhỏ (không fetch remainder) hoặc probe null.
+      let trialFetchRunId: number | null = null;
       if (trialProbe !== null) {
         if (s0.size <= MAX_FIRST_SAMPLE_PROBE_BYTES) {
           trialSample = firstSample;
         } else if (s0.size <= MAX_TRIAL_DECODE_SAMPLE_BYTES) {
+          // Tính plan sớm để run mang đúng timeout/viaWorker ngay từ
+          // lúc fetch (plan chỉ phụ thuộc kích thước sample + probe,
+          // không đổi trong lúc fetch — xem planTrialDecodeCall).
+          const trialPlanEarly = planTrialDecodeCall({
+            sampleBytes: s0.size,
+            baseTimeoutMs: trialTimeoutMs,
+            defaultProbe: trialProbe,
+            allowWorker: opts.trialDecodeProbe === undefined,
+          });
+          trialFetchRunId = beginTrialFetchRun({
+            sampleBytes: s0.size,
+            timeoutMs: trialPlanEarly.timeoutMs,
+            viaWorker: trialPlanEarly.viaWorker,
+            fetchedBytes: firstSample.length,
+          });
           try {
             trialSample = await fetchSampleRemainderChunked(
               fetchImpl,
@@ -1726,6 +1779,12 @@ export async function fetchVideoTrackByGopRange(
               knownSize,
               requests,
               lookup,
+              // Tiến độ thật theo chunk → registry → toast fetch.
+              (fetched) => {
+                if (trialFetchRunId !== null) {
+                  updateTrialFetchProgress(trialFetchRunId, fetched);
+                }
+              },
             );
           } catch {
             trialSample = null; // bỏ qua trial-decode (fail-open)
@@ -1743,13 +1802,53 @@ export async function fetchVideoTrackByGopRange(
           defaultProbe: trialProbe,
           allowWorker: opts.trialDecodeProbe === undefined,
         });
-        const trial = await runTrialDecode(
-          trialPlan.probe,
-          trialSample,
-          trialDecodeConfigFromTrack(track),
-          trialPlan.timeoutMs,
-          lookup,
-        );
+        // Đợt 71 Y5 — đăng ký run trial đang chạy để UI hiện toast trạng
+        // thái khi trial lâu (ngưỡng 5 s, phía preview.tsx); end trong
+        // finally để run không kẹt lại dù probe thắng/thua/timeout/throw.
+        // Đợt 72 Z5 — nếu run fetch đã đăng ký ở trên thì TÁI DÙNG nó
+        // (chuyển sang phase decode, không tạo run mới — toast giữ
+        // nguyên 1 toast, chỉ đổi nội dung fetch → decode); nếu không
+        // thì đăng ký run decode mới như Y5.
+        let trialRunId: number;
+        if (trialFetchRunId !== null) {
+          markTrialDecodeStarted(trialFetchRunId);
+          trialRunId = trialFetchRunId;
+        } else {
+          trialRunId = beginTrialDecodeRun({
+            sampleBytes: trialSample.length,
+            timeoutMs: trialPlan.timeoutMs,
+            viaWorker: trialPlan.viaWorker,
+          });
+        }
+        let trial: TrialDecodeResult;
+        try {
+          // Đợt 77 E7 — quét zero-run AVCC trước khi decode, CHỈ ở đường
+          // main-thread: sample lớn đi worker thì quét TRONG worker (xem
+          // gopTrialDecodeWorker62R4.worker.ts) để không kẹt UI tới ~1 s
+          // ở 50 MiB lossless. Violation → coi như probe-false (fallback
+          // về full-file qua nhánh `!trial.passed` dưới đây, cùng key
+          // i18n `gop.demux.trialDecodeFailed` nên không thêm chuỗi mới);
+          // inconclusive → decode như cũ (fail-open).
+          const zeroRun = !trialPlan.viaWorker
+            ? scanAvccZeroRun(trialSample, track.codec)
+            : null;
+          trial =
+            zeroRun !== null && zeroRun.violation
+              ? {
+                  passed: false,
+                  skipped: false,
+                  reason: `zero-run: ${zeroRun.reason}`,
+                }
+              : await runTrialDecode(
+                  trialPlan.probe,
+                  trialSample,
+                  trialDecodeConfigFromTrack(track),
+                  trialPlan.timeoutMs,
+                  lookup,
+                );
+        } finally {
+          endTrialDecodeRun(trialRunId);
+        }
         if (!trial.passed) {
           return fallback(
             trKey(
@@ -1771,6 +1870,11 @@ export async function fetchVideoTrackByGopRange(
             trialSample.length,
           );
         }
+      } else if (trialFetchRunId !== null) {
+        // Đợt 72 Z5 — fetch remainder lỗi giữa chừng (trialSample null,
+        // fail-open như M10): run fetch không còn việc gì, dọn ngay để
+        // toast không kẹt lại sau khi T3 đã trả về.
+        endTrialDecodeRun(trialFetchRunId);
       }
       return {
         mode: "gop-range",
@@ -1871,13 +1975,41 @@ export async function fetchVideoTrackByGopRange(
           defaultProbe: trialProbe,
           allowWorker: opts.trialDecodeProbe === undefined,
         });
-        const trial = await runTrialDecode(
-          trialPlan.probe,
-          chunks[0].data,
-          trialDecodeConfigFromTrack(track),
-          trialPlan.timeoutMs,
-          lookup,
-        );
+        // Đợt 71 Y5 — như mode stream: đăng ký run trial đang chạy để UI
+        // hiện toast trạng thái khi trial lâu; end trong finally.
+        const trialRunId = beginTrialDecodeRun({
+          sampleBytes: chunks[0].data.length,
+          timeoutMs: trialPlan.timeoutMs,
+          viaWorker: trialPlan.viaWorker,
+        });
+        let trial: TrialDecodeResult;
+        try {
+          // Đợt 77 E7 — như mode stream: quét zero-run AVCC trước khi
+          // decode ở đường main-thread; đường worker quét trong worker.
+          // trialProbe null (opt-out, Q5(b)) thì BỎ QUA cả quét — opt-out
+          // là tắt hẳn trial-decode, không chỉ tắt probe (test L8 khóa:
+          // probe null thì moov giả phải lọt như trước).
+          const zeroRun =
+            trialProbe !== null && !trialPlan.viaWorker
+              ? scanAvccZeroRun(chunks[0].data, track.codec)
+              : null;
+          trial =
+            zeroRun !== null && zeroRun.violation
+              ? {
+                  passed: false,
+                  skipped: false,
+                  reason: `zero-run: ${zeroRun.reason}`,
+                }
+              : await runTrialDecode(
+                  trialPlan.probe,
+                  chunks[0].data,
+                  trialDecodeConfigFromTrack(track),
+                  trialPlan.timeoutMs,
+                  lookup,
+                );
+        } finally {
+          endTrialDecodeRun(trialRunId);
+        }
         if (!trial.passed) {
           return fallback(
             trKey(

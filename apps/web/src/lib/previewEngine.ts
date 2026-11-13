@@ -707,6 +707,91 @@ export interface MotionBlurBlendFrame {
  * Thứ tự trả về: bóng cũ nhất → mới nhất → frame hiện tại (độ dài
  * ghostCount + 1 sau kẹp).
  */
+/**
+ * Chỉ số frame video tại thời điểm `timeSec` (giây nguồn) với `fps` cho
+ * trước — Phase 9 đợt 90 R1 (hướng (iii) của Q2 §7.1): snapshot motion
+ * blur của preview phải lấy theo FRAME VIDEO, không theo tick (~60fps)
+ * của app — tick nhanh hơn video nên 2 tick liên tiếp thường thấy cùng
+ * 1 video frame: snapshot trùng nhau làm blend mất blur nội dung, còn
+ * tick lệch frame thì mask ở 3 vị trí track khác nhau bị blend thành
+ * vệt. Lượng tử hoá theo floor(t·fps) để mọi tick trong cùng 1 frame
+ * cho cùng 1 chỉ số; caller gate snapshot bằng chỉ số này (xem
+ * updateMotionBlurSnapshots trong preview.tsx).
+ * - timeSec/fps không hợp lệ (NaN, fps ≤ 0, time âm) → -1 (không gate,
+ *   giữ hành vi cũ).
+ * - Epsilon 1e-6 chống sai số float ở biên frame (vd 0.5s·30 = 15.0000001).
+ */
+export function videoFrameIndex(timeSec: number, fps: number): number {
+  if (!Number.isFinite(timeSec) || !Number.isFinite(fps) || fps <= 0 || timeSec < 0) return -1;
+  // Đợt 93 U1: cộng 1µs vào THỜI GIAN trước khi nhân fps (thay cho
+  // epsilon 1e-6 đơn vị frame của R1). Lý do: mediaTime trong metadata
+  // rVFC của Chromium (và currentTime) lượng tử hoá theo µs — PTS k/fps
+  // tròn xuống 0,33µs (vd 4/30s → 0.133333) thì t·fps = k − 1e-5, lớn
+  // hơn epsilon cũ 10× nên floor về k−1: pump tưởng trùng frame trước
+  // ("duplicate") và BỎ QUA frame đó. Hệ thống: cứ 3 frame thì 1 frame
+  // (k≡1 mod 3 @30fps: 1,4,7,10,…) không bao giờ được capture — đó là
+  // toàn bộ ~33% duplicate trong số đo T2/U1, không phải frame trình
+  // chiếu lại. Cộng đúng 1 bước lượng tử (1µs) thì sai số còn lại
+  // < 0,5µs theo mọi hướng, đúng với mọi fps. Đánh đổi: thời gian nằm
+  // trong 1µs trước biên frame sẽ tròn lên frame kế (không nhìn thấy:
+  // 1µs/33ms ≈ 0,003% khung hình; xem test dưới).
+  return Math.floor((timeSec + 1e-6) * fps);
+}
+
+/**
+ * Quyết định snapshot của pump requestVideoFrameCallback (đợt 91 S1) —
+ * cùng ngữ nghĩa gate theo frame với updateMotionBlurSnapshots /
+ * motionBlurResetOnSeek của R1 nhưng gộp thành 1 hàm thuần để pump và
+ * tick dùng chung quyết định, test được bằng Node (không cần DOM).
+ * - frameIndex < 0 (không biết frame — metadata lỗi / thời gian âm) →
+ *   "duplicate" (không capture, không đổi ring).
+ * - Chưa có frame trước (lastFrame < 0) → "capture".
+ * - frameIndex === lastFrame → "duplicate" (cùng 1 frame trình chiếu
+ *   lại — vd sau pause/seek trình chiếu lại đúng frame cũ).
+ * - frameIndex < lastFrame - 1 (nhảy LÙI > 1 frame: seek/loop) →
+ *   "reset-capture" (xoá ring trước rồi mới capture, như
+ *   motionBlurResetOnSeek gọi trước blend ở R1).
+ * - Còn lại (tiến 1+ frame, hoặc lùi đúng 1 frame = phát ngược từng
+ *   bước) → "capture".
+ */
+export type RvfcFrameDecision = "capture" | "duplicate" | "reset-capture";
+
+export function rvfcFrameDecision(lastFrame: number, frameIndex: number): RvfcFrameDecision {
+  if (frameIndex < 0) return "duplicate";
+  if (lastFrame < 0) return "capture";
+  if (frameIndex === lastFrame) return "duplicate";
+  if (frameIndex < lastFrame - 1) return "reset-capture";
+  return "capture";
+}
+
+/**
+ * Element có hỗ trợ requestVideoFrameCallback không (đợt 91 S1).
+ * Duck-typed để unit-test được bằng fake (không cần DOM thật):
+ * - null/undefined/không phải object → false.
+ * - Có requestVideoFrameCallback là function → true (kể cả khi
+ *   cancelVideoFrameCallback thiếu — pump chỉ dùng cancel khi đổi
+ *   element, bọc try/catch ở call site).
+ * Chromium hỗ trợ từ lâu; WebKitGTK mới (Safari 15+) cũng có — nhưng
+ * call site KHÔNG được tin tưởng mù: watchdog ở drawVideoClip sẽ
+ * fallback về snapshot theo tick nếu callback không bao giờ bắn.
+ */
+export function rvfcSupported(el: unknown): boolean {
+  if (!el || typeof el !== "object") return false;
+  return typeof (el as { requestVideoFrameCallback?: unknown }).requestVideoFrameCallback === "function";
+}
+
+/**
+ * Đợt 101 C4 — PAD-OLDEST: số ghost clone cần thêm khi ring đói để plan
+ * giữ nguyên cửa sổ đầy (không co thành pair). Render (tmix) clone frame
+ * đầu để lấp cửa sổ thay vì co lại; preview lặp snapshot cũ nhất trong
+ * pool. Pool rỗng → 0 (caller trả null → vẽ trực tiếp, giữ hành vi cũ).
+ * weightsLength < 2 → 0 (không blur). Xem compositeMotionBlurLayer.
+ */
+export function motionBlurPadGhostCount(weightsLength: number, ghostPoolLength: number): number {
+  if (ghostPoolLength <= 0 || weightsLength < 2) return 0;
+  return Math.max(0, weightsLength - 1 - ghostPoolLength);
+}
+
 export function motionBlurBlendPlan(
   weights: readonly number[],
   ghostCount: number,
@@ -1189,6 +1274,112 @@ export function applyMask(img: ImageData, mask: ClipMask): void {
       d[i + 3] = Math.round(d[i + 3] * maskAlphaAt(mask, W, H, xx, yy));
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Đợt 92 T2 — cache canvas alpha mask (tránh vòng lặp pixel mỗi tick).
+// maskAlphaAt là hàm thuần theo (mask, W, H, px, py): với mask tĩnh thì
+// alpha từng pixel KHÔNG đổi theo thời gian — tính 1 lần, cache thành
+// canvas alpha rồi composite bằng destination-in (native, không JS
+// theo pixel) thay vì getImageData + applyMask + putImageData mỗi tick.
+// ---------------------------------------------------------------------------
+
+/**
+ * Mảng alpha mask (0–255) cho unit w×h — cùng công thức maskAlphaAt,
+ * tách ra để preview build canvas alpha 1 lần rồi tái dùng.
+ * Lưu ý: giá trị là Math.round(alpha*255), khớp đúng phép nhân trong
+ * applyMask khi alpha nguồn = 255 (d[i+3]=255 → Math.round(255*a)).
+ * Đợt 92 T2 (sửa lần 2): hình học được hoist RA KHỎI vòng lặp pixel
+ * (cx/cy/rx/ry/band/x0..y1 tính 1 lần, công thức ellipse/rect inline)
+ * thay vì gọi maskAlphaAt từng pixel — đo Node 640×360: 8.6ms → ~2.3ms
+ * (ngang applyMask); KHÔNG đổi giá trị nào (unit test so từng pixel
+ * với maskAlphaAt vẫn xanh).
+ */
+export function maskAlphaArray(mask: ClipMask, w: number, h: number): Uint8ClampedArray {
+  const out = new Uint8ClampedArray(w * h);
+  const shape = mask.shape;
+  const x = mask.x ?? 0.5;
+  const y = mask.y ?? 0.5;
+  const mw = mask.w ?? 1;
+  const mh = mask.h ?? 1;
+  const feather = mask.feather ?? 0;
+  const invert = mask.invert ?? false;
+  // Mask không hợp lệ: maskAlphaAt trả 1 mọi pixel (xem hàm đó).
+  if (
+    (shape !== "rect" && shape !== "ellipse") ||
+    !Number.isFinite(x) || !Number.isFinite(y) ||
+    !Number.isFinite(mw) || !Number.isFinite(mh) ||
+    !Number.isFinite(feather) ||
+    mw <= 0 || mh <= 0
+  ) {
+    out.fill(255);
+    return out;
+  }
+  const wPx = mw * w;
+  const hPx = mh * h;
+  const band = Math.min(1, Math.max(0, feather)) * Math.min(wPx, hPx);
+  const hard = band <= 1e-6;
+  if (shape === "rect") {
+    const x0 = (x - mw / 2) * w;
+    const x1 = (x + mw / 2) * w;
+    const y0 = (y - mh / 2) * h;
+    const y1 = (y + mh / 2) * h;
+    for (let yy = 0; yy < h; yy++) {
+      const dy = Math.max(y0 - yy, yy - y1);
+      for (let xx = 0; xx < w; xx++) {
+        const d = Math.max(x0 - xx, xx - x1, dy);
+        let a = hard ? (d < 0 ? 1 : 0) : clamp01(0.5 - d / band);
+        if (invert) a = 1 - a;
+        out[yy * w + xx] = Math.round(a * 255);
+      }
+    }
+  } else {
+    const cx = x * w;
+    const cy = y * h;
+    const rx = wPx / 2;
+    const ry = hPx / 2;
+    const rx2 = rx * rx;
+    const ry2 = ry * ry;
+    for (let yy = 0; yy < h; yy++) {
+      const ny = (yy - cy) / ry;
+      const gy = (yy - cy) / ry2;
+      for (let xx = 0; xx < w; xx++) {
+        const nx = (xx - cx) / rx;
+        const r = Math.sqrt(nx * nx + ny * ny);
+        const gx = (xx - cx) / rx2;
+        const grad = Math.sqrt(gx * gx + gy * gy);
+        const d = grad > 0 ? (r - 1) / grad : (r < 1 ? -Infinity : Infinity);
+        let a = hard ? (r < 1 ? 1 : 0) : clamp01(0.5 - d / band);
+        if (invert) a = 1 - a;
+        out[yy * w + xx] = Math.round(a * 255);
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Khoá cache cho canvas alpha mask — hình học ĐẦY ĐỦ (shape/x/y/w/h/
+ * feather/invert, đã nội suy keyframes/track ở caller) + kích thước
+ * unit. Hai mask cùng khoá có đúng cùng mảng alpha (maskAlphaAt chỉ
+ * phụ thuộc các tham số này + toạ độ pixel). Keyframes KHÔNG nằm trong
+ * khoá vì caller đã resolve thành x/y/w/h tĩnh của tick đó.
+ */
+export function maskAlphaCacheKey(mask: ClipMask, w: number, h: number): string {
+  const n = (v: number | undefined, dflt: number): string => {
+    const x = v ?? dflt;
+    return Number.isFinite(x) ? x.toFixed(6) : String(dflt);
+  };
+  return [
+    mask.shape ?? "",
+    n(mask.x, 0.5),
+    n(mask.y, 0.5),
+    n(mask.w, 1),
+    n(mask.h, 1),
+    n(mask.feather, 0),
+    mask.invert ? "1" : "0",
+    `${w}x${h}`,
+  ].join("|");
 }
 
 // ---------------------------------------------------------------------------
