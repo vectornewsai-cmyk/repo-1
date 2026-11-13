@@ -1,0 +1,1131 @@
+{
+  "startedAt": "2026-11-11T00:34:30.531Z",
+  "engines": {
+    "webkit": {
+      "engine": "webkit",
+      "loadStart": [
+        4.39,
+        5.84,
+        8.24
+      ],
+      "cases": {
+        "h264_30s_g12_640|playing|rep1": {
+          "clip": "h264_30s_g12_640",
+          "mode": "playing",
+          "method": "currentTime",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "currentTime",
+                "seekedMs": 119,
+                "settledMs": 0,
+                "ctAfter": 3.019,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 15,
+                "method": "currentTime",
+                "seekedMs": 183,
+                "settledMs": 0,
+                "ctAfter": 15.033,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "currentTime",
+                "seekedMs": 198,
+                "settledMs": 0,
+                "ctAfter": 27.024,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 46,
+              "dropped": 0
+            }
+          }
+        },
+        "h264_30s_g30_640|playing|rep1": {
+          "clip": "h264_30s_g30_640",
+          "mode": "playing",
+          "method": "currentTime",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "currentTime",
+                "seekedMs": 400,
+                "settledMs": null,
+                "ctAfter": 23.267,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": true
+              },
+              {
+                "target": 15,
+                "method": "currentTime",
+                "seekedMs": 193,
+                "settledMs": 0,
+                "ctAfter": 15.018,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "currentTime",
+                "seekedMs": 85,
+                "settledMs": 0,
+                "ctAfter": 27.017,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 555,
+              "dropped": 1
+            }
+          }
+        },
+        "h264_30s_g250_640|playing|rep1": {
+          "clip": "h264_30s_g250_640",
+          "mode": "playing",
+          "method": "currentTime",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "currentTime",
+                "seekedMs": 434,
+                "settledMs": 0,
+                "ctAfter": 3.1,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 15,
+                "method": "currentTime",
+                "seekedMs": 604,
+                "settledMs": 0,
+                "ctAfter": 15.033,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "currentTime",
+                "seekedMs": 282,
+                "settledMs": 0,
+                "ctAfter": 27.084,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 49,
+              "dropped": 0
+            }
+          }
+        },
+        "h264_10s_g30_640|playing|rep1": {
+          "clip": "h264_10s_g30_640",
+          "mode": "playing",
+          "method": "currentTime",
+          "raw": {
+            "duration": 10,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 1,
+                "method": "currentTime",
+                "seekedMs": 319,
+                "settledMs": null,
+                "ctAfter": 10,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": true
+              },
+              {
+                "target": 5,
+                "method": "currentTime",
+                "seekedMs": 167,
+                "settledMs": 0,
+                "ctAfter": 5,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": false
+              },
+              {
+                "target": 9,
+                "method": "currentTime",
+                "seekedMs": 14,
+                "settledMs": 0,
+                "ctAfter": 9,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 210,
+              "dropped": 0
+            }
+          }
+        },
+        "h264_60s_g30_640|playing|rep1": {
+          "clip": "h264_60s_g30_640",
+          "mode": "playing",
+          "method": "currentTime",
+          "raw": {
+            "duration": 60,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 6,
+                "method": "currentTime",
+                "seekedMs": 96,
+                "settledMs": 0,
+                "ctAfter": 6.012,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 30,
+                "method": "currentTime",
+                "seekedMs": 28,
+                "settledMs": 0,
+                "ctAfter": 30,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 54,
+                "method": "currentTime",
+                "seekedMs": 229,
+                "settledMs": null,
+                "ctAfter": 60,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": true
+              }
+            ],
+            "quality": {
+              "total": 162,
+              "dropped": 0
+            }
+          }
+        },
+        "h264_30s_g30_720|playing|rep1": {
+          "clip": "h264_30s_g30_720",
+          "mode": "playing",
+          "method": "currentTime",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "currentTime",
+                "seekedMs": 308,
+                "settledMs": 0,
+                "ctAfter": 3.116,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 15,
+                "method": "currentTime",
+                "seekedMs": 30,
+                "settledMs": 0,
+                "ctAfter": 15,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "currentTime",
+                "seekedMs": 75,
+                "settledMs": 0,
+                "ctAfter": 27,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 8,
+              "dropped": 0
+            }
+          }
+        },
+        "h264_30s_g30_320|playing|rep1": {
+          "clip": "h264_30s_g30_320",
+          "mode": "playing",
+          "method": "currentTime",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "currentTime",
+                "seekedMs": 67,
+                "settledMs": 0,
+                "ctAfter": 3,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 15,
+                "method": "currentTime",
+                "seekedMs": 117,
+                "settledMs": 0,
+                "ctAfter": 15.007,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "currentTime",
+                "seekedMs": 72,
+                "settledMs": 0,
+                "ctAfter": 27.001,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 49,
+              "dropped": 0
+            }
+          }
+        },
+        "vp9_30s_g30_640|playing|rep1": {
+          "clip": "vp9_30s_g30_640",
+          "mode": "playing",
+          "method": "currentTime",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "currentTime",
+                "seekedMs": 315,
+                "settledMs": null,
+                "ctAfter": 23.366,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": true
+              },
+              {
+                "target": 15,
+                "method": "currentTime",
+                "seekedMs": 114,
+                "settledMs": 0,
+                "ctAfter": 15.018,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "currentTime",
+                "seekedMs": 31,
+                "settledMs": 0,
+                "ctAfter": 27,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 494,
+              "dropped": 1
+            }
+          }
+        },
+        "h264_30s_g12_640|playing|rep2": {
+          "clip": "h264_30s_g12_640",
+          "mode": "playing",
+          "method": "currentTime",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "currentTime",
+                "seekedMs": 225,
+                "settledMs": 0,
+                "ctAfter": 3.067,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 15,
+                "method": "currentTime",
+                "seekedMs": 89,
+                "settledMs": 0,
+                "ctAfter": 15,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "currentTime",
+                "seekedMs": 180,
+                "settledMs": 0,
+                "ctAfter": 27.067,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 53,
+              "dropped": 0
+            }
+          }
+        },
+        "h264_30s_g12_640|playing|rep3": {
+          "clip": "h264_30s_g12_640",
+          "mode": "playing",
+          "method": "currentTime",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "currentTime",
+                "seekedMs": 679,
+                "settledMs": null,
+                "ctAfter": 23.433,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": true
+              },
+              {
+                "target": 15,
+                "method": "currentTime",
+                "seekedMs": 100,
+                "settledMs": 0,
+                "ctAfter": 15.001,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "currentTime",
+                "seekedMs": 389,
+                "settledMs": 0,
+                "ctAfter": 27.133,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 448,
+              "dropped": 3
+            }
+          }
+        },
+        "h264_30s_g30_640|playing|rep2": {
+          "clip": "h264_30s_g30_640",
+          "mode": "playing",
+          "method": "currentTime",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "currentTime",
+                "seekedMs": 396,
+                "settledMs": null,
+                "ctAfter": 23.367,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": true
+              },
+              {
+                "target": 15,
+                "method": "currentTime",
+                "seekedMs": 202,
+                "settledMs": 1,
+                "ctAfter": 15.067,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "currentTime",
+                "seekedMs": 94,
+                "settledMs": 0,
+                "ctAfter": 27,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 354,
+              "dropped": 5
+            }
+          }
+        },
+        "h264_30s_g30_640|playing|rep3": {
+          "clip": "h264_30s_g30_640",
+          "mode": "playing",
+          "method": "currentTime",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "currentTime",
+                "seekedMs": 684,
+                "settledMs": null,
+                "ctAfter": 23.567,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": true
+              },
+              {
+                "target": 15,
+                "method": "currentTime",
+                "seekedMs": 308,
+                "settledMs": null,
+                "ctAfter": 30,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": true
+              },
+              {
+                "target": 27,
+                "method": "currentTime",
+                "seekedMs": 479,
+                "settledMs": 0,
+                "ctAfter": 27,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 628,
+              "dropped": 7
+            }
+          }
+        },
+        "h264_30s_g250_640|playing|rep2": {
+          "clip": "h264_30s_g250_640",
+          "mode": "playing",
+          "method": "currentTime",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "currentTime",
+                "seekedMs": 979,
+                "settledMs": null,
+                "ctAfter": 23.498,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": true
+              },
+              {
+                "target": 15,
+                "method": "currentTime",
+                "seekedMs": 1114,
+                "settledMs": null,
+                "ctAfter": 30,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": true
+              },
+              {
+                "target": 27,
+                "method": "currentTime",
+                "seekedMs": 212,
+                "settledMs": 0,
+                "ctAfter": 27,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 611,
+              "dropped": 4
+            }
+          }
+        },
+        "h264_30s_g250_640|playing|rep3": {
+          "clip": "h264_30s_g250_640",
+          "mode": "playing",
+          "method": "currentTime",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "currentTime",
+                "seekedMs": 299,
+                "settledMs": 0,
+                "ctAfter": 3.03,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 15,
+                "method": "currentTime",
+                "seekedMs": 499,
+                "settledMs": 0,
+                "ctAfter": 15.02,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "currentTime",
+                "seekedMs": 466,
+                "settledMs": 0,
+                "ctAfter": 27.133,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 46,
+              "dropped": 1
+            }
+          }
+        },
+        "h264_30s_g30_640|paused|rep1": {
+          "clip": "h264_30s_g30_640",
+          "mode": "paused",
+          "method": "currentTime",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "currentTime",
+                "seekedMs": 213,
+                "settledMs": 0,
+                "ctAfter": 3,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": false
+              },
+              {
+                "target": 15,
+                "method": "currentTime",
+                "seekedMs": 110,
+                "settledMs": 0,
+                "ctAfter": 15,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "currentTime",
+                "seekedMs": 17,
+                "settledMs": 0,
+                "ctAfter": 27,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 0,
+              "dropped": 0
+            }
+          }
+        },
+        "h264_30s_g250_640|paused|rep1": {
+          "clip": "h264_30s_g250_640",
+          "mode": "paused",
+          "method": "currentTime",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "currentTime",
+                "seekedMs": 387,
+                "settledMs": 0,
+                "ctAfter": 3,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": false
+              },
+              {
+                "target": 15,
+                "method": "currentTime",
+                "seekedMs": 422,
+                "settledMs": 0,
+                "ctAfter": 15,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "currentTime",
+                "seekedMs": 188,
+                "settledMs": 0,
+                "ctAfter": 27,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 0,
+              "dropped": 0
+            }
+          }
+        },
+        "h264_30s_g250_640|playing|pause-seek-play|rep1": {
+          "clip": "h264_30s_g250_640",
+          "mode": "playing",
+          "method": "pause-seek-play",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "pause-seek-play",
+                "seekedMs": 116,
+                "settledMs": 0,
+                "ctAfter": 3,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 15,
+                "method": "pause-seek-play",
+                "seekedMs": 3,
+                "settledMs": 0,
+                "ctAfter": 15,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "pause-seek-play",
+                "seekedMs": 65,
+                "settledMs": 0,
+                "ctAfter": 27,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 18,
+              "dropped": 0
+            }
+          }
+        },
+        "h264_30s_g250_640|playing|pause-seek-play|rep2": {
+          "clip": "h264_30s_g250_640",
+          "mode": "playing",
+          "method": "pause-seek-play",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "pause-seek-play",
+                "seekedMs": 83,
+                "settledMs": 0,
+                "ctAfter": 3,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 15,
+                "method": "pause-seek-play",
+                "seekedMs": 89,
+                "settledMs": 0,
+                "ctAfter": 15,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "pause-seek-play",
+                "seekedMs": 4,
+                "settledMs": 0,
+                "ctAfter": 27,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 22,
+              "dropped": 1
+            }
+          }
+        },
+        "h264_30s_g250_640|playing|fastSeek|rep1": {
+          "clip": "h264_30s_g250_640",
+          "mode": "playing",
+          "method": "fastSeek",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "fastSeek",
+                "seekedMs": 400,
+                "settledMs": 0,
+                "ctAfter": 3.028,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 15,
+                "method": "fastSeek",
+                "seekedMs": 804,
+                "settledMs": null,
+                "ctAfter": 30,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": true
+              },
+              {
+                "target": 27,
+                "method": "fastSeek",
+                "seekedMs": 184,
+                "settledMs": 0,
+                "ctAfter": 27,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 365,
+              "dropped": 1
+            }
+          }
+        },
+        "h264_30s_g250_640|playing|fastSeek|rep2": {
+          "clip": "h264_30s_g250_640",
+          "mode": "playing",
+          "method": "fastSeek",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "fastSeek",
+                "seekedMs": 699,
+                "settledMs": null,
+                "ctAfter": 23.326,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": true
+              },
+              {
+                "target": 15,
+                "method": "fastSeek",
+                "seekedMs": 788,
+                "settledMs": 0,
+                "ctAfter": 15.023,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 27,
+                "method": "fastSeek",
+                "seekedMs": 505,
+                "settledMs": null,
+                "ctAfter": 30,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": true
+              }
+            ],
+            "quality": {
+              "total": 578,
+              "dropped": 0
+            }
+          }
+        },
+        "h264_30s_g250_640|playing|keyframe-first|rep1": {
+          "clip": "h264_30s_g250_640",
+          "mode": "playing",
+          "method": "keyframe-first",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "keyframe-first",
+                "seekedMs": 985,
+                "settledMs": null,
+                "ctAfter": 23.414,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": true
+              },
+              {
+                "target": 15,
+                "method": "keyframe-first",
+                "seekedMs": 1188,
+                "settledMs": null,
+                "ctAfter": 30,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": true
+              },
+              {
+                "target": 27,
+                "method": "keyframe-first",
+                "seekedMs": 417,
+                "settledMs": 0,
+                "ctAfter": 27,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 880,
+              "dropped": 1
+            }
+          }
+        },
+        "h264_30s_g250_640|playing|keyframe-first|rep2": {
+          "clip": "h264_30s_g250_640",
+          "mode": "playing",
+          "method": "keyframe-first",
+          "raw": {
+            "duration": 30,
+            "fastSeekType": "function",
+            "seeks": [
+              {
+                "target": 3,
+                "method": "keyframe-first",
+                "seekedMs": 582,
+                "settledMs": 0,
+                "ctAfter": 3.067,
+                "seekingAfter": false,
+                "pausedAfter": false,
+                "timeout": false
+              },
+              {
+                "target": 15,
+                "method": "keyframe-first",
+                "seekedMs": 1517,
+                "settledMs": null,
+                "ctAfter": 30,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": true
+              },
+              {
+                "target": 27,
+                "method": "keyframe-first",
+                "seekedMs": 443,
+                "settledMs": 0,
+                "ctAfter": 27,
+                "seekingAfter": false,
+                "pausedAfter": true,
+                "timeout": false
+              }
+            ],
+            "quality": {
+              "total": 302,
+              "dropped": 2
+            }
+          }
+        }
+      },
+      "keyframesG250": [
+        0,
+        8.333333,
+        16.666667,
+        25
+      ],
+      "loadEnd": [
+        0.49,
+        2.98,
+        6.25
+      ]
+    }
+  },
+  "summary": {
+    "h264_30s_g12_640": {
+      "medianSettledMs": 0,
+      "settledMs": [
+        null,
+        0,
+        0
+      ],
+      "seekedMs": [
+        679,
+        100,
+        389
+      ],
+      "timeouts": 1
+    },
+    "h264_30s_g30_640": {
+      "medianSettledMs": 0,
+      "settledMs": [
+        null,
+        null,
+        0
+      ],
+      "seekedMs": [
+        684,
+        308,
+        479
+      ],
+      "timeouts": 2
+    },
+    "h264_30s_g250_640": {
+      "medianSettledMs": 0,
+      "settledMs": [
+        0,
+        0,
+        0
+      ],
+      "seekedMs": [
+        299,
+        499,
+        466
+      ],
+      "timeouts": 0
+    },
+    "h264_10s_g30_640": {
+      "medianSettledMs": 0,
+      "settledMs": [
+        null,
+        0,
+        0
+      ],
+      "seekedMs": [
+        319,
+        167,
+        14
+      ],
+      "timeouts": 1
+    },
+    "h264_60s_g30_640": {
+      "medianSettledMs": 0,
+      "settledMs": [
+        0,
+        0,
+        null
+      ],
+      "seekedMs": [
+        96,
+        28,
+        229
+      ],
+      "timeouts": 1
+    },
+    "h264_30s_g30_720": {
+      "medianSettledMs": 0,
+      "settledMs": [
+        0,
+        0,
+        0
+      ],
+      "seekedMs": [
+        308,
+        30,
+        75
+      ],
+      "timeouts": 0
+    },
+    "h264_30s_g30_320": {
+      "medianSettledMs": 0,
+      "settledMs": [
+        0,
+        0,
+        0
+      ],
+      "seekedMs": [
+        67,
+        117,
+        72
+      ],
+      "timeouts": 0
+    },
+    "vp9_30s_g30_640": {
+      "medianSettledMs": 0,
+      "settledMs": [
+        null,
+        0,
+        0
+      ],
+      "seekedMs": [
+        315,
+        114,
+        31
+      ],
+      "timeouts": 1
+    }
+  },
+  "finishedAt": "2026-11-11T00:41:13.436Z"
+}

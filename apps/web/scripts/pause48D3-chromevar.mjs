@@ -53,6 +53,7 @@
 import { spawn, execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -126,7 +127,7 @@ function buildFixtures() {
   }
   // Điền byte 0xFF (không phải 0x00) vào packet theo khoảng pts.
   const py = path.join(SCRATCH, "make-garbage.py");
-  fs.writeFileSync(py, [
+  writeFileEpermRetry(py, [
     "import json, subprocess, sys",
     "src, dst, lo, hi, fill = sys.argv[1], sys.argv[2], float(sys.argv[3]), float(sys.argv[4]), int(sys.argv[5], 0)",
     "out = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0',",
@@ -200,7 +201,7 @@ function buildPages() {
     + "  }, 6000);\n"
     + "}, 3000);\n"
     + "</script>\n";
-  fs.writeFileSync(path.join(SCRATCH, "raw.html"), raw);
+  writeFileEpermRetry(path.join(SCRATCH, "raw.html"), raw);
   const seekel = "<!doctype html><meta charset=\"utf-8\"><title>D3 seekElement probe</title>\n"
     + "<script type=\"module\">\n"
     + "window.__c3Uncaught = [];\n"
@@ -255,7 +256,7 @@ function buildPages() {
     + "window.__c3 = R;\n"
     + "window.__c3Ready = true;\n"
     + "</script>\n";
-  fs.writeFileSync(path.join(SCRATCH, "seekel.html"), seekel);
+  writeFileEpermRetry(path.join(SCRATCH, "seekel.html"), seekel);
 }
 
 class TabCdp {
@@ -372,7 +373,7 @@ async function main() {
       // chứa 127.0.0.1 → "non-registrable domain"). Sha256 tính từ
       // đúng bytes đã ghi, không hardcode.
       const policyFile = path.join(SCRATCH, "webgl-policy.txt");
-      fs.writeFileSync(policyFile, "hatch-webgl-all-origins-v1\n");
+      writeFileEpermRetry(policyFile, "hatch-webgl-all-origins-v1\n");
       const policySha = crypto.createHash("sha256").update(fs.readFileSync(policyFile)).digest("hex");
       flags.push("--hatch-webgl-allowed-domains-file=" + policyFile);
       flags.push("--hatch-webgl-allowed-domains-sha256=" + policySha);

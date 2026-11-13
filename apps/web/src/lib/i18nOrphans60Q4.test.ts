@@ -166,9 +166,9 @@ const FRAGMENT_26 = [
 ];
 
 // --- A. Dict -------------------------------------------------------------
-ok("dict: vi==en==2326 key lá (2146 sau đợt 62 + 131 key fragment đợt 63 − 1 key chết speed.warnTooShort − 1 key jobNote chưa có UI + 7 key fragment đợt 64 (R2 6 + R8 1) + 1 key parent projectHistory + 14 key fragment đợt 65 (S2 1 + S4 10 + S6 1 + S8 2) + 29 key fragment đợt 66 (T7 27 + T8 2)), placeholder khớp, không rỗng", () => {
-  assert.equal(VI.size, 2326, `vi.json phải có 2326 key lá, nhận ${VI.size}`);
-  assert.equal(EN.size, 2326, `en.json phải có 2326 key lá, nhận ${EN.size}`);
+ok("dict: vi==en==2767 key lá (2400 sau đợt 73 A9 + 4 key karaoke style đợt 74 B9 + 1 key mediabin.codecUnsupported đợt 74 B3 + 8 key mediabin.codec* đợt 75 C6 + 6 key exportPanel.aspectFit* đợt 76 D9 + 6 key đợt 79 G9: 5 openProject.archiveHistory* + 1 captions.trackLabel + 10 key đợt 80 H7: 4 reverseGate.* + 6 rehydrate.* + 9 key đợt 80 H10 (social presets) + 17 key aiJob.* (luồng round-80 khác) + 2 key đợt 81 I6 (aiJob.etaEstimating + aiJob.etaHours) + 2 key đợt 84 L9 (mediabin.proxyHeightLabel + mediabin.proxyNoOriginalFile) + 24 key đợt 84 L8 (18 tts.* + 6 bridgeErrors.*) + 11 key đợt 85 M7 (tts.* export/import giọng) + 7 key đợt 85 M8 (mediabin.proxy* progress/retry) + 8 key đợt 87 O5/closing (7 mask/motionTrack + 1 motionTrack.maskStillFollows) + 1 key đợt 88 P6 (validation.TRACK_IMAGE_MASK) + 1 key đợt 91 S5 (motionTrack.title) + 1 key đợt 92 T5 (sticker.title) +249 key đợt 93 U5 (5 sticker.cat.* + 244 sticker.item.*)), placeholder khớp, không rỗng", () => {
+  assert.equal(VI.size, 2767, `vi.json phải có 2767 key lá, nhận ${VI.size}`);
+  assert.equal(EN.size, 2767, `en.json phải có 2767 key lá, nhận ${EN.size}`);
   for (const k of VI.keys()) assert.ok(EN.has(k), `en thiếu key ${k}`);
   for (const k of EN.keys()) assert.ok(VI.has(k), `vi thiếu key ${k}`);
   for (const k of VI.keys()) {
@@ -178,11 +178,14 @@ ok("dict: vi==en==2326 key lá (2146 sau đợt 62 + 131 key fragment đợt 63 
     assert.ok(e.length > 0, `${k}: en rỗng`);
     assert.deepEqual(placeholders(v), placeholders(e), `${k}: placeholder vi/en lệch`);
   }
-  // 52 key vi==en (+1 mẫu định dạng validation.detail từ fragment R5 đợt 63; 14 key xóa + 26 key gộp đều vi khác en; +2 mẫu
+  // 54 key vi==en (+1 mẫu định dạng validation.detail từ fragment R5 đợt 63; 14 key xóa + 26 key gộp đều vi khác en; +2 mẫu
   // định dạng gop.cache.belowThreshold / gop.cache.rangeOk từ fragment R6,
-  // parent gộp đợt 61; +1 key legacyAdopt.noHash từ fragment T7, parent gộp đợt 66).
+  // parent gộp đợt 61; +1 key legacyAdopt.noHash từ fragment T7, parent gộp đợt 66;
+  // +2 key tên riêng safeArea.platformTiktok / safeArea.platformYoutube thêm đợt 73 A9, parent gộp đợt 73;
+  // +6 key đợt 80 H10 (social presets, luồng round-80 khác): exportPreset.tiktokLabel / reelsLabel / shortsLabel / sizeSummaryMax + safeArea.platformReels / platformShorts — tên riêng + mẫu định dạng, giống hệt hai bên là hợp lệ).
+  // +1 key đợt 92 T5: sticker.title ("🌟 Sticker" giống hệt 2 bên — loanword Sticker đã dùng khắp panel sticker) → 60 thành 61; +11 key đợt 93 U5 (sticker.cat.emoji + 10 sticker.item.* loanword) → 61 thành 72.
   const same = [...VI.keys()].filter((k) => VI.get(k) === EN.get(k));
-  assert.equal(same.length, 52, `số key vi==en phải là 52, nhận ${same.length}: ${same.slice(0, 5).join(", ")}`);
+  assert.equal(same.length, 72, `số key vi==en phải là 72, nhận ${same.length}: ${same.slice(0, 5).join(", ")}`);
 });
 
 ok("dict: 14 key lẻ đã xóa khỏi cả hai bên; 28 key projectRepo.* còn đủ", () => {
@@ -265,6 +268,13 @@ ok("orphan: 0 key mồ côi sau đợt (42 key P7 + enhance.renderOnly đã nố
     // enhance. chỉ có trong fragment/dict, không xuất hiện trong src).
     // Key vào dict khi parent gộp fragment round64-r2.
     "enhance.fastMotion",
+    // Đợt 93 U5: 249 key sticker.cat.* / sticker.item.* truy cập động qua
+    // `t(labelKey)` trong StickerPanel (labelKey sống trong
+    // packages/video-spec/src/sticker.ts, ngoài phạm vi quét apps/web/src
+    // của test này) — scan chuỗi tĩnh không thấy. Check labelKey riêng
+    // bên dưới khóa mọi key phải có thật trong dict.
+    "sticker.cat.",
+    "sticker.item.",
   ];
   const orphans: string[] = [];
   for (const k of VI.keys()) {
@@ -273,6 +283,26 @@ ok("orphan: 0 key mồ côi sau đợt (42 key P7 + enhance.renderOnly đã nố
     orphans.push(k);
   }
   assert.deepEqual(orphans, [], `còn key mồ côi: ${orphans.join(", ")}`);
+});
+
+ok("sticker labelKey: 249 key sticker.cat.*/sticker.item.* đều có trong dict, vi khớp nhãn gốc", () => {
+  // Đợt 93 U5: nhãn sticker sống trong data (packages/video-spec/src/sticker.ts)
+  // dưới dạng labelKey, UI dịch động qua t(labelKey) nên chuỗi key đầy đủ
+  // không xuất hiện trong apps/web/src — DYNAMIC_PREFIXES ở trên cho qua
+  // vòng mồ côi. Check này khóa chiều ngược: mọi labelKey phải có thật
+  // trong dict cả hai bên, và giá trị vi phải đúng nhãn gốc trong data.
+  const stickerSrc = readFileSync("packages/video-spec/src/sticker.ts", "utf8");
+  const pairs = [...stickerSrc.matchAll(/label:\s*"((?:[^"\\]|\\.)*)",\s*labelKey:\s*"(sticker\.(?:cat|item)\.[a-z0-9-]+)"/g)];
+  assert.equal(pairs.length, 249, `sticker.ts phải có 249 cặp label/labelKey, nhận ${pairs.length}`);
+  const seen = new Set<string>();
+  for (const [, label, key] of pairs) {
+    assert.ok(!seen.has(key), `labelKey trùng: ${key}`);
+    seen.add(key);
+    assert.ok(VI.has(key), `vi.json thiếu key ${key}`);
+    assert.ok(EN.has(key), `en.json thiếu key ${key}`);
+    assert.equal(VI.get(key), label, `vi.json ${key} phải đúng nhãn gốc "${label}"`);
+    assert.ok((EN.get(key) ?? "").length > 0, `en.json ${key} rỗng`);
+  }
 });
 
 // --- Fixture spec (mẫu projectRepoNested22) ------------------------------

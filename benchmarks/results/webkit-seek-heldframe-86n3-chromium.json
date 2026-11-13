@@ -1,0 +1,1338 @@
+{
+  "startedAt": "2026-11-11T02:47:39.241Z",
+  "engine": "chromium",
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36",
+  "loadStart": [
+    17.35,
+    7.3,
+    3.05
+  ],
+  "cases": {
+    "h264_30s_g250_640|draw|playing": {
+      "clip": "h264_30s_g250_640",
+      "variant": "draw",
+      "mode": "playing",
+      "raw": {
+        "duration": 30,
+        "ticks": 709,
+        "refs": {
+          "3": {
+            "stable": true,
+            "dist2": 0
+          },
+          "15": {
+            "stable": true,
+            "dist2": 0
+          },
+          "27": {
+            "stable": true,
+            "dist2": 0
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 1025,
+            "frameReadyMs": 1094,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": true,
+            "ctAfter": 3.578,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 1923,
+            "frameReadyMs": 1985,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": true,
+            "ctAfter": 15.471,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 320,
+            "frameReadyMs": 397,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 27.563,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 503,
+            "frameReadyMs": 585,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 3.491,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 1532,
+            "frameReadyMs": 1592,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 15.484,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 472,
+            "frameReadyMs": 491,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 27.421,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 3,
+            "seekedMs": 984,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "midEqualsPre": false,
+            "midSeeking": true,
+            "ctAfter": 8.331,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 15,
+            "seekedMs": 2412,
+            "frameReadyMs": 2418,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": true,
+            "ctAfter": 15.419,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 27,
+            "seekedMs": 1052,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "midEqualsPre": false,
+            "midSeeking": true,
+            "ctAfter": 2.35,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g250_640|held|playing": {
+      "clip": "h264_30s_g250_640",
+      "variant": "held",
+      "mode": "playing",
+      "raw": {
+        "duration": 30,
+        "ticks": 659,
+        "refs": {
+          "3": {
+            "stable": true,
+            "dist2": 0
+          },
+          "15": {
+            "stable": true,
+            "dist2": 0
+          },
+          "27": {
+            "stable": true,
+            "dist2": 0
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 809,
+            "frameReadyMs": 812,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": true,
+            "ctAfter": 3.405,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 1015,
+            "frameReadyMs": 1023,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 15.415,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 428,
+            "frameReadyMs": null,
+            "timeout": false,
+            "frameTimeout": true,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 2.421,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 175,
+            "frameReadyMs": 183,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 3.408,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 303,
+            "frameReadyMs": 306,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 15.405,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 203,
+            "frameReadyMs": 209,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": true,
+            "ctAfter": 27.407,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 3,
+            "seekedMs": 117,
+            "frameReadyMs": 119,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 3.403,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 15,
+            "seekedMs": 213,
+            "frameReadyMs": 217,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 15.41,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 27,
+            "seekedMs": 71,
+            "frameReadyMs": 74,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 27.405,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g250_640|skip|playing": {
+      "clip": "h264_30s_g250_640",
+      "variant": "skip",
+      "mode": "playing",
+      "raw": {
+        "duration": 30,
+        "ticks": 405,
+        "refs": {
+          "3": {
+            "stable": true,
+            "dist2": 0
+          },
+          "15": {
+            "stable": true,
+            "dist2": 0
+          },
+          "27": {
+            "stable": true,
+            "dist2": 0
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 287,
+            "frameReadyMs": 349,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 3.466,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 808,
+            "frameReadyMs": 816,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 15.409,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 204,
+            "frameReadyMs": 210,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 27.406,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 203,
+            "frameReadyMs": 210,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 3.408,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 474,
+            "frameReadyMs": 477,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 15.403,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 112,
+            "frameReadyMs": 114,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": true,
+            "ctAfter": 27.403,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 3,
+            "seekedMs": 285,
+            "frameReadyMs": 290,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": true,
+            "ctAfter": 3.405,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 15,
+            "seekedMs": 561,
+            "frameReadyMs": 567,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 15.418,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 27,
+            "seekedMs": 212,
+            "frameReadyMs": 214,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 27.402,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g30_640|draw|playing": {
+      "clip": "h264_30s_g30_640",
+      "variant": "draw",
+      "mode": "playing",
+      "raw": {
+        "duration": 30,
+        "ticks": 326,
+        "refs": {
+          "3": {
+            "stable": true,
+            "dist2": 0
+          },
+          "15": {
+            "stable": true,
+            "dist2": 0
+          },
+          "27": {
+            "stable": true,
+            "dist2": 0
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 93,
+            "frameReadyMs": 100,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": false,
+            "ctAfter": 3.413,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 73,
+            "frameReadyMs": 78,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 15.405,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 6,
+            "frameReadyMs": 8,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 27.403,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 6,
+            "frameReadyMs": 10,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 3.405,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 7,
+            "frameReadyMs": 9,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 15.407,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 20,
+            "frameReadyMs": 25,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 27.407,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 3,
+            "seekedMs": 39,
+            "frameReadyMs": 103,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 3.473,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 15,
+            "seekedMs": 15,
+            "frameReadyMs": 19,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 15.405,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 27,
+            "seekedMs": 71,
+            "frameReadyMs": 73,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 27.409,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g30_640|held|playing": {
+      "clip": "h264_30s_g30_640",
+      "variant": "held",
+      "mode": "playing",
+      "raw": {
+        "duration": 30,
+        "ticks": 300,
+        "refs": {
+          "3": {
+            "stable": true,
+            "dist2": 0
+          },
+          "15": {
+            "stable": true,
+            "dist2": 0
+          },
+          "27": {
+            "stable": true,
+            "dist2": 0
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 74,
+            "frameReadyMs": 85,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 3.411,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 76,
+            "frameReadyMs": 78,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 15.418,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 85,
+            "frameReadyMs": 120,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 27.435,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 6,
+            "frameReadyMs": 8,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 3.448,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 14,
+            "frameReadyMs": 27,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 15.414,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 12,
+            "frameReadyMs": 62,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 27.446,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 3,
+            "seekedMs": 29,
+            "frameReadyMs": 36,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 3.457,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 15,
+            "seekedMs": 15,
+            "frameReadyMs": 20,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 15.409,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 27,
+            "seekedMs": 70,
+            "frameReadyMs": 71,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 27.417,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g30_640|skip|playing": {
+      "clip": "h264_30s_g30_640",
+      "variant": "skip",
+      "mode": "playing",
+      "raw": {
+        "duration": 30,
+        "ticks": 291,
+        "refs": {
+          "3": {
+            "stable": true,
+            "dist2": 0
+          },
+          "15": {
+            "stable": true,
+            "dist2": 0
+          },
+          "27": {
+            "stable": true,
+            "dist2": 0
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 63,
+            "frameReadyMs": 68,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 3.406,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 76,
+            "frameReadyMs": 87,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 15.423,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 83,
+            "frameReadyMs": 100,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 27.418,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 17,
+            "frameReadyMs": 20,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 3.404,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 87,
+            "frameReadyMs": 93,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 15.407,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 25,
+            "frameReadyMs": 91,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 27.468,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 3,
+            "seekedMs": 6,
+            "frameReadyMs": 8,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 3.403,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 15,
+            "seekedMs": 13,
+            "frameReadyMs": 16,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 15.405,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 2,
+            "target": 27,
+            "seekedMs": 71,
+            "frameReadyMs": 80,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": false,
+            "midSeeking": false,
+            "ctAfter": 27.41,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g250_640|draw|paused": {
+      "clip": "h264_30s_g250_640",
+      "variant": "draw",
+      "mode": "paused",
+      "raw": {
+        "duration": 30,
+        "ticks": 399,
+        "refs": {
+          "3": {
+            "stable": true,
+            "dist2": 0
+          },
+          "15": {
+            "stable": true,
+            "dist2": 0
+          },
+          "27": {
+            "stable": true,
+            "dist2": 0
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 366,
+            "frameReadyMs": 376,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 3,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 801,
+            "frameReadyMs": 803,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 15,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 382,
+            "frameReadyMs": 394,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 27,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 111,
+            "frameReadyMs": 114,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 3,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 722,
+            "frameReadyMs": 724,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 15,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 291,
+            "frameReadyMs": 298,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 27,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    },
+    "h264_30s_g250_640|held|paused": {
+      "clip": "h264_30s_g250_640",
+      "variant": "held",
+      "mode": "paused",
+      "raw": {
+        "duration": 30,
+        "ticks": 420,
+        "refs": {
+          "3": {
+            "stable": true,
+            "dist2": 0
+          },
+          "15": {
+            "stable": true,
+            "dist2": 0
+          },
+          "27": {
+            "stable": true,
+            "dist2": 0
+          }
+        },
+        "seeks": [
+          {
+            "rep": 0,
+            "target": 3,
+            "seekedMs": 350,
+            "frameReadyMs": 360,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 3,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 15,
+            "seekedMs": 610,
+            "frameReadyMs": 614,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 15,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 0,
+            "target": 27,
+            "seekedMs": 495,
+            "frameReadyMs": 500,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 27,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 3,
+            "seekedMs": 422,
+            "frameReadyMs": 431,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 3,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 15,
+            "seekedMs": 911,
+            "frameReadyMs": 913,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 15,
+            "seekingAfter": false,
+            "refStable": true
+          },
+          {
+            "rep": 1,
+            "target": 27,
+            "seekedMs": 176,
+            "frameReadyMs": 183,
+            "timeout": false,
+            "frameTimeout": false,
+            "midEqualsPre": true,
+            "midSeeking": true,
+            "ctAfter": 27,
+            "seekingAfter": false,
+            "refStable": true
+          }
+        ]
+      }
+    }
+  },
+  "summary": {
+    "h264_30s_g250_640|draw|playing": {
+      "medianSeekedMs": 1025,
+      "medianFrameReadyMs": 1094,
+      "seekedMs": [
+        1025,
+        1923,
+        320,
+        503,
+        1532,
+        472,
+        984,
+        2412,
+        1052
+      ],
+      "frameReadyMs": [
+        1094,
+        1985,
+        397,
+        585,
+        1592,
+        491,
+        null,
+        2418,
+        null
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 2,
+      "midEqualsPre": "4/9",
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g250_640|held|playing": {
+      "medianSeekedMs": 213,
+      "medianFrameReadyMs": 213,
+      "seekedMs": [
+        809,
+        1015,
+        428,
+        175,
+        303,
+        203,
+        117,
+        213,
+        71
+      ],
+      "frameReadyMs": [
+        812,
+        1023,
+        null,
+        183,
+        306,
+        209,
+        119,
+        217,
+        74
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 1,
+      "midEqualsPre": "6/9",
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g250_640|skip|playing": {
+      "medianSeekedMs": 285,
+      "medianFrameReadyMs": 290,
+      "seekedMs": [
+        287,
+        808,
+        204,
+        203,
+        474,
+        112,
+        285,
+        561,
+        212
+      ],
+      "frameReadyMs": [
+        349,
+        816,
+        210,
+        210,
+        477,
+        114,
+        290,
+        567,
+        214
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 0,
+      "midEqualsPre": "7/9",
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g30_640|draw|playing": {
+      "medianSeekedMs": 20,
+      "medianFrameReadyMs": 25,
+      "seekedMs": [
+        93,
+        73,
+        6,
+        6,
+        7,
+        20,
+        39,
+        15,
+        71
+      ],
+      "frameReadyMs": [
+        100,
+        78,
+        8,
+        10,
+        9,
+        25,
+        103,
+        19,
+        73
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 0,
+      "midEqualsPre": "1/9",
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g30_640|held|playing": {
+      "medianSeekedMs": 29,
+      "medianFrameReadyMs": 62,
+      "seekedMs": [
+        74,
+        76,
+        85,
+        6,
+        14,
+        12,
+        29,
+        15,
+        70
+      ],
+      "frameReadyMs": [
+        85,
+        78,
+        120,
+        8,
+        27,
+        62,
+        36,
+        20,
+        71
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 0,
+      "midEqualsPre": "0/9",
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g30_640|skip|playing": {
+      "medianSeekedMs": 63,
+      "medianFrameReadyMs": 80,
+      "seekedMs": [
+        63,
+        76,
+        83,
+        17,
+        87,
+        25,
+        6,
+        13,
+        71
+      ],
+      "frameReadyMs": [
+        68,
+        87,
+        100,
+        20,
+        93,
+        91,
+        8,
+        16,
+        80
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 0,
+      "midEqualsPre": "0/9",
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g250_640|draw|paused": {
+      "medianSeekedMs": 374,
+      "medianFrameReadyMs": 385,
+      "seekedMs": [
+        366,
+        801,
+        382,
+        111,
+        722,
+        291
+      ],
+      "frameReadyMs": [
+        376,
+        803,
+        394,
+        114,
+        724,
+        298
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 0,
+      "midEqualsPre": "6/6",
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "h264_30s_g250_640|held|paused": {
+      "medianSeekedMs": 459,
+      "medianFrameReadyMs": 466,
+      "seekedMs": [
+        350,
+        610,
+        495,
+        422,
+        911,
+        176
+      ],
+      "frameReadyMs": [
+        360,
+        614,
+        500,
+        431,
+        913,
+        183
+      ],
+      "timeouts": 0,
+      "frameTimeouts": 0,
+      "midEqualsPre": "6/6",
+      "refStable": [
+        true,
+        true,
+        true
+      ]
+    }
+  },
+  "loadEnd": [
+    9.25,
+    9.27,
+    4.57
+  ],
+  "finishedAt": "2026-11-11T02:50:10.363Z"
+}

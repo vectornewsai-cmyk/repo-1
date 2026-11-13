@@ -14,6 +14,9 @@ import { useStore } from "../store";
 import type { MediaItem } from "../media";
 import {
   CAPTION_LANGS,
+  KARAOKE_DEFAULT_TEMPLATE_ID,
+  KARAOKE_STYLE_TEMPLATES,
+  resolveKaraokeTemplate,
   TRANSLATE_TARGET_LANGS,
   translatedTrackLabel,
   validateCaptionSegments,
@@ -23,6 +26,7 @@ import {
   type CaptionWord,
   type TranslateTargetCode,
 } from "../lib/captions";
+import type { TextStyle } from "@repo-1/video-spec";
 import { formatTimecode } from "@repo-1/video-spec";
 import {
   collectProjectCaptions,
@@ -34,29 +38,20 @@ import { BRIDGE_URL } from "../lib/bridgeUrl";
 import { t, getLang, useLang } from "../i18n";
 import { resolveBridgeApiError, type BridgeApiErrorBody } from "../lib/bridgeErrors"; // Đợt 62 R5: dịch mã lỗi bridge→web
 import { resolveCaptionPhaseLabel } from "../lib/captionPhase63R1"; // Đợt 63 R1: localize phase caption theo locale (nợ R10 §10.4)
-import type { StructuredErrorDetail } from "../lib/errorDetailSummary"; // Đợt 62 R5: errorDetail trong SSE error
+import {
+  AI_JOB_STREAM_DROPPED,
+  AiJobCancelledError,
+  formatAiJobEta,
+  readAiJobStream,
+  type AiJobProgressState,
+} from "../lib/aiJobStream"; // Đợt 80 H8: progress + hủy thật cho job AI dài
+import { AiJobProgress } from "./AiJobProgress"; // Đợt 80 H8: thanh tiến trình AI dùng chung
 
 
 type Step = "config" | "running" | "review";
 
 interface Props {
   onClose: () => void;
-}
-
-interface NdjsonEvent {
-  type: "phase" | "done" | "error";
-  phase?: string;
-  message?: string;
-  language?: string;
-  audioDurationSec?: number;
-  transcribeTimeSec?: number;
-  count?: number;
-  segments?: unknown;
-  words?: unknown;
-  error?: string;
-  errorCode?: string;
-  errorParams?: Record<string, string>;
-  errorDetail?: StructuredErrorDetail | null;
 }
 
 function fmtElapsed(ms: number): string {
@@ -115,6 +110,8 @@ export function CaptionModal({ onClose }: Props) {
   const [targetLang, setTargetLang] = useState<"" | TranslateTargetCode>("");
   const [step, setStep] = useState<Step>("config");
   const [phaseMsg, setPhaseMsg] = useState("");
+  // Đợt 80 H8: tiến trình THẬT của job đang chạy (% + ETA từ bridge).
+  const [jobProgress, setJobProgress] = useState<AiJobProgressState | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [segments, setSegments] = useState<CaptionSegment[]>([]);
   const [dropped, setDropped] = useState<Set<number>>(new Set());
@@ -123,6 +120,11 @@ export function CaptionModal({ onClose }: Props) {
   const [words, setWords] = useState<CaptionWord[]>([]);
   const [karaokeEnabled, setKaraokeEnabled] = useState(true);
   const [highlightColor, setHighlightColor] = useState("#ffff00");
+  // Đợt 74 B9: template style karaoke có tên (gap A1) — mặc định Vàng nổi
+  // bật (= style cũ R4) để hành vi cũ không đổi khi user không chạm gì.
+  const [karaokeTemplateId, setKaraokeTemplateId] = useState(
+    KARAOKE_DEFAULT_TEMPLATE_ID,
+  );
   // Phase 9 R4: ghi chú sau khi nhập SRT/VTT (vd: "bỏ 2 cue hỏng").
   const [importNote, setImportNote] = useState<string | null>(null);
   // R1-080: bản dịch (null = không dịch)
@@ -181,43 +183,39 @@ export function CaptionModal({ onClose }: Props) {
         t("common.bridgeConn", { url: BRIDGE_URL })
       );
     }
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buf = "";
-    let got: CaptionSegment[] | null = null;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-      let idx: number;
-      while ((idx = buf.indexOf("\n")) >= 0) {
-        const line = buf.slice(0, idx).trim();
-        buf = buf.slice(idx + 1);
-        if (!line) continue;
-        let evt: NdjsonEvent;
-        try {
-          evt = JSON.parse(line) as NdjsonEvent;
-        } catch {
-          continue; // dòng rác — bỏ qua, không fail cả luồng
-        }
-        if (evt.type === "phase") {
+    // Đợt 80 H8: đọc NDJSON qua helper dùng chung — phase/progress/done/
+    // error/cancelled. Progress THẬT từ bridge (giây audio đã transcribe).
+    // Fallback phase tính 1 lần (dùng chung cho cả 2 handler để khỏi lặp
+    // call site t() — test captionModal60Q3 pin số call site).
+    const processingFallback = t("caption.processing");
+    let doneEvt;
+    try {
+      doneEvt = await readAiJobStream(res, {
+        onPhase: (phase, message) => {
           // Đợt 63 R1: localize phase theo locale qua phase KEY (bridge gửi
           // kèm message vi — hiển thị message nguyên vẹn làm locale en vẫn
           // thấy tiếng Việt, nợ R10 §10.4). Fallback message bridge →
           // processing khi phase lạ; không bao giờ hiện key thô.
-          setPhaseMsg(resolveCaptionPhaseLabel(evt.phase, evt.message, getLang(), t("caption.processing")));
-        } else if (evt.type === "done") {
-          got = validateCaptionSegments(evt.segments);
-          // R4: chỉ job caption gốc mới có words (job dịch thì không).
-          if (endpoint === "/api/caption") {
-            setWords(validateCaptionWords(evt.words));
-          }
-        } else if (evt.type === "error") {
-          throw new Error(resolveBridgeApiError(evt, t, t("caption.failed")));
-        }
+          setPhaseMsg(resolveCaptionPhaseLabel(phase, message, getLang(), processingFallback));
+        },
+        onProgress: (p) => {
+          setPhaseMsg(resolveCaptionPhaseLabel(p.phase, p.message, getLang(), processingFallback));
+          setJobProgress(p);
+        },
+      });
+    } catch (e) {
+      if (e instanceof AiJobCancelledError) throw e;
+      if ((e as Error).message === AI_JOB_STREAM_DROPPED) {
+        throw new Error(t("caption.bridgeDropped"));
       }
+      const body = (e as { bridgeBody?: BridgeApiErrorBody }).bridgeBody;
+      throw new Error(resolveBridgeApiError(body ?? null, t, t("caption.failed")));
     }
-    if (!got) throw new Error(t("caption.bridgeDropped"));
+    const got = validateCaptionSegments(doneEvt.segments);
+    // R4: chỉ job caption gốc mới có words (job dịch thì không).
+    if (endpoint === "/api/caption") {
+      setWords(validateCaptionWords(doneEvt.words));
+    }
     return got;
   };
 
@@ -235,6 +233,7 @@ export function CaptionModal({ onClose }: Props) {
     setSegmentsEn(null);
     setDroppedEn(new Set());
     setPhaseMsg(t("caption.uploading"));
+    setJobProgress(null);
     const t0 = Date.now();
     setElapsed(0);
     timerRef.current = window.setInterval(() => setElapsed(Date.now() - t0), 500);
@@ -257,7 +256,7 @@ export function CaptionModal({ onClose }: Props) {
       }
       setStep("review");
     } catch (e) {
-      if ((e as Error).name === "AbortError") {
+      if ((e as Error).name === "AbortError" || e instanceof AiJobCancelledError) {
         setError(t("caption.cancelled"));
       } else {
         setError((e as Error).message || t("caption.failed"));
@@ -402,9 +401,17 @@ export function CaptionModal({ onClose }: Props) {
       // Phase 9 R4: gắn karaoke khi bật + có word timestamps (mapping theo
       // thời gian nên câu bị bỏ sẽ tự không nhận từ của nó).
       const karaokeWords = karaokeEnabled && words.length > 0 ? words : undefined;
-      const styleOverride =
-        karaokeWords && highlightColor !== "#ffff00"
-          ? { highlightColor }
+      // Đợt 74 B9: áp template style karaoke đã chọn (màu chữ/nền/highlight).
+      // Mặc định (Vàng nổi bật + màu picker chưa đổi) → không override để
+      // spec giữ đúng style mặc định cũ. Picker màu thắng template khi user
+      // đã đổi màu khác #ffff00 (hành vi cũ R4 giữ nguyên).
+      const tpl = resolveKaraokeTemplate(karaokeTemplateId);
+      const styleOverride: Partial<TextStyle> | undefined =
+        tpl.id !== KARAOKE_DEFAULT_TEMPLATE_ID || highlightColor !== "#ffff00"
+          ? {
+              ...tpl.style,
+              ...(highlightColor !== "#ffff00" ? { highlightColor } : {}),
+            }
           : undefined;
       useStore.getState().addCaptionTrack(kept, {
         ...(source ? { source } : {}),
@@ -555,9 +562,18 @@ export function CaptionModal({ onClose }: Props) {
                 <b>{phaseMsg}</b>
               </p>
               <p className="muted">{t("caption.running", { elapsed: fmtElapsed(elapsed) })}</p>
-              <button onClick={cancel}>
-                {t("bgremove.cancel")}
-              </button>
+              {/* Đợt 80 H8: tiến trình THẬT (% + ETA) + nút Hủy thật.
+                  phaseMsg đã hiện ở trên nên không truyền phaseLabel nữa.
+                  Nút Hủy giữ dạng <button> trần onClick={cancel} như cũ
+                  (test captionModal60Q3 + modalClasses59P4 pin cấu trúc
+                  này + key bgremove.cancel) — không dùng nút trong
+                  AiJobProgress ở modal này; nút đó vẫn dùng cho các
+                  caller khác (BgRemovePanel/TtsButton/ExportPanel). */}
+              <AiJobProgress
+                progress={jobProgress?.progress ?? null}
+                etaText={formatAiJobEta(jobProgress?.etaSeconds ?? null, t)}
+              />
+              <button onClick={cancel}>{t("bgremove.cancel")}</button>
             </div>
           )}
 
@@ -581,6 +597,21 @@ export function CaptionModal({ onClose }: Props) {
                       onChange={(e) => setKaraokeEnabled(e.target.checked)}
                     />{" "}
                     {t("caption.karaokeHint", { words: String(words.length) })}
+                  </label>{" "}
+                  {/* Đợt 74 B9: chọn template style karaoke có tên (gap A1). */}
+                  <label>
+                    {t("caption.karaokeStyleLabel")}{" "}
+                    <select
+                      value={karaokeTemplateId}
+                      onChange={(e) => setKaraokeTemplateId(e.target.value)}
+                      aria-label={t("caption.karaokeStyleLabel")}
+                    >
+                      {KARAOKE_STYLE_TEMPLATES.map((tpl) => (
+                        <option key={tpl.id} value={tpl.id}>
+                          {t(tpl.nameKey)}
+                        </option>
+                      ))}
+                    </select>
                   </label>{" "}
                   <label>
                     {t("caption.highlightColor")}{" "}

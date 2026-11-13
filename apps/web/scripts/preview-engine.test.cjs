@@ -4,8 +4,13 @@
  */
 "use strict";
 const assert = require("assert");
+const path = require("path");
 
-const OUT = "/tmp/vcut-test-preview-engine/out";
+// Đợt 98 Z8: OUT suy từ __dirname (thư mục chứa file test đã copy) thay
+// vì đường dẫn cố định /tmp/vcut-test-preview-engine/out — đường cố định
+// là 1 nửa của lỗi "thư mục /tmp dùng chung" (script nay mktemp -d mỗi
+// lượt, test file phải tự tìm đúng thư mục đó).
+const OUT = path.join(__dirname, "out");
 const pe = require(`${OUT}/apps/web/src/lib/previewEngine.js`);
 // Đợt 10 (parent tích hợp): transitionClipVisual dời từ previewEngine sang
 // transitionPreview.ts nên block V1 require module đã biên dịch riêng.
@@ -544,8 +549,12 @@ eq(
   eq(v.window, "in", "transClip: đầu clip → cửa sổ vào");
   approx(v.p, 0.5, 1e-9, "transClip: p vào = localT/duration");
   eq(v.layer.region.kind, "rect", "transClip: wipeleft lớp B là rect");
-  eq(v.layer.region.x, 50, "transClip: wipeleft p=0.5 → B từ x=50");
-  eq(v.layer.region.w, 50, "transClip: wipeleft p=0.5 → B rộng 50");
+  // Đợt 98 Z8: kỳ vọng cũ (x=50, w=50) là biên naive trước đợt 13 C6;
+  // code đã đo thật theo strict-gt FFmpeg (transitionPreview.ts,
+  // wipeleft: B bắt đầu ti+1.5, ti=floor(W*(1-p))): p=0.5, W=100 →
+  // x=51.5, w=48.5. Test stale từ đợt 10, trước C6; chỉ sửa test.
+  eq(v.layer.region.x, 51.5, "transClip: wipeleft p=0.5 → B từ x=51.5 (C6: ti+1.5)");
+  eq(v.layer.region.w, 48.5, "transClip: wipeleft p=0.5 → B rộng 48.5 (C6: W-ti-1.5)");
   // Cửa sổ ra: p = elapsed/duration; lớp A slideleft dx = -pW.
   v = tp.transitionClipVisual(clip, 9, 100, 100);
   eq(v.window, "out", "transClip: cuối clip → cửa sổ ra");

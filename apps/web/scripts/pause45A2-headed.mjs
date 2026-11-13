@@ -26,6 +26,7 @@
 
 import { spawn, execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -100,7 +101,7 @@ function buildFixtures() {
   // broken-gap: copy valid, zero toàn bộ packet có pts_time trong [1.0, 2.0)
   // (phương pháp Y2 §3.1, dùng ffprobe JSON có tên trường — không dùng CSV).
   const py = path.join(SCRATCH, "make-broken-gap.py");
-  fs.writeFileSync(py, [
+  writeFileEpermRetry(py, [
     "import json, subprocess, sys",
     "src, dst = sys.argv[1], sys.argv[2]",
     "out = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0',",
@@ -125,8 +126,8 @@ function buildFixtures() {
   // mpeg4-unsupported: MPEG-4 Part 2 (Chrome không decode) — fixture Y2 §1.1.
   execFileSync("ffmpeg", ["-y", "-v", "error", "-f", "lavfi", "-i", "testsrc2=size=640x360:rate=30:duration=3",
     "-f", "lavfi", "-i", "sine=frequency=440:duration=3", "-c:v", "mpeg4", "-c:a", "aac", "-shortest", mpeg4], { stdio: "ignore" });
-  fs.writeFileSync(empty, Buffer.alloc(0));
-  fs.writeFileSync(garbage, Buffer.from(Array.from({ length: 1024 }, (_, i) => (i * 37 + 11) % 256)));
+  writeFileEpermRetry(empty, Buffer.alloc(0));
+  writeFileEpermRetry(garbage, Buffer.from(Array.from({ length: 1024 }, (_, i) => (i * 37 + 11) % 256)));
   return { valid, broken, mpeg4, empty, garbage, brokenInfo };
 }
 
@@ -290,7 +291,7 @@ function buildPage() {
     + "window.__a2Result = R;\n"
     + "window.__a2Ready = true;\n"
     + "</script>\n";
-  fs.writeFileSync(path.join(SCRATCH, "page.html"), page);
+  writeFileEpermRetry(path.join(SCRATCH, "page.html"), page);
 }
 
 async function main() {

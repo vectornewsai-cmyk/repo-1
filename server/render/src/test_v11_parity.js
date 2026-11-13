@@ -74,6 +74,7 @@
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 const path = require("node:path");
 
@@ -241,7 +242,7 @@ function loadPreviewEngine() {
   // lặng lẽ. Đặt stub vào TMP/node_modules để require từ TMP resolve được.
   const stubDir = path.join(TMP, "node_modules", "@repo-1", "video-spec");
   fs.mkdirSync(stubDir, { recursive: true });
-  fs.writeFileSync(
+  writeFileEpermRetry(
     path.join(stubDir, "package.json"),
     JSON.stringify({ name: "@repo-1/video-spec-stub", main: "index.js" }),
   );
@@ -250,7 +251,7 @@ function loadPreviewEngine() {
   const lines = names.map((n) =>
     `exports.${n} = (() => { throw new Error("stub @repo-1/video-spec: ${n} bị gọi — nhánh text này không được dùng stub"); });`);
   // Hằng số dạng object: cho giá trị rỗng thay vì hàm (code chỉ đọc, không gọi).
-  fs.writeFileSync(
+  writeFileEpermRetry(
     path.join(stubDir, "index.js"),
     `// Stub chỉ phục vụ load previewEngine.ts trong harness V11.\n` +
     `// textClipVisual nhánh parity không dùng các export này.\n` +
@@ -291,7 +292,7 @@ function writeRaw(name, frame, count) {
   const p = path.join(TMP, name);
   const chunks = [];
   for (let i = 0; i < count; i++) chunks.push(frame);
-  fs.writeFileSync(p, Buffer.concat(chunks));
+  writeFileEpermRetry(p, Buffer.concat(chunks));
   return p;
 }
 

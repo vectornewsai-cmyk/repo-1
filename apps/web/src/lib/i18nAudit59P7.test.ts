@@ -294,6 +294,13 @@ const DYNAMIC_PREFIXES = [
   // enhance. chỉ có trong fragment/dict, không xuất hiện trong src).
   // Key vào dict khi parent gộp fragment round64-r2.
   "enhance.fastMotion",
+  // Đợt 93 U5: 249 key sticker.cat.* / sticker.item.* truy cập động qua
+  // `t(labelKey)` trong StickerPanel (labelKey sống trong
+  // packages/video-spec/src/sticker.ts, ngoài phạm vi quét apps/web/src
+  // của test này) — scan chuỗi tĩnh không thấy. Check labelKey riêng
+  // trong i18nOrphans60Q4 khóa mọi key phải có thật trong dict.
+  "sticker.cat.",
+  "sticker.item.",
 ];
 // Đợt 60 Q4: 0 mẫu tồn đọng — 29 literal diagnostic GOP/loadReport
 // (24 lý do GOP + 4 lý do trial-decode + "case xấu") đã nối qua trKey
@@ -328,9 +335,9 @@ const P8_KEYS = [
 ];
 
 // --- A. Dict -------------------------------------------------------------
-ok("dict: vi==en==2326 key lá, cùng tập key, placeholder khớp, không rỗng", () => {
-  assert.equal(VI.size, 2326, `vi.json phải có 2326 key lá, nhận ${VI.size}`);
-  assert.equal(EN.size, 2326, `en.json phải có 2326 key lá, nhận ${EN.size}`);
+ok("dict: vi==en==2767 key lá, cùng tập key, placeholder khớp, không rỗng", () => {
+  assert.equal(VI.size, 2767, `vi.json phải có 2767 key lá, nhận ${VI.size}`);
+  assert.equal(EN.size, 2767, `en.json phải có 2767 key lá, nhận ${EN.size}`);
   for (const k of VI.keys()) assert.ok(EN.has(k), `en thiếu key ${k}`);
   for (const k of EN.keys()) assert.ok(VI.has(k), `vi thiếu key ${k}`);
   for (const k of VI.keys()) {
@@ -340,14 +347,19 @@ ok("dict: vi==en==2326 key lá, cùng tập key, placeholder khớp, không rỗ
     assert.ok(e.length > 0, `${k}: en rỗng`);
     assert.deepEqual(placeholders(v), placeholders(e), `${k}: placeholder vi/en lệch`);
   }
-  // 52 key vi==en là hợp lệ (tên riêng, nhãn emoji, mẫu định dạng) — khóa
+  // 54 key vi==en là hợp lệ (tên riêng, nhãn emoji, mẫu định dạng) — khóa
   // con số để key mới giống hệt hai bên không lọt âm thầm. 48 sau đợt 60;
   // +2 mẫu định dạng gop.cache.belowThreshold / gop.cache.rangeOk từ fragment
   // R6 (parent gộp đợt 61) + 1 mẫu định dạng validation.detail từ fragment
   // R5 (parent gộp đợt 63) — giá trị là chuỗi kỹ thuật {size}/{threshold} / template [{where}] {detail}.
   // +1 key legacyAdopt.noHash từ fragment T7 (parent gộp đợt 66).
+  // +2 key tên riêng safeArea.platformTiktok / safeArea.platformYoutube
+  // ("TikTok / Reels 9:16", "YouTube 16:9") thêm đợt 73 A9 (parent gộp đợt 73).
+  // +6 key đợt 80 H10 (social presets, luồng round-80 khác): exportPreset.tiktokLabel /
+  // reelsLabel / shortsLabel / sizeSummaryMax + safeArea.platformReels / platformShorts.
+  // +1 key đợt 92 T5: sticker.title ("🌟 Sticker" giống hệt 2 bên — loanword Sticker đã dùng khắp panel sticker) → 60 thành 61; +11 key đợt 93 U5 (sticker.cat.emoji + 10 sticker.item.* loanword) → 61 thành 72.
   const same = [...VI.keys()].filter((k) => VI.get(k) === EN.get(k));
-  assert.equal(same.length, 52, `số key vi==en phải là 52, nhận ${same.length}: ${same.slice(0, 5).join(", ")}`);
+  assert.equal(same.length, 72, `số key vi==en phải là 72, nhận ${same.length}: ${same.slice(0, 5).join(", ")}`);
 });
 
 ok("orphan: 0 key mồ côi (khóa danh sách rỗng), 0 key mới đợt 58", () => {

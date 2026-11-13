@@ -36,6 +36,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -127,7 +128,7 @@ class CDP {
   }
   async shot(name) {
     const r = await this.send("Page.captureScreenshot", { format: "png" });
-    fs.writeFileSync(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
+    writeFileEpermRetry(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
     return name;
   }
 }
@@ -335,7 +336,7 @@ async function main() {
     fs.mkdirSync(TMPDIR, { recursive: true });
     fs.rmSync(PROFILE, { recursive: true, force: true });
     fs.mkdirSync(VITE_CFG_DIR, { recursive: true });
-    fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, TMPDIR=${TMPDIR}`);
 
     const viteLogFd = fs.openSync(path.join(SCRATCH, "q3-vite.log"), "w");
@@ -394,7 +395,7 @@ async function main() {
     {
       await openModal(cdp, "Phụ đề", "Tạo phụ đề tự động");
       const m1 = await cdp.evalJs(MEASURE_FN);
-      fs.writeFileSync(path.join(SCRATCH, "q3-measure-config-vi.json"), JSON.stringify(m1, null, 2));
+      writeFileEpermRetry(path.join(SCRATCH, "q3-measure-config-vi.json"), JSON.stringify(m1, null, 2));
       const v1 = verdict(m1);
       await drainErrors(cdp);
       if (v1.ok) pass("Q1 config vi: nút text không tràn/chồng, modal vừa viewport", v1.summary);
@@ -411,7 +412,7 @@ async function main() {
         return b && !b.disabled ? b : null;
       }, "nút Áp dụng 2 câu xuất hiện sau import (bước review)", 30000);
       const m2 = await cdp.evalJs(MEASURE_FN);
-      fs.writeFileSync(path.join(SCRATCH, "q3-measure-review-vi.json"), JSON.stringify(m2, null, 2));
+      writeFileEpermRetry(path.join(SCRATCH, "q3-measure-review-vi.json"), JSON.stringify(m2, null, 2));
       const v2 = verdict(m2);
       await drainErrors(cdp);
       if (!delivery.ok) {
@@ -451,7 +452,7 @@ async function main() {
       } else {
         await openModal(cdp, "Captions", "Auto-generate captions");
         const m3 = await cdp.evalJs(MEASURE_FN);
-        fs.writeFileSync(path.join(SCRATCH, "q3-measure-config-en.json"), JSON.stringify(m3, null, 2));
+        writeFileEpermRetry(path.join(SCRATCH, "q3-measure-config-en.json"), JSON.stringify(m3, null, 2));
         const v3 = verdict(m3);
         await drainErrors(cdp);
         if (v3.ok) pass("Q3 config en: nút text không tràn/chồng, modal vừa viewport", v3.summary);
@@ -469,7 +470,7 @@ async function main() {
         return b && !b.disabled ? b : null;
       }, "nút Apply 2 caption sentences xuất hiện sau import (bước review en)", 30000);
       const m4 = await cdp.evalJs(MEASURE_FN);
-      fs.writeFileSync(path.join(SCRATCH, "q3-measure-review-en.json"), JSON.stringify(m4, null, 2));
+      writeFileEpermRetry(path.join(SCRATCH, "q3-measure-review-en.json"), JSON.stringify(m4, null, 2));
       const v4 = verdict(m4);
       await drainErrors(cdp);
       if (!delivery.ok) {
@@ -494,7 +495,7 @@ async function main() {
     else fail("H9 0 lỗi trang", phaseErrors.slice(0, 5).join(" || "));
 
     const nPass = results.filter((r) => r.ok).length;
-    fs.writeFileSync(path.join(SCRATCH, "q3-headed-report.json"), JSON.stringify({ cases: results, pass: nPass, total: results.length }, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "q3-headed-report.json"), JSON.stringify({ cases: results, pass: nPass, total: results.length }, null, 2));
     log(`KẾT QUẢ HEADED Q3: ${nPass}/${results.length} pass`);
     process.exitCode = nPass === results.length ? 0 : 1;
   } catch (e) {

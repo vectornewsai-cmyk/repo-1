@@ -43,6 +43,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -337,7 +338,7 @@ async function main() {
     fs.mkdirSync(TMPDIR, { recursive: true });
     fs.rmSync(PROFILE, { recursive: true, force: true });
     fs.mkdirSync(VITE_CFG_DIR, { recursive: true });
-    fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, TMPDIR=${TMPDIR}`);
 
     const viteLogFd = fs.openSync(path.join(SCRATCH, "r65-vite.log"), "w");
@@ -478,13 +479,13 @@ async function main() {
     // Lưu spec + snapshot để phần so sánh Node dùng.
     fs.mkdirSync(RENDER_DIR, { recursive: true });
     for (const [k, spec] of Object.entries(specs)) {
-      fs.writeFileSync(path.join(RENDER_DIR, `spec-${k}.json`), JSON.stringify(spec, null, 2));
+      writeFileEpermRetry(path.join(RENDER_DIR, `spec-${k}.json`), JSON.stringify(spec, null, 2));
     }
-    fs.writeFileSync(path.join(SCRATCH, "r65-preview-snaps.json"), JSON.stringify(snaps, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "r65-preview-snaps.json"), JSON.stringify(snaps, null, 2));
     log(`spec đã lưu: ${Object.keys(specs).join(", ")}; snapshot đã lưu (${Object.keys(snaps).length} slot)`);
 
     const nPass = results.filter((r) => r.ok).length;
-    fs.writeFileSync(path.join(SCRATCH, "r65-headed-report.json"), JSON.stringify({ cases: results, pass: nPass, total: results.length, proxyUsed }, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "r65-headed-report.json"), JSON.stringify({ cases: results, pass: nPass, total: results.length, proxyUsed }, null, 2));
     log(`KẾT QUẢ HEADED R65 S7 (preview): ${nPass}/${results.length} pass`);
     process.exitCode = nPass === results.length ? 0 : 1;
   } catch (e) {

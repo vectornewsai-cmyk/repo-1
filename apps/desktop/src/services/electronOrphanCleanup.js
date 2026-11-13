@@ -93,6 +93,9 @@
  */
 
 const fs = require('node:fs');
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte (port JS của
+// apps/web/scripts/eperm-retry.mjs; xem services/epermRetry.js).
+const { writeFileEpermRetry } = require('./epermRetry');
 const path = require('node:path');
 
 const ELECTRON_PIDFILE_NAME = 'electron.pid.json';
@@ -144,7 +147,7 @@ function writeElectronPidfile(userDataDir, record, log) {
   try {
     fs.mkdirSync(userDataDir, { recursive: true });
     const tmp = `${file}.${process.pid}.tmp`;
-    fs.writeFileSync(tmp, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+    writeFileEpermRetry(tmp, `${JSON.stringify(payload, null, 2)}\n`, { label: 'desktop-electron-pidfile' });
     fs.renameSync(tmp, file);
     return true;
   } catch (e) {

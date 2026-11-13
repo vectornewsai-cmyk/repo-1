@@ -51,6 +51,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -455,8 +456,8 @@ const main = async () => {
       rangeRequests: rangeLog.length, rangeLog: rangeLog.slice(-60),
       scope: "POOL-LEVEL: element do MediaPool.videoFor() của PreviewCanvas thật tạo (lấy instance qua fiber, item đưa vào bằng videoFor trực tiếp, không qua timeline UI; seek do harness gán currentTime trực tiếp, không qua vòng sync preview). Src HTTP drip/treo là mô phỏng nhỏ giọt có nhật ký range (như Z5), không phải mạng chậm thật. Vòng sync preview không chạy cho các element này vì project rỗng — số đo chứng minh trần trên element pool, không chứng minh vòng sync tự seek chậm 40 s.",
     };
-    fs.writeFileSync(path.join(opts.scratch, "pool-cap-evidence.json"), JSON.stringify(evidence, null, 2));
-    fs.writeFileSync(path.join(opts.scratch, "pool-cap-entries.json"), JSON.stringify(entries, null, 2));
+    writeFileEpermRetry(path.join(opts.scratch, "pool-cap-evidence.json"), JSON.stringify(evidence, null, 2));
+    writeFileEpermRetry(path.join(opts.scratch, "pool-cap-entries.json"), JSON.stringify(entries, null, 2));
     console.log(`[poolcap] entries=${entries.length} maxSamples=${evidence.maxSamplesPerEntry} maxDropped=${evidence.maxDroppedSeekingSamples} capHit=${evidence.capHit} validateProblems=${validateProblemsTotal}`);
     console.log(`[poolcap] evidence → ${path.join(opts.scratch, "pool-cap-evidence.json")}`);
   } finally {

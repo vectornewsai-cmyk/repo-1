@@ -57,6 +57,7 @@
 // đã dọn thay, như W1 đã kết luận).
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -436,7 +437,7 @@ async function main() {
               badgeFinal: (await cdp.evalJs(STATUS_JS)).badge?.text ?? null,
               trace,
             };
-            fs.writeFileSync(path.join(SCRATCH, "x1-success-trace.json"), JSON.stringify(success, null, 2));
+            writeFileEpermRetry(path.join(SCRATCH, "x1-success-trace.json"), JSON.stringify(success, null, 2));
           }
         }
         shotLog.push(`trang ${page} shot ${shot}: ${cls}`);

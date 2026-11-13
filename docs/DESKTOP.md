@@ -43,7 +43,9 @@ npm run smoke:desktop
 # chụp màn hình, in JSON VCUT_SMOKE_RESULT rồi thoát.
 ```
 
-Kết quả smoke test 06/11 trên VM này (2vCPU/8GB, Xvfb): `ok: true`,
+Kết quả smoke test 06/11 trên VM này (4 vCPU/8GB, Xvfb — đính chính F10:
+bản trước ghi "2vCPU" là sai; theo số đo cùng ngày 06/11 ở RESULTS.md §5,
+VM lúc đó đã là 4 vCPU): `ok: true`,
 `hasPreloadApi: true`, `hasNativeFileApi: true`, `rootChildren: 1`,
 `textLen: 2154`, `secureContext: true`, URL `app://vcut/index.html`.
 Lỗi `dbus` trong log là nhiễu môi trường (VM không có system bus), không
@@ -90,6 +92,18 @@ npm run build:desktop    # build web + build desktop + copy dist-web + electron-
   vì sao không `loadFile`: đường dẫn tuyệt đối của Vite build vỡ dưới
   `file://`, và scheme riêng cho secure context để IndexedDB/localStorage
   của web app hoạt động.
+- **Quyết định ship (ROUND82-J8, 10/11 — cập nhật § trên):** profile mặc định
+  là **`full`** — AppImage bundle bridge + render + cả 4 slim venv
+  (caption/tts/reframe/**bgremove**, bgremove đã có venv từ đợt 53 J8:
+  707 MB, rembg 2.0.60). AppImage full đo thật **556.967.568 byte**
+  (sha256 `43a2d045…57be`); profile `minimal` (không venv) ~148 MB chỉ dùng
+  cho máy ít đĩa/CI. Model AI KHÔNG bundle — tổng 4 model đã verify SHA256
+  là **3.707.375.022 byte (3,45 GiB)**, tải lần đầu trong app. Script ship
+  chuẩn (một lệnh, build → prepackage → AppImage → verify → probe AI →
+  smoke → kiểm chứng dọn bridge mồ côi):
+  `npm run package:ship` (xem `apps/desktop/scripts/package-ship.mjs`).
+  Chi tiết + số đo + giới hạn xem
+  `docs/PHASE9_ROUND82_J8_ELECTRON_SHIP_SERVICES_LIMITS.md`.
 - File native (`.vcut`) không commit vào repo (xem
   `docs/PHASE10_G5_DESKTOP_UX_LIMITS.md` §6 về quy ước binary).
 

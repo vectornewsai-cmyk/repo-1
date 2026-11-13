@@ -29,6 +29,7 @@
  */
 import { spawn, execSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -120,7 +121,7 @@ class CDP {
   }
   async shot(name) {
     const r = await this.send("Page.captureScreenshot", { format: "png" });
-    fs.writeFileSync(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
+    writeFileEpermRetry(path.join(SCRATCH, name), Buffer.from(r.data, "base64"));
     return name;
   }
 }
@@ -269,7 +270,7 @@ async function main() {
     fs.mkdirSync(TMPDIR, { recursive: true });
     fs.mkdirSync(BRIDGE_WORK_DIR, { recursive: true });
     fs.rmSync(PROFILE, { recursive: true, force: true });
-    fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
     log(`vite :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, bridge :${bridgePort}, static :${STATIC_PORT}`);
 
     const staticLogFd = fs.openSync(path.join(SCRATCH, "r10p-static.log"), "w");
@@ -395,7 +396,7 @@ async function main() {
           }
           const sidecar = path.join(proxiesDir, "r10-test-1080p__proxy_720p.json");
           const sidecarJson = fs.existsSync(sidecar) ? JSON.parse(fs.readFileSync(sidecar, "utf8")) : null;
-          fs.writeFileSync(path.join(SCRATCH, "r10-measure-proxy-redo.json"), JSON.stringify({ done, cardAfter: card1, newFiles, headOk, probeOut, sidecarJson, seenToasts, elapsedMs }, null, 2));
+          writeFileEpermRetry(path.join(SCRATCH, "r10-measure-proxy-redo.json"), JSON.stringify({ done, cardAfter: card1, newFiles, headOk, probeOut, sidecarJson, seenToasts, elapsedMs }, null, 2));
           await cdp.shot("r10-proxy-redo-after.png");
           const problems = [];
           if (!done) problems.push("proxyUrl không xuất hiện sau 120s");
@@ -447,7 +448,7 @@ async function main() {
           }
           const elapsedMs = Date.now() - t0;
           const expectedToast = VI.mediabin.smallEnough.replace("{name}", "r4-test.mp4");
-          fs.writeFileSync(path.join(SCRATCH, "r10-measure-proxy-skipped.json"), JSON.stringify({ settled, expectedToast, elapsedMs }, null, 2));
+          writeFileEpermRetry(path.join(SCRATCH, "r10-measure-proxy-skipped.json"), JSON.stringify({ settled, expectedToast, elapsedMs }, null, 2));
           await cdp.shot("r10-proxy-skipped.png");
           await drainErrors(cdp);
           // Toast có kèm nút đóng "×" ở cuối textContent nên so startsWith
@@ -462,8 +463,8 @@ async function main() {
     }
     await drainErrors(cdp);
 
-    fs.writeFileSync(path.join(SCRATCH, "r10-proxy-redo-report.json"), JSON.stringify({ results, phaseErrors, at: new Date().toISOString() }, null, 2));
-    fs.writeFileSync(path.join(SCRATCH, "r10-proxy-redo-log.txt"), logLines.join("\n") + "\n");
+    writeFileEpermRetry(path.join(SCRATCH, "r10-proxy-redo-report.json"), JSON.stringify({ results, phaseErrors, at: new Date().toISOString() }, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "r10-proxy-redo-log.txt"), logLines.join("\n") + "\n");
     if (phaseErrors.length === 0) pass("P9 0 lỗi trang trong phiên redo", "window.onerror / unhandledrejection = 0");
     else fail("P9 0 lỗi trang trong phiên redo", `${phaseErrors.length} lỗi: ${phaseErrors.slice(0, 5).join(" | ")}`);
 
@@ -474,7 +475,7 @@ async function main() {
     process.exit(failed.length ? 1 : 0);
   } catch (e) {
     log("HARNESS ERROR: " + (e && e.stack || e));
-    try { fs.writeFileSync(path.join(SCRATCH, "r10-proxy-redo-log.txt"), logLines.join("\n") + "\n"); } catch {}
+    try { writeFileEpermRetry(path.join(SCRATCH, "r10-proxy-redo-log.txt"), logLines.join("\n") + "\n"); } catch {}
     killAll();
     process.exit(2);
   }

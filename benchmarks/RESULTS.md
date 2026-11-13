@@ -1,11 +1,34 @@
 # RESULTS.md — Kết quả benchmark VCut Studio
 
-> Mọi số liệu VCut trong file này là **số đo thật** trên máy test ghi dưới đây (ngày đo: 2026-10-20).
+> Mọi số liệu VCut trong file này là **số đo thật** trên máy test ghi dưới đây.
 > Mọi số liệu CapCut đều là **ƯỚC TÍNH** từ tài liệu/cộng đồng công khai — CapCut/ByteDance
 > không công bố benchmark chính thức và không có số đo CapCut trên cùng máy này.
 > Đọc kèm `BENCH_LIMITS.md` trước khi trích dẫn.
 
-## Cấu hình máy test
+## Nhãn máy — đọc trước khi trích số tuyệt đối (cập nhật đợt 78 F10, 10/11/2026)
+
+VM test đã đổi phần cứng dưới chân nhiều lần. Số tuyệt đối **chỉ so được trong cùng
+một thế hệ máy**; thứ tự/tỉ lệ tương đối giữa các cấu hình trong cùng một lượt đo
+vẫn đứng. Ghi nhãn máy theo bảng dưới đây khi trích bất kỳ số nào trong file này:
+
+| Thế hệ máy | CPU | vCPU | RAM | GPU | Dùng cho |
+|---|---|---|---|---|---|
+| **Thế hệ 1** (đo 20/10 → 24/10/2026) | AMD EPYC 7D13 | 2 | 7,8 GB | Không có | §1–§4 (đo 20/10), §7, §8 (đo 24/10) |
+| **Thế hệ 2** (đo 06–07/11/2026) | model CPU không ghi lại lúc đo | 4 | ~7,8 GB | Không có | §5 (06/11), §9 (07/11) |
+| **Thế hệ 3** (đo 08–09/11/2026) | AMD EPYC 9D25 | 4 | 7,7 GB | Không có | E8 (09/11), đợt 65 S8, đợt 67 U2 |
+| **Thế hệ 4** (hiện tại, từ 10/11/2026) | AMD EPYC 9D64 | 4 | 7,7 GB | Không có | F10 đo lại VAAPI/WebKit (xem `docs/PHASE9_ROUND78_F10_BENCH_LABELS_LIMITS.md`) |
+
+> ⚠️ ĐÍNH CHÍNH F10: máy đo lúc E8 (09/11) là 9D25, nhưng đến sáng 10/11
+> `/proc/cpuinfo` đã là **EPYC 9D64** — VM lại đổi host. Mọi nhãn "9D25" trong
+> docs đợt 77 là đúng tại thời điểm đo (09/11), không phải nhãn máy hiện tại.
+> Các đợt benchmark sau phải ghi cả model CPU + ngày đo, không ghi "VM này"
+> chung chung. Chi tiết: `docs/PHASE9_ROUND78_F10_BENCH_LABELS_LIMITS.md` §2.
+>
+> ⚠️ ĐÍNH CHÍNH 11/11 (đợt 87 O7): lúc đo sáng 11/11 `/proc/cpuinfo` lại là
+> **EPYC 9D25** — host đổi lần nữa trong đêm 10 → 11/11. Số §10 ghi nhãn
+> 9D25 theo lúc đo; đừng gộp số tuyệt đối §10 với số 9D64 ngày 10/11.
+
+## Cấu hình máy test — thế hệ 1 (đo 20/10/2026; áp dụng cho §1–§4)
 
 | Hạng mục | Giá trị |
 |---|---|
@@ -28,7 +51,8 @@
 | 3840×2160 (4K) | 10s | veryfast/23 | 110.5s | **2.71 fps** | 0.09x |
 | 1920×1080 (1080p) | 10s | **medium/20 (mặc định app)** | 47.9s | **6.26 fps** | 0.21x |
 
-Đọc số liệu:
+Đọc số liệu (máy thế hệ 1: 7D13, 2 vCPU — không so trực tiếp với số đo trên máy
+4 vCPU ở §5/§9):
 - Trên 2 vCPU, render chạy chậm hơn realtime ở mọi độ phân giải (RT < 1).
 - Tỉ lệ nghịch gần tuyến tính theo số pixel: 4K (8.3M px) chậm ~5.5 lần 720p (0.92M px).
 - Preset mặc định của app (medium/CRF20) chậm hơn veryfast ~37% ở 1080p — đổi lại chất lượng cao hơn.
@@ -43,7 +67,7 @@
 | tts_medium.wav | 7.36s | 16.6s | **0.44x** | Steady-state |
 | tts_short.wav | 4.00s | 13.4s | **0.30x** | Steady-state |
 
-- Steady-state: **0.30–0.44x realtime** trên 2 vCPU. Transcribe đúng nội dung
+- Steady-state: **0.30–0.44x realtime** trên 2 vCPU (máy thế hệ 1, đo 20/10). Transcribe đúng nội dung
   (long: 10 segments, medium: 4, short: 2 — khớp số câu của văn bản gốc).
 - Cold-start lần đầu tốn ~3 phút load model — bridge giữ model trong RAM nên
   các lần gọi sau không chịu chi phí này.
@@ -84,7 +108,7 @@
 | 3s | 90 | 290.5s | 0.31 fps (gồm tải + load model lần đầu) |
 | 10s | 300 | 704.3s | **0.43 fps** (steady-state) |
 
-- Steady-state **~0.43 fps ≈ 2.3 giây/frame** trên 2 vCPU.
+- Steady-state **~0.43 fps ≈ 2.3 giây/frame** trên 2 vCPU (máy thế hệ 1, đo 20/10).
 - Session mặc định của app là **birefnet-general** (chất lượng cao hơn) nhưng
   **bị OOM trên máy 8GB** → benchmark dùng u2net (fallback chính thức).
   Trên máy ≥16GB RAM hoặc có GPU, birefnet-general chạy được và chất lượng mask
@@ -95,7 +119,8 @@
 ## 5. Preview FPS
 
 **ĐÃ ĐO (đợt 52 I9, 2026-11-06)** — Chromium thật (headless + headed Xvfb), viewport
-1440×900, canvas preview 872×276 (dpr=1), VM 4 vCPU không GPU. Chi tiết đầy đủ:
+1440×900, canvas preview 872×276 (dpr=1), VM 4 vCPU không GPU (máy thế hệ 2;
+model CPU không ghi lại lúc đo). Chi tiết đầy đủ:
 `docs/PHASE9_ROUND52_I9_PREVIEW_FPS_LIMITS.md`; JSON từng lần đo trong
 `benchmarks/results/preview-fps-r52-*.json`.
 
@@ -126,7 +151,7 @@ khi đang play project 1080p có LUT + effect). Harness mới: `apps/web/scripts
 > của CapCut (help center) và báo cáo cộng đồng; **không phải số đo**, và phần lớn
 > lợi thế của CapCut đến từ **GPU** — thứ máy test này không có.
 
-| Hạng mục | VCut (đo thật, 2 vCPU, không GPU) | CapCut (ước tính, máy người dùng điển hình có GPU) |
+| Hạng mục | VCut (đo thật — nhãn máy theo từng dòng; mặc định máy thế hệ 1: 2 vCPU 7D13, không GPU) | CapCut (ước tính, máy người dùng điển hình có GPU) |
 |---|---|---|
 | Render 1080p | 8.6 fps (veryfast) / 6.3 fps (mặc định) | Nhanh hơn realtime nhờ encode phần cứng GPU (NVENC/QuickSync/VideoToolbox) — tài liệu CapCut xác nhận dùng hardware acceleration cho encode/decode/preview |
 | Render 4K | 2.7 fps | Chậm hơn 1080p đáng kể kể cả có GPU; bản web render bằng cloud, bản desktop "nhanh nhất" theo CapCut |
@@ -153,7 +178,7 @@ khi đang play project 1080p có LUT + effect). Harness mới: `apps/web/scripts
 
 ## 7. Phase 8 refresh (2026-10-24) — proxy + tính năng Phase 7
 
-> Máy đo: cùng VM như mục trên (AMD EPYC 7D13, 2 vCPU, 7.8GB RAM, không GPU,
+> Máy đo: cùng VM thế hệ 1 như mục trên (AMD EPYC 7D13, 2 vCPU, 7.8GB RAM, không GPU,
 > FFmpeg 8.1.2). Spec khác đợt 2026-10-20: **clip 5s, 1 video + text overlay**
 > (đợt cũ: 10s, 2 clip + fade) — **không so sánh trực tiếp 2 đợt theo số tuyệt đối**.
 > Mỗi cấu hình: 1 warm-up + 1 lần đo. Số liệu thô: `benchmarks/results/phase8.jsonl`.
@@ -221,7 +246,7 @@ canvas full-res) nằm ngoài phạm vi đo này.
 
 ## 8. Phase 9 R3 — Preview FPS thật (headless) + GPU encode harness + proxy tự động
 
-> Đo ngày 2026-10-24 trên VM 2 vCPU, 8GB RAM, không GPU, Chromium headless
+> Đo ngày 2026-10-24 trên VM thế hệ 1 (2 vCPU, 8GB RAM, không GPU), Chromium headless
 > (Playwright cache chromium-1248), project mẫu 8s (2 video + 1 text).
 > Script: `apps/web/scripts/bench-preview-fps.mjs` (đếm rAF khi bấm Phát),
 > số thô: `benchmarks/results/preview-fps.json` (10s) và
@@ -272,8 +297,9 @@ Tắt checkbox (lưu localStorage `vcut-auto-proxy`) thì không tự tạo nữ
 
 > Số trong mục này lấy từ LIMITS của luồng đo, không đo lại trong đợt
 > docs-only 08/11. Preview FPS đợt 52 I9 đã có ở §5 — không lặp lại ở đây.
+> Máy đo §9: VM 4 vCPU thế hệ 2 (model CPU không ghi lại lúc đo), không GPU.
 
-### 9.1 Enhance render FPS thật 720p (đợt 59 P9, 07/11)
+### 9.1 Enhance render FPS thật 720p (đợt 59 P9, 07/11 — máy thế hệ 2: VM 4 vCPU, không GPU)
 
 Harness: `server/render/src/test_round59_p9_enhance_render.js` (52 pass,
 0 fail). Cấu hình khớp RESULTS §7.1 (veryfast/CRF23, 720p 5s = 150 frame,
@@ -312,7 +338,7 @@ trong `docs/PHASE9_ROUND59_P9_ENHANCE_RENDER_LIMITS.md` §3.
 - Chưa đo: FPS enhance lặp lại nhiều lần, enhance ở 1080p, render MP4
   cho đúng combo preset (nợ ROUND59 §6.9).
 
-### 9.2 GOP trial-decode — cap 32 MiB + tốc độ decode thật (đợt 59 P6, 07/11)
+### 9.2 GOP trial-decode — cap 32 MiB + tốc độ decode thật (đợt 59 P6, 07/11 — máy thế hệ 2: VM 4 vCPU, không GPU)
 
 Nguồn: `docs/PHASE9_ROUND59_P6_LARGE_SAMPLE_LIMITS.md`. Đo headed thật
 (Xvfb, Chromium, VM đang tải do các luồng đợt 59 chạy song song).
@@ -341,7 +367,82 @@ I1 đợt 52). Số cũ trong §3 ("~1,5–2,5× realtime khi model đã nạp")
 
 - Tốc độ infer thuần sau warmup (chưa tính nạp model ~10–12,5 s):
   **0,12–0,75× realtime; median 0,32× (đợt 49) / 0,44× (đợt 50)**,
-  **72 lần đo**, trên VM này (2 vCPU, không GPU), cho cả 25 giọng
-  VieNeu-TTS v3 Turbo.
+  **72 lần đo**, trên VM 4 vCPU thế hệ 2 (model CPU không ghi lại lúc đo),
+  không GPU, đo 06/11, cho cả 25 giọng VieNeu-TTS v3 Turbo.
+  (Đính chính F10: bản trước ghi "2 vCPU" ở dòng này là sai — ngày 06/11 VM
+  đã là 4 vCPU theo số đo cùng ngày ở §5; số đo không đổi, chỉ sửa nhãn máy.)
 - Hệ số theo giọng đã đo lặp (đợt 51 H2, đợt 52 I1); mô hình đường cong
   theo giọng thay ngưỡng nhị phân 13% (đợt 51 H1).
+
+## 10. Phase 9 đợt 87 O7 — Mask bám motion track: render + sinh video mask + preview FPS
+
+> Đo ngày 11/11/2026 trên VM **AMD EPYC 9D25, 4 vCPU, 7,7 GB RAM, không GPU**
+> (host lại đổi so với 9D64 ngày 10/11 — xem đính chính ở đầu file),
+> FFmpeg 8.1.2, load VM 3,7–9,1 (9 luồng đợt 87 khác chạy song song).
+> Chi tiết: `docs/PHASE9_ROUND87_O7_MASK_TRACK_BENCH_LIMITS.md`; số thô:
+> `benchmarks/results/round87-o7-mask-track.json`,
+> `benchmarks/results/preview-fps-r87-o7-{control,static,tracked}.json`;
+> script: `benchmarks/render/bench_round87_o7_mask_track.cjs`.
+>
+> **Phạm vi:** "tracked mask" đo bằng đường mask-video keyframe D4 có sẵn
+> (`mask_anim.py` → ffv1 gray → `movie+blend+alphamerge`), keyframes tay
+> x 0,2 → 0,8 mô phỏng quỹ đạo track — lúc O7 chạy, O2 (track thật) chưa
+> stage gì. Chi phí render/sinh video mask chỉ phụ thuộc hình học + số
+> frame + độ phân giải, không phụ thuộc keyframe từ tay hay từ track.
+> Chưa đo chi phí chạy track (OpenCV) và độ chính xác bám.
+
+### 10.1 Render fps — cùng clip testsrc2 720p 5 s (150 frame), veryfast/CRF23, rect w=0,4 h=0,4 feather=0,2
+
+| Cấu hình | n | FPS |
+|---|---|---|
+| Baseline (không mask) | 2 | 41,20 / 41,57 |
+| Mask tĩnh `--mask-mode png` | 2 | 34,01 / 34,84 |
+| Mask tĩnh `--mask-mode geq` | 2 | 4,28 / 4,83 |
+| **Tracked mask (video mask D4)** | 2 | **10,87 / 18,91** (dao động 74% theo tải VM) |
+| Tracked + denoise 0,5 | 1 | 16,34 |
+| Tracked + stabilize smoothing 10 | 1 | 11,05 |
+
+- Tracked nhanh hơn geq tĩnh **~2,4–4,4×**, chậm hơn PNG tĩnh ~2–3× (phần
+  lớn là sinh video mask ~4,2 s + decode video mask trong graph).
+- Geq 4,28–4,83 fps nhanh hơn baseline Phase 8 (0,97 fps, §7.1) vì khác
+  máy (4 vCPU 9D25 thay cho 2 vCPU 7D13) — **không so trực tiếp số tuyệt
+  đối**; hướng không đổi (geq vẫn chậm nhất, ~8× chậm hơn PNG tĩnh).
+- Kiểm chứng frame thật: tracked@2,5 ≈ static-png@2,5 (mean 0,234,
+  %pixel lệch >8 là 0,489% — quỹ đạo qua đúng tâm lúc giữa clip);
+  tracked@0,2 vs @4,8 mean 40,65 (21,5% pixel lệch >8 — mask di chuyển
+  rõ); png vs geq mean 0,251 (khớp R2).
+
+### 10.2 Chi phí sinh video mask (`mask_anim.py`, n=1 mỗi cấu hình)
+
+| Cấu hình | Frame | Wall | s/frame | .mkv |
+|---|---|---|---|---|
+| 720p 2 s, 2 kf | 60 | 1,79 s | 0,0298 | 530 KB |
+| 720p 5 s, 2 kf | 150 | 4,21 s | 0,0281 | 1,33 MB |
+| 720p 5 s, **11 kf** (mỗi 0,5 s) | 150 | 3,88 s | 0,0259 | 1,33 MB |
+| 720p 10 s, 2 kf | 300 | 7,57 s | 0,0252 | 2,65 MB |
+| 1080p 5 s, 2 kf | 150 | 9,99 s | 0,0666 | 3,01 MB |
+
+- Tuyến tính theo số frame (~0,025–0,030 s/frame ở 720p); 1080p đắt hơn
+  ~2,4× mỗi frame. **Mật độ keyframe không ảnh hưởng chi phí** (11 kf ≈
+  2 kf trên cùng 150 frame).
+- Đĩa tạm nhỏ: 1 frame PNG 2.204 B (720p) / 3.940 B (1080p) → 150 frame
+  ≈ 331 KB / 591 KB, xoá sau khi encode xong. Video mask sinh lại mỗi
+  lần render (chưa có cache qua các lần render).
+
+### 10.3 Preview FPS với tracked mask (Chromium headless 1254, vite dev, canvas 872×276, 6 s sau warmup 1 s)
+
+Project mẫu "Dự án mẫu" (2 webm 640×360 + 1 text); cửa sổ đo trong clip
+đầu; n=1 mỗi arm.
+
+| Arm | FPS | Frame | p50 frame | CPU Chrome |
+|---|---|---|---|---|
+| Không mask | 21,48 | 130 | 40,1 ms | 64,5% |
+| Static mask | 13,15 | 80 | 75,5 ms | 76,2% |
+| Tracked mask | 15,15 | 92 | 74,7 ms | 80,1% |
+
+- **Tracked ≈ static ở preview** (p50 gần như giống hệt 74,7 vs 75,5 ms):
+  nội suy hình học rẻ; cái đắt là vòng lặp alpha từng pixel của mask nói
+  chung (`maskAlphaAt`). Mask tự nó tốn ~30–40% FPS preview so với không
+  mask. n=1 nên đừng trích số tuyệt đối làm số ổn định.
+- Playhead chỉ tiến ~2,5 s trong 6 s wall ở cả 3 arm (decode-bound trên
+  VM) — FPS rAF không đồng nghĩa phát mượt.

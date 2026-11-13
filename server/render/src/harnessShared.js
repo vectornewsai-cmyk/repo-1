@@ -91,6 +91,10 @@
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
+// Đợt 83 K8: helper chống sóng EPERM dùng chung (ESM — require được từ CJS
+// trên Node ≥ 22.12; VM này chạy Node v24). Chỉ retry khi lỗi mang dấu
+// EPERM; xem apps/web/scripts/eperm-retry.mjs.
+const { writeFileEpermRetry, runSyncEpermRetry } = require("../../../apps/web/scripts/eperm-retry.mjs");
 
 let dissolveFrandFn = null;
 let radialWeightFn = null;
@@ -441,10 +445,12 @@ function yuv420PaddedDims(w, h) {
  * là thư mục tạm do caller sở hữu (harness tự dọn như thường lệ).
  */
 function runFfmpegShared(args, label) {
-  const r = spawnSync("ffmpeg", ["-v", "error", "-y", ...args], { encoding: "utf8" });
-  if (r.status !== 0) {
-    throw new Error(`${label}: ffmpeg exit ${r.status}: ${(r.stderr || "").slice(0, 300)}`);
-  }
+  // Đợt 83 K8: retry khi ffmpeg fail vì sóng EPERM (stderr "Operation not
+  // permitted" — J4: 13 lần transcode fail liên tiếp tối 10/11). Lỗi khác
+  // (sai tham số/codec) ném ngay sau lần đầu. Message lỗi đổi dạng nhẹ
+  // ("thoát mã N" thay cho "ffmpeg exit N") — đã grep, không caller nào
+  // match chuỗi cũ.
+  runSyncEpermRetry("ffmpeg", ["-v", "error", "-y", ...args], { label });
 }
 
 /**
@@ -487,7 +493,9 @@ function ffmpegRgbToYuv420(rgb, w, h, workDir, tag, opts = {}) {
   const { w: pw, h: ph } = yuv420PaddedDims(w, h);
   const rawIn = path.join(workDir, `${tag}-rgb-in.raw`);
   const out = path.join(workDir, `${tag}.yuv`);
-  fs.writeFileSync(rawIn, rgb);
+  // Đợt 83 K8: ghi raw-in qua helper EPERM (verify đủ byte — sóng EPERM
+  // từng để lại file 0 byte lặng, J6).
+  writeFileEpermRetry(rawIn, rgb, { label: `ffmpegRgbToYuv420 ${tag} raw-in` });
   const vf = matrix === null
     ? "pad=ceil(iw/2)*2:ceil(ih/2)*2:0:0:black,format=yuv420p"
     : `pad=ceil(iw/2)*2:ceil(ih/2)*2:0:0:black,scale=out_color_matrix=${matrix},format=yuv420p`;
@@ -584,7 +592,8 @@ function ffmpegYuvToRgb420(yuv, w, h, workDir, tag) {
   }
   const yuvIn = path.join(workDir, `${tag}-yuv-in.yuv`);
   const out = path.join(workDir, `${tag}-rgb-out.raw`);
-  fs.writeFileSync(yuvIn, yuv);
+  // Đợt 83 K8: ghi yuv-in qua helper EPERM (verify đủ byte).
+  writeFileEpermRetry(yuvIn, yuv, { label: `ffmpegYuvToRgb420 ${tag} yuv-in` });
   try {
     runFfmpegShared(["-f", "rawvideo", "-pix_fmt", "yuv420p", "-s", `${w}x${h}`, "-i", yuvIn,
       "-f", "rawvideo", "-pix_fmt", "rgb24", "-y", out], `ffmpegYuvToRgb420 ${tag}`);

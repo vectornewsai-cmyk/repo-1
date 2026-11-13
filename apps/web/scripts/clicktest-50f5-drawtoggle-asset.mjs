@@ -50,6 +50,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -324,7 +325,7 @@ try {
     },
     session: { playhead: 0 },
   };
-  fs.writeFileSync(PROJECT_FILE, JSON.stringify(projectEnv, null, 2));
+  writeFileEpermRetry(PROJECT_FILE, JSON.stringify(projectEnv, null, 2));
   log(`ghi ${PROJECT_FILE} (asset ${seed.assetId}, ${seed.bytes} byte)`);
   await cdp.evalJs(`location.reload()`);
   await sleep(3000);
@@ -504,7 +505,7 @@ try {
   if (results.length === 0) { console.log("\n== F5 clicktest: HARNESS ERROR =="); killAll(); process.exit(2); }
   log("(ghi tiếp các case đã chạy, exit 2 vì harness lỗi — không được đọc thành pass đủ)");
 }
-fs.writeFileSync(path.join(SCRATCH, OUT_FILE), JSON.stringify({ results, logLines }, null, 2));
+writeFileEpermRetry(path.join(SCRATCH, OUT_FILE), JSON.stringify({ results, logLines }, null, 2));
 const failed = results.filter((r) => !r.ok);
 console.log(`\n== F5 clicktest: ${results.length - failed.length}/${results.length} pass ==` + (harnessError ? " (HARNESS ERROR — exit 2)" : ""));
 killAll();

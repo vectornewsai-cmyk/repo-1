@@ -43,6 +43,7 @@
 import { spawn, execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -164,13 +165,13 @@ const PAGE = "<!doctype html><meta charset=\"utf-8\"><title>I8 pixel probe</titl
   + "document.body.appendChild(v);\n"
   + "setTimeout(function () { if (!window.__px.done) { window.__px.timeout = true; window.__px.done = true; } }, 25000);\n"
   + "</script>\n";
-fs.writeFileSync(path.join(SCRATCH, "pixel.html"), PAGE);
+writeFileEpermRetry(path.join(SCRATCH, "pixel.html"), PAGE);
 
 // ---------- policy file cho meta-chromium 155 (theo H3 meta155) ----------
 function buildPolicy() {
   const content = Buffer.from("hatch-webgl-all-origins-v1\n", "utf8");
   const file = path.join(SCRATCH, "webgl-policy.txt");
-  fs.writeFileSync(file, content);
+  writeFileEpermRetry(file, content);
   const sha = crypto.createHash("sha256").update(content).digest("hex");
   const out = execFileSync(META155, ["--hatch-validate-webgl-allowed-domains", "--hatch-webgl-allowed-domains-file=" + file, "--hatch-webgl-allowed-domains-sha256=" + sha, "--version"], { encoding: "utf8", timeout: 30000 });
   log("validator 155: " + JSON.stringify(out.slice(0, 200)));
@@ -468,7 +469,7 @@ async function main() {
 
   const RESULTS_FILE = process.env.I8_RESULTS || "i8-results.json";
   const out = { chrome156: "156.0.8078.4", meta155: "155.0.8059.91", refHashes: { "0.0": ref0, "2.5": ref25 }, arms, checks, results };
-  fs.writeFileSync(path.join(SCRATCH, RESULTS_FILE), JSON.stringify(out, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, RESULTS_FILE), JSON.stringify(out, null, 2));
   console.log(JSON.stringify({ checks, arms }, null, 2));
   const failed = checks.filter((c) => c.status === "FAIL").length;
   log("tổng: " + checks.length + " kiểm tra, FAIL=" + failed + " | scratch " + SCRATCH + " | results " + RESULTS_FILE);
