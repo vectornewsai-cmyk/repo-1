@@ -26,6 +26,7 @@
 
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -96,7 +97,7 @@ const PAGE = "<!doctype html><meta charset=\"utf-8\"><title>F6 pixel probe</titl
   + "}, 3000);\n"
   + "setTimeout(function () { if (!window.__px.done) { window.__px.timeout = true; window.__px.done = true; } }, 20000);\n"
   + "</script>\n";
-fs.writeFileSync(path.join(SCRATCH, "pixel.html"), PAGE);
+writeFileEpermRetry(path.join(SCRATCH, "pixel.html"), PAGE);
 
 class TabCdp {
   constructor(wsUrl) {

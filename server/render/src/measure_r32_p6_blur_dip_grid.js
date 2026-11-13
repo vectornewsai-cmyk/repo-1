@@ -58,6 +58,7 @@
  */
 "use strict";
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
 
@@ -270,7 +271,7 @@ async function main() {
       reversedWeightControl: revControl,
     };
     const idx = process.argv.indexOf("--json");
-    if (idx >= 0 && process.argv[idx + 1]) fs.writeFileSync(process.argv[idx + 1], JSON.stringify(result, null, 2));
+    if (idx >= 0 && process.argv[idx + 1]) writeFileEpermRetry(process.argv[idx + 1], JSON.stringify(result, null, 2));
     // Tóm tắt console theo nhóm để đọc nhanh.
     const byTier = {};
     for (const c of cells) byTier[c.tier] = (byTier[c.tier] || 0) + 1;

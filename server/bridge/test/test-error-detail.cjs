@@ -19,6 +19,7 @@
 
 const { EventEmitter } = require("events");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 
@@ -239,7 +240,7 @@ async function main() {
     const w = fs.mkdtempSync(path.join(os.tmpdir(), "vcut-err-test-"));
     const d = path.join(w, "j");
     fs.mkdirSync(d, { recursive: true });
-    fs.writeFileSync(path.join(d, "spec.json"), "{}"); // retry yêu cầu spec còn tồn tại
+    writeFileEpermRetry(path.join(d, "spec.json"), "{}"); // retry yêu cầu spec còn tồn tại
     const job = svc.enqueue({ dir: d, totalDuration: 5 });
     proc.stderr.emit("data", Buffer.from(CURVE_STDERR));
     proc.emit("close", 1, null);

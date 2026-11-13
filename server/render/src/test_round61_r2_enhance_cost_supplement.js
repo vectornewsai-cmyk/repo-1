@@ -30,6 +30,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
@@ -72,7 +73,7 @@ const specWith = (tracks, W, H, fps) => ({
 });
 function render(spec, name) {
   const specPath = path.join(work, `${name}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const outPath = path.join(work, `${name}.mp4`);
   const t0 = Date.now();
   const r = spawnSync("node", [path.join(RENDER, "src", "render.js"), "--spec", specPath,
@@ -244,7 +245,7 @@ for name, v in [("trail", trail), ("lead", lead), ("static", stat)]:
     print(f"{name} n={len(a)} mean={a.mean():.4f} median={np.median(a):.4f} p90={np.percentile(a, 90):.4f} max={a.max():.4f}")
 `;
 const ghostSoftPy = path.join(work, "ghost_soft.py");
-fs.writeFileSync(ghostSoftPy, GHOST_SOFT_PY);
+writeFileEpermRetry(ghostSoftPy, GHOST_SOFT_PY);
 function ghostSoftOf(origDir, rendDir) {
   const r = spawnSync("python3", [ghostSoftPy, origDir, rendDir], { encoding: "utf8" });
   if (r.status !== 0) throw new Error(`ghost_soft.py lỗi: ${r.stdout} ${r.stderr}`);

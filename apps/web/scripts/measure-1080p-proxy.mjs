@@ -21,6 +21,7 @@
  */
 import { spawn, execSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -220,12 +221,12 @@ async function runArm(name, cfg) {
       ? { samples: cpus.length, avg: Number((cpus.reduce((a, b) => a + b, 0) / cpus.length).toFixed(1)), max: Math.max(...cpus), note: "%CPU theo 1 core (100% = 1 core đầy); VM 4 core nên trần ~400%." }
       : null;
     fs.mkdirSync(path.dirname(path.join(ROOT, cfg.out)), { recursive: true });
-    fs.writeFileSync(path.join(ROOT, cfg.out), JSON.stringify(result, null, 2) + "\n");
+    writeFileEpermRetry(path.join(ROOT, cfg.out), JSON.stringify(result, null, 2) + "\n");
     console.log(`[${name}] frames=${result.frames} fpsAvg=${result.fpsAvg} frameTime p5/p50/p95=${result.frameTimeMs.p5}/${result.frameTimeMs.p50}/${result.frameTimeMs.p95}ms cpuChrome avg/max=${result.cpuChromePct ? `${result.cpuChromePct.avg}/${result.cpuChromePct.max}%` : "n/a"} timer16Hz=${result.timer16HzRate}/s loadAvg ${result.loadAvg1Before}->${result.loadAvg1After} time ${result.timeDisplay.before} -> ${result.timeDisplay.end} -> ${path.join(ROOT, cfg.out)}`);
   } catch (e) {
     result.error = e instanceof Error ? e.message : String(e);
     fs.mkdirSync(path.dirname(path.join(ROOT, cfg.out)), { recursive: true });
-    fs.writeFileSync(path.join(ROOT, cfg.out), JSON.stringify(result, null, 2) + "\n");
+    writeFileEpermRetry(path.join(ROOT, cfg.out), JSON.stringify(result, null, 2) + "\n");
     console.error(`[${name}] LỖI: ${result.error}`);
     process.exitCode = 1;
   } finally {

@@ -7,8 +7,9 @@
  *
  * Lưu ý trung thực (đợt 60 Q1 — preview nay ÁP enhance ở mức xấp xỉ,
  * xem lib/enhancePreview.ts + docs/PHASE9_ROUND60_Q1_PREVIEW_ENHANCE_LIMITS.md):
- * denoise → blur nhẹ, stabilize → zoom crop gợi ý, deinterlace KHÔNG có
- * xấp xỉ trực quan (yadif chỉ ở render). Toggle "xem trước enhance" trong
+ * denoise → blur nhẹ, stabilize → zoom crop gợi ý, deinterlace → tap dọc
+ * +0.5px (đợt 75 C8 — CHỈ khi tỉ lệ vẽ thật ≥ 0.9, tức xem gần full-res;
+ * ở cỡ nhỏ downscale đã giấu răng cưa nên không áp). Toggle "xem trước enhance" trong
  * panel này bật/tắt phần xấp xỉ đó; bản render luôn áp enhance thật.
  * - Chống rung KHÔNG dùng chung được với speedKeyframes (validator chặn,
  *   vì pass vidstabdetect phân tích theo trim gốc, không khớp đoạn ramp).

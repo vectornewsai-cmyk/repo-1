@@ -36,6 +36,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -268,7 +269,7 @@ const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "f1-keyframe-null-"));
 function renderCli(specObj, outName) {
   const specPath = path.join(tmpDir, `${outName}.json`);
   const outPath = path.join(tmpDir, `${outName}.mp4`);
-  fs.writeFileSync(specPath, JSON.stringify(specObj), "utf8");
+  writeFileEpermRetry(specPath, JSON.stringify(specObj), "utf8");
   const r = spawnSync(process.execPath,
     [RENDER_JS, "--spec", specPath, "--out", outPath, "--media-dir", MEDIA_DIR, "-y", "-q"],
     { encoding: "utf8", timeout: 120000 });

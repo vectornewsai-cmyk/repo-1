@@ -28,7 +28,13 @@
 import type {
   AdoptLegacyHistoryResult,
   LegacyFragmentAmbiguous,
+  ProjectVersion,
 } from "./projectHistory.ts";
+// Import kèm đuôi .ts theo quy ước strip-types (xem projectHistory.ts):
+// vite và node strip-types đều resolve được đuôi .ts, chỉ tsc là báo
+// TS5097 nên dòng import này mang @ts-ignore có chủ đích.
+// @ts-ignore: TS5097, đuôi .ts cho strip-types (import một dòng để @ts-ignore phủ đúng dòng specifier)
+import { legacyChainDisplay } from "./projectNameRegistry64R6.ts";
 
 /** Một chuỗi legacy mơ hồ đang chờ user quyết định (đủ bằng chứng để hiện UI). */
 export interface AmbiguousLegacyItem {
@@ -142,6 +148,19 @@ export function dismissLegacyId(id: string): void {
   if (ids.includes(id)) return;
   ids.push(id);
   saveDismissedLegacyIds(ids);
+  emitDismissed();
+}
+
+/**
+ * Đợt 67 U6 — MỞ LẠI một id đã bỏ qua: gỡ khỏi danh sách "đã bỏ qua"
+ * để lần adopt/quét sau hỏi lại chuỗi đó (dữ liệu trong kho không đổi).
+ * Không tự đưa vào hàng đợi — caller (modal) đưa lại sau khi mở lại.
+ */
+export function undismissLegacyId(id: string): void {
+  const ids = getDismissedLegacyIds();
+  if (!ids.includes(id)) return;
+  saveDismissedLegacyIds(ids.filter((x) => x !== id));
+  emitDismissed();
 }
 
 /** Xóa toàn bộ danh sách đã bỏ qua (để lần mở sau hỏi lại các chuỗi mơ hồ). */
@@ -151,6 +170,140 @@ export function clearDismissedLegacyIds(): void {
   } catch {
     /* bỏ qua */
   }
+  emitDismissed();
+}
+
+// ---------------------------------------------------------------------------
+// Theo dõi danh sách "đã bỏ qua" — subscribe/getSnapshot cho React
+// (HistoryPanel hiện số lượng; modal mở lại). Cùng mẫu hàng đợi.
+// ---------------------------------------------------------------------------
+
+let dismissedSnapshot: string[] = [];
+const dismissedListeners = new Set<() => void>();
+
+function emitDismissed(): void {
+  dismissedSnapshot = getDismissedLegacyIds();
+  dismissedListeners.forEach((fn) => fn());
+}
+
+/** Đăng ký nhận thay đổi danh sách "đã bỏ qua". Trả về hàm hủy đăng ký. */
+export function subscribeDismissedLegacyIds(cb: () => void): () => void {
+  dismissedListeners.add(cb);
+  return () => {
+    dismissedListeners.delete(cb);
+  };
+}
+
+/**
+ * Ảnh chụp danh sách "đã bỏ qua" hiện tại. Lần gọi đầu đọc từ kho
+ * (localStorage / kho đã inject) để snapshot khớp thực tế ngay cả khi
+ * chưa có thay đổi nào kể từ lúc nạp module.
+ */
+export function getDismissedLegacyIdsSnapshot(): string[] {
+  if (dismissedSnapshot.length === 0) {
+    // Chưa emit lần nào (hoặc danh sách đang rỗng thật): đọc lại từ
+    // kho để không kẹt ở snapshot rỗng khởi tạo khi kho đã có dữ liệu.
+    const fresh = getDismissedLegacyIds();
+    if (fresh.length > 0) dismissedSnapshot = fresh;
+    return dismissedSnapshot;
+  }
+  return dismissedSnapshot;
+}
+
+// ---------------------------------------------------------------------------
+// Yêu cầu mở modal nhận legacy (để xem lại các mục đã bỏ qua) —
+// HistoryPanel gọi khi user bấm nút; modal tự hiện ngay cả khi hàng
+// đợi đang rỗng. Cờ này là "yêu cầu mở một lần": modal xóa khi đóng.
+// ---------------------------------------------------------------------------
+
+let modalRequested = false;
+const modalRequestListeners = new Set<() => void>();
+
+function emitModalRequest(): void {
+  modalRequestListeners.forEach((fn) => fn());
+}
+
+/** HistoryPanel: yêu cầu mở modal nhận legacy (xem lại mục đã bỏ qua). */
+export function requestLegacyAdoptModal(): void {
+  if (modalRequested) return;
+  modalRequested = true;
+  emitModalRequest();
+}
+
+/** Modal: đã nhận yêu cầu mở (đóng modal thì xóa cờ). */
+export function clearLegacyAdoptModalRequest(): void {
+  if (!modalRequested) return;
+  modalRequested = false;
+  emitModalRequest();
+}
+
+/** Đăng ký nhận thay đổi cờ yêu cầu mở modal. */
+export function subscribeLegacyAdoptModalRequest(cb: () => void): () => void {
+  modalRequestListeners.add(cb);
+  return () => {
+    modalRequestListeners.delete(cb);
+  };
+}
+
+/** Cờ yêu cầu mở modal hiện tại (cho useSyncExternalStore). */
+export function getLegacyAdoptModalRequested(): boolean {
+  return modalRequested;
+}
+
+// ---------------------------------------------------------------------------
+// Nạp lại các chuỗi đã bỏ qua kèm bằng chứng hiển thị (để UI mở lại).
+// ---------------------------------------------------------------------------
+
+/** Nguồn đọc version tối thiểu để nạp lại chuỗi đã bỏ qua (HistoryStore khớp). */
+export interface LegacyChainLister {
+  listVersions(id: string): Promise<ProjectVersion[]>;
+}
+
+/** Một chuỗi đã bỏ qua, kèm bằng chứng hiển thị + cờ còn dữ liệu không. */
+export interface DismissedLegacyChain extends AmbiguousLegacyItem {
+  /** false khi chuỗi không còn version nào trong kho (đã xóa/prune) hoặc đọc kho lỗi. */
+  exists: boolean;
+}
+
+/**
+ * Đợt 67 U6 — nạp các chuỗi user đã "Bỏ qua" kèm bằng chứng hiển thị
+ * (tên/hash/số version/mốc — cùng bộ hiển thị với mục chờ quyết định)
+ * để modal hiện danh sách mở lại. Chuỗi nào đọc kho lỗi hoặc không
+ * còn version thì `exists` = false (vẫn liệt kê để user gỡ khỏi danh
+ * sách, không tự xóa dữ liệu hộ). `pointerChainId` (id chuỗi con trỏ
+ * hiện tại, nếu có) để gắn đúng nhãn loại chuỗi.
+ */
+export async function loadDismissedLegacyItems(
+  lister: LegacyChainLister,
+  openedSpecHash: string | null,
+  pointerChainId?: string | null,
+): Promise<DismissedLegacyChain[]> {
+  const out: DismissedLegacyChain[] = [];
+  for (const from of getDismissedLegacyIds()) {
+    let versions: ProjectVersion[] = [];
+    let exists = false;
+    try {
+      versions = await lister.listVersions(from);
+      exists = versions.length > 0;
+    } catch {
+      versions = [];
+      exists = false;
+    }
+    const d = legacyChainDisplay(from, versions);
+    out.push({
+      from,
+      reason: "dismissed",
+      namePart: d.namePart,
+      embeddedHash: d.embeddedHash,
+      versionCount: d.versionCount,
+      firstCreatedAt: d.firstCreatedAt,
+      lastCreatedAt: d.lastCreatedAt,
+      isPointerChain: pointerChainId != null && from === pointerChainId,
+      openedSpecHash,
+      exists,
+    });
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------

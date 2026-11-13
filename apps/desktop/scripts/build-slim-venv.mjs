@@ -51,10 +51,12 @@ import {
   readlinkSync,
   rmSync,
   symlinkSync,
-  writeFileSync,
 } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Đợt 85 M5: ghi file qua helper retry EPERM + verify đủ byte
+// (apps/web/scripts/eperm-retry.mjs).
+import { writeFileEpermRetry } from '../../web/scripts/eperm-retry.mjs';
 
 const desktopDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const repoRoot = resolve(desktopDir, '..', '..');
@@ -286,7 +288,7 @@ function rewritePaths(venvDir, oldVenv) {
       next = next.split(oldVenv).join(venvDir);
     }
     if (next !== text) {
-      writeFileSync(p, next);
+      writeFileEpermRetry(p, next, { label: 'build-slim-venv shebang-fix' });
       fixed += 1;
     }
   }
@@ -301,7 +303,12 @@ function runVerify(pythonBin, imports, venvDir) {
     ...imports.map((m) => `import ${m}`),
     'print("VERIFY OK:", sys.prefix)',
   ].join('; ');
-  const r = spawnSync(pythonBin, ['-c', code], { encoding: 'utf8', timeout: 120000 });
+  // ROUND82-J8: timeout 120s → 300s. Đo thật 10/11: import rembg+cv2+numpy+PIL
+  // trong venv bgremove mất 49,7s wall (chỉ 2,5s CPU) khi VM tải cao — bước
+  // verify in "VERIFY OK" rồi vẫn bị kill ở 120s do interpreter thoát chậm
+  // (prepackage fail giữa chừng, xem LIMITS J8 §5). 300s vẫn fail-fast nếu
+  // import thật sự treo.
+  const r = spawnSync(pythonBin, ['-c', code], { encoding: 'utf8', timeout: 300000 });
   if (r.status !== 0) {
     throw new Error(
       `Verify thất bại với ${pythonBin} (import ${imports.join(', ')}):\n${r.stdout || ''}${r.stderr || ''}`,
@@ -392,7 +399,7 @@ function main() {
       .slice(0, 25),
     verify: { imports: svc.verifyImports, output: verifyOut },
   };
-  writeFileSync(join(out, 'SLIM_VENV.json'), JSON.stringify(report, null, 2) + '\n');
+  writeFileEpermRetry(join(out, 'SLIM_VENV.json'), JSON.stringify(report, null, 2) + '\n', { label: 'build-slim-venv SLIM_VENV.json' });
   console.log(`[build-slim-venv] OK: ${out} — ${after.bytes} byte (giảm ${report.savedPercent}%), report: SLIM_VENV.json`);
   return report;
 }

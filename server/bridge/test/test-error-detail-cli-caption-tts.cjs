@@ -34,6 +34,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -107,7 +108,7 @@ function main() {
   try {
     vcut(["create", "--name", "N3", "--width", "1280", "--height", "720",
       "--out", path.join(work, "proj.json")]);
-    fs.writeFileSync(path.join(work, "corrupt.mp4"), "not a video");
+    writeFileEpermRetry(path.join(work, "corrupt.mp4"), "not a video");
     const before = JSON.parse(fs.readFileSync(path.join(work, "proj.json"), "utf8"));
     const bad = vcut(["caption", "--project", path.join(work, "proj.json"),
       "--src", path.join(work, "corrupt.mp4"), "--lang", "vi"]);
@@ -134,7 +135,7 @@ function main() {
     // + home + token rồi thoát với mã cố định. Đây là tiến trình con
     // thật qua spawn của CLI, không phải mock hàm redact/stream.
     const shim = path.join(work2, "fake-python.sh");
-    fs.writeFileSync(shim, "#!/bin/sh\n" +
+    writeFileEpermRetry(shim, "#!/bin/sh\n" +
       `echo '  File "${work2}/secret/script.py", line 9, in <module>' >&2\n` +
       `echo 'token sk-abcdefghij12345678 home ${os.homedir()}' >&2\n` +
       "echo 'stdout vẫn inherit, thấy được dòng này'\n" +
@@ -146,7 +147,7 @@ function main() {
       run("node", [cliJs2, "create", "--name", "N3s", "--width", "1280",
         "--height", "720", "--out", proj], { cwd: work2 });
       // caption kiểm tra tồn tại src trước khi spawn nên cần file thật.
-      fs.writeFileSync(path.join(work2, "x.mp4"), "x");
+      writeFileEpermRetry(path.join(work2, "x.mp4"), "x");
       const envCap = { ...process.env, VCUT_PYTHON: shim, FAKE_EXIT: "3" };
       const capRun = run("node", [cliJs2, "caption", "--project", proj,
         "--src", path.join(work2, "x.mp4"), "--lang", "vi"],

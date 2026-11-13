@@ -120,16 +120,16 @@ ok("worker timeout: keyframe 4K nhiễu 4.107.475 B → 4707 ms (tỉ lệ 1,2 m
   assert.equal(trialDecodeTimeoutForSampleSizeWorker(4_107_475, 200), 4707);
 });
 
-ok("worker timeout: keyframe 42.493.646 B → 49691 ms (không chạm trần 60 s; trần 45 s cũ sẽ cắt)", () => {
+ok("worker timeout: keyframe 42.493.646 B → 49691 ms (không chạm trần 90 s; trần 45 s cũ sẽ cắt — đợt 67 U5)", () => {
   assert.equal(
     trialDecodeTimeoutForSampleSizeWorker(42_493_646, 200),
     49_691,
   );
-  assert.equal(MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS, 60_000);
+  assert.equal(MAX_WORKER_TRIAL_DECODE_TIMEOUT_MS, 90_000);
 });
 
-ok("worker timeout: 64 MiB chạm trần; base không hợp lệ → dùng mặc định 200 ms", () => {
-  assert.equal(trialDecodeTimeoutForSampleSizeWorker(64 * 1024 * 1024, 200), 60_000);
+ok("worker timeout: 64 MiB → 78536 ms (không chạm trần 90 s; trần 60 s cũ cắt ở 60000 ms — đợt 67 U5); base không hợp lệ → dùng mặc định 200 ms", () => {
+  assert.equal(trialDecodeTimeoutForSampleSizeWorker(64 * 1024 * 1024, 200), 78_536);
   assert.equal(trialDecodeTimeoutForSampleSizeWorker(100_000, 0), 200);
   assert.equal(trialDecodeTimeoutForSampleSizeWorker(100_000, Number.NaN), 200);
 });

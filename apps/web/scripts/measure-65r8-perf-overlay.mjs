@@ -18,6 +18,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -281,13 +282,13 @@ async function main() {
     if (errs.length === 0) pass("H9 0 lỗi trang", "không có window.onerror/unhandledrejection");
     else fail("H9 0 lỗi trang", errs.slice(0, 5).join(" || "));
     const nPass = results.filter((r) => r.ok).length;
-    fs.writeFileSync(path.join(SCRATCH, "overlay.json"), JSON.stringify({ cases: results, pass: nPass, total: results.length, textPaused, textPlaying, textStopped }, null, 2));
-    fs.writeFileSync(path.join(SCRATCH, "overlay.log"), logLines.join("\n") + "\n");
+    writeFileEpermRetry(path.join(SCRATCH, "overlay.json"), JSON.stringify({ cases: results, pass: nPass, total: results.length, textPaused, textPlaying, textStopped }, null, 2));
+    writeFileEpermRetry(path.join(SCRATCH, "overlay.log"), logLines.join("\n") + "\n");
     log(`KẾT QUẢ HEADED R8 OVERLAY: ${nPass}/${results.length} pass`);
     process.exitCode = nPass === results.length ? 0 : 1;
   } catch (e) {
     log(`HARNESS LỖI: ${e && e.message ? e.message : e}`);
-    try { fs.mkdirSync(SCRATCH, { recursive: true }); fs.writeFileSync(path.join(SCRATCH, "overlay.log"), logLines.join("\n") + "\n"); } catch {}
+    try { fs.mkdirSync(SCRATCH, { recursive: true }); writeFileEpermRetry(path.join(SCRATCH, "overlay.log"), logLines.join("\n") + "\n"); } catch {}
     process.exitCode = 2;
   } finally {
     killAll();

@@ -7,6 +7,7 @@
 // 1 case duy nhất: proxy 480p của nhiễu 720p, 2 lượt lặp trong 1 phiên).
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -181,13 +182,13 @@ async function main() {
   revJs = revJs.replaceAll('"./mp4Demux"', '"./mp4Demux.js"')
     .replaceAll('"./reversePreviewGate"', '"./reversePreviewGate.js"')
     .replaceAll('"./reverseDecodeAhead"', '"./reverseDecodeAhead.js"');
-  fs.writeFileSync(revOut, revJs);
+  writeFileEpermRetry(revOut, revJs);
   result.build = { mp4DemuxTsSha256: sha256File(mp4Src), reverseWebcodecsTsSha256: sha256File(revSrc), reverseDecodeAheadTsSha256: sha256File(aheadSrc), reversePreviewGateTsSha256: sha256File(gateSrc), mp4DemuxJsSha256: sha256File(mp4Out), reverseWebcodecsJsSha256: sha256File(revOut), reverseDecodeAheadJsSha256: sha256File(aheadOut), reversePreviewGateJsSha256: sha256File(gateOut), importSpecifierRewritten: before };
   const link = path.join(SCRATCH, "noise-proxy480.mp4");
   try { fs.unlinkSync(link); } catch {}
   if (fs.realpathSync(PROXY_SRC) !== link) fs.symlinkSync(PROXY_SRC, link);
   result.fixtures.noiseProxy480 = { servedAs: "noise-proxy480.mp4", srcRealpath: fs.realpathSync(PROXY_SRC), bytes: fs.statSync(PROXY_SRC).size };
-  fs.writeFileSync(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>t2 paced q3 probe</title><body>probe</body><script type="module" src="/page.js"></script>`);
+  writeFileEpermRetry(path.join(SCRATCH, "index.html"), `<!doctype html><meta charset="utf-8"><title>t2 paced q3 probe</title><body>probe</body><script type="module" src="/page.js"></script>`);
   const server = serveDir(SCRATCH);
   await new Promise((r) => server.listen(PORT, "127.0.0.1", r));
   log(`phục vụ probe tại ${ORIGIN}, scratch ${SCRATCH}`);
@@ -240,8 +241,8 @@ async function main() {
     console.error(`LỖI: ${e.message}`);
   }
   result.session.endedAt = stamp();
-  fs.writeFileSync(outJson, JSON.stringify(result, null, 2));
-  fs.writeFileSync(path.join(SCRATCH, "t2-paced-q3.json"), JSON.stringify(result, null, 2));
+  writeFileEpermRetry(outJson, JSON.stringify(result, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "t2-paced-q3.json"), JSON.stringify(result, null, 2));
   log(`ghi ${outJson}`);
   cleanup();
   process.exit(result.errors.length ? 1 : 0);

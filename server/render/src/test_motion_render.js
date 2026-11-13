@@ -28,6 +28,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -139,7 +140,7 @@ function main() {
   };
   const dryRun = (specObj, name) => {
     const specPath = path.join(work, `${name}.json`);
-    fs.writeFileSync(specPath, JSON.stringify(specObj, null, 2));
+    writeFileEpermRetry(specPath, JSON.stringify(specObj, null, 2));
     const r = spawnSync("node", [path.join(__dirname, "render.js"),
       "--spec", specPath, "--out", path.join(work, `${name}.mp4`),
       "--media-dir", mediaDir, "--dry-run", "-q"],
@@ -159,7 +160,7 @@ function main() {
     "minterpolate nằm sau pad (thay fps, sau tpad M1), đúng vị trí chain S2+M1");
   // Render thật spec motion qua render.js.
   const specPath = path.join(work, "c-motion-real.json");
-  fs.writeFileSync(specPath, JSON.stringify(specMotion, null, 2));
+  writeFileEpermRetry(specPath, JSON.stringify(specMotion, null, 2));
   const outReal = path.join(work, "c-motion-real.mp4");
   const rr = spawnSync("node", [path.join(__dirname, "render.js"),
     "--spec", specPath, "--out", outReal, "--media-dir", mediaDir,

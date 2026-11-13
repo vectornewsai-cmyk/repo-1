@@ -97,8 +97,8 @@ ok("i18n: vi/en phẳng đủ key, bằng nhau, có 4 key reverseEngine mới", 
   // Parent gộp đợt 63: +131 key fragment (R1 5 + R5 123 + R7 2 + R9 1) − 1 key chết speed.warnTooShort − 1 key jobNote chưa có UI → 2275 mỗi bên (vi == en, 0 key mồ côi); parent gộp đợt 64: +7 key fragment (R2 6 + R8 1) + 1 key parent (projectHistory.migrateVersionsNeedsProjectId) → 2283 mỗi bên.
   // test Z6 không đổi. Nếu luồng khác cùng đợt cũng thêm key,
   // parent gộp cập nhật lại số này theo tổng thực tế.
-  assert.equal(vi.keys.size, 2326);
-  assert.equal(en.keys.size, 2326);
+  assert.equal(vi.keys.size, 2767);
+  assert.equal(en.keys.size, 2767);
 });
 
 ok("i18n: chuỗi badge đã dời từ hardcode preview.tsx sang dict (vi/en)", () => {

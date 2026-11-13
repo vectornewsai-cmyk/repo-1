@@ -164,14 +164,26 @@ test('probe AI phản ánh đúng thực tế máy này', { timeout: 180000 }, a
   assert.equal(ai.caption.pythonSource, 'venv');
   assert.equal(ai.tts.available, true, ai.tts.reason || '');
   assert.equal(ai.tts.pythonSource, 'venv');
-  // Máy này: bgremove KHÔNG có venv và system python3 không có rembg.
-  assert.equal(ai.bgremove.available, false);
-  // Đợt 52 I4 — lý do có thể là "thiếu rembg" HOẶC "thiếu model BiRefNet"
-  // (luồng I5 đợt 52 thêm kiểm tra model trước khi kiểm tra module — xem
-  // MODEL_CHECKS trong pythonServices.js): cả hai đều nghĩa là bgremove
-  // chưa chạy được trên máy này. Chỉ khóa "chưa chạy được", không khóa
-  // đúng một chuỗi lý do (chuỗi đó là chi tiết implement của probe).
-  assert.match(ai.bgremove.reason || '', /rembg|BiRefNet/);
+  // ROUND83-K7 — bgremove: khóa theo THỰC TẾ máy này, không hardcode
+  // "thiếu". Từ đợt 53 J8, server/bgremove/.venv đã có rembg import
+  // được (đo tay 11/11: `import rembg` OK) + model BiRefNet có trong
+  // ~/.u2net, và fix probe 15s → 120s của J8 đợt 82 làm import sâu hoàn
+  // thành thay vì timeout → available:true là ĐÚNG. Trước fix J8, test
+  // pass nhờ timeout 15s báo sai (false-negative). Venv có thì true,
+  // không thì false + lý do rembg/BiRefNet như cũ.
+  const bgVenvPy = path.join(REPO_ROOT, 'server', 'bgremove', '.venv', 'bin', 'python');
+  if (fs.existsSync(bgVenvPy)) {
+    assert.equal(ai.bgremove.available, true, ai.bgremove.reason || '');
+    assert.equal(ai.bgremove.pythonSource, 'venv');
+  } else {
+    assert.equal(ai.bgremove.available, false);
+    // Đợt 52 I4 — lý do có thể là "thiếu rembg" HOẶC "thiếu model BiRefNet"
+    // (luồng I5 đợt 52 thêm kiểm tra model trước khi kiểm tra module — xem
+    // MODEL_CHECKS trong pythonServices.js): cả hai đều nghĩa là bgremove
+    // chưa chạy được trên máy này. Chỉ khóa "chưa chạy được", không khóa
+    // đúng một chuỗi lý do (chuỗi đó là chi tiết implement của probe).
+    assert.match(ai.bgremove.reason || '', /rembg|BiRefNet/);
+  }
   // reframe: bridge tự ưu tiên .venv có cv2.
   assert.equal(ai.reframe.available, true, ai.reframe.reason || '');
   // beats: numpy có trong system python3.

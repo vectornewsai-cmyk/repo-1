@@ -32,6 +32,7 @@
 // (--js-flags=--expose-gc) để phân biệt đỉnh thoáng qua với bộ nhớ giữ.
 import { spawn, spawnSync, execSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -56,7 +57,7 @@ log(`noise file: ${NOISE} (${NOISE_BYTES} byte = ${(NOISE_BYTES / 1048576).toFix
 // ---- Bundle probe page từ code sản phẩm hiện tại (không sửa dist) ----
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "vcut-s4-"));
 const entry = path.join(tmp, "entry.js");
-fs.writeFileSync(entry, `
+writeFileEpermRetry(entry, `
 import { ReversePreviewController } from ${JSON.stringify(path.join(REPO, "apps/web/src/lib/reverseWebcodecs.ts"))};
 import { isReverseWebcodecsOptedIn, resolveReverseEngine } from ${JSON.stringify(path.join(REPO, "apps/web/src/lib/reversePlayback.ts"))};
 window.__vcutReverseWebcodecs = true;
@@ -318,7 +319,7 @@ async function main() {
     reqLogTotal: reqLog,
   };
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, JSON.stringify(summary, null, 2));
+  writeFileEpermRetry(OUT, JSON.stringify(summary, null, 2));
   log(`kết quả ghi tại ${OUT}`);
   cleanup();
   process.exit(0);

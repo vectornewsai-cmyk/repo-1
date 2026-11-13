@@ -130,6 +130,19 @@ export interface ForwardReseekDecision {
  * @param driftAbs |currentTime − target| (giây) ở tick này.
  * @param overCount số tick liên tiếp drift đã vượt ngưỡng trước tick
  *   này (0 = tick trước drift dưới ngưỡng / vừa seek xong).
+ * @param threshold ngưỡng drift (mặc định 0,35 s).
+ * @param confirmTicks số tick liên tiếp vượt ngưỡng mới seek
+ *   (mặc định 2).
+ * @param graceTick Đợt 95 W5 — true = detector re-arm vừa arm watch
+ *   mới cho element này Ở CÙNG TICK (xem nextResumeFreezeRearm /
+ *   preview.tsx): khoan kích seek lại 1 tick để playhead đã giữ kịp
+ *   đuổi theo element. Khi drift đã đủ số tick xác nhận mà graceTick
+ *   bật thì KHÔNG seek tick này mà trả overCount = confirmTicks − 1 —
+ *   tick sau (không còn grace) drift vẫn vượt thì seek ngay, đúng
+ *   trễ 1 tick; nếu element resume trong tick ân hạn và drift về dưới
+ *   ngưỡng thì không seek nữa (overCount reset về 0 như thường).
+ *   Chỉ có tác dụng đúng tick arm (caller chỉ set cho element vừa
+ *   arm); mọi tick khác hành vi giữ nguyên như cũ.
  */
 export function shouldIssueForwardReseek(
   seeking: boolean,
@@ -138,11 +151,17 @@ export function shouldIssueForwardReseek(
   overCount: number,
   threshold: number = FORWARD_RESEEK_THRESHOLD_S,
   confirmTicks: number = FORWARD_RESEEK_CONFIRM_TICKS,
+  graceTick = false,
 ): ForwardReseekDecision {
   if (seeking || justCompletedSeekTick) return { seek: false, overCount: 0 };
   if (!(driftAbs > threshold)) return { seek: false, overCount: 0 };
   const next = (Number.isFinite(overCount) && overCount > 0 ? Math.floor(overCount) : 0) + 1;
-  if (next >= confirmTicks) return { seek: true, overCount: 0 };
+  if (next >= confirmTicks) {
+    // Đợt 95 W5 — ân hạn 1 tick sau re-arm: hoãn seek, giữ đếm ở
+    // confirmTicks − 1 để tick sau seek ngay nếu drift vẫn vượt.
+    if (graceTick) return { seek: false, overCount: confirmTicks - 1 };
+    return { seek: true, overCount: 0 };
+  }
   return { seek: false, overCount: next };
 }
 

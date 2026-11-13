@@ -39,6 +39,7 @@
  */
 "use strict";
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -147,7 +148,7 @@ function ffmpegSingleRef(tp, type, window, p, frameClip, w, h, tag) {
   const baseRaw = path.join(TMP, `${tag}-base.raw`);
   const topRaw = path.join(TMP, `${tag}-top.raw`);
   const outRaw = path.join(TMP, `${tag}-out.raw`);
-  fs.writeFileSync(clipRaw, frameClip);
+  writeFileEpermRetry(clipRaw, frameClip);
   if (type === "fadewhite") {
     ffmpeg(["-f", "lavfi", "-i", `color=white:s=${w}x${h}:d=1:r=30`,
       "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-y", baseRaw]);
@@ -286,7 +287,7 @@ function main() {
     }
   }
   if (JSON_OUT) {
-    fs.writeFileSync(JSON_OUT, JSON.stringify(results, null, 2) + "\n");
+    writeFileEpermRetry(JSON_OUT, JSON.stringify(results, null, 2) + "\n");
     console.log(`JSON: ${JSON_OUT}`);
   }
   console.log(`workdir: ${TMP} (raw đã xoá sau mỗi phép đo)`);

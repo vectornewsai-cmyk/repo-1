@@ -44,6 +44,8 @@ import {
 // (không qua adapter G4 — tránh hai đường lưu song song).
 import { openProjectFromPath, saveProjectDesktop } from "../../desktop";
 import { isNativeDesktop } from "../../lib/nativeFiles";
+// Đợt 67 U6 — export archive kèm lịch sử (history.json).
+import { getHistoryStore } from "../../lib/projectHistory";
 import { HistoryPanel } from "./HistoryPanel";
 
 /**
@@ -219,7 +221,14 @@ export function ProjectMenu() {
     const mediaSources = st.media
       .filter((m) => m.file)
       .map((m) => ({ name: m.name, data: m.file as File }));
-    const res = await exportArchive(st.spec, st.spec.meta.name, mediaSources, st.projectId);
+    // Đợt 67 U6 — lịch sử đi kèm archive (history.json) để nhập sang
+    // máy khác mang theo chuỗi lịch sử (đóng nợ đợt 66 T7 §5.2).
+    const historyStore = getHistoryStore();
+    const historyVersions = await historyStore.listVersions(st.projectId);
+    const history = historyVersions.length > 0
+      ? historyStore.exportHistory(st.projectId, historyVersions)
+      : null;
+    const res = await exportArchive(st.spec, st.spec.meta.name, mediaSources, st.projectId, history);
     if (!res.ok || !res.blob) {
       // Đợt 31 N4: như toast lỗi mở file — tiền tố qua key, chi tiết giữ nguyên.
       pushToast(t("projectMenu.exportArchiveError", { errors: res.errors.join("; ") }), "error");
@@ -233,6 +242,7 @@ export function ProjectMenu() {
     const noteLines = formatNoteLines(res.structuredNotes ?? [], res.warnings, (k, vars) => t(k, vars));
     const msg =
       t("projectMenu.exportArchiveDone", { media: String(res.stats.mediaFiles), size: sizeMB }) +
+      (history ? t("projectMenu.exportArchiveHistory", { n: String(history.versions.length) }) : "") +
       (noteLines.length > 0 ? " " + t("projectMenu.exportArchiveNotes", { notes: noteLines.join("; ") }) : "");
     pushToast(msg, "success");
   };

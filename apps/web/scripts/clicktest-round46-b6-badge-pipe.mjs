@@ -36,6 +36,7 @@
 // exit 2 khi thiếu Chrome (khi đó KHÔNG có bằng chứng để báo).
 import { spawn, execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -108,7 +109,7 @@ async function main() {
   ]) {
     execFileSync(esbuild, [path.join(WEB_DIR, src), "--bundle", "--platform=browser", "--format=esm", `--outfile=${path.join(SCRATCH, out)}`], { stdio: "ignore" });
   }
-  fs.writeFileSync(path.join(SCRATCH, "page.html"), `<!doctype html><meta charset="utf-8"><title>B6 badge headed</title>
+  writeFileEpermRetry(path.join(SCRATCH, "page.html"), `<!doctype html><meta charset="utf-8"><title>B6 badge headed</title>
 <style>.preview-reverse-engine-badge{position:absolute;left:8px;bottom:32px;padding:2px 8px;border-radius:4px;color:#fff;font-size:12px;font-weight:700;}</style>
 <div class="preview-reverse-engine-badge" id="badge" style="display:none"></div>
 <script type="module">

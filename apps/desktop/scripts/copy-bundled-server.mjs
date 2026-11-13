@@ -17,6 +17,10 @@
  *                                     bridge — xem scripts/vcut-node)
  *   server/bridge/src/*.js            bridge (chỉ .js, không *.md)
  *   server/bridge/openapi.yaml        spec OpenAPI bridge đọc lúc chạy
+ *   server/eperm-retry.cjs            helper retry EPERM (đợt 85 M5 —
+ *                                     bridge/render require() bằng đường
+ *                                     tương đối, không có file này thì
+ *                                     app đóng gói gãy lúc khởi động)
  *   server/render/src/*.js            render worker (trừ file test_, measure_, demo_)
  *   server/render/src/*.py            helper Python của render (trừ file test_)
  *   server/caption/*.py, server/tts/tts.py, server/bgremove/bgremove.py,
@@ -70,10 +74,12 @@ import {
   rmSync,
   statSync,
   symlinkSync,
-  writeFileSync,
 } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Đợt 85 M5: ghi MANIFEST qua helper retry EPERM + verify đủ byte
+// (apps/web/scripts/eperm-retry.mjs).
+import { writeFileEpermRetry } from '../../web/scripts/eperm-retry.mjs';
 
 const desktopDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const repoRoot = resolve(desktopDir, '..', '..');
@@ -131,6 +137,14 @@ copyDirFiltered(join(repoRoot, 'server', 'bridge', 'src'), join(outDir, 'server'
 copyFile(
   join(repoRoot, 'server', 'bridge', 'openapi.yaml'),
   join(outDir, 'server', 'bridge', 'openapi.yaml'),
+);
+// Đợt 85 M5: helper retry EPERM (server/eperm-retry.cjs) — bridge/render
+// require() nó bằng đường tương đối "../../eperm-retry.cjs"; phải có
+// trong bundle thì app đóng gói mới chạy được (apps/web/scripts KHÔNG
+// nằm trong bundle nên không thể require thẳng helper gốc).
+copyFile(
+  join(repoRoot, 'server', 'eperm-retry.cjs'),
+  join(outDir, 'server', 'eperm-retry.cjs'),
 );
 copyDirFiltered(join(repoRoot, 'server', 'render', 'src'), join(outDir, 'server', 'render', 'src'), (name) =>
   notTestJs(name) || notTestPy(name),
@@ -332,7 +346,7 @@ const manifest = {
   slimVenvs,
   totals: { files: filesCopied, bytes: bytesCopied },
 };
-writeFileSync(join(outDir, 'MANIFEST.json'), JSON.stringify(manifest, null, 2) + '\n');
+writeFileEpermRetry(join(outDir, 'MANIFEST.json'), JSON.stringify(manifest, null, 2) + '\n', { label: 'copy-bundled-server MANIFEST.json' });
 
 console.log(
   `[copy-bundled-server] OK: ${filesCopied} file, ${(bytesCopied / 1024 / 1024).toFixed(1)} MiB ` +

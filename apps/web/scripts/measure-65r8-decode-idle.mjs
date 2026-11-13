@@ -30,6 +30,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
 import net from "node:net";
 import os from "node:os";
@@ -286,13 +287,13 @@ async function main() {
     log(`TỔNG ${REPS} rep (${allRows.length} hàng): rVFC fps mean ${agg.fps.mean} min ${agg.fps.min} max ${agg.fps.max} std ${agg.fps.std}; presentedFps mean ${agg.presentedFps.mean} min ${agg.presentedFps.min} max ${agg.presentedFps.max} std ${agg.presentedFps.std}; dropped ${agg.droppedTotal}/${agg.presentedTotal}; rep lặng ${agg.quietReps}/${REPS}`);
     log(`SO VỚI R64: decode 720p lúc tải 4.9–7.2 là 15.54 fps (dropped 29%) — số mới ở trên đo kèm loadavg từng hàng, xem JSON để tách tải khỏi giới hạn decode.`);
     fs.mkdirSync(OUT_DIR, { recursive: true });
-    fs.writeFileSync(OUT, JSON.stringify({ clip: LONG_FILE, reps: REPS, secs: SECS, maxLoad1: MAX_LOAD1, waitQuietSecs: WAIT_QUIET_SECS, repsDetail: reps, aggregate: agg }, null, 2));
-    fs.writeFileSync(LOG, logLines.join("\n") + "\n");
+    writeFileEpermRetry(OUT, JSON.stringify({ clip: LONG_FILE, reps: REPS, secs: SECS, maxLoad1: MAX_LOAD1, waitQuietSecs: WAIT_QUIET_SECS, repsDetail: reps, aggregate: agg }, null, 2));
+    writeFileEpermRetry(LOG, logLines.join("\n") + "\n");
     log(`đã ghi ${OUT} + ${LOG}`);
     process.exitCode = 0;
   } catch (e) {
     log(`HARNESS LỖI: ${e && e.message ? e.message : e}`);
-    try { fs.mkdirSync(OUT_DIR, { recursive: true }); fs.writeFileSync(LOG, logLines.join("\n") + "\n"); } catch {}
+    try { fs.mkdirSync(OUT_DIR, { recursive: true }); writeFileEpermRetry(LOG, logLines.join("\n") + "\n"); } catch {}
     process.exitCode = 2;
   } finally {
     killAll();

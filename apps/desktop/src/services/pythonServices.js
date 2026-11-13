@@ -266,7 +266,13 @@ async function probePythonService(def, appRoot, env = process.env, opts = {}) {
   }
   status.available = true;
   if (opts.deep && def.deepModule) {
-    const imp = await runShort(python, ['-c', `import ${def.deepModule}`], 15000);
+    // ROUND82-J8: timeout import sâu 15s → 120s. Đo thật 10/11: import
+    // rembg+cv2+numpy+PIL trong venv bgremove mất 49,7s wall (chỉ 2,5s CPU)
+    // khi VM tải cao — 15s báo "thiếu module" sai trong khi venv vẫn tốt
+    // (verify-packaged-tree import cùng venv với timeout 120s thì pass).
+    // Probe chạy song song nên wall time ≈ import chậm nhất, không cộng dồn;
+    // đánh đổi: start() có thể chờ lâu hơn trên máy lạnh/tải cao.
+    const imp = await runShort(python, ['-c', `import ${def.deepModule}`], 120000);
     status.deps = { module: def.deepModule, ok: imp.ok, ms: imp.ms };
     if (!imp.ok) {
       status.available = false;

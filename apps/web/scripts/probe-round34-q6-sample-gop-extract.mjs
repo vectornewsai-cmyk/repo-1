@@ -32,6 +32,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -227,7 +228,7 @@ async function main() {
     const data = await cdp.evaluate(`(async()=>{const r=await fetch(${JSON.stringify(v.src)}); const buf=await r.arrayBuffer(); const u8=new Uint8Array(buf); let s=""; for(let o=0;o<u8.length;o+=0x8000){s+=String.fromCharCode.apply(null,u8.subarray(o,o+0x8000));} return {size:u8.length,b64:btoa(s)};})()`, sessionId);
     if (!data || data.size === 0) { log(`clip ${i}: fetch blob rỗng, bỏ qua`); continue; }
     const name = `q6-mau-${i + 1}.webm`;
-    fs.writeFileSync(path.join(SCRATCH, name), Buffer.from(data.b64, "base64"));
+    writeFileEpermRetry(path.join(SCRATCH, name), Buffer.from(data.b64, "base64"));
     const stat = fs.statSync(path.join(SCRATCH, name));
     log(`ghi ${name}: ${stat.size} byte (khai ${data.size})`);
     manifest.clips.push({ file: name, srcScheme: "blob:", videoWidth: v.w, videoHeight: v.h, readyState: v.rs, duration: v.dur, bytes: stat.size, sha256: null });
@@ -237,7 +238,7 @@ async function main() {
   for (const c of manifest.clips) {
     c.sha256 = crypto.createHash("sha256").update(fs.readFileSync(path.join(SCRATCH, c.file))).digest("hex");
   }
-  fs.writeFileSync(path.join(SCRATCH, "q6-sample-manifest.json"), JSON.stringify(manifest, null, 2));
+  writeFileEpermRetry(path.join(SCRATCH, "q6-sample-manifest.json"), JSON.stringify(manifest, null, 2));
   log(`MANIFEST: ${JSON.stringify(manifest)}`);
   cleanup();
   if (manifest.clips.length >= 2) { log("OK: trích đủ 2 clip mẫu"); process.exit(0); }

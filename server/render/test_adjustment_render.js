@@ -33,6 +33,7 @@
 
 const { execFileSync, spawnSync } = require("child_process");
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 
@@ -97,7 +98,7 @@ let n = 0;
 function renderSpec(spec, label) {
   const specPath = path.join(WORK, `spec-${label}.json`);
   const outPath = path.join(WORK, `out-${label}.mp4`);
-  fs.writeFileSync(specPath, JSON.stringify(spec));
+  writeFileEpermRetry(specPath, JSON.stringify(spec));
   const r = spawnSync("node", [path.join(HERE, "src", "render.js"),
     "--spec", specPath, "--out", outPath, "--media-dir", MEDIA,
     "--encoder", "libx264", "-y", "-q"], { encoding: "utf8" });

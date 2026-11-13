@@ -25,6 +25,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import { captureCdpHangSnapshot } from "./cdp-snapshot.mjs";
@@ -244,7 +245,7 @@ try {
   results.allPass = results.targets.every((t) => t.checks.all ?? t.checks.ghiDuoc);
   results.log = logLines;
   fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
-  fs.writeFileSync(OUT_FILE, JSON.stringify(results, null, 2));
+  writeFileEpermRetry(OUT_FILE, JSON.stringify(results, null, 2));
   log(`DONE probe P3: allPass=${results.allPass} -> ${OUT_FILE}`);
   cleanup();
   process.exit(results.allPass ? 0 : 1);
@@ -252,7 +253,7 @@ try {
   console.error("PROBE FATAL:", e.message);
   results.fatal = e.message;
   results.log = logLines;
-  try { fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true }); fs.writeFileSync(OUT_FILE, JSON.stringify(results, null, 2)); } catch {}
+  try { fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true }); writeFileEpermRetry(OUT_FILE, JSON.stringify(results, null, 2)); } catch {}
   cleanup();
   process.exit(2);
 } finally {

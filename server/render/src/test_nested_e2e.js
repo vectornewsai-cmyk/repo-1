@@ -42,6 +42,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -99,7 +100,7 @@ function meanVolume(file, ss, dur) {
 }
 function renderViaRenderJs(specObj, outFile, mediaDir, tmp) {
   const specPath = path.join(tmp, `${path.basename(outFile, ".mp4")}.json`);
-  fs.writeFileSync(specPath, JSON.stringify(specObj, null, 2));
+  writeFileEpermRetry(specPath, JSON.stringify(specObj, null, 2));
   const r = spawnSync("node", [path.join(SRC_DIR, "render.js"), "--spec", specPath,
     "--out", outFile, "--media-dir", mediaDir, "-y", "-q",
     "--x264-preset", "ultrafast", "--crf", "28"], { encoding: "utf8", timeout: 300000 });

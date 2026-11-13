@@ -185,3 +185,94 @@ ok("KHÔNG GHOST: frame không blur vẽ trực tiếp, pixel = frame hiện t�
 });
 
 console.log(`\n== ghostBlend probe: ${pass} kiểm chứng xanh ==`);
+
+// Phase 9 đợt 90 R1 — ngữ nghĩa mask SAU blend (hướng (iii) Q2 §7.1),
+// mô hình 1D (1 hàng pixel, không cần canvas thật):
+//   - Nội dung: sọc chu kỳ 8px, cuộn 3px/frame (3 frame liên tiếp có pha
+//     khác nhau → tmix blur nội dung thật).
+//   - Mask: bước nhảy (step) tại mép p, track dời mép 10 → 12 → 14px.
+//   - CŨ (trước R1): trung bình các unit ĐÃ MASK (mask ở 3 vị trí khác
+//     nhau) → vệt mép mask về phía sau.
+//   - MỚI (R1): mask HIỆN TẠI × trung bình các unit THÔ (tmix → mask,
+//     đúng render) → mép sắc, nội dung trong mask vẫn blur.
+// Probe khóa: mới == tmix-rồi-mask theo từng pixel; cũ CÓ vệt, mới KHÔNG.
+console.log("== ghostBlend probe: mask sau blend (R1 đợt 90) ==");
+{
+  const W = 40;
+  // Sọc chu kỳ 8px (khối 4px), cuộn 3px/frame.
+  const content = (frame: number, x: number): number =>
+    (Math.floor((x + 3 * frame) / 4) % 2 === 0 ? 0 : 255);
+  const edge = (frame: number): number => 10 + 2 * frame; // track dời mép
+  const mask = (frame: number, x: number): number => (x >= edge(frame) ? 1 : 0);
+  const frames = [0, 1, 2];
+  const weights = [1 / 3, 1 / 3, 1 / 3];
+
+  // CŨ: trung bình unit đã mask.
+  const oldOut: number[] = [];
+  for (let x = 0; x < W; x++) {
+    oldOut[x] = frames.reduce((acc, f, i) => acc + weights[i] * content(f, x) * mask(f, x), 0);
+  }
+  // MỚI: mask hiện tại × trung bình unit thô.
+  const newOut: number[] = [];
+  for (let x = 0; x < W; x++) {
+    const avg = frames.reduce((acc, f, i) => acc + weights[i] * content(f, x), 0);
+    newOut[x] = mask(2, x) * avg;
+  }
+  // Định nghĩa trực tiếp (tmix rồi mask) để đối chiếu từng pixel.
+  const tmixThenMask: number[] = [];
+  for (let x = 0; x < W; x++) {
+    tmixThenMask[x] = mask(2, x) * tmix(frames.map((f) => content(f, x)), weights);
+  }
+  const cur = edge(2); // mép mask hiện tại = 14
+
+  ok("MỚI: bằng đúng tmix-rồi-mask theo từng pixel (định nghĩa render)", () => {
+    for (let x = 0; x < W; x++) close(newOut[x], tmixThenMask[x]);
+    console.log(`    mới == tmix→mask tại cả ${W} pixel`);
+  });
+
+  ok("MỚI: mép mask sắc — không pixel sáng nào bên trái mép hiện tại", () => {
+    const trail = newOut.slice(0, cur).filter((v) => v > 0);
+    console.log(`    mới: mép=${cur}, pixel sáng trái mép=${trail.length}, phải mép min=${Math.min(...newOut.slice(cur))}`);
+    assert.equal(trail.length, 0);
+  });
+
+  ok("CŨ: CÓ vệt — pixel sáng nằm trái mép hiện tại (mask cũ blend vào)", () => {
+    const trailXs: number[] = [];
+    for (let x = 0; x < cur; x++) if (oldOut[x] > 0) trailXs.push(x);
+    const extent = trailXs.length ? cur - Math.min(...trailXs) : 0;
+    console.log(`    cũ: vệt ${trailXs.length} pixel, mép trái xa nhất x=${Math.min(...trailXs)}, dài ${extent}px (mép hiện tại ${cur})`);
+    assert.ok(trailXs.length > 0, "cũ phải có vệt");
+    assert.ok(extent >= 2, `vệt cũ dài ít nhất 2px (đo ${extent}px)`);
+  });
+
+  ok("MỚI: nội dung trong mask VẪN blur (khác frame hiện tại, tương phản giảm)", () => {
+    // Tương phản = độ lệch chuẩn trên vùng lõi mask (x trong [cur+4, W)).
+    const core = (arr: number[]): number => {
+      const xs = arr.slice(cur + 4);
+      const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
+      return Math.sqrt(xs.reduce((a, b) => a + (b - mean) ** 2, 0) / xs.length);
+    };
+    const curFrame = Array.from({ length: W }, (_, x) => content(2, x));
+    const stdNew = core(newOut);
+    const stdCur = core(curFrame);
+    const diff = newOut.slice(cur + 4).filter((v, i) => Math.abs(v - curFrame[cur + 4 + i]) > 0).length;
+    console.log(`    mới: std lõi=${stdNew.toFixed(1)} (frame hiện tại ${stdCur.toFixed(1)}), pixel khác frame hiện tại=${diff}`);
+    assert.ok(stdNew < stdCur, "blur phải làm giảm tương phản lõi");
+    assert.ok(diff > 0, "lớp blend phải khác frame hiện tại (có blur thật)");
+  });
+
+  ok("CŨ: vệt làm tâm vùng sáng lệch về sau (mô hình P3: tâm −0.0092)", () => {
+    const centroid = (arr: number[]): number => {
+      let s = 0, n = 0;
+      for (let x = 0; x < W; x++) if (arr[x] > 0) { s += x; n++; }
+      return n ? s / n : -1;
+    };
+    const cOld = centroid(oldOut);
+    const cNew = centroid(newOut);
+    // Vùng sáng mới: [14, 40) với sọc — tâm ≈ 27; cũ kéo thêm vệt trái → tâm nhỏ hơn.
+    console.log(`    tâm vùng sáng: cũ=${cOld.toFixed(2)}, mới=${cNew.toFixed(2)} (mới phải lớn hơn vì không vệt trái)`);
+    assert.ok(cOld < cNew, "vệt cũ phải kéo tâm vùng sáng về sau (trái)");
+  });
+}
+
+console.log(`\n== ghostBlend probe: ${pass} kiểm chứng xanh ==`);

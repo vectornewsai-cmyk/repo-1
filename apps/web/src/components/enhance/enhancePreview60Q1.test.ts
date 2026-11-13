@@ -19,8 +19,12 @@
 //     smoothing 10 → 1.023; không stabilize → zoom 1.
 //  3. enhancePreviewPlan: toggle tắt → không áp gì, mọi tính năng đang bật
 //     đều vào notApproximated; toggle bật → denoise/stabilize vào applied,
-//     deinterlace LUÔN vào notApproximated (yadif chỉ ở render, không có
-//     CSS tương đương); needsOffscreen chỉ true khi alpha > 0 hoặc zoom != 1.
+//     deinterlace vào applied CHỈ khi tap được áp (đợt 75 C8: truyền
+//     drawScaleY ≥ 0.9 — không truyền tỉ lệ thì mặc định 0, deinterlace
+//     vẫn vào notApproximated như cũ); needsOffscreen chỉ true khi alpha > 0
+//     hoặc zoom != 1 (đợt 76 D4: tap đơn lẻ KHÔNG cần offscreen enhanceCanvas
+//     nữa — preview.tsx đưa qua half-res intermediate dw×dh/2; tap đi kèm
+//     denoise/stabilize vẫn qua offscreen).
 //     Clip có speedKeyframes → stabilize bị chặn (đợt 62 R3, xem
 //     enhancePreview62R3.test.ts).
 //  4. Không thêm shape spec: plan chỉ dùng field đã có trong ClipEnhance.
@@ -178,7 +182,7 @@ ok("plan: stabilize đơn lẻ → applied [stabilize], zoom 1.023, blur 0", () 
   assert.equal(p.needsOffscreen, true);
 });
 
-ok("plan: deinterlace đơn lẻ → applied rỗng, notApproximated [deinterlace], KHÔNG offscreen", () => {
+ok("plan: deinterlace đơn lẻ, KHÔNG truyền tỉ lệ vẽ (mặc định 0) → applied rỗng, notApproximated [deinterlace], KHÔNG offscreen", () => {
   const p = enhancePreviewPlan({ deinterlace: { mode: 1 } }, true);
   assert.deepEqual(p.applied, []);
   assert.deepEqual(p.notApproximated, ["deinterlace"]);
@@ -187,7 +191,7 @@ ok("plan: deinterlace đơn lẻ → applied rỗng, notApproximated [deinterlac
   assert.equal(p.needsOffscreen, false);
 });
 
-ok("plan: cả ba → applied [stabilize, denoise], notApproximated [deinterlace]", () => {
+ok("plan: cả ba, KHÔNG truyền tỉ lệ vẽ (mặc định 0) → applied [stabilize, denoise], notApproximated [deinterlace]", () => {
   const p = enhancePreviewPlan(
     { deinterlace: true, stabilize: { smoothing: 20 }, denoise: { strength: 0.8 } },
     true,
@@ -208,10 +212,11 @@ ok("plan: denoise strength 0 → blur 0 + alpha 0 nên needsOffscreen false dù 
   assert.equal(p.needsOffscreen, false);
 });
 
-ok("plan: không thêm shape spec — đúng 9 key đã khai", () => {
+ok("plan: không thêm shape spec — đúng 10 key đã khai (đợt 75 C8 thêm deinterlaceTap)", () => {
   const p = enhancePreviewPlan({ denoise: true }, true);
   assert.deepEqual(Object.keys(p).sort(), [
     "applied",
+    "deinterlaceTap",
     "denoiseBlendAlpha",
     "denoiseBlurPx",
     "enabled",
@@ -256,14 +261,14 @@ const FRAG = JSON.parse(readFileSync(findFragment(), "utf8")) as {
 
 const EXPECTED_VI: Record<string, string> = {
   "enhance.previewApprox":
-    "Bản xem trước chỉ là xấp xỉ — khử nhiễu là mờ nhẹ, chống rung là crop/scale gợi ý, khử răng cưa không hiện; bản render mới chính xác.",
+    "Bản xem trước chỉ là xấp xỉ — khử nhiễu là mờ nhẹ, chống rung là crop/scale gợi ý, khử răng cưa chỉ hiện khi xem gần full-res (trung bình nửa dòng dọc); ở cỡ nhỏ thì thu nhỏ đã giấu răng cưa; bản render mới chính xác.",
   "enhance.previewToggle": "Xem trước enhance (xấp xỉ)",
   "enhance.previewOffNote":
     "Đã tắt xem trước enhance — bản xem trước hiện khung gốc, bản render vẫn áp enhance.",
 };
 const EXPECTED_EN: Record<string, string> = {
   "enhance.previewApprox":
-    "Preview is only an approximation — denoise is a light blur, stabilize is a suggested crop/scale, deinterlace is not shown; the render is exact.",
+    "Preview is only an approximation — denoise is a light blur, stabilize is a suggested crop/scale, deinterlace only shows near full-res (half-line vertical average); at small sizes downscaling already hides combing; the render is exact.",
   "enhance.previewToggle": "Preview enhance (approximate)",
   "enhance.previewOffNote":
     "Enhance preview is off — the preview shows the original frame, the render still applies enhance.",
@@ -332,13 +337,13 @@ async function main(): Promise<void> {
         assert.equal(i18n.t("enhance.previewToggle"), "Xem trước enhance (xấp xỉ)");
         assert.equal(
           enhanceT("enhance.previewApprox", "?"),
-          "Bản xem trước chỉ là xấp xỉ — khử nhiễu là mờ nhẹ, chống rung là crop/scale gợi ý, khử răng cưa không hiện; bản render mới chính xác.",
+          "Bản xem trước chỉ là xấp xỉ — khử nhiễu là mờ nhẹ, chống rung là crop/scale gợi ý, khử răng cưa chỉ hiện khi xem gần full-res (trung bình nửa dòng dọc); ở cỡ nhỏ thì thu nhỏ đã giấu răng cưa; bản render mới chính xác.",
         );
       } else {
         assert.equal(i18n.t("enhance.previewToggle"), "Preview enhance (approximate)");
         assert.equal(
           enhanceT("enhance.previewApprox", "?"),
-          "Preview is only an approximation — denoise is a light blur, stabilize is a suggested crop/scale, deinterlace is not shown; the render is exact.",
+          "Preview is only an approximation — denoise is a light blur, stabilize is a suggested crop/scale, deinterlace only shows near full-res (half-line vertical average); at small sizes downscaling already hides combing; the render is exact.",
         );
       }
       assert.equal(

@@ -11,7 +11,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "../../store";
 import { t as i18nT, useLang } from "../../i18n";
-import { resolveBridgeApiError } from "../../lib/bridgeErrors"; // Đợt 62 R5: dịch mã lỗi bridge→web
+import { resolveBridgeApiError, type BridgeApiErrorBody } from "../../lib/bridgeErrors"; // Đợt 62 R5: dịch mã lỗi bridge→web
+import {
+  AI_JOB_STREAM_DROPPED,
+  AiJobCancelledError,
+  formatAiJobEta,
+  readAiJobStream,
+  type AiJobProgressState,
+} from "../../lib/aiJobStream"; // Đợt 80 H8: /api/tts giờ stream NDJSON + download
+import { AiJobProgress } from "../AiJobProgress"; // Đợt 81 I6: tiến trình + ETA + hủy cho TTS mẫu
 import { formatImportProgressText } from "../../lib/importProgressText41W3";
 import type { ImportFileProgressEvent } from "../../lib/ingestProgress39T5";
 import { ot } from "../../lib/onboardingCopy";
@@ -56,6 +64,11 @@ export function TemplatePackModal({ onClose }: { onClose: () => void }) {
   const [done, setDone] = useState<DoneInfo | null>(null);
   const [ttsMsg, setTtsMsg] = useState<string | null>(null);
   const [ttsBusy, setTtsBusy] = useState(false);
+  // Đợt 81 I6: tiến trình TTS mẫu (% chunk thật + ETA) + hủy thật.
+  // Trước đây makeTts bỏ qua progress nên user chỉ thấy nút "đang tạo"
+  // mà không biết còn bao lâu; nay hiện AiJobProgress như TtsButton.
+  const [ttsJobProgress, setTtsJobProgress] = useState<AiJobProgressState | null>(null);
+  const ttsAbortRef = useRef<AbortController | null>(null);
   // Đợt 41 W3 — tiến trình importFiles (create + makeTts dùng chung, như MediaBin V5).
   const [importProgress, setImportProgress] = useState<ImportFileProgressEvent | null>(null);
 
@@ -129,6 +142,13 @@ export function TemplatePackModal({ onClose }: { onClose: () => void }) {
     if (!done?.firstText) return;
     setTtsBusy(true);
     setTtsMsg(null);
+    setTtsJobProgress(null);
+    // Đợt 81 I6: AbortController riêng cho job TTS mẫu — nút Hủy trong
+    // AiJobProgress abort fetch → bridge kill subprocess thật (như
+    // TtsButton đợt 80 H8). Escape vẫn bị chặn khi ttsBusy (pin Q10);
+    // user hủy bằng nút Hủy, finally reset ttsBusy rồi Escape lại mở.
+    const ctrl = new AbortController();
+    ttsAbortRef.current = ctrl;
     try {
       // giọng mặc định của server (giống TtsButton: ưu tiên default, fallback Hải Đăng)
       let voice = "Hải Đăng";
@@ -146,14 +166,41 @@ export function TemplatePackModal({ onClose }: { onClose: () => void }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: done.firstText, voice }),
+        signal: ctrl.signal,
       });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
         throw new Error(resolveBridgeApiError(j, i18nT, i18nT("templatePack.bridgeErrorHttp", { status: String(res.status) })));
       }
-      const blob = await res.blob();
+      // Đợt 80 H8: /api/tts giờ stream NDJSON (phase/progress → done
+      // { downloadUrl }) thay vì trả WAV trực tiếp. Pack chỉ cần file
+      // cuối nên bỏ qua progress, đọc tới done rồi fetch downloadUrl.
+      // Đợt 81 I6: không bỏ qua progress nữa — onProgress cập nhật
+      // ttsJobProgress để AiJobProgress hiện % chunk + ETA thật.
+      let doneEvt;
+      try {
+        doneEvt = await readAiJobStream(res, {
+          onProgress: (p) => setTtsJobProgress(p),
+        });
+      } catch (e) {
+        if (e instanceof AiJobCancelledError) throw e;
+        if ((e as Error).message === AI_JOB_STREAM_DROPPED) {
+          throw new Error(i18nT("common.bridgeConn", { url: BRIDGE_URL }));
+        }
+        const body = (e as { bridgeBody?: BridgeApiErrorBody }).bridgeBody;
+        throw new Error(resolveBridgeApiError(body ?? null, i18nT, i18nT("templatePack.bridgeErrorHttp", { status: "?" })));
+      }
+      const downloadUrl = typeof doneEvt.downloadUrl === "string" ? doneEvt.downloadUrl : "";
+      if (!downloadUrl) throw new Error(i18nT("tts.bridgeEmpty"));
+      const dlRes = await fetch(`${BRIDGE_URL}${downloadUrl}`, { signal: ctrl.signal });
+      if (!dlRes.ok) {
+        throw new Error(i18nT("aiJob.downloadFailed", { status: String(dlRes.status) }));
+      }
+      const blob = await dlRes.blob();
       if (!blob || blob.size === 0) throw new Error(i18nT("tts.bridgeEmpty"));
-      const dur = Number(res.headers.get("X-TTS-Duration") || 0);
+      const dur = typeof doneEvt.durationSec === "number" && doneEvt.durationSec > 0
+        ? doneEvt.durationSec
+        : Number(dlRes.headers.get("X-TTS-Duration") || 0);
       const file = new File([blob], `tts-pack-${Date.now()}.wav`, { type: "audio/wav" });
       const st = useStore.getState();
       await st.importFiles([file], (ev) => setImportProgress(ev));
@@ -163,14 +210,22 @@ export function TemplatePackModal({ onClose }: { onClose: () => void }) {
       st.addMediaAtPlayhead(item.id);
       setTtsMsg(i18nT("templatePack.ttsAdded", { suffix: dur > 0 ? ` (${dur.toFixed(1)}s)` : "" }));
     } catch (e) {
-      const m = e instanceof Error ? e.message : String(e);
-      setTtsMsg(
-        m.includes("Failed to fetch")
-          ? i18nT("common.bridgeConn", { url: BRIDGE_URL })
-          : `❌ ${m}`,
-      );
+      // Đợt 81 I6: hủy (AbortError từ nút Hủy / AiJobCancelledError từ
+      // bridge) báo "Đã huỷ job." như TtsButton, không hiện "❌ AbortError".
+      if ((e as Error).name === "AbortError" || e instanceof AiJobCancelledError) {
+        setTtsMsg(i18nT("aiJob.cancelled"));
+      } else {
+        const m = e instanceof Error ? e.message : String(e);
+        setTtsMsg(
+          m.includes("Failed to fetch")
+            ? i18nT("common.bridgeConn", { url: BRIDGE_URL })
+            : `❌ ${m}`,
+        );
+      }
     } finally {
       setTtsBusy(false);
+      ttsAbortRef.current = null;
+      setTtsJobProgress(null);
     }
   };
 
@@ -235,6 +290,14 @@ export function TemplatePackModal({ onClose }: { onClose: () => void }) {
                   {ot("pack.again")}
                 </button>
               </div>
+              {/* Đợt 81 I6: tiến trình TTS mẫu THẬT (% chunk + ETA) + nút Hủy. */}
+              {ttsBusy && (
+                <AiJobProgress
+                  progress={ttsJobProgress?.progress ?? null}
+                  etaText={formatAiJobEta(ttsJobProgress?.etaSeconds ?? null, (k, vars) => i18nT(k, vars))}
+                  onCancel={() => ttsAbortRef.current?.abort()}
+                />
+              )}
               {ttsMsg && <p className="muted">{ttsMsg}</p>}
               <p className="muted small">{ot("pack.ttsHint")}</p>
             </div>

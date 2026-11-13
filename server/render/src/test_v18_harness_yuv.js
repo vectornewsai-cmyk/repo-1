@@ -67,6 +67,7 @@
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 const path = require("node:path");
 
@@ -186,7 +187,7 @@ function xfadePipe(type, fileA, fileB, preRgb, tag) {
 function rgbToYuvFfmpeg(rgb, tag) {
   const rawIn = path.join(TMP, `${tag}-in.raw`);
   const out = path.join(TMP, `${tag}.yuv`);
-  fs.writeFileSync(rawIn, rgb);
+  writeFileEpermRetry(rawIn, rgb);
   ffmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${W}x${H}`, "-i", rawIn, "-f", "rawvideo", "-pix_fmt", "yuv420p", "-y", out]);
   fs.unlinkSync(rawIn);
   return readAndUnlink(out);
@@ -194,7 +195,7 @@ function rgbToYuvFfmpeg(rgb, tag) {
 function yuvToRgbFfmpeg(yuv, tag) {
   const yuvIn = path.join(TMP, `${tag}-in.yuv`);
   const out = path.join(TMP, `${tag}.raw`);
-  fs.writeFileSync(yuvIn, yuv);
+  writeFileEpermRetry(yuvIn, yuv);
   ffmpeg(["-f", "rawvideo", "-pix_fmt", "yuv420p", "-s", `${W}x${H}`, "-i", yuvIn, "-f", "rawvideo", "-pix_fmt", "rgb24", "-y", out]);
   fs.unlinkSync(yuvIn);
   return readAndUnlink(out);
@@ -214,7 +215,7 @@ function decodeMp4(mp4, n, pixFmt, tag) {
 function rawToPng(rgb, tag) {
   const rawIn = path.join(TMP, `${tag}-in.raw`);
   const png = path.join(TMP, `${tag}.png`);
-  fs.writeFileSync(rawIn, rgb);
+  writeFileEpermRetry(rawIn, rgb);
   ffmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${W}x${H}`, "-i", rawIn, "-frames:v", "1", "-y", png]);
   fs.unlinkSync(rawIn);
   return png;

@@ -21,6 +21,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import { captureCdpHangSnapshot } from "./cdp-snapshot.mjs";
@@ -309,7 +310,7 @@ async function main() {
   }
   const out = { at: new Date().toISOString(), display: DISPLAY, wsPort: WS_PORT, results };
   fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
-  fs.writeFileSync(OUT_FILE, JSON.stringify(out, null, 2));
+  writeFileEpermRetry(OUT_FILE, JSON.stringify(out, null, 2));
   log(`kết quả: ${OUT_FILE} exit=${exitCode}`);
   process.exit(exitCode);
 }

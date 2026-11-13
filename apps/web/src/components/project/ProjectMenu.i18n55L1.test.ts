@@ -183,8 +183,10 @@ ok("i18n: vi/en parity toàn file, đủ 24 key mới (21 projectMenu + 3 topbar
 // Parent gộp đợt 58: +5 key (4 O3 preview.*Skipped* + 1 O5 captions.translatedTrack) -> 1942 mỗi bên (vi == en, 0 key mồ côi).
 // Parent gộp đợt 59: +15 key (4 P1 mediabin/store + 11 P8 enhance.*) -> 1957 mỗi bên (vi == en); P3 ghi đè 1 key nested.failsoft.unknownEffectType (thêm {type}), không tăng số key; đợt 60 Q4: −14 key mồ côi +26 key fragment P7 → 1969 mỗi bên; parent gộp đợt 60: +3 key Q1 → 1972 mỗi bên; parent gộp đợt 61: +72 key (R2 3 + R5 1 + R6 50 + R9 18) → 2044 mỗi bên; parent gộp đợt 62: +102 key (R2 2 + R5 91 + R7 9) → 2146 mỗi bên.
   // Parent gộp đợt 63: +131 key fragment (R1 5 + R5 123 + R7 2 + R9 1) − 1 key chết speed.warnTooShort − 1 key jobNote chưa có UI → 2275 mỗi bên (vi == en, 0 key mồ côi); parent gộp đợt 64: +7 key fragment (R2 6 + R8 1) + 1 key parent (projectHistory.migrateVersionsNeedsProjectId) → 2283 mỗi bên.
-  assert.equal(viKeys.size, 2326);
-  assert.equal(enKeys.size, 2326);
+  // Đợt 73 A9: +19 key (17 safeArea.* + 2 exportPreset.igPortrait*) → 2400 mỗi bên.
+  // Đợt 74 B9: +4 key caption.karaokeStyle* → 2404 mỗi bên; đợt 74 B3: +1 key mediabin.codecUnsupported → 2405 mỗi bên; đợt 75 C6: +8 key mediabin.codec* → 2413 mỗi bên; đợt 76 D9: +6 key exportPanel.aspectFit* → 2419 mỗi bên; đợt 79 G9: +6 key (5 openProject.archiveHistory* + 1 captions.trackLabel) → 2425 mỗi bên; đợt 80 H7: +10 key (4 reverseGate.* + 6 rehydrate.*) → 2435; +9 key đợt 80 H10 (social presets) → 2444 mỗi bên; +17 key aiJob.* (luồng round-80 khác) → 2461 mỗi bên; đợt 81 I6: +2 key aiJob.etaEstimating + aiJob.etaHours → 2463 mỗi bên; đợt 84 L9: +2 key (mediabin.proxyHeightLabel + mediabin.proxyNoOriginalFile) → 2465 mỗi bên; đợt 84 L8: +24 key (18 tts.* + 6 bridgeErrors.*) → 2489 mỗi bên; đợt 85 M7: +11 key tts.* (export/import giọng) → 2500 mỗi bên; đợt 85 M8: +7 key mediabin.proxy* (progress/retry) → 2507 mỗi bên; đợt 87 O5: +7 key (4 mask.* + 3 motionTrack.*) → 2514 mỗi bên; +1 key closing (motionTrack.maskStillFollows) → 2515 mỗi bên; +1 key đợt 88 P6 (validation.TRACK_IMAGE_MASK) → 2516 mỗi bên; +1 key đợt 91 S5 (motionTrack.title) → 2517 mỗi bên; +1 key đợt 92 T5 (sticker.title) → 2518 mỗi bên; +249 key đợt 93 U5 (5 sticker.cat.* + 244 sticker.item.*) → 2767 mỗi bên.
+  assert.equal(viKeys.size, 2767);
+  assert.equal(enKeys.size, 2767);
 });
 
 ok("i18n: nội dung 24 key mới đúng từng chữ, vi khác en", () => {

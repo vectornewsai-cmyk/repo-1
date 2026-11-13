@@ -19,6 +19,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -267,7 +268,7 @@ async function main() {
     const out = { runAt: new Date().toISOString(), label: "m5-round30-d7", bundle: snap.bundle, bundleSha256_16: snap.sha,
       exceptionTotalAfterLoad: loadExceptions.length, animationStyleExceptions: animationExceptions.length,
       exceptions: loadExceptions, domText, autosaveStyle, pass, log: logLines };
-    fs.writeFileSync(path.join(ROOT, "benchmarks", "results", "v30-m5-d7.json"), JSON.stringify(out, null, 2));
+    writeFileEpermRetry(path.join(ROOT, "benchmarks", "results", "v30-m5-d7.json"), JSON.stringify(out, null, 2));
     exitCode = pass ? 0 : 1;
   } catch (e) { log(`HARNESS-FAIL: ${e && e.stack ? e.stack : e}`); exitCode = 2; }
   finally {

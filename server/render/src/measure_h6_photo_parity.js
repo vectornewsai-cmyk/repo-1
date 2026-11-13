@@ -38,6 +38,7 @@
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 const path = require("node:path");
 
@@ -267,7 +268,7 @@ function main() {
     bins.forEach((b, k) => console.log(`  rho ${k === 10 ? ">1.0" : `${(k / 10).toFixed(1)}-${((k + 1) / 10).toFixed(1)}`}: MAD=${(b.sum / b.n).toFixed(3)} (n=${b.n})`));
     const dumpRaw = (buf, name) => {
       const p = path.join(TMP, name);
-      fs.writeFileSync(p, buf);
+      writeFileEpermRetry(p, buf);
       ffmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${W}x${H}`, "-i", p, "-frames:v", "1", "-y", p.replace(/\.raw$/, ".png")]);
     };
     dumpRaw(preview, "diag-P-circleopen-preview.raw");

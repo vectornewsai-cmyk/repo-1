@@ -34,6 +34,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -327,5 +328,5 @@ const out = {
   allPass: result.phaA.pass && result.phaB.pass,
 };
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
-fs.writeFileSync(OUT, JSON.stringify(out, null, 2));
+writeFileEpermRetry(OUT, JSON.stringify(out, null, 2));
 console.log(JSON.stringify(out, null, 2));

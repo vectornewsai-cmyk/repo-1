@@ -41,6 +41,7 @@
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 const path = require("node:path");
 
@@ -91,7 +92,7 @@ function fromImg(im, w, h) {
 function ffPixelate(src, w, h, k, tag) {
   const inp = path.join(TMP, `${tag}-in.raw`);
   const out = path.join(TMP, `${tag}-out.raw`);
-  fs.writeFileSync(inp, src);
+  writeFileEpermRetry(inp, src);
   runFfmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${w}x${h}`, "-r", "30", "-i", inp,
     "-vf", `scale=iw/${k}:ih/${k}:flags=neighbor,scale=iw*${k}:ih*${k}:flags=neighbor,format=rgb24`,
     "-f", "rawvideo", "-pix_fmt", "rgb24", out], tag);
@@ -103,7 +104,7 @@ function ffPixelate(src, w, h, k, tag) {
 function ffDownscale(src, w, h, k, tag) {
   const inp = path.join(TMP, `${tag}-in.raw`);
   const out = path.join(TMP, `${tag}-out.raw`);
-  fs.writeFileSync(inp, src);
+  writeFileEpermRetry(inp, src);
   runFfmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${w}x${h}`, "-r", "30", "-i", inp,
     "-vf", `scale=iw/${k}:ih/${k}:flags=neighbor,format=rgb24`,
     "-f", "rawvideo", "-pix_fmt", "rgb24", out], tag);

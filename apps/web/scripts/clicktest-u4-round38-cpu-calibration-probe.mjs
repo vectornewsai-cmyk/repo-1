@@ -37,6 +37,7 @@
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -229,7 +230,7 @@ async function main() {
     cdpLevel: { h1Rounds, h2Rounds, h1Stats: stats(h1Vals), h2Stats: stats(h2Vals), minGap: gap },
   };
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, JSON.stringify(result, null, 2) + "\n");
+  writeFileEpermRetry(OUT, JSON.stringify(result, null, 2) + "\n");
   console.log(`allPass=${allPass} -> ${OUT}`);
   process.exit(allPass ? 0 : 1);
 }

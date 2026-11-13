@@ -35,6 +35,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import os from "node:os";
 import path from "node:path";
 
@@ -249,7 +250,7 @@ async function runBrowser(serverProc) {
     };
     rewrite(envelope.spec.tracks);
     envelope.name = "T3 mở asset";
-    fs.writeFileSync(OPEN_PATH, JSON.stringify(envelope));
+    writeFileEpermRetry(OPEN_PATH, JSON.stringify(envelope));
     log(`[pha C] file mở đã ghi (${OPEN_PATH}), đổi ${replaced} clip sang asset:`);
     await cdp.setInputFiles('.project-menu input[accept=".vcut.json,.json,application/json"]', [OPEN_PATH]);
     await waitFor(async () => {
@@ -341,7 +342,7 @@ async function main() {
   const allPass = Object.values(results).every((r) => r.pass);
   const out = { allPass, results, at: new Date().toISOString() };
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, JSON.stringify(out, null, 2));
+  writeFileEpermRetry(OUT, JSON.stringify(out, null, 2));
   log(`\nKết quả ghi tại ${OUT} — allPass=${allPass}`);
   process.exit(0);
 }

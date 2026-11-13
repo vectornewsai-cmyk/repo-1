@@ -30,6 +30,7 @@
 "use strict";
 
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 const {
@@ -113,7 +114,7 @@ Image.fromarray(img).save("${path.join(work, "texture-wide.png")}")
 print("texture ok")
 `;
 const genPy = path.join(work, "gen_texture.py");
-fs.writeFileSync(genPy, GEN_PY);
+writeFileEpermRetry(genPy, GEN_PY);
 run("python3", [genPy], "tạo ảnh texture 2200x720 (seed 64)");
 const tex = path.join(work, "texture-wide.png");
 const enc = (vf, out) => run("ffmpeg", ["-v", "error", "-y", "-loop", "1", "-i", tex,

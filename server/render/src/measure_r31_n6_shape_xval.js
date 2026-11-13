@@ -17,6 +17,7 @@
  */
 "use strict";
 const fs = require("fs");
+const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -274,7 +275,7 @@ const out = {};
 if (JSON_OUT) {
   const p = path.isAbsolute(JSON_OUT) ? JSON_OUT : path.join(ROOT, JSON_OUT);
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  fs.writeFileSync(p, JSON.stringify(out, null, 2));
+  writeFileEpermRetry(p, JSON.stringify(out, null, 2));
   console.log(`JSON: ${p}`);
 }
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch { /* kệ */ }

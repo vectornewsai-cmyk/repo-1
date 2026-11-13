@@ -69,6 +69,10 @@ const { spawnSync } = require("child_process");
 const assert = require("node:assert/strict");
 const fs = require("fs");
 const path = require("path");
+// Phase 9 đợt 74 B4: timeout cho decode đo chuyển động (trước đây không
+// timeout — ffmpeg treo thì measureMotion treo theo; phía server chỉ test
+// dùng, web dùng bản TS copy, nhưng vẫn chặn cho đúng cùng một lớp lỗi).
+const { KILL_SIGNAL, measureTimeoutMs } = require("./timeouts");
 
 /** Khổ đo: đủ nhỏ để decode rẻ, đủ lớn để pan vài px vẫn thấy. */
 const MEASURE_WIDTH = 160;
@@ -188,7 +192,7 @@ function measureMotion(mediaPath) {
   const t0 = Date.now();
   const vf = `fps=${REF_FPS},scale=${MEASURE_WIDTH}:${MEASURE_HEIGHT},format=gray,gblur=sigma=${BLUR_SIGMA}`;
   const r = spawnSync("ffmpeg", ["-v", "error", "-i", mediaPath, "-vf", vf,
-    "-f", "rawvideo", "-pix_fmt", "gray", "-"], { maxBuffer: 512 * 1024 * 1024 });
+    "-f", "rawvideo", "-pix_fmt", "gray", "-"], { maxBuffer: 512 * 1024 * 1024, timeout: measureTimeoutMs(), killSignal: KILL_SIGNAL });
   const costMs = Date.now() - t0;
   if (r.error) throw new Error(`measureMotion: không chạy được ffmpeg: ${r.error.message}`);
   if (r.status !== 0) {
