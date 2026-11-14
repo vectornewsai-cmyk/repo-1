@@ -1,0 +1,56 @@
+{
+  "date": "2026-11-13T14:47:52.950Z",
+  "round": "phase9-round106-h2-2mib",
+  "clips": {
+    "c2": {
+      "file": "c2.mp4",
+      "dur": 8,
+      "bytes": 2139973
+    },
+    "c8": {
+      "file": "c8.mp4",
+      "dur": 32,
+      "bytes": 8182985
+    }
+  },
+  "cases": [
+    {
+      "name": "Lc2-h2Q-blobE-run1",
+      "date": "2026-11-13T14:48:06.506Z",
+      "mode": "blob",
+      "variant": "blob-direct",
+      "clip": "c2.mp4",
+      "run": 1,
+      "runError": "page.evaluate: Target page, context or browser has been closed"
+    },
+    {
+      "name": "Lc2-h2Q-blobE-run2",
+      "date": "2026-11-13T14:48:08.908Z",
+      "mode": "blob",
+      "variant": "blob-direct",
+      "clip": "c2.mp4",
+      "run": 2,
+      "runError": "page.evaluate: Target page, context or browser has been closed"
+    },
+    {
+      "name": "Lc2-h2Q-blobE-run3",
+      "date": "2026-11-13T14:48:11.148Z",
+      "mode": "blob",
+      "variant": "blob-direct",
+      "clip": "c2.mp4",
+      "run": 3,
+      "runError": "page.evaluate: Target page, context or browser has been closed"
+    }
+  ],
+  "env": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15",
+    "mediaRecorder": "undefined",
+    "hardwareConcurrency": 4,
+    "uptimeS": 968.83,
+    "loadavg": [
+      1.52,
+      3.85,
+      2.41
+    ]
+  }
+}

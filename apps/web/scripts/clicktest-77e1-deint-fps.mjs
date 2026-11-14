@@ -81,6 +81,14 @@
  * khi toggle xong (hủy các lần phát lại đang chờ để không toggle muộn
  * làm bẩn slot đo). Kịch bản: DELAY=7000 + COUNT=1 → retry bắn;
  * DELAY=12000 + COUNT=2 → fallback store bắn. Không sửa production.
+ * Đợt 106 H6: log chẩn đoán flake G4 (2/21 lần E1, tap=false +
+ * G3→G4 ~11,5–11,9s, cơ chế chưa biết — xem LIMITS G3 §4): setEnhCheckbox
+ * ghi rõ bấm hay không-bấm + snapshot hook sau khi store về đích; khối G4
+ * ghi snapshot enhance/hook/idle sau patchClip clean720, sau
+ * setEnhCheckbox(true), sau setPlayhead, và poll waitIdle ghi mọi lần
+ * đổi trạng thái (sleeping/ticks/hook/store) để bắt xem tap mất ở bước
+ * nào; dòng log G4 + thông báo FAIL ghi thêm store enhance + hook đầy đủ.
+ * Chỉ thêm log — không đổi ngưỡng, không đổi luồng đo, không sửa production.
  * Exit 0 mọi case PASS, 1 có FAIL, 2 harness lỗi. KHÔNG sửa code sản phẩm.
  * KHÔNG push/tag/binary.
  */
@@ -751,11 +759,18 @@ export default { plugins: [react(), mediaPlugin()], server: { hmr: false } };
     const cur = await cdp.evalJs(STATE_FN);
     const enh = cur.clips.find((c) => c.clipId === clipId)?.enhance;
     const has = !!(enh && enh[key]);
+    // Đợt 106 H6 (chẩn đoán flake G4): ghi rõ có bấm hay không + hook
+    // trước bấm — ca flake G4 không để lại dấu vết nào về bước này.
+    if (has !== want) log(`checkbox ${key}→${want}: BẤM (store ${has}→${want}, hook trước bấm tap=${cur.hook?.deinterlaceTap} hasEnhance=${cur.hook?.hasEnhance} applied=${JSON.stringify(cur.hook?.applied)})`);
+    else log(`checkbox ${key}→${want}: KHÔNG bấm (store đã ${has}, hook tap=${cur.hook?.deinterlaceTap} hasEnhance=${cur.hook?.hasEnhance} applied=${JSON.stringify(cur.hook?.applied)})`);
     if (has !== want) await clickEnhCheckbox(testid, `${key}→${want}`);
     const after = await cdp.evalJs(STATE_FN);
     const enh2 = after.clips.find((c) => c.clipId === clipId)?.enhance;
     const has2 = !!(enh2 && enh2[key]);
     if (has2 !== want) throw new Error(`checkbox ${key} không về ${want} (đang ${has2}, enhance=${JSON.stringify(enh2)})`);
+    // Đợt 106 H6: snapshot hook ngay sau khi store về đích — phân biệt
+    // "store chưa bật" với "store đã bật nhưng preview chưa vẽ tap".
+    log(`checkbox ${key}→${want}: store đã về ${want} (enhance=${JSON.stringify(enh2)}), hook sau bấm tap=${after.hook?.deinterlaceTap} hasEnhance=${after.hook?.hasEnhance} applied=${JSON.stringify(after.hook?.applied)} offscreen=${after.hook?.offscreenApplied}`);
     return after;
   }
   // Đợt 100 B7: togglePlay() cũ (Space + sleep cố định) đã thay bằng
@@ -975,10 +990,12 @@ export default { plugins: [react(), mediaPlugin()], server: { hmr: false } };
     await cdp.evalJs(SET_PLAYHEAD_FN(1.0));
     await waitIdle("preview interlaced tắt deint tại playhead 1.0", 60000);
     await sleep(500);
-    const hookC = (await cdp.evalJs(STATE_FN)).hook;
+    const stC = await cdp.evalJs(STATE_FN);
+    const hookC = stC.hook;
+    const enhC = stC.clips.find((c) => c.clipId === firstClipId)?.enhance;
     const diffC = await cdp.evalJs(SNAPDIFF_FN);
     if (!diffC.ok) throw new Error(`đo G3 thất bại: ${diffC.reason}`);
-    log(`G3 deint TẮT lại: hook tap=${hookC?.deinterlaceTap} offscreen=${hookC?.offscreenApplied}, MAD vs A=${diffC.meanAbsDiff} (${diffC.pctChanged}% đổi)`);
+    log(`G3 deint TẮT lại: hook tap=${hookC?.deinterlaceTap} hasEnhance=${hookC?.hasEnhance} applied=${JSON.stringify(hookC?.applied)} offscreen=${hookC?.offscreenApplied}, store enhance=${JSON.stringify(enhC)}, MAD vs A=${diffC.meanAbsDiff} (${diffC.pctChanged}% đổi)`);
     if (diffC.meanAbsDiff === 0 && hookC && hookC.deinterlaceTap === false) {
       pass("G3 tắt deinterlace: trả đúng khung gốc (pixel-identical)", `MAD vs baseline = 0, hook tap=false (mẫu Q1 A→D)`);
     } else {
@@ -986,6 +1003,35 @@ export default { plugins: [react(), mediaPlugin()], server: { hmr: false } };
     }
 
     // ---- G4: đối chứng progressive + deint BẬT ----------------------------
+    // Đợt 106 H6: probe chẩn đoán flake G4 — snapshot enhance/hook/idle
+    // sau mỗi bước giữa G3→G4 để bắt xem tap mất ở bước nào (ca flake
+    // 2/21: 11,5s im lặng, không một dòng log nào giữa G3 và G4).
+    async function g4Probe(tag) {
+      const s = await cdp.evalJs(STATE_FN);
+      const enh = s.clips.find((c) => c.clipId === firstClipId)?.enhance;
+      log(`G4-probe ${tag}: store enhance=${JSON.stringify(enh)} hook tap=${s.hook?.deinterlaceTap} hasEnhance=${s.hook?.hasEnhance} applied=${JSON.stringify(s.hook?.applied)} offscreen=${s.hook?.offscreenApplied} idle sleeping=${s.idle?.sleeping} ticks=${s.idle?.ticks}`);
+      return s;
+    }
+    // Như waitIdle nhưng ghi mọi lần đổi trạng thái (sleeping/ticks/hook/
+    // store) — ca flake có gap 11,5s mà không biết preview làm gì trong đó.
+    async function waitIdleTraced(label, timeoutMs = 60000) {
+      const t0 = Date.now();
+      let prev = null;
+      while (Date.now() - t0 < timeoutMs) {
+        const s = await cdp.evalJs(STATE_FN).catch(() => null);
+        if (s && s.idle) {
+          const enh = s.clips.find((c) => c.clipId === firstClipId)?.enhance;
+          const key = JSON.stringify([s.idle.sleeping, s.idle.ticks, s.hook?.deinterlaceTap, s.hook?.hasEnhance, s.hook?.applied, enh?.deinterlace ?? null]);
+          if (key !== prev) {
+            prev = key;
+            log(`G4-probe waitIdle t+${((Date.now() - t0) / 1000).toFixed(1)}s: sleeping=${s.idle.sleeping} ticks=${s.idle.ticks} hook tap=${s.hook?.deinterlaceTap} hasEnhance=${s.hook?.hasEnhance} applied=${JSON.stringify(s.hook?.applied)} store deint=${enh?.deinterlace ?? null}`);
+          }
+          if (s.idle.sleeping) { log(`G4-probe waitIdle xong sau ${((Date.now() - t0) / 1000).toFixed(2)}s (${label})`); return s; }
+        }
+        await sleep(500);
+      }
+      throw new Error(`timeout chờ vòng preview ngủ (${label})`);
+    }
     await cdp.evalJs(`(async () => {
       const url = ${JSON.stringify(MEDIA_URL("clean720.mp4"))};
       window.__e1storeMod.useStore.setState((s) => ({ media: [...s.media, { id: "m-c8-clean", name: "clean720.mp4", kind: "video", url, duration: 5, width: 1280, height: 720 }] }));
@@ -994,18 +1040,23 @@ export default { plugins: [react(), mediaPlugin()], server: { hmr: false } };
       window.__e1storeMod.useStore.getState().patchClip("v1", clip.id, { src: "clean720.mp4", in: 0, out: 4 });
       return true;
     })()`);
+    await g4Probe("sau patchClip clean720");
     await setEnhCheckbox("enhance-deinterlace-toggle", "deinterlace", true, firstClipId);
+    await g4Probe("sau setEnhCheckbox(true)");
     await cdp.evalJs(SET_PLAYHEAD_FN(1.0));
-    await waitIdle("preview progressive + deint tại playhead 1.0", 60000);
+    await g4Probe("sau setPlayhead(1.0)");
+    await waitIdleTraced("preview progressive + deint tại playhead 1.0", 60000);
     await sleep(500);
     const combClean = await cdp.evalJs(PREVIEW_COMBING_FN);
-    const hookD = (await cdp.evalJs(STATE_FN)).hook;
+    const stD = await cdp.evalJs(STATE_FN);
+    const hookD = stD.hook;
+    const enhD = stD.clips.find((c) => c.clipId === firstClipId)?.enhance;
     if (!combClean.ok) throw new Error(`đo G4 thất bại: ${combClean.reason}`);
-    log(`G4 progressive + deint BẬT: R=${combClean.ratio}, hook tap=${hookD?.deinterlaceTap}`);
+    log(`G4 progressive + deint BẬT: R=${combClean.ratio}, hook tap=${hookD?.deinterlaceTap} hasEnhance=${hookD?.hasEnhance} applied=${JSON.stringify(hookD?.applied)}, store enhance=${JSON.stringify(enhD)}, idle sleeping=${stD.idle?.sleeping} ticks=${stD.idle?.ticks}`);
     if (combClean.ratio < 0.8 && hookD && hookD.deinterlaceTap === true) {
       pass("G4 đối chứng progressive: tap không tạo thêm răng cưa", `R=${combClean.ratio} < 0.8 (probe clean tap1 0.61), hook tap=true`);
     } else {
-      fail("G4 đối chứng progressive: tap không tạo thêm răng cưa", `R=${combClean.ratio} (kỳ vọng < 0.8), hook=${JSON.stringify(hookD)}`);
+      fail("G4 đối chứng progressive: tap không tạo thêm răng cưa", `R=${combClean.ratio} (kỳ vọng < 0.8), hook=${JSON.stringify(hookD)}, store enhance=${JSON.stringify(enhD)}`);
     }
     // Trả clip về interlaced cho phần FPS (deint vẫn BẬT từ G4).
     await cdp.evalJs(`(async () => {

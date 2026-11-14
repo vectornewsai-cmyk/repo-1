@@ -41,12 +41,26 @@ harness) — đọc đĩa trước khi kết luận, theo tiền lệ báo cáo 
   driver chết trước khi tới O8 (dù có). F9 chạy O8 trên cây gộp cuối
   `ca378bbf` (đã có code F3): **21/21 cả 2 engine, Δx khớp từng chữ**
   với D7/D9/E8/E9. G3 không chạy lại O8 (xem §6).
-- **2 đính chính từ đĩa:** (1) reboot #29 KHÔNG phải 08:56:39Z như
+- **2 đính chính từ đĩa:** (1) ~~reboot #29 KHÔNG phải 08:56:39Z như
   brief — log cuối của F8 08:57:05.772Z, F1 resume 08:58:12Z, nên
-  reboot xảy ra trong khoảng **08:57:06–08:58:12Z**. (2) LIMITS gộp đợt
+  reboot xảy ra trong khoảng **08:57:06–08:58:12Z**~~ — **SAI, xem đính
+  chính H6 dưới đây.** (2) LIMITS gộp đợt
   104 §1 đếm thiếu F1: F1 thực tế có **5 run N10 60fps + 9 run E1**
   (run5 lần 1 chết do reboot, resume xong), không phải "3 run deint
   60fps" — chính dữ liệu E1 của F1 mới chứa lần flake tái hiện (§4).
+
+> **Đính chính của H6 (đợt 106, 13/11/2026) — thay thế đính chính (1)
+> ở trên: reboot #29 = 08:56:39Z là ĐÚNG; khoảng 08:57:06–08:58:12Z
+> của G3 là SAI.** Bằng chứng: F7 đo trực tiếp `uptime -s` = 08:56:39Z
+> lúc 08:57:38Z trên boot mới `cff65e89`; F9 xác minh độc lập (poller
+> restart 08:57:45Z, cùng `uptime_since` 08:56:39) — xem G8 §2.9
+> (`hidden_files/round105-g8/probe-notes.txt` + `round105-g8.md`).
+> Vì sao G3 kẹp sai: G3 dùng timestamp log của boot cũ (F8 log cuối
+> 08:57:05.772Z, F1 log cuối 08:57:03.660Z) — nhưng đồng hồ wall-clock
+> của boot cũ chạy nhanh hơn boot mới ~25–27s (cả hai log cuối đều nằm
+> SAU giờ boot mới 08:56:39Z), tức timestamp boot cũ không kẹp được
+> thời điểm reboot. Bài học: giờ reboot chỉ lấy từ `uptime -s` đo trực
+> tiếp trên boot mới (2 nguồn độc lập), không suy từ log boot cũ.
 
 ## 2. D6 recheck — chạy lại độc lập (G3, diff rỗng cả 3)
 

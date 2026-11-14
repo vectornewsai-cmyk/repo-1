@@ -9,6 +9,11 @@
  * (trước đó MiniBrowser chết vì thiếu libevent-2.1.so.7 — xem LIMITS §5).
  * BẮT BUỘC env GST_PLUGIN_SYSTEM_PATH=/usr/lib/x86_64-linux-gnu/gstreamer-1.0
  * khi launch (phát hiện N2 đợt 86: không có thì WebProcess crash 100%).
+ * Đợt 110 L8: script tự đặt thêm LD_LIBRARY_PATH với DEBROOT
+ * (/home/hatch/workspace/tmp-q6r3-debroot/...) để MiniBrowser không phụ
+ * thuộc vào lib hệ thống sau reboot; vite config tạm thêm
+ * server.watch.ignored (ignore mọi file — 0 inotify FD, đo L8, HMR đã tắt);
+ * vite log append theo lượt (o8w-vite-<stamp>-attemptN.log).
  *
  * Chạy (từ gốc repo): xvfb-run -a node apps/web/scripts/clicktest-87o8-mask-track-webkit.mjs
  * (tự spawn Xvfb :188 nếu chưa có; không cần xvfb-run nếu DISPLAY đã set).
@@ -35,6 +40,10 @@ const SCRATCH = process.env.O8W_SCRATCH || path.join(os.homedir(), "workspace", 
 const VITE_BIN = [path.join(ROOT, "node_modules", ".bin", "vite"), path.join(WEB_DIR, "node_modules", ".bin", "vite")].find((c) => fs.existsSync(c));
 const CFG_DIR = "/tmp/round87-o8";
 const VITE_CFG = path.join(CFG_DIR, "vite.o8w.config.mjs");
+// Đợt 110 L8 — tên log vite theo lượt (append, không ghi đè bằng chứng cũ);
+// DEBROOT cho LD_LIBRARY_PATH khi launch WebKit (sống qua reboot, độc lập /usr).
+const RUN_STAMP = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+const DEBROOT = "/home/hatch/workspace/tmp-q6r3-debroot/usr/lib/x86_64-linux-gnu";
 const BRIDGE_ENTRY = path.join(ROOT, "server", "bridge", "src", "index.js");
 const BRIDGE_WORK_DIR = "/tmp/round87-o8/bridge-work-w";
 
@@ -254,7 +263,9 @@ async function main() {
   if (!VITE_BIN) throw new Error("không thấy vite");
   const DEV_URL = `http://127.0.0.1:${DEV_PORT}/`;
   // (mkdir SCRATCH/CFG_DIR/BRIDGE_WORK_DIR đã dời lên đầu main — đợt 95 W8.)
-  writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+  // Đợt 110 L8 — watch.ignored ["**/**"]: vite 0 inotify FD (đo L8, xem
+  // docs/PHASE9_ROUND110_L8_INFRA_LIMITS.md §3); HMR đã tắt nên không mất gì.
+  writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
   log(`vite dev :${DEV_PORT}, DISPLAY=${DISPLAY}, bridge :${bridgePort}`);
 
   bridge = await startBridge(bridgePort);
@@ -287,7 +298,7 @@ async function main() {
   let up = false;
   let lastViteErr = "";
   for (let attempt = 1; attempt <= 8 && !up; attempt++) {
-    const viteLogFd = fs.openSync(path.join(SCRATCH, `o8w-vite-attempt${attempt}.log`), "w");
+    const viteLogFd = fs.openSync(path.join(SCRATCH, `o8w-vite-${RUN_STAMP}-attempt${attempt}.log`), "a");
     // Đợt 89 Q5 — --configLoader native: vite import trực tiếp config, KHÔNG
     // bundle qua loadConfigFromBundledFile (ghi file timestamp-*.mjs cạnh
     // config — chết EPERM khi sóng bật; đã chứng minh native-loader không
@@ -299,7 +310,7 @@ async function main() {
       try { const r = await fetch(DEV_URL, { signal: AbortSignal.timeout(3000) }); if (r.ok) up = true; } catch { await sleep(1000); }
     }
     if (!up) {
-      try { lastViteErr = fs.readFileSync(path.join(SCRATCH, `o8w-vite-attempt${attempt}.log`), "utf8").split("\n").slice(0, 4).join(" | "); } catch {}
+      try { lastViteErr = fs.readFileSync(path.join(SCRATCH, `o8w-vite-${RUN_STAMP}-attempt${attempt}.log`), "utf8").split("\n").slice(0, 4).join(" | "); } catch {}
       log(`vite attempt ${attempt} chưa lên (exit=${vite.exitCode}): ${lastViteErr.slice(0, 240)}`);
       try { if (vite.exitCode === null) vite.kill("SIGKILL"); } catch {}
       // Sóng EPERM bật/tắt theo chu kỳ ~1–2 phút: chờ 15s giữa các lần thử.
@@ -315,8 +326,13 @@ async function main() {
   if (xvfb.exitCode !== null) throw new Error(`Xvfb ${DISPLAY} thoát sớm (exit ${xvfb.exitCode})`);
 
   // BẮT BUỘC (N2 đợt 86): GST_PLUGIN_SYSTEM_PATH trước mọi probe WebKit.
+  // Đợt 110 L8 — tự đặt LD_LIBRARY_PATH với DEBROOT: wrapper MiniBrowser
+  // ghi đè LD_LIBRARY_PATH (nuốt path probe đặt — xem K1 §6.3); bản vá
+  // wrapper của K1 còn đó nên path này được giữ lại, và DEBROOT tồn tại
+  // độc lập với /usr nên sống qua reboot.
   browser = await webkit.launch({ headless: false,
-    env: { ...process.env, DISPLAY, GST_PLUGIN_SYSTEM_PATH: "/usr/lib/x86_64-linux-gnu/gstreamer-1.0" } });
+    env: { ...process.env, DISPLAY, GST_PLUGIN_SYSTEM_PATH: "/usr/lib/x86_64-linux-gnu/gstreamer-1.0",
+      LD_LIBRARY_PATH: [DEBROOT, process.env.LD_LIBRARY_PATH || ""].filter(Boolean).join(":") } });
   log(`webkit launched, version: ${browser.version()}`);
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const pageErrs = [];

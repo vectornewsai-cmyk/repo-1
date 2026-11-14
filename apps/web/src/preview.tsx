@@ -56,7 +56,11 @@ import { shouldSkipRenderWhileSeeking } from "./lib/seekSkipRender86N3";
 // Đợt 103 E4 — bỏ qua lần vẽ ở tick xác nhận drift đầu tiên (nợ D3 §5 mục 1:
 // đường tick vẽ 1 frame stale ở tick đầu sau nhảy vì seeking=false;
 // xem driftConfirmSkip103E4.ts).
-import { shouldSkipRenderWhileDriftConfirmPending } from "./lib/driftConfirmSkip103E4";
+import {
+  combineSkipRender,
+  shouldSkipRenderWhileDriftConfirmPending,
+  type SkipRenderDecision,
+} from "./lib/driftConfirmSkip103E4";
 // Đợt 102 D3 — vị ngữ cửa sổ timeline của pump rVFC (dùng chung cho check
 // A6 trong rvfcCallback và kill đồng bộ khi playhead nhảy; xem
 // rvfcClipWindow.ts).
@@ -1260,7 +1264,9 @@ export interface RvfcBlendTickSample {
   /**
    * Đợt 104 F3 (104f3): nguồn + tuổi anchor đã nuôi `presented` ở tick này
    * ("tap"|"pump" tươi ≤50ms, "frameIdx" = rơi về frameIdx).
-   * (Đợt 105 G1: nấc "rawAnchor" đã bỏ sau khi đo — 0/30 clean, xem LIMITS.)
+   * (Đợt 105 G1: nấc "rawAnchor" đã bỏ. Đính chính đợt 106 H5: số "0/30
+   *  clean" cũ là artifact dedup của analyzer distinct; đo đúng mọi
+   *  occurrence: rawAnchor 70,4% ≈ frameIdx 70,0%, không lợi ích.)
    */
   anchorSrc?: string;
   anchorAgeMs?: number | null;
@@ -1360,7 +1366,8 @@ export interface MotionBlurSnapshotPix {
   /**
    * Đợt 104 F3 (104f3): nguồn nhãn snapshot ("tap"|"pump" = anchor tươi,
    * "frameIdx" = rơi về frameIdx, "off" = relabel tắt).
-   * (Đợt 105 G1: "rawAnchor" đã bỏ sau khi đo 0/30 clean.)
+   * (Đợt 105 G1: "rawAnchor" đã bỏ. Đính chính đợt 106 H5: "0/30 clean" cũ
+   *  là artifact dedup; đo đúng: rawAnchor 70,4% ≈ frameIdx 70,0%.)
    */
   labelSrc?: string;
 }
@@ -1521,8 +1528,9 @@ function updateMotionBlurSnapshots(
 ): void {
   if (typeof document === "undefined" || maxGhosts <= 0) return;
   // Đợt 104 F3 (104f3): relabel snapshot bằng anchor tươi (F8; nấc rawAnchor
-  // F8b đã bỏ ở đợt 105 G1 sau khi đo 0/30 clean) — nhãn ghi vào ring là
-  // frame anchor, không phải frameIdx từ currentTime.
+  // F8b đã bỏ ở đợt 105 G1 — 70,4% ≈ frameIdx 70,0%, không lợi ích; số
+  // "0/30 clean" cũ là artifact dedup, đính chính đợt 106 H5) — nhãn ghi
+  // vào ring là frame anchor, không phải frameIdx từ currentTime.
   // Khi tap tắt, f3RelabelFrameIndex = identity nên hành vi gốc giữ nguyên.
   const relabel104f3 = f3RelabelFrameIndex(clipId, frameIndex);
   frameIndex = relabel104f3.frame;
@@ -2606,9 +2614,14 @@ function rvfcWatchdogMiss(clipId: string, frameIdx: number): boolean {
  *   anchor 50–500ms sai 70%+ theo D2 §4).
  * - F8b (ĐÃ BỎ ở đợt 105 G1): khi anchor cũ (>50ms), nhãn = frame callback
  *   gần nhất KHÔNG ngoại suy (rawAnchor) thay vì rơi về frameIdx. Đo 3 run
- *   (B/B2/C-hậu-flip): rawAnchor 0/30 clean — giả thuyết BỊ BÁC (callback
- *   kẹt sau main-thread bận trong khi trình chiếu đã sang frame kế);
- *   anchor cũ nay rơi về frameIdx như E3 (25–27% clean ở tập khó).
+ *   (B/B2/C-hậu-flip): rawAnchor 70,4% clean (mọi occurrence) ≈ frameIdx
+ *   70,0% — giả thuyết BỊ BÁC ở dạng "nâng tập fallback lên gần mức tap"
+ *   (tap 97,9%), nhưng rawAnchor KHÔNG tệ hơn frameIdx, chỉ là cách rơi
+ *   về khác không tốt hơn. (Đợt 106 H5 đính chính: số "0/30 clean" cũ là
+ *   artifact dedup của analyzer distinct, xem LIMITS đợt 105 G1 §3.2;
+ *   số E3 "frameIdx 25–27% clean" cũng chịu bias tương tự, không dùng
+ *   làm baseline fallback nữa.)
+ *   anchor cũ nay rơi về frameIdx như E3.
  * - Mọi code đợt này mang marker 104f3 để revert bằng grep nếu không land.
  */
 interface PresentedTapState104f3 {
@@ -2735,7 +2748,7 @@ function ensurePresentedTap104f3(clipId: string, el: HTMLVideoElement, fps: numb
 }
 
 /** Đợt 104 F3 (104f3): nguồn anchor của 1 frame trình chiếu. */
-export type F3AnchorSrc = "tap" | "pump" | "frameIdx"; // Đợt 105 G1: "rawAnchor" đã bỏ (đo 0/30 clean).
+export type F3AnchorSrc = "tap" | "pump" | "frameIdx"; // Đợt 105 G1: "rawAnchor" đã bỏ (70,4% ≈ frameIdx 70,0%, không lợi ích; đính chính đợt 106 H5).
 export interface F3AnchorInfo {
   frame: number;
   src: F3AnchorSrc;
@@ -2754,7 +2767,8 @@ export interface F3AnchorCandidate {
  * - anchor tươi nhất (tuổi ≤50ms, có expectedDisplayTime) trong các ứng
  *   viên → ngoại suy F + số khung trôi qua kể từ E (công thức X2);
  * - không ứng viên nào tươi → frameIdx (nấc rawAnchor F8b đã bỏ ở đợt 105
- *   G1 sau khi đo 0/30 clean — xem LIMITS đợt 105 G1 §2).
+ *   G1: 70,4% ≈ frameIdx 70,0% mọi occurrence, không lợi ích — đính chính
+ *   đợt 106 H5; xem LIMITS đợt 105 G1 §3.2).
  */
 export function f3PickAnchor104f3(
   cands: F3AnchorCandidate[],
@@ -5126,7 +5140,7 @@ function syncMedia(
   // 300 ms đóng băng mới arm lại trong khi seek chỉ cần 2 tick xác nhận.
   // Không truyền ở đường pause thì không ân hạn.
   resumeGraceTailLive97Y4?: ReadonlySet<object>,
-): boolean {
+): SkipRenderDecision {
   // Đợt 39 T6: mở đầu tick mới — cờ hoàn tất seek của tick trước hết hạn.
   seekCompletedThisTick.clear();
   forwardSeekCompletedThisTick.clear();
@@ -5589,7 +5603,12 @@ function syncMedia(
         driftConfirmSkipTicks103E4;
     }
   }
-  return (
+  // Đợt 110 L1 — TÁCH tín hiệu: gate E4 chỉ bỏ vẽ, KHÔNG được kích giữ R2
+  // (xem combineSkipRender trong driftConfirmSkip103E4.ts — trước đây
+  // boolean gộp N3||E4 làm prevSkipRenderSeeking, E4 kích giữ R2 -> pause
+  // element -> detector re-arm mù -> CAP 5 s trong đuôi Y4; đo K1).
+  // Nhánh pause bỏ qua giá trị trả về nên chỉ nhánh phát đọc 2 cờ này.
+  return combineSkipRender(
     shouldSkipRenderWhileSeeking(
       reversePlayback,
       actives.map((a) => ({
@@ -5597,7 +5616,8 @@ function syncMedia(
         seeking: a.el.seeking,
         reverse: a.reverse,
       })),
-    ) || skipRenderDriftConfirm103E4
+    ),
+    skipRenderDriftConfirm103E4,
   );
 }
 
@@ -7236,10 +7256,14 @@ export function PreviewCanvas() {
         // playing: false trước khi vẽ sau seek.
         const reversePlayback = useStore.getState().reversePlayback;
         drawTransport = { playing: true, reversePlayback };
-        const skipRenderSeeking = syncMedia(spec, pool, mediaByName, t, true, engine, forceSeek, reversePlayback, playheadHeld, playheadHeldResume, resumeRearmedThisTick95W5, resumeWatchLive96X4, resumeGraceTailLive97Y4);
+        // Đợt 110 L1 — syncMedia nay trả 2 cờ tách riêng (xem
+        // combineSkipRender): skipRender = bỏ vẽ tick này (N3 HOẶC E4),
+        // skipRenderSeeking = chỉ N3 — tín hiệu giữ R2 cho tick sau.
+        // E4 KHÔNG còn kích giữ R2 (cơ chế CAP đợt 109 K1).
+        const skipRenderDecision = syncMedia(spec, pool, mediaByName, t, true, engine, forceSeek, reversePlayback, playheadHeld, playheadHeldResume, resumeRearmedThisTick95W5, resumeWatchLive96X4, resumeGraceTailLive97Y4);
         // Đợt 90 R2 — cờ N3 của tick này làm tín hiệu giữ cho tick sau
         // (playhead tăng ở đầu tick, trước syncMedia — xem quyết định giữ).
-        prevSkipRenderSeeking = skipRenderSeeking;
+        prevSkipRenderSeeking = skipRenderDecision.skipRenderSeeking;
         // Đợt 91 S2 — arm theo dõi resume-stall: seek xuôi của clip video
         // vừa hoàn tất ở tick này (forwardSeekCompletedThisTick — CHỈ
         // nhánh forward, xem khai báo set) thì ghi element + currentTime
@@ -7296,9 +7320,15 @@ export function PreviewCanvas() {
         // vẫn chạy; khi seek xong, tick đó vẽ lại và gán lastDrawn).
         // lastRequested vẫn gán = t như cũ (chỉ nhánh pause/sleep đọc).
         // syncMedia + audio + expose media state ở trên vẫn chạy đủ.
-        if (skipRenderSeeking) {
-          seekSkipRenderTicks86N3++;
-          winHook.__vcutSeekSkipRenderTicks86N3 = seekSkipRenderTicks86N3;
+        if (skipRenderDecision.skipRender) {
+          // Đợt 110 L1 — bộ đếm N3 chỉ đếm tick bỏ vẽ VÌ seeking (cờ
+          // skipRenderSeeking); tick chỉ bỏ vẽ vì E4 đã có bộ đếm riêng
+          // __vcut103e4DriftConfirmSkips, không gộp vào đây nữa (trước
+          // đây bộ đếm này đếm gộp cả 2, xem LIMITS đợt 110 L1 §1.3).
+          if (skipRenderDecision.skipRenderSeeking) {
+            seekSkipRenderTicks86N3++;
+            winHook.__vcutSeekSkipRenderTicks86N3 = seekSkipRenderTicks86N3;
+          }
           // Đợt 92 T3 — ghi mẫu tick bỏ vẽ (preMs vẫn đo tới điểm này).
           recordRenderFrameTick92T3({ t: now, preMs: performance.now() - now, renderMs: 0, skipped: true, held: false });
         } else {
@@ -7320,7 +7350,9 @@ export function PreviewCanvas() {
         // Đợt 90 R2 — giữ cờ N3 của nhánh pause luôn (pause-seek đang bay
         // thì tick bấm play kế tiếp giữ playhead ngay từ tick đầu, không
         // chờ 1 tick vượt).
-        prevSkipRenderSeeking = syncMedia(spec, pool, mediaByName, t, false, engine, false);
+        // Đợt 110 L1 — nhánh pause chỉ lấy cờ seeking (N3) cho giữ R2;
+        // đường pause vốn không ghi pending E4 nên cờ E4 luôn false ở đây.
+        prevSkipRenderSeeking = syncMedia(spec, pool, mediaByName, t, false, engine, false).skipRenderSeeking;
         // Đợt 89 Q5 — phơi element media thật + snapshot state Ở NHÁNH
         // PAUSE (mirror khối playing ở trên, chỉ phục vụ đo — không đổi
         // hành vi): trước đây __vcutMediaEls/__vcutMediaState chỉ refresh

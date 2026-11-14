@@ -35,6 +35,57 @@ export interface DriftConfirmPendingActive {
 }
 
 /**
+ * Kết quả gộp của 2 gate bỏ vẽ trong syncMedia (đợt 110 L1 — tách tín hiệu
+ * giữ R2 khỏi tín hiệu bỏ vẽ).
+ *
+ * - `skipRender`: bỏ qua renderFrame ở tick này — đúng khi gate N3
+ *   (clip video xuôi đang seeking) HOẶC gate E4 (clip video xuôi đang ở
+ *   tick xác nhận drift / tick bị ân hạn giữ overCount) bật.
+ * - `skipRenderSeeking`: tick này bỏ vẽ VÌ clip đang seeking (chỉ N3) —
+ *   tín hiệu duy nhất được phép làm `prevSkipRenderSeeking` cho quyết
+ *   định giữ playhead R2 ở tick sau.
+ *
+ * VÌ SAO PHẢI TÁCH (cơ chế CAP đã chứng minh, xem
+ * docs/PHASE9_ROUND110_L1_REARM_FIX_LIMITS.md §1): trước đợt 110,
+ * syncMedia trả về 1 boolean gộp `N3 || E4`, và tickInner gán thẳng nó
+ * vào `prevSkipRenderSeeking` — nên 1 tick E4 (không có seek nào đang
+ * bay) cũng kích giữ playhead R2 ở tick sau. Giữ R2 pause element video
+ * (nhánh forward của syncMedia pause active khi playheadHeld mà không
+ * phải giữ resume), mà detector re-arm (`nextResumeFreezeRearm`) trả về
+ * không-arm ngay khi element paused — nên trong suốt đuôi ân hạn Y4
+ * (grace giữ overCount, E4 bỏ vẽ MỌI tick, giữ R2 lặp lại mỗi tick),
+ * không watch mới nào arm được, đuôi chạm trần 5000 ms mà không có
+ * rearm ở tick sau: CAP. Đo K1: 4/4 CAP của nhánh on có element paused
+ * ở 20-24/21-26 mẫu sampler trong đuôi + skipTicks tăng liên tục, trong
+ * khi span được cứu của nhánh off có 0/14 mẫu paused + skipTicks đứng
+ * yên. Tách ra: E4 vẫn chặn frame stale (skipRender giữ nguyên), nhưng
+ * không còn kích giữ R2 — element không bị pause oan, detector arm được
+ * watch khi element đóng băng >= 300 ms trong đuôi (đường cứu như nhánh
+ * off của K1).
+ */
+export interface SkipRenderDecision {
+  /** Bỏ qua renderFrame ở tick này (N3 HOẶC E4). */
+  skipRender: boolean;
+  /** Tick này bỏ vẽ VÌ clip đang seeking (chỉ N3) — tín hiệu giữ R2. */
+  skipRenderSeeking: boolean;
+}
+
+/**
+ * Gộp 2 gate bỏ vẽ thành 1 quyết định tách tín hiệu. Thuần, không chạm DOM.
+ * Bất biến: `skipRenderSeeking` KHÔNG BAO GIỜ được bật bởi gate E4 —
+ * E4 chỉ bỏ vẽ, không phát seek, nên không được kích giữ playhead R2.
+ */
+export function combineSkipRender(
+  skipWhileSeeking: boolean,
+  skipWhileDriftConfirm: boolean,
+): SkipRenderDecision {
+  return {
+    skipRender: skipWhileSeeking || skipWhileDriftConfirm,
+    skipRenderSeeking: skipWhileSeeking,
+  };
+}
+
+/**
  * true = tick phát này nên bỏ qua renderFrame (có clip video xuôi đang ở
  * tick xác nhận drift đầu tiên — element chưa seeking mà frame đã stale;
  * vẽ lúc này chỉ vẽ frame cũ lên canvas).
