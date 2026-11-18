@@ -651,6 +651,93 @@ let maskCanvas: HTMLCanvasElement | null = null;
 // copy nhầm nội dung đã mask thay vì thô.
 let rawUnitCanvas: HTMLCanvasElement | null = null;
 
+// Phase 9 đợt 130 T5 — (c2) instrumentation log draw (chẩn đoán-only).
+// Quyết parent đợt 129 §12.3(a): PHÊ DUYỆT có giới hạn — đúng 2 điểm log
+// (§8.6 LIMITS T5 đợt 129): (1) mỗi lần rawUnitSource vẽ (preview.tsx:685),
+// (2) mỗi lần chuỗi tạo drawSrc xong (preview.tsx:4117–4211). MẶC ĐỊNH TẮT:
+// chỉ ghi khi harness đặt window.__vcutC2DrawLog = true (cùng mẫu hook đo
+// window.__vcutHoldStats / __vcutTickCost). KHÔNG đổi hành vi render —
+// chỉ đọc currentTime/seeking/readyState + đẩy 1 object vào mảng (không
+// vẽ thêm, không seek, không đổi thứ tự vẽ). Cửa sổ ghi: CHỈ 1–2 vòng loop
+// quanh wrap — wrap = frameIdx nhảy lùi (video loop lại / seek lùi về đầu);
+// từ lúc bật cờ, vòng loop đầu tiên CHƯA có wrap thì không ghi; ghi trong
+// 2 vòng loop sau wrap đầu tiên rồi tự dừng (bật cờ lại để reset cửa sổ).
+// Trần an toàn 10.000 entry (probe (c2) dùng clip ngắn nên không chạm trần).
+// Harness đọc qua window.__vcutC2DrawLogEntries (mảng entry, xem
+// C2DrawLogEntry). Xong chẩn đoán thì gỡ helper này hoặc giữ sau cờ debug.
+type C2DrawLogEntry = {
+  point: "rawUnit" | "drawSrc";
+  clipId: string;
+  frameIdx: number;
+  ct: number | null;
+  seeking: boolean | null;
+  readyState: number | null;
+  stage: string;
+  srcKind: string;
+  wallMs: number;
+  loopNo: number;
+};
+const C2_DRAW_LOG_MAX_ENTRIES = 10000;
+const c2DrawLogEntries: C2DrawLogEntry[] = [];
+let c2DrawLogLastFrameIdx = -1;
+let c2DrawLogLoopNo = 0;
+let c2DrawLogWasEnabled = false;
+// Đợt 134 (T3, quyết parent đợt 133 §12.1(a)): nới loop-gate + không xóa
+// mảng khi re-enable giữa chừng. Chỉ là log chẩn đoán, mặc định tắt
+// (chỉ ghi khi window.__vcutC2DrawLog === true); không đổi hành vi render.
+// Revert về md5 gốc sau khi đo lượt yên #11.
+function c2DrawLogMaxLoop(): number {
+  if (typeof window === "undefined") return Number.POSITIVE_INFINITY;
+  const v = (window as unknown as { __vcutC2DrawLogMaxLoop?: unknown })
+    .__vcutC2DrawLogMaxLoop;
+  return typeof v === "number" && Number.isFinite(v) && v >= 1
+    ? Math.floor(v)
+    : Number.POSITIVE_INFINITY;
+}
+function c2DrawLogPush(entry: Omit<C2DrawLogEntry, "wallMs" | "loopNo">): void {
+  if (typeof window === "undefined") return;
+  const w = window as unknown as {
+    __vcutC2DrawLog?: unknown;
+    __vcutC2DrawLogEntries?: C2DrawLogEntry[];
+    __vcutC2DrawLogReset?: unknown;
+  };
+  if (w.__vcutC2DrawLog !== true) {
+    c2DrawLogWasEnabled = false;
+    return;
+  }
+  if (!c2DrawLogWasEnabled) {
+    // Re-enable: KHÔNG xóa mảng, KHÔNG reset loopNo — probe re-arm giữa
+    // chừng (toggle false→true giữa các pass) chỉ là tạm dừng ghi, không
+    // phải phiên đo mới; xóa ở đây làm mất log đã ghi (lượt #10: 137 entry
+    // chỉ còn lại nhờ probe vet-trước-toggle). Phiên đo mới thật sự là lần
+    // load trang mới (module state khởi tạo rỗng) hoặc khi probe đặt tường
+    // minh window.__vcutC2DrawLogReset = true trước khi bật cờ.
+    c2DrawLogWasEnabled = true;
+    if (w.__vcutC2DrawLogReset === true) {
+      w.__vcutC2DrawLogReset = false;
+      c2DrawLogLoopNo = 0;
+      c2DrawLogLastFrameIdx = -1;
+      c2DrawLogEntries.length = 0;
+    }
+  }
+  if (c2DrawLogLastFrameIdx >= 0 && entry.frameIdx < c2DrawLogLastFrameIdx) {
+    c2DrawLogLoopNo += 1;
+  }
+  c2DrawLogLastFrameIdx = entry.frameIdx;
+  // Nới loop-gate: trước đây chỉ ghi loop 1–2 nên mọi draw hậu-flip
+  // (loop ≥3) đều bị bỏ — log draw 0/5 (c2) ở lượt #9/#10. Nay ghi mọi
+  // loop ≥1; đặt window.__vcutC2DrawLogMaxLoop = 2 để khôi phục đúng
+  // hành vi cũ khi cần đối chiếu.
+  if (c2DrawLogLoopNo < 1 || c2DrawLogLoopNo > c2DrawLogMaxLoop()) return;
+  if (c2DrawLogEntries.length >= C2_DRAW_LOG_MAX_ENTRIES) return;
+  c2DrawLogEntries.push({
+    ...entry,
+    wallMs: typeof performance !== "undefined" ? performance.now() : 0,
+    loopNo: c2DrawLogLoopNo,
+  });
+  w.__vcutC2DrawLogEntries = c2DrawLogEntries;
+}
+
 /**
  * Unit THÔ (chưa mask) — đúng nửa đầu của maskedUnitSource: vẽ nội dung
  * đã letterbox (kèm cssFilter) vào offscreen W×H (giới hạn 640px như
@@ -668,6 +755,9 @@ function rawUnitSource(
   cssFilter: string,
   W: number,
   H: number,
+  // Phase 9 đợt 130 T5 — (c2) log draw điểm 1: chỉ chẩn đoán, mặc định tắt
+  // (xem c2DrawLogPush trên). Không đổi hành vi vẽ.
+  debug?: { el: HTMLVideoElement | null; frameIdx: number; clipId: string },
 ): HTMLCanvasElement | null {
   if (typeof document === "undefined") return null;
   if (!rawUnitCanvas) rawUnitCanvas = document.createElement("canvas");
@@ -683,6 +773,25 @@ function rawUnitSource(
   rctx.clearRect(0, 0, w, h);
   setCtxFilter(rctx, cssFilter);
   rctx.drawImage(drawSrc, dx * s, dy * s, dw * s, dh * s);
+  // Phase 9 đợt 130 T5 — (c2) log draw điểm 1 (§8.6): currentTime/seeking/
+  // readyState của video NGAY SAU lần vẽ rawUnit + frameIdx của tick.
+  if (debug) {
+    c2DrawLogPush({
+      point: "rawUnit",
+      clipId: debug.clipId,
+      frameIdx: debug.frameIdx,
+      ct: debug.el ? debug.el.currentTime : null,
+      seeking: debug.el ? debug.el.seeking : null,
+      readyState: debug.el ? debug.el.readyState : null,
+      stage: "rawUnit",
+      srcKind:
+        drawSrc instanceof HTMLCanvasElement
+          ? `canvas ${drawSrc.width}x${drawSrc.height}`
+          : drawSrc instanceof HTMLVideoElement
+            ? "video"
+            : "other",
+    });
+  }
   setCtxFilter(rctx, "");
   return rawUnitCanvas;
 }
@@ -4115,6 +4224,10 @@ function drawVideoClip(
     trackCenter = null;
   }
   let drawSrc: CanvasImageSource = srcEl;
+  // Phase 9 đợt 130 T5 — (c2) log draw điểm 2: nhánh nào của chuỗi đã tạo
+  // drawSrc cuối cùng (mặc định "video-raw" = video thô chưa qua xử lý).
+  // Chỉ để log chẩn đoán, không đổi hành vi (xem c2DrawLogPush).
+  let drawSrcStage = "video-raw";
   // Đợt 91 S1: drawSrc đã qua xử lý theo frame (chroma/LUT WebGL/
   // effects/enhance/deint) thì snapshot rVFC (video thô) KHÔNG tương
   // đương snapshot đường tick (đã xử lý) — clip đó không dùng pump
@@ -4125,6 +4238,7 @@ function drawVideoClip(
     const keyed = chromaKeyedSource(srcEl, mw, mh, vis.chroma);
     if (keyed) {
       drawSrc = keyed;
+      drawSrcStage = "chroma";
       pipelineProcessedDrawSrc = true;
     }
   }
@@ -4157,6 +4271,7 @@ function drawVideoClip(
     }
     if (allOk) {
       drawSrc = chained;
+      drawSrcStage = "lut";
       cssFilter = vis.cssFilterNoLut;
       srcAtLetterbox = true;
       pipelineProcessedDrawSrc = true;
@@ -4174,6 +4289,7 @@ function drawVideoClip(
     const effSrc = effectCanvasSource(drawSrc, dw, dh, canvasOps, yuvMatrixForSourceWidth(mw));
     if (effSrc) {
       drawSrc = effSrc;
+      drawSrcStage = "effects";
       srcAtLetterbox = true;
       pipelineProcessedDrawSrc = true;
     }
@@ -4200,6 +4316,7 @@ function drawVideoClip(
     const enhSrc = enhancePreviewSource(drawSrc, dw, dh, enhPlan.denoiseBlurPx, enhPlan.denoiseBlendAlpha, enhPlan.stabilizeZoom, enhPlan.deinterlaceTap);
     if (enhSrc) {
       drawSrc = enhSrc;
+      drawSrcStage = "enhance";
       enhOffscreen = true;
       srcAtLetterbox = true;
       pipelineProcessedDrawSrc = true;
@@ -4250,6 +4367,7 @@ function drawVideoClip(
     const interSrc = deintIntermediateSource(interInput, dw, dh);
     if (interSrc) {
       drawSrc = interSrc;
+      drawSrcStage = "deint-intermediate";
       srcAtLetterbox = true;
       pipelineProcessedDrawSrc = true;
     }
@@ -4271,6 +4389,7 @@ function drawVideoClip(
   if (!srcAtLetterbox && (mw > dw || mh > dh)) {
     const normSrc = letterboxIntermediateSource(drawSrc, dw, dh);
     if (normSrc) drawSrc = normSrc;
+    if (normSrc) drawSrcStage = "letterbox-norm";
   }
   // Đợt 85 M10: nốt rò plain upscale (C1 chỉ vá media > letterbox) —
   // media ≤ letterbox mà drawSrc còn là video element thô thì qua
@@ -4285,7 +4404,36 @@ function drawVideoClip(
   ) {
     const nativeSrc = plainNativeSource(drawSrc, mw, mh);
     if (nativeSrc) drawSrc = nativeSrc;
+    if (nativeSrc) drawSrcStage = "plain-native";
   }
+  // Phase 9 đợt 130 T5 — (c2) log draw điểm 2 (§8.6): chuỗi tạo drawSrc đã
+  // xong — ghi nhánh nào đã tạo drawSrc cuối cùng + currentTime/seeking/
+  // readyState của video lúc đó + frameIdx của tick. Chẩn đoán-only,
+  // mặc định tắt (xem c2DrawLogPush); không đổi hành vi vẽ.
+  c2DrawLogPush({
+    point: "drawSrc",
+    clipId: clip.id,
+    frameIdx,
+    ct:
+      typeof HTMLVideoElement !== "undefined" && srcEl instanceof HTMLVideoElement
+        ? srcEl.currentTime
+        : null,
+    seeking:
+      typeof HTMLVideoElement !== "undefined" && srcEl instanceof HTMLVideoElement
+        ? srcEl.seeking
+        : null,
+    readyState:
+      typeof HTMLVideoElement !== "undefined" && srcEl instanceof HTMLVideoElement
+        ? srcEl.readyState
+        : null,
+    stage: drawSrcStage,
+    srcKind:
+      drawSrc instanceof HTMLCanvasElement
+        ? `canvas ${drawSrc.width}x${drawSrc.height}`
+        : drawSrc instanceof HTMLVideoElement
+          ? "video"
+          : "other",
+  });
   // Đợt 91 S1: pump requestVideoFrameCallback sở hữu snapshot khi clip
   // đang phát xuôi + có blur + srcEl là element video + drawSrc là
   // video thô (không qua xử lý theo frame — xem
@@ -4372,7 +4520,18 @@ function drawVideoClip(
     const maskTimings: MaskTimings = { get: 0, apply: 0, put: 0, total: 0, viaCanvas: false };
     const rawT0 = performance.now();
     const rawUnit =
-      ghostWeights.length > 0 ? rawUnitSource(drawSrc, dx, dy, dw, dh, cssFilter, W, H) : null;
+      ghostWeights.length > 0
+        ? rawUnitSource(drawSrc, dx, dy, dw, dh, cssFilter, W, H, {
+            // Đợt 130 T5 — (c2) log draw điểm 1: video element + frameIdx
+            // của tick (chẩn đoán-only, mặc định tắt; xem c2DrawLogPush).
+            el:
+              typeof HTMLVideoElement !== "undefined" && srcEl instanceof HTMLVideoElement
+                ? srcEl
+                : null,
+            frameIdx,
+            clipId: clip.id,
+          })
+        : null;
     const rawMs = performance.now() - rawT0;
     // Đợt 100 B2: mốc lấy mẫu thật của snapshot đường mask — rawUnit vẽ
     // từ video element trong khoảng [rawT0, rawT0+rawMs] nên pixels
@@ -6246,6 +6405,16 @@ export function PreviewCanvas() {
     // xem header C3 trong playheadHold90R2.ts). Chỉ đo, qua hook
     // __vcutTailDriftGateBlocked101C3.
     let resumeTailDriftGateBlocked101C3 = 0;
+    // Đợt 111 M1 — số lần đuôi đóng sớm vì element chạm cuối clip thật
+    // (ended đúng + ct trong PLAYHEAD_TAIL_ENDED_EPS_S cuối của duration
+    // — xem header M1 trong playheadHold90R2.ts). Chỉ đo, qua hook
+    // __vcutTailEndedClosed111M1.
+    let resumeTailEndedClosed111M1 = 0;
+    // Đợt 112 N1 — số lần đuôi đóng vì decoder decode ổn định đủ
+    // PLAYHEAD_TAIL_STEADY_CLOSE_ADVANCES lần tăng lành liên tiếp
+    // (xem header N1 trong playheadHold90R2.ts). Chỉ đo, qua hook
+    // __vcutTailSteadyClosed112N1.
+    let resumeTailSteadyClosed112N1 = 0;
     // Đợt 95 W5 — element video xuôi vừa được detector re-arm Ở TICK NÀY
     // (ghi ở khối detector bên dưới, đọc ở syncMedia cùng tick để khoan
     // kích drift re-seek 1 tick — xem shouldIssueForwardReseek graceTick).
@@ -6437,7 +6606,7 @@ export function PreviewCanvas() {
       // hết watch + số lần tăng) để probe đo trực tiếp đuôi có sống
       // qua đúng tick drift re-seek từng bắn ở c1 đợt 96 không (xem
       // LIMITS đợt 97 Y4 §2). Chỉ phục vụ đo.
-      __vcutResumeGraceTail97Y4?: Array<{ el: object; endedAtMs: number; advances: number }>;
+      __vcutResumeGraceTail97Y4?: Array<{ el: object; endedAtMs: number; advances: number; steadyAdvances: number }>;
       // Đợt 98 Z3 — đếm bò của detector đóng băng theo tốc độ (số lần
       // arm vì bò + số tick bò) để probe đo trực tiếp fix có arm trong
       // lúc element bò không (xem LIMITS đợt 98 Z3 §2). Chỉ phục vụ đo.
@@ -6449,6 +6618,12 @@ export function PreviewCanvas() {
       // đáp xa khỏi target (xem PLAYHEAD_TAIL_CLOSE_DRIFT_MAX_S). Chỉ
       // phục vụ đo.
       __vcutTailDriftGateBlocked101C3?: number;
+      // Đợt 111 M1 — số lần đuôi đóng sớm vì element chạm cuối clip thật
+      // (xem PLAYHEAD_TAIL_ENDED_EPS_S). Chỉ phục vụ đo.
+      __vcutTailEndedClosed111M1?: number;
+      // Đợt 112 N1 — số lần đuôi đóng vì decoder decode ổn định
+      // (xem PLAYHEAD_TAIL_STEADY_CLOSE_ADVANCES). Chỉ phục vụ đo.
+      __vcutTailSteadyClosed112N1?: number;
       __vcutMediaState?: Array<{
         tag: string;
         currentTime: number;
@@ -6706,9 +6881,17 @@ export function PreviewCanvas() {
             tailTarget101C3 === null
               ? undefined
               : tailElVideo.currentTime - tailTarget101C3,
+          // Đợt 111 M1 — element chạm cuối clip thật thì đóng đuôi sớm
+          // (xem header M1 trong playheadHold90R2.ts): chỉ đóng khi
+          // ended đúng VÀ ct trong 0,1 s cuối của duration — flash
+          // `ended` giữa clip (seek/reset) không đóng oan.
+          ended: tailElVideo.ended,
+          duration: tailElVideo.duration,
         });
         if (stepped.burstBlocked === true) resumeTailBurstBlocked100B3++;
         if (stepped.driftGateBlocked === true) resumeTailDriftGateBlocked101C3++;
+        if (stepped.endedClosed === true) resumeTailEndedClosed111M1++;
+        if (stepped.steadyClosed === true) resumeTailSteadyClosed112N1++;
         if (stepped.tail === null) resumeGraceTail97Y4.delete(tailEl);
         else resumeGraceTail97Y4.set(tailEl, stepped.tail);
       }
@@ -6718,6 +6901,9 @@ export function PreviewCanvas() {
           el: tailEl,
           endedAtMs: tail.endedAtMs,
           advances: tail.advances,
+          // Đợt 112 N1 — công bố steady để probe kiểm trực tiếp đuôi đóng
+          // vì steady có đủ 4 lần tăng lành liên tiếp không (xem PREREG-N1 §3).
+          steadyAdvances: tail.steadyAdvances ?? 0,
         }),
       );
       // Đợt 98 Z3 — công bố đếm bò để probe đo trực tiếp (xem hook
@@ -6735,6 +6921,14 @@ export function PreviewCanvas() {
       // probe đo trực tiếp luật drift-gate có chặn được burst dài-gap
       // (g2/g5) không (xem PLAYHEAD_TAIL_CLOSE_DRIFT_MAX_S).
       winHook.__vcutTailDriftGateBlocked101C3 = resumeTailDriftGateBlocked101C3;
+      // Đợt 111 M1 — công bố đếm đuôi-đóng-vì-ended để probe đo trực
+      // tiếp fix cuộc đua tail-ceiling vs restart-ended seek ở biên cuối
+      // clip (xem PLAYHEAD_TAIL_ENDED_EPS_S).
+      winHook.__vcutTailEndedClosed111M1 = resumeTailEndedClosed111M1;
+      // Đợt 112 N1 — công bố đếm đuôi-đóng-vì-steady để probe đo trực
+      // tiếp fix CAP m1f4 (đuôi kẹt tới trần vì C3 chặn mọi lần tăng —
+      // xem PLAYHEAD_TAIL_STEADY_CLOSE_ADVANCES).
+      winHook.__vcutTailSteadyClosed112N1 = resumeTailSteadyClosed112N1;
       const resumeHold91S2 =
         resumeWatches91S2.length > 0 &&
         resumeWatches91S2.some((w) =>
@@ -7967,6 +8161,10 @@ export function PreviewCanvas() {
       if (winHook.__vcutResumeFreezeCrawl98Z3 !== undefined) delete winHook.__vcutResumeFreezeCrawl98Z3;
       // Đợt 100 B3: dọn hook đếm burst-bị-chặn của đuôi.
       if (winHook.__vcutTailBurstBlocked100B3 !== undefined) delete winHook.__vcutTailBurstBlocked100B3;
+      // Đợt 111 M1: dọn hook đếm đuôi-đóng-vì-ended.
+      if (winHook.__vcutTailEndedClosed111M1 !== undefined) delete winHook.__vcutTailEndedClosed111M1;
+      // Đợt 112 N1: dọn hook đếm đuôi-đóng-vì-steady.
+      if (winHook.__vcutTailSteadyClosed112N1 !== undefined) delete winHook.__vcutTailSteadyClosed112N1;
       if (winHook.__vcutMediaState !== undefined) delete winHook.__vcutMediaState;
       disposeReverseWebcodecsControllers();
     };

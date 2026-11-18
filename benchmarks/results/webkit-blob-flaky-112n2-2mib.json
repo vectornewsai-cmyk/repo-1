@@ -1,0 +1,2610 @@
+{
+  "date": "2026-11-14T09:18:05.415Z",
+  "round": "phase9-round112-n2-2mib",
+  "clips": {
+    "c2": {
+      "file": "c2.mp4",
+      "dur": 8,
+      "bytes": 2139973
+    },
+    "c8": {
+      "file": "c8.mp4",
+      "dur": 32,
+      "bytes": 8182985
+    },
+    "c16": {
+      "file": "c16.mp4",
+      "dur": 64,
+      "bytes": 16365151
+    }
+  },
+  "cases": [
+    {
+      "name": "Lc8-N2CTL-run1",
+      "date": "2026-11-14T08:50:05.920Z",
+      "mode": "blob",
+      "variant": "blob-file",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "gstDebugFile": "/home/hatch/workspace/goals/capcut-clone-video-editor/hidden_files/round112-n2/gst/Lc8-N2CTL-run1.log",
+      "gstDebugBytes": 766764,
+      "j2Queue2MaxSizeBytes": 4194304,
+      "l2Queue2MaxSizeBytes": null,
+      "l2Queue2RingBufferMaxSize": null,
+      "l2SplitTag": null,
+      "gstPluginPath": "/usr/lib/x86_64-linux-gnu/gstreamer-1.0",
+      "loadavg": [
+        3.11,
+        2.01,
+        1.09
+      ],
+      "memAvailMB": 2175,
+      "run": 1,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 0,
+      "poolInfoMode": "none",
+      "playDelayAppliedMs": 0,
+      "preloadWaitMs": null,
+      "preloadFull": false,
+      "seekMs": null,
+      "seekTarget": null,
+      "seekedOk": false,
+      "ptMs": null,
+      "ptFull": false,
+      "elLog": [
+        {
+          "tag": "el1",
+          "why": "videoFor-initial",
+          "t": 0.16,
+          "src": "blob",
+          "rs": 0,
+          "ct": 0
+        }
+      ],
+      "elAtSeek": null,
+      "elAtPlay": "el1",
+      "elCount": 1,
+      "playOk": true,
+      "failKind": "ok",
+      "directBlob": true,
+      "firstErrCode": null,
+      "playErr": null,
+      "totalFrames": 685,
+      "droppedFrames": 0,
+      "finalCt": 29.085,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "swapMs": 0,
+      "swapRs": 0,
+      "swapNs": 3,
+      "swapPaused": true,
+      "swapCt": 0,
+      "swapSeeking": false,
+      "httpLoadstartBeforeSwap": false,
+      "httpProgressBeforeSwap": false,
+      "httpLoadedMetaBeforeSwap": false,
+      "httpLoadedBeforeSwap": false,
+      "playCalledMs": 159,
+      "ctReached": 28.983,
+      "evs": [
+        {
+          "e": "waiting",
+          "t": 0.26,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "loadstart",
+          "t": 0.26,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 0.52,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 1.03,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "suspend",
+          "t": 1.03,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "loadedmetadata",
+          "t": 1.03,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "loadeddata",
+          "t": 1.03,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "canplay",
+          "t": 1.03,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "playing",
+          "t": 1.03,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "canplaythrough",
+          "t": 1.04,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        }
+      ],
+      "firstSample": {
+        "t": 1.03,
+        "ct": 0.019,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            17.48
+          ]
+        ],
+        "frames": 1
+      },
+      "lastSample": {
+        "t": 30,
+        "ct": 28.983,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 682
+      },
+      "srcTrace": [
+        {
+          "t": 0.16,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.16,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.16,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 1.03,
+          "src": "blob",
+          "ct": 0.02,
+          "rs": 4,
+          "ns": 1
+        },
+        {
+          "t": 30.1,
+          "src": "blob",
+          "ct": 29.09,
+          "rs": 4,
+          "ns": 1
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc8-N2CTL-run2",
+      "date": "2026-11-14T08:50:38.021Z",
+      "mode": "blob",
+      "variant": "blob-file",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "gstDebugFile": "/home/hatch/workspace/goals/capcut-clone-video-editor/hidden_files/round112-n2/gst/Lc8-N2CTL-run2.log",
+      "gstDebugBytes": 724860,
+      "j2Queue2MaxSizeBytes": 4194304,
+      "l2Queue2MaxSizeBytes": null,
+      "l2Queue2RingBufferMaxSize": null,
+      "l2SplitTag": null,
+      "gstPluginPath": "/usr/lib/x86_64-linux-gnu/gstreamer-1.0",
+      "loadavg": [
+        4.69,
+        2.47,
+        1.27
+      ],
+      "memAvailMB": 1700,
+      "run": 2,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 0,
+      "poolInfoMode": "none",
+      "playDelayAppliedMs": 0,
+      "preloadWaitMs": null,
+      "preloadFull": false,
+      "seekMs": null,
+      "seekTarget": null,
+      "seekedOk": false,
+      "ptMs": null,
+      "ptFull": false,
+      "elLog": [
+        {
+          "tag": "el1",
+          "why": "videoFor-initial",
+          "t": 0.29,
+          "src": "blob",
+          "rs": 0,
+          "ct": 0
+        }
+      ],
+      "elAtSeek": null,
+      "elAtPlay": "el1",
+      "elCount": 1,
+      "playOk": true,
+      "failKind": "ok",
+      "directBlob": true,
+      "firstErrCode": null,
+      "playErr": null,
+      "totalFrames": 697,
+      "droppedFrames": 0,
+      "finalCt": 29.208,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "swapMs": 0,
+      "swapRs": 0,
+      "swapNs": 3,
+      "swapPaused": true,
+      "swapCt": 0,
+      "swapSeeking": false,
+      "httpLoadstartBeforeSwap": false,
+      "httpProgressBeforeSwap": false,
+      "httpLoadedMetaBeforeSwap": false,
+      "httpLoadedBeforeSwap": false,
+      "playCalledMs": 295,
+      "ctReached": 29.092,
+      "evs": [
+        {
+          "e": "waiting",
+          "t": 0.39,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "loadstart",
+          "t": 0.39,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 0.7,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 0.92,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.07
+        },
+        {
+          "e": "suspend",
+          "t": 0.92,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.07
+        },
+        {
+          "e": "loadedmetadata",
+          "t": 0.92,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.07
+        },
+        {
+          "e": "loadeddata",
+          "t": 0.92,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.07
+        },
+        {
+          "e": "canplay",
+          "t": 0.92,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.07
+        },
+        {
+          "e": "playing",
+          "t": 0.92,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.07
+        },
+        {
+          "e": "canplaythrough",
+          "t": 0.92,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.07
+        }
+      ],
+      "firstSample": {
+        "t": 0.92,
+        "ct": 0.066,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            17.48
+          ]
+        ],
+        "frames": 2
+      },
+      "lastSample": {
+        "t": 29.94,
+        "ct": 29.092,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 696
+      },
+      "srcTrace": [
+        {
+          "t": 0.29,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.29,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.29,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.92,
+          "src": "blob",
+          "ct": 0.07,
+          "rs": 4,
+          "ns": 1
+        },
+        {
+          "t": 30.09,
+          "src": "blob",
+          "ct": 29.21,
+          "rs": 4,
+          "ns": 1
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc8-N2R8-run1",
+      "date": "2026-11-14T08:51:34.613Z",
+      "mode": "blob",
+      "variant": "blob-file",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "gstDebugFile": "/home/hatch/workspace/goals/capcut-clone-video-editor/hidden_files/round112-n2/gst/Lc8-N2R8-run1.log",
+      "gstDebugBytes": 782351,
+      "j2Queue2MaxSizeBytes": null,
+      "l2Queue2MaxSizeBytes": null,
+      "l2Queue2RingBufferMaxSize": 8388608,
+      "l2SplitTag": null,
+      "gstPluginPath": "/usr/lib/x86_64-linux-gnu/gstreamer-1.0",
+      "loadavg": [
+        3.07,
+        2.41,
+        1.33
+      ],
+      "memAvailMB": 2237,
+      "run": 1,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 0,
+      "poolInfoMode": "none",
+      "playDelayAppliedMs": 0,
+      "preloadWaitMs": null,
+      "preloadFull": false,
+      "seekMs": null,
+      "seekTarget": null,
+      "seekedOk": false,
+      "ptMs": null,
+      "ptFull": false,
+      "elLog": [
+        {
+          "tag": "el1",
+          "why": "videoFor-initial",
+          "t": 0.13,
+          "src": "blob",
+          "rs": 0,
+          "ct": 0
+        }
+      ],
+      "elAtSeek": null,
+      "elAtPlay": "el1",
+      "elCount": 1,
+      "playOk": true,
+      "failKind": "ok",
+      "directBlob": true,
+      "firstErrCode": null,
+      "playErr": null,
+      "totalFrames": 702,
+      "droppedFrames": 0,
+      "finalCt": 29.449,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "swapMs": 0,
+      "swapRs": 0,
+      "swapNs": 3,
+      "swapPaused": true,
+      "swapCt": 0,
+      "swapSeeking": false,
+      "httpLoadstartBeforeSwap": false,
+      "httpProgressBeforeSwap": false,
+      "httpLoadedMetaBeforeSwap": false,
+      "httpLoadedBeforeSwap": false,
+      "playCalledMs": 132,
+      "ctReached": 29.345,
+      "evs": [
+        {
+          "e": "waiting",
+          "t": 0.18,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "loadstart",
+          "t": 0.18,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 0.49,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 0.58,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "suspend",
+          "t": 0.58,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "loadedmetadata",
+          "t": 0.58,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "loadeddata",
+          "t": 0.58,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "canplay",
+          "t": 0.58,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "playing",
+          "t": 0.58,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "canplaythrough",
+          "t": 0.58,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        }
+      ],
+      "firstSample": {
+        "t": 0.58,
+        "ct": 0.023,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            9.279
+          ]
+        ],
+        "frames": 1
+      },
+      "lastSample": {
+        "t": 29.9,
+        "ct": 29.345,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 700
+      },
+      "srcTrace": [
+        {
+          "t": 0.13,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.13,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.13,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.58,
+          "src": "blob",
+          "ct": 0.02,
+          "rs": 4,
+          "ns": 1
+        },
+        {
+          "t": 30,
+          "src": "blob",
+          "ct": 29.45,
+          "rs": 4,
+          "ns": 1
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc8-N2R8-run2",
+      "date": "2026-11-14T08:52:06.096Z",
+      "mode": "blob",
+      "variant": "blob-file",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "gstDebugFile": "/home/hatch/workspace/goals/capcut-clone-video-editor/hidden_files/round112-n2/gst/Lc8-N2R8-run2.log",
+      "gstDebugBytes": 750066,
+      "j2Queue2MaxSizeBytes": null,
+      "l2Queue2MaxSizeBytes": null,
+      "l2Queue2RingBufferMaxSize": 8388608,
+      "l2SplitTag": null,
+      "gstPluginPath": "/usr/lib/x86_64-linux-gnu/gstreamer-1.0",
+      "loadavg": [
+        2,
+        2.21,
+        1.3
+      ],
+      "memAvailMB": 2241,
+      "run": 2,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 0,
+      "poolInfoMode": "none",
+      "playDelayAppliedMs": 0,
+      "preloadWaitMs": null,
+      "preloadFull": false,
+      "seekMs": null,
+      "seekTarget": null,
+      "seekedOk": false,
+      "ptMs": null,
+      "ptFull": false,
+      "elLog": [
+        {
+          "tag": "el1",
+          "why": "videoFor-initial",
+          "t": 0.13,
+          "src": "blob",
+          "rs": 0,
+          "ct": 0
+        }
+      ],
+      "elAtSeek": null,
+      "elAtPlay": "el1",
+      "elCount": 1,
+      "playOk": true,
+      "failKind": "ok",
+      "directBlob": true,
+      "firstErrCode": null,
+      "playErr": null,
+      "totalFrames": 659,
+      "droppedFrames": 0,
+      "finalCt": 29.522,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "swapMs": 0,
+      "swapRs": 0,
+      "swapNs": 3,
+      "swapPaused": true,
+      "swapCt": 0,
+      "swapSeeking": false,
+      "httpLoadstartBeforeSwap": false,
+      "httpProgressBeforeSwap": false,
+      "httpLoadedMetaBeforeSwap": false,
+      "httpLoadedBeforeSwap": false,
+      "playCalledMs": 134,
+      "ctReached": 29.404,
+      "evs": [
+        {
+          "e": "waiting",
+          "t": 0.18,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "loadstart",
+          "t": 0.18,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 0.53,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 0.53,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "suspend",
+          "t": 0.53,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "loadedmetadata",
+          "t": 0.53,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "loadeddata",
+          "t": 0.53,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "canplay",
+          "t": 0.53,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "playing",
+          "t": 0.53,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "canplaythrough",
+          "t": 0.53,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        }
+      ],
+      "firstSample": {
+        "t": 0.53,
+        "ct": 0.001,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            9.22
+          ]
+        ],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 29.93,
+        "ct": 29.404,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 656
+      },
+      "srcTrace": [
+        {
+          "t": 0.13,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.13,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.13,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.53,
+          "src": "blob",
+          "ct": 0,
+          "rs": 4,
+          "ns": 1
+        },
+        {
+          "t": 30.05,
+          "src": "blob",
+          "ct": 29.52,
+          "rs": 4,
+          "ns": 1
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc8-N2R8-run3",
+      "date": "2026-11-14T08:52:38.972Z",
+      "mode": "blob",
+      "variant": "blob-file",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "gstDebugFile": "/home/hatch/workspace/goals/capcut-clone-video-editor/hidden_files/round112-n2/gst/Lc8-N2R8-run3.log",
+      "gstDebugBytes": 713782,
+      "j2Queue2MaxSizeBytes": null,
+      "l2Queue2MaxSizeBytes": null,
+      "l2Queue2RingBufferMaxSize": 8388608,
+      "l2SplitTag": null,
+      "gstPluginPath": "/usr/lib/x86_64-linux-gnu/gstreamer-1.0",
+      "loadavg": [
+        1.9,
+        2.2,
+        1.32
+      ],
+      "memAvailMB": 2171,
+      "run": 3,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 0,
+      "poolInfoMode": "none",
+      "playDelayAppliedMs": 0,
+      "preloadWaitMs": null,
+      "preloadFull": false,
+      "seekMs": null,
+      "seekTarget": null,
+      "seekedOk": false,
+      "ptMs": null,
+      "ptFull": false,
+      "elLog": [
+        {
+          "tag": "el1",
+          "why": "videoFor-initial",
+          "t": 0.25,
+          "src": "blob",
+          "rs": 0,
+          "ct": 0
+        }
+      ],
+      "elAtSeek": null,
+      "elAtPlay": "el1",
+      "elCount": 1,
+      "playOk": true,
+      "failKind": "ok",
+      "directBlob": true,
+      "firstErrCode": null,
+      "playErr": null,
+      "totalFrames": 546,
+      "droppedFrames": 1,
+      "finalCt": 28.875,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "swapMs": 0,
+      "swapRs": 0,
+      "swapNs": 3,
+      "swapPaused": true,
+      "swapCt": 0,
+      "swapSeeking": false,
+      "httpLoadstartBeforeSwap": false,
+      "httpProgressBeforeSwap": false,
+      "httpLoadedMetaBeforeSwap": false,
+      "httpLoadedBeforeSwap": false,
+      "playCalledMs": 251,
+      "ctReached": 28.792,
+      "evs": [
+        {
+          "e": "waiting",
+          "t": 0.29,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "loadstart",
+          "t": 0.29,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 0.64,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 1.18,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "suspend",
+          "t": 1.18,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "loadedmetadata",
+          "t": 1.18,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "loadeddata",
+          "t": 1.18,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "canplay",
+          "t": 1.18,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "playing",
+          "t": 1.18,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        },
+        {
+          "e": "canplaythrough",
+          "t": 1.18,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.02
+        }
+      ],
+      "firstSample": {
+        "t": 1.18,
+        "ct": 0.025,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            9.279
+          ],
+          [
+            17.062,
+            18.114
+          ]
+        ],
+        "frames": 1
+      },
+      "lastSample": {
+        "t": 29.95,
+        "ct": 28.792,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 544
+      },
+      "srcTrace": [
+        {
+          "t": 0.25,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.25,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.25,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 1.18,
+          "src": "blob",
+          "ct": 0.02,
+          "rs": 4,
+          "ns": 1
+        },
+        {
+          "t": 30.06,
+          "src": "blob",
+          "ct": 28.87,
+          "rs": 4,
+          "ns": 1
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc8-N2R8-run4",
+      "date": "2026-11-14T08:53:11.075Z",
+      "mode": "blob",
+      "variant": "blob-file",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "gstDebugFile": "/home/hatch/workspace/goals/capcut-clone-video-editor/hidden_files/round112-n2/gst/Lc8-N2R8-run4.log",
+      "gstDebugBytes": 718671,
+      "j2Queue2MaxSizeBytes": null,
+      "l2Queue2MaxSizeBytes": null,
+      "l2Queue2RingBufferMaxSize": 8388608,
+      "l2SplitTag": null,
+      "gstPluginPath": "/usr/lib/x86_64-linux-gnu/gstreamer-1.0",
+      "loadavg": [
+        2.03,
+        2.18,
+        1.35
+      ],
+      "memAvailMB": 1604,
+      "run": 4,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 0,
+      "poolInfoMode": "none",
+      "playDelayAppliedMs": 0,
+      "preloadWaitMs": null,
+      "preloadFull": false,
+      "seekMs": null,
+      "seekTarget": null,
+      "seekedOk": false,
+      "ptMs": null,
+      "ptFull": false,
+      "elLog": [
+        {
+          "tag": "el1",
+          "why": "videoFor-initial",
+          "t": 0.23,
+          "src": "blob",
+          "rs": 0,
+          "ct": 0
+        }
+      ],
+      "elAtSeek": null,
+      "elAtPlay": "el1",
+      "elCount": 1,
+      "playOk": true,
+      "failKind": "ok",
+      "directBlob": true,
+      "firstErrCode": null,
+      "playErr": null,
+      "totalFrames": 580,
+      "droppedFrames": 0,
+      "finalCt": 29.25,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "swapMs": 0,
+      "swapRs": 0,
+      "swapNs": 3,
+      "swapPaused": true,
+      "swapCt": 0,
+      "swapSeeking": false,
+      "httpLoadstartBeforeSwap": false,
+      "httpProgressBeforeSwap": false,
+      "httpLoadedMetaBeforeSwap": false,
+      "httpLoadedBeforeSwap": false,
+      "playCalledMs": 288,
+      "ctReached": 29.111,
+      "evs": [
+        {
+          "e": "waiting",
+          "t": 0.32,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "loadstart",
+          "t": 0.32,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 0.69,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 0.92,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.09
+        },
+        {
+          "e": "suspend",
+          "t": 0.92,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.09
+        },
+        {
+          "e": "loadedmetadata",
+          "t": 0.92,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.09
+        },
+        {
+          "e": "loadeddata",
+          "t": 0.92,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.09
+        },
+        {
+          "e": "canplay",
+          "t": 0.92,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.09
+        },
+        {
+          "e": "playing",
+          "t": 0.92,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.09
+        },
+        {
+          "e": "canplaythrough",
+          "t": 0.92,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.09
+        }
+      ],
+      "firstSample": {
+        "t": 0.92,
+        "ct": 0.094,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            9.279
+          ]
+        ],
+        "frames": 2
+      },
+      "lastSample": {
+        "t": 29.93,
+        "ct": 29.111,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 576
+      },
+      "srcTrace": [
+        {
+          "t": 0.29,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.29,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.29,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.92,
+          "src": "blob",
+          "ct": 0.09,
+          "rs": 4,
+          "ns": 1
+        },
+        {
+          "t": 30.09,
+          "src": "blob",
+          "ct": 29.25,
+          "rs": 4,
+          "ns": 1
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc8-N2R8-run5",
+      "date": "2026-11-14T08:53:43.973Z",
+      "mode": "blob",
+      "variant": "blob-file",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "gstDebugFile": "/home/hatch/workspace/goals/capcut-clone-video-editor/hidden_files/round112-n2/gst/Lc8-N2R8-run5.log",
+      "gstDebugBytes": 722135,
+      "j2Queue2MaxSizeBytes": null,
+      "l2Queue2MaxSizeBytes": null,
+      "l2Queue2RingBufferMaxSize": 8388608,
+      "l2SplitTag": null,
+      "gstPluginPath": "/usr/lib/x86_64-linux-gnu/gstreamer-1.0",
+      "loadavg": [
+        1.23,
+        1.97,
+        1.3
+      ],
+      "memAvailMB": 1508,
+      "run": 5,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 0,
+      "poolInfoMode": "none",
+      "playDelayAppliedMs": 0,
+      "preloadWaitMs": null,
+      "preloadFull": false,
+      "seekMs": null,
+      "seekTarget": null,
+      "seekedOk": false,
+      "ptMs": null,
+      "ptFull": false,
+      "elLog": [
+        {
+          "tag": "el1",
+          "why": "videoFor-initial",
+          "t": 0.27,
+          "src": "blob",
+          "rs": 0,
+          "ct": 0
+        }
+      ],
+      "elAtSeek": null,
+      "elAtPlay": "el1",
+      "elCount": 1,
+      "playOk": true,
+      "failKind": "ok",
+      "directBlob": true,
+      "firstErrCode": null,
+      "playErr": null,
+      "totalFrames": 573,
+      "droppedFrames": 3,
+      "finalCt": 29.25,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "swapMs": 0,
+      "swapRs": 0,
+      "swapNs": 3,
+      "swapPaused": true,
+      "swapCt": 0,
+      "swapSeeking": false,
+      "httpLoadstartBeforeSwap": false,
+      "httpProgressBeforeSwap": false,
+      "httpLoadedMetaBeforeSwap": false,
+      "httpLoadedBeforeSwap": false,
+      "playCalledMs": 269,
+      "ctReached": 29.096,
+      "evs": [
+        {
+          "e": "waiting",
+          "t": 0.3,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "loadstart",
+          "t": 0.3,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 0.65,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 0.8,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "suspend",
+          "t": 0.8,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "loadedmetadata",
+          "t": 0.8,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "loadeddata",
+          "t": 0.8,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "canplay",
+          "t": 0.8,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "playing",
+          "t": 0.8,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "canplaythrough",
+          "t": 0.8,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        }
+      ],
+      "firstSample": {
+        "t": 0.8,
+        "ct": 0.001,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            9.22
+          ]
+        ],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 29.89,
+        "ct": 29.096,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 570
+      },
+      "srcTrace": [
+        {
+          "t": 0.27,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.27,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.27,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.8,
+          "src": "blob",
+          "ct": 0,
+          "rs": 4,
+          "ns": 1
+        },
+        {
+          "t": 30.05,
+          "src": "blob",
+          "ct": 29.25,
+          "rs": 4,
+          "ns": 1
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc8-N2R8-run6",
+      "date": "2026-11-14T09:08:09.538Z",
+      "mode": "blob",
+      "variant": "blob-file",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "gstDebugFile": "/home/hatch/workspace/goals/capcut-clone-video-editor/hidden_files/round112-n2/gst/Lc8-N2R8-run6.log",
+      "gstDebugBytes": 306684,
+      "j2Queue2MaxSizeBytes": null,
+      "l2Queue2MaxSizeBytes": null,
+      "l2Queue2RingBufferMaxSize": 8388608,
+      "l2SplitTag": null,
+      "gstPluginPath": "/usr/lib/x86_64-linux-gnu/gstreamer-1.0",
+      "loadavg": [
+        3.78,
+        5.28,
+        2.79
+      ],
+      "memAvailMB": 2169,
+      "run": 6,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 0,
+      "poolInfoMode": "none",
+      "playDelayAppliedMs": 0,
+      "preloadWaitMs": null,
+      "preloadFull": false,
+      "seekMs": null,
+      "seekTarget": null,
+      "seekedOk": false,
+      "ptMs": null,
+      "ptFull": false,
+      "elLog": [
+        {
+          "tag": "el1",
+          "why": "videoFor-initial",
+          "t": 3.79,
+          "src": "blob",
+          "rs": 0,
+          "ct": 0
+        }
+      ],
+      "elAtSeek": null,
+      "elAtPlay": "el1",
+      "elCount": 1,
+      "playOk": true,
+      "failKind": "ok",
+      "directBlob": true,
+      "firstErrCode": null,
+      "playErr": null,
+      "totalFrames": 9,
+      "droppedFrames": 2,
+      "finalCt": 8.542,
+      "finalPaused": false,
+      "finalSrcKind": "blob",
+      "swapMs": 0,
+      "swapRs": 0,
+      "swapNs": 3,
+      "swapPaused": true,
+      "swapCt": 0,
+      "swapSeeking": false,
+      "httpLoadstartBeforeSwap": false,
+      "httpProgressBeforeSwap": false,
+      "httpLoadedMetaBeforeSwap": false,
+      "httpLoadedBeforeSwap": false,
+      "playCalledMs": 3788,
+      "ctReached": 8.542,
+      "evs": [
+        {
+          "e": "waiting",
+          "t": 5.21,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "loadstart",
+          "t": 6.3,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 8.6,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "stalled",
+          "t": 11.09,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 13.61,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.01
+        },
+        {
+          "e": "suspend",
+          "t": 13.61,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.01
+        },
+        {
+          "e": "loadedmetadata",
+          "t": 13.61,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.01
+        },
+        {
+          "e": "loadeddata",
+          "t": 13.61,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.01
+        },
+        {
+          "e": "canplay",
+          "t": 13.61,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.01
+        },
+        {
+          "e": "playing",
+          "t": 13.61,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.01
+        },
+        {
+          "e": "canplaythrough",
+          "t": 13.68,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0.08
+        }
+      ],
+      "firstSample": {
+        "t": 13.68,
+        "ct": 0.01,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            9.22
+          ]
+        ],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 29.9,
+        "ct": 8.542,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            20.052
+          ]
+        ],
+        "frames": 9
+      },
+      "srcTrace": [
+        {
+          "t": 3.79,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 3.79,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 3.79,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 13.61,
+          "src": "blob",
+          "ct": 0.01,
+          "rs": 4,
+          "ns": 1
+        },
+        {
+          "t": 30.08,
+          "src": "blob",
+          "ct": 8.54,
+          "rs": 4,
+          "ns": 1
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "LOOPc8-N2R8-run1",
+      "date": "2026-11-14T09:14:11.427Z",
+      "mode": "blob",
+      "variant": "blob-file",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "gstDebugFile": "/home/hatch/workspace/goals/capcut-clone-video-editor/hidden_files/round112-n2/gst/LOOPc8-N2R8-run1.log",
+      "gstDebugBytes": 1164818,
+      "l2Queue2MaxSizeBytes": null,
+      "l2Queue2RingBufferMaxSize": 8388608,
+      "loadavg": [
+        18.94,
+        6.82,
+        3.65
+      ],
+      "memAvailMB": 855,
+      "run": 1,
+      "loopsCompleted": 1,
+      "targetLoops": 2,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 1,
+      "seekedCount": 1,
+      "totalFrames": 11,
+      "droppedFrames": 3,
+      "stalls": [
+        {
+          "fromT": 17.19,
+          "durS": 17.69,
+          "ct": 0
+        },
+        {
+          "fromT": 34.88,
+          "durS": 3.02,
+          "ct": 0.083
+        },
+        {
+          "fromT": 37.9,
+          "durS": 4.88,
+          "ct": 1.667
+        },
+        {
+          "fromT": 42.78,
+          "durS": 15.41,
+          "ct": 7.458
+        },
+        {
+          "fromT": 58.19,
+          "durS": 36.32,
+          "ct": 12.75
+        },
+        {
+          "fromT": 100.9,
+          "durS": 1.81,
+          "ct": 0
+        },
+        {
+          "fromT": 103.98,
+          "durS": 1.7,
+          "ct": 0.083
+        },
+        {
+          "fromT": 105.68,
+          "durS": 5.09,
+          "ct": 2.5
+        },
+        {
+          "fromT": 110.77,
+          "durS": 1.62,
+          "ct": 5.583
+        }
+      ],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 0,
+      "poolInfoMode": "none",
+      "finalSrcKind": "blob",
+      "playErr": "play-timeout-10s",
+      "finalCt": 5.583,
+      "finalPaused": false,
+      "finalEnded": false,
+      "swapMs": 0,
+      "swapRs": 0,
+      "swapNs": 3,
+      "httpLoadstartBeforeSwap": false,
+      "httpProgressBeforeSwap": false,
+      "httpLoadedMetaBeforeSwap": false,
+      "httpLoadedBeforeSwap": false,
+      "playCalledMs": 5182,
+      "wallS": 112.39,
+      "srcTrace": [
+        {
+          "t": 5.17,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 5.17,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 5.17,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 17.09,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 2
+        },
+        {
+          "t": 112.69,
+          "src": "blob",
+          "ct": 5.58,
+          "rs": 4,
+          "ns": 1
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "LOOPc8-N2R8-run2",
+      "date": "2026-11-14T09:16:54.234Z",
+      "mode": "blob",
+      "variant": "blob-file",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "gstDebugFile": "/home/hatch/workspace/goals/capcut-clone-video-editor/hidden_files/round112-n2/gst/LOOPc8-N2R8-run2.log",
+      "gstDebugBytes": 1457920,
+      "l2Queue2MaxSizeBytes": null,
+      "l2Queue2RingBufferMaxSize": 8388608,
+      "loadavg": [
+        51.78,
+        25.89,
+        11.36
+      ],
+      "memAvailMB": 1366,
+      "run": 2,
+      "loopsCompleted": 1,
+      "targetLoops": 2,
+      "pass": false,
+      "resumeMsMedian": null,
+      "resumeNull": 1,
+      "seekedCount": 1,
+      "totalFrames": 19,
+      "droppedFrames": 6,
+      "stalls": [
+        {
+          "fromT": 15.58,
+          "durS": 6.62,
+          "ct": 0
+        },
+        {
+          "fromT": 22.2,
+          "durS": 4.08,
+          "ct": 0.167
+        },
+        {
+          "fromT": 26.28,
+          "durS": 12.3,
+          "ct": 1.417
+        },
+        {
+          "fromT": 38.58,
+          "durS": 33.8,
+          "ct": 7.583
+        },
+        {
+          "fromT": 72.38,
+          "durS": 10.7,
+          "ct": 27.208
+        },
+        {
+          "fromT": 95.18,
+          "durS": 4.13,
+          "ct": 3.542
+        },
+        {
+          "fromT": 99.31,
+          "durS": 8.26,
+          "ct": 5.417
+        },
+        {
+          "fromT": 107.57,
+          "durS": 4.62,
+          "ct": 11.917
+        }
+      ],
+      "srcAtPlay": "blob",
+      "blobReadyMs": 0,
+      "poolInfoMode": "none",
+      "finalSrcKind": "blob",
+      "playErr": "play-timeout-10s",
+      "finalCt": 11.917,
+      "finalPaused": false,
+      "finalEnded": false,
+      "swapMs": 0,
+      "swapRs": 0,
+      "swapNs": 3,
+      "httpLoadstartBeforeSwap": false,
+      "httpProgressBeforeSwap": false,
+      "httpLoadedMetaBeforeSwap": false,
+      "httpLoadedBeforeSwap": false,
+      "playCalledMs": 2001,
+      "wallS": 112.19,
+      "srcTrace": [
+        {
+          "t": 2,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 2,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 2,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 15.47,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 2
+        },
+        {
+          "t": 113.19,
+          "src": "blob",
+          "ct": 11.92,
+          "rs": 4,
+          "ns": 1
+        }
+      ],
+      "errEvents": []
+    },
+    {
+      "name": "Lc8-N2EL-run1",
+      "date": "2026-11-14T09:21:55.627Z",
+      "mode": "blob",
+      "variant": "fresh-element",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "gstDebugFile": "/home/hatch/workspace/goals/capcut-clone-video-editor/hidden_files/round112-n2/gst/Lc8-N2EL-run1.log",
+      "gstDebugBytes": 570306,
+      "j2Queue2MaxSizeBytes": 4194304,
+      "l2Queue2MaxSizeBytes": null,
+      "l2Queue2RingBufferMaxSize": null,
+      "l2SplitTag": null,
+      "gstPluginPath": "/usr/lib/x86_64-linux-gnu/gstreamer-1.0",
+      "loadavg": [
+        0.93,
+        11.28,
+        9.32
+      ],
+      "memAvailMB": 772,
+      "run": 1,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 10790,
+      "poolInfoMode": "skipped",
+      "playDelayAppliedMs": 0,
+      "preloadWaitMs": 19304,
+      "preloadFull": true,
+      "seekMs": 31086,
+      "seekTarget": 16,
+      "seekedOk": false,
+      "ptMs": null,
+      "ptFull": false,
+      "elLog": [
+        {
+          "tag": "el1",
+          "why": "videoFor-initial",
+          "t": 0.9,
+          "src": "http",
+          "rs": 0,
+          "ct": 0
+        },
+        {
+          "tag": "el2",
+          "why": "videoFor-fresh-swap",
+          "t": 11.72,
+          "src": "blob",
+          "rs": 0,
+          "ct": 0
+        }
+      ],
+      "elAtSeek": "el2",
+      "elAtPlay": "el2",
+      "elCount": 2,
+      "playOk": true,
+      "failKind": "ok",
+      "directBlob": false,
+      "firstErrCode": null,
+      "playErr": null,
+      "totalFrames": 5,
+      "droppedFrames": 2,
+      "finalCt": 28.667,
+      "finalPaused": false,
+      "finalSrcKind": "http",
+      "swapMs": 10790,
+      "swapRs": 0,
+      "swapNs": 3,
+      "swapPaused": true,
+      "swapCt": 0,
+      "swapSeeking": false,
+      "httpLoadstartBeforeSwap": false,
+      "httpProgressBeforeSwap": false,
+      "httpLoadedMetaBeforeSwap": false,
+      "httpLoadedBeforeSwap": false,
+      "playCalledMs": 41390,
+      "ctReached": 28.667,
+      "evs": [
+        {
+          "e": "abort",
+          "t": 11.78,
+          "rs": 0,
+          "ns": 3,
+          "ct": 0
+        },
+        {
+          "e": "emptied",
+          "t": 11.78,
+          "rs": 0,
+          "ns": 3,
+          "ct": 0
+        },
+        {
+          "e": "loadstart",
+          "t": 11.99,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 13.5,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "stalled",
+          "t": 17,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 18.22,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "stalled",
+          "t": 22.38,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "emptied",
+          "t": 24.18,
+          "rs": 0,
+          "ns": 3,
+          "ct": 0
+        },
+        {
+          "e": "loadstart",
+          "t": 25.12,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 25.88,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 26.29,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 26.78,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 27.67,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 28.11,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 30.3,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "suspend",
+          "t": 30.3,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "loadedmetadata",
+          "t": 30.3,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "loadeddata",
+          "t": 30.3,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "canplay",
+          "t": 30.3,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "canplaythrough",
+          "t": 30.3,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "seeking",
+          "t": 31.48,
+          "rs": 4,
+          "ns": 1,
+          "ct": 16
+        },
+        {
+          "e": "playing",
+          "t": 42.42,
+          "rs": 4,
+          "ns": 1,
+          "ct": 16
+        },
+        {
+          "e": "seeked",
+          "t": 49.08,
+          "rs": 4,
+          "ns": 1,
+          "ct": 16.46
+        }
+      ],
+      "firstSample": {
+        "t": 43.12,
+        "ct": 16,
+        "paused": false,
+        "ended": false,
+        "seeking": true,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 0
+      },
+      "lastSample": {
+        "t": 72.61,
+        "ct": 28.667,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 5
+      },
+      "srcTrace": [
+        {
+          "t": 0.99,
+          "src": "http",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 11.78,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 11.78,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 11.78,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 11.78,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 24.18,
+          "src": "http",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 24.18,
+          "src": "http",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 42.91,
+          "src": "http",
+          "ct": 16,
+          "rs": 4,
+          "ns": 1
+        },
+        {
+          "t": 73.31,
+          "src": "http",
+          "ct": 28.67,
+          "rs": 4,
+          "ns": 1
+        }
+      ],
+      "errEvents": [
+        {
+          "t": 24.18,
+          "src": "http",
+          "code": null,
+          "msg": null,
+          "rs": 0,
+          "ns": 3
+        }
+      ]
+    },
+    {
+      "name": "Lc8-N2EL-run2",
+      "date": "2026-11-14T09:23:14.515Z",
+      "mode": "blob",
+      "variant": "fresh-element",
+      "clip": "c8.mp4",
+      "clipBytes": 8182985,
+      "clipDurS": 32,
+      "playDelayMs": 0,
+      "gstDebugFile": "/home/hatch/workspace/goals/capcut-clone-video-editor/hidden_files/round112-n2/gst/Lc8-N2EL-run2.log",
+      "gstDebugBytes": 623555,
+      "j2Queue2MaxSizeBytes": 4194304,
+      "l2Queue2MaxSizeBytes": null,
+      "l2Queue2RingBufferMaxSize": null,
+      "l2SplitTag": null,
+      "gstPluginPath": "/usr/lib/x86_64-linux-gnu/gstreamer-1.0",
+      "loadavg": [
+        51.37,
+        28.47,
+        16.1
+      ],
+      "memAvailMB": 962,
+      "run": 2,
+      "srcAtPlay": "blob",
+      "blobReadyMs": 352,
+      "poolInfoMode": "blob",
+      "playDelayAppliedMs": 0,
+      "preloadWaitMs": 20006,
+      "preloadFull": false,
+      "seekMs": 20367,
+      "seekTarget": 16,
+      "seekedOk": true,
+      "ptMs": null,
+      "ptFull": false,
+      "elLog": [
+        {
+          "tag": "el1",
+          "why": "videoFor-initial",
+          "t": 0.01,
+          "src": "http",
+          "rs": 0,
+          "ct": 0
+        },
+        {
+          "tag": "el2",
+          "why": "videoFor-fresh-swap",
+          "t": 0.36,
+          "src": "blob",
+          "rs": 0,
+          "ct": 0
+        }
+      ],
+      "elAtSeek": "el2",
+      "elAtPlay": "el2",
+      "elCount": 2,
+      "playOk": true,
+      "failKind": "ok",
+      "directBlob": false,
+      "firstErrCode": null,
+      "playErr": null,
+      "totalFrames": 213,
+      "droppedFrames": 7,
+      "finalCt": 32,
+      "finalPaused": true,
+      "finalSrcKind": "blob",
+      "swapMs": 352,
+      "swapRs": 0,
+      "swapNs": 3,
+      "swapPaused": true,
+      "swapCt": 0,
+      "swapSeeking": false,
+      "httpLoadstartBeforeSwap": true,
+      "httpProgressBeforeSwap": false,
+      "httpLoadedMetaBeforeSwap": false,
+      "httpLoadedBeforeSwap": false,
+      "playCalledMs": 22558,
+      "ctReached": 32,
+      "evs": [
+        {
+          "e": "loadstart",
+          "t": 0.2,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "abort",
+          "t": 0.36,
+          "rs": 0,
+          "ns": 3,
+          "ct": 0
+        },
+        {
+          "e": "emptied",
+          "t": 0.36,
+          "rs": 0,
+          "ns": 3,
+          "ct": 0
+        },
+        {
+          "e": "loadstart",
+          "t": 0.38,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 0.72,
+          "rs": 0,
+          "ns": 2,
+          "ct": 0
+        },
+        {
+          "e": "progress",
+          "t": 0.96,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "suspend",
+          "t": 0.96,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "loadedmetadata",
+          "t": 0.96,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "loadeddata",
+          "t": 0.96,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "canplay",
+          "t": 0.96,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "canplaythrough",
+          "t": 0.96,
+          "rs": 4,
+          "ns": 1,
+          "ct": 0
+        },
+        {
+          "e": "seeking",
+          "t": 20.56,
+          "rs": 4,
+          "ns": 1,
+          "ct": 16
+        },
+        {
+          "e": "seeked",
+          "t": 22.56,
+          "rs": 4,
+          "ns": 1,
+          "ct": 16
+        },
+        {
+          "e": "playing",
+          "t": 22.66,
+          "rs": 4,
+          "ns": 1,
+          "ct": 16.08
+        },
+        {
+          "e": "pause",
+          "t": 38.76,
+          "rs": 4,
+          "ns": 1,
+          "ct": 32
+        }
+      ],
+      "firstSample": {
+        "t": 22.99,
+        "ct": 16.292,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [
+          [
+            0,
+            32
+          ]
+        ],
+        "frames": 6
+      },
+      "lastSample": {
+        "t": 52.96,
+        "ct": 32,
+        "paused": true,
+        "ended": true,
+        "seeking": false,
+        "rs": 4,
+        "dur": 32,
+        "buf": [],
+        "frames": 213
+      },
+      "srcTrace": [
+        {
+          "t": 0.01,
+          "src": "http",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.36,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.36,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.36,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 0.36,
+          "src": "blob",
+          "ct": 0,
+          "rs": 0,
+          "ns": 3
+        },
+        {
+          "t": 22.99,
+          "src": "blob",
+          "ct": 16.29,
+          "rs": 4,
+          "ns": 1
+        },
+        {
+          "t": 53.06,
+          "src": "blob",
+          "ct": 32,
+          "rs": 4,
+          "ns": 1
+        }
+      ],
+      "errEvents": []
+    }
+  ],
+  "env": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15",
+    "mediaRecorder": "undefined",
+    "hardwareConcurrency": 4,
+    "uptimeS": 1529.33,
+    "previewMd5": "03bf029f09b8890b285eacc10a02172b",
+    "shimMd5": "b208e8de1780f432062f03ca5eea4a66",
+    "loadavg": [
+      1.09,
+      11.66,
+      9.42
+    ]
+  }
+}
