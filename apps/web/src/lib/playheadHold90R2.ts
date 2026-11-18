@@ -581,6 +581,98 @@ export const PLAYHEAD_TAIL_BURST_RATE_MAX = 1.5;
  */
 export const PLAYHEAD_TAIL_CLOSE_DRIFT_MAX_S = 0.35;
 
+// ---- Đợt 112 N1: steady-close — đuôi đóng khi decoder decode ỔN ĐỊNH dù lệch vị trí
+// (nợ CAP m1f4 đợt 111, xem docs/PHASE9_ROUND111_M1_TAILCEILING_LIMITS.md §4.2
+// + PREREG-N1 trong hidden_files/round112-n1) ----
+//
+// ĐIỂM MÙ CỦA LUẬT 2-ADVANCE + DRIFT-GATE C3 (đo thật, m1f4 đợt 111, clip bóng
+// 6 s gop30, load4 — XÁC MINH LẠI từ probe-results.json thô, đính chính LIMITS M1):
+// đuôi mở ở t=3807 sau burst +0,55 s đặt ct lead ph ~0,6 s; element giải mã ỔN ĐỊNH
+// suốt đuôi (ct 1,2 → 5,87 ~0,91×, ph 0,8 → 5,47 ~0,96×) nhưng lead giữ +0,4…+0,7 s
+// nên MỌI lần tăng đều bị C3 chặn (gate 0→8; burst B3 0→1; chỉ 1 lần tăng được đếm rồi
+// bị reset ngay tick sau) — advances giữ 0, đuôi không bao giờ đóng bằng luật 2-advance,
+// sống tới trần 5000 ms (tuổi 5197 ms ở tick phát cuối) → CAP. Trong đuôi, canvas VẪN
+// vẽ (renderTicks 0/11 skipped) — user-visible correlate là preview hiển thị frame LEAD
+// ph ~0,5 s suốt ~5 s (lỗi sync), không phải đóng băng. Đuôi sinh ra làm CẦU NỐI ngắn
+// (~300 ms tới watch mới), không phải bộ chặn drift re-seek 5,2 s.
+// (Đính chính M1 §4.2: "freeze ở 5,9667" sau đuôi đóng KHÔNG phải quirk WebKit tự kẹt
+// khi đang phát — rafSamples cho playing=False từ rel 9400, renderTicks dừng ở rel 9004,
+// probe-log pause app sau localPh≥5,0: probe pause ở ph 5,967, đúng 1 frame trước cuối
+// clip, nên element dừng ở 5,9667 VÌ BỊ PAUSE. Element không bao giờ ngồi ở frame cuối
+// TRONG LÚC PHÁT ở m1f4; ended không bắn vì playback đã dừng trước khi ct kịp tới 6,0.)
+//
+// SỬA (luật thứ ba, độc lập với 2-advance): đếm riêng số lần tăng LIÊN TIẾP đạt tốc độ
+// lành (qua luật burst-rate B3) — bất kể đáp gần hay xa target — vào `steadyAdvances`;
+// đủ PLAYHEAD_TAIL_STEADY_CLOSE_ADVANCES lần liên tiếp thì ĐÓNG đuôi (cờ `steadyClosed`).
+// Lý do: độ ổn định của decoder đo bằng TỐC ĐỘ decode (đều ~1×), không phải độ chính xác
+// vị trí — misalignment còn lại là lỗi vị trí, và drift re-seek (bắn ngay sau khi đuôi
+// đóng) mới là đường sửa đúng, không phải đuôi. Burst (B3) và tick đóng băng đều RESET
+// steady về 0: burst là bất ổn, đóng băng là chưa chứng minh ổn định liên tục — nên ca
+// f4 (re-seek bắn 1 tick sau burst → kẹt seek 5,5 s) vẫn được chặn: re-seek sớm nhất
+// sau burst là 4 tick (~1,6–2,4 s dưới tải). Ngưỡng 4 = gấp đôi ngưỡng 2-advance hiện
+// có, vì 1 lần tăng đáp xa là bằng chứng yếu hơn 1 lần tăng đáp đúng. Đuôi đóng vì
+// steady vẫn để drift re-seek sửa vị trí ngay — không che freeze thật (freeze reset
+// steady, đuôi vẫn mở tới trần rồi thành CAP như cũ).
+/**
+ * Số lần tăng LIÊN TIẾP đạt tốc độ lành (qua luật burst-rate B3) cần để đóng đuôi
+ * vì decoder đã ổn định — dù các lần tăng đó đáp xa target (xem header N1). Gấp đôi
+ * ngưỡng 2-advance: đáp xa là bằng chứng yếu hơn đáp đúng. Đổi số phải cập nhật cả
+ * test pin bên dưới.
+ */
+export const PLAYHEAD_TAIL_STEADY_CLOSE_ADVANCES = 4;
+
+// ---- Đợt 111 M1: đuôi đóng sớm khi element chạm cuối clip thật (nợ
+// LIMITS đợt 110 L1 §6 mục 2 — CAP l1f3, xem
+// docs/PHASE9_ROUND110_L1_REARM_FIX_LIMITS.md §4.2) ----
+//
+// CUỘC ĐUA (đo thật, l1f3 đợt 110, clip bóng 6 s, gop250, loadN=4):
+// đuôi Y4 mở ở t=4331 (ct burst 0,57 → 1,32); element giải mã bình
+// thường suốt đuôi (ct 1,52 → 6,0, ph 0,73 → 5,23) nhưng mọi lần tăng
+// đều bị B3/C3 từ chối đếm (burst / đáp xa) nên advances giữ 0;
+// t=9108 ct chạm đúng duration (6,0), tuổi đuôi 4777 ms — chỉ thiếu
+// 23 ms so với ngưỡng CAP 4800 ms; t=9317 restart-ended seek bắn
+// (ct 6,0 → 5,5, restartV 0 → 1 ở tick sau — chứng tỏ `ended` đã đúng);
+// t=9522 tuổi đuôi 5191 ms; t=9708 đuôi đóng vì chạm trần 5000 ms,
+// rearms 0 → 0 → CAP. Detector không arm vì element không đóng băng
+// >= 300 ms trong đuôi, và ~200 ms cuối đang seeking (restart seek)
+// nên trả track null theo luật.
+//
+// SỬA: đuôi đóng ngay khi element chạm cuối clip THẬT — `ended` đúng
+// VÀ currentTime trong 0,1 s cuối của duration (xem
+// PLAYHEAD_TAIL_ENDED_EPS_S). Đuôi tồn tại để phát hiện element ĐÓNG
+// BĂNG; element đã phát xong clip thì không đóng băng, không cần cứu —
+// restart seek sau đó (đường H5) là một lần resync mới, không phải
+// drift re-seek mà đuôi đang ân hạn. Đóng ở tuổi 4777–4986 ms thay vì
+// đợi trần 5000 ms rồi thành CAP.
+//
+// VÌ SAO CẦN CẢ `ended` LẪN ct GẦN DURATION (không dùng `ended` trần):
+// `ended` có thể thoáng đúng giữa clip trong lúc seek/reset (xem M4
+// đợt 85 — phân biệt restart do `ended` thật ct ≈ duration vs do
+// seek/reset). Đóng đuôi oan lúc đó sẽ tắt ân hạn drift re-seek giữa
+// lúc decoder chưa ổn định — đúng ca f4 mà đuôi sinh ra để chặn.
+// Một lần flash giữa clip có ct xa duration nên không lọt điều kiện
+// này; chỉ cuối clip thật mới thỏa cả hai. Duration NaN/Infinity
+// (live) → không đóng (fail-open, hành vi cũ).
+//
+// ĐẢM BẢO KHÔNG CHE FREEZE THẬT: freeze ở ct=5,99 (1 frame trước
+// cuối) có ended=false nên đuôi vẫn mở → vẫn thành CAP nếu chạm trần
+// không rearm. Freeze đúng ở ct=duration thì element đã phát xong —
+// restart seek sau đó tự reposition, stall sau restart (nếu có) được
+// watch mới bao phủ như bình thường.
+// Caller đếm số lần đóng-vì-ended qua cờ `endedClosed` (như
+// burstBlocked/driftGateBlocked) để probe đo trực tiếp; phân loại CAP
+// xem ended-close là kết cục hợp lệ, không phải freeze (xem
+// PREREG-M1 §3 trong hidden_files/round111-m1).
+/**
+ * Dung sai "đã ở cuối clip" (giây): currentTime trong khoảng này tính
+ * từ duration thì coi là đã chạm cuối clip khi `ended` đúng. Khi ended
+ * đúng, currentTime ở đúng duration (sai số float nhỏ); 0,1 s ≈ 3 frame
+ * là biên an toàn rộng mà vẫn chỉ đúng ở cuối clip — một lần flash
+ * `ended` giữa clip có ct cách duration hàng giây nên không lọt.
+ * Đổi số phải cập nhật cả test pin bên dưới.
+ */
+export const PLAYHEAD_TAIL_ENDED_EPS_S = 0.1;
+
 /** Đuôi ân hạn drift re-seek cho 1 element video sau khi watch của nó hết. */
 export interface ResumeGraceTail97Y4 {
   /** Timestamp rAF (ms) lúc watch hết (khối dọn watch bỏ watch vì element tăng). */
@@ -596,6 +688,14 @@ export interface ResumeGraceTail97Y4 {
    * thiếu thì dùng endedAtMs làm mốc (xem nextResumeGraceTail97Y4).
    */
   lastTickMs?: number;
+  /**
+   * Đợt 112 N1 — số lần tăng LIÊN TIẾP đạt tốc độ lành (qua luật
+   * burst-rate B3), bất kể đáp gần hay xa target (xem header N1).
+   * Burst và tick đóng băng reset về 0; đủ PLAYHEAD_TAIL_STEADY_CLOSE_ADVANCES
+   * thì đuôi đóng vì decoder đã ổn định (cờ `steadyClosed`). Tùy chọn
+   * để đuôi cũ vẫn chạy: thiếu thì coi là 0.
+   */
+  steadyAdvances?: number;
 }
 
 export interface ResumeGraceTailInput {
@@ -625,6 +725,21 @@ export interface ResumeGraceTailInput {
    * drift → bỏ qua gate, chạy như B3 (tương thích ngược).
    */
   drift?: number;
+  /**
+   * Đợt 111 M1 — element đã chạm `ended` chưa (do caller đọc
+   * `el.ended` — xem header M1). Chỉ có tác dụng khi đi cùng
+   * `duration`: đuôi chỉ đóng vì ended khi ended đúng VÀ currentCt
+   * trong PLAYHEAD_TAIL_ENDED_EPS_S cuối của duration (cuối clip
+   * thật, không phải flash giữa clip). Không truyền = không biết →
+   * bỏ qua luật này, chạy như cũ (tương thích ngược).
+   */
+  ended?: boolean;
+  /**
+   * Đợt 111 M1 — độ dài media của element (giây, `el.duration`).
+   * Không hữu hạn (NaN/Infinity — live) → luật ended không kích hoạt
+   * (fail-open). Không truyền = không biết → bỏ qua luật này.
+   */
+  duration?: number;
 }
 
 export interface ResumeGraceTailResult {
@@ -643,6 +758,21 @@ export interface ResumeGraceTailResult {
    * Caller đếm để probe đo trực tiếp.
    */
   driftGateBlocked?: boolean;
+  /**
+   * Đợt 111 M1 — true = tick này vừa đóng đuôi vì element chạm cuối
+   * clip thật (ended đúng + currentCt trong PLAYHEAD_TAIL_ENDED_EPS_S
+   * cuối của duration — xem header M1). Caller đếm để probe đo trực
+   * tiếp; phân loại CAP xem đây là kết cục hợp lệ, không phải freeze.
+   */
+  endedClosed?: boolean;
+  /**
+   * Đợt 112 N1 — true = tick này vừa đóng đuôi vì decoder đã decode ổn
+   * định đủ PLAYHEAD_TAIL_STEADY_CLOSE_ADVANCES lần tăng lành liên tiếp
+   * (xem header N1) — dù các lần tăng đó đáp xa target. Caller đếm để
+   * probe đo trực tiếp; phân loại CAP xem đây là kết cục hợp lệ, không
+   * phải freeze (drift re-seek sửa vị trí ngay sau khi đuôi đóng).
+   */
+  steadyClosed?: boolean;
 }
 
 /**
@@ -652,6 +782,9 @@ export interface ResumeGraceTailResult {
  * khi dừng phát (cùng chỗ dọn resumeWatches91S2).
  *
  * - Không phát hoặc đã có watch mới → đóng đuôi (watch sống tiếp quản).
+ * - Đợt 111 M1 — element chạm cuối clip thật (ended đúng + currentCt
+ *   trong PLAYHEAD_TAIL_ENDED_EPS_S cuối của duration) → đóng đuôi
+ *   (element đã phát xong, không đóng băng — xem header M1).
  * - Quá trần cứng 5000 ms kể từ lúc watch hết → đóng (van an toàn).
  * - Tăng >= 1 frame kể từ lần tăng cuối → đếm 1 lần tăng; đủ 2 lần
  *   tăng ở 2 tick riêng biệt → decoder resume ổn định → đóng đuôi.
@@ -666,6 +799,12 @@ export interface ResumeGraceTailResult {
  *   thì cũng KHÔNG đếm mà reset advances về 0 + rebase lastCt (xem
  *   header C3 — burst dài-gap g2/g5 lọt luật rate vì rate chỉ 1,14–
  *   1,41×, nhưng đáp với drift +0,93…+1,60 nên gate này chặn được).
+ *   Đợt 112 N1 — NGOẠI LỆ ổn-định: lần tăng lành-về-tốc-độ nhưng đáp xa
+ *   vẫn đếm vào `steadyAdvances` (riêng, không reset); đủ
+ *   PLAYHEAD_TAIL_STEADY_CLOSE_ADVANCES lần liên tiếp thì đóng đuôi vì
+ *   decoder đã ổn định (cờ `steadyClosed`) — xem header N1 (ca m1f4:
+ *   8 lần đáp xa liên tiếp giữ đuôi mở 5,2 s tới trần). Burst và tick
+ *   đóng băng reset steady về 0.
  * - Còn lại (đóng băng < 1 frame) → giữ đuôi mở.
  * - Trừ 1e-9 s để biên đúng-1-frame không bị sai số float (như
  *   shouldHoldForResumeStall / nextResumeFreezeRearm).
@@ -684,7 +823,23 @@ export function nextResumeGraceTail97Y4(
   // lastTickMs thì dùng endedAtMs (lần bước đầu sau khi đuôi mở, gap
   // ≈ 1 tick sau khi watch hết).
   const prevTickMs = tail.lastTickMs ?? tail.endedAtMs;
+  // Đợt 112 N1 — số lần tăng lành liên tiếp đã đếm (đuôi cũ không có
+  // trường này thì coi là 0 — tương thích ngược).
+  const steady = tail.steadyAdvances ?? 0;
   if (!playing || hasWatch) return { tail: null };
+  // Đợt 111 M1 — element chạm cuối clip thật → đóng đuôi ngay (xem
+  // header M1): `ended` đúng VÀ currentCt trong PLAYHEAD_TAIL_ENDED_EPS_S
+  // cuối của duration. Đặt TRƯỚC trần 5000 ms để đuôi đóng vì ended ở
+  // tuổi >5000 vẫn ghi đúng lý do ended (không phải trần). Duration
+  // không hữu hạn / không truyền → không kích hoạt (fail-open).
+  if (
+    input.ended === true &&
+    input.duration !== undefined &&
+    Number.isFinite(input.duration) &&
+    currentCt >= input.duration - PLAYHEAD_TAIL_ENDED_EPS_S
+  ) {
+    return { tail: null, endedClosed: true };
+  }
   if (nowMs - tail.endedAtMs > PLAYHEAD_RESUME_STALL_GRACE_TAIL_MAX_MS) return { tail: null };
   if (Math.abs(currentCt - tail.lastCt) >= frameDur - 1e-9) {
     // Đợt 100 B3 — luật burst-rate: tăng quá nhanh trong chính tick này
@@ -695,7 +850,8 @@ export function nextResumeGraceTail97Y4(
       const rate = Math.abs(currentCt - tail.lastCt) / (gapS * playbackRate);
       if (rate > PLAYHEAD_TAIL_BURST_RATE_MAX) {
         return {
-          tail: { ...tail, advances: 0, lastCt: currentCt, lastTickMs: nowMs },
+          // Đợt 112 N1 — burst reset cả steady (bất ổn, xem header N1).
+          tail: { ...tail, advances: 0, steadyAdvances: 0, lastCt: currentCt, lastTickMs: nowMs },
           burstBlocked: true,
         };
       }
@@ -707,20 +863,36 @@ export function nextResumeGraceTail97Y4(
     // ngược). Kiểm SAU luật rate: burst vừa nhanh vừa đáp xa báo
     // burstBlocked (luật cũ giữ nguyên), chỉ lần tăng lành-về-tốc-độ
     // mà đáp xa mới báo driftGateBlocked.
+    // Đợt 112 N1 — nhưng lần tăng lành đáp xa VẪN đếm vào steady: đủ
+    // PLAYHEAD_TAIL_STEADY_CLOSE_ADVANCES lần liên tiếp thì đóng đuôi
+    // vì decoder đã ổn định (cờ steadyClosed — xem header N1). Tick
+    // đóng-vì-steady vừa báo driftGateBlocked (lần tăng này đã bị gate
+    // chặn khỏi `advances`) vừa báo steadyClosed (lý do đóng đuôi).
     if (
       input.drift !== undefined &&
       Math.abs(input.drift) > PLAYHEAD_TAIL_CLOSE_DRIFT_MAX_S
     ) {
+      const steadyNext = steady + 1;
+      if (steadyNext >= PLAYHEAD_TAIL_STEADY_CLOSE_ADVANCES) {
+        return { tail: null, steadyClosed: true, driftGateBlocked: true };
+      }
       return {
-        tail: { ...tail, advances: 0, lastCt: currentCt, lastTickMs: nowMs },
+        tail: { ...tail, advances: 0, steadyAdvances: steadyNext, lastCt: currentCt, lastTickMs: nowMs },
         driftGateBlocked: true,
       };
     }
     const advances = tail.advances + 1;
+    // Đợt 112 N1 — lần tăng lành đáp đúng vị trí cũng là bằng chứng ổn
+    // định: đếm vào steady như lần tăng đáp xa (đóng bằng advances ở 2
+    // như cũ — luật 2-advance chạy trước, steady chỉ là đường thứ hai).
+    const steadyNext = steady + 1;
     if (advances >= 2) return { tail: null };
-    return { tail: { ...tail, advances, lastCt: currentCt, lastTickMs: nowMs } };
+    return { tail: { ...tail, advances, steadyAdvances: steadyNext, lastCt: currentCt, lastTickMs: nowMs } };
   }
-  return { tail: { ...tail, lastTickMs: nowMs } };
+  // Đợt 112 N1 — tick đóng băng reset steady về 0: decoder khựng lại là
+  // chưa chứng minh ổn định liên tục (advances giữ như cũ, chỉ steady
+  // là chuỗi liên tiếp nên phải reset).
+  return { tail: { ...tail, steadyAdvances: 0, lastTickMs: nowMs } };
 }
 
 /**

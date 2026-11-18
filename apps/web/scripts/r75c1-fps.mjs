@@ -215,7 +215,7 @@ async function main() {
     fs.mkdirSync(VITE_CFG_DIR, { recursive: true });
     writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\n// @vitejs/plugin-react nằm ở node_modules GỐC repo (hoisted), không phải
 // apps/web/node_modules — resolve từ gốc để bản shadow ở /tmp cũng chạy được.
-const require = createRequire(${JSON.stringify(path.join(ROOT, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+const require = createRequire(${JSON.stringify(path.join(ROOT, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
     log(`vite dev :${DEV_PORT} (webDir=${WEB_DIR}), debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, label=${LABEL}`);
 
     const viteLogFd = fs.openSync(path.join(SCRATCH, "r75c1-vite.log"), "w");

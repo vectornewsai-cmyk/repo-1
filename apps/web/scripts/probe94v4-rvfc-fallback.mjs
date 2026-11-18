@@ -144,7 +144,7 @@ async function main() {
     DISPLAY = d; break;
   }
   if (!DISPLAY) throw new Error("hết display Xvfb trống :193–:197");
-  fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+  fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
   const DEV_URL = `http://127.0.0.1:${DEV_PORT}/`;
   log(`fallback probe ${ENGINE} phase=${PHASE} vite :${DEV_PORT} DISPLAY=${DISPLAY}`);
   log(`môi trường: ${execFileSync("sh", ["-c", "free -m | head -2 | tail -1; uptime"], { encoding: "utf8" }).trim().replace(/\n/g, " | ")}`);

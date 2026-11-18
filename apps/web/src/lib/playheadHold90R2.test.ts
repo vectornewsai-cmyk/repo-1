@@ -367,6 +367,8 @@ function tailStep(
   tail: ResumeGraceTail97Y4,
   hasWatch = false,
   playing = true,
+  ended?: boolean,
+  duration?: number,
 ) {
   return nextResumeGraceTail97Y4({
     playing,
@@ -375,6 +377,8 @@ function tailStep(
     frameDur: 1 / 30,
     hasWatch,
     tail,
+    ended,
+    duration,
   });
 }
 
@@ -430,6 +434,71 @@ await ok("Y4-R6 không phát → đuôi đóng ngay (dừng phát thì không c�
   const tail0: ResumeGraceTail97Y4 = { endedAtMs: 1000, advances: 0, lastCt: 1.0 };
   const s = tailStep(1100, 1.0, tail0, false, false);
   assert.equal(s.tail, null);
+});
+
+// ---- Đợt 111 M1: đuôi đóng sớm khi element chạm cuối clip thật (CAP l1f3) ----
+
+import { PLAYHEAD_TAIL_ENDED_EPS_S } from "./playheadHold90R2.ts";
+
+await ok("M1-R1 PLAYHEAD_TAIL_ENDED_EPS_S = 0,1 (pin: ~3 frame — khi ended đúng, ct ở đúng duration; đổi số phải có ý thức)", () => {
+  assert.equal(PLAYHEAD_TAIL_ENDED_EPS_S, 0.1);
+});
+
+await ok("M1-R2 replay l1f3: ended đúng + ct=duration ở tuổi đuôi 4777 ms → đuôi đóng + endedClosed=true (thay vì đợi trần 5000 ms rồi thành CAP)", () => {
+  // l1f3: đuôi mở t=4331; tick t=9108 ct=6,0=duration, tuổi 4777 ms.
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 4331, advances: 0, lastCt: 5.8223 };
+  const s = tailStep(9108, 6.0, tail0, false, true, true, 6.0);
+  assert.equal(s.tail, null);
+  assert.equal(s.endedClosed, true);
+});
+
+await ok("M1-R3 ended đúng nhưng ct xa duration (flash giữa clip do seek/reset) → đuôi KHÔNG đóng", () => {
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 1000, advances: 0, lastCt: 0.5 };
+  const s = tailStep(2000, 0.5, tail0, false, true, true, 6.0);
+  assert.notEqual(s.tail, null);
+  assert.equal(s.endedClosed, undefined);
+});
+
+await ok("M1-R4 ended đúng + ct ở cuối clip nhưng duration NaN (live) → KHÔNG đóng (fail-open)", () => {
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 1000, advances: 0, lastCt: 5.9 };
+  const s = tailStep(2000, 5.9, tail0, false, true, true, Number.NaN);
+  assert.notEqual(s.tail, null);
+  assert.equal(s.endedClosed, undefined);
+});
+
+await ok("M1-R5 ended=false nhưng ct=duration → KHÔNG đóng (chưa có cờ ended)", () => {
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 1000, advances: 0, lastCt: 5.9 };
+  const s = tailStep(2000, 6.0, tail0, false, true, false, 6.0);
+  assert.notEqual(s.tail, null);
+  assert.equal(s.endedClosed, undefined);
+});
+
+await ok("M1-R6 ended ở tuổi >5000 ms → vẫn ghi endedClosed (lý do ended, không phải trần)", () => {
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 1000, advances: 0, lastCt: 5.9 };
+  const s = tailStep(1000 + 5100, 6.0, tail0, false, true, true, 6.0);
+  assert.equal(s.tail, null);
+  assert.equal(s.endedClosed, true);
+});
+
+await ok("M1-R7 ended + watch mới arm cùng tick → đóng nhưng endedClosed=false (lý do là watch tiếp quản)", () => {
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 1000, advances: 0, lastCt: 5.9 };
+  const s = tailStep(2000, 6.0, tail0, true, true, true, 6.0);
+  assert.equal(s.tail, null);
+  assert.equal(s.endedClosed, undefined);
+});
+
+await ok("M1-R8 không truyền ended/duration → hành vi cũ (đuôi vẫn mở, tương thích ngược)", () => {
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 1000, advances: 0, lastCt: 5.9 };
+  const s = tailStep(2000, 6.0, tail0);
+  assert.notEqual(s.tail, null);
+  assert.equal(s.endedClosed, undefined);
+});
+
+await ok("M1-R9 freeze thật 1 frame trước cuối (ct=5,99, ended=false) → đuôi KHÔNG đóng (không che freeze)", () => {
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 1000, advances: 0, lastCt: 5.9 };
+  const s = tailStep(1000 + 5001, 5.99, tail0, false, true, false, 6.0);
+  assert.equal(s.tail, null); // đóng vì chạm trần, không phải vì ended
+  assert.equal(s.endedClosed, undefined);
 });
 
 // ---- Đợt 98 Z3: định nghĩa đóng băng theo TỐC ĐỘ (nợ LIMITS đợt 97 §4 mục 3) ----
@@ -792,6 +861,134 @@ await ok("C3-R10 điểm mù B3-R5 nay ĐÓNG khi biết drift: cùng số B3-R5
   assert.equal(s1.tail?.lastCt, 5.4242);
   assert.equal(s1.driftGateBlocked, true);
   assert.equal(s1.burstBlocked, undefined); // rate 0,58× không chặn — chỉ gate chặn
+});
+
+// ---- Đợt 112 N1: steady-close — đuôi đóng khi decoder decode ỔN ĐỊNH dù lệch vị trí
+// (nợ CAP m1f4 đợt 111 — đuôi kẹt tới trần vì C3 chặn mọi lần tăng; xem PREREG-N1
+// trong hidden_files/round112-n1) ----
+
+import {
+  PLAYHEAD_TAIL_STEADY_CLOSE_ADVANCES,
+} from "./playheadHold90R2.ts";
+
+await ok("N1-R1 PLAYHEAD_TAIL_STEADY_CLOSE_ADVANCES = 4 (pin: gấp đôi ngưỡng 2-advance — đáp xa là bằng chứng yếu hơn đáp đúng; đổi số phải có ý thức)", () => {
+  assert.equal(PLAYHEAD_TAIL_STEADY_CLOSE_ADVANCES, 4);
+});
+
+await ok("N1-R2 replay m1f4 đợt 111: 4 lần tăng lành đáp xa liên tiếp → đuôi đóng + steadyClosed=true ở tuổi ~1593 ms (thay vì sống tới trần 5197 ms rồi thành CAP)", () => {
+  // m1f4: đuôi mở t=3807 (ct 1,1167, lead ph ~0,6 s); 8 lần tăng đáp xa liên tiếp
+  // bị C3 chặn (gate 0→8), advances giữ 0. Test dùng 4 lần tăng đầu (mỗi lần +0,4 s
+  // / 400 ms = 1,0×, drift +0,5…+0,6) — đủ ngưỡng steady là đóng.
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 3807, advances: 0, lastCt: 1.1167 };
+  const s1 = tailStepC3(4200, 1.5167, tail0, 0.5);
+  assert.notEqual(s1.tail, null);
+  assert.equal(s1.tail?.advances, 0); // đáp xa: KHÔNG đếm vào advances (luật C3 cũ)
+  assert.equal(s1.tail?.steadyAdvances, 1);
+  assert.equal(s1.driftGateBlocked, true);
+  const s2 = tailStepC3(4600, 1.9167, s1.tail!, 0.55);
+  assert.notEqual(s2.tail, null);
+  assert.equal(s2.tail?.steadyAdvances, 2);
+  const s3 = tailStepC3(5000, 2.3167, s2.tail!, 0.6);
+  assert.notEqual(s3.tail, null);
+  assert.equal(s3.tail?.steadyAdvances, 3);
+  const s4 = tailStepC3(5400, 2.7167, s3.tail!, 0.5);
+  assert.equal(s4.tail, null); // lần tăng lành đáp xa thứ 4 liên tiếp → đóng
+  assert.equal(s4.steadyClosed, true);
+  assert.equal(s4.driftGateBlocked, true); // lần tăng này vẫn bị gate chặn khỏi advances
+});
+
+await ok("N1-R3 3 lần tăng lành đáp xa → vẫn mở (chưa đủ 4 — không đóng sớm oan)", () => {
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 10000, advances: 0, lastCt: 1.0 };
+  const s1 = tailStepC3(10400, 1.4, tail0, 0.5);
+  assert.equal(s1.tail?.steadyAdvances, 1);
+  const s2 = tailStepC3(10800, 1.8, s1.tail!, 0.55);
+  assert.equal(s2.tail?.steadyAdvances, 2);
+  const s3 = tailStepC3(11200, 2.2, s2.tail!, 0.5);
+  assert.notEqual(s3.tail, null);
+  assert.equal(s3.tail?.steadyAdvances, 3);
+  assert.equal(s3.steadyClosed, undefined);
+});
+
+await ok("N1-R4 burst chen giữa chuỗi steady → reset steady về 0, vẫn mở (bảo vệ ca f4: re-seek không bắn 1 tick sau burst)", () => {
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 3807, advances: 0, lastCt: 1.1167 };
+  const s1 = tailStepC3(4200, 1.5167, tail0, 0.5);
+  const s2 = tailStepC3(4600, 1.9167, s1.tail!, 0.55);
+  const s3 = tailStepC3(5000, 2.3167, s2.tail!, 0.6);
+  assert.equal(s3.tail?.steadyAdvances, 3);
+  const s4 = tailStepC3(5400, 3.4767, s3.tail!, 2.49); // burst +1,16 s/400 ms = 2,9×
+  assert.notEqual(s4.tail, null);
+  assert.equal(s4.tail?.advances, 0);
+  assert.equal(s4.tail?.steadyAdvances, 0); // burst reset cả steady
+  assert.equal(s4.tail?.lastCt, 3.4767);
+  assert.equal(s4.burstBlocked, true);
+  const s5 = tailStepC3(5800, 3.8767, s4.tail!, 0.5);
+  assert.notEqual(s5.tail, null);
+  assert.equal(s5.tail?.steadyAdvances, 1); // đếm lại từ đầu sau burst
+});
+
+await ok("N1-R5 tick đóng băng chen giữa chuỗi steady → reset steady về 0, vẫn mở (decoder khựng lại là chưa ổn định liên tục)", () => {
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 10000, advances: 0, lastCt: 1.0 };
+  const s1 = tailStepC3(10400, 1.4, tail0, 0.5);
+  const s2 = tailStepC3(10800, 1.8, s1.tail!, 0.55);
+  assert.equal(s2.tail?.steadyAdvances, 2);
+  const s3 = tailStepC3(11200, 1.8, s2.tail!, 0.6); // đóng băng: ct đứng yên
+  assert.notEqual(s3.tail, null);
+  assert.equal(s3.tail?.advances, 0);
+  assert.equal(s3.tail?.steadyAdvances, 0); // freeze reset steady
+  const s4 = tailStepC3(11600, 2.2, s3.tail!, 0.5);
+  assert.notEqual(s4.tail, null);
+  assert.equal(s4.tail?.steadyAdvances, 1);
+});
+
+await ok("N1-R6 đường lành KHÔNG đổi: 2 lần tăng đáp đúng vị trí vẫn đóng đuôi bằng advances (steadyClosed=false/undefined, không chờ đủ 4)", () => {
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 10000, advances: 0, lastCt: 1.0 };
+  const s1 = tailStepC3(10100, 1.0 + 1 / 30, tail0, 0.1);
+  assert.notEqual(s1.tail, null);
+  assert.equal(s1.tail?.advances, 1);
+  assert.equal(s1.tail?.steadyAdvances, 1);
+  const s2 = tailStepC3(10200, 1.0 + 2 / 30, s1.tail!, 0.12);
+  assert.equal(s2.tail, null); // đóng bằng advances #2 như Y4/C3
+  assert.equal(s2.steadyClosed, undefined);
+});
+
+await ok("N1-R7 hỗn hợp: 1 lần tăng đáp đúng + 3 lần tăng đáp xa → đóng bằng steady ở lần thứ 4 (steady đếm cả hai loại tăng lành)", () => {
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 10000, advances: 0, lastCt: 1.1 };
+  const s1 = tailStepC3(10400, 1.15, tail0, 0.1); // đáp đúng: advances 1, steady 1
+  assert.notEqual(s1.tail, null);
+  assert.equal(s1.tail?.advances, 1);
+  assert.equal(s1.tail?.steadyAdvances, 1);
+  const s2 = tailStepC3(10800, 1.55, s1.tail!, 0.5); // đáp xa: advances reset, steady 2
+  assert.notEqual(s2.tail, null);
+  assert.equal(s2.tail?.advances, 0);
+  assert.equal(s2.tail?.steadyAdvances, 2);
+  const s3 = tailStepC3(11200, 1.95, s2.tail!, 0.5);
+  assert.equal(s3.tail?.steadyAdvances, 3);
+  const s4 = tailStepC3(11600, 2.35, s3.tail!, 0.5);
+  assert.equal(s4.tail, null); // steady #4 → đóng
+  assert.equal(s4.steadyClosed, true);
+});
+
+await ok("N1-R8 biên drift: drift đúng 0,35 thì tính là đáp đúng — 2 lần tăng đóng bằng advances (không đi đường steady)", () => {
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 10000, advances: 0, lastCt: 2.0 };
+  const s1 = tailStepC3(10100, 2.0 + 1 / 30, tail0, 0.35);
+  assert.equal(s1.tail?.advances, 1);
+  assert.equal(s1.driftGateBlocked, undefined);
+  const s2 = tailStepC3(10200, 2.0 + 2 / 30, s1.tail!, 0.35);
+  assert.equal(s2.tail, null);
+  assert.equal(s2.steadyClosed, undefined);
+});
+
+await ok("N1-R9 !playing / hasWatch đóng trước steady (steadyClosed=false/undefined — đóng vì lý do khác, không đếm oan steady)", () => {
+  const tail0: ResumeGraceTail97Y4 = { endedAtMs: 10000, advances: 0, lastCt: 1.0 };
+  const s1 = tailStepC3(10400, 1.4, tail0, 0.5);
+  const s2 = tailStepC3(10800, 1.8, s1.tail!, 0.55);
+  assert.equal(s2.tail?.steadyAdvances, 2);
+  const sWatch = tailStep(11200, 2.2, s2.tail!, true);
+  assert.equal(sWatch.tail, null);
+  assert.equal(sWatch.steadyClosed, undefined);
+  const sStop = tailStep(11200, 2.2, s2.tail!, false, false);
+  assert.equal(sStop.tail, null);
+  assert.equal(sStop.steadyClosed, undefined);
 });
 
 console.log(`playheadHold90R2.test: ${pass} passed`);

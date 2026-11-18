@@ -392,7 +392,7 @@ async function main() {
     fs.mkdirSync(TMPDIR, { recursive: true });
     fs.rmSync(PROFILE, { recursive: true, force: true });
     fs.mkdirSync(VITE_CFG_DIR, { recursive: true });
-    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, TMPDIR=${TMPDIR}, window=${WIN_W}x${WIN_H}, sources=${SOURCES_RUN.map((s) => s.name).join(",")}, variants=${VARIANTS.join(",")}`);
 
     const viteLogFd = fs.openSync(path.join(SCRATCH, "r84l2-vite.log"), "w");
