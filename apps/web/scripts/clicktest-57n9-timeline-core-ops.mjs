@@ -281,7 +281,14 @@ async function main() {
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, TMPDIR=${TMPDIR}`);
 
     const viteLogFd = fs.openSync(path.join(SCRATCH, "n9-vite.log"), "w");
-    // Config tạm /tmp/round57-n9/vite.n9.config.mjs tắt HMR (xem file đó):
+    // Đợt 123 T8: tự ghi config mirror L8 trước khi spawn (mẫu đợt 122) —
+    // sao y nội dung gốc N9 (LIMITS §5.1: react plugin + hmr: false) +
+    // watch.ignored để vite không giữ inotify watch (phòng ENOSPC).
+    // Ghi lại mỗi lần chạy vì /tmp mất sau reboot.
+    const VITE_CFG = "/tmp/round57-n9/vite.n9.config.mjs";
+    fs.mkdirSync("/tmp/round57-n9", { recursive: true });
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
+    // Config mirror /tmp/round57-n9/vite.n9.config.mjs (tự ghi ở trên, tắt HMR):
     // luồng khác sửa .tsx/.ts giữa chừng không reload trang đang test.
     vite = spawn(VITE_BIN, ["-c", "/tmp/round57-n9/vite.n9.config.mjs", "--port", String(DEV_PORT), "--strictPort", "--host", "127.0.0.1"],
       { cwd: WEB_DIR, stdio: ["ignore", viteLogFd, viteLogFd] });

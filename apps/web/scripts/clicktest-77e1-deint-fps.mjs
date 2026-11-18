@@ -583,7 +583,7 @@ const mediaPlugin = () => ({ name: "d4-media", configureServer(server) {
     fs.createReadStream(fp).pipe(res);
   });
 } });
-export default { plugins: [react(), mediaPlugin()], server: { hmr: false } };
+export default { plugins: [react(), mediaPlugin()], server: { hmr: false, watch: { ignored: ["**/**"] } } }; // Đợt 120 T8 — mirror workaround L8 (đợt 110/112/113 P7): vite 0 inotify FD; HMR đã tắt nên không mất gì; boot #60 headroom chỉ ~434-545 watch (< ~1578 vite thường cần) nên vite chết ENOSPC 8/8 trước mirror. Chỉ đổi watcher, không đổi module phục vụ — pixel G2/G7a/G7b/G8 phải khớp lịch sử thì mới gộp số.
 `);
   log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, cửa sổ ${WIN}, loadavg ${loadAvg()}`);
 

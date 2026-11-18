@@ -154,9 +154,17 @@ async function main() {
   const bridge = spawn("node", ["src/index.js"], { cwd: path.join(ROOT, "server/bridge"), stdio: "ignore", env: { ...process.env, BRIDGE_PORT: "8787", BRIDGE_RATE_PERSIST_PATH: bridgePersistPath } });
   const viteBin = path.join(ROOT, "node_modules/.bin/vite");
   // Đợt 37 T4: preview-dist → serve dist đóng băng thay vì vite dev.
+  // Đợt 122 T8 — mirror L8: harness này trước đây spawn vite không `-c`
+  // nên vite load apps/web/vite.config.ts (production, không watch.ignored)
+  // và giữ ~1.613 inotify watch → chết ENOSPC khi trần đầy. Config dưới
+  // sao chép y hệt production (plugins [react()], port 5173) + chỉ thêm
+  // watch.ignored ["**/**"]; KHÔNG thêm hmr:false, KHÔNG sửa vite.config.ts.
+  const VITE_CFG = "/tmp/round122-t8/vite.check-proxy.config.mjs";
+  fs.mkdirSync("/tmp/round122-t8", { recursive: true });
+  fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(ROOT, "apps", "web", "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { port: 5173, watch: { ignored: ["**/**"] } } };\n`);
   const viteArgs = CHECK_PROXY_PREVIEW_DIST
     ? ["preview", "--port", "5173", "--strictPort", "--host", "127.0.0.1"]
-    : ["--port", "5173", "--strictPort", "--host", "127.0.0.1"];
+    : ["-c", VITE_CFG, "--port", "5173", "--strictPort", "--host", "127.0.0.1"];
   const vite = spawn(viteBin, viteArgs, { cwd: path.join(ROOT, "apps/web"), stdio: "ignore" });
   let chrome = null;
   try {

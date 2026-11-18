@@ -399,11 +399,18 @@ async function main() {
     // ---- Vite (config thật của apps/web) ----------------------------------
     const viteLogStream = fs.createWriteStream(path.join(SCRATCH, "v8e-vite.log"), { flags: "w" });
     viteLogStream.on("error", () => { /* đợt EPERM */ });
-    // Vite với config thật của apps/web. --configLoader runner (thay vì
-    // bundle mặc định): runner không ghi file tạm .vite-temp/*.mjs nên
-    // tránh được lỗi EPERM "loadConfigFromBundledFile" của VM (xem LIMITS
-    // §6); semantics config thật vẫn giữ nguyên như dev-desktop.
-    vite = spawn(VITE_BIN, ["--configLoader", "runner", "--port", String(DEV_PORT), "--strictPort", "--host", "127.0.0.1"],
+    // Vite với config mirror (đợt 122 T8): bản sao y hệt production +
+    // watch.ignored; --configLoader runner giữ nguyên (tránh file tạm
+    // .vite-temp/*.mjs và lỗi EPERM "loadConfigFromBundledFile", xem LIMITS §6).
+    // Đợt 122 T8 — mirror L8: harness này trước đây spawn vite không `-c`
+    // nên vite load apps/web/vite.config.ts (production, không watch.ignored)
+    // và giữ ~1.613 inotify watch → chết ENOSPC khi trần đầy. Config dưới
+    // sao chép y hệt production (plugins [react()], port 5173) + chỉ thêm
+    // watch.ignored ["**/**"]; KHÔNG thêm hmr:false, KHÔNG sửa vite.config.ts.
+    const VITE_CFG = "/tmp/round68-v8/vite.v8e.config.mjs";
+    fs.mkdirSync("/tmp/round68-v8", { recursive: true });
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { port: 5173, watch: { ignored: ["**/**"] } } };\n`);
+    vite = spawn(VITE_BIN, ["-c", VITE_CFG, "--configLoader", "runner", "--port", String(DEV_PORT), "--strictPort", "--host", "127.0.0.1"],
       { cwd: WEB_DIR, stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, TMPDIR } });
     vite.stdout.on("data", (d) => { try { viteLogStream.write(d); } catch {} });
     vite.stderr.on("data", (d) => { try { viteLogStream.write(d); } catch {} });

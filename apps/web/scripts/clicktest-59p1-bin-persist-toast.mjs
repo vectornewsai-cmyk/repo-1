@@ -345,7 +345,7 @@ async function main() {
     // Config tắt HMR (tự tạo lại — /tmp mất sau reboot, xem LIMITS O2 §4):
     // luồng khác sửa .tsx/.ts giữa chừng không reload trang đang test.
     fs.mkdirSync(VITE_CFG_DIR, { recursive: true });
-    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, TMPDIR=${TMPDIR}`);
 
     const viteLogFd = fs.openSync(path.join(SCRATCH, "p1-vite.log"), "w");

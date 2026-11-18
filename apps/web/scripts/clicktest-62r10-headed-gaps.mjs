@@ -505,7 +505,7 @@ async function main() {
       if (fs.existsSync(src) && !fs.existsSync(dst)) fs.copyFileSync(src, dst);
     }
     fs.rmSync(PROFILE, { recursive: true, force: true });
-    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, bridge :${bridgePort}, static :${STATIC_PORT}`);
 
     // ---- Static server (phục vụ mp4/webp test, CORS *) ----------------

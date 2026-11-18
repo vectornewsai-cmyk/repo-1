@@ -182,7 +182,7 @@ async function main() {
     // reload trang đang test. Tạo lại mỗi lần chạy vì /tmp mất sau reboot.
     const VITE_CFG = "/tmp/round60-q10/vite.q10.config.mjs";
     fs.mkdirSync("/tmp/round60-q10", { recursive: true });
-    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(ROOT, "apps", "web", "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(ROOT, "apps", "web", "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, TMPDIR=${TMPDIR}`);
 
     const viteLogFd = fs.openSync(path.join(SCRATCH, "q10-vite.log"), "w");

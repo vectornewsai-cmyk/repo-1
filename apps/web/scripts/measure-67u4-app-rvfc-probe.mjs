@@ -344,7 +344,7 @@ const mediaPlugin = () => ({ name: "r61r3-media", configureServer(server) {
     fs.createReadStream(fp).pipe(res);
   });
 } });
-export default { plugins: [react(), mediaPlugin()], server: { hmr: false } };
+export default { plugins: [react(), mediaPlugin()], server: { hmr: false, watch: { ignored: ["**/**"] } } };
 `);
 
   const viteLogFd = fs.openSync(path.join(SCRATCH, "u4-app-rvfc-vite.log"), "w");

@@ -385,7 +385,7 @@ async function main() {
     // Config vite tắt HMR (tự tạo, chống /tmp bị xóa sau reboot — xem N9 LIMITS §5).
     const viteCfgPath = "/tmp/round80-h9/vite.h9.config.mjs";
     fs.mkdirSync(path.dirname(viteCfgPath), { recursive: true });
-    writeFileEpermRetry(viteCfgPath, `import { createRequire } from "node:module";\nconst require = createRequire("/home/hatch/workspace/repo-1/apps/web/package.json");\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(viteCfgPath, `import { createRequire } from "node:module";\nconst require = createRequire("/home/hatch/workspace/repo-1/apps/web/package.json");\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, preview :${PREVIEW_PORT}, DISPLAY=${DISPLAY}`);
 
     // ---------- PHASE A: vite dev — responsive + manifest ----------

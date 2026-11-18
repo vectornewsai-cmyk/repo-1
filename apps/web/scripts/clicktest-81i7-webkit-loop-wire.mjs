@@ -350,7 +350,7 @@ async function main() {
     // phân giải được từ node_modules của repo (config trong /tmp lỗi
     // ERR_MODULE_NOT_FOUND — xem log lượt chạy đầu). Xóa ở finally.
     const viteCfg = path.join(WEB_DIR, "vite.i7.config.mjs");
-    writeFileEpermRetry(viteCfg, `import { defineConfig } from "vite";\nimport react from "@vitejs/plugin-react";\nexport default defineConfig({ plugins: [react()], server: { host: "127.0.0.1", port: ${DEV_PORT}, strictPort: true, hmr: false } });\n`);
+    writeFileEpermRetry(viteCfg, `import { defineConfig } from "vite";\nimport react from "@vitejs/plugin-react";\nexport default defineConfig({ plugins: [react()], server: { host: "127.0.0.1", port: ${DEV_PORT}, strictPort: true, hmr: false, watch: { ignored: ["**/**"] } } });\n`);
     vite = spawn(VITE_BIN, ["--config", viteCfg], { cwd: WEB_DIR, stdio: ["ignore", "pipe", "pipe"] });
     let viteLog = "";
     vite.stdout.on("data", (d) => { viteLog += d.toString(); });

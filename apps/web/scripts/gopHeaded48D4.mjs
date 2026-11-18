@@ -143,7 +143,15 @@ async function waitBridge() {
 }
 const viteBin = path.join(REPO, "node_modules/.bin/vite");
 let viteLog = "";
-const vite = SHARED ? null : spawn(viteBin, ["--host", "127.0.0.1", "--port", String(VITE_PORT), "--strictPort"], {
+// Đợt 122 T8 — mirror L8: harness này trước đây spawn vite không `-c`
+// nên vite load apps/web/vite.config.ts (production, không watch.ignored)
+// và giữ ~1.613 inotify watch → chết ENOSPC khi trần đầy. Config dưới
+// sao chép y hệt production (plugins [react()], port 5173) + chỉ thêm
+// watch.ignored ["**/**"]; KHÔNG thêm hmr:false, KHÔNG sửa vite.config.ts.
+const VITE_CFG = "/tmp/round48-d4/vite.d4.config.mjs";
+fs.mkdirSync("/tmp/round48-d4", { recursive: true });
+fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { port: 5173, watch: { ignored: ["**/**"] } } };\n`);
+const vite = SHARED ? null : spawn(viteBin, ["-c", VITE_CFG, "--host", "127.0.0.1", "--port", String(VITE_PORT), "--strictPort"], {
   stdio: "pipe", cwd: WEB_DIR,
 });
 if (vite) {

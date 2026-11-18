@@ -302,7 +302,15 @@ async function main() {
     await new Promise((res, rej) => { toneServer.once("error", rej); toneServer.listen(TONE_PORT, "127.0.0.1", res); });
 
     const viteLogFd = fs.openSync(path.join(SCRATCH, "ticknull-vite.log"), "w");
-    vite = spawn(VITE_BIN, ["--port", String(DEV_PORT), "--strictPort", "--host", "127.0.0.1"],
+    // Đợt 122 T8 — mirror L8: harness này trước đây spawn vite không `-c`
+    // nên vite load apps/web/vite.config.ts (production, không watch.ignored)
+    // và giữ ~1.613 inotify watch → chết ENOSPC khi trần đầy. Config dưới
+    // sao chép y hệt production (plugins [react()], port 5173) + chỉ thêm
+    // watch.ignored ["**/**"]; KHÔNG thêm hmr:false, KHÔNG sửa vite.config.ts.
+    const VITE_CFG = "/tmp/round53-j5/vite.j5-ticknull.config.mjs";
+    fs.mkdirSync("/tmp/round53-j5", { recursive: true });
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { port: 5173, watch: { ignored: ["**/**"] } } };\n`);
+    vite = spawn(VITE_BIN, ["-c", VITE_CFG, "--port", String(DEV_PORT), "--strictPort", "--host", "127.0.0.1"],
       { cwd: WEB_DIR, stdio: ["ignore", viteLogFd, viteLogFd] });
     let up = false;
     for (let i = 0; i < 120 && !up; i++) {

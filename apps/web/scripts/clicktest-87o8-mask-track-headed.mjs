@@ -598,8 +598,25 @@ async function main() {
   // user chỉ cần copy fixture vào rồi chạy lại. (mkdir TMPDIR/CFG_DIR/
   // BRIDGE_WORK_DIR vẫn ở dưới, idempotent.)
   fs.mkdirSync(SCRATCH, { recursive: true });
+  // Đợt 112 N7 — TỰ COPY fixture từ nguồn chuẩn hidden_files/round87-o8/headed/
+  // vào SCRATCH khi thiếu (nợ M9 đợt 111: lần đầu chạy trên scratch mới exit=2
+  // vì thiếu fixture, phải copy tay). Idempotent: chỉ copy file CHƯA CÓ trong
+  // SCRATCH, KHÔNG ghi đè fixture đã có (giữ nguyên file đích kể cả khi khác
+  // nguồn — người chạy muốn đổi fixture thì xóa file đích rồi chạy lại);
+  // khi SCRATCH chính là thư mục nguồn thì không copy gì. Nguồn thiếu ->
+  // khối check dưới vẫn throw lỗi rõ như trước.
+  const FIXTURE_SRC = path.join(os.homedir(), "workspace", "goals", "capcut-clone-video-editor", "hidden_files", "round87-o8", "headed");
+  for (const name of ["o8-white-720p-6s.mp4", "o8-ball-720p-6s.mp4", "o8-track-35-65.json"]) {
+    const dst = path.join(SCRATCH, name);
+    if (fs.existsSync(dst)) { log(`fixture ${name}: đã có trong SCRATCH, bỏ qua (không ghi đè)`); continue; }
+    const src = path.join(FIXTURE_SRC, name);
+    if (path.resolve(src) === path.resolve(dst)) continue; // SCRATCH == nguồn: không có gì để copy
+    if (!fs.existsSync(src)) continue; // để khối check dưới throw lỗi rõ
+    fs.copyFileSync(src, dst);
+    log(`fixture ${name}: đã tự copy từ ${FIXTURE_SRC} (${fs.statSync(dst).size} byte)`);
+  }
   if (!fs.existsSync(CLIP_W) || !fs.existsSync(CLIP_B) || !fs.existsSync(TRACK_FILE)) {
-    throw new Error(`thiếu fixture trong SCRATCH ${SCRATCH} (cần o8-white-720p-6s.mp4, o8-ball-720p-6s.mp4, o8-track-35-65.json — copy từ hidden_files/round87-o8/headed/ rồi chạy lại)`);
+    throw new Error(`thiếu fixture trong SCRATCH ${SCRATCH} (cần o8-white-720p-6s.mp4, o8-ball-720p-6s.mp4, o8-track-35-65.json — nguồn chuẩn ${FIXTURE_SRC} cũng thiếu)`);
   }
   const bridgePort = await pickFreePort(8851, 8859);
   if (!bridgePort) throw new Error("hết cổng bridge trống 8851–8859");
@@ -627,7 +644,11 @@ async function main() {
   fs.mkdirSync(CFG_DIR, { recursive: true });
   fs.mkdirSync(BRIDGE_WORK_DIR, { recursive: true });
   fs.rmSync(PROFILE, { recursive: true, force: true });
-  writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+  // Đợt 113 P7 — mirror workaround L8 từ bản WebKit (dòng 268):
+  // watch.ignored ["**/**"] để vite 0 inotify FD; không có nó vite
+  // thường chết ENOSPC 8/8 trên boot headroom thấp (N8 đợt 112, boot #43
+  // headroom 1511 < ~1586 watch). HMR đã tắt nên không mất gì.
+  writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
   log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, bridge :${bridgePort}`);
 
   bridge = await startBridge(bridgePort);

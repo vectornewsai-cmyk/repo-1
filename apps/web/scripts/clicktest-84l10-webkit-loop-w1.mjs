@@ -460,7 +460,7 @@ async function main() {
     const clip10Url = `http://127.0.0.1:${CLIP_PORT}/${path.basename(CLIP10_PATH)}`;
     const clip4Url = `http://127.0.0.1:${CLIP_PORT}/${path.basename(CLIP4_PATH)}`;
     const viteCfg = path.join(WEB_DIR, "vite.l10.config.mjs");
-    writeFileEpermRetry(viteCfg, `import { defineConfig } from "vite";\nimport react from "@vitejs/plugin-react";\nexport default defineConfig({ plugins: [react()], server: { host: "127.0.0.1", port: ${DEV_PORT}, strictPort: true, hmr: false } });\n`);
+    writeFileEpermRetry(viteCfg, `import { defineConfig } from "vite";\nimport react from "@vitejs/plugin-react";\nexport default defineConfig({ plugins: [react()], server: { host: "127.0.0.1", port: ${DEV_PORT}, strictPort: true, hmr: false, watch: { ignored: ["**/**"] } } });\n`);
     vite = spawn(VITE_BIN, ["--config", viteCfg], { cwd: WEB_DIR, stdio: ["ignore", "pipe", "pipe"] });
     let viteLog = "";
     vite.stdout.on("data", (d) => { viteLog += d.toString(); });

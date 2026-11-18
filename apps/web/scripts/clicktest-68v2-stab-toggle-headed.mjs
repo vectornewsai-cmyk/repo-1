@@ -35,8 +35,11 @@
  * Chạy (từ gốc repo): node apps/web/scripts/clicktest-68v2-stab-toggle-headed.mjs
  * Env: V2_DEV_PORT (mặc định tự chọn 5820–5829), V2_DEBUG_PORT (9920–9929),
  * V2_DISPLAY (mặc định :270–:279), V2_SCRATCH (mặc định
- * hidden_files/round68-v2/headed). TMPDIR riêng
- * hidden_files/round68-v2/tmp. Exit 0 mọi case PASS, 1 có FAIL,
+ * hidden_files/round68-v2/headed). TMPDIR riêng /tmp/round68-v2/tmp
+ * (đợt 125 T8: đổi từ hidden_files/round68-v2/tmp — đường dài làm
+ * Chrome FATAL "Socket path too long" vì SingletonSocket vượt giới
+ * hạn sun_path 108 ký tự; /tmp/round68-v2 đã được harness mkdir sẵn).
+ * Exit 0 mọi case PASS, 1 có FAIL,
  * 2 harness lỗi. KHÔNG push/tag/binary. Ảnh chụp + log vite/chrome nằm
  * ở SCRATCH.
  */
@@ -56,7 +59,7 @@ const CHROME_CANDIDATES = ["chromium-1254", "chromium-1248", "chromium-1187"].ma
 );
 const CHROME = CHROME_CANDIDATES.find((c) => fs.existsSync(c)) || CHROME_CANDIDATES[0];
 const VITE_BIN = [path.join(ROOT, "node_modules", ".bin", "vite"), path.join(WEB_DIR, "node_modules", ".bin", "vite")].find((c) => fs.existsSync(c));
-const VITE_CFG = path.join(os.homedir(), "workspace", "goals", "capcut-clone-video-editor", "hidden_files", "round68-v2", "vite.config.cjs");
+const VITE_CFG = "/tmp/round68-v2/vite.v2.config.mjs";
 const RENDER_JS = path.join(ROOT, "server", "render", "src", "render.js");
 const SRC720 = "/home/hatch/workspace/.scratch-r65s1-0e63Ph/media/shakynoisy720.mp4";
 
@@ -204,7 +207,13 @@ const TOGGLE_FN = `(() => {
   t.scrollIntoView({ block: "center" });
   const r = t.getBoundingClientRect();
   const label = t.closest("label");
-  const hint = dlg.querySelector(".preset-desc");
+  // Đợt 125 T8: hint của toggle là <p class="preset-desc"> KỀ SAU hàng
+  // .preset-row chứa toggle (ExportPanel.tsx) — KHÔNG dùng
+  // dlg.querySelector(".preset-desc") (trả .preset-desc ĐẦU TIÊN của
+  // dialog = mô tả preset xuất, làm H1 fail oan dù app đúng).
+  const row = t.closest(".preset-row");
+  const hintEl = row && row.nextElementSibling && row.nextElementSibling.classList.contains("preset-desc") ? row.nextElementSibling : null;
+  const hint = hintEl;
   return {
     found: true,
     x: r.left + r.width / 2, y: r.top + r.height / 2,
@@ -371,11 +380,23 @@ async function main() {
     if (!VITE_BIN) throw new Error("không thấy vite");
     const DEV_URL = `http://127.0.0.1:${DEV_PORT}/`;
     const PROFILE = path.join(SCRATCH, "chrome-userdata");
-    const TMPDIR = path.join(os.homedir(), "workspace", "goals", "capcut-clone-video-editor", "hidden_files", "round68-v2", "tmp");
+    // Đợt 125 T8: TMPDIR phải NGẮN — Chrome đặt SingletonSocket tại
+    // $TMPDIR/org.chromium.Chromium.XXXXXX/SingletonSocket, giới hạn
+    // sun_path 108 ký tự; đường hidden_files/round68-v2/tmp dài ~128
+    // ký tự làm Chrome FATAL ngay khi launch (đã tái hiện độc lập).
+    // /tmp/round68-v2/tmp cho ~64 ký tự; /tmp mất sau reboot thì
+    // harness tạo lại (dòng mkdir /tmp/round68-v2 ở dưới) + dọn luôn
+    // singleton stale — đúng ý đồ TMPDIR riêng ban đầu.
+    const TMPDIR = "/tmp/round68-v2/tmp";
     fs.mkdirSync(SCRATCH, { recursive: true });
     fs.mkdirSync(TMPDIR, { recursive: true });
     fs.rmSync(PROFILE, { recursive: true, force: true });
-    if (!fs.existsSync(VITE_CFG)) throw new Error(`không thấy vite config ${VITE_CFG}`);
+    // Đợt 124 T8: tự ghi config mirror L8 trước khi spawn (mẫu đợt 123 57n9) —
+    // sao y nội dung gốc V2 (react plugin + hmr: false) + watch.ignored để
+    // vite không giữ inotify watch (phòng ENOSPC). Ghi lại mỗi lần chạy vì
+    // /tmp mất sau reboot; không còn phụ thuộc file ngoài repo round68-v2.
+    fs.mkdirSync("/tmp/round68-v2", { recursive: true });
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
     if (!fs.existsSync(RENDER_JS)) throw new Error(`không thấy render.js ${RENDER_JS}`);
     if (!fs.existsSync(SRC720)) throw new Error(`không thấy media ${SRC720}`);
     log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, TMPDIR=${TMPDIR}, loadavg: ${fs.readFileSync("/proc/loadavg", "utf8").trim().split(" ").slice(0, 3).join(" ")}`);

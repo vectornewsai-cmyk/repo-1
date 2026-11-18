@@ -272,7 +272,7 @@ async function main() {
     await new Promise((r) => clipServer.listen(CLIP_PORT, "127.0.0.1", r));
     // Vite dev.
     const viteCfg = path.join(WEB_DIR, "vite.n3.config.mjs");
-    writeFileEpermRetry(viteCfg, `import { defineConfig } from "vite";\nimport react from "@vitejs/plugin-react";\nexport default defineConfig({ plugins: [react()], server: { host: "127.0.0.1", port: ${DEV_PORT}, strictPort: true, hmr: false } });\n`);
+    writeFileEpermRetry(viteCfg, `import { defineConfig } from "vite";\nimport react from "@vitejs/plugin-react";\nexport default defineConfig({ plugins: [react()], server: { host: "127.0.0.1", port: ${DEV_PORT}, strictPort: true, hmr: false, watch: { ignored: ["**/**"] } } });\n`);
     vite = spawn(VITE_BIN, ["--config", viteCfg], { cwd: WEB_DIR, stdio: ["ignore", "pipe", "pipe"] });
     let viteLog = "";
     vite.stdout.on("data", (d) => { viteLog += d.toString(); });

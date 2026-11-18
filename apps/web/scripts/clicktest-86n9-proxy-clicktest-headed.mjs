@@ -405,7 +405,7 @@ async function main() {
   fs.mkdirSync(CFG_DIR, { recursive: true });
   fs.mkdirSync(BRIDGE_WORK_DIR, { recursive: true });
   fs.rmSync(PROFILE, { recursive: true, force: true });
-  writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+  writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
   // Fixture: 3 clip thật 1080p (C 12 s để % kịp hiện, D 8 s, E 8 s).
   const clipC = path.join(SCRATCH, "n9-clip-c-1080p-12s.mp4");
   const clipD = path.join(SCRATCH, "n9-clip-d-1080p-8s.mp4");

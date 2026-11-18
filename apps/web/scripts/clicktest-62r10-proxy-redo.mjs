@@ -270,7 +270,7 @@ async function main() {
     fs.mkdirSync(TMPDIR, { recursive: true });
     fs.mkdirSync(BRIDGE_WORK_DIR, { recursive: true });
     fs.rmSync(PROFILE, { recursive: true, force: true });
-    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+    writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
     log(`vite :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, bridge :${bridgePort}, static :${STATIC_PORT}`);
 
     const staticLogFd = fs.openSync(path.join(SCRATCH, "r10p-static.log"), "w");
