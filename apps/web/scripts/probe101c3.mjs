@@ -184,7 +184,7 @@ async function main() {
     }
     throw new Error("Xvfb không khởi động được sau 3 lần thử (sóng EPERM?)");
   };
-  writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+  writeFileEpermRetry(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
   const BRIDGE_URL = `http://127.0.0.1:${bridgePort}`;
   const DEV_URL = `http://127.0.0.1:${DEV_PORT}/`;
   log(`probe101c3 ${ENGINE} loadN=${LOAD_N} phase=${PHASE} gop=${GOP} clip=${CLIP_B_NAME} vite :${DEV_PORT} bridge :${bridgePort} DISPLAY=${DISPLAY}`);

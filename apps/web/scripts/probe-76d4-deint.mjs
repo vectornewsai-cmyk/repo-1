@@ -327,7 +327,7 @@ const serveDir = (dir) => (req, res) => {
   res.setHeader("Content-Length", String(st.size));
   fs.createReadStream(fp).pipe(res);
 };
-export default { server: { hmr: false }, plugins: [{ name: "d4-media", configureServer(server) {
+export default { server: { hmr: false, watch: { ignored: ["**/**"] } }, plugins: [{ name: "d4-media", configureServer(server) {
   server.middlewares.use("/r76d4-media", serveDir(MEDIA_DIR));
   server.middlewares.use("/r76d4-out", serveDir(OUT_DIR));
 } }] };

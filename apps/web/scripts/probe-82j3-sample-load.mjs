@@ -94,6 +94,10 @@ async function waitPort(port, timeoutMs = 60000) {
 
 let vite, xvfb, chrome;
 try {
+  // Config do harness viết clicktest-77e1-deint-fps.mjs ghi (mẫu 65r8-overlay
+  // đợt 121 T9): kiểm tra tồn tại trước khi spawn để lỗi rõ ràng khi chạy
+  // trước writer sau reboot (/tmp mất) thay vì vite fail vì thiếu file.
+  if (!fs.existsSync(VITE_CFG)) throw new Error(`không thấy vite config ${VITE_CFG} (chạy clicktest-77e1-deint-fps.mjs trước để tạo)`);
   log(`probe bắt đầu: vite :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}`);
   xvfb = spawn("Xvfb", [DISPLAY, "-screen", "0", "2560x1440x24"], { stdio: "ignore" });
   await sleep(1500);

@@ -348,7 +348,7 @@ async function main() {
   if (!xvfbClaim) throw new Error("hết display Xvfb trống :193–:197 (lock W8)");
   const DISPLAY = xvfbClaim.display;
   log(`Xvfb display ${DISPLAY} đã claim bằng lock W8`);
-  fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false } };\n`);
+  fs.writeFileSync(VITE_CFG, `import { createRequire } from "node:module";\nconst require = createRequire(${JSON.stringify(path.join(WEB_DIR, "package.json"))});\nconst react = require("@vitejs/plugin-react").default;\nexport default { plugins: [react()], server: { hmr: false, watch: { ignored: ["**/**"] } } };\n`);
   const DEV_URL = `http://127.0.0.1:${DEV_PORT}/`;
   log(`vite :${DEV_PORT} DISPLAY=${DISPLAY} (ghi vào ${TAG})`);
 

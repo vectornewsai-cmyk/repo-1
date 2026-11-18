@@ -399,7 +399,7 @@ const mediaPlugin = () => ({ name: "j9-media", configureServer(server) {
     fs.createReadStream(fp).pipe(res);
   });
 } });
-export default { plugins: [react(), mediaPlugin()], server: { hmr: false } };
+export default { plugins: [react(), mediaPlugin()], server: { hmr: false, watch: { ignored: ["**/**"] } } };
 `);
   log(`vite dev :${DEV_PORT}, debug :${DEBUG_PORT}, DISPLAY=${DISPLAY}, cửa sổ ${WIN}, loadavg ${loadAvg()}`);
 

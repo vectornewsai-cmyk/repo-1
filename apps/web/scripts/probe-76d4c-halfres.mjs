@@ -244,7 +244,7 @@ const serveDir = (dir) => (req, res) => {
   res.setHeader("Content-Length", String(st.size));
   fs.createReadStream(fp).pipe(res);
 };
-export default { server: { hmr: false }, plugins: [{ name: "d4c-media", configureServer(server) {
+export default { server: { hmr: false, watch: { ignored: ["**/**"] } }, plugins: [{ name: "d4c-media", configureServer(server) {
   server.middlewares.use("/r76d4c-media", serveDir(MEDIA_DIR));
 } }] };
 `);

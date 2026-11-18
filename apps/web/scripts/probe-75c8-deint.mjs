@@ -295,7 +295,7 @@ const serveDir = (dir) => (req, res) => {
   res.setHeader("Content-Length", String(st.size));
   fs.createReadStream(fp).pipe(res);
 };
-export default { server: { hmr: false }, plugins: [{ name: "c8-media", configureServer(server) {
+export default { server: { hmr: false, watch: { ignored: ["**/**"] } }, plugins: [{ name: "c8-media", configureServer(server) {
   server.middlewares.use("/r75c8-media", serveDir(MEDIA_DIR));
   server.middlewares.use("/r75c8-out", serveDir(OUT_DIR));
 } }] };
