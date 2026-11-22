@@ -1,53 +1,76 @@
 #!/usr/bin/env node
 /**
- * test_v19_pixelate_probe.js — Phase 9 đợt 19, luồng G6: khóa lại cơ
- * chế của dư pixelate 0,1293 (v17) và 0,6667 (V12/V14), đã truy nguyên
- * tới cùng (xem docs/PHASE9_ROUND19_G6_HARNESS_YUV_LIMITS.md §6).
+ * test_v19_pixelate_probe.js — Phase 9 đợt 19, luồng G6: khóa cơ chế
+ * pixelate; VIẾT LẠI ở đợt 150 (T0) sang cơ chế geq.
  *
- * Kết luận đã chứng minh (FFmpeg 8.1.2, filter render đúng effects.js:
- * scale=iw/K:ih/K:flags=neighbor,scale=iw*K:ih*K:flags=neighbor):
- * 1. Vị trí lấy mẫu của FFmpeg KHỚP canvas (offset floor(K/2)): xung
- *    đơn điểm và ramp tuyến tính cho MAD = 0 (mục A).
- * 2. Toàn bộ dư nằm ở khâu DOWNSCALE (downscale-only MAD = full-chain
- *    MAD); khâu upscale là chính xác (mục D).
- * 3. Dư là do bộ lọc của swscale trộn chroma từ vùng lân cận trong
- *    khi giữ luma: trên ramp mịn cho ±1 hệ thống (MAD 0,6667, mục B);
- *    trên nội dung nhiễu + cạnh sắc chỉ 4,4% khối lệch, đuôi tới 119
- *    đúng tại khối mà mẫu nằm sát cạnh sắc (mục D), nhưng |dY| vẫn
- *    nhỏ (luma giữ) — tức vị trí mẫu đúng, chỉ chroma bị trộn.
- * 4. KHÔNG PHẢI lỗi mô hình canvas và KHÔNG sửa được bằng cách chỉnh
- *    mô hình: muốn khớp bit-exact phải tái tạo đúng bộ lọc nội bộ
- *    của swscale (phụ thuộc phiên bản, không có giá trị sản phẩm —
- *    pipeline render thật chạy trên frame yuv420p, không phải raw
- *    RGB tổng hợp như harness). Badge KHỚP vẫn đứng (MAD <= 2).
+ * LỊCH SỬ — cơ chế scale CŨ (đợt 19–148) ĐÃ NGHỈ HƯU, không còn áp:
+ *   filter cũ `scale=iw/K:ih/K:flags=neighbor,scale=iw*K:ih*K:flags=neighbor`
+ *   làm 640x360 @ K=13 ra 637x351 (lẻ) → libx264 từ chối, `npm test` FAIL
+ *   ở demo_effects (đợt 148 phát hiện, đợt 149 sửa bằng geq — xem
+ *   docs/PHASE9_ROUND149_T0_PIXELATE_LIMITS.md §1–§3).
+ *   Các khóa cũ đã BỎ: (1) MAD=0 tuyệt đối trên posFrame — chỉ đúng trên
+ *   đường rgb24 của scale, không còn ý nghĩa khi pipeline chạy yuv420p;
+ *   (2) tách dư downscale/upscale — không còn hai khâu scale để tách;
+ *   (3) footprint pixel kề của swscale — đặc thù bộ lọc swscale, geq
+ *   không có. Hồ sơ cũ giữ nguyên trong
+ *   docs/PHASE9_ROUND19_G6_HARNESS_YUV_LIMITS.md §6 (không sửa).
  *
- * Script này KHÓA các dấu hiệu trên thành assert (không khóa số đo
- * tuyệt đối theo phiên bản FFmpeg): vi phạm assert -> exit 1 (báo
- * hiệu hành vi swscale đã đổi, cần điều tra lại, không phải tự nâng
- * ngưỡng). Mục C (footprint pixel kề) chỉ IN để đối chiếu, không
- * assert — footprint có thể đổi theo phiên bản swscale mà tier vẫn
- * đứng.
+ * CƠ CHẾ MỚI (đợt 149, effects.js — probe này DÙNG CHUỖI FILTER THẬT từ
+ * buildEffectFilter, không hardcode bản sao):
+ *   geq=lum='lum(X-mod(X,K)+F,Y-mod(Y,K)+F)'
+ *      :cb='cb(trunc(2*X/K)*K/2+F/2,trunc(2*Y/K)*K/2+F/2)'
+ *      :cr='cr(trunc(2*X/K)*K/2+F/2,trunc(2*Y/K)*K/2+F/2)'
+ *      :a='alpha(X-mod(X,K)+F,Y-mod(Y,K)+F)'   (K = 2+round(t*14), F = floor(K/2))
+ *   Biểu thức chroma được viết cho chroma NỬA phân giải (yuv420p — đường
+ *   pipeline thật): trên yuv420p, X_chroma = X_luma/2 nên mẫu chroma rơi
+ *   đúng (bx*K+F)/2, khớp lưới khối luma. Trên yuv444p (chroma full-res),
+ *   cùng biểu thức lấy HAI vị trí/khối → MAD ramp 4,03–7,01 (đo đợt 150,
+ *   không phải 0,37–0,43 như LIMITS đợt 149 §5 ghi — số đó là của biến thể
+ *   chroma full-res, KHÔNG phải chuỗi filter thật; xem LIMITS đợt 150 §2).
+ *   Probe này khóa trên ĐƯỜNG PIPELINE THẬT (yuv420p), yuv444p chỉ dùng
+ *   để khóa vị trí lấy mẫu luma (không bị subsample che).
  *
- * Canvas dùng module THẬT effectCanvas.ts (transpile qua tsc như
- * V12/V14), không copy code mô hình. Khung nhiễu + cạnh sắc ở mục D
- * tự sinh xác định (mulberry + đường chéo cứng + checker), không
- * dùng file v17 (tmp của v17 không bền).
+ * KHÓA MỚI (đợt 150) — vi phạm assert -> exit 1:
+ *   0. Chuỗi filter thật phải là geq (không còn `scale=iw`), có alpha_expr.
+ *   A. Vị trí lấy mẫu đúng floor(K/2): trên posFrame (R=x, G=y), luma
+ *      (yMAD) của geq khớp canvas — yuv444p yMAD <= 0,5; yuv420p yMAD
+ *      <= 1,6 (sàn roundtrip yuv420p đã ~1,30); trên nội dung nhiễu thật
+ *      640x360, geq yMAD − sàn roundtrip <= 0,15.
+ *   B. Tier KHỚP theo luma trên ramp mịn: yuv420p yMAD <= 2. RGB MAD trên
+ *      ramp đối kháng (3,75–6,13) CHỈ IN, không assert — đó là sàn
+ *      subsample chroma + pattern chroma tần số cao, không phải lỗi lấy mẫu.
+ *   C. Kích thước ra == kích thước vào với MỌI K (2..16) và MỌI W/H kể cả
+ *      lẻ (6 size x 6 K); encode libx264 case 640x360 K=13 (đúng case
+ *      demo_effects từng FAIL) phải exit 0, đúng 640x360.
+ *   D. Khối hằng: K CHẴN (chroma K/2 nguyên, lưới khớp hoàn toàn) — số đoạn
+ *      màu hàng giữa (tol 0) == ceil(W/K), lệch trong khối == 0. K LẺ —
+ *      chroma 2x subsample không căn được khối lẻ: pixel lệch > 4 so với
+ *      đầu khối CHỈ được phép ở x % K == 0 (mép khối — pixel chia sẻ
+ *      chroma với khối kề); runs tol0 <= 2*ceil(W/K). Luma (Y) hằng theo
+ *      khối với mọi K (lệch Y trong khối <= 3).
+ *   E. Alpha không về 0: yuva444p, tập alpha ra vẫn chứa giá trị khác 0
+ *      (đối chứng: cùng filter bỏ alpha_expr -> alpha [0]); alpha hằng
+ *      theo từng khối KxK.
+ *
+ * Canvas dùng module THẬT effectCanvas.ts (transpile qua tsc như V12/V14),
+ * không copy code mô hình.
  *
  * Cách chạy (từ server/render/): node src/test_v19_pixelate_probe.js
  * Exit 0 khi mọi assert khóa đều đạt. Thư mục /tmp của script tự xoá
- * khi xong.
+ * khi xong. Hiệu năng geq đo riêng bằng server/render/bench_pixelate_geq.sh
+ * (không nằm trong probe này).
  */
 "use strict";
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
-const { writeFileEpermRetry } = require("../../eperm-retry.cjs");
 const os = require("node:os");
 const path = require("node:path");
 
 const HERE = __dirname;
 const ROOT = path.resolve(HERE, "..", "..", "..");
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "v19-pix-probe-"));
+const { buildEffectFilter } = require("./effects.js");
 
 let failures = 0;
 function check(name, ok, detail) {
@@ -58,6 +81,7 @@ function check(name, ok, detail) {
 function runFfmpeg(args, label) {
   const r = spawnSync("ffmpeg", ["-v", "error", "-y", ...args], { encoding: "utf8" });
   if (r.status !== 0) throw new Error(`${label}: ffmpeg exit ${r.status}: ${(r.stderr || "").slice(0, 300)}`);
+  return r;
 }
 function findTsc() {
   for (const c of [path.join(ROOT, "apps", "web", "node_modules", ".bin", "tsc"), path.join(ROOT, "node_modules", ".bin", "tsc"), "tsc"]) {
@@ -88,47 +112,64 @@ function fromImg(im, w, h) {
   }
   return buf;
 }
-/** Render pixelate FFmpeg thật (đúng filter effects.js), lấy 1 frame. */
-function ffPixelate(src, w, h, k, tag) {
+/** Render pixelate bằng CHUỖI FILTER THẬT từ effects.js, lấy 1 frame. */
+function ffPixelateGeq(src, w, h, intensity, pixFmt, tag) {
+  const f = buildEffectFilter({ type: "pixelate", intensity });
   const inp = path.join(TMP, `${tag}-in.raw`);
   const out = path.join(TMP, `${tag}-out.raw`);
-  writeFileEpermRetry(inp, src);
+  fs.writeFileSync(inp, src);
   runFfmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${w}x${h}`, "-r", "30", "-i", inp,
-    "-vf", `scale=iw/${k}:ih/${k}:flags=neighbor,scale=iw*${k}:ih*${k}:flags=neighbor,format=rgb24`,
+    "-vf", `format=${pixFmt},${f},format=rgb24`,
     "-f", "rawvideo", "-pix_fmt", "rgb24", out], tag);
   const b = fs.readFileSync(out);
   fs.unlinkSync(inp); fs.unlinkSync(out);
   return b;
 }
-/** Downscale-only (không upscale) — tách dư thuộc khâu nào. */
-function ffDownscale(src, w, h, k, tag) {
+/** Roundtrip rgb24 -> pixFmt -> rgb24, không geq (sàn đo). */
+function ffRoundtrip(src, w, h, pixFmt, tag) {
   const inp = path.join(TMP, `${tag}-in.raw`);
   const out = path.join(TMP, `${tag}-out.raw`);
-  writeFileEpermRetry(inp, src);
+  fs.writeFileSync(inp, src);
   runFfmpeg(["-f", "rawvideo", "-pix_fmt", "rgb24", "-s", `${w}x${h}`, "-r", "30", "-i", inp,
-    "-vf", `scale=iw/${k}:ih/${k}:flags=neighbor,format=rgb24`,
+    "-vf", `format=${pixFmt},format=rgb24`,
     "-f", "rawvideo", "-pix_fmt", "rgb24", out], tag);
   const b = fs.readFileSync(out);
   fs.unlinkSync(inp); fs.unlinkSync(out);
   return b;
 }
 function diffStats(a, b, w, h) {
-  let sum = 0, maxd = 0, diffPix = 0, diffSamples = 0;
+  let sum = 0, maxd = 0, diffPix = 0;
   const perCh = [0, 0, 0];
+  let ySum = 0;
   for (let p = 0; p < w * h; p++) {
-    let pd = false;
+    const yA = 0.299 * a[p * 3] + 0.587 * a[p * 3 + 1] + 0.114 * a[p * 3 + 2];
+    const yB = 0.299 * b[p * 3] + 0.587 * b[p * 3 + 1] + 0.114 * b[p * 3 + 2];
+    ySum += Math.abs(yA - yB);
     for (let c = 0; c < 3; c++) {
       const d = Math.abs(a[p * 3 + c] - b[p * 3 + c]);
       sum += d; perCh[c] += d; maxd = Math.max(maxd, d);
-      if (d > 0) { pd = true; diffSamples++; }
     }
-    if (pd) diffPix++;
+  }
+  diffPix = 0;
+  for (let p = 0; p < w * h; p++) {
+    if (a[p * 3] !== b[p * 3] || a[p * 3 + 1] !== b[p * 3 + 1] || a[p * 3 + 2] !== b[p * 3 + 2]) diffPix++;
   }
   return {
     mad: sum / (w * h * 3), maxd,
-    diffPixFrac: diffPix / (w * h), diffSamplesFrac: diffSamples / (w * h * 3),
+    yMad: ySum / (w * h),
+    diffPixFrac: diffPix / (w * h),
     perChMad: perCh.map((v) => v / (w * h)),
   };
+}
+function countRunsRow(buf, w, h, y, tol) {
+  let runs = 1;
+  for (let x = 1; x < w; x++) {
+    const i0 = (y * w + x - 1) * 3, i1 = (y * w + x) * 3;
+    let same = true;
+    for (let c = 0; c < 3; c++) if (Math.abs(buf[i1 + c] - buf[i0 + c]) > tol) { same = false; break; }
+    if (!same) runs++;
+  }
+  return runs;
 }
 function patternFrame(w, h) {
   const buf = Buffer.alloc(w * h * 3);
@@ -177,7 +218,7 @@ function noisyEdgeFrame(w, h) {
 }
 
 function main() {
-  console.log(`== V19 pixelate probe (FFmpeg ${spawnSync("ffmpeg", ["-version"], { encoding: "utf8" }).stdout.split("\n")[0]}) ==`);
+  console.log(`== V19 pixelate probe — BẢN GEQ (đợt 150) (FFmpeg ${spawnSync("ffmpeg", ["-version"], { encoding: "utf8" }).stdout.split("\n")[0]}) ==`);
   const ec = transpileTs(path.join("apps", "web", "src", "lib", "effectCanvas.ts"), "effectCanvas-js");
   if (typeof ec.applyPixelate !== "function") {
     console.log("effectCanvas: PENDING — thiếu applyPixelate (exit 2)");
@@ -188,87 +229,186 @@ function main() {
   const canvasPix = (src, w, h, intensity) => fromImg(ec.applyPixelate(toImg(src, w, h), intensity), w, h);
   const kOf = (intensity) => 2 + Math.round(intensity * 14);
 
-  // ---- A. Vị trí lấy mẫu: pattern vị trí (R=x, G=y) phải khớp tuyệt đối ----
+  // ---- 0. Chuỗi filter thật phải là geq, có alpha_expr, không còn scale ----
+  {
+    const f0 = buildEffectFilter({ type: "pixelate", intensity: 0 });
+    const f1 = buildEffectFilter({ type: "pixelate", intensity: 1 });
+    const f08 = buildEffectFilter({ type: "pixelate", intensity: 0.8 });
+    check("0 filter pixelate là geq", f0.startsWith("geq="), f0.slice(0, 80));
+    check("0 filter có alpha_expr bắt buộc", f0.includes(":a='alpha("), "thiếu alpha_expr -> geq ép alpha về 0");
+    check("0 filter KHÔNG còn scale đổi kích thước", !/scale=iw/.test(f0), "scale cũ làm sai kích thước khung hình");
+    check("0 K theo intensity (0->2, 0.8->13, 1->16)", f0.includes("mod(X,2)") && f08.includes("mod(X,13)") && f1.includes("mod(X,16)"),
+      `K@0=${/mod\(X,(\d+)\)/.exec(f0)?.[1]} K@0.8=${/mod\(X,(\d+)\)/.exec(f08)?.[1]} K@1=${/mod\(X,(\d+)\)/.exec(f1)?.[1]}`);
+    check("0 vị trí lấy mẫu floor(K/2) trong lum", f08.includes("lum(X-mod(X,13)+6,Y-mod(Y,13)+6)"),
+      "lum phải lấy mẫu đầu khối + 6 (floor(13/2))");
+  }
+
+  // ---- A. Vị trí lấy mẫu: posFrame (R=x, G=y) — khóa theo LUMA (yMAD) ----
   for (const [w, h, intensity] of [[72, 48, 0.25], [72, 48, 0.43], [72, 45, 0.5], [78, 39, 0.75]]) {
     const k = kOf(intensity);
     const src = posFrame(w, h);
-    const ff = ffPixelate(src, w, h, k, `pos-${w}x${h}k${k}`);
     const cv = canvasPix(src, w, h, intensity);
-    const st = diffStats(ff, cv, w, h);
-    check(`A offset mẫu ${w}x${h} k=${k}`, st.mad === 0 && st.maxd === 0,
-      `MAD=${st.mad.toFixed(4)} maxdiff=${st.maxd} (kỳ vọng 0 — FFmpeg lấy đúng offset floor(k/2) của canvas)`);
+    const ff444 = ffPixelateGeq(src, w, h, intensity, "yuv444p", `pos444-${w}x${h}k${k}`);
+    const st444 = diffStats(ff444, cv, w, h);
+    check(`A vị trí mẫu yuv444p ${w}x${h} k=${k}`, st444.yMad <= 0.5,
+      `yMAD=${st444.yMad.toFixed(4)} <= 0,5 (RGB MAD=${st444.mad.toFixed(2)} chỉ in — nhiễu roundtrip YUV, không phải sai vị trí)`);
+    const ff420 = ffPixelateGeq(src, w, h, intensity, "yuv420p", `pos420-${w}x${h}k${k}`);
+    const st420 = diffStats(ff420, cv, w, h);
+    check(`A vị trí mẫu yuv420p ${w}x${h} k=${k}`, st420.yMad <= 1.6,
+      `yMAD=${st420.yMad.toFixed(4)} <= 1,6 (sàn roundtrip yuv420p ~1,30)`);
+  }
+  {
+    // Nội dung nhiễu thật: geq không được lệch luma quá sàn roundtrip.
+    const W = 640, H = 360, intensity = 0.43;
+    const src = noisyEdgeFrame(W, H);
+    const cv = canvasPix(src, W, H, intensity);
+    const ff = ffPixelateGeq(src, W, H, intensity, "yuv420p", "noisy420");
+    const st = diffStats(ff, cv, W, H);
+    const rt = ffRoundtrip(src, W, H, "yuv420p", "noisy420-rt");
+    const stRt = diffStats(rt, src, W, H);
+    console.log(`A nhiễu thật ${W}x${H} k=8 yuv420p: geq yMAD=${st.yMad.toFixed(4)} | sàn roundtrip yMAD=${stRt.yMad.toFixed(4)} (RGB MAD geq=${st.mad.toFixed(2)}, sàn=${stRt.mad.toFixed(2)})`);
+    check("A geq không lệch luma quá sàn roundtrip (nhiễu thật)", st.yMad - stRt.yMad <= 0.15,
+      `geq yMAD − sàn = ${(st.yMad - stRt.yMad).toFixed(4)} <= 0,15`);
   }
 
-  // ---- B. Ramp mịn: dư ±1 hệ thống, vẫn KHỚP tier ----
+  // ---- B. Ramp mịn: tier KHỚP theo luma (yuv420p) ----
   for (const [w, h, intensity] of [[72, 48, 0.25], [78, 39, 0.75], [72, 45, 0.5]]) {
     const k = kOf(intensity);
     const src = patternFrame(w, h);
-    const ff = ffPixelate(src, w, h, k, `pat-${w}x${h}k${k}`);
     const cv = canvasPix(src, w, h, intensity);
+    const ff = ffPixelateGeq(src, w, h, intensity, "yuv420p", `pat-${w}x${h}k${k}`);
     const st = diffStats(ff, cv, w, h);
-    check(`B ramp mịn ${w}x${h} k=${k}`, st.maxd <= 1 && st.mad <= 2,
-      `MAD=${st.mad.toFixed(4)} maxdiff=${st.maxd} perCh=${st.perChMad.map((v) => v.toFixed(3)).join("/")} diffPix=${(st.diffPixFrac * 100).toFixed(1)}% (dư ±1, tier KHỚP)`);
+    console.log(`B ramp ${w}x${h} k=${k} yuv420p: yMAD=${st.yMad.toFixed(4)} RGB MAD=${st.mad.toFixed(4)} maxd=${st.maxd} (RGB MAD chỉ in — sàn subsample + pattern đối kháng)`);
+    check(`B tier KHỚP theo luma (ramp ${w}x${h} k=${k})`, st.yMad <= 2,
+      `yMAD=${st.yMad.toFixed(4)} <= 2`);
   }
 
-  // ---- C. Footprint pixel kề (CHỈ IN, không assert): nền solid + 1 pixel trắng ----
+  // ---- C. Kích thước ra == kích thước vào, mọi K, mọi W/H (kể cả lẻ) ----
   {
-    const W = 72, H = 48, K = 6;
-    const solid = Buffer.alloc(W * H * 3);
-    for (let p = 0; p < W * H; p++) { solid[p * 3] = 12; solid[p * 3 + 1] = 15; solid[p * 3 + 2] = 12; }
-    const base = ffDownscale(solid, W, H, K, "fp-base");
-    const at00 = [base[0], base[1], base[2]];
-    console.log(`C footprint (downscale, nền solid (12,15,12), dst(0,0) gốc = [${at00}]) — chỉ in đối chiếu:`);
-    for (const [x, y] of [[2, 3], [4, 3], [3, 2], [3, 4], [2, 2], [4, 4]]) {
-      const s = Buffer.from(solid);
-      const i = (y * W + x) * 3;
-      s[i] = 255; s[i + 1] = 255; s[i + 2] = 255;
-      const o = ffDownscale(s, W, H, K, `fp-${x}_${y}`);
-      console.log(`  trắng tại (${x},${y}) -> dst(0,0) = [${o[0]},${o[1]},${o[2]}]${o[0] === at00[0] && o[1] === at00[1] && o[2] === at00[2] ? " (không đổi)" : " (ĐỔI)"}`);
+    let bad = 0;
+    for (const [w, h] of [[640, 360], [641, 361], [639, 359], [854, 480], [1920, 1080], [321, 241]]) {
+      for (const k of [2, 3, 7, 9, 13, 16]) {
+        const intensity = (k - 2) / 14;
+        const src = patternFrame(w, h);
+        const ff = ffPixelateGeq(src, w, h, intensity, "yuv420p", `size-${w}x${h}k${k}`);
+        if (ff.length !== w * h * 3) { bad++; console.log(`  C SAI kích thước: ${w}x${h} k=${k} -> ${ff.length} byte (kỳ vọng ${w * h * 3})`); }
+      }
     }
+    check("C kích thước ra == vào (6 size x 6 K = 36 case)", bad === 0, `${36 - bad}/36 case đúng kích thước`);
+  }
+  {
+    // Đúng case demo_effects từng FAIL: 640x360 K=13 encode libx264 thật.
+    const f = buildEffectFilter({ type: "pixelate", intensity: 0.8 });
+    const mp4 = path.join(TMP, "c-640x360k13.mp4");
+    runFfmpeg(["-f", "lavfi", "-i", "testsrc2=size=640x360:rate=30:duration=1",
+      "-vf", `format=yuv420p,${f}`, "-c:v", "libx264", "-pix_fmt", "yuv420p", mp4], "encode-k13");
+    const probe = spawnSync("ffprobe", ["-v", "error", "-select_streams", "v:0",
+      "-show_entries", "stream=width,height,codec_name", "-of", "csv=p=0", mp4], { encoding: "utf8" });
+    const dims = (probe.stdout || "").trim();
+    const sz = fs.statSync(mp4).size;
+    check("C encode libx264 640x360 K=13 (case demo từng FAIL)", probe.status === 0 && dims === "h264,640,360",
+      `ffprobe: ${dims} (thứ tự csv: codec,width,height), file ${sz} byte`);
   }
 
-  // ---- D. Nội dung nhiễu + cạnh sắc: dư thưa, tập trung ở khối cạnh, luma giữ ----
-  {
-    const W = 640, H = 360, K = 8, intensity = 0.43;
-    const src = noisyEdgeFrame(W, H);
-    const ff = ffPixelate(src, W, H, K, "noisy");
-    const cv = canvasPix(src, W, H, intensity);
-    const st = diffStats(ff, cv, W, H);
-    // Downscale-only so với mẫu canvas, từng khối — tách khâu + đo luma.
-    const down = ffDownscale(src, W, H, K, "noisy-down");
-    const DW = W / K, DH = H / K;
-    const Y = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
-    let dsum = 0, dmax = 0, diffBlocks = 0, maxYd = 0, sumYd = 0, meanDownErrSum = 0;
-    for (let by = 0; by < DH; by++) for (let bx = 0; bx < DW; bx++) {
-      const si = ((by * K + 4) * W + (bx * K + 4)) * 3;
-      const di = (by * DW + bx) * 3;
-      let err = 0;
-      for (let c = 0; c < 3; c++) {
-        const d = Math.abs(down[di + c] - src[si + c]);
-        err = Math.max(err, d);
-        meanDownErrSum += d;
-      }
-      dsum += err; dmax = Math.max(dmax, err);
-      if (err > 0) {
-        diffBlocks++;
-        const ys = Y(src[si], src[si + 1], src[si + 2]);
-        const yf = Y(down[di], down[di + 1], down[di + 2]);
-        const yd = Math.abs(yf - ys);
-        sumYd += yd; maxYd = Math.max(maxYd, yd);
+  // ---- D. Khối hằng trên đường yuv420p (posFrame, hàng giữa) ----
+  for (const [w, h, k] of [[72, 48, 8], [640, 360, 16], [640, 360, 13], [640, 360, 9]]) {
+    const intensity = (k - 2) / 14;
+    const src = posFrame(w, h);
+    const ff = ffPixelateGeq(src, w, h, intensity, "yuv420p", `blk-${w}x${h}k${k}`);
+    const y = Math.floor(h / 2);
+    const runs0 = countRunsRow(ff, w, h, y, 0);
+    const expect = Math.ceil(w / k);
+    // Luma hằng theo khối với MỌI K (Y chỉ phụ thuộc luma full-res).
+    const Y = (px) => 0.299 * px[0] + 0.587 * px[1] + 0.114 * px[2];
+    let maxYD = 0;
+    for (let bx = 0; bx < Math.ceil(w / k); bx++) {
+      const x0 = bx * k, x1 = Math.min(w, x0 + k);
+      const y0 = Y([ff[(y * w + x0) * 3], ff[(y * w + x0) * 3 + 1], ff[(y * w + x0) * 3 + 2]]);
+      for (let x = x0 + 1; x < x1; x++) {
+        maxYD = Math.max(maxYD, Math.abs(Y([ff[(y * w + x) * 3], ff[(y * w + x) * 3 + 1], ff[(y * w + x) * 3 + 2]]) - y0));
       }
     }
-    // Full-chain: mỗi khối ra là bản nhân bản của đúng 1 mẫu downscale,
-    // nên MAD full-chain PHẢI bằng đúng trung bình lỗi mẫu downscale
-    // (meanDownErr) — bằng nhau tới epsilon thì upscale là chính xác
-    // tuyệt đối, toàn bộ dư thuộc khâu downscale.
-    const meanDownErr = meanDownErrSum / (DW * DH * 3);
-    console.log(`D nhiễu+cạnh ${W}x${H} k=${K} | full-chain MAD=${st.mad.toFixed(4)} maxdiff=${st.maxd} diffPix=${(st.diffPixFrac * 100).toFixed(2)}% | downscale-only maxErr-khối=${dmax} khối-lệch=${diffBlocks}/${DW * DH} (${(diffBlocks / (DW * DH) * 100).toFixed(1)}%) meanDownErr=${meanDownErr.toFixed(4)} | luma: mean|dY|=${diffBlocks ? (sumYd / diffBlocks).toFixed(3) : "0"} max|dY|=${maxYd.toFixed(3)}`);
-    check(`D tier KHỚP trên nội dung nhiễu+cạnh`, st.mad <= 2,
-      `MAD=${st.mad.toFixed(4)} <= 2`);
-    check(`D upscale chính xác tuyệt đối (MAD full-chain = meanDownErr)`, Math.abs(meanDownErr - st.mad) < 1e-9,
-      `meanDownErr=${meanDownErr.toFixed(6)} vs full-chain MAD=${st.mad.toFixed(6)} (chênh ${(Math.abs(meanDownErr - st.mad)).toExponential(1)} — dư 100% thuộc khâu downscale)`);
-    check(`D luma giữ (vị trí mẫu đúng, chỉ chroma trộn)`, maxYd <= 8,
-      `max|dY|=${maxYd.toFixed(3)} <= 8 trong khi maxdiff RGB=${st.maxd} (lệch vị trí mẫu sẽ kéo luma theo cạnh sắc, không giữ được)`);
+    if (k % 2 === 0) {
+      check(`D khối hằng K chẵn ${w}x${h} k=${k}`, runs0 === expect,
+        `runs tol0=${runs0} == ceil(${w}/${k})=${expect}`);
+      let maxInBlock = 0;
+      for (let bx = 0; bx < Math.ceil(w / k); bx++) {
+        const x0 = bx * k, x1 = Math.min(w, x0 + k);
+        for (let x = x0 + 1; x < x1; x++) {
+          for (let c = 0; c < 3; c++) maxInBlock = Math.max(maxInBlock, Math.abs(ff[(y * w + x) * 3 + c] - ff[(y * w + x0) * 3 + c]));
+        }
+      }
+      check(`D lệch trong khối = 0 (K chẵn ${w}x${h} k=${k})`, maxInBlock === 0, `max lệch=${maxInBlock}`);
+    } else {
+      // K lẻ: chroma subsample không căn được khối lẻ — pixel lệch chỉ ở mép khối.
+      // So mỗi pixel với MẪU của khối nó (pixel tại bx*K+F): pixel đầu khối
+      // (x%K==0) có thể mang chroma khối trước (pixel chroma chia sẻ qua
+      // biên subsample); pixel giữa khối không được lệch.
+      const sampleOf = (bx) => {
+        const sx = Math.min(w - 1, bx * k + Math.floor(k / 2));
+        return [ff[(y * w + sx) * 3], ff[(y * w + sx) * 3 + 1], ff[(y * w + sx) * 3 + 2]];
+      };
+      let fringeOk2 = true, fringeCount2 = 0;
+      for (let x = 0; x < w; x++) {
+        const bx = Math.floor(x / k);
+        const s = sampleOf(bx);
+        let dev = 0;
+        for (let c = 0; c < 3; c++) dev = Math.max(dev, Math.abs(ff[(y * w + x) * 3 + c] - s[c]));
+        if (dev > 4) {
+          fringeCount2++;
+          if (x % k !== 0) fringeOk2 = false;
+        }
+      }
+      console.log(`D K lẻ ${w}x${h} k=${k}: runs tol0=${runs0} (ceil=${expect}, giới hạn ${2 * expect}) | pixel lệch>4 so mẫu khối: ${fringeCount2}, toàn bộ ở x%K==0: ${fringeOk2}`);
+      check(`D K lẻ ${w}x${h} k=${k}: runs không vỡ khối`, runs0 <= 2 * expect,
+        `runs tol0=${runs0} <= ${2 * expect}`);
+      check(`D K lẻ ${w}x${h} k=${k}: pixel lệch chỉ ở mép khối`, fringeOk2,
+        `${fringeCount2} pixel lệch>4, toàn bộ tại x%K==0 (chroma chia sẻ qua biên subsample)`);
+    }
+    check(`D luma hằng theo khối ${w}x${h} k=${k}`, maxYD <= 3,
+      `max |dY| trong khối = ${maxYD.toFixed(2)} <= 3`);
+  }
+
+  // ---- E. Alpha không về 0 (yuva444p), alpha pixel hoá theo khối ----
+  {
+    const W = 64, H = 48, K = 9;
+    const rgba = Buffer.alloc(W * H * 4);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const i = (y * W + x) * 4;
+      rgba[i] = (x * 4) % 256; rgba[i + 1] = (y * 5) % 256; rgba[i + 2] = 128;
+      rgba[i + 3] = (x < W / 2 ? 0 : (y < H / 2 ? 128 : 200));
+    }
+    const f = buildEffectFilter({ type: "pixelate", intensity: 0.5 });
+    const inp = path.join(TMP, "alpha-in.raw"), out = path.join(TMP, "alpha-out.raw");
+    fs.writeFileSync(inp, rgba);
+    runFfmpeg(["-f", "rawvideo", "-pix_fmt", "rgba", "-s", `${W}x${H}`, "-r", "30", "-i", inp,
+      "-vf", `format=yuva444p,${f},format=rgba`, "-f", "rawvideo", "-pix_fmt", "rgba", out], "alpha");
+    const b = fs.readFileSync(out);
+    const alphas = new Set();
+    for (let p = 0; p < W * H; p++) alphas.add(b[p * 4 + 3]);
+    const sorted = [...alphas].sort((a, b2) => a - b2);
+    let blockConst = true;
+    for (let y = 0; y < H && blockConst; y++) {
+      for (let bx = 0; bx < Math.ceil(W / K); bx++) {
+        const x0 = bx * K, x1 = Math.min(W, x0 + K);
+        const a0 = b[(y * W + x0) * 4 + 3];
+        for (let x = x0 + 1; x < x1; x++) if (b[(y * W + x) * 4 + 3] !== a0) { blockConst = false; break; }
+        if (!blockConst) break;
+      }
+    }
+    check("E alpha không bị ép về 0", alphas.size > 1 && sorted.some((v) => v > 0),
+      `alpha unique ra: [${sorted.join(",")}] (vào: 0,128,200)`);
+    check("E alpha hằng theo từng khối KxK", blockConst, `K=${K}, ${W}x${H}`);
+    // Đối chứng: cùng filter nhưng BỎ alpha_expr -> alpha về 0 (lý do alpha_expr bắt buộc).
+    const fNoA = f.replace(/:a='[^']*'/, "");
+    runFfmpeg(["-f", "rawvideo", "-pix_fmt", "rgba", "-s", `${W}x${H}`, "-r", "30", "-i", inp,
+      "-vf", `format=yuva444p,${fNoA},format=rgba`, "-f", "rawvideo", "-pix_fmt", "rgba", out], "alpha-noa");
+    const b2 = fs.readFileSync(out);
+    const alphas2 = new Set();
+    for (let p = 0; p < W * H; p++) alphas2.add(b2[p * 4 + 3]);
+    console.log(`E đối chứng (bỏ alpha_expr): alpha unique ra: [${[...alphas2].sort((a, b2) => a - b2).join(",")}] — phải là [0] thì mới chứng minh alpha_expr có tác dụng`);
+    check("E đối chứng: không alpha_expr thì alpha về 0", alphas2.size === 1 && alphas2.has(0),
+      `alpha unique: [${[...alphas2].join(",")}]`);
   }
 
   console.log(`tmp: ${TMP} (sẽ xoá sau khi in xong)`);

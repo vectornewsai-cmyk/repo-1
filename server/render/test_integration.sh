@@ -83,5 +83,29 @@ run_demo transitions "*.mp4"          1
 run_demo textfx     "textfx-*.mp4"     1
 echo
 
+echo "== 4. Render-test pixelate (đợt 149: khóa lỗi scale đổi kích thước) =="
+if node "$RENDER_DIR/test_pixelate_render.js" --out-dir "$OUT/pix-test" >/dev/null 2>&1; then
+  pass "test_pixelate_render (20 case size x intensity + alpha)"
+else
+  fail "test_pixelate_render" "xem log: node server/render/test_pixelate_render.js"
+fi
+echo
+
+echo "== 5. Probe V19 pixelate geq (đợt 151: nối vào suite theo quyết parent (j) đợt 150) =="
+# Probe V19 khóa chuỗi filter pixelate THẬT (geq + alpha_expr bắt buộc) trên
+# 34 assert: vị trí lấy mẫu floor(K/2), tier khớp theo luma, kích thước ra ==
+# vào với mọi K và mọi W/H (36 case), khối hằng, alpha không về 0.
+# Chạy độc lập từ đợt 19 tới đợt 150; từ đợt 151 nối vào suite — ĐẾM
+# INTEGRATION ĐỔI 11 → 12 (xem docs/PHASE9_ROUND151_T0_V19_INTEGRATION_LIMITS.md).
+# Log đầy đủ giữ lại trong $OUT để soi khi rớt (probe tự xoá /tmp riêng của nó).
+# Lưu ý: probe exit 2 khi applyPixelate thiếu trong effectCanvas.ts — vẫn tính FAIL
+# (khóa phải được bắt buộc chạy, không được lặng lẽ bỏ qua).
+if node "$RENDER_DIR/src/test_v19_pixelate_probe.js" > "$OUT/v19-pixelate.log" 2>&1; then
+  pass "test_v19_pixelate_probe (34 assert geq)"
+else
+  fail "test_v19_pixelate_probe" "xem log: $OUT/v19-pixelate.log"
+fi
+echo
+
 echo "== KẾT QUẢ: $PASS pass, $FAIL fail =="
 [ "$FAIL" -eq 0 ]

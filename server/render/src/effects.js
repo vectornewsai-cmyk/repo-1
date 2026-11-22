@@ -137,11 +137,36 @@ function buildEffectFilter(effect) {
       return `crop=w=iw-24:h=ih-24:x='12+12*sin(2*PI*t*9)':y='12+12*cos(2*PI*t*7)',pad=iw+24:ih+24:x=12:y=12:color=black`;
     }
     case "pixelate": {
-      // Thu nhỏ rồi phóng lại bằng neighbor: khối pixel rõ rệt.
-      // Dùng iw/iw*K (không cần biết W/H tuyệt đối): scale thứ 2 nhân ngược
-      // đúng hệ số nên kích thước ra bằng kích thước vào.
+      // Pixel hoá bằng geq — KHÔNG ĐỔI kích thước khung hình.
+      //
+      // LỖI CŨ (đợt 148 phát hiện, `npm test` FAIL ở demo_effects): bản cũ
+      // dùng `scale=iw/K:ih/K,scale=iw*K:ih*K` (neighbor). Vì iw/K bị cắt
+      // ngọn (vd 640/13 = 49) rồi nhân ngược lại (49*13 = 637) nên khung
+      // hình ra LẺ (637x351) → libx264 (yuv420p) từ chối encode; với K khác
+      // (6/11/12/14/15) kích thước ra CHẴN nhưng SAI (636x...) → vỡ xfade/
+      // mask downstream vốn đòi đúng WxH. Chỉ K chia hết W,H mới đúng.
+      //
+      // Bản mới lấy mẫu trực tiếp từng khối KxK bằng geq: mỗi pixel lấy
+      // giá trị của điểm mẫu trong khối của nó (đầu khối + floor(K/2),
+      // ĐÚNG vị trí lấy mẫu mà đợt 19 đã khóa cho scale-neighbor), nên
+      // kích thước ra = kích thước vào với MỌI K và MỌI W/H, kể cả lẻ.
+      // Chroma (nửa độ phân giải) lấy ĐÚNG vị trí luma (bx+F)/2 — tức
+      // trunc(2*X/K)*K/2+F/2 — để lưới khối chroma khớp lưới khối luma;
+      // biến thể chroma khối riêng K/2 đã đo tệ hơn hẳn trên ramp đối
+      // kháng (MAD 13,1 so với 3,8 ở K=13). Kiểm chứng parity đầy đủ
+      // trong docs/PHASE9_ROUND149_T0_PIXELATE_LIMITS.md §3.
+      // BẮT BUỘC có alpha_expr: geq KHÔNG có alpha_expr sẽ ép alpha về 0
+      // (đã đo thực: clip alpha thành trong suốt hoàn toàn) — nên alpha
+      // cũng pixel hoá cùng lưới luma. Trên yuv420p (không có alpha),
+      // alpha_expr được bỏ qua, không lỗi (đã đo thực).
       const k = 2 + Math.round(t * 14); // 2..16
-      return `scale=iw/${k}:ih/${k}:flags=neighbor,scale=iw*${k}:ih*${k}:flags=neighbor`;
+      const f = Math.floor(k / 2);
+      const c = (fn) =>
+        `${fn}(trunc(2*X/${k})*${k}/2+${f}/2,trunc(2*Y/${k})*${k}/2+${f}/2)`;
+      return `geq=lum='lum(X-mod(X,${k})+${f},Y-mod(Y,${k})+${f})'` +
+        `:cb='${c("cb")}'` +
+        `:cr='${c("cr")}'` +
+        `:a='alpha(X-mod(X,${k})+${f},Y-mod(Y,${k})+${f})'`;
     }
     case "mirror": {
       // Lật ngang toàn khung hình (không có tham số cường độ — hflip nhị phân).
@@ -245,15 +270,23 @@ function selfTest() {
   assert.ok(buildEffectFilter({ type: "glitch" }).includes("noise=alls="));
   assert.ok(buildEffectFilter({ type: "shake" }).includes("crop="));
   assert.ok(buildEffectFilter({ type: "shake" }).includes("pad="));
-  assert.ok(buildEffectFilter({ type: "pixelate" }).includes("flags=neighbor"));
+  // Đợt 149: pixelate dùng geq (giữ nguyên kích thước), KHÔNG dùng scale —
+  // scale cũ đổi kích thước khung hình (637x351 ở K=13) làm libx264 fail.
+  const px0 = buildEffectFilter({ type: "pixelate", intensity: 0 });
+  const px1 = buildEffectFilter({ type: "pixelate", intensity: 1 });
+  assert.ok(px0.startsWith("geq="), `pixelate phải dùng geq: ${px0}`);
+  assert.ok(px0.includes("mod(X,2)"), `pixelate@0 phải có K=2: ${px0}`);
+  assert.ok(px1.includes("mod(X,16)"), `pixelate@1 phải có K=16: ${px1}`);
+  assert.ok(px0.includes(":a='alpha("), `pixelate phải pixel hoá cả alpha (geq không có alpha_expr sẽ ép alpha về 0): ${px0}`);
+  assert.ok(px1.includes("trunc(2*X/16)"), `pixelate chroma phải lấy đúng vị trí luma (bx+F)/2: ${px1}`);
+  assert.ok(!px0.includes("scale=") && !px1.includes("scale="), "pixelate KHÔNG được dùng scale (đổi kích thước khung hình)");
+  assert.ok(px0.includes("lum(X-mod(X,2)+1,"), `pixelate@0 lấy mẫu tại tâm khối floor(K/2)=1: ${px0}`);
   assert.strictEqual(buildEffectFilter({ type: "mirror" }), "hflip");
   assert.ok(buildEffectFilter({ type: "old-film" }).includes("vignette="));
   assert.ok(buildEffectFilter({ type: "invert", intensity: 1 }).includes("255-2*val"));
   assert.ok(buildEffectFilter({ type: "edgedetect" }).startsWith("edgedetect="));
   assert.ok(buildEffectFilter({ type: "hue-rotate", intensity: 0.5 }).includes("h=0"));
   assert.ok(buildEffectFilter({ type: "hue-rotate", intensity: 1 }).includes("h=90"));
-  assert.ok(buildEffectFilter({ type: "pixelate", intensity: 0 }).includes("iw/2"));
-  assert.ok(buildEffectFilter({ type: "pixelate", intensity: 1 }).includes("iw/16"));
   assert.ok(validateEffects([{ type: "glitch" }, { type: "mirror" }]).length === 0);
 
   // 4. Chain nối nhiều effect
