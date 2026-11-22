@@ -52,6 +52,12 @@
  * Exit 0 mọi case PASS (hoặc mọi case có verdict rõ + không lỗi harness),
  *   1 có FAIL, 2 harness lỗi. KHÔNG push/tag/binary.
  * Ảnh chụp + log + report JSON ở O8_SCRATCH (ngoài repo).
+ * Đợt 152 T0 (F-151-T10-2): report JSON theo lượt — như bản WebKit, trước
+ * đây tên cố định "o8-clicktest-report.json" nên lần chạy sau ghi đè lần
+ * trước. Nay mỗi lần chạy ghi file riêng
+ * o8-clicktest-report-<stamp>-<boot8>[-attempt<N>]-pid<PID>.json (attempt
+ * lấy từ env O8_ATTEMPT khi driver truyền); file tên cố định vẫn ghi thêm
+ * làm bản "latest" cho luồng đọc cũ (T8/T10).
  */
 import { spawn, execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -68,6 +74,22 @@ const CHROME = [path.join(os.homedir(), ".cache/ms-playwright", "chromium-1254",
   path.join(os.homedir(), ".cache/ms-playwright", "chromium-1187", "chrome-linux", "chrome"),
   "/opt/meta-chromium/chrome"].find((c) => c && fs.existsSync(c));
 const VITE_BIN = [path.join(ROOT, "node_modules", ".bin", "vite"), path.join(WEB_DIR, "node_modules", ".bin", "vite")].find((c) => fs.existsSync(c));
+// Đợt 152 T0 (F-151-T10-2): report JSON theo lượt — tên file chứa stamp +
+// boot_id (8 ký tự đầu, cùng quy ước ngắn của T8) + attempt (env O8_ATTEMPT,
+// khi driver truyền) + pid (chống trùng khi 2 lần chạy cùng 1 giây). Mỗi lần
+// chạy ghi file RIÊNG, không ghi đè lần trước.
+const RUN_STAMP = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+const BOOT_ID = (() => { try { return fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim().slice(0, 8); } catch { return "noboot"; } })();
+const O8_ATTEMPT = process.env.O8_ATTEMPT || "";
+const REPORT_FILE = path.join(SCRATCH, `o8-clicktest-report-${RUN_STAMP}-${BOOT_ID}${O8_ATTEMPT ? `-attempt${O8_ATTEMPT}` : ""}-pid${process.pid}.json`);
+// Ghi report theo lượt (REPORT_FILE) + bản "latest" tên cố định cho luồng
+// đọc cũ (T8/T10). JSON mang thêm khối `run` để tự nhận diện lượt chạy ngay
+// cả khi file bị đổi tên.
+function writeReport(payload) {
+  const body = JSON.stringify(payload, null, 2);
+  writeFileEpermRetry(REPORT_FILE, body);
+  writeFileEpermRetry(path.join(SCRATCH, "o8-clicktest-report.json"), body);
+}
 const CFG_DIR = "/tmp/round87-o8";
 const VITE_CFG = path.join(CFG_DIR, "vite.o8.config.mjs");
 const BRIDGE_ENTRY = path.join(ROOT, "server", "bridge", "src", "index.js");
@@ -1058,7 +1080,8 @@ async function main() {
   const failed = results.filter((r) => r.ok === false).length;
   const noted = results.filter((r) => r.ok === null).length;
   log(`\n== KẾT QUẢ CLICK-TEST O8: ${results.length - failed - noted}/${results.length} pass, ${failed} fail, ${noted} note ==`);
-  writeFileEpermRetry(path.join(SCRATCH, "o8-clicktest-report.json"), JSON.stringify({ precheck: pre, results, logLines }, null, 2));
+  log(`report JSON theo lượt: ${REPORT_FILE}`);
+  writeReport({ run: { stamp: RUN_STAMP, bootId: BOOT_ID, pid: process.pid, file: REPORT_FILE }, precheck: pre, results, logLines });
   return failed === 0 ? 0 : 1;
 }
 
@@ -1067,7 +1090,7 @@ try {
   code = await main();
 } catch (e) {
   console.error(`[o8] HARNESS LỖI: ${e.message}\n${e.stack || ""}`);
-  try { writeFileEpermRetry(path.join(SCRATCH, "o8-clicktest-report.json"), JSON.stringify({ results, logLines, harnessError: e.message }, null, 2)); } catch {}
+  try { writeReport({ run: { stamp: RUN_STAMP, bootId: BOOT_ID, pid: process.pid, file: REPORT_FILE }, results, logLines, harnessError: e.message }); } catch {}
   code = 2;
 } finally {
   for (const p of [chrome, xvfb, vite, bridge]) {

@@ -14,6 +14,12 @@
  * thuộc vào lib hệ thống sau reboot; vite config tạm thêm
  * server.watch.ignored (ignore mọi file — 0 inotify FD, đo L8, HMR đã tắt);
  * vite log append theo lượt (o8w-vite-<stamp>-attemptN.log).
+ * Đợt 152 T0 (F-151-T10-2): report JSON theo lượt — trước đây tên cố định
+ * "o8w-clicktest-report.json" nên attempt2 của driver ghi đè attempt1, chỉ
+ * còn JSON cuối cùng trên đĩa. Nay mỗi lần chạy ghi file riêng
+ * o8w-clicktest-report-<stamp>-<boot8>[-attempt<N>]-pid<PID>.json (attempt
+ * lấy từ env O8W_ATTEMPT khi driver truyền); file tên cố định vẫn ghi thêm
+ * làm bản "latest" cho luồng đọc cũ (T8/T10).
  *
  * Chạy (từ gốc repo): xvfb-run -a node apps/web/scripts/clicktest-87o8-mask-track-webkit.mjs
  * (tự spawn Xvfb :188 nếu chưa có; không cần xvfb-run nếu DISPLAY đã set).
@@ -43,6 +49,21 @@ const VITE_CFG = path.join(CFG_DIR, "vite.o8w.config.mjs");
 // Đợt 110 L8 — tên log vite theo lượt (append, không ghi đè bằng chứng cũ);
 // DEBROOT cho LD_LIBRARY_PATH khi launch WebKit (sống qua reboot, độc lập /usr).
 const RUN_STAMP = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+// Đợt 152 T0 (F-151-T10-2): report JSON theo lượt — tên file chứa stamp +
+// boot_id (8 ký tự đầu, cùng quy ước ngắn của T8) + attempt (env O8W_ATTEMPT,
+// khi driver truyền) + pid (chống trùng khi 2 lần chạy cùng 1 giây). Mỗi lần
+// chạy ghi file RIÊNG, không ghi đè lần trước.
+const BOOT_ID = (() => { try { return fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim().slice(0, 8); } catch { return "noboot"; } })();
+const O8_ATTEMPT = process.env.O8W_ATTEMPT || "";
+const REPORT_FILE = path.join(SCRATCH, `o8w-clicktest-report-${RUN_STAMP}-${BOOT_ID}${O8_ATTEMPT ? `-attempt${O8_ATTEMPT}` : ""}-pid${process.pid}.json`);
+// Ghi report theo lượt (REPORT_FILE) + bản "latest" tên cố định cho luồng
+// đọc cũ (T8/T10). JSON mang thêm khối `run` để tự nhận diện lượt chạy ngay
+// cả khi file bị đổi tên.
+function writeReport(payload) {
+  const body = JSON.stringify(payload, null, 2);
+  writeFileEpermRetry(REPORT_FILE, body);
+  writeFileEpermRetry(path.join(SCRATCH, "o8w-clicktest-report.json"), body);
+}
 const DEBROOT = "/home/hatch/workspace/tmp-q6r3-debroot/usr/lib/x86_64-linux-gnu";
 const BRIDGE_ENTRY = path.join(ROOT, "server", "bridge", "src", "index.js");
 const BRIDGE_WORK_DIR = "/tmp/round87-o8/bridge-work-w";
@@ -814,7 +835,8 @@ async function main() {
   const failed = results.filter((r) => r.ok === false).length;
   const noted = results.filter((r) => r.ok === null).length;
   log(`\n== KẾT QUẢ CLICK-TEST O8 WebKit: ${results.length - failed - noted}/${results.length} pass, ${failed} fail, ${noted} note ==`);
-  writeFileEpermRetry(path.join(SCRATCH, "o8w-clicktest-report.json"), JSON.stringify({ results, logLines }, null, 2));
+  log(`report JSON theo lượt: ${REPORT_FILE}`);
+  writeReport({ run: { stamp: RUN_STAMP, bootId: BOOT_ID, pid: process.pid, file: REPORT_FILE }, results, logLines });
   return failed === 0 ? 0 : 1;
 }
 
@@ -823,7 +845,7 @@ try {
   code = await main();
 } catch (e) {
   console.error(`[o8w] HARNESS LỖI: ${e.message}\n${e.stack || ""}`);
-  try { writeFileEpermRetry(path.join(SCRATCH, "o8w-clicktest-report.json"), JSON.stringify({ results, logLines, harnessError: e.message }, null, 2)); } catch {}
+  try { writeReport({ run: { stamp: RUN_STAMP, bootId: BOOT_ID, pid: process.pid, file: REPORT_FILE }, results, logLines, harnessError: e.message }); } catch {}
   code = 2;
 } finally {
   try { if (browser) await browser.close(); } catch {}

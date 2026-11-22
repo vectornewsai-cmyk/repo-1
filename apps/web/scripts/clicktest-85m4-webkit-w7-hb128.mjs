@@ -41,7 +41,7 @@
 // đợt 127 (14 phút im lặng, vượt mọi chặn trên nội bộ). Heartbeat chạy
 // trên event loop Node nên vẫn ghi log ngay cả khi page.evaluate treo.
 // File gốc KHÔNG sửa.
-import { spawn } from "node:child_process";
+import { spawn, execFile } from "node:child_process";
 import fs from "node:fs";
 import { writeFileEpermRetry } from "./eperm-retry.mjs";
 import http from "node:http";
@@ -76,6 +76,67 @@ const VITE_BIN = [path.join(ROOT, "node_modules", ".bin", "vite"), path.join(WEB
 fs.mkdirSync(SCRATCH, { recursive: true });
 const logLines = [];
 function log(...a) { const l = `[${new Date().toISOString()}] ${a.join(" ")}`; logLines.push(l); console.log(l); }
+// DIAG-137-T8 — watchdog chẩn đoán kẹt evaluate (quyết parent đợt 136 §12.3(i) bước 1).
+// CHẨN ĐOÁN-ONLY: khi một page.evaluate BẤT KỲ (đợt 142 mở rộng qua ev()) im lặng
+// >60 s, ghi log WATCHDOG-137 + gọi script dump chẩn đoán (ps/RSS + /proc/meminfo
+// kèm Balloon + dmesg + journalctl -k + kiểm vite HTTP) + probe evaluate tầm thường
+// (1+1, race 30 s) để phân biệt "page JS chết" / "media pipeline kẹt" / "kênh chết".
+// KHÔNG đổi verdict, KHÔNG resolve/reject evaluate đang treo, KHÔNG đổi timeout.
+let DIAG137_DEV_URL = "";
+const DIAG137_SCRIPT = "/home/hatch/workspace/goals/capcut-clone-video-editor/hidden_files/t8-diag-stall.sh";
+function evalDiag137(page, fn, label) {
+  const p = page.evaluate(fn);
+  const timer = setTimeout(() => {
+    log(`WATCHDOG-137: evaluate im lang >60s tai ${label} — chup chan doan (khong doi verdict)`);
+    try {
+      execFile("bash", [DIAG137_SCRIPT, label, DIAG137_DEV_URL || ""], (err) => {
+        if (err) log(`WATCHDOG-137: diag script loi: ${String(err.message || err).slice(0, 200)}`);
+        else log(`WATCHDOG-137: diag script xong (xem smoke/stall-*)`);
+      });
+    } catch (e) { log(`WATCHDOG-137: khong goi duoc diag script: ${String(e.message || e).slice(0, 200)}`); }
+    Promise.race([
+      page.evaluate(() => 1 + 1).then(
+        (v) => `probe-1+1 tra ve ${v} (kenh evaluate CON SONG — evaluate goc ket o media pipeline/JS)`,
+        (e) => `probe-1+1 LOI: ${String(e.message || e).slice(0, 200)}`),
+      new Promise((r) => setTimeout(() => r("probe-1+1 TIMEOUT 30s (kenh evaluate ket cung / page JS chet)"), 30000)),
+    ]).then((m) => log(`WATCHDOG-137 probe ${label}: ${m}`)).catch((e) => log(`WATCHDOG-137 probe loi: ${String(e.message || e).slice(0, 200)}`));
+  }, 60000);
+  p.then(() => clearTimeout(timer), () => clearTimeout(timer));
+  return p;
+}
+
+// WATCHDOG-142 (quyet parent dot 141 (e)): wrap TOAN BO page.evaluate con lai
+// bang evalDiag137 qua ev() — moi evaluate (setup/startPlaying, vong P4,
+// waitForNotSeeking, sampleFor...) gio deu duoc canh 60 s. Label tu lay tu
+// stack trace (ten ham + so dong noi goi) de khi ket thi biet dung cho.
+// CHAN DOAN-ONLY: khong doi verdict, khong doi timeout, khong resolve/reject
+// evaluate dang treo. Hai cho page.evaluate con tran la CO Y: (1) `const p =
+// page.evaluate(fn)` ben trong evalDiag137 (chinh no la watchdog); (2) probe
+// 1+1 ben trong watchdog.
+let EV142_N = 0;
+function ev(page, fn) {
+  EV142_N += 1;
+  let site = `ev#${EV142_N}`;
+  try {
+    const frames = new Error().stack.split("\n").slice(1);
+    for (const fr of frames) {
+      let t = fr.trim().replace(/^at /, "").replace(/^async /, "");
+      if (t.startsWith("ev (") || t.startsWith("evalDiag137 (")) continue;
+      let name = "?";
+      let lineNo = "?";
+      const pm = t.match(/^(.*?) \((.*):(\d+):\d+\)$/);
+      if (pm) { name = pm[1]; lineNo = pm[3]; }
+      else {
+        const am = t.match(/^(.*):(\d+):\d+$/);
+        if (am) { name = am[1].split("/").pop(); lineNo = am[2]; }
+      }
+      if (name !== "?") site = `${name}:${lineNo}`;
+      break;
+    }
+  } catch {}
+  return evalDiag137(page, fn, site);
+}
+
 
 async function pickFreePort(lo, hi) {
   for (let p = lo; p <= hi; p++) {
@@ -184,26 +245,26 @@ async function waitFor(fn, desc, timeoutMs = 120000) {
 }
 
 async function setupProject(page, clipUrl, clipName, dur) {
-  const setup = await page.evaluate(SETUP_FN.replaceAll("__CLIP_URL__", JSON.stringify(clipUrl)).replaceAll("__CLIP_NAME__", JSON.stringify(clipName)).replaceAll("__DUR__", String(dur)));
+  const setup = await ev(page, SETUP_FN.replaceAll("__CLIP_URL__", JSON.stringify(clipUrl)).replaceAll("__CLIP_NAME__", JSON.stringify(clipName)).replaceAll("__DUR__", String(dur)));
   if (!setup.mediaName || setup.clips.length !== 1) throw new Error("setup project sai: " + JSON.stringify(setup));
   return setup;
 }
 
 async function startPlaying(page, engineName, clipDur) {
   let lastState = null;
-  await page.evaluate(`(async () => { const st = await (${STORE_FN}); st.setPlayhead(0); })()`);
+  await ev(page, `(async () => { const st = await (${STORE_FN}); st.setPlayhead(0); })()`);
   await page.keyboard.press("Space");
   await sleep(300);
-  let stPlay = await page.evaluate(STATE_FN);
+  let stPlay = await ev(page, STATE_FN);
   if (!stPlay.playing) {
-    await page.evaluate(`(async () => { const s = await (${STORE_FN}); s.togglePlay(); })()`);
+    await ev(page, `(async () => { const s = await (${STORE_FN}); s.togglePlay(); })()`);
     await sleep(300);
-    stPlay = await page.evaluate(STATE_FN);
+    stPlay = await ev(page, STATE_FN);
   }
   if (!stPlay.playing) throw new Error("không phát được (playing vẫn false sau Space + togglePlay)");
   try {
     await waitFor(async () => {
-      const s = await page.evaluate(STATE_FN);
+      const s = await ev(page, STATE_FN);
       const v = s.mediaEls.find((e) => e.tag === "VIDEO");
       lastState = s;
       return v && v.readyState >= 2 && v.duration === clipDur ? v : null;
@@ -212,7 +273,7 @@ async function startPlaying(page, engineName, clipDur) {
     throw new Error(`${e.message} — lastState=${JSON.stringify(lastState)}`);
   }
   if (engineName === "webkit") {
-    const attached = await page.evaluate(ATTACH_FN);
+    const attached = await ev(page, ATTACH_FN);
     if (!attached.ok || !attached.isConnected) throw new Error("gắn element vào DOM thất bại: " + JSON.stringify(attached));
   }
 }
@@ -226,7 +287,7 @@ async function waitForPlaySync(page, engineName, clipDur, tag, resets = 0) {
   });
   try {
   while (Date.now() - t0 < 60000) {
-    const s = await page.evaluate(STATE_FN);
+    const s = await evalDiag137(page, STATE_FN, "waitForPlaySync-" + tag);
     const v = s.mediaEls.find((e) => e.tag === "VIDEO");
     last = s;
     if (v && !v.paused && !v.seeking && v.currentTime >= 1.0 && Math.abs(v.currentTime - s.playhead) <= 1.0) {
@@ -254,13 +315,13 @@ async function waitForPlaySync(page, engineName, clipDur, tag, resets = 0) {
 
 async function resetPlayhead0(page) {
   for (let attempt = 0; attempt < 2; attempt++) {
-    await page.evaluate(`(async () => { const s = await (${STORE_FN}); s.setPlayhead(0); if (!s.playing) s.togglePlay(); })()`);
+    await ev(page, `(async () => { const s = await (${STORE_FN}); s.setPlayhead(0); if (!s.playing) s.togglePlay(); })()`);
     await sleep(500);
-    const chk0 = await page.evaluate(STATE_FN);
+    const chk0 = await ev(page, STATE_FN);
     if (chk0.playhead < 1.0) return chk0;
     await sleep(500);
   }
-  return await page.evaluate(STATE_FN);
+  return await ev(page, STATE_FN);
 }
 
 /**
@@ -278,13 +339,13 @@ async function waitForNotSeeking(page, tag, timeoutMs = 15000) {
   });
   try {
   while (Date.now() - t0 < timeoutMs) {
-    const s = await page.evaluate(STATE_FN);
+    const s = await ev(page, STATE_FN);
     last = s;
     const v = s.mediaEls.find((e) => e.tag === "VIDEO");
     if (v && !v.seeking && !v.paused) return { ok: true, state: s };
     await sleep(200);
   }
-  const s = await page.evaluate(STATE_FN);
+  const s = await ev(page, STATE_FN);
   const v = s.mediaEls.find((e) => e.tag === "VIDEO");
   return { ok: false, state: s, lastSeeking: v ? v.seeking : null, lastPaused: v ? v.paused : null };
   } finally { hbStop(); }
@@ -300,7 +361,7 @@ async function sampleFor(page, secs, tag) {
   });
   try {
   while (Date.now() - t0 < secs * 1000) {
-    const s = await page.evaluate(STATE_FN);
+    const s = await evalDiag137(page, STATE_FN, "sampleFor-" + tag);
     const v = s.mediaEls.find((e) => e.tag === "VIDEO");
     samples.push({ t: +((Date.now() - t0) / 1000).toFixed(2), playhead: s.playhead, playing: s.playing, ct: v ? v.currentTime : null, paused: v ? v.paused : null, ended: v ? v.ended : null, seeking: v ? v.seeking : null, restartEndedVideo: s.restartEndedVideo, reseeksVideo: s.reseeksVideo, traceEvents: (s.traceEvents || []).length });
     await sleep(200);
@@ -322,14 +383,14 @@ async function runEngine(engineName, devUrl, clip30Url) {
   try {
     await page.goto(devUrl, { waitUntil: "domcontentloaded", timeout: 120000 });
     await waitFor(async () => {
-      const ok = await page.evaluate(() => {
+      const ok = await ev(page, () => {
         const tb = document.querySelector(".topbar");
         return tb && (tb.textContent || "").includes("VCut") ? true : null;
       });
       return ok;
     }, "app mount (topbar VCut)", 240000);
-    await page.evaluate(INJECT_ERRORS);
-    await page.evaluate(`(() => { const b = [...document.querySelectorAll("button")].find((x) => x.textContent.trim() === "Để sau"); if (b) b.click(); return !!b; })()`).catch(() => {});
+    await ev(page, INJECT_ERRORS);
+    await ev(page, `(() => { const b = [...document.querySelectorAll("button")].find((x) => x.textContent.trim() === "Để sau"); if (b) b.click(); return !!b; })()`).catch(() => {});
     await sleep(800);
 
     const clip30Name = path.basename(CLIP30_PATH);
@@ -340,13 +401,13 @@ async function runEngine(engineName, devUrl, clip30Url) {
     {
       await resetPlayhead0(page);
       await waitForPlaySync(page, engineName, CLIP30_DUR, "P1");
-      const base = await page.evaluate(STATE_FN);
+      const base = await ev(page, STATE_FN);
       const r0 = base.restartEndedVideo ?? 0;
       // Đợt 85 M4: chờ !seeking ngay trước khi ép (tránh ép đúng lúc seek
       // đang kẹt — guard chặn restart suốt cửa sổ).
       const preForce = await waitForNotSeeking(page, "P1");
       if (!preForce.ok) log(`[${engineName}] P1 CẢNH BÁO — ép khi seeking chưa hết (seeking=${preForce.lastSeeking}, paused=${preForce.lastPaused})`);
-      const forced = await page.evaluate(FORCE_ENDED_FN);
+      const forced = await ev(page, FORCE_ENDED_FN);
       if (!forced.ok) throw new Error("P1 ép ended thất bại: " + JSON.stringify(forced));
       const tForce = Date.now();
       // Chờ restart do ép bắn (+1), tối đa 8 s. Poll 100 ms + gỡ NGAY khi
@@ -355,13 +416,13 @@ async function runEngine(engineName, devUrl, clip30Url) {
       let fired = false;
       let tFired = null;
       for (let i = 0; i < 80; i++) {
-        const s = await page.evaluate(STATE_FN);
+        const s = await ev(page, STATE_FN);
         if ((s.restartEndedVideo ?? 0) >= r0 + 1) { fired = true; tFired = Date.now(); break; }
         await sleep(100);
       }
-      const unforced = await page.evaluate(UNFORCE_ENDED_FN);
+      const unforced = await ev(page, UNFORCE_ENDED_FN);
       const tUnforce = Date.now();
-      const afterUnforce = await page.evaluate(STATE_FN);
+      const afterUnforce = await ev(page, STATE_FN);
       // Đợt 85 M4 — settle 1,5 s sau khi gỡ: hook counter được publish mỗi
       // tick rAF nên dưới tải cao có thể lag sau sự kiện thật (run 1:
       // counter 1→2 lộ ở mẫu t=0,53 s trong khi event đã ghi trước đó);
@@ -369,12 +430,12 @@ async function runEngine(engineName, devUrl, clip30Url) {
       // Extra tính bằng CHỈ SỐ mảng events (không phụ thuộc clock):
       // mọi event append sau baseline đều là restart bắn trong phase A.
       await sleep(1500);
-      const settled = await page.evaluate(STATE_FN);
+      const settled = await ev(page, STATE_FN);
       const baselineRestart = settled.restartEndedVideo ?? 0;
       const baselineEvents = settled.traceEvents || [];
       log(`[${engineName}] P1: ép ended → restart ${r0}→${afterUnforce.restartEndedVideo} (fired=${fired}), gỡ ghi đè: endedNow=${unforced.endedNow}; sau settle 1,5 s: restart=${baselineRestart}, events=${baselineEvents.length}`);
       const samplesA = await sampleFor(page, 20, "P1-phaseA");
-      const endA = await page.evaluate(STATE_FN);
+      const endA = await ev(page, STATE_FN);
       const endEvents = endA.traceEvents || [];
       const extraEvents = endEvents.slice(baselineEvents.length);
       const extraCount = (endA.restartEndedVideo ?? 0) - baselineRestart;
@@ -393,14 +454,14 @@ async function runEngine(engineName, devUrl, clip30Url) {
 
     // --- P2: reset playhead về 0 → quan sát 15 s ---
     {
-      const before = await page.evaluate(STATE_FN);
+      const before = await ev(page, STATE_FN);
       const r0 = before.restartEndedVideo ?? 0;
       const ev0 = (before.traceEvents || []).length;
       const tReset = Date.now();
       await resetPlayhead0(page);
       const tResetDone = Date.now();
       const samplesB = await sampleFor(page, 15, "P2-phaseB");
-      const endB = await page.evaluate(STATE_FN);
+      const endB = await ev(page, STATE_FN);
       const endEvents = endB.traceEvents || [];
       const extraEvents = endEvents.slice(ev0);
       const extraCount = (endB.restartEndedVideo ?? 0) - r0;
@@ -419,12 +480,12 @@ async function runEngine(engineName, devUrl, clip30Url) {
     {
       await resetPlayhead0(page);
       await waitForPlaySync(page, engineName, CLIP30_DUR, "P3").catch(() => null);
-      const before = await page.evaluate(STATE_FN);
+      const before = await ev(page, STATE_FN);
       const r0 = before.restartEndedVideo ?? 0;
       const ev0 = (before.traceEvents || []).length;
       const t0 = Date.now();
       const samplesC = await sampleFor(page, 20, "P3-control");
-      const endC = await page.evaluate(STATE_FN);
+      const endC = await ev(page, STATE_FN);
       const endEvents = endC.traceEvents || [];
       const extraEvents = endEvents.slice(ev0);
       const extraCount = (endC.restartEndedVideo ?? 0) - r0;
@@ -446,28 +507,28 @@ async function runEngine(engineName, devUrl, clip30Url) {
       for (let i = 1; i <= 3; i++) {
         await resetPlayhead0(page);
         await waitForPlaySync(page, engineName, CLIP30_DUR, `P4-lần${i}`).catch(() => null);
-        const base = await page.evaluate(STATE_FN);
+        const base = await ev(page, STATE_FN);
         const r0 = base.restartEndedVideo ?? 0;
         // Đợt 85 M4: chờ !seeking ngay trước khi ép (run 2: ép đúng lúc
         // seek kẹt → guard chặn, FAIL oan).
         const preForce = await waitForNotSeeking(page, `P4-lần${i}`);
         if (!preForce.ok) log(`[${engineName}] P4-lần${i} CẢNH BÁO — ép khi seeking chưa hết (seeking=${preForce.lastSeeking}, paused=${preForce.lastPaused})`);
-        const forced = await page.evaluate(FORCE_ENDED_FN);
+        const forced = await ev(page, FORCE_ENDED_FN);
         if (!forced.ok) throw new Error(`P4-lần${i} ép ended thất bại`);
         const tForce = Date.now();
         const samples = [];
         let fired = false;
         while (Date.now() - tForce < 8000) {
-          const s = await page.evaluate(STATE_FN);
+          const s = await ev(page, STATE_FN);
           const v = s.mediaEls.find((e) => e.tag === "VIDEO");
           samples.push({ t: +((Date.now() - tForce) / 1000).toFixed(2), playhead: s.playhead, ct: v ? v.currentTime : null, restartEndedVideo: s.restartEndedVideo, seeking: v ? v.seeking : null });
           if ((s.restartEndedVideo ?? 0) >= r0 + 1 && v && Math.abs(v.currentTime - s.playhead) < 1.5 && v.currentTime > 0.3 && v.currentTime < CLIP30_DUR - 0.1) { fired = true; break; }
           await sleep(100);
         }
-        const unforced = await page.evaluate(UNFORCE_ENDED_FN);
-        const afterForce = await page.evaluate(STATE_FN);
+        const unforced = await ev(page, UNFORCE_ENDED_FN);
+        const afterForce = await ev(page, STATE_FN);
         await sleep(1200);
-        const afterUnforce = await page.evaluate(STATE_FN);
+        const afterUnforce = await ev(page, STATE_FN);
         const v1 = afterUnforce.mediaEls.find((e) => e.tag === "VIDEO");
         const delta = (afterForce.restartEndedVideo ?? 0) - r0;
         let sawTargetSeek = false;
@@ -488,13 +549,13 @@ async function runEngine(engineName, devUrl, clip30Url) {
     // + trace event trong cửa sổ. PASS = 0 restart dư; nếu có restart thì
     // trace event là bằng chứng cơ chế (seekJustLanded/endedFlipped). ---
     {
-      const before = await page.evaluate(STATE_FN);
+      const before = await ev(page, STATE_FN);
       const r0 = before.restartEndedVideo ?? 0;
       const ev0 = (before.traceEvents || []).length;
       const tReset = Date.now();
       await resetPlayhead0(page);
       const samplesD = await sampleFor(page, 40, "P5-phaseB-long");
-      const endD = await page.evaluate(STATE_FN);
+      const endD = await ev(page, STATE_FN);
       const endEvents = endD.traceEvents || [];
       const extraEvents = endEvents.slice(ev0);
       const extraCount = (endD.restartEndedVideo ?? 0) - r0;
@@ -561,6 +622,8 @@ async function main() {
     vite.stdout.on("data", (d) => { viteLog += d.toString(); });
     vite.stderr.on("data", (d) => { viteLog += d.toString(); });
     const devUrl = `http://127.0.0.1:${DEV_PORT}/`;
+    DIAG137_DEV_URL = devUrl; // DIAG-137-T8: cho watchdog kiem vite HTTP
+    writeFileEpermRetry(path.join(SCRATCH, "dev-url.txt"), devUrl + "\n"); // WATCHDOG-142: cho driver doc devUrl that de goi diag live khi log im lang >120 s
     let lastFetchErr = "";
     try {
       await waitFor(async () => {

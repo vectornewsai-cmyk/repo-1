@@ -140,21 +140,44 @@ if [ "$RCC" = 0 ] && [ "$CELAPSED_MS" -ge 2500 ]; then
   ok "T6 cooldown: giữ lại ngay sau nhả bị chờ ${CELAPSED_MS}ms (>= 2500ms, delay=3s)"
 else bad "T6 cooldown: rc=$RCC elapsed=${CELAPSED_MS}ms (muốn >= 2500ms)"; fi
 
-# ---- T7: poll đã vá — đếm được WebProcess giả, không tự đếm chính mình ----
-echo "--- T7 poll-quiet-v2 (mẫu [W]ebProcess) ---"
+# T7-BLOCK-START
+# ---- T7: chỉ đếm marker giả (phương án A, đợt 151 — quyết parent §12.3(b) đợt 150) ----
+# (B) đã bị bác bỏ bằng số đo có đối chứng (T6-150 §6.3): cùng churn bơm
+# vào, (B) 2/30 PASS, bản cũ 13/30, trial (A) 30/30. Tiền đề quyết (g)
+# đợt 149 ("(B) bền trước mọi churn nền") bị thay thế. (A) đếm CHỈ
+# process giả WebProcess-q4test (bracket trick [W]ebProcess-q4test +
+# grep -v grep, không tự đếm), assert B1=1 B2=0 — miễn nhiễm churn nền
+# theo thiết kế (không đếm nền nên nền đổi không ảnh hưởng).
+# PHẠM VI HẸP: (A) CHỈ áp cho khối test T7 này; KHÔNG đổi count_blockers
+# dùng chung trong vcut-poll-quiet-v2.sh (gate cửa yên của T4 giữ nguyên,
+# tránh ảnh hưởng phép đo #22) trừ khi T4 xác nhận lại gate sau đổi.
+# Code (B) giữ trong lịch sử: bản suite md5 63a25be3 (khối T7 đợt 150,
+# xem LIMITS T6-150 §6 + harness đối chứng t7-control.sh) và đoạn
+# chú thích dưới — đã thay bằng (A) trong suite, không chạy nữa.
+# --- (B) ĐÃ THAY BẰNG (A) — giữ lại để đối chiếu, KHÔNG chạy: ---
+# bash "$POLL" 1 --once >/dev/null 2>&1 || true
+# N0=$(grep -m1 "^poll 1" "$TDIR/poll-quiet-v2.log" | grep -oE "blockers=[0-9]+" | cut -d= -f2)
+# bash -c 'exec -a WebProcess-q4test sleep 25' & FAKEPID=$!; sleep 1
+# bash "$POLL" 1 --once >/dev/null 2>&1 || true
+# B1=$(grep "^poll 1" "$TDIR/poll-quiet-v2.log" | sed -n '2p' | grep -oE "blockers=[0-9]+" | cut -d= -f2)
+# kill $FAKEPID 2>/dev/null || true; wait $FAKEPID 2>/dev/null || true; sleep 1
+# bash "$POLL" 1 --once >/dev/null 2>&1 || true
+# B2=$(grep "^poll 1" "$TDIR/poll-quiet-v2.log" | tail -1 | grep -oE "blockers=[0-9]+" | cut -d= -f2)
+# assert cũ: B1-N0=1 VÀ B2-N0=0 (thay cho bản cũ hơn B1-B2=1).
+echo "--- T7 poll-quiet-v2 (mẫu [W]ebProcess-q4test, phương án A: chỉ đếm giả) ---"
+count_fake() { ps -eo args | grep -E "[W]ebProcess-q4test" | grep -v grep | wc -l; }
 bash -c 'exec -a WebProcess-q4test sleep 25' &
 FAKEPID=$!
 sleep 1
-bash "$POLL" 1 --once >/dev/null 2>&1 || true
-B1=$(grep -m1 "^poll 1" "$TDIR/poll-quiet-v2.log" | grep -oE "blockers=[0-9]+" | cut -d= -f2)
+B1=$(count_fake)
 kill $FAKEPID 2>/dev/null || true; wait $FAKEPID 2>/dev/null || true
 sleep 1
-bash "$POLL" 1 --once >/dev/null 2>&1 || true
-B2=$(grep "^poll 1" "$TDIR/poll-quiet-v2.log" | tail -1 | grep -oE "blockers=[0-9]+" | cut -d= -f2)
-echo "  blockers với WebProcess giả: $B1, sau khi kill giả: $B2"
-if [ -n "$B1" ] && [ -n "$B2" ] && [ "$B1" -ge 1 ] && [ "$((B1 - B2))" = 1 ]; then
-  ok "T7 poll: bắt được +1 WebProcess giả ($B1 -> $B2), không tự đếm"
-else bad "T7 poll: B1=$B1 B2=$B2 (muốn B1-B2=1)"; fi
+B2=$(count_fake)
+echo "  giả WebProcess-q4test: với giả B1=$B1, sau khi kill giả B2=$B2"
+if [ "$B1" = 1 ] && [ "$B2" = 0 ]; then
+  ok "T7 poll (A): giả +1 (B1=$B1), kill giả về 0 (B2=$B2)"
+else bad "T7 poll (A): B1=$B1 B2=$B2 (muốn B1=1 và B2=0)"; fi
+# T7-BLOCK-END
 
 # ---- T8: run-attempt trả đúng exit code lệnh + luôn nhả lock ----
 echo "--- T8 run-attempt exit code ---"

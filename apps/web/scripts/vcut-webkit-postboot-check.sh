@@ -443,6 +443,153 @@
 # gate-visible moi vao round136-t5/. preview.tsx 530e10a7 (fix T3 CON
 # NGUYEN, khoi phuc theo quyet parent dot 135 §12.3(a)). RAM luc mo
 # ~1.374 MB (theo log mo dot). Xem docs/PHASE9_ROUND136_T5_INFRA_LIMITS.md.
+# Dot 137 (luot cron 15:35 +07 18/11, mo 08:35Z 18/11): REBOOT MOI giua
+# dot 136 dong (07:26Z) va luot mo — boot 2104246b (btime 08:07:11Z theo
+# uptime -s / 08:07:26Z theo stat /proc/1, chenh 15 s, boot_id
+# 2104246b-04b2-4252-a642-b1a7cadeefe1); boot 1ca1feaa chet ~08:07Z.
+# So thu tu TAM #93? (cho T6 dem lai — dai du bao dot 136 cho #93? la
+# [05:56:47Z, 07:55:21Z], btime 08:07:11Z NAM NGOAI dai, muon ~12 phut;
+# viec T2/T6). Replay khoi dong MUON: configure 08:31:35Z (boot +24m24s,
+# 2 dong dpkg.log) — muon thu 3 sau #54? +47m14s va #72? +25m22s; apt-get
+# update pid 856 + wrapper os-intent pid 831 DANG CHAY luc +24m; installs
+# bat dau ~08:41Z (aspell). DIEM KHAC LON: /var/cache/apt/archives TRONG
+# (0 .deb, 0 byte — khac dot 136: 178 .deb / 156M ben vung) nen replay
+# lan nay PHAI DOWNLOAD (term.log 0 dong Get: — apt giu Last-Modified
+# lam mtime file .deb nen KHONG dung mtime de do tuoi download, dung
+# ctime; xem LIMITS); lists 3, partial 0, GST 0 file luc mo. RAM luc mo
+# chi ~753 MB (MemAvailable) + Balloon 6.140.668 kB — balloon PHINH TRO
+# LAI sau khi dot 136 xa -4,70 GB; gate A >=1024 MB cua T4 co the bi chan
+# (viec T4). Headroom mo 2178 (giam tu 2281 mo dot 136; con 378 tren
+# nguong bao ~1.800). Watcher T5 dot 137 (b90, v6) theo doi toi khi
+# replay xong + postboot PASS on dinh 2 poll roi ghi co gate-visible moi
+# vao round137-t5/. preview.tsx 530e10a7 (fix T3 CON NGUYEN). Xem
+# docs/PHASE9_ROUND137_T5_INFRA_LIMITS.md (khi viet xong).
+# Dot 137 — BOOT MOI THU 2 GIUA LUOT (09:36:01Z 18/11, boot_id
+# 17db9652-ad06-409f-989c-cdbdba15d0af): boot 2104246b CHET GIUA LUOT
+# trong khung (09:35:47Z, 09:36:01Z] (hep ~14 s: T4 poll #69 09:35:47Z
+# con song, btime boot moi 09:36:01Z; tuoi tho ~1h28m45s) — reboot giua
+# luot giet watcher b90 (poll 51 cuoi 09:36:02Z dong ho cu, dpkg 753 dong
+# / 110 installs, GST 107 file) + poller T4 (poll #69 cuoi) + session
+# exec cua T5; co POSTBOOT_PASS cho 2104246b KHONG BAO GIO duoc viet
+# (replay dang chay, chua PASS). Replay boot 2104246b: configure
+# 08:31:35Z (boot +24m24s) -> installs 08:41-09:33:55Z (110 installs,
+# goi libav xong 09:10:32Z, plugins-bad 1 transaction dai 09:10:34-
+# 09:33:55Z ~23m21s chi de download, cache 0 -> 131 .deb); bracket
+# (configure +24m24s, chet luc 110 installs] — replay KHONG xong.
+# Boot moi: replay khoi dong NHANH — configure 09:36:50Z (boot +49s),
+# apt-get update pid 806 + wrapper pid 783 dang chay luc +1m30s; cache
+# APT SONG QUA REBOOT: 133 .deb / 79M (khac boot 1: 0 .deb luc mo) nen
+# replay lan nay chu yeu cai tu cache, du kien nhanh hon nhieu. RAM luc
+# mo boot 2 ~1.904 MB, Balloon 4.885.304 kB. Watcher T5 dot 137 (b91,
+# v6) theo doi boot moi toi khi PASS on dinh 2 poll roi ghi co
+# gate-visible vao round137-t5/ (cung thu muc — co cho boot 1 chua tung
+# ton tai nen NO_FLAG_AT_START).
+# Dot 138 — BOOT MOI GIUA LUOT (11:52:20Z 18/11, boot_id
+# 914964c3-c36a-4893-bf24-d8321e75d299): boot 17db9652 (#94?) CHET GIUA
+# LUOT trong khung (11:52:12Z, 11:52:20Z] (hep ~8 s: T4 poll #13
+# 11:52:12Z con song, btime boot moi 11:52:20Z; tuoi tho ~2h16m) —
+# reboot giua luot giet sampler RAM T5 (mau cuoi 11:51:59Z) + poller T4
+# (poll #13 cuoi) + session exec/sleep cua T5 (runtime restart). RAM
+# truoc reboot len toi 6.112.624 kB (97,2% guard birefnet 6.144 MiB,
+# T5 sampler 11:51:59Z; T4 poll #12 11:51:27Z thay 6.062 MB) — reboot
+# cat dung luc RAM sap vuot guard; KHONG ai kip thu birefnet. Replay
+# boot #94? da XONG HAN truoc khi chet (1545 dong / 221 installs /
+# 462 configure, dong bang tu 09:42:06Z; postboot PASS). Boot moi:
+# replay khoi dong — configure 11:53:11Z (boot +51s), apt-get update
+# pid 802 dang chay; cache APT SONG QUA REBOOT: 178 .deb / 156M nen
+# replay lan nay chu yeu cai tu cache. RAM mo boot moi ~1.748 MB,
+# Balloon 5.074.548 kB. Watcher T5 dot 138 (b92, v6) theo doi boot
+# moi toi khi PASS on dinh 2 poll roi ghi co gate-visible moi vao
+# round138-t5/ (T4-138 doc uu tien round138-t5/, du phong round137-t5/).
+# Dot 139 — BOOT MOI SAU DOT 138 (boot_id
+# 541524e2-c789-420b-a27b-9287d68c63a3; btime kernel 13:53:41Z uptime -s /
+# 13:53:52Z stat /proc/1 — LUU Y: brief dot 139 + round-in-progress.md ghi
+# btime 14:03:07Z, MAU THUAN voi 5 nguon kernel (btime /proc/stat, uptime -s,
+# stat /proc/1, who -b, journal first entry 13:53:53Z) + dpkg.log hoat dong
+# 13:54:12–13:57:33Z tren log moi (khong the truoc boot) — T5-139 lay
+# 13:53:41Z lam chuan, ghi sai lech thanh F-139-T5-1, cho T6/T10 phan xu;
+# boot 914964c3 (#95? TAM) chet truoc khi T5-139 mo (khung chet cho T6/T2);
+# replay boot moi: configure 13:54:12Z (boot +31s), xong 13:57:33Z
+# (boot +3m52s) — 1545 dong / 221 installs / 462 configure, NHANH NHAT
+# tu truoc toi nay (so voi #94? +6m05s); postboot PASS ngay lan kiem dau
+# (T5-139 poll0, boot ~52' tuoi); GST he thong la thu muc THAT (apt)
+# 269/269, khong can symlink K1; cache APT SONG: 178 .deb / 156M; lists 37;
+# Balloon xa dan: 6.443.824 kB (ket dot 138) -> 5.022.776 kB (14:45:22Z),
+# RAM avail 547 MB (mo dot) -> ~1,7 GB — gate A (>=1024 MB) co the mo
+# lai o dot nay; KHONG can watcher (replay da xong truoc khi T5 mo),
+# KHONG kich hoat luat (C) — (C) chi danh cho replay KET khi postboot FAIL.
+# Dot 140 — BOOT MOI SAU DOT 139 (boot_id
+# af558fb5-e964-4116-a69b-ec784f3defab; btime kernel 15:54:37Z uptime -s /
+# 15:54:52Z stat /proc/1 — KHOP brief dot 140, khong lap lai F-139-T5-1;
+# boot 541524e2 (#96? TAM) chet truoc khi T5-140 mo (khung chet cho T6/T2);
+# replay boot moi: startup configure 15:55:19Z (boot +42s), GAP 805s
+# (15:55:19–16:08:44Z) khong co apt/dpkg nao trong guest log (journal chi
+# co housekeeping systemd; apt history Start-Date dau tien 16:08:44Z,
+# 0 lan apt-get update) — nguyen nhan gap chua ro, co the host-side;
+# cai that 16:08:44–16:11:16Z (2m32s), goi cuoi gstreamer1.0-tools,
+# 1545 dong / 221 installs / 462 configure — TRUNG bracket day du,
+# nhung boot +16m39s la CHAM NHAT wall-clock trong 3 replay day du
+# (#94? +6m05s, #96? +3m52s); postboot PASS ngay poll0 (T5-140, boot
+# ~1h45' tuoi); GST he thong that 269/269; cache APT SONG: 178 .deb /
+# 156M; lists 39 (+2 cli.github.com vs 37 dot 139); Balloon 6.397.220 kB
+# (ket dot 139) -> 5.930.172 kB (mo dot 140), RAM avail ~0,9 GB; headroom
+# inotify mo dot 1840 — chi con ~40 tren nguong bao user (< ~1.800);
+# KHONG can watcher (replay da xong truoc khi T5 mo), KHONG kich hoat
+# luat (C).
+# Dot 140 boot 2 — REBOOT GIUA LUOT (boot_id
+# 90392aa5-f13b-4048-9c57-e4defc8e74d9; btime kernel 17:52:56Z uptime -s /
+# 17:53:11Z stat /proc/1; boot af558fb5 chet giua luot, T4 attempt1 + sampler
+# T5 + session T5 chet theo; dong ho cu co le nhanh ~+35s — moc hoat dong
+# cuoi boot cu (sampler 17:53:19Z, chain T4 17:53:26Z) nam SAU btime boot
+# moi 17:52:56Z, xem F-140-T5-2); replay boot moi CHET YEU: dpkg chi 2 dong
+# tu 17:53:48Z, 0 proc apt/dpkg tu poll1, cache apt TRONG (0 .deb — khong
+# song qua reboot lan nay), lists 5; watcher v6 poll 9 (18:04:01Z, silent
+# 614s) TRIGGER=YES §8.2(B) form B; T5 verify doc lap 5/5 (18:05:06Z) roi
+# --repair 1 lan (18:05:45Z): apt-get update OK sau ~9p (mirror cham),
+# cai du 11 goi; RE-CHECK PASS; dpkg dong bang 795 dong / 113 installs /
+# 230 configure (giong het boot #95? 914964c3 — repair 1 phan, KHONG phai
+# replay day du 1545/221/462); GST la SYMLINK -> debroot (269 file, repair
+# tao 18:05Z), khong phai thu muc that; watcher ghi co POSTBOOT_PASS
+# 18:17:07Z poll 22 (PASS on dinh 2 poll); T4 doc co moi tu poll #29.
+# Dot 141 — BOOT MOI SAU DOT 140 (boot_id
+# 2c0efe57-5559-4e92-9f8b-aecf1f9866a3; btime kernel 19:54:12Z uptime -s /
+# 19:54:22Z stat /proc/1 / 19:54:23Z journal first entry — KHOP brief dot
+# 141; boot 90392aa5 (#98? TAM) chet truoc khi T5-141 mo (reboot #23 trong
+# luc dong so dot 140); replay boot moi CHAY TOT: startup configure
+# 19:54:43Z (boot +31s), cai that 19:55:18–19:58:09Z (2m51s), goi cuoi
+# gstreamer1.0-tools, 1545 dong / 221 installs / 462 configure — TRUNG
+# bracket day du, xong boot +3m57s (nhanh thu 2 trong cac replay day du,
+# sau #96? +3m52s; KHONG co GAP nhu dot 140 boot 1, 805s); cache APT SONG
+# QUA REBOOT: 178 .deb / 156M (khac dot 140 boot 2: 0 .deb — gia dinh
+# cache song lai dung lan nay, xem F-140-T5-3); lists 39; GST he thong
+# that 269/269; term.log 0 dong Get: (cai tu cache); postboot PASS ngay
+# poll0 (T5-141 20:40:47Z, boot ~46' tuoi); co POSTBOOT_PASS ghi 20:41:02Z
+# poll=0; T4 doc co poll #1 20:42:02Z va MO CUA YEN #17 poll #2 20:42:47Z
+# (RAM 1485MB), attempt1 chay ngay; headroom inotify mo dot 1737 — DA
+# CHAM DUOI nguong bao user (< ~1.800) lan dau (dot 140 dong 1838; T10
+# BAO PARENT RO); KHONG can watcher (replay da xong truoc khi T5 mo),
+# KHONG kich hoat luat (C).
+# Dot 142 — BOOT MOI SAU DOT 141 (boot_id
+# bde599df-eb81-4205-86a0-b71a0ab9790c; btime kernel 22:48:05Z uptime -s /
+# 22:48:16Z stat /proc/1 / 22:48:17Z journal first entry; boot 2c0efe57 (#99?
+# TAM) chet truoc khi T5-142 mo (reboot #25 luc dong so dot 141);
+# replay CHET DANG (B) "cham ma khong cai" — dpkg.log CHI 2 dong
+# "startup packages configure" 22:48:39Z (boot +34s) roi im han, 0 proc
+# apt/dpkg/wrapper, cache apt TRONG (0 .deb), lists 5 (chi cli.github.com),
+# GST dir KHONG TON TAI, /var/log/apt KHONG TON TAI; postboot FAIL exit 1
+# poll0 23:42Z (thieu 5 lib + GST + 11 goi apt); §8.2(B) form B TRIGGER=YES
+# (verify doc lap 5/5 23:43:32Z: postboot FAIL tuoi, 0 proc, dpkg im
+# 3293s >= 600, form B 2 dong/0 installs/GST absent/lists 5, MiniBrowser 0;
+# luat (C) KHONG du — lists 5 > 3, khong co apt song) -> --repair 1 lan
+# duy nhat 23:44:06Z: GST symlink lai -> debroot (269 file), apt-get update
+# OK nhanh (~1 phut, mirror khoe), cai du 11 goi, RE-CHECK toan PASS;
+# dpkg dong bang 795 dong / 113 installs / 230 configure (mtime 23:46:02Z,
+# goi cuoi libc-bin — Y HET boot 90392aa5 dot 140: repair-1-phan, KHONG
+# phai replay day du 1545/221/462); GST la SYMLINK -> debroot; cache
+# 110 .deb / 57M; lists 75; postboot PASS kiem doc lap poll1 exit 0;
+# headroom inotify mo dot 1614 (giam tu 1720 cuoi dot 141, van DUOI nguong
+# bao < ~1.800 — theo doi, khong bao rieng). Xem
+# docs/PHASE9_ROUND142_T5_INFRA_LIMITS.md.
 # R9 đợt 115: (i) timeout RIÊNG cho apt-get update (1500 s) + install
 # (1800 s) trong --repair — báo rõ khi timeout (exit 124) thay vì treo
 # cả script khi mirror chậm; (ii) nhánh symlink GST trong --repair BỎ
@@ -481,7 +628,62 @@ DEBROOT_GST=$DEBROOT/gstreamer-1.0
 FAIL=0
 say() { echo "[postboot $BOOT] $*"; }
 
-say "boot=$BOOT (reboot MOI = 2026-11-18 05:29:34Z, boot_id 1ca1feaa-af3b-41dc-aaae-34376329b0a3, sau bcc71e61 chet ~05:29Z giua dot 135 va 136; replay DANG CHAY luc 05:41Z — dpkg 2 dong / 0 installs, apt-get update pid 814 + wrapper pid 793 dang chay, GST 0 file, lists 3; NHUNG xong nhanh: dpkg 1545 dong / 221 installs (TRUNG baseline), dong cuoi 05:45:44Z (gstreamer1.0-tools, boot +16m10s), GST 269, lists 39, partial 0, plugins-bad DA CAI 1.24.2-1ubuntu4; postboot poll0 PASS exit 0 luc 05:45:10Z (11 goi dich du truoc khi goi cuoi tools xong 05:45:44Z); watcher b89 v6 theo doi toi khi PASS on dinh 2 poll roi ghi co gate-visible moi vao round136-t5/)"
+# Dot 151 — BOOT MOI SAU DOT 150 (boot_id
+# 2e430750-6ba0-47b6-bf22-902953eff096; btime /proc/stat 01:25:51Z
+# 20/11 (epoch 1795137951; uptime -s KHOP); /proc/1 01:26:02Z (offset
+# 11 s); boot e9295700 chet o reboot #41 (01:25:51Z, GIUA harness
+# T8-150), tuoi tho 6.822 s = 1h53m42s (stat->stat: 23:32:09Z ->
+# 01:25:51Z); run 150 mo 02:35:51Z — thuoc T7-151 (quyet parent
+# 150 (q)); replay boot moi TOI TU NHIEN VA NHANH: hoat dong dpkg
+# dau 01:26:35Z (boot +44s), cai xong 01:30:13Z (boot +4m22s),
+# 1545 dong / 106 startup / 169 install / 9 upgrade / 178 configure
+# / 1040 status / 43 trigproc, goi cuoi gstreamer1.0-tools, md5
+# 51d12c3d (KHAC md5 d2b2e788 dot 146/147 — noi dung replay doi, co
+# 9 dong upgrade mesa 25.2.8-0ubuntu0.24.04.5); 0 entry sau
+# 01:30:13Z; cache APT SONG 178 .deb/156M (mtime truoc boot —
+# chuoi 0 .deb 2 lan DUT, khong keo dai sang lan 3; chi ghi nhan
+# theo quyet (l) 149 / (r) 150); lists 37 (1 mirror azure); GST
+# thu muc that (apt) 269 file = debroot 269 — KHONG can symlink
+# repair; postboot PASS poll1 T4 manual 02:38Z + poll2 T5 doc lap
+# 02:40:23Z exit 0; co POSTBOOT_PASS moi cho boot 2e430750 ghi
+# 02:43:12Z poll=2 (replay-day-du, KHONG can repair); CHIEN LUOC
+# MOI (quyet parent 150 (h)): watcher dot 151
+# (replay-watch-151.sh) kich --repair som o boot+15' neu dpkg.log
+# dong bang / 0 hoat dong apt, khong cho watcher timeout 60' — ap
+# cho moi reboot trong phien; headroom: T9-151 do (T5 khong probe
+# lai de tranh nhieu T4).
+# Dot 150 — BOOT MOI SAU DOT 149 (boot_id
+# e9295700-bda0-4a9b-8aab-4dd57661212e; btime /proc/stat 23:32:09Z
+# 19/11 (epoch 1795131129; uptime -s KHOP); /proc/1 23:32:24Z (offset
+# 15 s); boot 802f358f chet o reboot #40 (23:32:09Z), tuoi tho
+# 7.698 s = 2h08m18s (stat->stat: 21:23:51Z -> 23:32:09Z); run 149
+# SUCCEEDED 23:04:36Z TRUOC reboot (khong bi viet lai them);
+# replay boot moi KHONG TOI: chi 2 dong "startup packages
+# configure" 23:35:42Z (boot +3m33s — 9 s truoc khi luot cron 150
+# mo 23:35:51Z, cung mau dot 149: replay 13 s truoc run mo),
+# sau do im hoan toan — watcher 60' TIMEOUT 00:44:15Z (120 poll,
+# dpkg van 2 dong, md5 ba3a7c19 khong doi, 0 apt/dpkg, lists 3,
+# /var/log/apt KHONG ton tai); cache APT 0 .deb — LAN THU 2
+# LIEN TIEP cache khong song qua reboot (truoc #39 la 5 lan
+# song 178 .deb/156M; sau repair dot 149 chi con 110 .deb);
+# TRIGGER form B = YES (verify 5/5 00:50:38Z: postboot FAIL tuoi
+# exit 1, 0 proc apt/dpkg, dpkg im 4.496 s, 2 dong/0 installs/
+# GST absent/lists 3/cache 0, MiniBrowser 0 + WebKitWebProcess 0)
+# -> --repair 1 lan 00:50:59–01:04:59Z (14m00s — lau hon dot 149
+# vi cache 0 nen phai download lai; GST symlink -> debroot 269
+# file + apt-get update + cai du 11 goi, RE-CHECK toan PASS),
+# dpkg dong bang 795 dong / 113 installs / 230 configure, goi
+# cuoi libc-bin (Y HET mau repair-1-phan dot 140 boot 2 / 142 /
+# 149 boot 2); cache sau repair 110 .deb, lists 75; postboot
+# PASS poll1 doc lap 01:05:33Z exit 0, co POSTBOOT_PASS moi
+# poll=1 (repair-1-phan, KHONG phai replay-day-du); headroom
+# inotify mo dot 150 = 318 (tran 63747 khong doi) — DUOI nguong
+# bao < ~1.800 lan 10 lien tiep; testsrc2 QUY DUOC CHU (xem
+# LIMITS T5-150 §7: 40 ffmpeg testsrc2, 9 PPID — test scripts
+# T0: demo_lut/demo_effects/demo_sticker/test_pixelate_render/
+# bench_pixelate_geq.sh, --out-dir /tmp/itest/...); run 150
+# jitter 0 s (started 23:35:51Z = scheduled).
+say "boot=$BOOT (DOT 151, boot e9295700 -> 2e430750 reboot #41, btime 01:25:51Z (/proc/stat; /proc/1 01:26:02Z, offset 11 s); tuoi tho boot cu e9295700 = 6.822 s = 1h53m42s (stat->stat); replay TOI TU NHIEN VA NHANH: hoat dong dau 01:26:35Z (boot +44s), cai xong 01:30:13Z (boot +4m22s), dpkg 1545 dong / 169 install / 9 upgrade / 178 configure, goi cuoi gstreamer1.0-tools, md5 51d12c3d; cache APT SONG 178 .deb/156M (mtime truoc boot — chuoi 0 .deb 2 lan DUT); lists 37 (1 mirror azure); GST thu muc that 269 = debroot 269; postboot PASS poll2 doc lap 02:40:23Z exit 0 (poll1: T4 manual 02:38Z), co POSTBOOT_PASS moi poll=2 (replay-day-du, KHONG can repair); chien luoc moi quyet (h) dot 150: watcher 151 repair som o boot+15' neu replay vang; headroom: T9-151 do; run 150 thuoc T7-151)"
 
 # 1. Wrapper MiniBrowser: phải giữ lại LD_LIBRARY_PATH truyền vào.
 if [ -f "$WRAP" ]; then
