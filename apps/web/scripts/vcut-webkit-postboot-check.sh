@@ -683,7 +683,11 @@ say() { echo "[postboot $BOOT] $*"; }
 # T0: demo_lut/demo_effects/demo_sticker/test_pixelate_render/
 # bench_pixelate_geq.sh, --out-dir /tmp/itest/...); run 150
 # jitter 0 s (started 23:35:51Z = scheduled).
-say "boot=$BOOT (DOT 151, boot e9295700 -> 2e430750 reboot #41, btime 01:25:51Z (/proc/stat; /proc/1 01:26:02Z, offset 11 s); tuoi tho boot cu e9295700 = 6.822 s = 1h53m42s (stat->stat); replay TOI TU NHIEN VA NHANH: hoat dong dau 01:26:35Z (boot +44s), cai xong 01:30:13Z (boot +4m22s), dpkg 1545 dong / 169 install / 9 upgrade / 178 configure, goi cuoi gstreamer1.0-tools, md5 51d12c3d; cache APT SONG 178 .deb/156M (mtime truoc boot — chuoi 0 .deb 2 lan DUT); lists 37 (1 mirror azure); GST thu muc that 269 = debroot 269; postboot PASS poll2 doc lap 02:40:23Z exit 0 (poll1: T4 manual 02:38Z), co POSTBOOT_PASS moi poll=2 (replay-day-du, KHONG can repair); chien luoc moi quyet (h) dot 150: watcher 151 repair som o boot+15' neu replay vang; headroom: T9-151 do; run 150 thuoc T7-151)"
+# F-175-T5-3 (sua dot 176): dong say DOT-151 cu in cung ket qua lich su
+# ("poll2 doc lap 02:40:23Z") tren moi lan chay — de doc nham thanh
+# ket qua live. Lich su DOT-151 van luu o comment ngay tren day;
+# dong live chi in boot hien tai, ket qua that o cac dong PASS phia sau.
+say "boot=$BOOT (postboot check-only — ket qua live o cac dong PASS/KET LUAN phia sau)"
 
 # 1. Wrapper MiniBrowser: phải giữ lại LD_LIBRARY_PATH truyền vào.
 if [ -f "$WRAP" ]; then
