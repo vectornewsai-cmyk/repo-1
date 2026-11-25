@@ -37,6 +37,10 @@
  *   `ended` tự nhiên hiếm — ghi rõ, không ép PASS/FAIL theo nó).
  * WebKitGTK cần gắn element vào DOM (can thiệp test-only vì W5 — I7 §3).
  * WebKitGTK ≠ Safari thật (ghi rõ trong LIMITS).
+ * Đợt 173 T8 (Q3 — quyết (i) đợt 172, parent CHẤP NHẬN): thêm heartbeat
+ * HB128 nhẹ vào vòng W2/E4 theo mẫu của 85m4 (đợt 128 T3) + ghi thêm
+ * trường `seeking` vào sample W2/E4 — chẩn đoán-only, không đổi verdict.
+ * (md5 mới ghi trong docs/PHASE9_ROUND173_T8_VITEHARNESS_LIMITS.md.)
  */
 import { spawn, execFile } from "node:child_process";
 import fs from "node:fs";
@@ -64,6 +68,20 @@ const VITE_BIN = [path.join(ROOT, "node_modules", ".bin", "vite"), path.join(WEB
 fs.mkdirSync(SCRATCH, { recursive: true });
 const logLines = [];
 function log(...a) { const l = `[${new Date().toISOString()}] ${a.join(" ")}`; logLines.push(l); console.log(l); }
+// HB128-Q3 (đợt 173, quyết (i) đợt 172 §12.3 — parent CHẤP NHẬN Q3):
+// heartbeat nhẹ vào vòng W2/E4, theo mẫu HB128 của 85m4 (đợt 128 T3).
+// Log mỗi 5 s trong lúc quan sát; state lấy từ sample cuối cùng đã biết.
+// Chạy trên event loop Node nên vẫn ghi log ngay cả khi page.evaluate treo
+// (3 điểm kẹt 157/170/171 đều chết ở evaluate đầu vòng W2/E4 mà không để
+// lại trạng thái media lúc chết). CHẨN ĐOÁN-ONLY: không đổi verdict,
+// không đổi timeout, không can thiệp chạy.
+function hbStart(tag, getSummary) {
+  const t0 = Date.now();
+  const iv = setInterval(() => {
+    log(`[HB128] ${tag} elapsed=${((Date.now() - t0) / 1000).toFixed(0)}s ${getSummary()}`);
+  }, 5000);
+  return () => clearInterval(iv);
+}
 // DIAG-137-T8 — watchdog chẩn đoán kẹt evaluate (quyết parent đợt 136 §12.3(i) bước 1).
 // CHẨN ĐOÁN-ONLY: khi một page.evaluate BẤT KỲ (đợt 142 mở rộng qua ev()) im lặng
 // >60 s, ghi log WATCHDOG-137 + gọi script dump chẩn đoán (ps/RSS + /proc/meminfo
@@ -232,22 +250,40 @@ async function waitFor(fn, desc, timeoutMs = 120000) {
   throw new Error(`timeout chờ ${desc} (${timeoutMs}ms) — last=${JSON.stringify(last)}`);
 }
 
+// PLAN B B2 (quyet (j) dot 185, trien khai dot 186): boc setupProject +
+// startPlaying bang hbStart/hbStop (thiet ke §C4 LIMITS T8-180 — B1 chi
+// boc resetPlayhead0; setup van mu voi (c') truoc B2). Setup thuong <5 s
+// nen 0 dong them/lan chay; neu ev() setup treo, HB chay voi summary "?"
+// dong bang -> trailing run -> (c')/V2 TRIGGER @125 s (via=f).
 async function setupProject(page, clipUrl, clipName, dur) {
+  const hbStop = hbStart(`setupProject setup`, () => `playhead=? ct=?`);
+  try {
   const setup = await ev(page, SETUP_FN.replaceAll("__CLIP_URL__", JSON.stringify(clipUrl)).replaceAll("__CLIP_NAME__", JSON.stringify(clipName)).replaceAll("__DUR__", String(dur)));
   if (!setup.mediaName || setup.clips.length !== 1) throw new Error("setup project sai: " + JSON.stringify(setup));
   return setup;
+  } finally { hbStop(); }
 }
 
+// PLAN B B2 — xem ghi chu o setupProject (tren). Boc startPlaying: summary
+// lay tu STATE_FN moi nhat da biet (lastState); truoc lan doc dau -> "?".
 async function startPlaying(page, engineName, clipDur) {
   let lastState = null;
+  const hbStop = hbStart(`startPlaying start`, () => {
+    if (!lastState) return `playhead=? ct=?`;
+    const v = lastState.mediaEls.find((e) => e.tag === "VIDEO");
+    return `playhead=${lastState.playhead} ct=${v ? v.currentTime : "?"} paused=${v ? v.paused : "?"} seeking=${v ? v.seeking : "?"} playing=${lastState.playing}`;
+  });
+  try {
   await ev(page, `(async () => { const st = await (${STORE_FN}); st.setPlayhead(0); })()`);
   await page.keyboard.press("Space");
   await sleep(300);
   let stPlay = await ev(page, STATE_FN);
+  lastState = stPlay;
   if (!stPlay.playing) {
     await ev(page, `(async () => { const s = await (${STORE_FN}); s.togglePlay(); })()`);
     await sleep(300);
     stPlay = await ev(page, STATE_FN);
+    lastState = stPlay;
   }
   if (!stPlay.playing) throw new Error("không phát được (playing vẫn false sau Space + togglePlay)");
   try {
@@ -264,6 +300,7 @@ async function startPlaying(page, engineName, clipDur) {
     const attached = await ev(page, ATTACH_FN);
     if (!attached.ok || !attached.isConnected) throw new Error("gắn element vào DOM thất bại: " + JSON.stringify(attached));
   }
+  } finally { hbStop(); }
 }
 
 // Chờ element video PHÁT THẬT trước khi ép ended: ct >= 1.0, không seeking,
@@ -429,14 +466,22 @@ async function runEngine(engineName, devUrl, clip10Url, clip4Url) {
     const r2 = s2.restartEndedVideo;
     const t2 = Date.now();
     let reachedEnd = false;
+    // HB128-Q3 (đợt 173): heartbeat 5 s trong vòng W2 — sample cuối cùng
+    // đã biết (kèm seeking — xem push bên dưới) làm bằng chứng nếu evaluate kẹt.
+    const hbStopW2 = hbStart(`sampleFor W2`, () => {
+      const lsm = w2.samples[w2.samples.length - 1];
+      return `n=${w2.samples.length} lastPlayhead=${lsm ? lsm.playhead : "?"} lastCt=${lsm ? lsm.ct : "?"} paused=${lsm ? lsm.paused : "?"} seeking=${lsm ? lsm.seeking : "?"} playing=${lsm ? lsm.playing : "?"}`;
+    });
+    try {
     while (Date.now() - t2 < 70000) {
       const s = await ev(page, STATE_FN);
       const v = s.mediaEls.find((e) => e.tag === "VIDEO");
-      w2.samples.push({ t: +((Date.now() - t2) / 1000).toFixed(2), playhead: s.playhead, playing: s.playing, ct: v ? v.currentTime : null, paused: v ? v.paused : null, restartEndedVideo: s.restartEndedVideo });
+      w2.samples.push({ t: +((Date.now() - t2) / 1000).toFixed(2), playhead: s.playhead, playing: s.playing, ct: v ? v.currentTime : null, paused: v ? v.paused : null, seeking: v ? v.seeking : null, restartEndedVideo: s.restartEndedVideo });
       if (s.playhead >= CLIP10_DUR - 0.1) { reachedEnd = true; break; }
       if (!s.playing && s.playhead > 0.5) break;
       await sleep(200);
     }
+    } finally { hbStopW2(); }
     const end2 = await ev(page, STATE_FN);
     w2.restartDeltaNatural = (end2.restartEndedVideo ?? 0) - (r2 ?? 0);
     w2.reachedEnd = reachedEnd; w2.finalPlayhead = end2.playhead; w2.errors = end2.errors;
@@ -453,13 +498,20 @@ async function runEngine(engineName, devUrl, clip10Url, clip4Url) {
     const e4 = { samples: [] };
     const t4 = Date.now();
     let e4ReachedEnd = false;
+    // HB128-Q3 (đợt 173): heartbeat 5 s trong vòng E4 — như W2 ở trên.
+    const hbStopE4 = hbStart(`sampleFor E4`, () => {
+      const lsm = e4.samples[e4.samples.length - 1];
+      return `n=${e4.samples.length} lastPlayhead=${lsm ? lsm.playhead : "?"} lastCt=${lsm ? lsm.ct : "?"} paused=${lsm ? lsm.paused : "?"} seeking=${lsm ? lsm.seeking : "?"} playing=${lsm ? lsm.playing : "?"}`;
+    });
+    try {
     while (Date.now() - t4 < 25000) {
       const s = await ev(page, STATE_FN);
       const v = s.mediaEls.find((e) => e.tag === "VIDEO");
-      e4.samples.push({ t: +((Date.now() - t4) / 1000).toFixed(2), playhead: s.playhead, playing: s.playing, ct: v ? v.currentTime : null, paused: v ? v.paused : null, ended: v ? v.ended : null, restartEndedVideo: s.restartEndedVideo });
+      e4.samples.push({ t: +((Date.now() - t4) / 1000).toFixed(2), playhead: s.playhead, playing: s.playing, ct: v ? v.currentTime : null, paused: v ? v.paused : null, seeking: v ? v.seeking : null, ended: v ? v.ended : null, restartEndedVideo: s.restartEndedVideo });
       if (s.playhead >= CLIP4_DUR - 0.05 && !s.playing) { e4ReachedEnd = true; break; }
       await sleep(200);
     }
+    } finally { hbStopE4(); }
     const mid4 = await ev(page, STATE_FN);
     const rMid = mid4.restartEndedVideo;
     await sleep(3000); // chờ thêm 3 s: restart giả (nếu có) sẽ lộ ở đây
