@@ -1,0 +1,22 @@
+  PASS 1-single-sample-no-fire ['watch consec=1']
+WOULD-FIRE avail=6291656 balloon=1000 load1=1.00 boot=6f1d9f87 consec=2 (dry-run, no exec)
+  PASS 2-two-consec-would-fire ['watch consec=1', 'would-fire consec=2']
+  PASS 3-defer-during-attempt ['watch consec=1', 'defer-attempt tag=attempt1-6f1d9f87 age=60s consec=2']
+WOULD-FIRE avail=6291756 balloon=1000 load1=1.00 boot=6f1d9f87 consec=3 (dry-run, no exec)
+  PASS 4-fire-after-attempt-done watch consec=1 / defer-attempt tag=attempt1-6f1d9f87 age=60s consec=2 / would-fire consec=3
+  PASS 5-skip-lock-held ['watch consec=1', 'skip-lock-held-age-0s consec=2']
+  PASS 6-no-refire-same-boot ['watch consec=1', 'skip-fired-this-boot consec=2', 'skip-fired-this-boot consec=3']
+WOULD-FIRE avail=6291656 balloon=1000 load1=1.00 boot=6f1d9f87 consec=2 (dry-run, no exec)
+  PASS 7-stale-boot-marker-ignored ['watch consec=1', 'would-fire consec=2']
+WOULD-FIRE avail=6291656 balloon=1000 load1=1.00 boot=6f1d9f87 consec=2 (dry-run, no exec)
+  PASS 7b-old-marker-ignored ['watch consec=1', 'would-fire consec=2']
+WOULD-FIRE avail=6291656 balloon=1000 load1=1.00 boot=6f1d9f87 consec=2 (dry-run, no exec)
+  PASS 8-dip-resets-counter ['watch consec=1', 'watch consec=0', 'watch consec=1', 'would-fire consec=2']
+  PASS 9-boot-change-resets watch consec=1 / watch consec=1
+WOULD-FIRE avail=6671932 balloon=1000 load1=1.00 boot=cea79500 consec=2 (dry-run, no exec)
+WOULD-FIRE avail=6384376 balloon=1000 load1=1.00 boot=cea79500 consec=3 (dry-run, no exec)
+  PASS 10-replay-186-fires-at-2nd-sample ['watch consec=1', 'would-fire consec=2', 'would-fire consec=3']
+  PASS 10b-replay-186-defer-if-attempt ['watch consec=1', 'defer-attempt tag=attempt1-cea79500 age=60s consec=2', 'defer-attempt tag=attempt1-cea79500 age=60s consec=3']
+FIRE avail=6291656 boot=6f1d9f87 consec=2
+  PASS 11-live-calls-fire-once ['watch consec=1', 'fired consec=2'] fires=[(6291656, '6f1d9f87')]
+OFFLINE: 13 PASS, 0 FAIL []
