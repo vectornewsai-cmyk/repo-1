@@ -244,22 +244,40 @@ async function waitFor(fn, desc, timeoutMs = 120000) {
   throw new Error(`timeout chờ ${desc} (${timeoutMs}ms) — last=${JSON.stringify(last)}`);
 }
 
+// PLAN B B2 (quyet (j) dot 185, trien khai dot 186): boc setupProject +
+// startPlaying bang hbStart/hbStop (thiet ke §C4 LIMITS T8-180 — B1 chi
+// boc resetPlayhead0; setup van mu voi (c') truoc B2). Setup thuong <5 s
+// nen 0 dong them/lan chay; neu ev() setup treo, HB chay voi summary "?"
+// dong bang -> trailing run -> (c')/V2 TRIGGER @125 s (via=f).
 async function setupProject(page, clipUrl, clipName, dur) {
+  const hbStop = hbStart(`setupProject setup`, () => `playhead=? ct=?`);
+  try {
   const setup = await ev(page, SETUP_FN.replaceAll("__CLIP_URL__", JSON.stringify(clipUrl)).replaceAll("__CLIP_NAME__", JSON.stringify(clipName)).replaceAll("__DUR__", String(dur)));
   if (!setup.mediaName || setup.clips.length !== 1) throw new Error("setup project sai: " + JSON.stringify(setup));
   return setup;
+  } finally { hbStop(); }
 }
 
+// PLAN B B2 — xem ghi chu o setupProject (tren). Boc startPlaying: summary
+// lay tu STATE_FN moi nhat da biet (lastState); truoc lan doc dau -> "?".
 async function startPlaying(page, engineName, clipDur) {
   let lastState = null;
+  const hbStop = hbStart(`startPlaying start`, () => {
+    if (!lastState) return `playhead=? ct=?`;
+    const v = lastState.mediaEls.find((e) => e.tag === "VIDEO");
+    return `playhead=${lastState.playhead} ct=${v ? v.currentTime : "?"} paused=${v ? v.paused : "?"} seeking=${v ? v.seeking : "?"} playing=${lastState.playing}`;
+  });
+  try {
   await ev(page, `(async () => { const st = await (${STORE_FN}); st.setPlayhead(0); })()`);
   await page.keyboard.press("Space");
   await sleep(300);
   let stPlay = await ev(page, STATE_FN);
+  lastState = stPlay;
   if (!stPlay.playing) {
     await ev(page, `(async () => { const s = await (${STORE_FN}); s.togglePlay(); })()`);
     await sleep(300);
     stPlay = await ev(page, STATE_FN);
+    lastState = stPlay;
   }
   if (!stPlay.playing) throw new Error("không phát được (playing vẫn false sau Space + togglePlay)");
   try {
@@ -276,6 +294,7 @@ async function startPlaying(page, engineName, clipDur) {
     const attached = await ev(page, ATTACH_FN);
     if (!attached.ok || !attached.isConnected) throw new Error("gắn element vào DOM thất bại: " + JSON.stringify(attached));
   }
+  } finally { hbStop(); }
 }
 
 async function waitForPlaySync(page, engineName, clipDur, tag, resets = 0) {
@@ -313,15 +332,28 @@ async function waitForPlaySync(page, engineName, clipDur, tag, resets = 0) {
   } finally { hbStop(); }
 }
 
+// PLAN B B1 (quyết (j) đợt 180, triển khai đợt 181): bọc resetPlayhead0
+// bằng hbStart/hbStop (kẹt 179 nằm ở resetPlayhead0, giữa các vùng có hb).
 async function resetPlayhead0(page) {
+  let last = null;
+  const hbStop = hbStart(`resetPlayhead0 reset`, () => {
+    if (!last) return `playhead=? ct=?`;
+    const v = last.mediaEls.find((e) => e.tag === "VIDEO");
+    return `playhead=${last.playhead} ct=${v ? v.currentTime : "?"} paused=${v ? v.paused : "?"} seeking=${v ? v.seeking : "?"} playing=${last.playing}`;
+  });
+  try {
   for (let attempt = 0; attempt < 2; attempt++) {
     await ev(page, `(async () => { const s = await (${STORE_FN}); s.setPlayhead(0); if (!s.playing) s.togglePlay(); })()`);
     await sleep(500);
     const chk0 = await ev(page, STATE_FN);
+    last = chk0;
     if (chk0.playhead < 1.0) return chk0;
     await sleep(500);
   }
-  return await ev(page, STATE_FN);
+  const s = await ev(page, STATE_FN);
+  last = s;
+  return s;
+  } finally { hbStop(); }
 }
 
 /**
