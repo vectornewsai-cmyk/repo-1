@@ -2,8 +2,12 @@
  * voicefx.js — Voice effects cho render worker (Phase 8 Q5, Node, zero-deps).
  *
  * Đổi giọng bằng filter FFmpeg thật (đã kiểm chứng trên FFmpeg 8.1.2):
- * - pitch (semitone -12..12) → `rubberband=pitch=2^(n/12)` — đổi cao độ mà
- *   KHÔNG đổi tốc độ (khác asetrate, vốn đổi cả tốc độ).
+ * - pitch (semitone -12..12) → TD-PSOLA tiền xử lý bằng Node (đợt 197 P1,
+ *   xem psolaPitch.js — CÙNG code psola.ts với preview, core mặc định
+ *   two-stage ở n = −12); buildVoiceFilters bỏ rubberband khi nhận
+ *   opts.pitchDone (render.js luôn tiền xử lý trước khi dựng graph).
+ *   `rubberband=tempo=1:pitch=2^(n/12)` chỉ còn là đường legacy cho caller
+ *   trực tiếp không qua render.js (giữ mặc định để không phá API cũ).
  * - robot → `vibrato=f=rate:d=depth` — điều chế delay tạo âm kim loại,
  *   đo được sideband quanh tần số gốc (xem test_q5.js).
  * - telephone → `highpass=f=300,lowpass=f=3400` — chỉ giữ dải thoại.
@@ -71,13 +75,17 @@ function validateVoice(v) {
 /**
  * Dựng chuỗi filter FFmpeg cho VoiceEffect.
  * Trả về "" nếu không có effect nào bật, ngược lại ",rubberband=...,...".
+ * opts.pitchDone = true: pitch đã được tiền xử lý bằng PSOLA (psolaPitch.js)
+ * nên KHÔNG thêm rubberband — robot/telephone/echo vẫn thêm như thường.
  */
-function buildVoiceFilters(voice) {
+function buildVoiceFilters(voice, opts = {}) {
   if (!hasVoiceEffect(voice)) return "";
   const parts = [];
   const pitch = Number(voice.pitch ?? 0);
-  if (Math.abs(pitch) > 1e-9) {
-    // rubberband pitch = hệ số tần số (2^(n/12)), tempo giữ 1 = không đổi tốc độ.
+  if (Math.abs(pitch) > 1e-9 && !opts.pitchDone) {
+    // LEGACY (caller trực tiếp không qua render.js): rubberband pitch = hệ
+    // số tần số (2^(n/12)), tempo giữ 1 = không đổi tốc độ. Render worker
+    // (render.js) luôn tiền xử lý PSOLA nên không đi đường này nữa.
     parts.push(`rubberband=tempo=1:pitch=${fmtNum(Math.pow(2, pitch / 12))}`);
   }
   if (voice.robot !== undefined && voice.robot !== false) {
@@ -109,6 +117,16 @@ if (require.main === module && process.argv.includes("--self-test")) {
   assert.ok(buildVoiceFilters({ pitch: 12 }).includes("rubberband=tempo=1:pitch=2"),
     "pitch +12 phải ra hệ số 2");
   assert.ok(buildVoiceFilters({ pitch: -12 }).includes("pitch=0.5"), "pitch -12 phải ra 0.5");
+  // Đợt 197 P1: pitchDone → không rubberband nữa (PSOLA đã tiền xử lý),
+  // nhưng robot/telephone/echo vẫn còn trong chain.
+  assert.ok(!buildVoiceFilters({ pitch: -12 }, { pitchDone: true }).includes("rubberband"),
+    "pitchDone: không được còn rubberband");
+  assert.strictEqual(buildVoiceFilters({ pitch: -12 }, { pitchDone: true }), "",
+    "pitchDone + chỉ pitch → chain rỗng (pitch đã xong ở pre-process)");
+  assert.ok(buildVoiceFilters({ pitch: 7, robot: true }, { pitchDone: true }).includes("vibrato=f=25:d=0.6"),
+    "pitchDone: robot vẫn phải có");
+  assert.ok(!buildVoiceFilters({ pitch: 7, robot: true }, { pitchDone: true }).includes("rubberband"),
+    "pitchDone + robot: không rubberband");
   assert.ok(buildVoiceFilters({ robot: true }).includes("vibrato=f=25:d=0.6"));
   assert.ok(buildVoiceFilters({ telephone: true }).includes("highpass=f=300"));
   assert.ok(buildVoiceFilters({ telephone: true }).includes("lowpass=f=3400"));

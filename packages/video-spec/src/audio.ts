@@ -100,6 +100,92 @@ export interface VoiceEffect {
   echo?: boolean | { delayMs?: number; decay?: number };
 }
 
+// ---------------------------------------------------------------------------
+// Đợt 191 P1 — Mặc định + resolve cho voice effects (1 nguồn số chung cho
+// render FFmpeg và preview Web Audio — cùng preset phải cho cùng tham số).
+// Mirror trong server/render/src/voicefx.js (JS) và audio.js (twin viết tay).
+// ---------------------------------------------------------------------------
+
+/** Robot mặc định: vibrato f=25 Hz (mirror voicefx.js). */
+export const DEFAULT_VOICE_ROBOT_RATE = 25;
+/** Robot mặc định: vibrato d=0.6 (mirror voicefx.js). */
+export const DEFAULT_VOICE_ROBOT_DEPTH = 0.6;
+/** Echo mặc định: aecho delays=200 ms (mirror voicefx.js). */
+export const DEFAULT_VOICE_ECHO_DELAY_MS = 200;
+/** Echo mặc định: aecho decays=0.5 (mirror voicefx.js). */
+export const DEFAULT_VOICE_ECHO_DECAY = 0.5;
+/**
+ * Hằng số aecho của render (đo thật bằng impulse trên FFmpeg 8.1.2,
+ * đợt 191 P1 — xem voicefx.js): out = outGain × (inGain × in +
+ * Σ decay × in(t−delay)). Lưu ý dry KHÔNG phải inGain (0.8) mà là
+ * inGain × outGain = 0.72; wet = outGain × decay.
+ */
+export const VOICE_ECHO_IN_GAIN = 0.8;
+/** Xem VOICE_ECHO_IN_GAIN. */
+export const VOICE_ECHO_OUT_GAIN = 0.9;
+
+/** Tham số voice đã resolve — mọi field đều có giá trị cụ thể. */
+export interface ResolvedVoiceEffect {
+  /** Có ít nhất 1 voice effect đang bật. */
+  active: boolean;
+  /** Cao độ (semitone, 0 = tắt). */
+  pitchSemitones: number;
+  /** Hệ số tần số 2^(n/12) — đúng tham số rubberband=pitch của render. */
+  pitchRatio: number;
+  /** Robot đã resolve (null = tắt). */
+  robot: { rate: number; depth: number } | null;
+  /** Telephone đang bật. */
+  telephone: boolean;
+  /** Echo đã resolve (null = tắt). */
+  echo: { delayMs: number; decay: number } | null;
+}
+
+/** true nếu có ít nhất 1 voice effect đang bật (mirror voicefx.js hasVoiceEffect). */
+export function hasVoiceEffect(voice?: VoiceEffect | null): boolean {
+  if (!voice || typeof voice !== "object") return false;
+  if (Math.abs(Number(voice.pitch ?? 0)) > 1e-9) return true;
+  if (voice.robot !== undefined && voice.robot !== false) return true;
+  if (voice.telephone === true) return true;
+  if (voice.echo !== undefined && voice.echo !== false) return true;
+  return false;
+}
+
+/**
+ * Resolve VoiceEffect về tham số cụ thể, điền mặc định render khi field thiếu.
+ * - pitch: giữ nguyên (0 = tắt); pitchRatio = 2^(n/12).
+ * - robot true → { rate: 25, depth: 0.6 }; object thì điền từng field thiếu.
+ * - echo true → { delayMs: 200, decay: 0.5 }; object thì điền từng field thiếu.
+ * - robot/echo = false hoặc undefined → null (tắt).
+ * Không validate khoảng — validateAudioEffects vẫn là cổng chặn giá trị sai.
+ */
+export function resolveVoiceEffect(voice?: VoiceEffect | null): ResolvedVoiceEffect {
+  const pitch = Number(voice?.pitch ?? 0);
+  const robotRaw = voice?.robot;
+  const robot =
+    robotRaw === undefined || robotRaw === false
+      ? null
+      : {
+          rate: robotRaw === true ? DEFAULT_VOICE_ROBOT_RATE : Number(robotRaw.rate ?? DEFAULT_VOICE_ROBOT_RATE),
+          depth: robotRaw === true ? DEFAULT_VOICE_ROBOT_DEPTH : Number(robotRaw.depth ?? DEFAULT_VOICE_ROBOT_DEPTH),
+        };
+  const echoRaw = voice?.echo;
+  const echo =
+    echoRaw === undefined || echoRaw === false
+      ? null
+      : {
+          delayMs: echoRaw === true ? DEFAULT_VOICE_ECHO_DELAY_MS : Number(echoRaw.delayMs ?? DEFAULT_VOICE_ECHO_DELAY_MS),
+          decay: echoRaw === true ? DEFAULT_VOICE_ECHO_DECAY : Number(echoRaw.decay ?? DEFAULT_VOICE_ECHO_DECAY),
+        };
+  return {
+    active: hasVoiceEffect(voice),
+    pitchSemitones: pitch,
+    pitchRatio: Math.pow(2, pitch / 12),
+    robot,
+    telephone: voice?.telephone === true,
+    echo,
+  };
+}
+
 /** true nếu có ít nhất 1 effect đang bật. */
 export function hasAudioEffects(fx?: AudioEffects | null): boolean {
   if (!fx) return false;

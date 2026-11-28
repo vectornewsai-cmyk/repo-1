@@ -73,7 +73,7 @@ function hasAudioEffects(fx) {
  *   decays={0.15+0.45v}|{0.1+0.3v}|{0.08+0.22v} — 3 taps để tránh notch
  *   comb-filtering triệt tiêu hoàn toàn 1 tần số (vd delay 45ms triệt tiêu sine 100Hz).
  */
-function buildAudioEffectsFilters(fx) {
+function buildAudioEffectsFilters(fx, opts = {}) {
   if (!hasAudioEffects(fx)) return "";
   const parts = [];
   const bass = Number(fx.bass ?? 0);
@@ -110,9 +110,10 @@ function buildAudioEffectsFilters(fx) {
     parts.push(`aecho=in_gain=0.8:out_gain=0.9:delays=30|60|120:decays=${d1}|${d2}|${d3}`);
   }
   // Phase 8 Q5: voice effects đứng sau reverb, trước volume (xem voicefx.js).
+  // Đợt 197 P1: opts.pitchDone → pitch đã tiền xử lý PSOLA, bỏ rubberband.
   if (fx.voice !== undefined) {
     const { buildVoiceFilters } = require("./voicefx");
-    const vf = buildVoiceFilters(fx.voice);
+    const vf = buildVoiceFilters(fx.voice, opts);
     if (vf) parts.push(vf.slice(1)); // bỏ dấu phẩy đầu (parts tự nối bằng ",")
   }
   return parts.length ? "," + parts.join(",") : "";

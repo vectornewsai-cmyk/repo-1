@@ -56,6 +56,9 @@ const { buildEffectsChain } = require("./effects");
 const { buildStickerOverlay } = require("./sticker");
 // Batch G (R1-076): audio effects — dựng chuỗi filter cho AudioEffects.
 const { buildAudioEffectsFilters } = require("./audioroute");
+// Đợt 197 P1: pitch PSOLA — tiền xử lý audio render (thống nhất sang PSOLA,
+// bỏ rubberband; xem psolaPitch.js).
+const { collectPitchPreprocess, psolaPitchKey } = require("./psolaPitch");
 // P0-03: image clip (ảnh tĩnh thành media type chính thức).
 const { buildImageChain } = require("./image");
 // R1-011: opacity/alpha cho video clip.
@@ -645,6 +648,8 @@ function checkAdjLayerSplitConflicts(spec, transitions) {
 
 function buildFilterGraph(spec, ctx) {
   const { W, H, fps, D, mediaIndex, absOf, transitions, fontFiles, assetsDir, mediaProbes } = ctx;
+  // Đợt 197 P1: map (file nguồn, pitch) -> input index wav PSOLA tạm.
+  const psolaAudio = ctx.psolaAudio || new Map();
   // Đợt 76 D9: cách lấp khung của clip video (fit = mặc định, crop = lấp đầy).
   const aspectFit = ctx.aspectFit ?? "fit";
   const fc = [];
@@ -1266,12 +1271,24 @@ function buildFilterGraph(spec, ctx) {
     else duckingActive = true;
   }
   const aseg = [];
+  // Đợt 197 P1: stream audio cho clip có pitch PSOLA đã tiền xử lý — dùng
+  // wav tạm thay cho file gốc, và báo pitchDone để buildVoiceFilters bỏ
+  // rubberband (pitch đã xong ở pre-process; robot/telephone/echo vẫn chạy).
+  // Không có trong map (không tiền xử lý được / legacy) → dùng file gốc.
+  const audioStreamRefFor = (clip, abs, idx) => {
+    const pitch = clip.audioEffects?.voice?.pitch;
+    if (typeof pitch === "number" && Math.abs(pitch) > 1e-9 && psolaAudio) {
+      const pi = psolaAudio.get(psolaPitchKey(abs, pitch));
+      if (pi !== undefined) return { ref: `[${pi}:a]`, pitchDone: true };
+    }
+    return { ref: `[${idx}:a]`, pitchDone: false };
+  };
   // Helper dựng chain audio cho 1 clip (dùng chung cho audio clip và video inherit).
   // streamRef: `[idx:a]` — audio stream của file nguồn.
   // Phase 7 P3: thêm trackVolume (nhân vào gain) + speed ramp (segment concat)
   // + gain expression (volumeKeyframes / fade cong). Không ramp, không keyframes,
   // không fade cong → chain cũ 100% (volume + afade tĩnh).
-  const buildAudioChain = (streamRef, clip, label, trackVolume = 1, branchSeg) => {
+  const buildAudioChain = (streamRef, clip, label, trackVolume = 1, branchSeg, pitchDone = false) => {
     const a = lbl(label);
     const isRamp = clip.speedKeyframes && clip.speedKeyframes.keyframes &&
       clip.speedKeyframes.keyframes.length > 0;
@@ -1290,8 +1307,9 @@ function buildFilterGraph(spec, ctx) {
         `asetpts=PTS-STARTPTS${speedChain},aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo`;
     }
     // R1-076: audio effects (bass → treble → noiseReduction → compressor → reverb),
-    // áp dụng sau aformat, trước volume.
-    chain += buildAudioEffectsFilters(clip.audioEffects);
+    // áp dụng sau aformat, trước volume. Đợt 197 P1: pitchDone → pitch PSOLA
+    // đã tiền xử lý, buildVoiceFilters bỏ rubberband.
+    chain += buildAudioEffectsFilters(clip.audioEffects, { pitchDone });
     const gainFilter = buildGainFilter(clip, trackVolume);
     if (gainFilter) {
       // Đường expression thay thế HOÀN TOÀN volume + afade tĩnh (đã gộp trong expr).
@@ -1315,8 +1333,10 @@ function buildFilterGraph(spec, ctx) {
   for (const track of spec.tracks.filter((t) => t.kind === "audio" && !t.muted)) {
     for (const clip of track.clips) {
       const idx = mediaIndex.get(absOf(clip.src));
-      buildAudioChain(`[${idx}:a]`, clip, "ac", track.volume ?? 1,
-        duckingActive ? (track.id === ducking.voiceTrackId ? voiceSeg : musicSeg) : undefined);
+      const sref = audioStreamRefFor(clip, absOf(clip.src), idx);
+      buildAudioChain(sref.ref, clip, "ac", track.volume ?? 1,
+        duckingActive ? (track.id === ducking.voiceTrackId ? voiceSeg : musicSeg) : undefined,
+        sref.pitchDone);
     }
   }
   // Audio inherit từ video clip (R1-015).
@@ -1344,8 +1364,9 @@ function buildFilterGraph(spec, ctx) {
       const abs = absOf(clip.src);
       if (!hasAudioStream(abs)) continue; // file câm → không add [idx:a]
       const idx = mediaIndex.get(abs);
+      const sref = audioStreamRefFor(clip, abs, idx);
       // Ducking: audio kế thừa của video luôn thuộc nhánh nhạc.
-      buildAudioChain(`[${idx}:a]`, clip, "va", track.volume ?? 1, duckingActive ? musicSeg : undefined);
+      buildAudioChain(sref.ref, clip, "va", track.volume ?? 1, duckingActive ? musicSeg : undefined, sref.pitchDone);
     }
   }
   let aout;
@@ -1894,6 +1915,20 @@ function main() {
     }
   }
 
+  // 4b. Đợt 197 P1: pitch PSOLA — tiền xử lý audio (thống nhất render sang
+  // PSOLA, bỏ rubberband). Với mỗi (file nguồn, pitch) có clip dùng, decode
+  // → shift bằng CÙNG code psola.ts với preview → wav tạm; wav tạm được
+  // đăng ký làm input riêng ở bước 5, chain audio của clip dùng [psolaIdx:a]
+  // và buildVoiceFilters bỏ rubberband (pitchDone). Decode/shift thất bại
+  // → dừng render với lỗi rõ (không lặng lẽ rơi về rubberband).
+  const psolaPitch = collectPitchPreprocess(spec, {
+    absOf, mediaProbes: mv.probes,
+    tmpDir: os.tmpdir(), ffmpegBin: args.ffmpeg,
+  });
+  for (const [key, wavPath] of psolaPitch.byKey) {
+    log(`   🎵 pitch PSOLA "${key}" → ${wavPath}`);
+  }
+
   // 5. Đánh chỉ số input cho từng file media (mỗi file chỉ -i một lần)
   const mediaIndex = new Map();
   const orderedMedia = [];
@@ -1907,6 +1942,16 @@ function main() {
   for (const track of spec.tracks)
     for (const clip of track.clips)
       if (clip.src) register(clip.src);
+  // Đăng ký wav pitch-PSOLA tạm làm input riêng (đường dẫn tuyệt đối, không
+  // qua absOf — theo mẫu textSrPng dưới).
+  const psolaAudioIdx = new Map();
+  for (const [key, wavPath] of psolaPitch.byKey) {
+    if (!mediaIndex.has(wavPath)) {
+      mediaIndex.set(wavPath, orderedMedia.length);
+      orderedMedia.push(wavPath);
+    }
+    psolaAudioIdx.set(key, mediaIndex.get(wavPath));
+  }
   // Đăng ký PNG text SR làm input (đường dẫn tuyệt đối, không qua absOf).
   const textSrPngIdx = new Map();
   for (const [clipId, pngPath] of textSrPng) {
@@ -1925,6 +1970,9 @@ function main() {
     // K3: LUT user resolve từ mediaDir (file __lut_<id>.cube upload kèm spec).
     userLutsDir: mediaDir,
     mediaProbes: mv.probes, // R1-015 fix: check audio stream trước khi inherit
+    // Đợt 197 P1: map (file nguồn, pitch) -> input index của wav PSOLA tạm
+    // (rỗng khi spec không có clip pitch — hành vi cũ 100%).
+    psolaAudio: psolaAudioIdx,
     // Plugin wiring: null khi spec không khai plugin (hành vi cũ 100%).
     pluginFiltersFor: pluginHost
       ? (clip) => pluginHost.filtersForClip(clip, { width: meta.width, height: meta.height, fps: meta.fps })

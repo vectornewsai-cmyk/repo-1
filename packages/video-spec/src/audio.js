@@ -48,7 +48,72 @@ export function hasAudioEffects(fx) {
         Math.abs(fx.treble ?? 0) > 1e-9 ||
         (fx.noiseReduction ?? 0) > 1e-9 ||
         fx.compressor !== undefined ||
-        (fx.reverb ?? 0) > 1e-9);
+        (fx.reverb ?? 0) > 1e-9 ||
+        fx.voice !== undefined);
+}
+// ---------------------------------------------------------------------------
+// Đợt 191 P1 — Mặc định + resolve cho voice effects (mirror audio.ts).
+// Cùng 1 nguồn số cho cả render (FFmpeg) và preview (Web Audio).
+// ---------------------------------------------------------------------------
+/** Robot mặc định: vibrato f=25 Hz (mirror voicefx.js). */
+export const DEFAULT_VOICE_ROBOT_RATE = 25;
+/** Robot mặc định: vibrato d=0.6 (mirror voicefx.js). */
+export const DEFAULT_VOICE_ROBOT_DEPTH = 0.6;
+/** Echo mặc định: aecho delays=200 ms (mirror voicefx.js). */
+export const DEFAULT_VOICE_ECHO_DELAY_MS = 200;
+/** Echo mặc định: aecho decays=0.5 (mirror voicefx.js). */
+export const DEFAULT_VOICE_ECHO_DECAY = 0.5;
+/**
+ * Hằng số aecho của render (đo thật bằng impulse trên FFmpeg 8.1.2,
+ * đợt 191 P1): out = outGain × (inGain × in + Σ decay × in(t−delay)).
+ * Dry = inGain × outGain = 0.72 (không phải inGain 0.8); wet = outGain × decay.
+ */
+export const VOICE_ECHO_IN_GAIN = 0.8;
+/** Xem VOICE_ECHO_IN_GAIN. */
+export const VOICE_ECHO_OUT_GAIN = 0.9;
+/** true nếu có ít nhất 1 voice effect đang bật (mirror voicefx.js hasVoiceEffect). */
+export function hasVoiceEffect(voice) {
+    if (!voice || typeof voice !== "object")
+        return false;
+    if (Math.abs(Number(voice.pitch ?? 0)) > 1e-9)
+        return true;
+    if (voice.robot !== undefined && voice.robot !== false)
+        return true;
+    if (voice.telephone === true)
+        return true;
+    if (voice.echo !== undefined && voice.echo !== false)
+        return true;
+    return false;
+}
+/**
+ * Resolve VoiceEffect về tham số cụ thể, điền mặc định render khi field thiếu.
+ * robot true → { rate: 25, depth: 0.6 }; echo true → { delayMs: 200, decay: 0.5 }.
+ * Không validate khoảng — validateAudioEffects vẫn là cổng chặn giá trị sai.
+ */
+export function resolveVoiceEffect(voice) {
+    const pitch = Number(voice?.pitch ?? 0);
+    const robotRaw = voice?.robot;
+    const robot = robotRaw === undefined || robotRaw === false
+        ? null
+        : {
+            rate: robotRaw === true ? DEFAULT_VOICE_ROBOT_RATE : Number(robotRaw.rate ?? DEFAULT_VOICE_ROBOT_RATE),
+            depth: robotRaw === true ? DEFAULT_VOICE_ROBOT_DEPTH : Number(robotRaw.depth ?? DEFAULT_VOICE_ROBOT_DEPTH),
+        };
+    const echoRaw = voice?.echo;
+    const echo = echoRaw === undefined || echoRaw === false
+        ? null
+        : {
+            delayMs: echoRaw === true ? DEFAULT_VOICE_ECHO_DELAY_MS : Number(echoRaw.delayMs ?? DEFAULT_VOICE_ECHO_DELAY_MS),
+            decay: echoRaw === true ? DEFAULT_VOICE_ECHO_DECAY : Number(echoRaw.decay ?? DEFAULT_VOICE_ECHO_DECAY),
+        };
+    return {
+        active: hasVoiceEffect(voice),
+        pitchSemitones: pitch,
+        pitchRatio: Math.pow(2, pitch / 12),
+        robot,
+        telephone: voice?.telephone === true,
+        echo,
+    };
 }
 /** Validate AudioEffects. Trả về danh sách lỗi (rỗng = hợp lệ). */
 export function validateAudioEffects(v) {
@@ -70,6 +135,66 @@ export function validateAudioEffects(v) {
     numIn("treble", -12, 12);
     numIn("noiseReduction", 0, 1);
     numIn("reverb", 0, 1);
+    // Phase 8 Q5: voice effects (mirror audio.ts — bản .js cũ thiếu đoạn này,
+    // đợt 191 P1 bổ sung cho khớp; trước đây validate web bỏ qua voice sai).
+    const voice = fx["voice"];
+    if (voice !== undefined) {
+        if (typeof voice !== "object" || voice === null || Array.isArray(voice)) {
+            errs.push("audioEffects.voice phải là object");
+        }
+        else {
+            const vv = voice;
+            const vnum = (key, min, max) => {
+                const val = vv[key];
+                if (val === undefined)
+                    return;
+                if (typeof val !== "number" || !Number.isFinite(val) || val < min || val > max) {
+                    errs.push(`audioEffects.voice.${key} phải là số trong [${min}, ${max}], nhận được: ${JSON.stringify(val)}`);
+                }
+            };
+            vnum("pitch", -12, 12);
+            const r = vv["robot"];
+            if (r !== undefined && r !== true && r !== false) {
+                if (typeof r !== "object" || r === null || Array.isArray(r)) {
+                    errs.push("audioEffects.voice.robot phải là true hoặc object { rate?, depth? }");
+                }
+                else {
+                    const rr = r;
+                    const rnum = (key, min, max) => {
+                        const val = rr[key];
+                        if (val === undefined)
+                            return;
+                        if (typeof val !== "number" || !Number.isFinite(val) || val < min || val > max) {
+                            errs.push(`audioEffects.voice.robot.${key} phải là số trong [${min}, ${max}], nhận được: ${JSON.stringify(val)}`);
+                        }
+                    };
+                    rnum("rate", 5, 60);
+                    rnum("depth", 0, 1);
+                }
+            }
+            if (vv["telephone"] !== undefined && typeof vv["telephone"] !== "boolean")
+                errs.push("audioEffects.voice.telephone phải là boolean");
+            const e = vv["echo"];
+            if (e !== undefined && e !== true && e !== false) {
+                if (typeof e !== "object" || e === null || Array.isArray(e)) {
+                    errs.push("audioEffects.voice.echo phải là true hoặc object { delayMs?, decay? }");
+                }
+                else {
+                    const ee = e;
+                    const enm = (key, min, max) => {
+                        const val = ee[key];
+                        if (val === undefined)
+                            return;
+                        if (typeof val !== "number" || !Number.isFinite(val) || val < min || val > max) {
+                            errs.push(`audioEffects.voice.echo.${key} phải là số trong [${min}, ${max}], nhận được: ${JSON.stringify(val)}`);
+                        }
+                    };
+                    enm("delayMs", 50, 1000);
+                    enm("decay", 0, 1);
+                }
+            }
+        }
+    }
     const c = fx["compressor"];
     if (c !== undefined) {
         if (typeof c !== "object" || c === null || Array.isArray(c)) {
