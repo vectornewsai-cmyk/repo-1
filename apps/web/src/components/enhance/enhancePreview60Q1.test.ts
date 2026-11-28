@@ -212,16 +212,22 @@ ok("plan: denoise strength 0 → blur 0 + alpha 0 nên needsOffscreen false dù 
   assert.equal(p.needsOffscreen, false);
 });
 
-ok("plan: không thêm shape spec — đúng 10 key đã khai (đợt 75 C8 thêm deinterlaceTap)", () => {
+ok("plan: không thêm shape spec — đúng 16 key đã khai (đợt 75 C8 thêm deinterlaceTap; đợt 191 P2 thêm denoiseWarmupFactor; đợt 193 P2 thêm noiseSigma; đợt 194 P2 thêm deintBobField; đợt 196 P2 thêm deintVerticalBlend; đợt 198 P2 thêm motionEstimate + denoiseMotionMultiplier)", () => {
   const p = enhancePreviewPlan({ denoise: true }, true);
   assert.deepEqual(Object.keys(p).sort(), [
     "applied",
     "deinterlaceTap",
+    "deintBobField",
+    "deintVerticalBlend",
     "denoiseBlendAlpha",
     "denoiseBlurPx",
+    "denoiseMotionMultiplier",
+    "denoiseWarmupFactor",
     "enabled",
     "hasEnhance",
+    "motionEstimate",
     "needsOffscreen",
+    "noiseSigma",
     "notApproximated",
     "stabilizeBlockedBySpeedRamp",
     "stabilizeZoom",

@@ -51,6 +51,8 @@ export interface ImportedItemLike {
   height?: number;
   /** Thời lượng giây (video/audio; ảnh = 0). */
   duration?: number;
+  /** Đợt 194 P2 — fps nguồn (xem MediaItem.fps trong media.ts). */
+  fps?: number;
   /** Thumbnail dataURL (nếu probe tạo được). */
   thumbnail?: string;
 }
@@ -64,6 +66,7 @@ export interface ImportAssetStoreLike {
       width?: number;
       height?: number;
       duration?: number;
+      fps?: number;
       thumbnail?: string;
     },
   ): Promise<AssetManifest>;
@@ -96,6 +99,7 @@ export async function ingestImportedItem(
       width: item.width,
       height: item.height,
       duration: item.duration,
+      fps: item.fps,
       thumbnail: item.thumbnail,
     });
     return { manifest, nameMismatch: manifest.originalName !== item.name };
@@ -113,6 +117,7 @@ export interface ImportAssetStoreWithProgressLike extends ImportAssetStoreLike {
       width?: number;
       height?: number;
       duration?: number;
+      fps?: number;
       thumbnail?: string;
     },
     onProgress?: IngestProgressCallback,
@@ -145,6 +150,7 @@ export async function ingestImportedItemWithProgress(
           width: item.width,
           height: item.height,
           duration: item.duration,
+          fps: item.fps,
           thumbnail: item.thumbnail,
         },
         onProgress,

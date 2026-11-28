@@ -80,6 +80,11 @@ export interface AssetManifest {
   height?: number;
   /** Thời lượng giây (video/audio). */
   duration?: number;
+  /**
+   * Đợt 194 P2 — fps nguồn của video (xem MediaItem.fps trong media.ts):
+   * lưu bền qua reload để rehydrate khôi phục được mà không probe lại.
+   */
+  fps?: number;
   /** Thumbnail dataURL (tuỳ chọn, do caller tạo — AssetStore không probe). */
   thumbnail?: string;
   /**
@@ -117,6 +122,8 @@ export interface IngestMeta {
   width?: number;
   height?: number;
   duration?: number;
+  /** Đợt 194 P2 — fps nguồn (xem MediaItem.fps trong media.ts). */
+  fps?: number;
   thumbnail?: string;
 }
 
@@ -457,6 +464,7 @@ export class AssetStore {
       if (meta.width !== undefined) manifest.width = meta.width;
       if (meta.height !== undefined) manifest.height = meta.height;
       if (meta.duration !== undefined) manifest.duration = meta.duration;
+      if (meta.fps !== undefined) manifest.fps = meta.fps;
       if (meta.thumbnail !== undefined) manifest.thumbnail = meta.thumbnail;
       await req(mStore.put(manifest));
       await req(bStore.put(input, assetId));

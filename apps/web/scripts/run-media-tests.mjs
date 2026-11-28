@@ -12,7 +12,7 @@
  * (lệnh đầy đủ cũng ghi trong đầu mỗi file test).
  *
  * Chạy: node apps/web/scripts/run-media-tests.mjs [-- <tên-file>|all]
- *   Mặc định chạy cả 3 file media.*.test.ts; exit != 0 nếu có file fail
+ *   Mặc định chạy cả 4 file media.*.test.ts; exit != 0 nếu có file fail
  *   (kể cả lỗi bundle). Bundle ghi ra /tmp, không đụng repo.
  * KHÔNG push/tag/binary.
  */
@@ -27,6 +27,7 @@ const ESBUILD = path.join(ROOT, "node_modules", ".bin", "esbuild");
 const TESTS = [
   { src: "apps/web/src/media.blobPrefetch90R3.test.ts", out: "/tmp/blob-prefetch-90r3.test.mjs" },
   { src: "apps/web/src/media.captureThumb66T6.test.ts", out: "/tmp/capture-thumb-66t6.test.mjs" },
+  { src: "apps/web/src/media.fpsProbe94P2.test.ts", out: "/tmp/fps-probe-94p2.test.mjs" },
   { src: "apps/web/src/media.retryPlay95W2.test.ts", out: "/tmp/retry-play-95w2.test.mjs" },
 ];
 

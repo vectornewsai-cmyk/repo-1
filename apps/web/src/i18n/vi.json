@@ -107,7 +107,8 @@
     "experimentWarning": "Phát ngược bằng decode-ahead chỉ là thử nghiệm opt-in: chỉ bật cho footage dễ decode hoặc máy đã chứng minh có hardware decode; không đảm bảo 30 fps ngược cho mọi footage.",
     "underLoadWarning": "Số đo decode dùng để mở cổng này đo dưới tải (under-load), không phải số quiet — nhịp ngược thực tế có thể thấp hơn khi máy bận.",
     "noHardwareWarning": "Máy này chưa chứng minh có hardware decode — phát ngược footage nặng bằng decode phần mềm có thể rớt dưới 30 fps.",
-    "proxyMainNote": "Proxy chỉ phục vụ preview (export vẫn dùng file gốc). Chọn proxy làm hướng chính cho chiều ngược vẫn cần số đo fps ngược thật trên đúng cặp gốc/proxy, không suy từ độ phân giải."
+    "proxyMainNote": "Proxy chỉ phục vụ preview (export vẫn dùng file gốc). Chọn proxy làm hướng chính cho chiều ngược vẫn cần số đo fps ngược thật trên đúng cặp gốc/proxy, không suy từ độ phân giải.",
+    "force192P3": "Đợt 192 P3: ép bật prefetch bằng __vcutDecodeAheadForce (chỉ đo, không phải cổng mở thật)."
   },
   "topbar": {
     "addText": "Thêm chữ tại playhead",
@@ -1754,6 +1755,8 @@
     "motionBadge": "Motion của clip đang xem: NỘI SUY = bản render sẽ nội suy frame mới (preview giữ fps project, không nội suy); BLUR≈ = preview chỉ vẽ vệt mờ xấp xỉ, render dùng motion blur thật",
     "reverseBadge": "Đang ở chế độ phát ngược: playhead chạy lùi theo từng frame, mọi video seek từng frame, audio bị tắt vì không phát ngược đồng bộ được. Bấm nút ◀ hoặc phím J để dừng, nút ▶ để về phát xuôi.",
     "reverseLabel": "◀ PHÁT NGƯỢC — không audio",
+    "reverseAudioLabel": "◀ PHÁT NGƯỢC — audio đảo",
+    "reverseAudioBadge": "Đang ở chế độ phát ngược: audio đang phát đảo đồng bộ với hình (clip ngắn, đã decode + đảo). Clip dài hơn 60 giây vẫn mute. Bấm nút ◀ hoặc phím J để dừng, nút ▶ để về phát xuôi.",
     "holdBadge": "Decoder chưa kịp giao frame mới nên preview đang vẽ lại frame tốt cuối cùng thay vì để đen. Nếu hiện (cũ) nghĩa là frame đã giữ quá 3 giây timeline — hình đứng yên trong khi playhead vẫn chạy.",
     "fsExitTitle": "Thoát toàn màn hình (F)",
     "fsEnterTitle": "Xem toàn màn hình (F)",

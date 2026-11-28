@@ -107,7 +107,8 @@
     "experimentWarning": "Reverse playback via decode-ahead is an opt-in experiment: only enable it for easy-to-decode footage or on a machine proven to have hardware decode; it does not guarantee 30 fps reverse for all footage.",
     "underLoadWarning": "The decode measurements that opened this gate were taken under load, not quiet — actual reverse pace may be lower when the machine is busy.",
     "noHardwareWarning": "This machine has not proven hardware decode — reverse-playing heavy footage with software decode may drop below 30 fps.",
-    "proxyMainNote": "Proxies serve preview only (export still uses the original file). Choosing a proxy as the main direction for reverse still needs real measured reverse fps on the exact original/proxy pair, not inferred from resolution."
+    "proxyMainNote": "Proxies serve preview only (export still uses the original file). Choosing a proxy as the main direction for reverse still needs real measured reverse fps on the exact original/proxy pair, not inferred from resolution.",
+    "force192P3": "Round 192 P3: prefetch force-enabled via __vcutDecodeAheadForce (measurement only, not a real gate opening)."
   },
   "topbar": {
     "addText": "Add text at playhead",
@@ -1754,6 +1755,8 @@
     "motionBadge": "Motion of the clip being previewed: INTERPOLATE = the render will interpolate new frames (preview keeps the project fps and does not interpolate); BLUR≈ = preview only draws an approximate blur trail, the render uses real motion blur",
     "reverseBadge": "Reverse playback mode: the playhead moves backwards frame by frame, every video seeks per frame, and audio is off because it cannot play in sync backwards. Tap the ◀ button or press J to stop, or ▶ to play forwards again.",
     "reverseLabel": "◀ REVERSE — no audio",
+    "reverseAudioLabel": "◀ REVERSE — reversed audio",
+    "reverseAudioBadge": "Reverse playback mode: audio is playing reversed in sync with the picture (short clip, decoded + reversed). Clips longer than 60 seconds stay muted. Tap the ◀ button or press J to stop, or ▶ to play forwards again.",
     "holdBadge": "The decoder hasn't delivered a new frame yet, so preview is redrawing the last good frame instead of showing black. If it says (stale), the frame has been held for over 3 timeline seconds — the picture is frozen while the playhead keeps moving.",
     "fsExitTitle": "Exit fullscreen (F)",
     "fsEnterTitle": "View fullscreen (F)",

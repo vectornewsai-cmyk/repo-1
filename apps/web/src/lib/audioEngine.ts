@@ -11,11 +11,15 @@
  *     → BiquadFilterNode lowshelf (bass, ~100Hz — khớp filter `bass` của FFmpeg)
  *     → BiquadFilterNode highshelf (treble, ~3000Hz — khớp filter `treble`)
  *     → DynamicsCompressorNode (compressor — khớp `acompressor`)
+ *     → VoiceFxChain (Đợt 191 P1: pitch/robot/telephone/echo — xem previewVoiceFx.ts)
  *     → GainNode riêng cho từng element (volume + fade + keyframes + mute)
  *     → master GainNode → AnalyserNode (VU meter) → destination
  *
  * R1-076: reverb và noiseReduction KHÔNG có node Web Audio tương đương
  * (aecho/afftdn là filter FFmpeg) → render-only, ghi rõ trong AUDIOFX_LIMITS.md.
+ * Đợt 191 P1: voice effects ĐÃ có preview (pitch xấp xỉ bằng pitch-shifter
+ * 2 đường delay; robot/telephone/echo khớp tham số render — xem
+ * docs/PHASE9_ROUND191_P1_VOICEFX_PREVIEW_LIMITS.md).
  *
  * Mỗi frame của vòng lặp preview: preview.tsx tính gain mục tiêu cho từng
  * source đang active rồi gọi engine.update(). Gain được làm mượt bằng
@@ -24,8 +28,9 @@
  * Fallback trung thực: nếu Web Audio không khả dụng (trình duyệt chặn,
  * AudioContext chưa được mở), update() gán el.volume trực tiếp như code cũ.
  */
-import type { KeyframedValue, FadeCurve } from "@repo-1/video-spec";
+import type { KeyframedValue, FadeCurve, VoiceEffect } from "@repo-1/video-spec";
 import { EASINGS, interpolateKeyframes, normalizeKeyframes } from "@repo-1/video-spec";
+import { createVoiceChain, hasVoiceEffect, type VoiceChain } from "./previewVoiceFx.ts";
 
 function clamp(v: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, v));
@@ -145,10 +150,11 @@ export interface ActiveAudioSource {
 }
 
 /**
- * Hiệu ứng audio mà preview (Web Audio) hỗ trợ (R1-076).
+ * Hiệu ứng audio mà preview (Web Audio) hỗ trợ (R1-076, mở rộng đợt 191 P1).
  * - bass/treble (dB): BiquadFilter lowshelf ~100Hz / highshelf ~3000Hz
  *   (khớp tần số mặc định của filter `bass`/`treble` trong FFmpeg).
  * - compressor: DynamicsCompressorNode (khớp `acompressor`).
+ * - voice: VoiceFxChain (đợt 191 P1) — pitch/robot/telephone/echo, xem previewVoiceFx.ts.
  * reverb và noiseReduction không có node tương đương → render-only.
  */
 export interface PreviewAudioFx {
@@ -160,6 +166,8 @@ export interface PreviewAudioFx {
     attackMs?: number;
     releaseMs?: number;
   };
+  /** Voice effects (Phase 8 Q5) — undefined = tắt. */
+  voice?: VoiceEffect;
 }
 
 /**
@@ -172,12 +180,15 @@ export function toPreviewFx(fx?: {
   compressor?: PreviewAudioFx["compressor"];
   noiseReduction?: number;
   reverb?: number;
+  voice?: VoiceEffect;
 }): PreviewAudioFx | undefined {
   if (!fx) return undefined;
   const out: PreviewAudioFx = {};
   if (Math.abs(fx.bass ?? 0) > 1e-9) out.bass = fx.bass;
   if (Math.abs(fx.treble ?? 0) > 1e-9) out.treble = fx.treble;
   if (fx.compressor !== undefined) out.compressor = fx.compressor;
+  // Đợt 191 P1: voice effects đi qua preview (toàn bộ 4 hiệu ứng).
+  if (hasVoiceEffect(fx.voice)) out.voice = fx.voice;
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
@@ -223,6 +234,8 @@ export class AudioEngine {
       low: BiquadFilterNode;
       high: BiquadFilterNode;
       comp: DynamicsCompressorNode;
+      /** Chuỗi voice-effect (đợt 191 P1) — null khi context thiếu method tạo node. */
+      voice: VoiceChain | null;
     }
   >();
   private levelBuf: Uint8Array | null = null;
@@ -235,6 +248,25 @@ export class AudioEngine {
   /** Graph đã sẵn sàng chưa. */
   get isReady(): boolean {
     return this.ctx !== null && this.master !== null;
+  }
+
+  /**
+   * Đợt 192 P3 — AudioContext thật cho ReverseAudioPlayer (nối audio
+   * đảo, S7c): player dùng CHUNG context với engine để không tạo
+   * context thứ hai và để resume theo gesture đã có. Null khi graph
+   * chưa mở — wiring khi đó bỏ qua (giữ mute), không tự tạo context.
+   */
+  getContext(): AudioContext | null {
+    return this.ctx;
+  }
+
+  /**
+   * Đợt 192 P3 — nút master cho audio đảo: player nối gain của nó vào
+   * đây để audio đảo đi qua volume tổng + VU meter như mọi source
+   * khác (thay vì thẳng ra destination). Null khi graph chưa mở.
+   */
+  getMasterNode(): GainNode | null {
+    return this.master;
   }
 
   /**
@@ -296,6 +328,7 @@ export class AudioEngine {
     low: BiquadFilterNode;
     high: BiquadFilterNode;
     comp: DynamicsCompressorNode;
+    voice: VoiceChain | null;
   } | null {
     const hit = this.nodes.get(el);
     if (hit) return hit;
@@ -318,10 +351,29 @@ export class AudioEngine {
       comp.ratio.value = 1; // 1:1 = không nén (tắt)
       const gain = this.ctx.createGain();
       gain.gain.value = 1;
+      // Đợt 191 P1: voice chain chèn giữa compressor và gain (khớp thứ tự
+      // render: ... → compressor → reverb → voice → volume). Fail-soft:
+      // context thiếu createOscillator/createDelay (mock cũ) thì voice = null
+      // và graph chạy tiếp không có voice — không phá bass/treble/compressor.
+      let voice: VoiceChain | null = null;
+      try {
+        voice = createVoiceChain(this.ctx);
+        // Đợt 196 P1: nâng cấp pitch sang TD-PSOLA khi AudioWorklet khả dụng.
+        // Fire-and-forget: chain chạy bằng shifter 2-delay cũ cho tới khi
+        // upgrade xong (setParams áp lại); thất bại thì giữ đường cũ.
+        voice.upgradePitchToPsola().catch(() => undefined);
+      } catch {
+        voice = null;
+      }
       src.connect(low);
       low.connect(high);
       high.connect(comp);
-      comp.connect(gain);
+      if (voice) {
+        comp.connect(voice.input);
+        voice.output.connect(gain);
+      } else {
+        comp.connect(gain);
+      }
       gain.connect(this.master);
       // Từ đây engine nắm toàn quyền gain — element không tự áp volume/mute nữa
       // (tránh nhân đôi với GainNode).
@@ -330,7 +382,8 @@ export class AudioEngine {
       // ROUND44-Z2: giữ cả src (trước đây chỉ giữ 4 node hạ nguồn) để
       // releaseElement ngắt được toàn bộ chuỗi; nếu không, src vẫn nối
       // vào low và Map giữ element cũ sau khi pool drop nó.
-      const rec = { src, gain, low, high, comp };
+      // Đợt 191 P1: giữ thêm voice chain (dispose trong releaseElement).
+      const rec = { src, gain, low, high, comp, voice };
       this.nodes.set(el, rec);
       return rec;
     } catch {
@@ -360,6 +413,12 @@ export class AudioEngine {
     const rec = this.nodes.get(el);
     if (!rec) return false;
     this.nodes.delete(el);
+    // Đợt 191 P1: voice chain tự ngắt toàn bộ node của nó (kể cả oscillator).
+    try {
+      rec.voice?.dispose();
+    } catch {
+      /* mock / đã dispose — bỏ qua */
+    }
     for (const n of [rec.src, rec.low, rec.high, rec.comp, rec.gain]) {
       try {
         n.disconnect();
@@ -376,6 +435,7 @@ export class AudioEngine {
    * - Không có Web Audio: fallback gán el.volume trực tiếp (hành vi cũ).
    *
    * R1-076: đồng thời cập nhật tham số FX (bass/treble/compressor) từ s.fx.
+   * Đợt 191 P1: thêm voice (pitch/robot/telephone/echo) từ s.fx.voice.
    * Cùng 1 element chia sẻ cho nhiều clip → clip active đầu tiên thắng
    * (giới hạn kiến trúc đã ghi trong AUDIOPREVIEW_LIMITS.md).
    */
@@ -410,6 +470,13 @@ export class AudioEngine {
           t,
           GAIN_SMOOTHING_TC,
         );
+        // Đợt 191 P1: voice params — về bypass khi clip không có voice.
+        // setParams tự resolve mặc định render (robot 25/0.6, echo 200/0.5).
+        try {
+          n.voice?.setParams(fx?.voice ?? null, t);
+        } catch {
+          /* chain mock thiếu method — bỏ qua, giữ tiếng không voice */
+        }
       } else {
         // Fallback: chưa có graph (ensure() chưa gọi / thất bại).
         try {
