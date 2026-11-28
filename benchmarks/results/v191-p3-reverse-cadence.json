@@ -1,0 +1,1303 @@
+{
+ "schema": "v191-p3-reverse-cadence/1",
+ "runAt": "2026-11-25T09:00:00Z",
+ "note": "Headed chromium-1248, DISPLAY:93, port 4193, shared VM 1.5 CPU. Fixtures: sparse-gop-ramp191.mp4 (1280x720 30fps 10s 300f 1 keyframe 52MB), dense-gop-ramp191.mp4 (same content, -g 30, 10 keyframes 52.8MB), frames-noise.mp4 (90f 3s 1 keyframe 1.9MB). Cadence = ReverseCadenceTracker: distinct presented frames + inter-frame intervals. playheadDelta = timeEnd-timeStart (reverse: negative = moving backward).",
+ "runs": [
+  {
+   "label": "baseline-wc-sparse-12s",
+   "bundle": "index-BMVwYB-q.js",
+   "video": "sparse-gop-ramp191.mp4",
+   "load": {
+    "atStart": "2.10 2.57 2.07",
+    "beforeFwd": "2.73 2.69 2.11",
+    "beforeRev": "3.38 2.83 2.17",
+    "atEnd": "3.70 2.92 2.20"
+   },
+   "engineRequested": "default-webcodecs",
+   "reverse": {
+    "samples": 24,
+    "timeStart": 9.6,
+    "timeEnd": 0,
+    "wallSec": 12.184,
+    "drawDelta": 1,
+    "holdDelta": 163,
+    "maxHoldAgeSec": 7.133333333333333,
+    "graySeconds": [
+     4,
+     4,
+     4,
+     4,
+     4,
+     4,
+     4,
+     4,
+     4,
+     4,
+     4,
+     4,
+     4,
+     2,
+     2,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   "cadence": null,
+   "rafReverse": {
+    "n": 811,
+    "wallSec": 12.793,
+    "gapMean": 0.0157,
+    "gapP50": 0.0044,
+    "gapP95": 0.0729,
+    "gapP99": 0.0807,
+    "gapMax": 0.2629,
+    "countOver100ms": 3,
+    "lostSec": 0.172,
+    "predictedAdvanceSec": 12.563,
+    "predictedRate": 0.982,
+    "exclFirst": {
+     "countOver100ms": 3,
+     "lostSec": 0.172,
+     "predictedAdvanceSec": 12.551,
+     "predictedRate": 0.981
+    }
+   },
+   "perSeekReverse": {
+    "version": "per-seek-v2",
+    "count": 1,
+    "completed": 0,
+    "byStatus": {
+     "unresolved": 1
+    },
+    "byPhase": {
+     "reverse": 1
+    },
+    "byMechanism": {
+     "undetermined": 1
+    },
+    "seekLatencyMs": {
+     "median": null,
+     "p95": null,
+     "max": null
+    },
+    "drawLatencyMs": {
+     "median": null,
+     "p95": null,
+     "max": null
+    },
+    "bySegment": []
+   }
+  },
+  {
+   "label": "baseline-el-sparse-12s",
+   "bundle": "index-BMVwYB-q.js",
+   "video": "sparse-gop-ramp191.mp4",
+   "load": {
+    "atStart": "4.43 3.13 2.30",
+    "beforeFwd": "5.95 3.50 2.43",
+    "beforeRev": "6.51 3.66 2.49",
+    "atEnd": "7.30 3.98 2.61"
+   },
+   "engineRequested": "element",
+   "reverse": {
+    "samples": 24,
+    "timeStart": 9.6,
+    "timeEnd": 0,
+    "wallSec": 12.478,
+    "drawDelta": 1,
+    "holdDelta": 145,
+    "maxHoldAgeSec": 4.933333333333334,
+    "graySeconds": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3
+    ]
+   },
+   "cadence": null,
+   "rafReverse": {
+    "n": 593,
+    "wallSec": 13.033,
+    "gapMean": 0.0221,
+    "gapP50": 0.0063,
+    "gapP95": 0.0866,
+    "gapP99": 0.0953,
+    "gapMax": 0.1673,
+    "countOver100ms": 4,
+    "lostSec": 0.155,
+    "predictedAdvanceSec": 12.944,
+    "predictedRate": 0.993,
+    "exclFirst": {
+     "countOver100ms": 4,
+     "lostSec": 0.155,
+     "predictedAdvanceSec": 12.869,
+     "predictedRate": 0.987
+    }
+   },
+   "perSeekReverse": {
+    "version": "per-seek-v2",
+    "count": 1,
+    "completed": 0,
+    "byStatus": {
+     "unresolved": 1
+    },
+    "byPhase": {
+     "reverse": 1
+    },
+    "byMechanism": {
+     "undetermined": 1
+    },
+    "seekLatencyMs": {
+     "median": null,
+     "p95": null,
+     "max": null
+    },
+    "drawLatencyMs": {
+     "median": null,
+     "p95": null,
+     "max": null
+    },
+    "bySegment": []
+   }
+  },
+  {
+   "label": "fix-el-sparse-12s",
+   "bundle": "index-c6_4vdXB.js",
+   "video": "sparse-gop-ramp191.mp4",
+   "load": {
+    "atStart": "3.65 2.18 1.82",
+    "beforeFwd": "3.52 2.18 1.82",
+    "beforeRev": "4.84 2.50 1.93",
+    "atEnd": "4.50 2.50 1.94"
+   },
+   "engineRequested": "element",
+   "reverse": {
+    "samples": 24,
+    "timeStart": 10,
+    "timeEnd": 9.9,
+    "wallSec": 12.02,
+    "drawDelta": 2,
+    "holdDelta": 432,
+    "maxHoldAgeSec": 0,
+    "graySeconds": [
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     9,
+     9,
+     9,
+     9
+    ]
+   },
+   "cadence": {
+    "presentedFrames": 1,
+    "distinctFrames": 1,
+    "firstFrameLatencyMs": 10880.100000000093,
+    "wallSec": 0,
+    "presentedFps": 0,
+    "intervalMedianMs": null,
+    "intervalP90Ms": null,
+    "intervalMaxMs": null,
+    "stallsOver100Ms": 0,
+    "stallsOver250Ms": 0
+   },
+   "rafReverse": {
+    "n": 1314,
+    "wallSec": 12.537,
+    "gapMean": 0.0095,
+    "gapP50": 0.002,
+    "gapP95": 0.0538,
+    "gapP99": 0.0698,
+    "gapMax": 0.0931,
+    "countOver100ms": 0,
+    "lostSec": 0,
+    "predictedAdvanceSec": 12.535,
+    "predictedRate": 1,
+    "exclFirst": {
+     "countOver100ms": 0,
+     "lostSec": 0,
+     "predictedAdvanceSec": 12.519,
+     "predictedRate": 0.999
+    }
+   },
+   "perSeekReverse": {
+    "version": "per-seek-v2",
+    "count": 2,
+    "completed": 1,
+    "byStatus": {
+     "completed": 1,
+     "unresolved": 1
+    },
+    "byPhase": {
+     "reverse": 2
+    },
+    "byMechanism": {
+     "mixed": 1,
+     "undetermined": 1
+    },
+    "seekLatencyMs": {
+     "median": 10773,
+     "p95": 10773,
+     "max": 10773
+    },
+    "drawLatencyMs": {
+     "median": 7.5,
+     "p95": 7.5,
+     "max": 7.5
+    },
+    "bySegment": [
+     {
+      "segment": 0,
+      "targetRangeSec": [
+       0,
+       10
+      ],
+      "count": 1,
+      "medianSeekLatencyMs": 10773,
+      "medianDrawLatencyMs": 7.5,
+      "byMechanism": {
+       "mixed": 1
+      }
+     }
+    ]
+   }
+  },
+  {
+   "label": "fix-wc-sparse-30s",
+   "bundle": "index-DZ5dYfL1.js",
+   "video": "sparse-gop-ramp191.mp4",
+   "load": {
+    "atStart": "1.23 1.11 1.46",
+    "beforeFwd": "1.29 1.12 1.46",
+    "beforeRev": "2.02 1.28 1.51",
+    "atEnd": "5.31 2.18 1.81"
+   },
+   "engineRequested": "default-webcodecs",
+   "reverse": {
+    "samples": 60,
+    "timeStart": 10,
+    "timeEnd": 8.3,
+    "wallSec": 32.608,
+    "drawDelta": 1,
+    "holdDelta": 436,
+    "maxHoldAgeSec": 1.5666666666666664,
+    "graySeconds": [
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8
+    ]
+   },
+   "cadence": {
+    "presentedFrames": 2,
+    "distinctFrames": 2,
+    "firstFrameLatencyMs": null,
+    "wallSec": 4.795,
+    "presentedFps": 0.42,
+    "intervalMedianMs": 4795.5,
+    "intervalP90Ms": 4795.5,
+    "intervalMaxMs": 4795.5,
+    "stallsOver100Ms": 1,
+    "stallsOver250Ms": 1
+   },
+   "rafReverse": {
+    "n": 1229,
+    "wallSec": 33.273,
+    "gapMean": 0.0281,
+    "gapP50": 0.0125,
+    "gapP95": 0.0809,
+    "gapP99": 0.1065,
+    "gapMax": 1.3797,
+    "countOver100ms": 15,
+    "lostSec": 2.148,
+    "predictedAdvanceSec": 32.439,
+    "predictedRate": 0.975,
+    "exclFirst": {
+     "countOver100ms": 14,
+     "lostSec": 0.869,
+     "predictedAdvanceSec": 32.339,
+     "predictedRate": 0.972
+    }
+   }
+  },
+  {
+   "label": "fix-wc-dense-12s-deadlock",
+   "bundle": "index-c6_4vdXB.js",
+   "video": "dense-gop-ramp191.mp4",
+   "load": {
+    "atStart": "2.62 2.31 1.91",
+    "beforeFwd": "2.97 2.38 1.94",
+    "beforeRev": "2.51 2.31 1.92",
+    "atEnd": "2.29 2.26 1.91"
+   },
+   "engineRequested": "default-webcodecs",
+   "reverse": {
+    "samples": 24,
+    "timeStart": 10,
+    "timeEnd": 9.9,
+    "wallSec": 11.989,
+    "drawDelta": 95,
+    "holdDelta": 84,
+    "maxHoldAgeSec": 0,
+    "graySeconds": [
+     4,
+     4,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9
+    ]
+   },
+   "cadence": {
+    "presentedFrames": 2,
+    "distinctFrames": 2,
+    "firstFrameLatencyMs": 1341.7000000001863,
+    "wallSec": 1.978,
+    "presentedFps": 1.01,
+    "intervalMedianMs": 1977.6,
+    "intervalP90Ms": 1977.6,
+    "intervalMaxMs": 1977.6,
+    "stallsOver100Ms": 1,
+    "stallsOver250Ms": 1
+   },
+   "rafReverse": {
+    "n": 1686,
+    "wallSec": 12.506,
+    "gapMean": 0.0074,
+    "gapP50": 0.0071,
+    "gapP95": 0.0174,
+    "gapP99": 0.0706,
+    "gapMax": 0.0899,
+    "countOver100ms": 0,
+    "lostSec": 0,
+    "predictedAdvanceSec": 12.508,
+    "predictedRate": 1,
+    "exclFirst": {
+     "countOver100ms": 0,
+     "lostSec": 0,
+     "predictedAdvanceSec": 12.491,
+     "predictedRate": 0.999
+    }
+   },
+   "perSeekReverse": {
+    "version": "per-seek-v2",
+    "count": 2,
+    "completed": 2,
+    "byStatus": {
+     "completed": 2
+    },
+    "byPhase": {
+     "reverse": 2
+    },
+    "byMechanism": {
+     "mixed": 2
+    },
+    "seekLatencyMs": {
+     "median": 1592.6500000001397,
+     "p95": 1910.6000000000931,
+     "max": 1910.6000000000931
+    },
+    "drawLatencyMs": {
+     "median": 3.0999999998603016,
+     "p95": 6.199999999720603,
+     "max": 6.199999999720603
+    },
+    "bySegment": [
+     {
+      "segment": 9,
+      "targetRangeSec": [
+       9,
+       10
+      ],
+      "count": 2,
+      "medianSeekLatencyMs": 1592.6500000001397,
+      "medianDrawLatencyMs": 3.0999999998603016,
+      "byMechanism": {
+       "mixed": 2
+      }
+     }
+    ]
+   }
+  },
+  {
+   "label": "fix2-wc-dense-12s-deadlock-fixed",
+   "bundle": "index-DAtiN5A1.js",
+   "video": "dense-gop-ramp191.mp4",
+   "load": {
+    "atStart": "2.27 2.19 1.92",
+    "beforeFwd": "2.17 2.17 1.92",
+    "beforeRev": "1.99 2.14 1.90",
+    "atEnd": "1.63 2.05 1.88"
+   },
+   "engineRequested": "default-webcodecs",
+   "reverse": {
+    "samples": 24,
+    "timeStart": 10,
+    "timeEnd": 6.6,
+    "wallSec": 12.981,
+    "drawDelta": 11,
+    "holdDelta": 160,
+    "maxHoldAgeSec": 3.0666666666666673,
+    "graySeconds": [
+     4,
+     4,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     8,
+     7,
+     7,
+     7,
+     7,
+     7
+    ]
+   },
+   "cadence": {
+    "presentedFrames": 6,
+    "distinctFrames": 6,
+    "firstFrameLatencyMs": 1561.9000000003725,
+    "wallSec": 10.812,
+    "presentedFps": 0.55,
+    "intervalMedianMs": 2339.1,
+    "intervalP90Ms": 3428.7,
+    "intervalMaxMs": 3428.7,
+    "stallsOver100Ms": 5,
+    "stallsOver250Ms": 5
+   },
+   "rafReverse": {
+    "n": 610,
+    "wallSec": 13.614,
+    "gapMean": 0.0223,
+    "gapP50": 0.0057,
+    "gapP95": 0.0864,
+    "gapP99": 0.1149,
+    "gapMax": 0.2437,
+    "countOver100ms": 10,
+    "lostSec": 0.506,
+    "predictedAdvanceSec": 13.075,
+    "predictedRate": 0.96,
+    "exclFirst": {
+     "countOver100ms": 10,
+     "lostSec": 0.506,
+     "predictedAdvanceSec": 13.029,
+     "predictedRate": 0.957
+    }
+   },
+   "perSeekReverse": {
+    "version": "per-seek-v2",
+    "count": 7,
+    "completed": 6,
+    "byStatus": {
+     "completed": 6,
+     "unresolved": 1
+    },
+    "byPhase": {
+     "reverse": 7
+    },
+    "byMechanism": {
+     "mixed": 6,
+     "undetermined": 1
+    },
+    "seekLatencyMs": {
+     "median": 2152.3499999998603,
+     "p95": 2793.3000000002794,
+     "max": 2793.3000000002794
+    },
+    "drawLatencyMs": {
+     "median": 5.25,
+     "p95": 67,
+     "max": 67
+    },
+    "bySegment": [
+     {
+      "segment": 7,
+      "targetRangeSec": [
+       7,
+       8
+      ],
+      "count": 1,
+      "medianSeekLatencyMs": 729.7000000001863,
+      "medianDrawLatencyMs": 67,
+      "byMechanism": {
+       "mixed": 1
+      }
+     },
+     {
+      "segment": 9,
+      "targetRangeSec": [
+       9,
+       10
+      ],
+      "count": 5,
+      "medianSeekLatencyMs": 2216,
+      "medianDrawLatencyMs": 2.1000000000931323,
+      "byMechanism": {
+       "mixed": 5
+      }
+     }
+    ]
+   }
+  },
+  {
+   "label": "fix-wc-noise-1.9MB-12s",
+   "bundle": "index-DAtiN5A1.js",
+   "video": "frames-noise.mp4",
+   "load": {
+    "atStart": "4.37 2.65 2.10",
+    "beforeFwd": "5.54 2.92 2.19",
+    "beforeRev": "6.61 3.24 2.30",
+    "atEnd": "6.87 3.41 2.37"
+   },
+   "engineRequested": "default-webcodecs",
+   "reverse": {
+    "samples": 24,
+    "timeStart": 2.9,
+    "timeEnd": 0,
+    "wallSec": 12.378,
+    "drawDelta": 7,
+    "holdDelta": 68,
+    "maxHoldAgeSec": 0.03333333333333366,
+    "graySeconds": [
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15
+    ]
+   },
+   "cadence": {
+    "presentedFrames": 3,
+    "distinctFrames": 3,
+    "firstFrameLatencyMs": 106.20000000018626,
+    "wallSec": 3.772,
+    "presentedFps": 0.8,
+    "intervalMedianMs": 1974.9,
+    "intervalP90Ms": 1974.9,
+    "intervalMaxMs": 1974.9,
+    "stallsOver100Ms": 2,
+    "stallsOver250Ms": 2
+   },
+   "rafReverse": {
+    "n": 229,
+    "wallSec": 12.894,
+    "gapMean": 0.0372,
+    "gapP50": 0.0145,
+    "gapP95": 0.0846,
+    "gapP99": 0.1178,
+    "gapMax": 1.5172,
+    "countOver100ms": 6,
+    "lostSec": 1.523,
+    "predictedAdvanceSec": 6.987,
+    "predictedRate": 0.542,
+    "exclFirst": {
+     "countOver100ms": 5,
+     "lostSec": 0.106,
+     "predictedAdvanceSec": 6.887,
+     "predictedRate": 0.534
+    }
+   }
+  },
+  {
+   "label": "fix3-wc-sparse-12s",
+   "bundle": "index-FB5F_ZL6.js",
+   "video": "sparse-gop-ramp191.mp4",
+   "load": {
+    "atStart": "9.60 4.98 3.32",
+    "beforeFwd": "10.35 5.22 3.40",
+    "beforeRev": "10.68 5.46 3.50",
+    "atEnd": "11.57 5.82 3.64"
+   },
+   "engineRequested": "default-webcodecs",
+   "reverse": {
+    "samples": 24,
+    "timeStart": 9.9,
+    "timeEnd": 9.9,
+    "wallSec": 14,
+    "drawDelta": 1,
+    "holdDelta": 157,
+    "maxHoldAgeSec": 0,
+    "graySeconds": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   "cadence": null,
+   "rafReverse": {
+    "n": 316,
+    "wallSec": 14.709,
+    "gapMean": 0.0511,
+    "gapP50": 0.0227,
+    "gapP95": 0.1104,
+    "gapP99": 0.221,
+    "gapMax": 1.4817,
+    "countOver100ms": 25,
+    "lostSec": 3.181,
+    "predictedAdvanceSec": 12.972,
+    "predictedRate": 0.882,
+    "exclFirst": {
+     "countOver100ms": 24,
+     "lostSec": 1.799,
+     "predictedAdvanceSec": 12.872,
+     "predictedRate": 0.875
+    }
+   }
+  },
+  {
+   "label": "fix3-wc-sparse-30s",
+   "bundle": "index-FB5F_ZL6.js",
+   "video": "sparse-gop-ramp191.mp4",
+   "load": {
+    "atStart": "9.31 5.91 3.75",
+    "beforeFwd": "10.01 6.11 3.83",
+    "beforeRev": "10.68 6.39 3.94",
+    "atEnd": "10.85 6.90 4.21"
+   },
+   "engineRequested": "default-webcodecs",
+   "reverse": {
+    "samples": 60,
+    "timeStart": 10,
+    "timeEnd": 0,
+    "wallSec": 32.411,
+    "drawDelta": 2,
+    "holdDelta": 283,
+    "maxHoldAgeSec": 4.866666666666667,
+    "graySeconds": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     4,
+     4,
+     3,
+     3,
+     2,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   "cadence": {
+    "presentedFrames": 43,
+    "distinctFrames": 43,
+    "firstFrameLatencyMs": 20223.299999999814,
+    "wallSec": 4.899,
+    "presentedFps": 8.78,
+    "intervalMedianMs": 103.8,
+    "intervalP90Ms": 184.3,
+    "intervalMaxMs": 281.3,
+    "stallsOver100Ms": 25,
+    "stallsOver250Ms": 1
+   },
+   "rafReverse": {
+    "n": 1232,
+    "wallSec": 33.099,
+    "gapMean": 0.0269,
+    "gapP50": 0.009,
+    "gapP95": 0.0924,
+    "gapP99": 0.107,
+    "gapMax": 0.4123,
+    "countOver100ms": 30,
+    "lostSec": 0.858,
+    "predictedAdvanceSec": 32.24,
+    "predictedRate": 0.974,
+    "exclFirst": {
+     "countOver100ms": 30,
+     "lostSec": 0.858,
+     "predictedAdvanceSec": 32.221,
+     "predictedRate": 0.973
+    }
+   },
+   "perSeekReverse": {
+    "version": "per-seek-v2",
+    "count": 2,
+    "completed": 1,
+    "byStatus": {
+     "seeked-no-draw": 1,
+     "completed": 1
+    },
+    "byPhase": {
+     "reverse": 2
+    },
+    "byMechanism": {
+     "undetermined": 1,
+     "mixed": 1
+    },
+    "seekLatencyMs": {
+     "median": 422.20000000018626,
+     "p95": 422.20000000018626,
+     "max": 422.20000000018626
+    },
+    "drawLatencyMs": {
+     "median": 85.79999999981374,
+     "p95": 85.79999999981374,
+     "max": 85.79999999981374
+    },
+    "bySegment": [
+     {
+      "segment": 0,
+      "targetRangeSec": [
+       0,
+       1
+      ],
+      "count": 1,
+      "medianSeekLatencyMs": 422.20000000018626,
+      "medianDrawLatencyMs": 85.79999999981374,
+      "byMechanism": {
+       "mixed": 1
+      }
+     }
+    ]
+   }
+  },
+  {
+   "label": "fix3-wc-dense-12s",
+   "bundle": "index-FB5F_ZL6.js",
+   "video": "dense-gop-ramp191.mp4",
+   "load": {
+    "atStart": "6.38 6.33 4.19",
+    "beforeFwd": "8.33 6.77 4.36",
+    "beforeRev": "8.16 6.79 4.39",
+    "atEnd": "6.97 6.58 4.35"
+   },
+   "engineRequested": "default-webcodecs",
+   "reverse": {
+    "samples": 24,
+    "timeStart": 9.9,
+    "timeEnd": 8.9,
+    "wallSec": 12.605,
+    "drawDelta": 6,
+    "holdDelta": 159,
+    "maxHoldAgeSec": 0.10000000000000142,
+    "graySeconds": [
+     2,
+     2,
+     2,
+     2,
+     2,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     8
+    ]
+   },
+   "cadence": {
+    "presentedFrames": 15,
+    "distinctFrames": 15,
+    "firstFrameLatencyMs": 2981.7000000001863,
+    "wallSec": 10.227,
+    "presentedFps": 1.47,
+    "intervalMedianMs": 98,
+    "intervalP90Ms": 3523.7,
+    "intervalMaxMs": 4187.9,
+    "stallsOver100Ms": 5,
+    "stallsOver250Ms": 4
+   },
+   "rafReverse": {
+    "n": 541,
+    "wallSec": 13.22,
+    "gapMean": 0.0245,
+    "gapP50": 0.0057,
+    "gapP95": 0.094,
+    "gapP99": 0.1109,
+    "gapMax": 0.179,
+    "countOver100ms": 16,
+    "lostSec": 0.24,
+    "predictedAdvanceSec": 13.038,
+    "predictedRate": 0.986,
+    "exclFirst": {
+     "countOver100ms": 16,
+     "lostSec": 0.24,
+     "predictedAdvanceSec": 12.961,
+     "predictedRate": 0.98
+    }
+   },
+   "perSeekReverse": {
+    "version": "per-seek-v2",
+    "count": 5,
+    "completed": 4,
+    "byStatus": {
+     "completed": 4,
+     "unresolved": 1
+    },
+    "byPhase": {
+     "reverse": 5
+    },
+    "byMechanism": {
+     "mixed": 4,
+     "undetermined": 1
+    },
+    "seekLatencyMs": {
+     "median": 3043.0499999998137,
+     "p95": 4003.899999999441,
+     "max": 4003.899999999441
+    },
+    "drawLatencyMs": {
+     "median": 3.4499999997206032,
+     "p95": 5.6000000005587935,
+     "max": 5.6000000005587935
+    },
+    "bySegment": [
+     {
+      "segment": 9,
+      "targetRangeSec": [
+       9,
+       10
+      ],
+      "count": 4,
+      "medianSeekLatencyMs": 3043.0499999998137,
+      "medianDrawLatencyMs": 3.4499999997206032,
+      "byMechanism": {
+       "mixed": 4
+      }
+     }
+    ]
+   }
+  },
+  {
+   "label": "fix3-wc-dense-12s-repeat",
+   "bundle": "index-FB5F_ZL6.js",
+   "video": "dense-gop-ramp191.mp4",
+   "load": {
+    "atStart": "5.18 6.14 4.29",
+    "beforeFwd": "6.09 6.30 4.36",
+    "beforeRev": "5.38 6.14 4.33",
+    "atEnd": "4.65 5.94 4.29"
+   },
+   "engineRequested": "default-webcodecs",
+   "reverse": {
+    "samples": 24,
+    "timeStart": 9.9,
+    "timeEnd": 9.6,
+    "wallSec": 12.928,
+    "drawDelta": 5,
+    "holdDelta": 161,
+    "maxHoldAgeSec": 0.10000000000000142,
+    "graySeconds": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9,
+     9
+    ]
+   },
+   "cadence": {
+    "presentedFrames": 3,
+    "distinctFrames": 3,
+    "firstFrameLatencyMs": 4125.5,
+    "wallSec": 6.977,
+    "presentedFps": 0.43,
+    "intervalMedianMs": 4104,
+    "intervalP90Ms": 4104,
+    "intervalMaxMs": 4104,
+    "stallsOver100Ms": 2,
+    "stallsOver250Ms": 2
+   },
+   "rafReverse": {
+    "n": 507,
+    "wallSec": 13.774,
+    "gapMean": 0.027,
+    "gapP50": 0.0055,
+    "gapP95": 0.0993,
+    "gapP99": 0.1718,
+    "gapMax": 0.26,
+    "countOver100ms": 25,
+    "lostSec": 1.087,
+    "predictedAdvanceSec": 12.589,
+    "predictedRate": 0.914,
+    "exclFirst": {
+     "countOver100ms": 25,
+     "lostSec": 1.087,
+     "predictedAdvanceSec": 12.574,
+     "predictedRate": 0.913
+    }
+   },
+   "perSeekReverse": {
+    "version": "per-seek-v2",
+    "count": 4,
+    "completed": 3,
+    "byStatus": {
+     "completed": 3,
+     "unresolved": 1
+    },
+    "byPhase": {
+     "reverse": 4
+    },
+    "byMechanism": {
+     "mixed": 3,
+     "undetermined": 1
+    },
+    "seekLatencyMs": {
+     "median": 3864,
+     "p95": 3917.2999999998137,
+     "max": 3917.2999999998137
+    },
+    "drawLatencyMs": {
+     "median": 9.900000000372529,
+     "p95": 73.29999999981374,
+     "max": 73.29999999981374
+    },
+    "bySegment": [
+     {
+      "segment": 9,
+      "targetRangeSec": [
+       9,
+       10
+      ],
+      "count": 3,
+      "medianSeekLatencyMs": 3864,
+      "medianDrawLatencyMs": 9.900000000372529,
+      "byMechanism": {
+       "mixed": 3
+      }
+     }
+    ]
+   }
+  },
+  {
+   "label": "fix3-el-sparse-12s",
+   "bundle": "index-FB5F_ZL6.js",
+   "video": "sparse-gop-ramp191.mp4",
+   "load": {
+    "atStart": "4.11 5.62 4.26",
+    "beforeFwd": "4.02 5.57 4.26",
+    "beforeRev": "4.34 5.61 4.28",
+    "atEnd": "3.38 5.34 4.21"
+   },
+   "engineRequested": "element",
+   "reverse": {
+    "samples": 24,
+    "timeStart": 10,
+    "timeEnd": 10,
+    "wallSec": 12.303,
+    "drawDelta": 1,
+    "holdDelta": 358,
+    "maxHoldAgeSec": 0,
+    "graySeconds": [
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ]
+   },
+   "cadence": null,
+   "rafReverse": {
+    "n": 1082,
+    "wallSec": 12.899,
+    "gapMean": 0.0119,
+    "gapP50": 0.0022,
+    "gapP95": 0.0672,
+    "gapP99": 0.0774,
+    "gapMax": 0.0972,
+    "countOver100ms": 0,
+    "lostSec": 0,
+    "predictedAdvanceSec": 12.899,
+    "predictedRate": 1,
+    "exclFirst": {
+     "countOver100ms": 0,
+     "lostSec": 0,
+     "predictedAdvanceSec": 12.885,
+     "predictedRate": 0.999
+    }
+   },
+   "perSeekReverse": {
+    "version": "per-seek-v2",
+    "count": 1,
+    "completed": 0,
+    "byStatus": {
+     "unresolved": 1
+    },
+    "byPhase": {
+     "reverse": 1
+    },
+    "byMechanism": {
+     "undetermined": 1
+    },
+    "seekLatencyMs": {
+     "median": null,
+     "p95": null,
+     "max": null
+    },
+    "drawLatencyMs": {
+     "median": null,
+     "p95": null,
+     "max": null
+    },
+    "bySegment": []
+   }
+  }
+ ]
+}

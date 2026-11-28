@@ -526,6 +526,9 @@ export async function rehydrateMediaItems(
       duration: c.manifest.duration ?? 0,
       width: c.manifest.width,
       height: c.manifest.height,
+      // Đợt 194 P2 — fps nguồn lưu bền trong manifest (không probe lại
+      // lúc reload — probe rVFC cần phát video ~0,5 s mỗi item).
+      fps: c.manifest.fps,
       thumbnail: c.manifest.thumbnail,
       file,
       // Đợt 75 C6 — probe lại codec (xem dep probeUnsupportedCodec ở

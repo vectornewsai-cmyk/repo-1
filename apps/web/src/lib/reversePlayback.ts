@@ -410,3 +410,91 @@ export function resolveReverseEngineBadge(
     missingApi: reverseEngineMissingApi(detailed.reason),
   };
 }
+
+// Đợt 191 P3 — có nên đóng băng playhead ngược 1 tick vì frame ngược
+// chưa sẵn sàng không? CHỈ phát ngược TOÀN CỤC (clip reverse lẻ không
+// được đóng băng playhead chung — timeline còn clip khác đang chạy).
+//
+// Bối cảnh đo được (baseline headed đợt 191, fixture 300 frame/1 GOP):
+// playhead ngược chạy realtime 9,6 → 0 trong 12,8 s nhưng chỉ 1 frame
+// MỚI được vẽ (0,08 fps, hold 163 tick, tuổi giữ 7,13 s) — hình đóng
+// băng rồi nhảy, vì playhead không chờ frame. Gate giữ R2 (đợt 90) loại
+// trừ reverse (seekSkipRender86N3 trả false khi reversePlayback) nên
+// playhead ngược chưa bao giờ được giữ. Luật mới, theo engine:
+// - element: giữ khi seek stepping còn bay ở tick trước (không seek
+//   nào hoàn tất thì không có frame mới để vẽ; playhead bước tiếp chỉ
+//   làm lag tăng). Tick seek vừa xong → nhả, playhead bước 1 frame.
+// - webcodecs: giữ khi tick trước KHÔNG vẽ frame nào cho target hiện
+//   tại (cửa sổ đang decode / biên cửa sổ chưa xong). Frame trong cache
+//   thì vẽ đều nên không giữ — tốc độ realtime được giữ nguyên khi
+//   decode kịp. LƯU Ý (đợt 191 P3, sửa sau đo dense): "có vẽ" KHÔNG
+//   đồng nghĩa "frame MỚI" — playhead đang giữ thì frame đúng target
+//   vẫn là frame cũ, vẽ lại nó vẫn chứng minh decoder kịp; đòi frame
+//   mới trong lúc playhead đứng yên là deadlock tự duy trì (đo dense:
+//   95 draw mà playhead 10 → 9,9 vì cứ chờ frame mới không bao giờ tới).
+// - Không có clip video stepping active (khoảng trống timeline) →
+//   không giữ (tránh đóng băng vĩnh viễn khi không có frame nào để chờ).
+// Trần tường + latch nhả do shouldHoldPlayheadWhileSeeking (R2) lo:
+// helper này chỉ trả tín hiệu từng tick, không giữ trạng thái.
+export interface ReversePlayheadHoldInput {
+  /** Phát ngược toàn cục (không phải clip reverse lẻ). */
+  globalReverse: boolean;
+  /** Engine đang chọn (resolveReverseEngine). */
+  engine: ReverseEngine;
+  /** Tick trước có element video stepping đang seeking không. */
+  steppingSeekingPrevTick: boolean;
+  /** Tick trước có vẽ frame ngược nào cho target hiện tại không. */
+  drewFramePrevTick: boolean;
+  /** Có clip video stepping đang active ở playhead không. */
+  hasSteppingVideo: boolean;
+}
+
+// Đợt 192 P3 — target seek thật khi stepping ngược (S6b, F-191-P4-1).
+//
+// Bối cảnh đo được (headed Chromium 1254, probe đợt 192 — xem
+// docs/PHASE9_ROUND192_P3_REVERSE_SMOOTH_LIMITS.md §1): preview seek
+// element tới đúng `sourceTimeAt` (biên lưới frame, t = k/30) thì trình
+// duyệt hiện frame floor(s·30) = N−k, trong khi render frame k cần
+// nguồn N−1−k → lệch hệ thống +1 frame ở mọi biên k>0 (MAD 25,5–33,2),
+// chỉ k=0 khớp. Nguyên nhân: "frame chứa mốc s" tại s đúng bằng đầu
+// frame là frame BẮT ĐẦU tại s, còn render frame k là frame KẾT THÚC
+// tại s. Sửa: seek lùi 1 ms khỏi biên — frame chứa (s − 1 ms) chính là
+// frame render cần, và vẫn đúng ở mọi vị trí lệch lưới (chỉ sai trong
+// 1 ms ngay sau đầu frame, ~3% khoảng frame — xem probe).
+// Vì sao 1 ms chứ không phải nửa frame (gợi ý đầu của P4): probe phân
+// biệt cho thấy target lệch lưới ở nửa ĐẦU khoảng frame mà lùi nửa
+// frame thì hiện sai −1 frame (2/2 case), còn lùi 1 ms thì đúng cả 2;
+// Chrome báo currentTime đúng bằng giá trị seek yêu cầu (không snap
+// về đầu frame) nên 1 ms đủ xa biên để decoder chọn đúng frame.
+// Áp cho CẢ hai nhánh stepping ngược (toàn cục + clip.reverse) và cho
+// đường WebCodecs (sampleIndexForPresentationTime dùng <= nên mốc
+// s − 1 ms cũng trả N−1−k). Clamp về 0: mốc 0 là frame đầu, không có
+// frame "trước 0" để lùi vào.
+export const REVERSE_SEEK_BACKOFF_SEC = 0.001;
+
+/** Target seek thật khi stepping ngược: lùi 1 ms khỏi biên lưới frame. */
+export function reverseSeekTarget(target: number): number {
+  if (!(target > 0)) return 0;
+  return Math.max(0, target - REVERSE_SEEK_BACKOFF_SEC);
+}
+
+// Đợt 193 P3 — target seek thật khi SCRUB ngược (pause), tách riêng
+// khỏi stepping S6b (đợt 192) nhưng cùng 1 ms: scrub tại biên ngược
+// cũng hiện N−k (đo headed đợt 193: 0/4 biên đúng, xem LIMITS §1),
+// vì đường pause/seek (Seeker trong seek.ts) seek tới đúng target.
+// Scrub xuôi giữ nguyên target (không lùi). CHỈ áp cho VIDEO — audio
+// không có frame để lệch. Kèm seekElement { reverseScrub: true } để
+// snapToFrame không nuốt mất 1 ms (xem seek.ts); helper này chỉ quyết
+// định theo cờ reverse, executor ở preview.tsx kiểm tra tagName.
+export function reverseScrubSeekTarget(target: number, reverse: boolean): number {
+  return reverse ? reverseSeekTarget(target) : target;
+}
+
+export function shouldHoldReversePlayhead(
+  input: ReversePlayheadHoldInput,
+): boolean {
+  if (!input.globalReverse) return false;
+  if (!input.hasSteppingVideo) return false;
+  if (input.engine === "element") return input.steppingSeekingPrevTick;
+  return !input.drewFramePrevTick;
+}

@@ -869,7 +869,29 @@ export class ReversePreviewController {
   enableDecodeAheadFromGate(
     input: DecodeAheadGateInput,
   ): DecodeAheadDecision {
-    const decision = resolveDecodeAheadGate(input);
+    let decision = resolveDecodeAheadGate(input);
+    // Đợt 192 P3 — override đo console-only: harness đặt
+    // window.__vcutDecodeAheadForce = true TRƯỚC khi controller đo
+    // cửa sổ đầu thì ép verdict thành allowed-experiment bất chấp cổng
+    // (để A/B đo prefetch OFF vs ON trên cùng fixture). Mặc định tắt
+    // (flag không đặt = cổng chạy như cũ); KHÔNG đổi toggle (mặc định
+    // TẮT), KHÔNG đổi module cổng chung reversePreviewGate.ts; decision
+    // ghi rõ lý do "force192P3" để UI/badge không nhầm là cổng mở thật.
+    const forced =
+      typeof window !== "undefined" &&
+      (window as unknown as Record<string, unknown>)
+        .__vcutDecodeAheadForce === true;
+    if (forced && decision.verdict !== "allowed-experiment") {
+      decision = {
+        ...decision,
+        verdict: "allowed-experiment",
+        warnings: [
+          ...decision.warnings,
+          "Đợt 192 P3: ép bật prefetch bằng __vcutDecodeAheadForce (chỉ đo, không phải cổng mở thật)",
+        ],
+        warningKeys: [...decision.warningKeys, "reverseGate.force192P3"],
+      };
+    }
     if (decision.verdict === "allowed-experiment") {
       this.decodeAheadEnabled = true;
       this.decodeAheadWarnings = [...decision.warnings];
@@ -1555,7 +1577,32 @@ export class ReversePreviewController {
         }
       }
       if (this.gopActive && this.track) {
-        return this.ensureWindowViaGop(timeSec, transientGops);
+        const gopOk = await this.ensureWindowViaGop(timeSec, transientGops);
+        if (gopOk) return true;
+        // Đợt 191 P3 — cửa sổ GOP hỏng thì RƠI VỀ full-file (hợp đồng
+        // "lỗi GOP rơi về full-file" ghi ở đầu ensureWindowForTime:
+        // T3 chỉ cam kết mode gop-range, không cam kết từng cửa sổ
+        // fetch/decode được). Trước đợt này, false ở đây trả thẳng về
+        // caller nên controller kẹt vĩnh viễn ở gop-range với 0 hit
+        // (đo thật: file blob 52 MiB, 1 GOP/300 frame, gopActive=true,
+        // hits=0 sau 12 s; Range trên blob: URL trả 206 đúng nên lỗi
+        // không ở tầng fetch — xem LIMITS P3 §2.3). Latch
+        // gopActive=false để không thử lại GOP mỗi cửa sổ; gopMode tự
+        // thành "full-file-fallback" (getter có sẵn). Xóa cờ unsupported
+        // nếu chính lần gọi này vừa đặt (decode-0 ở đường GOP dùng byte
+        // segment — không chứng minh được đường full-file cũng hỏng;
+        // frameAt chỉ gọi ensureWindow khi unsupported=false nên cờ này
+        // ở đây chỉ có thể do lần gọi này đặt; nếu full-file cũng 0
+        // frame thì nhánh dưới đặt lại unsupported như cũ).
+        this.gopActive = false;
+        this.unsupported = false;
+        this.gopFallbackReasonValue = trKey(
+          this.gopI18nLookup,
+          "gop.controller.windowFailed",
+          {},
+          "gop-window-failed: cửa sổ GOP fetch/decode hỏng, rơi về full-file",
+        );
+        // Rơi xuống nhánh load() bên dưới, không return false.
       }
       if (!(await this.load())) return false;
       const track = this.track as Mp4VideoTrack;

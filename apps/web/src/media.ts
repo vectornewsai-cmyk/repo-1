@@ -88,6 +88,24 @@ export interface MediaItem {
   duration: number;
   width?: number;
   height?: number;
+  /**
+   * Đợt 194 P2 — fps nguồn của video (frame/giây, đo lúc probe import
+   * bằng requestVideoFrameCallback: presentedFrames/mediaTime, snap về
+   * tốc độ chuẩn gần nhất — xem probeVideoFps/snapVideoFpsEstimate).
+   * Dùng để chọn đúng field cho bob luân phiên ở mode 1 (yadif mode=1
+   * tăng gấp đôi fps: field = floor(thời gian nguồn đã tiêu × 2×fps)
+   * % 2 — xem deintBobFieldForConsumedTime trong lib/enhancePreview.ts).
+   * undefined = chưa đo được (ảnh/audio, video quá ngắn <0,4 s, probe
+   * lỗi, trình duyệt không có rVFC) → bob giữ top field như cũ.
+   * Lưu bền qua manifest (AssetManifest.fps — xem assetStore.ts) nên
+   * sống qua reload qua rehydrate36S5; media mẫu nay mang fps: 30
+   * (SAMPLE_MEDIA_FPS trong sample.ts, đợt 196 P2 — đo thật đợt 195
+   * P2 §3: ffprobe 30/1 + probeVideoFps headed 30/29,97/30); clip pack
+   * ghi bằng recordPackMedia đi qua fileToMediaItem nên probe đo lại
+   * lúc import. 5 mp4 public cũng vào qua importFiles → probe đo lại,
+   * không có code app nào dựng MediaItem cho chúng nên không ghi cứng.
+   */
+  fps?: number;
   /** Ảnh thumbnail dataURL (nếu tạo được). */
   thumbnail?: string;
   /** File gốc — dùng để upload lên bridge server khi xuất MP4 (P0-01). */
@@ -140,16 +158,176 @@ function kindOf(file: File): MediaKind | null {
   return null;
 }
 
-function probeVideo(url: string): Promise<{ duration: number; width: number; height: number }> {
+/** Kiểu tối thiểu của metadata requestVideoFrameCallback (duck-typed như
+ * rvfcSupported trong lib/previewEngine.ts — không tin mù vào lib DOM). */
+export interface VideoFrameCallbackSample {
+  presentedFrames: number;
+  mediaTime: number;
+}
+
+type RvfcLike = (
+  cb: (now: number, metadata: VideoFrameCallbackSample) => void,
+) => number;
+
+/** Đợt 194 P2 — các tốc độ khung hình chuẩn để snap ước lượng fps đo
+ * được (rVFC trên ~0,5 s chỉ cho ±1–2 fps nên không snap sẽ lưu
+ * 29,3/30,7 lung tung; snap trong ±0,6 fps, ngoài thì giữ ước lượng
+ * làm tròn 2 chữ số — VFR hoặc fps lạ vẫn có số dùng được). */
+export const VIDEO_FPS_STANDARD_RATES = [
+  23.976, 24, 25, 29.97, 30, 47.952, 48, 50, 59.94, 60, 119.88, 120,
+];
+
+/** Snap ước lượng fps về tốc độ chuẩn GẦN NHẤT (sai ≤ 0,6); không hợp
+ * lệ (NaN/≤0/>240) → undefined. Lấy gần nhất chứ không lấy đầu tiên
+ * trong dung sai — 29.97 và 30 chỉ cách nhau 0,03 nên cửa sổ ±0,6 của
+ * hai tốc độ này chồng nhau (đo 30,0 mà lấy đầu tiên sẽ nhầm 29.97). */
+export function snapVideoFpsEstimate(fps: number): number | undefined {
+  if (typeof fps !== "number" || !Number.isFinite(fps) || fps <= 0 || fps > 240) {
+    return undefined;
+  }
+  let best: number | undefined;
+  let bestDist = Number.POSITIVE_INFINITY;
+  for (const r of VIDEO_FPS_STANDARD_RATES) {
+    const d = Math.abs(fps - r);
+    if (d < bestDist) {
+      bestDist = d;
+      best = r;
+    }
+  }
+  if (best !== undefined && bestDist <= 0.6) return best;
+  return Math.round(fps * 100) / 100;
+}
+
+/** fps từ hai mẫu rVFC: ΔpresentedFrames / ΔmediaTime. presentedFrames
+ * tăng 1 mỗi frame trình chiếu nên tỉ lệ này = fps trung bình trên cửa
+ * sổ đo (VFR: trung bình, không phải fps tức thời). Không đủ mẫu
+ * (Δframe ≤ 0 hoặc Δt ≤ 0) → undefined. Thuần — test được không cần DOM. */
+export function fpsFromPresentedFrames(
+  first: VideoFrameCallbackSample,
+  last: VideoFrameCallbackSample,
+): number | undefined {
+  const dFrames = last.presentedFrames - first.presentedFrames;
+  const dT = last.mediaTime - first.mediaTime;
+  if (!(dFrames > 0) || !(dT > 0)) return undefined;
+  return dFrames / dT;
+}
+
+/** Cửa sổ đo fps tối đa lúc probe (ms): video 30fps cho ~15–27 mẫu
+ * rVFC trong thời gian này — đủ snap về tốc độ chuẩn; hết hạn mà chưa
+ * đủ mẫu thì dùng mẫu đã có (≥2 frame) hoặc undefined. */
+export const VIDEO_FPS_PROBE_MAX_MS = 900;
+/** Cửa sổ mediaTime tối thiểu để chốt sớm (giây): đủ ~15 frame @30fps. */
+export const VIDEO_FPS_PROBE_MIN_WINDOW_SEC = 0.5;
+/** Độ dài video tối thiểu để đo fps (giây): ngắn hơn thì không đủ frame
+ * mà đo — giữ fps undefined, bob dùng top field như cũ. */
+export const VIDEO_FPS_PROBE_MIN_DURATION_SEC = 0.4;
+
+/**
+ * Đợt 194 P2 — đo fps nguồn của element video đã load metadata: phát
+ * (muted, detached — không tiếng, không hiện) rồi đếm callback
+ * requestVideoFrameCallback. HTMLVideoElement KHÔNG có sẵn thuộc tính
+ * fps nên đây là cách duy nhất đo được trong trình duyệt (không dùng
+ * ffprobe — app local-first, import chạy hoàn toàn phía client).
+ * - Không có rVFC / video quá ngắn / play() bị từ chối / decode lỗi →
+ *   undefined NGAY (không chờ hết timeout — import không bị chậm oan).
+ * - Hết VIDEO_FPS_PROBE_MAX_MS mà chưa đủ cửa sổ 0,5 s: dùng mẫu đã có
+ *   nếu ≥2 frame trình chiếu, không thì undefined.
+ * - Luôn pause() lại trước khi resolve; element do caller sở hữu (probe
+ *   sẽ xóa src sau đó). Không throw — mọi lỗi đều là undefined.
+ */
+export function probeVideoFps(v: HTMLVideoElement): Promise<number | undefined> {
+  return new Promise((resolve) => {
+    const rvfc = (v as unknown as { requestVideoFrameCallback?: unknown })
+      .requestVideoFrameCallback;
+    if (typeof rvfc !== "function") {
+      resolve(undefined);
+      return;
+    }
+    if (!(v.duration > VIDEO_FPS_PROBE_MIN_DURATION_SEC)) {
+      resolve(undefined);
+      return;
+    }
+    const requestFrame = rvfc as unknown as RvfcLike;
+    let first: VideoFrameCallbackSample | null = null;
+    let last: VideoFrameCallbackSample | null = null;
+    let done = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const finish = (fps: number | undefined) => {
+      if (done) return;
+      done = true;
+      if (timer !== null) clearTimeout(timer);
+      try {
+        v.pause();
+      } catch {
+        /* bỏ qua */
+      }
+      resolve(fps);
+    };
+    timer = setTimeout(() => {
+      if (first && last) {
+        const est = fpsFromPresentedFrames(first, last);
+        finish(est === undefined ? undefined : snapVideoFpsEstimate(est));
+      } else {
+        finish(undefined);
+      }
+    }, VIDEO_FPS_PROBE_MAX_MS);
+    const onFrame = (_now: number, metadata: VideoFrameCallbackSample) => {
+      if (done) return;
+      const sample: VideoFrameCallbackSample = {
+        presentedFrames: metadata.presentedFrames,
+        mediaTime: metadata.mediaTime,
+      };
+      if (!first) first = sample;
+      last = sample;
+      if (
+        first &&
+        last &&
+        last.mediaTime - first.mediaTime >= VIDEO_FPS_PROBE_MIN_WINDOW_SEC &&
+        last.presentedFrames - first.presentedFrames >= 10
+      ) {
+        const est = fpsFromPresentedFrames(first, last);
+        finish(est === undefined ? undefined : snapVideoFpsEstimate(est));
+        return;
+      }
+      try {
+        requestFrame.call(v, onFrame);
+      } catch {
+        finish(undefined);
+      }
+    };
+    try {
+      const p = v.play();
+      if (p && typeof (p as Promise<void>).catch === "function") {
+        (p as Promise<void>).catch(() => finish(undefined));
+      }
+      requestFrame.call(v, onFrame);
+    } catch {
+      finish(undefined);
+    }
+  });
+}
+
+function probeVideo(url: string): Promise<{ duration: number; width: number; height: number; fps?: number }> {
   return new Promise((resolve, reject) => {
     const v = document.createElement("video");
     v.preload = "metadata";
     v.muted = true;
-    const done = () => {
-      resolve({ duration: v.duration || 0, width: v.videoWidth, height: v.videoHeight });
+    const done = async () => {
+      const base = { duration: v.duration || 0, width: v.videoWidth, height: v.videoHeight };
+      // Đợt 194 P2 — đo fps nguồn (bounded ~900 ms, fail-open): probe
+      // lỗi / không đo được → fps undefined, item vẫn import bình thường.
+      let fps: number | undefined;
+      try {
+        fps = await probeVideoFps(v);
+      } catch {
+        fps = undefined;
+      }
+      resolve(fps === undefined ? base : { ...base, fps });
       v.src = "";
     };
-    v.onloadedmetadata = done;
+    v.onloadedmetadata = () => {
+      void done();
+    };
     v.onerror = () => reject(new Error(i18nT("media.videoMetaFailed")));
     v.src = url;
   });
@@ -233,6 +411,7 @@ export async function fileToMediaItem(file: File): Promise<MediaItem> {
       item.duration = meta.duration;
       item.width = meta.width;
       item.height = meta.height;
+      if (meta.fps !== undefined) item.fps = meta.fps;
       item.thumbnail = await captureVideoThumb(url);
     } else if (kind === "audio") {
       const meta = await probeAudio(url);

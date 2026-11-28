@@ -142,10 +142,22 @@ import {
   resolveReverseEngine,
   resolveReverseEngineDetailed,
   reversePlayhead,
+  reverseScrubSeekTarget,
+  reverseSeekTarget,
   reverseStep,
+  shouldHoldReversePlayhead,
   shouldIssueStepSeek,
   stepDrawAllowedWithCompletion,
 } from "./lib/reversePlayback";
+// Đợt 192 P3: nối audio đảo vào preview (S7c, F-191-P4-3) — manager
+// theo từng clip (xem reverseAudioWiring.ts).
+import {
+  ReverseAudioWiring,
+  type ReverseAudioWiringEntry,
+} from "./lib/reverseAudioWiring";
+import type { ReversedAudioContextLike } from "./lib/reverseAudio";
+// Đợt 191 P3: đo cadence frame ngược thật (chỉ ghi số, không đổi vẽ).
+import { ReverseCadenceTracker } from "./lib/reverseCadence";
 // Đợt 34 Q2: hook đo gap rAF riêng vòng preview (P5 đợt 32, nay mới
 // nối — xem previewRafHook.ts) + đường phát ngược WebCodecs opt-in
 // (mặc định TẮT, xem reverseWebcodecs.ts). Cả hai đều không đổi hành
@@ -197,13 +209,22 @@ import {
   type CanvasEffectOp,
 } from "./lib/effectCanvas";
 // Đợt 60 Q1: enhance vào preview ở mức xấp xỉ (denoise → blur nhẹ,
-// stabilize → zoom crop gợi ý; deinterlace: tap dọc +0.5px từ đợt 75 C8,
-// chỉ khi vẽ gần full-res).
+// stabilize → zoom crop gợi ý; deinterlace: bob-nearest từ đợt 193 P2,
+// chỉ khi vẽ gần full-res — trước đó tap dọc +0.5px từ đợt 75 C8, đã
+// bỏ khi bob-first thay thế tap kèm denoise/stabilize).
 import {
   ENHANCE_PREVIEW_DEINT_INTERMEDIATE_DIVISOR,
-  ENHANCE_PREVIEW_DEINT_TAP_OFFSET_PX,
+  MOTION_BAND_FRACTIONS,
+  MOTION_BAND_HEIGHT,
+  deinterlaceOf,
+  denoiseStrengthOf,
   enhancePreviewDebug,
   enhancePreviewPlan,
+  gatedNoiseSigmaFromBandSigmas,
+  meanAbsLumaNeighborDiff,
+  motionBandLumaFromBandData,
+  motionEstimateFromBandLuma,
+  noiseSigmaFromMeanAbsDiff,
   type EnhancePreviewDebug,
 } from "./lib/enhancePreview";
 // N5 (Phase 9): preview dùng spec đã làm phẳng nested + gộp adjustment
@@ -479,25 +500,25 @@ function previewViewportScale(W: number, H: number): number {
 // ---- Enhance preview xấp xỉ (Phase 9 đợt 60 Q1; cơ chế blend đợt 62 R3) ----
 // Render áp enhance thật (hqdn3d/yadif/vidstab); preview xấp xỉ bằng 1
 // lần vẽ offscreen: denoise → BLEND với bản mờ (vẽ khung gốc rồi vẽ đè
-// bản blur(3.0px) với globalAlpha = strength — composite
-// (1-a)·gốc + a·blur, a = strength; đợt 62 R3 thay thang blur thuần đợt
+// bản blur(3.0px) với globalAlpha = a — composite
+// (1-a)·gốc + a·blur, a = denoiseBlendAlpha(strength), nhân thêm hệ số
+// warm-up ở 3 frame đầu clip (đợt 191 P2) + hệ số thích nghi theo mức
+// nhiễu k(s, σ̂) (đợt 193 P2); đợt 62 R3 thay thang blur thuần đợt
 // 61 vì blur Chromium bị lượng tử hóa — xem lib/enhancePreview.ts +
 // docs/PHASE9_ROUND62_R3_BLUR_REWORK_LIMITS.md §2), stabilize → zoom
-// crop gợi ý (vẽ phóng to rồi cắt viền). Deinterlace (đợt 75 C8): tap dọc
-// +0.5px (ENHANCE_PREVIEW_DEINT_TAP_OFFSET_PX) trên lần vẽ gốc — bilinear
-// trung bình 2 dòng kề, R combing 1.12 → 0.67 ở full-res (xem
+// crop gợi ý (vẽ phóng to rồi cắt viền). Deinterlace (đợt 75 C8–192 P2):
+// tap dọc +0.5px (ENHANCE_PREVIEW_DEINT_TAP_OFFSET_PX) trên lần vẽ gốc
+// — bilinear trung bình 2 dòng kề, R combing 1.12 → 0.67 ở full-res (xem
 // lib/enhancePreview.ts + docs/PHASE9_ROUND75_C8_ENHANCE_PREVIEW_LIMITS.md);
-// tap KHÔNG thêm lần vẽ, chỉ đổi offset. Đợt 76 D4: tap ĐƠN LẺ (không
-// denoise/stabilize) KHÔNG qua enhanceCanvas nữa mà qua intermediate
-// thu hẹp dọc (deintIntermediateSource, xem dưới); tap đi kèm
-// denoise/stabilize vẫn qua đường offscreen này (tap đã nằm trong lần
-// vẽ gốc của enhanceCanvas). Bản inline-shift (cộng +0.5px vào lần vẽ
-// cuối) đã thử và BỎ sau headed lần 1 — FPS 0.99× nhưng R không giảm
-// ở upscale (xem LIMITS đợt 76 D4 §2.2).
+// Đợt 193 P2: tap ĐÃ BỎ — deinterlace nay bob-nearest TRƯỚC khi qua
+// đường offscreen này (deintBobNearestSource, xem dưới; bob-first khớp
+// thứ tự render yadif → hqdn3d, MAD 4,68–8,72 → 4,26–7,86 trên 12 ô).
+// Bản inline-shift (cộng +0.5px vào lần vẽ cuối) đã thử và BỎ sau headed
+// lần 1 — FPS 0.99× nhưng R không giảm ở upscale (xem LIMITS đợt 76 D4 §2.2).
 // Canvas tái dùng như effectCanvas; kích thước = letterbox dw×dh (cùng khổ
 // với effectCanvasSource) nên mọi đường vẽ sau (mask/SR/motion blur/vignette)
-// dùng drawSrc đã enhance mà không đổi gì. blendAlpha <= 0, zoom == 1 và
-// không tap → trả null, giữ drawSrc cũ.
+// dùng drawSrc đã enhance mà không đổi gì. blendAlpha <= 0 và zoom == 1
+// → trả null, giữ drawSrc cũ.
 // Xem lib/enhancePreview.ts (ánh xạ thuần) + LIMITS đợt 60 Q1.
 let enhanceCanvas: HTMLCanvasElement | null = null;
 
@@ -508,10 +529,9 @@ function enhancePreviewSource(
   blurPx: number,
   blendAlpha: number,
   zoom: number,
-  deintTap = false,
 ): HTMLCanvasElement | null {
   if (typeof document === "undefined") return null;
-  if (blendAlpha <= 0 && zoom === 1 && !deintTap) return null;
+  if (blendAlpha <= 0 && zoom === 1) return null;
   if (!enhanceCanvas) enhanceCanvas = document.createElement("canvas");
   const cw = Math.max(2, Math.round(w));
   const ch = Math.max(2, Math.round(h));
@@ -530,15 +550,12 @@ function enhancePreviewSource(
   // vẽ đè bản blur với alpha a lên nền gốc (không cần canvas phụ).
   // a=1 → đúng bằng đường blur thuần cũ (khung toàn mờ); a=0 → chỉ
   // bước 1 chạy (blendAlpha<=0 đã return null khi zoom==1).
-  // Đợt 75 C8: deintTap lệch dọc +0.5px (tap khử răng cưa — bilinear
-  // trung bình 2 dòng kề); bản mờ (nếu có) lệch cùng để hình học khớp.
-  const tapDy = deintTap ? ENHANCE_PREVIEW_DEINT_TAP_OFFSET_PX : 0;
-  cctx.drawImage(src, -zx, -zy + tapDy, cw * zoom, ch * zoom);
+  cctx.drawImage(src, -zx, -zy, cw * zoom, ch * zoom);
   if (blendAlpha > 0 && blurPx > 0) {
     cctx.save();
     cctx.globalAlpha = Math.min(1, Math.max(0, blendAlpha));
     setCtxFilter(cctx, `blur(${blurPx.toFixed(2)}px)`);
-    cctx.drawImage(src, -zx, -zy + tapDy, cw * zoom, ch * zoom);
+    cctx.drawImage(src, -zx, -zy, cw * zoom, ch * zoom);
     cctx.restore();
     setCtxFilter(cctx, "");
   }
@@ -559,11 +576,14 @@ function enhancePreviewSource(
 // dh/4 phải upscale 2× trong mask unit 640×360 trong khi dh/2 khớp
 // đúng 1:1). Cơ chế (divisor hiện tại = 2, lấy từ
 // ENHANCE_PREVIEW_DEINT_INTERMEDIATE_DIVISOR): vẽ drawSrc xuống canvas
-// dw×(dh/2) (downscale dọc 2× — mỗi hàng đích lấy mẫu đúng giữa 2 hàng
-// nguồn kề, một hàng mỗi field, tức khử xen kẽ, hạt nhân [1,1]/2 như
-// tap C8), các nhánh vẽ sau vẽ canvas này lên khổ đích dw×dh như
-// drawSrc thường (intrinsic size khác nhưng mọi drawImage đều chỉ rõ
-// dw×dh nên hình học không đổi). Vẫn 2 lần vẽ nhưng lần 1 chỉ 1/4 pixel
+// dw×(dh/2) với smoothing TẮT (đợt 192 P2 — BOB, thay half-res cũ:
+// mỗi hàng đích lấy đúng 1 hàng nguồn chẵn = top field, đã xác minh
+// headed Chromium 1254; trước đây smoothing BẬT nên mỗi hàng đích là
+// trung bình ~2 hàng nguồn, một hàng mỗi field — tức khử xen kẽ nhưng
+// mềm hơn cả yadif), các nhánh vẽ sau vẽ canvas này lên khổ đích
+// dw×dh như drawSrc thường (intrinsic size khác nhưng mọi drawImage
+// đều chỉ rõ dw×dh nên hình học không đổi; bước upscale dùng smoothing
+// BẬT nên kết quả là bob-bilinear). Vẫn 2 lần vẽ nhưng lần 1 chỉ 1/4 pixel
 // khổ đích và lần 2 lấy mẫu từ canvas (rẻ hơn lấy mẫu từ video):
 // probe-c ở s=1.13 cho R 0.85 → 0.66 (clean đối chứng 0.63) với thông
 // lượng 0.49× chi phí vẽ thường (xem docs/PHASE9_ROUND76_D4_DEINT_FPS_LIMITS.md
@@ -580,6 +600,7 @@ function deintIntermediateSource(
   src: CanvasImageSource,
   w: number,
   h: number,
+  field: 0 | 1 = 0,
 ): HTMLCanvasElement | null {
   if (typeof document === "undefined") return null;
   if (!deintIntermediateCanvas) deintIntermediateCanvas = document.createElement("canvas");
@@ -592,19 +613,310 @@ function deintIntermediateSource(
   const cctx = deintIntermediateCanvas.getContext("2d", { willReadFrequently: true });
   if (!cctx) return null;
   cctx.clearRect(0, 0, cw, ch);
-  cctx.imageSmoothingEnabled = true;
-  // Đợt 78 F1 — ĐÃ THỬ "medium" rồi HOÀN LẠI "high" (xem LIMITS F1 §4):
-  // probe cho high/low/medium pixel Y HỆT nhau ở downscale dọc đúng 2×,
-  // và headed G2 sau đổi vẫn R 0.74 → 0.51 / MAD 0.6087 y hệt trước đổi —
-  // nhưng phép đo A/B headed không cho thấy lần vẽ trung gian rẻ hơn
-  // (1280×360: median ~71ms/call ở "high" so với ~250ms/call ở "medium",
-  // n nhỏ, nhiễu tải lớn; tỉ lệ gap 0.86 → 0.77, draw-fps 0.58 → 0.55).
-  // Không có lợi ích đo được nên giữ "high" như các canvas trung gian
-  // khác (effect/letterbox) cho nhất quán — đừng đổi lại khi chưa có số
-  // mới tách được khỏi nhiễu.
-  cctx.imageSmoothingQuality = "high";
-  cctx.drawImage(src, 0, 0, cw, ch);
+  // Đợt 192 P2 — BOB THAY HALF-RES: tắt smoothing ở lần vẽ trung gian
+  // (nearest) để intermediate giữ đúng TOP FIELD (hàng chẵn) thay vì
+  // trung bình 2 field như trước (half-res cũ: mỗi hàng đích = trung
+  // bình 2 hàng nguồn kề → mềm hơn cả yadif, R 1.83 vs 2.12, MAD 3.57
+  // vs yadif; trên thanh chạy ngang MAD 6.61). Đã xác minh headed
+  // Chromium 1254 (probe-192-p2/headed-bob-check): downscale dọc đúng
+  // 2× smoothing-off lấy đúng hàng chẵn (200/200 trên mẫu hàng
+  // chẵn 200 / lẻ 50), cả nguồn canvas lẫn <video> (214/215); lệch
+  // source-rect sy=1 thì lấy hàng lẻ (38/40) — mặc định sy=0 lấy top
+  // field, khớp yadif parity=-1 trên 3 fixture đo (inter/inter15/
+  // interbar). Lần vẽ sau (upscale intermediate lên khổ đích, smoothing
+  // ON/high như cũ) cho bob-bilinear: MAD 3.10/2.70 (inter f8/f3),
+  // 4.00–4.56 (inter15), 0.28 (thanh chạy); R 1.89–1.92 (yadif
+  // 2.12–2.21). Không thêm lần vẽ (chỉ đổi sampling của lần vẽ trung
+  // gian sẵn có), không đổi khổ intermediate (dw×dh/2) hay tín hiệu
+  // plan — G7b mask giữ nguyên hình học. Dòng imageSmoothingQuality
+  // cũ (đợt 78 F1: high/low/medium cho pixel Y hệt nhau ở downscale
+  // smoothing-ON) bỏ vì vô nghĩa khi smoothing tắt — đừng bật lại
+  // smoothing ở đây khi chưa có số mới (bật lại = quay về half-res).
+  // Đợt 193 P2 — BOB-NEAREST + BOB-FIRST: bước upscale cuối (intermediate
+  // → khổ đích) nay cũng tắt smoothing (deintBobNearestSource, xem dưới)
+  // thay vì bilinear: MAD vs yadif 3,10 → 2,55 (inter f8), 4,00–4,56 →
+  // 3,55–4,11 (inter15), 0,28 → 0,19 (thanh chạy); le8 88–90% → 93–95%
+  // (vẫn tier XẤP XỈ). Bob nay áp cho MỌI trường hợp có tap (kể cả kèm
+  // denoise/stabilize — bob TRƯỚC rồi mới blend/zoom trên khung đã bob,
+  // khớp thứ tự render yadif → hqdn3d); tap +0,5px trong enhanceCanvas
+  // đã bỏ. Intermediate dw×dh/2 vẫn tái dùng làm bước 1 của bob.
+  // Đợt 194 P2 — FIELD BOTTOM (field=1): source-rect lệch sy=1, sh=h−1
+  // (đúng mẫu đã xác minh headed Chromium 1254 đợt 192 P2 F:
+  // drawImage(v, 0, 1, 320, 179, 0, 0, 320, 90) lấy đúng hàng lẻ
+  // 38/40 thay vì hàng chẵn 214/215). field=0 giữ đúng lần vẽ cũ
+  // (4 đối số, toàn bộ nguồn) để không đổi hành vi top field đã đo.
+  cctx.imageSmoothingEnabled = false;
+  if (field === 1) {
+    cctx.drawImage(src, 0, 1, cw, Math.max(1, Math.round(h) - 1), 0, 0, cw, ch);
+  } else {
+    cctx.drawImage(src, 0, 0, cw, ch);
+  }
   return deintIntermediateCanvas;
+}
+
+// Đợt 193 P2 — BOB-NEAREST (upscale cuối của bob): từ intermediate
+// dw×dh/2 (top field) lên canvas full-res dw×dh với smoothing TẮT —
+// mỗi hàng đích lấy đúng 1 hàng intermediate (line doubling), khớp
+// đúng bob-nearest trong probe (probe-193-p2 C1: MAD vs yadif 2,55–
+// 4,11, le8 93–95% — tốt hơn bob-bilinear 3,10–4,56 / 88–90% mọi ô).
+// Đã xác minh headed Chromium 1254 (probe-193-p2/headed-bob-nearest):
+// half xen kẽ 200/50 → upscale-nearest ra đúng [200,200,50,50,...];
+// nguồn video hàng xen kẽ 214/38 → [214,214,38,38,...]. Thêm 1 lần vẽ
+// full-res so với bob-bilinear cũ (upscale nằm trong lần vẽ gốc của
+// drawVideoClip) — chi phí 1 drawImage nearest full-res, rẻ hơn lấy
+// mẫu từ video; FPS headed chưa đo lại (nợ — xem LIMITS §5.4).
+// Canvas tái dùng như deintIntermediateCanvas. Thất bại (không có
+// document/context) → trả null, giữ drawSrc cũ.
+// Đợt 196 P2 — BLEND DỌC SAU BOB (verticalBlend = plan.deintVerticalBlend,
+// 0,75 khi σ̂ ≥ 2,7, 0 khi sạch — xem enhancePreview.ts): khi > 0 thì vẽ
+// thêm lên canvas blend tái dùng: copy bob (smoothing TẮT) rồi phủ khung
+// bob lệch −0,5px với smoothing BẬT + globalAlpha=w — đúng phép
+// (1−w)·bob + w·blurV(bob) của probe-196-p2a (w=0,75 thắng/hòa tap-P4
+// trên 6/7 nhóm nhiễu). PHA QUAN TRỌNG: phải lệch −0,5px (lên), KHÔNG
+// phải +0,5px (xuống) — drawImage lệch +0,5px lấy mẫu hàng TRÊN
+// (blur pha lên: hàng chẵn bị mềm, hàng lẻ giữ nguyên) làm MAD tệ hơn
+// cả bob thuần (+0,38 tới +1,53 trên 10 nhóm — probe-196-p2a vbUp075);
+// lệch −0,5px lấy mẫu hàng DƯỚI (blur pha xuống: hàng chẵn giữ nguyên
+// như yadif giữ field, hàng lẻ = trung bình 2 field kề) mới đúng.
+// Hành vi biên DƯỚI của lần vẽ lệch (hàng đích cuối lấy mẫu nguồn
+// y=H−0,5) đã xác minh headed đợt này: clamp về biên — xem LIMITS §4.3.
+// Blend thất bại (không có context) → trả khung bob thuần, không crash.
+let deintBobCanvas: HTMLCanvasElement | null = null;
+let deintBobBlendCanvas: HTMLCanvasElement | null = null;
+
+function deintBobNearestSource(
+  src: CanvasImageSource,
+  w: number,
+  h: number,
+  field: 0 | 1 = 0,
+  verticalBlend = 0,
+): HTMLCanvasElement | null {
+  const half = deintIntermediateSource(src, w, h, field);
+  if (!half) return null;
+  if (typeof document === "undefined") return null;
+  if (!deintBobCanvas) deintBobCanvas = document.createElement("canvas");
+  const cw = Math.max(2, Math.round(w));
+  const ch = Math.max(2, Math.round(h));
+  if (deintBobCanvas.width !== cw || deintBobCanvas.height !== ch) {
+    deintBobCanvas.width = cw;
+    deintBobCanvas.height = ch;
+  }
+  const cctx = deintBobCanvas.getContext("2d", { willReadFrequently: true });
+  if (!cctx) return null;
+  cctx.clearRect(0, 0, cw, ch);
+  cctx.imageSmoothingEnabled = false;
+  cctx.drawImage(half, 0, 0, cw, ch);
+  if (!(verticalBlend > 0)) return deintBobCanvas;
+  if (!deintBobBlendCanvas) deintBobBlendCanvas = document.createElement("canvas");
+  if (deintBobBlendCanvas.width !== cw || deintBobBlendCanvas.height !== ch) {
+    deintBobBlendCanvas.width = cw;
+    deintBobBlendCanvas.height = ch;
+  }
+  const bctx = deintBobBlendCanvas.getContext("2d", { willReadFrequently: true });
+  if (!bctx) return deintBobCanvas;
+  bctx.clearRect(0, 0, cw, ch);
+  bctx.globalAlpha = 1;
+  bctx.imageSmoothingEnabled = false;
+  bctx.drawImage(deintBobCanvas, 0, 0, cw, ch);
+  bctx.imageSmoothingEnabled = true;
+  bctx.globalAlpha = Math.min(1, Math.max(0, verticalBlend));
+  // Đợt 196 P2: lệch −0,5px (pha xuống — xem comment trên); +0,5px là
+  // pha lên, làm MAD tệ hơn cả bob thuần (probe-196-p2a vbUp075).
+  bctx.drawImage(deintBobCanvas, 0, -0.5, cw, ch);
+  bctx.globalAlpha = 1;
+  return deintBobBlendCanvas;
+}
+
+// Đợt 193 P2 — ƯỚC LƯỢNG MỨC NHIỄU σ̂ CHO ALPHA THÍCH NGHI: đọc 3 dải
+// ngang (y ≈ 0,2/0,5/0,8 chiều cao, mỗi dải 12 dòng, đủ chiều rộng) từ
+// khung nguồn rồi tính σ̂ = mean|Δ| luma / 1,30 (xem
+// noiseSigmaFromMeanAbsDiff trong lib/enhancePreview.ts — hiệu chuẩn
+// E/σ ≈ 1,30 trên 4 fixture flat, sai < 1,5%). Nguồn ưu tiên held
+// canvas (G1 đợt 79 — cùng frame, cùng tick, rẻ hơn đọc lại video) khi
+// drawSrc còn là element video thô; đã qua chroma/LUT/effects thì đọc
+// từ canvas đã xử lý (ước lượng hơi lệch theo hiệu ứng — chấp nhận,
+// xem LIMITS §1.3); video không có held canvas thì vẽ 1 lần xuống
+// scratch canvas native rồi đọc. Chỉ gọi khi denoise bật hoặc
+// deinterlace bật (đợt 196 P2: σ̂ còn để tính trọng số blend dọc sau
+// bob — xem drawVideoClip); tránh đọc pixel vô ích khi không enhance.
+// Cache 1 entry theo (clipId, src, frameIdx) — frameIdx -1 (không xác
+// định) thì tính mới mỗi tick, không cache. Đợt 196 P2: key cache CÓ src
+// (trước đây chỉ clipId + frameIdx nên đổi src của cùng clip — vd
+// patchClip trong harness — thì σ̂ cũ còn nằm lại; held cache đã key
+// theo src từ đợt 63 R6, riêng cache này thì chưa). Mọi thất bại
+// (không có document/context, video chưa load, getImageData lỗi) →
+// null = giữ hành vi cũ (k=1), không crash, không đoán bừa.
+let enhanceNoiseSigmaCache: { key: string; sigma: number | null } | null = null;
+let enhanceNoiseScratchCanvas: HTMLCanvasElement | null = null;
+
+function estimateEnhanceNoiseSigma(
+  drawSrc: CanvasImageSource,
+  srcEl: CanvasImageSource,
+  clip: VideoClip,
+  frameIdx: number,
+): number | null {
+  if (typeof document === "undefined") return null;
+  const key = `${clip.id}:${clip.src ?? ""}:${frameIdx}`;
+  if (frameIdx >= 0 && enhanceNoiseSigmaCache && enhanceNoiseSigmaCache.key === key) {
+    return enhanceNoiseSigmaCache.sigma;
+  }
+  let sigma: number | null = null;
+  try {
+    let srcCanvas: HTMLCanvasElement | null = null;
+    if (typeof HTMLCanvasElement !== "undefined" && drawSrc instanceof HTMLCanvasElement) {
+      srcCanvas = drawSrc;
+    } else if (
+      drawSrc === srcEl &&
+      typeof HTMLVideoElement !== "undefined" &&
+      srcEl instanceof HTMLVideoElement
+    ) {
+      const held = heldFrameCache.get(heldFrameCacheKey63R6(clip));
+      if (held) srcCanvas = held.canvas;
+    }
+    if (
+      !srcCanvas &&
+      typeof HTMLVideoElement !== "undefined" &&
+      srcEl instanceof HTMLVideoElement
+    ) {
+      const vw = srcEl.videoWidth;
+      const vh = srcEl.videoHeight;
+      if (vw >= 4 && vh >= 36) {
+        if (!enhanceNoiseScratchCanvas) enhanceNoiseScratchCanvas = document.createElement("canvas");
+        enhanceNoiseScratchCanvas.width = vw;
+        enhanceNoiseScratchCanvas.height = vh;
+        const sctx = enhanceNoiseScratchCanvas.getContext("2d", { willReadFrequently: true });
+        if (sctx) {
+          sctx.drawImage(srcEl, 0, 0, vw, vh);
+          srcCanvas = enhanceNoiseScratchCanvas;
+        }
+      }
+    }
+    if (srcCanvas && srcCanvas.width >= 4 && srcCanvas.height >= 36) {
+      const cctx = srcCanvas.getContext("2d", { willReadFrequently: true });
+      if (cctx) {
+        // Đợt 203 P2 — σ̂ có gate theo dải (xem gatedNoiseSigmaFromBandSigmas
+        // trong lib/enhancePreview.ts): giữ nguyên 3 lần getImageData, chỉ
+        // đổi cách gộp — mean 3 dải, trừ khi dải ít chi tiết nhất tách xa
+        // mean (nội dung làm nhiễm σ̂, ca w4s f11) thì dùng dải đó.
+        const bandSigmas: number[] = [];
+        for (const frac of [0.2, 0.5, 0.8]) {
+          const y = Math.min(
+            srcCanvas.height - 12,
+            Math.max(0, Math.floor(srcCanvas.height * frac)),
+          );
+          const img = cctx.getImageData(0, y, srcCanvas.width, 12);
+          bandSigmas.push(
+            noiseSigmaFromMeanAbsDiff(meanAbsLumaNeighborDiff(img.data, srcCanvas.width, 12)),
+          );
+        }
+        if (bandSigmas.length > 0) sigma = gatedNoiseSigmaFromBandSigmas(bandSigmas);
+      }
+    }
+  } catch {
+    sigma = null;
+  }
+  if (frameIdx >= 0) enhanceNoiseSigmaCache = { key, sigma };
+  return sigma;
+}
+
+// Đợt 198 P2 — ƯỚC LƯỢNG CHUYỂN ĐỘNG C5b_box CHO α THÍCH NGHI (N10/N5b):
+// đọc 3 dải ngang (cùng vị trí với estimateEnhanceNoiseSigma: y ≈ 0,2/0,5/0,8
+// chiều cao, mỗi dải 12 dòng) từ khung nguồn rồi so bob-top của khung này
+// với bob-top của frame kề trước (xem motionEstimateFromBandLuma trong
+// lib/enhancePreview.ts — hiệu chuẩn probe-198-p2b §G). Nguồn ưu tiên held
+// canvas / canvas đã xử lý / scratch canvas — cùng thứ tự ưu tiên với σ̂
+// (xem estimateEnhanceNoiseSigma). Cache 1 entry theo (clipId, src) +
+// frameIdx: chỉ tính khi frameIdx === prevFrameIdx + 1 (seek / đổi clip /
+// frame đầu → null = hệ số 1, giữ hành vi cũ); vẽ lại cùng frame (pause)
+// trả lại ước lượng đã tính, không so khung với chính nó. Mọi thất bại
+// (không có document/context, video chưa load, getImageData lỗi) → null =
+// giữ hành vi cũ (hệ số 1), không crash, không đoán bừa.
+let enhanceMotionPrev: {
+  key: string;
+  frameIdx: number;
+  bands: Float64Array;
+  lastMotion: number | null;
+} | null = null;
+let enhanceMotionScratchCanvas: HTMLCanvasElement | null = null;
+
+function estimateEnhanceMotionEstimate(
+  drawSrc: CanvasImageSource,
+  srcEl: CanvasImageSource,
+  clip: VideoClip,
+  frameIdx: number,
+): number | null {
+  if (typeof document === "undefined" || frameIdx < 0) return null;
+  const key = `${clip.id}:${clip.src ?? ""}`;
+  if (
+    enhanceMotionPrev &&
+    enhanceMotionPrev.key === key &&
+    enhanceMotionPrev.frameIdx === frameIdx
+  ) {
+    return enhanceMotionPrev.lastMotion;
+  }
+  let bands: Float64Array | null = null;
+  let width = 0;
+  try {
+    let srcCanvas: HTMLCanvasElement | null = null;
+    if (typeof HTMLCanvasElement !== "undefined" && drawSrc instanceof HTMLCanvasElement) {
+      srcCanvas = drawSrc;
+    } else if (
+      drawSrc === srcEl &&
+      typeof HTMLVideoElement !== "undefined" &&
+      srcEl instanceof HTMLVideoElement
+    ) {
+      const held = heldFrameCache.get(heldFrameCacheKey63R6(clip));
+      if (held) srcCanvas = held.canvas;
+    }
+    if (
+      !srcCanvas &&
+      typeof HTMLVideoElement !== "undefined" &&
+      srcEl instanceof HTMLVideoElement
+    ) {
+      const vw = srcEl.videoWidth;
+      const vh = srcEl.videoHeight;
+      if (vw >= 4 && vh >= 36) {
+        if (!enhanceMotionScratchCanvas) enhanceMotionScratchCanvas = document.createElement("canvas");
+        enhanceMotionScratchCanvas.width = vw;
+        enhanceMotionScratchCanvas.height = vh;
+        const sctx = enhanceMotionScratchCanvas.getContext("2d", { willReadFrequently: true });
+        if (sctx) {
+          sctx.drawImage(srcEl, 0, 0, vw, vh);
+          srcCanvas = enhanceMotionScratchCanvas;
+        }
+      }
+    }
+    if (srcCanvas && srcCanvas.width >= 4 && srcCanvas.height >= 36) {
+      const cctx = srcCanvas.getContext("2d", { willReadFrequently: true });
+      if (cctx) {
+        width = srcCanvas.width;
+        const merged = new Uint8ClampedArray(3 * width * MOTION_BAND_HEIGHT * 4);
+        for (let b = 0; b < 3; b++) {
+          const y = Math.min(
+            srcCanvas.height - MOTION_BAND_HEIGHT,
+            Math.max(0, Math.floor(srcCanvas.height * MOTION_BAND_FRACTIONS[b])),
+          );
+          const img = cctx.getImageData(0, y, width, MOTION_BAND_HEIGHT);
+          merged.set(img.data, b * width * MOTION_BAND_HEIGHT * 4);
+        }
+        bands = motionBandLumaFromBandData(merged, width);
+      }
+    }
+  } catch {
+    bands = null;
+  }
+  let motion: number | null = null;
+  if (bands) {
+    if (
+      enhanceMotionPrev &&
+      enhanceMotionPrev.key === key &&
+      enhanceMotionPrev.frameIdx === frameIdx - 1
+    ) {
+      motion = motionEstimateFromBandLuma(bands, enhanceMotionPrev.bands, width);
+    }
+    enhanceMotionPrev = { key, frameIdx, bands, lastMotion: motion };
+  }
+  return motion;
 }
 
 // Trạng thái enhance của frame video vừa vẽ — phơi qua
@@ -619,8 +931,14 @@ const enhancePreviewDebugState: EnhancePreviewDebug = {
   enabled: true,
   denoiseBlurPx: 0,
   denoiseBlendAlpha: 0,
+  denoiseWarmupFactor: 1,
+  noiseSigma: null,
+  motionEstimate: null,
+  denoiseMotionMultiplier: 1,
   stabilizeZoom: 1,
   deinterlaceTap: false,
+  deintBobField: 0,
+  deintVerticalBlend: 0,
   stabilizeBlockedBySpeedRamp: false,
   applied: [],
   notApproximated: [],
@@ -3855,6 +4173,84 @@ function exposeHoldStats(): void {
   (window as unknown as { __vcutHoldStats?: HoldStats }).__vcutHoldStats = holdStats;
 }
 let tickHadHold = false;
+// Đợt 191 P3 — cadence frame ngược thật (chỉ đo, không đổi vẽ):
+// tracker ghi mỗi frame MỚI được vẽ khi stepping (khử trùng vẽ lại
+// cùng frame — chỉ phục vụ thống kê cadence); reverseDrewFrameTick =
+// tick renderFrame vừa rồi có VẼ frame ngược nào cho target hiện tại
+// không (tín hiệu giữ playhead webcodecs ở tick sau, cùng mẫu
+// tickHadHold); reverseDrewFramePrevTick = giá trị tick trước của nó
+// (syncMedia đọc để tính tín hiệu giữ — vòng lặp chạy syncMedia SAU khi
+// tăng playhead nên tín hiệu luôn cũ 1 tick, như prevSkipRenderSeeking).
+// "Có vẽ" KHÔNG đòi frame mới (xem shouldHoldReversePlayhead): playhead
+// đang giữ thì frame đúng vẫn là frame cũ — đòi mới là deadlock.
+const reverseCadenceTracker = new ReverseCadenceTracker();
+let reverseDrewFrameTick = false;
+let reverseDrewFramePrevTick = false;
+// Đợt 191 P3 — tín hiệu giữ playhead ngược của lần syncMedia gần nhất
+// (xem ghi chú ở return của syncMedia; vòng lặp đọc sau khi gọi syncMedia).
+let lastSyncReversePlayheadHold = false;
+let reverseCadenceExposed = false;
+function exposeReverseCadence(): void {
+  if (reverseCadenceExposed || typeof window === "undefined") return;
+  reverseCadenceExposed = true;
+  (
+    window as unknown as { __vcutReverseCadence?: ReverseCadenceTracker }
+  ).__vcutReverseCadence = reverseCadenceTracker;
+}
+// Đợt 192 P3 — nối audio đảo vào preview (S7c, F-191-P4-3): 1 manager
+// cho cả preview (xem reverseAudioWiring.ts). Tạo lười khi engine đã
+// có AudioContext (ensure() chạy ở lần bấm play đầu); ctx đổi (dispose
+// + ensure lại tạo context mới) thì tạo lại manager để player không
+// giữ context đã đóng. Không throw — lỗi ở đây chỉ làm audio đảo im.
+let reverseAudioWiring: ReverseAudioWiring | null = null;
+let reverseAudioWiringCtx: object | null = null;
+function getReverseAudioWiring(engine: AudioEngine): ReverseAudioWiring | null {
+  let ctx: AudioContext | null = null;
+  try {
+    ctx = engine.getContext();
+  } catch {
+    return null;
+  }
+  if (!ctx) return null;
+  if (!reverseAudioWiring || reverseAudioWiringCtx !== ctx) {
+    try {
+      reverseAudioWiring?.stopAll();
+    } catch {
+      /* bỏ qua */
+    }
+    let dest: unknown = null;
+    try {
+      dest = engine.getMasterNode() ?? ctx.destination;
+    } catch {
+      dest = ctx.destination;
+    }
+    reverseAudioWiring = new ReverseAudioWiring(
+      ctx as unknown as ReversedAudioContextLike,
+      dest,
+    );
+    reverseAudioWiringCtx = ctx;
+  }
+  return reverseAudioWiring;
+}
+let reverseAudioExposed = false;
+function exposeReverseAudio(): void {
+  if (reverseAudioExposed || typeof window === "undefined") return;
+  reverseAudioExposed = true;
+  try {
+    Object.defineProperty(window, "__vcutReverseAudio", {
+      get: () =>
+        reverseAudioWiring?.debugSnapshot() ?? {
+          loaded: 0,
+          playing: false,
+          clips: [],
+          lastPlayheadSec: null,
+        },
+      configurable: true,
+    });
+  } catch {
+    /* đo thống kê không được làm hỏng preview */
+  }
+}
 // Đợt 60 Q6: id các video clip mà renderFrame tick vừa rồi KHÔNG vẽ
 // được (điểm `!srcEl` trong drawVideoClip: decoder tụt → decision
 // "skip", hoặc chưa có source element) — badge effect ở tick sau đọc
@@ -3938,6 +4334,10 @@ function drawVideoClip(
   const { width: W, height: H } = spec.meta;
   const item = mediaByName.get(clip.src);
   const localT = t - clip.start;
+  // Đợt 191 P3 — cờ cadence khai báo ở hàm (điểm ghi sau nhánh video
+  // cần đọc; gán trong nhánh video bên dưới, mặc định false = không đo).
+  let stepping = false;
+  let drewReverseFrame = false;
   // Phase 9 đợt 10 (V1): transition visual — alpha lấy từ
   // transitionClipVisual, giữ nguyên hành vi fade cũ (fade vào =
   // localT/duration, fade ra = (duration-localT)/duration; type lạ
@@ -4004,7 +4404,7 @@ function drawVideoClip(
     // K4 (đợt 27): stepping = tick này playhead đang chạy từng frame
     // nhưng element vẫn paused vì seek-stepping — phát ngược toàn cục
     // (drawTransport.reversePlayback) hoặc clip.reverse.
-    const stepping =
+    stepping =
       drawTransport.playing &&
       (drawTransport.reversePlayback || (clip.reverse ?? false));
     // Đợt 34 Q2: đường WebCodecs opt-in (mặc định TẮT). Chỉ khi stepping
@@ -4034,7 +4434,10 @@ function drawVideoClip(
       // full-file, file > 128 MiB vẫn khóa S4 như cũ — xem LIMITS V2).
       wcFrame = reverseWebcodecsFrameFor(
         item.proxyUrl ?? item.url,
-        rampSourceTimeAt(clip, t),
+        // Đợt 192 P3 (S6b): cùng lùi 1 ms như đường element — mốc
+        // s − 1 ms tra ra sample N−1−k trong
+        // sampleIndexForPresentationTime (dùng <=), khớp render.
+        reverseSeekTarget(rampSourceTimeAt(clip, t)),
         knownSizeBytesForPreview(item),
         // Đợt 60 Q4 — i18nLookup: lý do fallback GOP đi qua key gop.*
         // trong dict thay vì kẹt VI (chỉ test/diagnostics đọc).
@@ -4046,10 +4449,14 @@ function drawVideoClip(
     // đều qua đây) — kill pump zombie của clip cũ ngay tick đầu clip mới,
     // trước cả quyết định draw/hold/skip (xem rvfcNoteVideoElementOwner).
     if (v) rvfcNoteVideoElementOwner(v, clip.id, t, clip.start, clip.duration);
+    // Đợt 191 P3: tick này có vẽ frame ngược không (chỉ đo cadence —
+    // ghi ở cuối hàm sau khi có frameIdx; hold/skip không ghi).
+    // (drewReverseFrame đã khai báo ở đầu hàm.)
     if (wcFrame) {
       srcEl = wcFrame.frame;
       mw = wcFrame.width;
       mh = wcFrame.height;
+      drewReverseFrame = true;
     } else if (v) {
       // Khi stepping, element chỉ được draw khi đã seek đúng target
       // (±0.5 frame, xem seekOnTarget): seek còn bay mà vẽ thì frame
@@ -4095,6 +4502,7 @@ function drawVideoClip(
         mw = v.videoWidth;
         mh = v.videoHeight;
         storeHeldFrame(clip, v, mw, mh);
+        drewReverseFrame = true;
       } else if (decision === "hold") {
         const held = heldFrameCache.get(key);
         if (held) {
@@ -4161,6 +4569,31 @@ function drawVideoClip(
       rawMs: null,
       rawCt: null,
     });
+  }
+  // Đợt 191 P3 — ghi cadence frame ngược thật (chỉ đo, không đổi vẽ):
+  // chỉ khi stepping và tick này VẼ frame (không phải hold/skip). Tracker
+  // tự khử trùng khi playhead đứng yên vẽ lại cùng frame (chỉ thống kê);
+  // cờ giữ playhead tick sau (reverseDrewFrameTick) đặt khi CÓ VẼ — kể
+  // cả vẽ lại frame cũ (playhead đang giữ thì frame đúng vẫn là frame
+  // cũ; đòi frame mới là deadlock, xem shouldHoldReversePlayhead).
+  if (stepping && drewReverseFrame && frameIdx >= 0) {
+    exposeReverseCadence();
+    reverseDrewFrameTick = true;
+    if (typeof performance !== "undefined") {
+      // Đợt 191 P3 — frameIdx là chỉ số của motion-blur (theo held
+      // firstHeldT) nên SAI khi srcEl là VideoFrame (đường webcodecs):
+      // frame đúng vẫn là frame cũ theo held thì tracker khử trùng
+      // thành 3 frame cho cả lượt dù cache đã hit 33 lần (đo thật
+      // frames-noise). Lấy chỉ số từ mốc nguồn thật của frame đang vẽ.
+      const presentedIdx =
+        typeof VideoFrame !== "undefined" && srcEl instanceof VideoFrame
+          // Đợt 192 P3 (S6b): chỉ số frame ĐANG VẼ phải theo mốc seek
+          // thật (đã lùi 1 ms) — dùng mốc thô thì tracker ghi N−k trong
+          // khi controller trả frame N−1−k, khử trùng sai.
+          ? videoFrameIndex(reverseSeekTarget(rampSourceTimeAt(clip, t)), projFps)
+          : frameIdx;
+      reverseCadenceTracker.recordPresented(presentedIdx, performance.now());
+    }
   }
   // Đợt 90 R1: reset ring khi seek/loop nhảy lùi, TRƯỚC khi blend (xem
   // motionBlurResetOnSeek) — tránh blend 1 khung bóng cũ trước seek.
@@ -4294,67 +4727,79 @@ function drawVideoClip(
       pipelineProcessedDrawSrc = true;
     }
   }
-  // Q1 (Phase 9 đợt 60; blend đợt 62 R3; tap khử răng cưa đợt 75 C8):
-  // enhance preview xấp xỉ — denoise → blend với bản mờ (alpha = strength,
-  // blur 3.0px cố định), stabilize → zoom crop gợi ý (offscreen, sau effects
-  // như hqdn3d ở render); deinterlace → tap dọc +0.5px, CHỈ khi tỉ lệ vẽ
-  // thật (dh/mh × tỉ lệ viewport canvas) ≥ 0.9 — dưới ngưỡng downscale
-  // đã giấu răng cưa, xem lib/enhancePreview.ts. Toggle UI mặc định bật
+  // Q1 (Phase 9 đợt 60; blend đợt 62 R3; tap khử răng cưa đợt 75 C8;
+  // bob-nearest + bob-first đợt 193 P2): enhance preview xấp xỉ —
+  // denoise → blend với bản mờ (alpha = strength, blur 3.0px cố định),
+  // stabilize → zoom crop gợi ý (offscreen, sau effects như hqdn3d ở
+  // render); deinterlace → bob-nearest (giữ top field, upscale nearest
+  // lên full-res; đợt 194 P2: luân phiên top/bottom theo field của plan
+  // khi có fps nguồn — mode 1 @proj 60fps/nguồn 30fps), CHỈ khi tỉ lệ
+  // vẽ thật (dh/mh × tỉ lệ viewport canvas) ≥ 0.9 — dưới ngưỡng
+  // downscale đã giấu răng cưa, xem lib/enhancePreview.ts. Toggle UI mặc định bật
   // (store.enhancePreviewEnabled). Clip có speedKeyframes thì
   // stabilize bị chặn trong plan (zoom 1 — đồng bộ render chặn hẳn).
+  // Đợt 191 P2 — WARM-UP denoise: hqdn3d render hội tụ theo frame nên
+  // alpha blend nhân thêm hệ số warm-up ở 3 frame đầu clip (frame 0 →
+  // 1/3 alpha); số frame kể từ đầu clip = floor(localT × fps project)
+  // vì hqdn3d chạy sau filter fps trong render (xem render.js:852).
+  // Đợt 193 P2 — ALPHA THÍCH NGHI: σ̂ ước lượng từ khung nguồn (3 dải
+  // ngang — xem estimateEnhanceNoiseSigma) rồi truyền vào plan; alpha
+  // nhân thêm k(s, σ̂) và warm-up đánh giá tại alpha hiệu dụng. Bob
+  // chạy TRƯỚC offscreen denoise/stabilize (bob-first, khớp thứ tự
+  // render yadif → hqdn3d).
   // Hook đo ghi MỌI lần vẽ (kể cả clip không enhance / toggle tắt) để
   // harness phân biệt trạng thái.
   const drawScaleY = mh > 0 ? (dh / mh) * previewViewportScale(W, H) : 0;
+  const enhFramesSinceClipStart =
+    spec.meta.fps > 0 && localT >= 0 ? Math.floor(localT * spec.meta.fps) : undefined;
+  // Đợt 196 P2 — σ̂ còn để tính trọng số blend dọc sau bob (plan.
+  // deintVerticalBlend) nên ước lượng cả khi chỉ bật deinterlace, không
+  // chỉ khi denoise bật; không có σ̂ thì w=0, giữ bob thuần như cũ.
+  const enhNoiseSigma =
+    denoiseStrengthOf(clip.enhance) !== null || deinterlaceOf(clip.enhance)
+      ? estimateEnhanceNoiseSigma(drawSrc, srcEl, clip, frameIdx)
+      : null;
+  // Đợt 198 P2 — ước lượng chuyển động C5b_box cho α thích nghi (N10/N5b):
+  // cùng điều kiện ước lượng với σ̂ (denoise hoặc deinterlace bật); không
+  // có ước lượng thì plan giữ hệ số 1 (hành vi cũ).
+  const enhMotionEstimate =
+    denoiseStrengthOf(clip.enhance) !== null || deinterlaceOf(clip.enhance)
+      ? estimateEnhanceMotionEstimate(drawSrc, srcEl, clip, frameIdx)
+      : null;
   const enhPlan = enhancePreviewPlan(
     clip.enhance,
     useStore.getState().enhancePreviewEnabled,
     clip.speedKeyframes !== undefined,
     drawScaleY,
+    enhFramesSinceClipStart,
+    enhNoiseSigma ?? undefined,
+    // Đợt 194 P2 — fps nguồn + thời gian nguồn đã tiêu (kể từ điểm trim)
+    // cho field bob mode 1 (xem deintBobFieldForConsumedTime): render
+    // chạy yadif SAU trim nên chỉ số yadif đếm từ clip.in, không phải từ
+    // đầu file (trim=start=in rồi setpts=PTS-STARTPTS trước yadif —
+    // server/render/src/render.js). Thiếu fps → field 0 (top, như cũ).
+    item.fps,
+    Math.max(0, rampSourceTimeAt(clip, t) - clip.in),
+    enhMotionEstimate ?? undefined,
   );
-  let enhOffscreen = false;
-  if (enhPlan.needsOffscreen) {
-    const enhSrc = enhancePreviewSource(drawSrc, dw, dh, enhPlan.denoiseBlurPx, enhPlan.denoiseBlendAlpha, enhPlan.stabilizeZoom, enhPlan.deinterlaceTap);
-    if (enhSrc) {
-      drawSrc = enhSrc;
-      drawSrcStage = "enhance";
-      enhOffscreen = true;
-      srcAtLetterbox = true;
-      pipelineProcessedDrawSrc = true;
-    }
-  }
-  // Đợt 76 D4 — TAP ĐƠN LẺ QUA INTERMEDIATE THU HẸP DỌC (đóng nợ G5
-  // đợt 75 C8: FPS deint-only 0.65–0.71× vì tap đi qua enhanceCanvas
-  // full-res): khi plan có tap mà KHÔNG cần offscreen (không denoise
-  // alpha, không stabilize zoom) thì đưa drawSrc qua
-  // deintIntermediateSource (dw×dh/2 — đợt 77 E1 đã thử dw×dh/4 rồi
-  // quay về 2 vì không chứng minh được nhanh hơn mà còn FAIL G7b mask;
-  // xem LIMITS E1 §3) thay vì enhanceCanvas — các nhánh vẽ sau vẽ
-  // canvas này lên khổ đích dw×dh như thường, không đổi gì khác. Tap
-  // đi kèm denoise/stabilize vẫn qua offscreen như cũ (đã nằm trong
-  // lần vẽ gốc của enhanceCanvas). Hook debug: offscreenApplied=false
-  // + tap=true là dấu hiệu phân biệt đường intermediate với đường
-  // offscreen enhanceCanvas cũ (intermediate cũng là canvas trung gian
-  // nhưng ở nửa chiều cao và KHÔNG qua enhanceCanvas — xem LIMITS §3).
-  // Bản inline-shift (deintInlineDy, cộng +0.5px vào lần vẽ cuối) đã
-  // BỎ sau headed lần 1: FPS 0.99× nhưng R không giảm ở upscale (xem
-  // LIMITS §2.2 đợt 76 D4; probe E1 xác nhận lại: R 0.85 → 0.88).
-  if (enhPlan.deinterlaceTap && !enhPlan.needsOffscreen) {
-    // Đợt 79 G1 — HƯỚNG MỚI: intermediate đọc từ canvas held-frame thay
-    // vì đọc lại video (giảm số lần đọc video mỗi tick deint-only từ 2
-    // → 1). Cơ chế (F1): chi phí nằm ở phía nguồn video — drawImage từ
-    // video đắt gấp nhiều lần từ canvas cùng khổ. storeHeldFrame đã vẽ
-    // video → held canvas (mw×mh, cùng frame, cùng tick) ngay trước
-    // pipeline này, nên vẽ intermediate từ canvas đó thay vì video là
-    // cùng 1 frame, rẻ hơn mà pixel ~y hệt (probe tab trắng G1:
-    // MAD B vs A = 0,0162 interlaced / 0,0133 clean, max 1/255,
-    // R 0,43 = 0,43, vgrad giống tới 3 chữ số — xem
-    // docs/PHASE9_ROUND79_G1_DEINT_FPS_LIMITS.md §3.1). CHỈ áp khi
-    // drawSrc còn là element video thô (drawSrc === srcEl): đã qua
-    // chroma/LUT/effects thì drawSrc là canvas đã xử lý, KHÔNG được
-    // thay bằng held canvas (sẽ mất hiệu ứng); nhánh hold (srcEl đã
-    // là canvas giữ) và VideoFrame/WebCodecs cũng giữ hành vi cũ.
-    // Không có held canvas (store thất bại / frame đầu) → rơi về video
-    // như cũ, không crash. Quyết giữ hay hoàn lại theo số headed G5.
+  // Đợt 193 P2 — BOB-FIRST (thay tap +0,5px trong enhanceCanvas, đã bỏ):
+  // khi plan có tap thì bob-nearest TRƯỚC, rồi mới blend denoise/zoom
+  // trên khung đã bob — khớp thứ tự render yadif → hqdn3d (probe-193-p2
+  // C2: MAD 4,68–8,72 → 4,26–7,86 trên 12 ô inter/inter15 × s=0,5/0,8).
+  // Đợt 196 P2 — BLEND DỌC SAU BOB: plan.deintVerticalBlend (0,75 khi
+  // σ̂ ≥ 2,7) vẽ thêm 1 lần drawImage smoothing-ON lệch −0,5px với
+  // globalAlpha=w lên khung bob (xem deintBobNearestSource); σ̂ đã ước
+  // lượng cả khi chỉ bật deinterlace để plan tính được w.
+  // Đợt 194 P2 — BOB LUÂN PHIÊN cho mode 1: field lấy từ plan
+  // (plan.deintBobField, 0 = top / 1 = bottom — xem enhancePreviewPlan);
+  // project 60fps / nguồn 30fps thì luân phiên mỗi frame output, còn
+  // project 30fps / nguồn 30fps hoặc chưa có fps thì luôn top.
+  // Nguồn bob ưu tiên held canvas (G1 đợt 79 — cùng frame, cùng tick)
+  // khi drawSrc còn là element video thô; đã qua chroma/LUT/effects thì
+  // bob từ canvas đã xử lý. Hook debug: offscreenApplied=false +
+  // tap=true + drawSrcStage="deint-bob-nearest" là dấu hiệu phân biệt
+  // đường bob-only với đường offscreen enhanceCanvas.
+  if (enhPlan.deinterlaceTap) {
     let interInput: CanvasImageSource = drawSrc;
     if (
       drawSrc === srcEl &&
@@ -4364,10 +4809,21 @@ function drawVideoClip(
       const held = heldFrameCache.get(heldFrameCacheKey63R6(clip));
       if (held) interInput = held.canvas;
     }
-    const interSrc = deintIntermediateSource(interInput, dw, dh);
-    if (interSrc) {
-      drawSrc = interSrc;
-      drawSrcStage = "deint-intermediate";
+    const bobSrc = deintBobNearestSource(interInput, dw, dh, enhPlan.deintBobField, enhPlan.deintVerticalBlend);
+    if (bobSrc) {
+      drawSrc = bobSrc;
+      drawSrcStage = "deint-bob-nearest";
+      srcAtLetterbox = true;
+      pipelineProcessedDrawSrc = true;
+    }
+  }
+  let enhOffscreen = false;
+  if (enhPlan.needsOffscreen) {
+    const enhSrc = enhancePreviewSource(drawSrc, dw, dh, enhPlan.denoiseBlurPx, enhPlan.denoiseBlendAlpha, enhPlan.stabilizeZoom);
+    if (enhSrc) {
+      drawSrc = enhSrc;
+      drawSrcStage = "enhance";
+      enhOffscreen = true;
       srcAtLetterbox = true;
       pipelineProcessedDrawSrc = true;
     }
@@ -4908,6 +5364,13 @@ function renderFrame(
   // nếu tick này có clip rơi vào nhánh hold (badge đọc ở tick sau).
   // Đợt 60 Q6: reset cùng lúc tập clip không vẽ được (xem tickSkippedClipIds).
   tickHadHold = false;
+  // Đợt 191 P3: reset cờ vẽ frame ngược của tick (drawVideoClip đặt
+  // lại khi vẽ frame stepping; vòng lặp nhánh phát copy sang PrevTick sau render).
+  reverseDrewFrameTick = false;
+  // Đợt 191 P3: phơi tracker cadence NGAY từ tick render đầu (không chờ
+  // frame ngược đầu tiên) để harness gọi start() trước khi bấm phát ngược
+  // và đọc được snapshot() = null (0 event) thay vì "tracker chưa có".
+  exposeReverseCadence();
   tickSkippedClipIds = new Set();
   // nền đen toàn canvas (tọa độ device px)
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -5451,9 +5914,14 @@ function syncMedia(
         // Đợt 39 T6: ghi tick vừa hoàn tất để drawVideoClip bypass guard
         // lag đúng tick này (frame vừa seek xong, xem reversePlayback.ts).
         if (justCompletedSeek(wasSeekingGlobal, a.el.seeking)) seekCompletedThisTick.add(a.el);
+        // Đợt 192 P3 (S6b, F-191-P4-1): seek lùi 1 ms khỏi biên lưới
+        // frame (reverseSeekTarget) — seek đúng biên thì trình duyệt
+        // hiện frame N−k, render cần N−1−k. Chỉ đổi điểm seek; phép
+        // so pacing vẫn so với a.target thô (|currentTime − target|
+        // ≈ 1 ms << stepEps nửa frame nên không phát seek thừa).
         if (!justCompletedSeek(wasSeekingGlobal, a.el.seeking) && shouldIssueStepSeek(a.el.seeking, a.el.currentTime, a.target, stepEps)) {
           try {
-            a.el.currentTime = a.target;
+            a.el.currentTime = reverseSeekTarget(a.target);
           } catch {
             /* seek chưa sẵn sàng */
           }
@@ -5471,9 +5939,12 @@ function syncMedia(
         steppingPrevSeeking.set(a.el, a.el.seeking);
         // Đợt 39 T6: như nhánh ngược toàn cục (ghi tick vừa hoàn tất).
         if (justCompletedSeek(wasSeekingClip, a.el.seeking)) seekCompletedThisTick.add(a.el);
+        // Đợt 192 P3 (S6b): cùng lùi 1 ms như nhánh toàn cục — clip
+        // reverse cũng stepping ngược (target giảm dần) nên cùng lệch +1
+        // frame đúng biên; xem ghi chú nhánh trên.
         if (!justCompletedSeek(wasSeekingClip, a.el.seeking) && shouldIssueStepSeek(a.el.seeking, a.el.currentTime, a.target, stepEps)) {
           try {
-            a.el.currentTime = a.target;
+            a.el.currentTime = reverseSeekTarget(a.target);
           } catch {
             /* seek chưa sẵn sàng */
           }
@@ -5736,6 +6207,42 @@ function syncMedia(
     : liveAudioSources;
   // R1-063: đẩy gain vào Web Audio graph (mượt bằng setTargetAtTime) + VU meter.
   engine.update(outSources);
+  // Đợt 192 P3 (S7c, F-191-P4-3): nối audio đảo — chỉ khi đang phát
+  // ngược (toàn cục hoặc clip.reverse). Gain dùng audioSources GỐC
+  // (trước khi outSources gán 0 cho reverse) để audio đảo nghe đúng
+  // mức clip; element vẫn paused nên không phát chồng tiếng xuôi.
+  // Không reverse thì dừng hết (đổi hướng về xuôi giữa lúc phát);
+  // pause thì syncMedia chạy với playing=false nên cũng dừng hết
+  // (không để đuôi 0,5 s sau khi bấm pause).
+  if (playing && (reversePlayback || actives.some((a) => a.reverse))) {
+    const wiring = getReverseAudioWiring(engine);
+    if (wiring) {
+      const byEl = new Map<object, ActiveAudioSource>();
+      for (const s of liveAudioSources) if (!byEl.has(s.el)) byEl.set(s.el, s);
+      const entries: ReverseAudioWiringEntry[] = [];
+      for (const a of actives) {
+        const s = byEl.get(a.el);
+        if (!s) continue;
+        if (!reversePlayback && !a.reverse) continue;
+        entries.push({
+          clipKey: a.clipKey,
+          url: a.el.currentSrc || a.el.src,
+          sourceDurationSec: a.el.duration,
+          sourceTimeSec: a.target,
+          gain: s.gain,
+          speed: a.speed,
+        });
+      }
+      exposeReverseAudio();
+      wiring.tick(t, entries);
+    }
+  } else {
+    try {
+      reverseAudioWiring?.stopAll();
+    } catch {
+      /* wiring không được phá syncMedia */
+    }
+  }
   if (!playing) pool.pauseAll();
   // Đợt 86 N3 (W6): cờ bỏ qua render của tick này — chỉ có ý nghĩa khi
   // đang phát (nhánh pause bỏ qua giá trị trả về). Tính SAU mọi seek/
@@ -5762,6 +6269,30 @@ function syncMedia(
         driftConfirmSkipTicks103E4;
     }
   }
+  // Đợt 191 P3 — tín hiệu giữ playhead ngược cho tick sau (xem
+  // shouldHoldReversePlayhead trong reversePlayback.ts): chỉ phát ngược
+  // toàn cục + có clip video stepping active; engine element thì theo
+  // seek còn bay, engine webcodecs thì theo tick trước có vẽ frame mới
+  // không (reverseDrewFramePrevTick — module-level, vòng lặp cập
+  // nhật sau mỗi lần renderFrame ở nhánh phát). Tín hiệu cũ 1 tick như
+  // prevSkipRenderSeeking của giữ R2 (syncMedia chạy sau khi tăng
+  // playhead trong cùng tick). Ghi vào biến module-level (cùng mẫu
+  // tickHadHold) thay vì trả qua combineSkipRender — kiểu trả của nó
+  // (SkipRenderDecision) thuộc gate E4, không mở rộng vì 1 cờ ngược.
+  lastSyncReversePlayheadHold = shouldHoldReversePlayhead({
+    globalReverse: reversePlayback,
+    engine: resolveReverseEngine(),
+    steppingSeekingPrevTick: actives.some(
+      (a) =>
+        a.el.tagName === "VIDEO" &&
+        (reversePlayback || a.reverse) &&
+        a.el.seeking,
+    ),
+    drewFramePrevTick: reverseDrewFramePrevTick,
+    hasSteppingVideo: actives.some(
+      (a) => a.el.tagName === "VIDEO" && (reversePlayback || a.reverse),
+    ),
+  });
   // Đợt 110 L1 — TÁCH tín hiệu: gate E4 chỉ bỏ vẽ, KHÔNG được kích giữ R2
   // (xem combineSkipRender trong driftConfirmSkip103E4.ts — trước đây
   // boolean gộp N3||E4 làm prevSkipRenderSeeking, E4 kích giữ R2 -> pause
@@ -5940,6 +6471,13 @@ export function PreviewCanvas() {
   // tính lại text/title ngay khi đổi lang, kể cả khi vòng lặp đang ngủ
   // lúc pause — nợ Z6 §6.3). Null = badge đang ẩn, effect không làm gì.
   const lastReverseEngineBadge45A6Ref = useRef<ReverseEngineBadge45A6 | null>(null);
+  // Đợt 192 P3 (S7c): badge phát ngược báo đúng trạng thái audio —
+  // "audio đảo" khi đang có đoạn đảo phát, "không audio" khi mute.
+  // Cập nhật qua DOM như badge đường phát ngược (không re-render);
+  // lastReverseAudioBadgeRef giữ key text\ntitle cuối để đổi lang
+  // refresh ngay cả khi vòng lặp đang ngủ (mẫu engine badge A6).
+  const reverseBadgeRef = useRef<HTMLDivElement | null>(null);
+  const lastReverseAudioBadgeRef = useRef<string>("");
   const dragRef = useRef<{ trackId: string; clipId: string; dx: number; dy: number } | null>(null);
   const engineRef = useRef<AudioEngine | null>(null);
   const vuBarRef = useRef<HTMLDivElement>(null);
@@ -6334,6 +6872,33 @@ export function PreviewCanvas() {
     }
   }, [previewLang]);
 
+  // Đợt 192 P3 (S7c): đổi ngôn ngữ cũng refresh badge phát ngược ngay
+  // (mẫu engine badge A6 trên) — badge này cập nhật qua DOM trong tick
+  // vòng lặp, mà vòng lặp NGỦ khi pause nên đổi lang lúc pause sẽ kẹt
+  // chuỗi cũ nếu chỉ trông chờ tick. Tính lại từ trạng thái audio đảo
+  // cuối cùng đã lưu (key text\ntitle); badge chưa mount thì no-op.
+  useEffect(() => {
+    const el = reverseBadgeRef.current;
+    if (!el) return;
+    try {
+      const playing = reverseAudioWiring?.isPlaying ?? false;
+      const text = playing
+        ? i18nT("preview.reverseAudioLabel")
+        : i18nT("preview.reverseLabel");
+      const title = playing
+        ? i18nT("preview.reverseAudioBadge")
+        : i18nT("preview.reverseBadge");
+      const key = `${text}\n${title}`;
+      if (lastReverseAudioBadgeRef.current !== key) {
+        lastReverseAudioBadgeRef.current = key;
+        el.textContent = text;
+        el.title = title;
+      }
+    } catch {
+      // Badge không được làm hỏng render khi đổi lang.
+    }
+  }, [previewLang]);
+
   // vòng lặp phát lại + vẽ
   // T5 (Phase 9 đợt 21): vòng lặp NGỦ khi đứng yên — nợ đợt 20 R5 §7.
   // Trước đây loop đặt rAF tiếp theo ngay đầu mỗi tick nên chạy liên tục
@@ -6376,6 +6941,9 @@ export function PreviewCanvas() {
     // nhả khi chạm trần. Hai bộ đếm cuối chỉ phục vụ đo qua hook.
     let playheadHoldState = initialPlayheadHoldState();
     let prevSkipRenderSeeking = false;
+    // Đợt 191 P3 — tín hiệu giữ playhead ngược của tick trước (syncMedia
+    // trả về; chỉ phát ngược toàn cục — xem shouldHoldReversePlayhead).
+    let prevReversePlayheadHold = false;
     let playheadHoldTicks90R2 = 0;
     let playheadHoldEpisodes90R2 = 0;
     let prevPlayheadHeld = false;
@@ -6698,7 +7266,7 @@ export function PreviewCanvas() {
       const forceSeekEdge = st.playing && !prevPlayingRef.current;
       const holdDecision = shouldHoldPlayheadWhileSeeking({
         playing: st.playing,
-        seekingPrevTick: prevSkipRenderSeeking,
+        seekingPrevTick: prevSkipRenderSeeking || prevReversePlayheadHold,
         forceSeekEdge,
         nowMs: now,
         state: playheadHoldState,
@@ -7458,6 +8026,35 @@ export function PreviewCanvas() {
         // Đợt 90 R2 — cờ N3 của tick này làm tín hiệu giữ cho tick sau
         // (playhead tăng ở đầu tick, trước syncMedia — xem quyết định giữ).
         prevSkipRenderSeeking = skipRenderDecision.skipRenderSeeking;
+        // Đợt 191 P3 — cờ giữ playhead ngược của tick này (syncMedia ghi
+        // vào biến module-level) làm tín hiệu giữ cho tick sau, cùng mẫu
+        // cờ N3 ở trên.
+        prevReversePlayheadHold = lastSyncReversePlayheadHold;
+        // Đợt 192 P3 (S7c): badge phát ngược báo đúng trạng thái audio
+        // tick này — "audio đảo" khi đang có đoạn đảo phát, "không
+        // audio" khi mute (clip dài/chưa load/không có audio). Chỉ ghi
+        // DOM khi text/title đổi (mẫu badge đường phát ngược trên).
+        // Nhánh pause bên dưới không chạy qua đây: pause gọi syncMedia
+        // với playing=false (đã stopAll trong đó) nên badge quay về
+        // "không audio" ở lần tick pause đầu tiên — xem khối pause.
+        try {
+          const revAudioPlaying = reverseAudioWiring?.isPlaying ?? false;
+          const revText = revAudioPlaying
+            ? i18nT("preview.reverseAudioLabel")
+            : i18nT("preview.reverseLabel");
+          const revTitle = revAudioPlaying
+            ? i18nT("preview.reverseAudioBadge")
+            : i18nT("preview.reverseBadge");
+          const revKey = `${revText}\n${revTitle}`;
+          const revBadgeEl = reverseBadgeRef.current;
+          if (revBadgeEl && lastReverseAudioBadgeRef.current !== revKey) {
+            lastReverseAudioBadgeRef.current = revKey;
+            revBadgeEl.textContent = revText;
+            revBadgeEl.title = revTitle;
+          }
+        } catch {
+          // Badge không được làm hỏng vòng lặp preview.
+        }
         // Đợt 91 S2 — arm theo dõi resume-stall: seek xuôi của clip video
         // vừa hoàn tất ở tick này (forwardSeekCompletedThisTick — CHỈ
         // nhánh forward, xem khai báo set) thì ghi element + currentTime
@@ -7533,6 +8130,10 @@ export function PreviewCanvas() {
           renderFrame(ctx, spec, pool, mediaByName, t, computeViewport(cw, ch, spec), useStore.getState().selection[0] ?? null);
           recordRenderFrameTick92T3({ t: now, preMs: preMs92T3, renderMs: performance.now() - renderStart92T3, skipped: false, held: tickHadHold });
           lastDrawnTRef.current = t;
+          // Đợt 191 P3 — tick phát này có vẽ frame ngược nào không → tín
+          // hiệu giữ playhead webcodecs ở tick sau (syncMedia đọc cờ
+          // module-level này; chỉ cập nhật ở nhánh phát).
+          reverseDrewFramePrevTick = reverseDrewFrameTick;
         }
         lastRequestedTRef.current = t;
       } else {
@@ -7547,6 +8148,25 @@ export function PreviewCanvas() {
         // Đợt 110 L1 — nhánh pause chỉ lấy cờ seeking (N3) cho giữ R2;
         // đường pause vốn không ghi pending E4 nên cờ E4 luôn false ở đây.
         prevSkipRenderSeeking = syncMedia(spec, pool, mediaByName, t, false, engine, false).skipRenderSeeking;
+        // Đợt 191 P3 — nhánh pause không giữ playhead ngược (không phát):
+        // xóa tín hiệu giữ để tick phát đầu tiên không giữ oan 1 tick.
+        prevReversePlayheadHold = false;
+        // Đợt 192 P3 (S7c): pause thì audio đảo đã dừng (stopAll trong
+        // syncMedia) nên badge quay về "không audio" ngay tick pause
+        // đầu tiên — nếu không, badge kẹt ở "audio đảo" trong khi im.
+        try {
+          const revText = i18nT("preview.reverseLabel");
+          const revTitle = i18nT("preview.reverseBadge");
+          const revKey = `${revText}\n${revTitle}`;
+          const revBadgeEl = reverseBadgeRef.current;
+          if (revBadgeEl && lastReverseAudioBadgeRef.current !== revKey) {
+            lastReverseAudioBadgeRef.current = revKey;
+            revBadgeEl.textContent = revText;
+            revBadgeEl.title = revTitle;
+          }
+        } catch {
+          // Badge không được làm hỏng vòng lặp preview.
+        }
         // Đợt 89 Q5 — phơi element media thật + snapshot state Ở NHÁNH
         // PAUSE (mirror khối playing ở trên, chỉ phục vụ đo — không đổi
         // hành vi): trước đây __vcutMediaEls/__vcutMediaState chỉ refresh
@@ -7693,11 +8313,33 @@ export function PreviewCanvas() {
           const gen = ++seekGen;
           void seekerRef.current!.request(t, (tt) => {
             const { actives } = collectActives(spec, pool, mediaByName, tt);
-            const targets: SeekTarget[] = actives.map((a) => ({
-              el: a.el,
-              target: a.target,
-              label: a.el instanceof HTMLVideoElement ? "video" : "audio",
-            }));
+            // Đợt 193 P3 — scrub ngược tại biên (nợ S6b đợt 192): khi
+            // đang ở chế độ phát ngược toàn cục hoặc clip.reverse, seek
+            // VIDEO tới reverseSeekTarget(a.target) (lùi 1 ms) để hiện
+            // đúng frame render (N−1−k) thay vì N−k; scrub xuôi giữ
+            // nguyên target. Chỉ video — audio không có frame để lệch
+            // (giữ target gốc). Cờ per-target reverseScrub để seekElement
+            // không snap tròn về lưới (snapToFrame sẽ nuốt mất 1 ms) và
+            // so frame bằng floor (xem seek.ts); target xuôi/audio trong
+            // cùng lần seekAll không đổi hành vi.
+            const reverseGlobal = useStore.getState().reversePlayback;
+            const targets: SeekTarget[] = actives.map((a) => {
+              const rev = reverseGlobal || a.reverse;
+              const isVideo = a.el.tagName === "VIDEO";
+              if (rev && isVideo) {
+                return {
+                  el: a.el,
+                  target: reverseScrubSeekTarget(a.target, true),
+                  label: "video",
+                  reverseScrub: true,
+                };
+              }
+              return {
+                el: a.el,
+                target: a.target,
+                label: a.el instanceof HTMLVideoElement ? "video" : "audio",
+              };
+            });
             // seekAll: pause TẤT CẢ trước, seek audio+video đồng thời.
             // Đợt 89 Q5 — timeoutExtensions: gia hạn timeout khi element
             // vẫn đang seeking (seek xa keyframe dưới tải: WebKit 1,6–6,4s
@@ -8319,6 +8961,7 @@ export function PreviewCanvas() {
           ngược), báo rõ không có audio đồng bộ khi phát ngược. */}
       {isReversePlayback && (
         <div
+          ref={reverseBadgeRef}
           className="preview-reverse-badge"
           title={i18nT("preview.reverseBadge")}
         >

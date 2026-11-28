@@ -79,6 +79,15 @@ export interface SeekTarget {
   target: number;
   /** Nhãn debug, ví dụ "video:clip-3". */
   label: string;
+  /**
+   * Đợt 193 P3 — target này là scrub NGƯỢC (đã lùi 1 ms bằng
+   * reverseSeekTarget): seekElement KHÔNG snap về lưới frame
+   * (snapToFrame round sẽ nuốt mất 1 ms: round(k − 0,03) = k) và so
+   * frame bằng floor (frame CHỨA currentTime) thay vì round — xem
+   * `reverseScrub` trong SeekOpts. Chỉ target này đổi; mọi target
+   * khác trong cùng seekAll giữ hành vi cũ.
+   */
+  reverseScrub?: boolean;
 }
 
 export interface SeekOpts {
@@ -86,6 +95,18 @@ export interface SeekOpts {
   fps?: number;
   /** Timeout chờ `seeked` cho mỗi element. Mặc định 1200ms. */
   timeoutMs?: number;
+  /**
+   * Đợt 193 P3 — scrub NGƯỢC (target đã lùi 1 ms bằng
+   * reverseSeekTarget, xem reversePlayback.ts): seekElement KHÔNG snap
+   * target về lưới frame (snapToFrame round sẽ nuốt mất 1 ms:
+   * round(k − 0,03) = k, mất luôn backoff) và so frame bằng floor
+   * (frame CHỨA currentTime) thay vì round — element ở đúng biên
+   * (ct = k/30, hiện frame k) phải được coi là CHƯA đúng frame k−1
+   * để seek chạy. Mặc định false = hành vi cũ (scrub xuôi / mọi
+   * caller cũ). seekAll ưu tiên cờ per-target `SeekTarget.reverseScrub`
+   * rồi mới tới cờ này.
+   */
+  reverseScrub?: boolean;
   /** Debounce của Seeker khi scrub. Mặc định 80ms. */
   debounceMs?: number;
   /**
@@ -139,6 +160,22 @@ export function frameIndexOf(t: number, fps = 30): number {
     typeof fps === "number" && Number.isFinite(fps) && fps > 0 ? fps : 30;
   if (!Number.isFinite(t) || t <= 0) return 0;
   return Math.round(t * f);
+}
+
+/**
+ * Đợt 193 P3 — chỉ số frame CHỨA một thời điểm (floor): frame trình
+ * duyệt hiện tại currentTime là frame BẮT ĐẦU ở floor(t·fps), không
+ * phải frame gần nhất (round). Dùng cho scrub ngược: target đã lùi
+ * 1 ms khỏi biên (s − 1 ms) nằm trong frame k−1, còn element đang ở
+ * đúng biên s hiện frame k — round cho cả hai đều = k (coi là đã đúng,
+ * không seek → giữ bug N−k), floor cho k−1 vs k (seek chạy, sửa đúng).
+ * Ngoài lưới: floor(s − 1 ms) = floor(s) nên không đổi frame.
+ */
+export function frameIndexFloor(t: number, fps = 30): number {
+  const f =
+    typeof fps === "number" && Number.isFinite(fps) && fps > 0 ? fps : 30;
+  if (!Number.isFinite(t) || t <= 0) return 0;
+  return Math.floor(t * f);
 }
 
 /**
@@ -232,7 +269,16 @@ export function seekElement(
 ): Promise<SeekResult> {
   const fps = opts.fps ?? 30;
   const timeoutMs = opts.timeoutMs ?? DEFAULT_SEEK_TIMEOUT_MS;
-  const snapped = snapToFrame(target, fps);
+  // Đợt 193 P3 — scrub ngược: caller đã lùi target 1 ms
+  // (reverseSeekTarget), giữ nguyên giá trị đó — KHÔNG snapToFrame
+  // (round sẽ nuốt 1 ms về lại đúng biên, mất backoff). Scrub xuôi
+  // snap như cũ. So frame bằng floor khi scrub ngược (frame chứa
+  // currentTime), round khi scrub xuôi (needsSeek cũ) — xem
+  // frameIndexFloor. Hai chỗ dùng frameIdx: kiểm tra "đã đúng frame"
+  // ở attempt() + tracker đáp sai trong listener.
+  const reverseScrub = opts.reverseScrub ?? false;
+  const snapped = reverseScrub ? target : snapToFrame(target, fps);
+  const frameIdx = reverseScrub ? frameIndexFloor : frameIndexOf;
   return new Promise((resolve) => {
     let done = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -320,8 +366,11 @@ export function seekElement(
       // nền đen (đúng dấu vết DARK-FIRST đo được dưới tải). Nên: đang
       // seeking thì LUÔN chờ seeked rồi mới kiểm tra lại, dù currentTime
       // đã báo đúng target; chỉ khi không seeking mới được kết luận
-      // "đã đúng frame, không cần seek" (tránh nhấp nháy).
-      if (!el.seeking && !needsSeek(el, snapped, fps)) {
+      // "đã đúng frame, không cần seek" (tránh nhấp nháy). Đợt 193 P3:
+      // so bằng frameIdx — floor khi scrub ngược (element ở đúng biên
+      // hiện frame k, target lùi 1 ms thuộc frame k−1 nên PHẢI seek),
+      // round khi scrub xuôi (đúng needsSeek cũ, xem frameIndexOf).
+      if (!el.seeking && frameIdx(el.currentTime, fps) === frameIdx(snapped, fps)) {
         finish(true, false);
         return;
       }
@@ -367,8 +416,8 @@ export function seekElement(
         // > 0 mới tính), và seek tới 0 khi element đã ở 0 còn finish
         // sớm ở đầu attempt() trước khi tới đây.
         if (assigned && !el.seeking) {
-          const landedFrame = frameIndexOf(el.currentTime, fps);
-          const targetFrame = frameIndexOf(snapped, fps);
+          const landedFrame = frameIdx(el.currentTime, fps);
+          const targetFrame = frameIdx(snapped, fps);
           // ROUND46-B2: phân loại mọi lần đáp qua tracker A2 thay vì
           // chỉ đếm đáp 0 (Z2). correct / intentional-zero (target 0)
           // reset streak; zero-landing VÀ wrong-landing đều đếm liên
@@ -440,7 +489,13 @@ export async function seekAll(
   }
   const results = await Promise.all(
     targets.map((tg) =>
-      seekElement(tg.el, tg.target, opts).catch(
+      // Đợt 193 P3: cờ scrub-ngược per-target (SeekTarget.reverseScrub)
+      // thắng cờ chung của opts — target video ngược đi đường không-snap
+      // + so floor, target xuôi/audio trong cùng lần seekAll giữ nguyên.
+      seekElement(tg.el, tg.target, {
+        ...opts,
+        reverseScrub: tg.reverseScrub ?? opts.reverseScrub ?? false,
+      }).catch(
         (): SeekResult => ({ seeked: false, timedOut: false }),
       ),
     ),

@@ -13,6 +13,17 @@ import { extensionForContainer, recorderContainerType } from "./lib/sampleMime";
 const W = 640;
 const H = 360;
 const FPS = 30;
+/**
+ * Đợt 196 P2 (a) — fps nguồn của media mẫu (mau-* + clip pack ghi bằng
+ * recordPackMedia, captureStream(30)): **30** — đo thật đợt 195 P2 §3:
+ * 5 mp4 public ffprobe avg = r = 30/1 (1280×720, 3,0 s); clip ghi thật
+ * bằng recordPackMedia đo headed bằng probeVideoFps: 30 / 29,97 / 30
+ * (29,97 là snap của ước lượng ~30). Ghi sẵn vào MediaItem + manifest
+ * để bob luân phiên đúng trên clip mẫu (trước đây thiếu fps nên bob
+ * luôn top field — nợ P2-194 §8.3). probeVideoFps lúc import vẫn thắng
+ * giá trị này nếu đo khác (máy yếu, rAF thưa).
+ */
+export const SAMPLE_MEDIA_FPS = 30;
 
 /** Vẽ 1 frame của clip mẫu. `variant` đổi bảng màu & chuyển động. */
 function drawSampleFrame(ctx: CanvasRenderingContext2D, t: number, dur: number, variant: 0 | 1) {
@@ -166,6 +177,10 @@ export async function buildSampleProject(): Promise<{ spec: VideoSpec; media: Me
         width: W,
         height: H,
         duration: seconds,
+        // Đợt 196 P2 (a) — fps mẫu 30 (xem SAMPLE_MEDIA_FPS): ghi vào
+        // manifest để rehydrate khôi phục fps qua reload; ảnh tĩnh
+        // (stillSample) không có fps.
+        fps: isVideo ? SAMPLE_MEDIA_FPS : undefined,
         thumbnail: thumb,
       });
       sampleAssetId = kept.assetId;
@@ -200,6 +215,9 @@ export async function buildSampleProject(): Promise<{ spec: VideoSpec; media: Me
       duration: seconds,
       width: W,
       height: H,
+      // Đợt 196 P2 (a) — fps mẫu 30 (xem SAMPLE_MEDIA_FPS): chỉ video
+      // ghi thật (ảnh tĩnh không có fps); bob luân phiên dùng field này.
+      ...(isVideo ? { fps: SAMPLE_MEDIA_FPS } : {}),
       thumbnail: thumb,
       file: new File([blob], `mau-${variant + 1}.${ext}`, { type: blob.type }),
       ...(sampleAssetId ? { assetId: sampleAssetId } : {}),
